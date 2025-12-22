@@ -19,16 +19,13 @@ package org.geotools.image.palette;
 /**
  * This class is responsible for computing efficiently an inverse color map for a given color map.
  *
- * <p>This algorithm is adapted from the algorithm found in Graphics Gems volume 2 by Spencer W.
- * Thomas "Efficient Inverse Color Map Computation".
+ * <p>This algorithm is adapted from the algorithm found in Graphics Gems volume 2 by Spencer W. Thomas "Efficient
+ * Inverse Color Map Computation".
  *
  * @author Simone Giannecchini, GeoSolutions SAS
  */
 public final class EfficientInverseColorMapComputation {
-    /**
-     * Number of most significant bits we are going to use from the input color in order to quantize
-     * them.
-     */
+    /** Number of most significant bits we are going to use from the input color in order to quantize them. */
     protected final int bits;
 
     protected final int truncationBits;
@@ -46,32 +43,23 @@ public final class EfficientInverseColorMapComputation {
     protected final byte[] mapBuf;
 
     /**
-     * {@link EfficientInverseColorMapComputation} that allows us to specify the number of bits we
-     * are going to save from the quantization.
+     * {@link EfficientInverseColorMapComputation} that allows us to specify the number of bits we are going to save
+     * from the quantization.
      */
     public EfficientInverseColorMapComputation(byte[][] rgbColorMap, final int quantizationBits) {
         colorMap = rgbColorMap;
         bits = quantizationBits;
         truncationBits = 8 - bits;
         blueQuantizationMask = (1 << bits) - 1;
-        greenQuantizationMask = (blueQuantizationMask << bits);
-        redQuantizationMask = (greenQuantizationMask << bits);
+        greenQuantizationMask = blueQuantizationMask << bits;
+        redQuantizationMask = greenQuantizationMask << bits;
         final int maximumQuantizationValue = 1 << bits;
         final int numberOfColors = colorMap[0].length;
-        mapBuf =
-                new byte
-                        [maximumQuantizationValue
-                                * maximumQuantizationValue
-                                * maximumQuantizationValue];
-        if (mapBuf.length <= 0)
-            throw new IllegalArgumentException("Illegal number of quantization colors");
-        final int[] distBuf =
-                new int
-                        [maximumQuantizationValue
-                                * maximumQuantizationValue
-                                * maximumQuantizationValue];
+        mapBuf = new byte[maximumQuantizationValue * maximumQuantizationValue * maximumQuantizationValue];
+        if (mapBuf.length <= 0) throw new IllegalArgumentException("Illegal number of quantization colors");
+        final int[] distBuf = new int[maximumQuantizationValue * maximumQuantizationValue * maximumQuantizationValue];
 
-        final int x = (1 << truncationBits);
+        final int x = 1 << truncationBits;
         final int xsqr = x * x;
         final int txsqr = xsqr + xsqr;
 
@@ -115,17 +103,12 @@ public final class EfficientInverseColorMapComputation {
             // Going to check for all the quantized space
             //
             // //
-            for (int r = 0, rxx = rinc, rgbI = 0;
-                    r < maximumQuantizationValue;
-                    rdist += rxx, ++r, rxx += txsqr) {
+            int rgbI = 0;
+            for (int r = 0, rxx = rinc; r < maximumQuantizationValue; rdist += rxx, ++r, rxx += txsqr) {
                 gdist = rdist;
-                for (int g = 0, gxx = ginc;
-                        g < maximumQuantizationValue;
-                        gdist += gxx, ++g, gxx += txsqr) {
+                for (int g = 0, gxx = ginc; g < maximumQuantizationValue; gdist += gxx, ++g, gxx += txsqr) {
                     bdist = gdist;
-                    for (int b = 0, bxx = binc;
-                            b < maximumQuantizationValue;
-                            bdist += bxx, ++b, ++rgbI, bxx += txsqr) {
+                    for (int b = 0, bxx = binc; b < maximumQuantizationValue; bdist += bxx, ++b, ++rgbI, bxx += txsqr) {
                         if (i == 0 || distBuf[rgbI] > bdist) {
                             distBuf[rgbI] = bdist;
                             mapBuf[rgbI] = (byte) i;
@@ -137,20 +120,19 @@ public final class EfficientInverseColorMapComputation {
     }
 
     /**
-     * This method is responsible for doing the actual lookup that given an rgb triple returns the
-     * best, taking into account quantization, index in the forward color map.
+     * This method is responsible for doing the actual lookup that given an rgb triple returns the best, taking into
+     * account quantization, index in the forward color map.
      *
      * @param red component.
      * @param green component.
      * @param blue component.
-     * @return the best, taking into account quantization, index in the forward color map for the
-     *     provided triple.
+     * @return the best, taking into account quantization, index in the forward color map for the provided triple.
      */
     public int getIndexNearest(int red, int green, int blue) {
         return mapBuf[
-                        ((red << (2 * bits - truncationBits)) & redQuantizationMask)
-                                + ((green << (1 * bits - truncationBits)) & greenQuantizationMask)
-                                + ((blue >> (truncationBits)) & blueQuantizationMask)]
+                        (red << 2 * bits - truncationBits & redQuantizationMask)
+                                + (green << 1 * bits - truncationBits & greenQuantizationMask)
+                                + (blue >> truncationBits & blueQuantizationMask)]
                 & 0xFF;
     }
 }

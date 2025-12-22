@@ -17,26 +17,26 @@
 package org.geotools.referencing.wkt;
 
 import java.net.URI;
+import java.text.MessageFormat;
 import java.text.ParseException;
 import java.text.ParsePosition;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchIdentifierException;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.MathTransformFactory;
+import org.geotools.api.referencing.operation.NoninvertibleTransformException;
+import org.geotools.api.referencing.operation.Operation;
+import org.geotools.api.referencing.operation.OperationMethod;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.referencing.AbstractIdentifiedObject;
 import org.geotools.referencing.ReferencingFactoryFinder;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchIdentifierException;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.MathTransformFactory;
-import org.opengis.referencing.operation.NoninvertibleTransformException;
-import org.opengis.referencing.operation.Operation;
-import org.opengis.referencing.operation.OperationMethod;
 
 /**
  * Parser for {@linkplain MathTransform math transform} <A
- * HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html"><cite>Well
- * Known Text</cite> (WKT)</A> of math transform.
+ * HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html"><cite>Well Known
+ * Text</cite> (WKT)</A> of math transform.
  *
  * @since 2.0
  * @version $Id$
@@ -48,9 +48,7 @@ public class MathTransformParser extends AbstractParser {
     /** The factory to use for creating math transforms. */
     protected final MathTransformFactory mtFactory;
 
-    /**
-     * The classification of the last math transform or projection parsed, or {@code null} if none.
-     */
+    /** The classification of the last math transform or projection parsed, or {@code null} if none. */
     private String classification;
 
     /**
@@ -113,28 +111,26 @@ public class MathTransformParser extends AbstractParser {
     }
 
     /**
-     * Parses the next element (a {@link MathTransform}) in the specified <cite>Well Know
-     * Text</cite> (WKT) tree.
+     * Parses the next element (a {@link MathTransform}) in the specified <cite>Well Know Text</cite> (WKT) tree.
      *
      * @param element The parent element.
      * @param required True if parameter is required and false in other case.
      * @return The next element as a {@link MathTransform} object.
      * @throws ParseException if the next element can't be parsed.
      */
-    final MathTransform parseMathTransform(final Element element, final boolean required)
-            throws ParseException {
+    final MathTransform parseMathTransform(final Element element, final boolean required) throws ParseException {
         lastMethod = null;
         classification = null;
         final Object key = element.peek();
-        if (key instanceof Element) {
-            final String keyword = ((Element) key).keyword.trim().toUpperCase(symbols.locale);
+        if (key instanceof Element element1) {
+            final String keyword = element1.keyword.trim().toUpperCase(symbols.locale);
             if ("PARAM_MT".equals(keyword)) return parseParamMT(element);
             if ("CONCAT_MT".equals(keyword)) return parseConcatMT(element);
             if ("INVERSE_MT".equals(keyword)) return parseInverseMT(element);
             if ("PASSTHROUGH_MT".equals(keyword)) return parsePassThroughMT(element);
         }
         if (required) {
-            throw element.parseFailed(null, Errors.format(ErrorKeys.UNKNOW_TYPE_$1, key));
+            throw element.parseFailed(null, MessageFormat.format(ErrorKeys.UNKNOW_TYPE_$1, key));
         }
         return null;
     }
@@ -284,8 +280,8 @@ public class MathTransformParser extends AbstractParser {
     }
 
     /**
-     * Returns the operation method for the last math transform parsed. This is used by {@link
-     * Parser} in order to built {@link org.opengis.referencing.crs.DerivedCRS}.
+     * Returns the operation method for the last math transform parsed. This is used by {@link Parser} in order to built
+     * {@link org.geotools.api.referencing.crs.DerivedCRS}.
      */
     final OperationMethod getOperationMethod() {
         if (lastMethod == null) {
@@ -294,8 +290,7 @@ public class MathTransformParser extends AbstractParser {
              * getLastMethod(). Performs a slower and less robust check as a fallback.
              */
             if (classification != null) {
-                for (final OperationMethod method :
-                        mtFactory.getAvailableMethods(Operation.class)) {
+                for (final OperationMethod method : mtFactory.getAvailableMethods(Operation.class)) {
                     if (AbstractIdentifiedObject.nameMatches(method, classification)) {
                         lastMethod = method;
                         break;

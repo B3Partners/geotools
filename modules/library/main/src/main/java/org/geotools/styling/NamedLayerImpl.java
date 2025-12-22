@@ -22,6 +22,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import org.geotools.api.style.FeatureTypeConstraint;
+import org.geotools.api.style.NamedLayer;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleVisitor;
 import org.geotools.util.Utilities;
 
 /**
@@ -46,7 +50,7 @@ public class NamedLayerImpl extends StyledLayerImpl implements NamedLayer {
     }
 
     @Override
-    public void setLayerFeatureConstraints(FeatureTypeConstraint[] featureTypeConstraints) {
+    public void setLayerFeatureConstraints(FeatureTypeConstraint... featureTypeConstraints) {
         this.featureTypeConstraints.clear();
         this.featureTypeConstraints.addAll(Arrays.asList(featureTypeConstraints));
     }
@@ -77,8 +81,7 @@ public class NamedLayerImpl extends StyledLayerImpl implements NamedLayer {
             return true;
         }
 
-        if (oth instanceof NamedLayerImpl) {
-            NamedLayerImpl other = (NamedLayerImpl) oth;
+        if (oth instanceof NamedLayerImpl other) {
 
             if (!Utilities.equals(styles, other.styles)) return false;
 

@@ -19,8 +19,10 @@ package org.geotools.process.vector;
 
 import java.io.IOException;
 import java.util.Map;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.grid.GridElement;
@@ -34,8 +36,6 @@ import org.geotools.process.factory.DescribeParameter;
 import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * A process that builds a regular grid as a feature collection
@@ -52,16 +52,12 @@ public class GridProcess implements VectorProcess {
         Rectangular,
         HexagonFlat,
         HexagonAngled
-    };
+    }
 
     @DescribeResult(name = "result", description = "Generated grid cells as features")
     public SimpleFeatureCollection execute(
-            @DescribeParameter(name = "bounds", description = "Bounds of the grid")
-                    ReferencedEnvelope bounds,
-            @DescribeParameter(
-                            name = "width",
-                            description = "Width of a cell (in units of the grid CRS)")
-                    double width,
+            @DescribeParameter(name = "bounds", description = "Bounds of the grid") ReferencedEnvelope bounds,
+            @DescribeParameter(name = "width", description = "Width of a cell (in units of the grid CRS)") double width,
             @DescribeParameter(
                             name = "height",
                             description =
@@ -70,19 +66,16 @@ public class GridProcess implements VectorProcess {
                     Double height,
             @DescribeParameter(
                             name = "vertexSpacing",
-                            description =
-                                    "Distance between vertices along cell sides (in units of the grid CRS)",
+                            description = "Distance between vertices along cell sides (in units of the grid CRS)",
                             min = 0)
                     Double vertexSpacing,
             @DescribeParameter(
                             name = "mode",
-                            description =
-                                    "Type of grid to be generated.  Specifies shape of cells in grid.",
+                            description = "Type of grid to be generated.  Specifies shape of cells in grid.",
                             defaultValue = "Rectangular")
                     GridMode mode)
             throws ProcessException {
-        final GridFeatureBuilder builder =
-                new GridFeatureBuilderImpl(bounds.getCoordinateReferenceSystem());
+        final GridFeatureBuilder builder = new GridFeatureBuilderImpl(bounds.getCoordinateReferenceSystem());
         double h = height != null ? height : width;
 
         SimpleFeatureSource source;
@@ -136,12 +129,12 @@ public class GridProcess implements VectorProcess {
 
         @Override
         public String getFeatureID(GridElement ge) {
-            return String.valueOf("grid." + (id++));
+            return String.valueOf("grid." + id++);
         }
 
         /**
-         * Overrides {@linkplain GridFeatureBuilder#setAttributes(GridElement, Map)} to assign a
-         * sequential integer id value to each grid element feature as it is constructed.
+         * Overrides {@linkplain GridFeatureBuilder#setAttributes(GridElement, Map)} to assign a sequential integer id
+         * value to each grid element feature as it is constructed.
          *
          * @param ge the element from which the new feature is being constructed
          * @param attributes a {@code Map} with the single key "id"

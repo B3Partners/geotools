@@ -33,9 +33,8 @@ import org.geotools.util.URLs;
 import org.geotools.util.logging.Logging;
 
 /**
- * A cache for memory mapped buffers, used to avoid generating over and over read only memory mapped
- * buffers. Mapping a file is a synchronized operation, plus by generating light copies the same
- * buffer can be shared by various threads
+ * A cache for memory mapped buffers, used to avoid generating over and over read only memory mapped buffers. Mapping a
+ * file is a synchronized operation, plus by generating light copies the same buffer can be shared by various threads
  *
  * @author Andrea Aime - OpenGeo
  */
@@ -43,11 +42,9 @@ class MemoryMapCache {
 
     static final Logger LOGGER = Logging.getLogger(MemoryMapCache.class);
 
-    SoftValueHashMap<MappingKey, MappedByteBuffer> buffers =
-            new SoftValueHashMap<>(0, new BufferCleaner());
+    SoftValueHashMap<MappingKey, MappedByteBuffer> buffers = new SoftValueHashMap<>(0, new BufferCleaner());
 
-    MappedByteBuffer map(FileChannel wrapped, URL url, MapMode mode, long position, long size)
-            throws IOException {
+    MappedByteBuffer map(FileChannel wrapped, URL url, MapMode mode, long position, long size) throws IOException {
         if (mode != MapMode.READ_ONLY) {
             return wrapped.map(mode, position, size);
         }
@@ -72,12 +69,12 @@ class MemoryMapCache {
             }
         }
 
-        return (MappedByteBuffer) buffer.duplicate();
+        return MappedByteBuffer.class.cast(buffer.duplicate());
     }
 
     /**
-     * Cleans up all memory mapped regions for a specified file. It is necessary to call this method
-     * before any attempt to open a file for writing on Windows
+     * Cleans up all memory mapped regions for a specified file. It is necessary to call this method before any attempt
+     * to open a file for writing on Windows
      */
     void cleanFileCache(URL url) {
         try {
@@ -98,10 +95,7 @@ class MemoryMapCache {
                 }
             }
         } catch (Throwable t) {
-            LOGGER.log(
-                    Level.WARNING,
-                    "An error occurred while trying to clean the memory map cache",
-                    t);
+            LOGGER.log(Level.WARNING, "An error occurred while trying to clean the memory map cache", t);
         }
     }
 
@@ -133,9 +127,9 @@ class MemoryMapCache {
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + ((file == null) ? 0 : file.hashCode());
-            result = prime * result + (int) (position ^ (position >>> 32));
-            result = prime * result + (int) (size ^ (size >>> 32));
+            result = prime * result + (file == null ? 0 : file.hashCode());
+            result = prime * result + (int) (position ^ position >>> 32);
+            result = prime * result + (int) (size ^ size >>> 32);
             return result;
         }
 
@@ -159,7 +153,7 @@ class MemoryMapCache {
      *
      * @author Andrea Aime
      */
-    public class BufferCleaner implements ValueCleaner<MappingKey, MappedByteBuffer> {
+    public static class BufferCleaner implements ValueCleaner<MappingKey, MappedByteBuffer> {
 
         @Override
         public void clean(MappingKey key, MappedByteBuffer buffer) {

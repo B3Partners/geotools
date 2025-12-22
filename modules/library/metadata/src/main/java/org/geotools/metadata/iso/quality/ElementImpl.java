@@ -19,20 +19,20 @@
  */
 package org.geotools.metadata.iso.quality;
 
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
+import org.geotools.api.metadata.Identifier;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.metadata.quality.Element;
+import org.geotools.api.metadata.quality.EvaluationMethodType;
+import org.geotools.api.metadata.quality.Result;
+import org.geotools.api.util.InternationalString;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.metadata.iso.MetadataEntity;
-import org.opengis.metadata.Identifier;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.metadata.quality.Element;
-import org.opengis.metadata.quality.EvaluationMethodType;
-import org.opengis.metadata.quality.Result;
-import org.opengis.util.InternationalString;
 
 /**
  * Type of test applied to the data specified by a data quality scope.
@@ -44,6 +44,7 @@ import org.opengis.util.InternationalString;
  */
 public class ElementImpl extends MetadataEntity implements Element {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -3542504624077298894L;
 
     /** Name of the test applied to the data. */
@@ -65,15 +66,14 @@ public class ElementImpl extends MetadataEntity implements Element {
     private Citation evaluationProcedure;
 
     /**
-     * Date or range of dates on which a data quality measure was applied. The array length is 1 for
-     * a single date, or 2 for a range. Returns {@code null} if this information is not available.
+     * Date or range of dates on which a data quality measure was applied. The array length is 1 for a single date, or 2
+     * for a range. Returns {@code null} if this information is not available.
      */
     private long date1 = Long.MIN_VALUE, date2 = Long.MIN_VALUE;
 
     /**
-     * Value (or set of values) obtained from applying a data quality measure or the out come of
-     * evaluating the obtained value (or set of values) against a specified acceptable conformance
-     * quality level.
+     * Value (or set of values) obtained from applying a data quality measure or the out come of evaluating the obtained
+     * value (or set of values) against a specified acceptable conformance quality level.
      */
     private Collection<Result> results;
 
@@ -129,10 +129,7 @@ public class ElementImpl extends MetadataEntity implements Element {
         measureDescription = newValue;
     }
 
-    /**
-     * Returns the type of method used to evaluate quality of the dataset, or {@code null} if
-     * unspecified.
-     */
+    /** Returns the type of method used to evaluate quality of the dataset, or {@code null} if unspecified. */
     @Override
     public EvaluationMethodType getEvaluationMethodType() {
         return evaluationMethodType;
@@ -169,9 +166,8 @@ public class ElementImpl extends MetadataEntity implements Element {
     }
 
     /**
-     * Returns the date or range of dates on which a data quality measure was applied. The array
-     * length is 1 for a single date, or 2 for a range. Returns an empty list if this information is
-     * not available.
+     * Returns the date or range of dates on which a data quality measure was applied. The array length is 1 for a
+     * single date, or 2 for a range. Returns an empty list if this information is not available.
      *
      * @since 2.4
      */
@@ -187,8 +183,8 @@ public class ElementImpl extends MetadataEntity implements Element {
     }
 
     /**
-     * Set the date or range of dates on which a data quality measure was applied. The collection
-     * size is 1 for a single date, or 2 for a range.
+     * Set the date or range of dates on which a data quality measure was applied. The collection size is 1 for a single
+     * date, or 2 for a range.
      *
      * @since 2.4
      */
@@ -201,17 +197,15 @@ public class ElementImpl extends MetadataEntity implements Element {
             if (it.hasNext()) {
                 date2 = it.next().getTime();
                 if (it.hasNext()) {
-                    throw new IllegalArgumentException(
-                            Errors.format(ErrorKeys.MISMATCHED_ARRAY_LENGTH));
+                    throw new IllegalArgumentException(ErrorKeys.MISMATCHED_ARRAY_LENGTH);
                 }
             }
         }
     }
 
     /**
-     * Returns the value (or set of values) obtained from applying a data quality measure or the out
-     * come of evaluating the obtained value (or set of values) against a specified acceptable
-     * conformance quality level.
+     * Returns the value (or set of values) obtained from applying a data quality measure or the out come of evaluating
+     * the obtained value (or set of values) against a specified acceptable conformance quality level.
      *
      * @since 2.4
      */
@@ -221,9 +215,8 @@ public class ElementImpl extends MetadataEntity implements Element {
     }
 
     /**
-     * Set the value (or set of values) obtained from applying a data quality measure or the out
-     * come of evaluating the obtained value (or set of values) against a specified acceptable
-     * conformance quality level.
+     * Set the value (or set of values) obtained from applying a data quality measure or the out come of evaluating the
+     * obtained value (or set of values) against a specified acceptable conformance quality level.
      *
      * @since 2.4
      */

@@ -39,6 +39,7 @@ import java.util.regex.Pattern;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
+import org.elasticsearch.client.HttpAsyncResponseConsumerFactory;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
@@ -63,17 +64,20 @@ public class RestElasticClient implements ElasticClient {
 
     private final boolean enableRunAs;
 
+    private final int responseBufferLimit;
+
     private final ObjectMapper mapper;
 
     private Double version;
 
     public RestElasticClient(RestClient client) {
-        this(client, null, false);
+        this(client, null, false, (Integer) ElasticDataStoreFactory.RESPONSE_BUFFER_LIMIT.sample);
     }
 
-    public RestElasticClient(RestClient client, RestClient proxyClient, boolean enableRunAs) {
+    public RestElasticClient(RestClient client, RestClient proxyClient, boolean enableRunAs, int responseBufferLimit) {
         this.client = client;
         this.proxyClient = proxyClient;
+        this.responseBufferLimit = responseBufferLimit;
         this.mapper = new ObjectMapper();
         this.mapper.setDateFormat(DATE_FORMAT);
         this.enableRunAs = enableRunAs;
@@ -89,11 +93,9 @@ public class RestElasticClient implements ElasticClient {
         try {
             final Response response = performRequest("GET", "/", null, true);
             try (final InputStream inputStream = response.getEntity().getContent()) {
-                Map<String, Object> info =
-                        mapper.readValue(inputStream, new TypeReference<Map<String, Object>>() {});
+                Map<String, Object> info = mapper.readValue(inputStream, new TypeReference<>() {});
                 @SuppressWarnings("unchecked")
-                Map<String, Object> ver =
-                        (Map<String, Object>) info.getOrDefault("version", Collections.emptyMap());
+                Map<String, Object> ver = (Map<String, Object>) info.getOrDefault("version", Collections.emptyMap());
                 final Matcher m = pattern.matcher((String) ver.get("number"));
                 if (!m.find()) {
                     version = DEFAULT_VERSION;
@@ -130,8 +132,7 @@ public class RestElasticClient implements ElasticClient {
         return properties;
     }
 
-    private Map<String, ElasticMappings.Mapping> getMappings(String indexName, String type)
-            throws IOException {
+    private Map<String, ElasticMappings.Mapping> getMappings(String indexName, String type) throws IOException {
         final Response response;
         try {
             final StringBuilder path = new StringBuilder("/").append(indexName).append("/_mapping");
@@ -151,20 +152,17 @@ public class RestElasticClient implements ElasticClient {
         try (final InputStream inputStream = response.getEntity().getContent()) {
             final Map<String, ElasticMappings> values;
             if (getVersion() < 7) {
-                values =
-                        this.mapper.readValue(
-                                inputStream, new TypeReference<Map<String, ElasticMappings>>() {});
+                values = this.mapper.readValue(inputStream, new TypeReference<>() {});
             } else {
                 final Map<String, ElasticMappings.Untyped> res =
-                        this.mapper.readValue(
-                                inputStream,
-                                new TypeReference<Map<String, ElasticMappings.Untyped>>() {});
+                        this.mapper.readValue(inputStream, new TypeReference<>() {});
                 values = new HashMap<>();
                 for (final Entry<String, ElasticMappings.Untyped> entry : res.entrySet()) {
                     final ElasticMappings mappings = new ElasticMappings();
                     mappings.setMappings(new HashMap<>());
                     if (aliasedIndex != null && aliasedIndex.equals(entry.getKey())) {
-                        mappings.getMappings().put(aliasedIndex, entry.getValue().getMappings());
+                        mappings.getMappings()
+                                .put(aliasedIndex, entry.getValue().getMappings());
                         values.put(aliasedIndex, mappings);
                     } else {
                         mappings.getMappings().put(indexName, entry.getValue().getMappings());
@@ -190,8 +188,7 @@ public class RestElasticClient implements ElasticClient {
     }
 
     @Override
-    public ElasticResponse search(String searchIndices, String type, ElasticRequest request)
-            throws IOException {
+    public ElasticResponse search(String searchIndices, String type, ElasticRequest request) throws IOException {
         final StringBuilder pathBuilder = new StringBuilder("/" + searchIndices);
         if (getVersion() < 7) {
             pathBuilder.append("/" + type);
@@ -239,8 +236,7 @@ public class RestElasticClient implements ElasticClient {
         return parseResponse(performRequest("POST", pathBuilder.toString(), requestBody));
     }
 
-    private Response performRequest(
-            String method, String path, Map<String, Object> requestBody, boolean isAdmin)
+    private Response performRequest(String method, String path, Map<String, Object> requestBody, boolean isAdmin)
             throws IOException {
         final HttpEntity entity;
         if (requestBody != null) {
@@ -258,12 +254,14 @@ public class RestElasticClient implements ElasticClient {
         }
 
         @SuppressWarnings("PMD.CloseResource") // not managed here
-        final RestClient client =
-                isAdmin || this.proxyClient == null ? this.client : this.proxyClient;
+        final RestClient client = isAdmin || this.proxyClient == null ? this.client : this.proxyClient;
 
         final Request request = new Request(method, path);
         request.setEntity(entity);
-
+        final RequestOptions.Builder optionsBuilder = RequestOptions.DEFAULT.toBuilder();
+        // Set the response buffer limit, default is 100MB
+        optionsBuilder.setHttpAsyncResponseConsumerFactory(
+                new HttpAsyncResponseConsumerFactory.HeapBufferedResponseConsumerFactory(responseBufferLimit));
         if (!isAdmin && enableRunAs) {
             final SecurityContext ctx = SecurityContextHolder.getContext();
             final Authentication auth = ctx.getAuthentication();
@@ -271,18 +269,14 @@ public class RestElasticClient implements ElasticClient {
                 throw new IllegalStateException("Authentication could not be determined!");
             }
             if (!auth.isAuthenticated()) {
-                throw new IllegalStateException(
-                        String.format("User is not authenticated: %s", auth.getName()));
+                throw new IllegalStateException("User is not authenticated: %s".formatted(auth.getName()));
             }
-            final RequestOptions.Builder optionsBuilder = RequestOptions.DEFAULT.toBuilder();
             optionsBuilder.addHeader(RUN_AS, auth.getName());
-            request.setOptions(optionsBuilder);
-            LOGGER.fine(String.format("Performing request on behalf of user %s", auth.getName()));
+            LOGGER.fine("Performing request on behalf of user %s".formatted(auth.getName()));
         } else {
-            LOGGER.fine(
-                    String.format(
-                            "Performing request with %s credentials", isAdmin ? "user" : "proxy"));
+            LOGGER.fine("Performing request with %s credentials".formatted(isAdmin ? "user" : "proxy"));
         }
+        request.setOptions(optionsBuilder);
         final Response response = client.performRequest(request);
         if (response.getStatusLine().getStatusCode() >= 400) {
             throw new IOException(
@@ -291,8 +285,7 @@ public class RestElasticClient implements ElasticClient {
         return response;
     }
 
-    Response performRequest(String method, String path, Map<String, Object> requestBody)
-            throws IOException {
+    Response performRequest(String method, String path, Map<String, Object> requestBody) throws IOException {
         return performRequest(method, path, requestBody, false);
     }
 
@@ -323,6 +316,7 @@ public class RestElasticClient implements ElasticClient {
     }
 
     @Override
+    @SuppressWarnings("PMD.UseTryWithResources")
     public void close() throws IOException {
         LOGGER.fine("Closing proxyClient: " + this.client);
         try {
@@ -336,8 +330,7 @@ public class RestElasticClient implements ElasticClient {
     }
 
     @SuppressWarnings("unchecked")
-    public static void removeMapping(
-            String parent, String key, Map<String, Object> data, String currentParent) {
+    public static void removeMapping(String parent, String key, Map<String, Object> data, String currentParent) {
         Iterator<Entry<String, Object>> it = data.entrySet().iterator();
         while (it.hasNext()) {
             Entry<String, Object> entry = it.next();
@@ -349,13 +342,7 @@ public class RestElasticClient implements ElasticClient {
                 ((List<Object>) entry.getValue())
                         .stream()
                                 .filter(item -> item instanceof Map)
-                                .forEach(
-                                        item ->
-                                                removeMapping(
-                                                        parent,
-                                                        key,
-                                                        (Map<String, Object>) item,
-                                                        currentParent));
+                                .forEach(item -> removeMapping(parent, key, (Map<String, Object>) item, currentParent));
             }
         }
     }
@@ -365,9 +352,7 @@ public class RestElasticClient implements ElasticClient {
         try {
             final Response response = performRequest("GET", "/_alias/" + alias, null, true);
             try (final InputStream inputStream = response.getEntity().getContent()) {
-                final Map<String, Object> result =
-                        this.mapper.readValue(
-                                inputStream, new TypeReference<Map<String, Object>>() {});
+                final Map<String, Object> result = this.mapper.readValue(inputStream, new TypeReference<>() {});
                 indices = result.keySet();
             }
         } catch (IOException e) {

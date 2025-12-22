@@ -16,10 +16,10 @@
  */
 package org.geotools.imageio.netcdf.cv;
 
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.util.NumericConverterFactory;
 import org.geotools.imageio.netcdf.utilities.NetCDFCRSUtilities;
 import org.geotools.util.Converter;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import ucar.nc2.Attribute;
 import ucar.nc2.constants.AxisType;
 import ucar.nc2.dataset.CoordinateAxis;
@@ -45,8 +45,7 @@ class NumericCoordinateVariable<T extends Number> extends CoordinateVariable<T> 
         // If the axis is not numeric, we can't process any further.
         if (!coordinateAxis.isNumeric()) {
             throw new IllegalArgumentException(
-                    "Unable to process non numeric coordinate variable: "
-                            + coordinateAxis.toString());
+                    "Unable to process non numeric coordinate variable: " + coordinateAxis.toString());
         }
 
         // scale and offset

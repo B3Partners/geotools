@@ -21,9 +21,8 @@ import org.geotools.graph.traverse.GraphIterator;
 import org.geotools.graph.traverse.standard.DirectedBreadthFirstTopologicalIterator;
 
 /**
- * Detects cycles in a directed graph. A directed topological iteration of the nodes of the graph is
- * performed. If the iteration includes all nodes in the graph then the graph is cycle free,
- * otherwise a cycle exists.
+ * Detects cycles in a directed graph. A directed topological iteration of the nodes of the graph is performed. If the
+ * iteration includes all nodes in the graph then the graph is cycle free, otherwise a cycle exists.
  *
  * @see org.geotools.graph.traverse.standard.DirectedBreadthFirstTopologicalIterator
  * @author Justin Deoliveira, Refractions Research Inc, jdeolive@refractions.net
@@ -36,6 +35,6 @@ public class DirectedCycleDetector extends CycleDetector {
 
     @Override
     protected GraphIterator createIterator() {
-        return (new DirectedBreadthFirstTopologicalIterator());
+        return new DirectedBreadthFirstTopologicalIterator();
     }
 }

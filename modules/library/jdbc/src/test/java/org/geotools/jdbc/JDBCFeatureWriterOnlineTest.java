@@ -17,14 +17,16 @@
 package org.geotools.jdbc;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.Flushable;
 import java.util.List;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * JDBC {@link FeatureWriter}-implementation tampers with input-data.
@@ -36,9 +38,7 @@ public abstract class JDBCFeatureWriterOnlineTest extends JDBCTestSupport {
 
     @Test
     public void testNext() throws Exception {
-
-        try (FeatureWriter writer =
-                dataStore.getFeatureWriter(tname("ft1"), Transaction.AUTO_COMMIT)) {
+        try (FeatureWriter writer = dataStore.getFeatureWriter(tname("ft1"), Transaction.AUTO_COMMIT)) {
             assertTrue(writer.hasNext());
             final SimpleFeature feature = (SimpleFeature) writer.next();
             assertEquals("POINT (0 0)", feature.getAttribute(0).toString());
@@ -46,14 +46,21 @@ public abstract class JDBCFeatureWriterOnlineTest extends JDBCTestSupport {
             assertEquals(0.0, (double) (Double) feature.getAttribute(2), 0.0);
             assertEquals("zero", feature.getAttribute(3));
         }
-        try (FeatureWriter writer =
-                dataStore.getFeatureWriter(tname("ft1"), Transaction.AUTO_COMMIT)) {
+        try (FeatureWriter writer = dataStore.getFeatureWriter(tname("ft1"), Transaction.AUTO_COMMIT)) {
             assertTrue(writer.hasNext());
             final SimpleFeature feature = (SimpleFeature) writer.next();
             final List<Object> attributes = feature.getAttributes();
             for (Object attribute : attributes) {
                 assertNotNull(attribute);
             }
+        }
+    }
+
+    @Test
+    public void testFlushableAppends() throws Exception {
+        try (FeatureWriter writer = dataStore.getFeatureWriterAppend(tname("ft1"), Transaction.AUTO_COMMIT)) {
+            assertFalse(writer.hasNext());
+            assertTrue(writer instanceof Flushable);
         }
     }
 }

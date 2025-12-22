@@ -18,6 +18,54 @@ package org.geotools.filter;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.capability.FilterCapabilities;
+import org.geotools.api.filter.capability.GeometryOperand;
+import org.geotools.api.filter.capability.TemporalOperators;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Multiply;
+import org.geotools.api.filter.expression.Subtract;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
+import org.geotools.api.filter.temporal.After;
+import org.geotools.api.filter.temporal.AnyInteracts;
+import org.geotools.api.filter.temporal.Before;
+import org.geotools.api.filter.temporal.Begins;
+import org.geotools.api.filter.temporal.BegunBy;
+import org.geotools.api.filter.temporal.During;
+import org.geotools.api.filter.temporal.EndedBy;
+import org.geotools.api.filter.temporal.Ends;
+import org.geotools.api.filter.temporal.Meets;
+import org.geotools.api.filter.temporal.MetBy;
+import org.geotools.api.filter.temporal.OverlappedBy;
+import org.geotools.api.filter.temporal.TContains;
+import org.geotools.api.filter.temporal.TEquals;
+import org.geotools.api.filter.temporal.TOverlaps;
 import org.geotools.filter.capability.ArithmeticOperatorsImpl;
 import org.geotools.filter.capability.ComparisonOperatorsImpl;
 import org.geotools.filter.capability.FilterCapabilitiesImpl;
@@ -30,63 +78,15 @@ import org.geotools.filter.capability.TemporalOperatorImpl;
 import org.geotools.filter.visitor.IsFullySupportedFilterVisitor;
 import org.geotools.filter.visitor.IsSupportedFilterVisitor;
 import org.geotools.filter.visitor.OperatorNameFilterVisitor;
-import org.opengis.filter.And;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Id;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.capability.FilterCapabilities;
-import org.opengis.filter.capability.GeometryOperand;
-import org.opengis.filter.capability.TemporalOperators;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Multiply;
-import org.opengis.filter.expression.Subtract;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
-import org.opengis.filter.temporal.After;
-import org.opengis.filter.temporal.AnyInteracts;
-import org.opengis.filter.temporal.Before;
-import org.opengis.filter.temporal.Begins;
-import org.opengis.filter.temporal.BegunBy;
-import org.opengis.filter.temporal.During;
-import org.opengis.filter.temporal.EndedBy;
-import org.opengis.filter.temporal.Ends;
-import org.opengis.filter.temporal.Meets;
-import org.opengis.filter.temporal.MetBy;
-import org.opengis.filter.temporal.OverlappedBy;
-import org.opengis.filter.temporal.TContains;
-import org.opengis.filter.temporal.TEquals;
-import org.opengis.filter.temporal.TOverlaps;
 
 /**
  * Allows for easier interaction with FilterCapabilities.
  *
- * <p>This class provides some out of the box FilterCapabilities constants that you can quickly use
- * to describe the encoding abilities of your service.
+ * <p>This class provides some out of the box FilterCapabilities constants that you can quickly use to describe the
+ * encoding abilities of your service.
  *
- * <p>This class behaves similar to Citations in that the constants are to be considered immutable,
- * methods have been provided to assist in composing your own set of FilterCapabilities.
+ * <p>This class behaves similar to Citations in that the constants are to be considered immutable, methods have been
+ * provided to assist in composing your own set of FilterCapabilities.
  *
  * <p>Example:
  *
@@ -96,8 +96,7 @@ import org.opengis.filter.temporal.TOverlaps;
  * capabilities.addAll( Capabilities.SIMPLE_COMPARISONS );
  * </code></pre>
  *
- * You can use the Capabilities class at runtime to check existing filters to see if they are fully
- * supported:
+ * You can use the Capabilities class at runtime to check existing filters to see if they are fully supported:
  *
  * <pre><code>
  * if( fullySupports( filter )) {
@@ -166,15 +165,9 @@ public class Capabilities {
 
     static {
         logicalNames = new HashMap<>();
-        logicalNames.put(
-                And.class,
-                "And"); // not an operator name, see scalarCapabilities.hasLogicalOperators()
-        logicalNames.put(
-                Or.class,
-                "Or"); // not an operator name, see scalarCapabilities.hasLogicalOperators()
-        logicalNames.put(
-                Not.class,
-                "Not"); // not an operator name, see scalarCapabilities.hasLogicalOperators()
+        logicalNames.put(And.class, "And"); // not an operator name, see scalarCapabilities.hasLogicalOperators()
+        logicalNames.put(Or.class, "Or"); // not an operator name, see scalarCapabilities.hasLogicalOperators()
+        logicalNames.put(Not.class, "Not"); // not an operator name, see scalarCapabilities.hasLogicalOperators()
     }
 
     private static Map<Class<?>, String> filterNames;
@@ -210,8 +203,7 @@ public class Capabilities {
         exprNames.put(Function.class, "Function");
     }
 
-    private static final OperatorNameFilterVisitor operationNameVisitor =
-            new OperatorNameFilterVisitor();
+    private static final OperatorNameFilterVisitor operationNameVisitor = new OperatorNameFilterVisitor();
 
     /** Support for logical types AND, OR and NOT */
     public static Capabilities LOGICAL;
@@ -231,8 +223,7 @@ public class Capabilities {
         SIMPLE_COMPARISONS = new Capabilities();
         SIMPLE_COMPARISONS.addType(PropertyIsEqualTo.class); // COMPARE_EQUALS|
         SIMPLE_COMPARISONS.addType(PropertyIsGreaterThan.class); // COMPARE_GREATER_THAN
-        SIMPLE_COMPARISONS.addType(
-                PropertyIsGreaterThanOrEqualTo.class); // COMPARE_GREATER_THAN_EQUAL
+        SIMPLE_COMPARISONS.addType(PropertyIsGreaterThanOrEqualTo.class); // COMPARE_GREATER_THAN_EQUAL
         SIMPLE_COMPARISONS.addType(PropertyIsLessThan.class); // COMPARE_LESS_THAN
         SIMPLE_COMPARISONS.addType(PropertyIsLessThanOrEqualTo.class); // COMPARE_LESS_THAN_EQUAL
         SIMPLE_COMPARISONS.addType(PropertyIsNotEqualTo.class); // COMPARE_NOT_EQUALS;
@@ -242,10 +233,7 @@ public class Capabilities {
 
     /** This is a quick visitor (returning true / false) that only checks one level deep. */
     IsSupportedFilterVisitor supportedVisitor;
-    /**
-     * Visitor (returning true / false) if the provided filter is supported by our
-     * FilterCapabilities.
-     */
+    /** Visitor (returning true / false) if the provided filter is supported by our FilterCapabilities. */
     IsFullySupportedFilterVisitor fullySupportedVisitor;
 
     /** Internal FilterCapabilities data structure used to maintain state. */
@@ -256,8 +244,8 @@ public class Capabilities {
     }
 
     public Capabilities(FilterCapabilities contents) {
-        if (contents instanceof FilterCapabilitiesImpl) {
-            this.contents = (FilterCapabilitiesImpl) contents;
+        if (contents instanceof FilterCapabilitiesImpl impl) {
+            this.contents = impl;
         } else {
             this.contents = new FilterCapabilitiesImpl(contents);
         }
@@ -294,8 +282,8 @@ public class Capabilities {
      * <p>If this is a known name (avaialble as part of opengis interface) it will be grouped into:
      *
      * <ul>
-     *   <li>Spatial Operators: Will added a SpatialOperator into the mix with Point, LineString,
-     *       Polygon as the supported geometry operands (based on the assumption of JTS)
+     *   <li>Spatial Operators: Will added a SpatialOperator into the mix with Point, LineString, Polygon as the
+     *       supported geometry operands (based on the assumption of JTS)
      *   <li>Comparison Operators:
      *   <li>Arithmetic Operators: will cause hassimpleArithmetic to be true
      *   <li>Other: will be treated as a no argument function call
@@ -315,11 +303,10 @@ public class Capabilities {
      * @param name FilterCapabilities Operand name such as "BBOX", "Like" or "MUL"
      */
     public void addName(String name) {
-        if (name == null) {
-            return;
-        } else if (spatialNames.containsValue(name)) {
-            SpatialOperatorsImpl operators =
-                    contents.getSpatialCapabilities().getSpatialOperators();
+        if (name == null) return;
+
+        if (spatialNames.containsValue(name)) {
+            SpatialOperatorsImpl operators = contents.getSpatialCapabilities().getSpatialOperators();
             if (operators.getOperator(name) == null) {
                 SpatialOperatorImpl operator = new SpatialOperatorImpl(name);
                 // default JTS?
@@ -336,15 +323,13 @@ public class Capabilities {
                 operators.getOperators().add(operator);
             }
         } else if (scalarNames.containsValue(name)) {
-            ComparisonOperatorsImpl operators =
-                    contents.getScalarCapabilities().getComparisonOperators();
+            ComparisonOperatorsImpl operators = contents.getScalarCapabilities().getComparisonOperators();
             if (operators.getOperator(name) == null) {
                 OperatorImpl operator = new OperatorImpl(name);
                 operators.getOperators().add(operator);
             }
         } else if (arithmaticNames.containsValue(name)) {
-            ArithmeticOperatorsImpl operators =
-                    contents.getScalarCapabilities().getArithmeticOperators();
+            ArithmeticOperatorsImpl operators = contents.getScalarCapabilities().getArithmeticOperators();
             operators.setSimpleArithmetic(true);
         } else if (logicalNames.containsValue(name)) {
             contents.getScalarCapabilities().setLogicalOperators(true);
@@ -410,9 +395,9 @@ public class Capabilities {
     /**
      * Determines if the filter and all its sub filters and expressions are supported.
      *
-     * <p>Is most important for logic filters, as they are the only ones with subFilters. The geoapi
-     * FilterVisitor and ExpressionVisitors allow for the handling of null, even so care should be
-     * taken to use Filter.INCLUDE and Expression.NIL where you can.
+     * <p>Is most important for logic filters, as they are the only ones with subFilters. The geoapi FilterVisitor and
+     * ExpressionVisitors allow for the handling of null, even so care should be taken to use Filter.INCLUDE and
+     * Expression.NIL where you can.
      *
      * <p>
      *
@@ -432,8 +417,8 @@ public class Capabilities {
     /**
      * Determines if the expression and all its sub expressions is supported.
      *
-     * <p>The Expression visitor used for this work can handle null, even so care should be taken to
-     * useExpression.NIL where you can.
+     * <p>The Expression visitor used for this work can handle null, even so care should be taken to useExpression.NIL
+     * where you can.
      *
      * <p>
      *
@@ -452,8 +437,8 @@ public class Capabilities {
     }
 
     /**
-     * Quickly look at the filter and determine the OperationName we need to check for in the
-     * FilterCapabilities data structure.
+     * Quickly look at the filter and determine the OperationName we need to check for in the FilterCapabilities data
+     * structure.
      *
      * @return Operation name
      */
@@ -465,8 +450,8 @@ public class Capabilities {
     /**
      * Figure out the OperationName for the provided filterType.
      *
-     * <p>The returned name can be used to check the FilterCapabilities to see if it type is
-     * supported in this execution context.
+     * <p>The returned name can be used to check the FilterCapabilities to see if it type is supported in this execution
+     * context.
      *
      * <p>This approach is not applicable for Functions.
      *

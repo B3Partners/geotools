@@ -54,9 +54,9 @@ public class RedefineHandler extends XSIElementHandler {
     @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
     public int hashCode() {
-        return (LOCALNAME.hashCode()
-                        * ((id == null) ? 1 : id.hashCode())
-                        * ((schemaLocation == null) ? 1 : schemaLocation.hashCode()))
+        return LOCALNAME.hashCode()
+                        * (id == null ? 1 : id.hashCode())
+                        * (schemaLocation == null ? 1 : schemaLocation.hashCode())
                 + hashCodeOffset;
     }
 
@@ -119,8 +119,7 @@ public class RedefineHandler extends XSIElementHandler {
     }
 
     /**
-     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String,
-     *     org.xml.sax.Attributes)
+     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
     public void startElement(String namespaceURI, String localName, Attributes atts) {

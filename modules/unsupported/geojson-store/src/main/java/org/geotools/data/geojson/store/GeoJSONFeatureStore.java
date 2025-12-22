@@ -17,19 +17,19 @@
 package org.geotools.data.geojson.store;
 
 import java.io.IOException;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
-import org.geotools.data.QueryCapabilities;
-import org.geotools.data.ResourceInfo;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.QueryCapabilities;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureStore;
 import org.geotools.data.store.ContentState;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
 
 public class GeoJSONFeatureStore extends ContentFeatureStore {
     private GeoJSONFeatureSource delegate;
@@ -37,20 +37,19 @@ public class GeoJSONFeatureStore extends ContentFeatureStore {
 
     public GeoJSONFeatureStore(ContentEntry entry, Query query) {
         super(entry, query);
-        delegate =
-                new GeoJSONFeatureSource(entry, query) {
-                    @Override
-                    public void setTransaction(Transaction transaction) {
-                        super.setTransaction(transaction);
-                        GeoJSONFeatureStore.this.setTransaction(transaction);
-                    }
-                };
+        delegate = new GeoJSONFeatureSource(entry, query) {
+            @Override
+            public void setTransaction(Transaction transaction) {
+                super.setTransaction(transaction);
+                GeoJSONFeatureStore.this.setTransaction(transaction);
+            }
+        };
         delegate.setQuick(((GeoJSONDataStore) entry.getDataStore()).isQuick());
     }
 
     @Override
-    protected FeatureWriter<SimpleFeatureType, SimpleFeature> getWriterInternal(
-            Query query, int flags) throws IOException {
+    protected FeatureWriter<SimpleFeatureType, SimpleFeature> getWriterInternal(Query query, int flags)
+            throws IOException {
         GeoJSONFeatureWriter writer = new GeoJSONFeatureWriter(entry, query);
         writer.setWriteBounds(writeBounds);
         return writer;
@@ -68,8 +67,7 @@ public class GeoJSONFeatureStore extends ContentFeatureStore {
     }
 
     @Override
-    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query)
-            throws IOException {
+    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query) throws IOException {
         return delegate.getReaderInternal(query);
     }
 

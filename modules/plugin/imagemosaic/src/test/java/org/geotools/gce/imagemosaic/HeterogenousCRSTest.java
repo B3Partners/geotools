@@ -30,7 +30,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import com.sun.media.jai.operator.ImageReadDescriptor;
 import it.geosolutions.imageio.stream.input.FileImageInputStreamExtImpl;
 import java.awt.Color;
 import java.awt.geom.AffineTransform;
@@ -43,6 +42,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -62,10 +62,27 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
-import javax.media.jai.Interpolation;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.RenderedOp;
 import org.apache.commons.io.FileUtils;
+import org.eclipse.imagen.Interpolation;
+import org.eclipse.imagen.PlanarImage;
+import org.eclipse.imagen.RenderedOp;
+import org.eclipse.imagen.media.imageread.ImageReadDescriptor;
+import org.geotools.api.coverage.grid.GridEnvelope;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortOrder;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
@@ -76,16 +93,14 @@ import org.geotools.coverage.grid.io.GranuleSource;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultRepository;
-import org.geotools.data.Query;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.store.DecoratingDataStore;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.text.cql2.CQL;
 import org.geotools.gce.imagemosaic.catalog.GranuleCatalog;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.image.test.ImageAssert;
 import org.geotools.image.util.ImageUtilities;
@@ -104,26 +119,14 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.coverage.grid.GridEnvelope;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.And;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.sort.SortOrder;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 
 /** Testing whether a simple mosaic correctly has its elements reprojected */
 public class HeterogenousCRSTest {
 
     public static final double DELTA = 1E-6;
-    @Rule public TemporaryFolder crsMosaicFolder = new TemporaryFolder();
+
+    @Rule
+    public TemporaryFolder crsMosaicFolder = new TemporaryFolder();
 
     @BeforeClass
     public static void ignoreReciprocals() throws Exception {
@@ -150,8 +153,7 @@ public class HeterogenousCRSTest {
 
     @Ignore
     @Test
-    public void testHeterogeneousCRS()
-            throws IOException, URISyntaxException, TransformException, FactoryException {
+    public void testHeterogeneousCRS() throws IOException, URISyntaxException, TransformException, FactoryException {
         testMosaic(
                 "heterogeneous_crs",
                 "location D, crs A",
@@ -170,15 +172,9 @@ public class HeterogenousCRSTest {
 
     @Test
     public void testWithInterpolation() throws IOException, URISyntaxException {
-        ParameterValue<Interpolation> interpolationParam =
-                AbstractGridFormat.INTERPOLATION.createValue();
+        ParameterValue<Interpolation> interpolationParam = AbstractGridFormat.INTERPOLATION.createValue();
         interpolationParam.setValue(Interpolation.getInstance(Interpolation.INTERP_BILINEAR));
-        testMosaic(
-                "diff_crs_sorting_test",
-                "resolution D, crs A",
-                null,
-                "EPSG:32610",
-                interpolationParam);
+        testMosaic("diff_crs_sorting_test", "resolution D, crs A", null, "EPSG:32610", interpolationParam);
     }
 
     @Test
@@ -222,8 +218,7 @@ public class HeterogenousCRSTest {
         // hack workaround for the store not being created with a consistent CRS in certain
         // environments.
         assertEquals(CRS.toSRS(imReader.getCoordinateReferenceSystem()), expectedCRS);
-        Collection<GeneralParameterValue> finalParamsCollection =
-                new ArrayList<>(Arrays.asList(params));
+        Collection<GeneralParameterValue> finalParamsCollection = new ArrayList<>(Arrays.asList(params));
 
         // Let's do a sort order to get the correct results
         ParameterValue<String> sortByParam = ImageMosaicFormat.SORT_BY.createValue();
@@ -231,8 +226,7 @@ public class HeterogenousCRSTest {
 
         finalParamsCollection.add(sortByParam);
 
-        GridCoverage2D gc2d =
-                imReader.read(finalParamsCollection.toArray(new GeneralParameterValue[] {}));
+        GridCoverage2D gc2d = imReader.read(finalParamsCollection.toArray(new GeneralParameterValue[] {}));
         assertEquals(CRS.toSRS(gc2d.getCoordinateReferenceSystem()), expectedCRS);
 
         if (resultLocation != null) {
@@ -249,8 +243,7 @@ public class HeterogenousCRSTest {
         imReader.dispose();
     }
 
-    private ImageMosaicReader getTestMosaic(String testLocation)
-            throws URISyntaxException, IOException {
+    private ImageMosaicReader getTestMosaic(String testLocation) throws URISyntaxException, IOException {
         URL storeUrl = TestData.url(this, testLocation);
 
         File testDataFolder = new File(storeUrl.toURI());
@@ -346,8 +339,7 @@ public class HeterogenousCRSTest {
         assertEquals(2, image.getTile(0, 0).getNumBands());
 
         // check source files
-        final String fileSource =
-                (String) coverage.getProperty(AbstractGridCoverage2DReader.FILE_SOURCE_PROPERTY);
+        final String fileSource = (String) coverage.getProperty(AbstractGridCoverage2DReader.FILE_SOURCE_PROPERTY);
         assertThat(fileSource, containsString("utm32n.tiff"));
         assertThat(fileSource, containsString("utm32s.tiff"));
         assertThat(fileSource, containsString("utm33n.tiff"));
@@ -365,35 +357,30 @@ public class HeterogenousCRSTest {
 
     @Test
     public void testConcurrentHeteroUTMH2Across() throws Exception {
-        runConcurrentHeteroUTMH2(
-                r -> {
-                    ParameterValue<GridGeometry2D> ggp =
-                            AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
-                    GridEnvelope range = r.getOriginalGridRange();
-                    // move read area partially outside
-                    ReferencedEnvelope bounds =
-                            ReferencedEnvelope.reference(r.getOriginalEnvelope());
-                    bounds.translate(bounds.getWidth() / 2, 0);
-                    GridGeometry2D gg = new GridGeometry2D(range, bounds);
-                    ggp.setValue(gg);
-                    return new GeneralParameterValue[] {ggp};
-                });
+        runConcurrentHeteroUTMH2(r -> {
+            ParameterValue<GridGeometry2D> ggp = AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
+            GridEnvelope range = r.getOriginalGridRange();
+            // move read area partially outside
+            ReferencedEnvelope bounds = ReferencedEnvelope.reference(r.getOriginalEnvelope());
+            bounds.translate(bounds.getWidth() / 2, 0);
+            GridGeometry2D gg = new GridGeometry2D(range, bounds);
+            ggp.setValue(gg);
+            return new GeneralParameterValue[] {ggp};
+        });
     }
 
     @Test
     public void testConcurrentHeteroUTMH2NoGranules() throws Exception {
-        runConcurrentHeteroUTMH2(
-                r -> {
-                    ParameterValue<Filter> filter = ImageMosaicFormat.FILTER.createValue();
-                    filter.setValue(Filter.EXCLUDE);
-                    return new GeneralParameterValue[] {filter};
-                });
+        runConcurrentHeteroUTMH2(r -> {
+            ParameterValue<Filter> filter = ImageMosaicFormat.FILTER.createValue();
+            filter.setValue(Filter.EXCLUDE);
+            return new GeneralParameterValue[] {filter};
+        });
     }
 
-    private void runConcurrentHeteroUTMH2(
-            Function<ImageMosaicReader, GeneralParameterValue[]> parameters)
-            throws URISyntaxException, IOException, InterruptedException,
-                    java.util.concurrent.ExecutionException, java.util.concurrent.TimeoutException {
+    private void runConcurrentHeteroUTMH2(Function<ImageMosaicReader, GeneralParameterValue[]> parameters)
+            throws URISyntaxException, IOException, InterruptedException, java.util.concurrent.ExecutionException,
+                    java.util.concurrent.TimeoutException {
         String testLocation = "hetero_utm";
         URL storeUrl = TestData.url(this, testLocation);
 
@@ -405,16 +392,16 @@ public class HeterogenousCRSTest {
         // a single request will cause the deadlock in this case (but we try with a pool
         // nevertheless, to be extra sure)
         File datastoreProperties = new File(testDirectory, "datastore.properties");
-        try (FileWriter out = new FileWriter(datastoreProperties)) {
+        try (FileWriter out = new FileWriter(datastoreProperties, StandardCharsets.UTF_8)) {
             out.write("database=hetero_concurrent\n");
             out.write(
-                    "SPI=org.geotools.data.h2.H2DataStoreFactory\n"
-                            + "dbtype=h2\n"
-                            + "user=gs\n"
-                            + "passwd=gs\n"
-                            + "Connection\\ timeout=3600\n"
-                            + "max \\connections=1"
-                            + "min \\connections=1");
+                    """
+                    SPI=org.geotools.geopkg.GeoPkgDataStoreFactory
+                    dbtype=geopkg
+                    database=test
+                    Connection\\ timeout=3600
+                    max \\connections=1\
+                    min \\connections=1""");
             out.flush();
         }
 
@@ -423,8 +410,7 @@ public class HeterogenousCRSTest {
         try {
             List<Future> futures = new ArrayList<>();
             for (int i = 0; i < 20; i++) {
-                Future<GridCoverage2D> future =
-                        executors.submit(() -> reader.read(parameters.apply(reader)));
+                Future<GridCoverage2D> future = executors.submit(() -> reader.read(parameters.apply(reader)));
                 futures.add(future);
             }
             for (Future future : futures) {
@@ -451,15 +437,12 @@ public class HeterogenousCRSTest {
 
         // read a coverage and compare with expected image
         final String expectedResultLocation = "hetero_s2_results/overlap.png";
-        ParameterValue<Color> inputTransparentColor =
-                AbstractGridFormat.INPUT_TRANSPARENT_COLOR.createValue();
+        ParameterValue<Color> inputTransparentColor = AbstractGridFormat.INPUT_TRANSPARENT_COLOR.createValue();
         inputTransparentColor.setValue(Color.BLACK);
-        ParameterValue<Color> outputTransparentColor =
-                ImageMosaicFormat.OUTPUT_TRANSPARENT_COLOR.createValue();
+        ParameterValue<Color> outputTransparentColor = ImageMosaicFormat.OUTPUT_TRANSPARENT_COLOR.createValue();
         outputTransparentColor.setValue(Color.BLACK);
 
-        assertExpectedMosaic(
-                imReader, expectedResultLocation, inputTransparentColor, outputTransparentColor);
+        assertExpectedMosaic(imReader, expectedResultLocation, inputTransparentColor, outputTransparentColor);
         imReader.dispose();
     }
 
@@ -476,35 +459,22 @@ public class HeterogenousCRSTest {
         Assert.assertNotNull(imReader);
 
         // read a coverage and compare with expected image
-        ParameterValue<Color> inputTransparentColor =
-                AbstractGridFormat.INPUT_TRANSPARENT_COLOR.createValue();
+        ParameterValue<Color> inputTransparentColor = AbstractGridFormat.INPUT_TRANSPARENT_COLOR.createValue();
         inputTransparentColor.setValue(Color.BLACK);
-        ParameterValue<Color> outputTransparentColor =
-                ImageMosaicFormat.OUTPUT_TRANSPARENT_COLOR.createValue();
+        ParameterValue<Color> outputTransparentColor = ImageMosaicFormat.OUTPUT_TRANSPARENT_COLOR.createValue();
         outputTransparentColor.setValue(Color.BLACK);
         ParameterValue<GridGeometry2D> ggp = AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
         GridEnvelope2D range = new GridEnvelope2D(0, 0, 158, 103);
-        GridGeometry2D gg =
-                new GridGeometry2D(
-                        range,
-                        new ReferencedEnvelope(
-                                11.6834779,
-                                11.8616874,
-                                47.6380806,
-                                47.7542552,
-                                CRS.decode("EPSG:4236", true)));
+        GridGeometry2D gg = new GridGeometry2D(
+                range,
+                new ReferencedEnvelope(11.6834779, 11.8616874, 47.6380806, 47.7542552, CRS.decode("EPSG:4236", true)));
         ggp.setValue(gg);
         ParameterValue<Filter> filter = ImageMosaicFormat.FILTER.createValue();
         filter.setValue(CQL.toFilter("location = 'g1.tif'"));
 
         final String expectedResultLocation = "hetero_s2_results/filtered.png";
         assertExpectedMosaic(
-                imReader,
-                expectedResultLocation,
-                inputTransparentColor,
-                outputTransparentColor,
-                filter,
-                ggp);
+                imReader, expectedResultLocation, inputTransparentColor, outputTransparentColor, filter, ggp);
         imReader.dispose();
     }
 
@@ -522,8 +492,7 @@ public class HeterogenousCRSTest {
 
         // read a coverage and compare with expected image
         final String expectedResultLocation = "hetero_s2_results/footprints.png";
-        ParameterValue<String> footprintBehavior =
-                AbstractGridFormat.FOOTPRINT_BEHAVIOR.createValue();
+        ParameterValue<String> footprintBehavior = AbstractGridFormat.FOOTPRINT_BEHAVIOR.createValue();
         footprintBehavior.setValue("Transparent");
 
         assertExpectedMosaic(imReader, expectedResultLocation, footprintBehavior);
@@ -544,8 +513,7 @@ public class HeterogenousCRSTest {
 
         // read a coverage and compare with expected image
         final String expectedResultLocation = "hetero_utm_footprint_results/footprints.png";
-        ParameterValue<String> footprintBehavior =
-                AbstractGridFormat.FOOTPRINT_BEHAVIOR.createValue();
+        ParameterValue<String> footprintBehavior = AbstractGridFormat.FOOTPRINT_BEHAVIOR.createValue();
         footprintBehavior.setValue("Transparent");
         // use sort to get a stable result
         ParameterValue<String> sortBy = ImageMosaicFormat.SORT_BY.createValue();
@@ -556,28 +524,20 @@ public class HeterogenousCRSTest {
     }
 
     @Test
-    public void testHeteroCRSDateline()
-            throws IOException, URISyntaxException, TransformException, FactoryException {
+    public void testHeteroCRSDateline() throws IOException, URISyntaxException, TransformException, FactoryException {
         ImageMosaicReader imReader = getTestMosaic("hetero_crs_dateline");
         assertEquals(CRS.toSRS(imReader.getCoordinateReferenceSystem()), "EPSG:4326");
 
         // read before dateline
-        GeneralParameterValue gg1 =
-                buildGridGeometryParameter(
-                        new ReferencedEnvelope(179, 180, 60, 62, DefaultGeographicCRS.WGS84),
-                        128,
-                        256);
+        GeneralParameterValue gg1 = buildGridGeometryParameter(
+                new ReferencedEnvelope(179, 180, 60, 62, DefaultGeographicCRS.WGS84), 128, 256);
         GridCoverage2D gcBefore = imReader.read(new GeneralParameterValue[] {gg1});
         RenderedImage riBefore = gcBefore.getRenderedImage();
-        ImageAssert.assertEquals(
-                testFile("hetero_crs_dateline_results/before.png"), riBefore, 1000);
+        ImageAssert.assertEquals(testFile("hetero_crs_dateline_results/before.png"), riBefore, 1000);
 
         // read after the dateline
-        GeneralParameterValue ggAfter =
-                buildGridGeometryParameter(
-                        new ReferencedEnvelope(180, 181, 60, 62, DefaultGeographicCRS.WGS84),
-                        128,
-                        256);
+        GeneralParameterValue ggAfter = buildGridGeometryParameter(
+                new ReferencedEnvelope(180, 181, 60, 62, DefaultGeographicCRS.WGS84), 128, 256);
         GridCoverage2D gcAfter = imReader.read(new GeneralParameterValue[] {ggAfter});
         RenderedImage riAfter = gcAfter.getRenderedImage();
         ImageAssert.assertEquals(testFile("hetero_crs_dateline_results/after.png"), riAfter, 1000);
@@ -596,8 +556,7 @@ public class HeterogenousCRSTest {
     }
 
     @Test
-    public void testHeteroCRSRasterMask()
-            throws IOException, URISyntaxException, TransformException, FactoryException {
+    public void testHeteroCRSRasterMask() throws IOException, URISyntaxException, TransformException, FactoryException {
         URL storeUrl = TestData.url(this, "rastermask2");
 
         File testDataFolder = new File(storeUrl.toURI());
@@ -606,40 +565,33 @@ public class HeterogenousCRSTest {
 
         // force hetero setup, different CRS for the mosaic
         String indexer =
-                "GranuleAcceptors=org.geotools.gce.imagemosaic.acceptors.HeterogeneousCRSAcceptorFactory\n"
-                        + "GranuleHandler=org.geotools.gce.imagemosaic.granulehandler.ReprojectingGranuleHandlerFactory\n"
-                        + "HeterogeneousCRS=true\n"
-                        + //
-                        "MosaicCRS=EPSG\\:3857\n"
-                        + // the reprojection bit
-                        "Schema=*the_geom:Polygon,location:String,crs:String";
-        FileUtils.writeStringToFile(
-                new File(testDirectory, "indexer.properties"), indexer, "UTF-8");
+                """
+                GranuleAcceptors=org.geotools.gce.imagemosaic.acceptors.HeterogeneousCRSAcceptorFactory
+                GranuleHandler=org.geotools.gce.imagemosaic.granulehandler.ReprojectingGranuleHandlerFactory
+                HeterogeneousCRS=true
+                MosaicCRS=EPSG\\:3857
+                Schema=*the_geom:Polygon,location:String,crs:String""";
+        FileUtils.writeStringToFile(new File(testDirectory, "indexer.properties"), indexer, "UTF-8");
 
         // footprint management
         String footprints = "footprint_source=raster";
-        FileUtils.writeStringToFile(
-                new File(testDirectory, "footprints.properties"), footprints, "UTF-8");
+        FileUtils.writeStringToFile(new File(testDirectory, "footprints.properties"), footprints, "UTF-8");
 
         ImageMosaicReader imReader = new ImageMosaicReader(testDirectory, new Hints());
         Assert.assertNotNull(imReader);
         assertEquals(CRS.toSRS(imReader.getCoordinateReferenceSystem()), "EPSG:3857");
 
         // check it's not empty (used to be)
-        final ParameterValue<String> footprintParam =
-                AbstractGridFormat.FOOTPRINT_BEHAVIOR.createValue();
+        final ParameterValue<String> footprintParam = AbstractGridFormat.FOOTPRINT_BEHAVIOR.createValue();
         footprintParam.setValue("Transparent");
         GridCoverage2D coverage = imReader.read(new GeneralParameterValue[] {footprintParam});
         assertNotNull(coverage);
-        ImageAssert.assertEquals(
-                testFile("hetero_crs_rastermask.png"), coverage.getRenderedImage(), 1000);
+        ImageAssert.assertEquals(testFile("hetero_crs_rastermask.png"), coverage.getRenderedImage(), 1000);
         imReader.dispose();
     }
 
-    GeneralParameterValue buildGridGeometryParameter(
-            ReferencedEnvelope envelope, int width, int height) {
-        final ParameterValue<GridGeometry2D> gg =
-                AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
+    GeneralParameterValue buildGridGeometryParameter(ReferencedEnvelope envelope, int width, int height) {
+        final ParameterValue<GridGeometry2D> gg = AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
         final GridEnvelope2D range = new GridEnvelope2D(0, 0, width, height);
         final GridGeometry2D value = new GridGeometry2D(range, envelope);
         gg.setValue(value);
@@ -648,14 +600,12 @@ public class HeterogenousCRSTest {
 
     private void assertExpectedBounds(ReferencedEnvelope expected, ImageMosaicReader imReader) {
         // the specified CRS has been honored
-        assertTrue(
-                CRS.equalsIgnoreMetadata(
-                        imReader.getCoordinateReferenceSystem(),
-                        expected.getCoordinateReferenceSystem()));
+        assertTrue(CRS.equalsIgnoreMetadata(
+                imReader.getCoordinateReferenceSystem(), expected.getCoordinateReferenceSystem()));
 
         // getting the expected bounds (more or less)
         double EPS = 0.5d / 110; // pixel size is 1km, use half a pixel tolerance
-        GeneralEnvelope envelope = imReader.getOriginalEnvelope();
+        GeneralBounds envelope = imReader.getOriginalEnvelope();
 
         assertEquals(expected.getMinX(), envelope.getMinimum(0), EPS);
         assertEquals(expected.getMaxX(), envelope.getMaximum(0), EPS);
@@ -664,9 +614,7 @@ public class HeterogenousCRSTest {
     }
 
     private void assertExpectedMosaic(
-            ImageMosaicReader imReader,
-            final String expectedResultLocation,
-            GeneralParameterValue... params)
+            ImageMosaicReader imReader, final String expectedResultLocation, GeneralParameterValue... params)
             throws IOException {
         GridCoverage2D coverage = imReader.read(params);
         File resultsFile = testFile(expectedResultLocation);
@@ -686,9 +634,8 @@ public class HeterogenousCRSTest {
         ImageMosaicReader reader = getTestMosaic("diff_crs_sorting_test");
         String coverageName = reader.getGridCoverageNames()[0];
 
-        Map<String, DimensionDescriptor> descriptors =
-                reader.getDimensionDescriptors(coverageName).stream()
-                        .collect(Collectors.toMap(dd -> dd.getName(), dd -> dd));
+        Map<String, DimensionDescriptor> descriptors = reader.getDimensionDescriptors(coverageName).stream()
+                .collect(Collectors.toMap(dd -> dd.getName(), dd -> dd));
         assertEquals(4, descriptors.size());
         DimensionDescriptor crsDescriptor = descriptors.get(DimensionDescriptor.CRS);
         assertNotNull(crsDescriptor);
@@ -696,12 +643,10 @@ public class HeterogenousCRSTest {
         DimensionDescriptor resolutionDescriptor = descriptors.get(DimensionDescriptor.RESOLUTION);
         assertNotNull(resolutionDescriptor);
         assertEquals("resolution", resolutionDescriptor.getStartAttribute());
-        DimensionDescriptor resolutionXDescriptor =
-                descriptors.get(DimensionDescriptor.RESOLUTION_X);
+        DimensionDescriptor resolutionXDescriptor = descriptors.get(DimensionDescriptor.RESOLUTION_X);
         assertNotNull(resolutionXDescriptor);
         assertEquals("resX", resolutionXDescriptor.getStartAttribute());
-        DimensionDescriptor resolutionYDescriptor =
-                descriptors.get(DimensionDescriptor.RESOLUTION_Y);
+        DimensionDescriptor resolutionYDescriptor = descriptors.get(DimensionDescriptor.RESOLUTION_Y);
         assertNotNull(resolutionYDescriptor);
         assertEquals("resY", resolutionYDescriptor.getStartAttribute());
 
@@ -741,7 +686,7 @@ public class HeterogenousCRSTest {
         FileUtils.copyDirectory(testDataFolder, testDirectory);
 
         ImageMosaicReader imReader = new ImageMosaicReader(testDirectory, null);
-        GridCoverage2D coverage = imReader.read(null);
+        GridCoverage2D coverage = imReader.read();
         if (coverage.getRenderedImage() instanceof PlanarImage) {
             ImageUtilities.disposePlanarImageChain((PlanarImage) coverage.getRenderedImage());
         }
@@ -749,8 +694,7 @@ public class HeterogenousCRSTest {
         imReader.dispose();
 
         // append the CrsAttribute to the indexer.properties
-        try (FileWriter out =
-                new FileWriter(new File(testDirectory, "hetero_utm.properties"), true)) {
+        try (FileWriter out = new FileWriter(new File(testDirectory, "hetero_utm.properties"), true)) {
             out.write("UseExistingSchema=true\n");
             out.write("CrsAttribute=crs\n");
             out.flush();
@@ -780,21 +724,17 @@ public class HeterogenousCRSTest {
         // check what gets used for source file at half resolution
         ParameterValue<GridGeometry2D> ggp = AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
         GridEnvelope originalRange = imReader.getOriginalGridRange();
-        GridEnvelope readRange =
-                new GridEnvelope2D(
-                        0, 0, originalRange.getSpan(0) / 4, originalRange.getSpan(1) / 4);
+        GridEnvelope readRange = new GridEnvelope2D(0, 0, originalRange.getSpan(0) / 4, originalRange.getSpan(1) / 4);
         GridGeometry2D gg = new GridGeometry2D(readRange, imReader.getOriginalEnvelope());
         ggp.setValue(gg);
         List<String> filesExtOvr = getSourceFilesForParams(imReader, ggp);
-        assertThat(
-                filesExtOvr,
-                containsInAnyOrder("g1.tif.ovr", "g2.tif.ovr", "g4.tif.ovr", "g3.tif.ovr"));
+        assertThat(filesExtOvr, containsInAnyOrder("g1.tif.ovr", "g2.tif.ovr", "g4.tif.ovr", "g3.tif.ovr"));
 
         imReader.dispose();
     }
 
-    public List<String> getSourceFilesForParams(
-            ImageMosaicReader imReader, GeneralParameterValue... params) throws IOException {
+    public List<String> getSourceFilesForParams(ImageMosaicReader imReader, GeneralParameterValue... params)
+            throws IOException {
         GridCoverage2D coverage = imReader.read(params);
         RenderedImage ri = coverage.getRenderedImage();
         return getInputFileNames(ri);
@@ -803,8 +743,7 @@ public class HeterogenousCRSTest {
     @SuppressWarnings("PMD.CloseResource") // image stream closed along the reader
     private List<String> getInputFileNames(RenderedImage inputImage) {
         List<String> files = new ArrayList<>();
-        if (inputImage instanceof PlanarImage) {
-            PlanarImage planarImage = (PlanarImage) inputImage;
+        if (inputImage instanceof PlanarImage planarImage) {
 
             final int nSources = planarImage.getNumSources();
             if (nSources > 0) {
@@ -816,8 +755,8 @@ public class HeterogenousCRSTest {
                         // Ignore
                     }
                     if (source != null) {
-                        if (source instanceof PlanarImage) {
-                            List<String> piFiles = getInputFileNames((RenderedImage) source);
+                        if (source instanceof RenderedImage image) {
+                            List<String> piFiles = getInputFileNames(image);
                             files.addAll(piFiles);
                         }
                     }
@@ -825,13 +764,10 @@ public class HeterogenousCRSTest {
             } else {
                 // grab the streams from the reader, the particular implementation being
                 // used has an accessor for the source files
-                Object imageReader =
-                        inputImage.getProperty(ImageReadDescriptor.PROPERTY_NAME_IMAGE_READER);
-                if ((imageReader != null) && (imageReader instanceof ImageReader)) {
-                    final ImageReader reader = (ImageReader) imageReader;
+                Object imageReader = inputImage.getProperty(ImageReadDescriptor.PROPERTY_NAME_IMAGE_READER);
+                if (imageReader != null && imageReader instanceof ImageReader reader) {
                     final ImageInputStream stream = (ImageInputStream) reader.getInput();
-                    if (stream instanceof FileImageInputStreamExtImpl) {
-                        FileImageInputStreamExtImpl fis = (FileImageInputStreamExtImpl) stream;
+                    if (stream instanceof FileImageInputStreamExtImpl fis) {
                         File file = fis.getFile();
                         files.add(file.getName());
                     }
@@ -858,15 +794,13 @@ public class HeterogenousCRSTest {
 
         ImageMosaicReader imReader = new ImageMosaicReader(testDirectory, null);
         CoordinateReferenceSystem utmZone32N = CRS.decode("EPSG:32632", true);
-        GeneralEnvelope envelope =
-                new GeneralEnvelope(new double[] {150000, 600000}, new double[] {850000, 1200000});
+        GeneralBounds envelope = new GeneralBounds(new double[] {150000, 600000}, new double[] {850000, 1200000});
         envelope.setCoordinateReferenceSystem(utmZone32N);
         GridEnvelope2D gridRange = new GridEnvelope2D(0, 0, 700, 600);
 
         // Setting up an UTM gridGeometry
         GridGeometry2D readingGridGeometry = new GridGeometry2D(gridRange, envelope);
-        ParameterValue<GridGeometry2D> ggParam =
-                AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
+        ParameterValue<GridGeometry2D> ggParam = AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
         ggParam.setValue(readingGridGeometry);
 
         GridCoverage2D gc = imReader.read(new GeneralParameterValue[] {ggParam});
@@ -890,15 +824,13 @@ public class HeterogenousCRSTest {
         //
 
         // Test the metadata value
-        String epsgCodes =
-                imReader.getMetadataValue(AbstractGridCoverage2DReader.MULTICRS_EPSGCODES);
+        String epsgCodes = imReader.getMetadataValue(AbstractGridCoverage2DReader.MULTICRS_EPSGCODES);
 
         // The reader supports EPSG:32632
         assertTrue(epsgCodes.contains("EPSG:32632"));
         assertTrue(Utils.isSupportedCRS(imReader, utmZone32N));
 
-        ParameterValue<Boolean> useAlternativeCRS =
-                ImageMosaicFormat.OUTPUT_TO_ALTERNATIVE_CRS.createValue();
+        ParameterValue<Boolean> useAlternativeCRS = ImageMosaicFormat.OUTPUT_TO_ALTERNATIVE_CRS.createValue();
         useAlternativeCRS.setValue(true);
         gc = imReader.read(new GeneralParameterValue[] {ggParam, useAlternativeCRS});
 
@@ -931,11 +863,10 @@ public class HeterogenousCRSTest {
         final ParameterBlock block = unwarpedImage.getParameterBlock();
         List<Object> paramValues = block.getParameters();
         // The green.tif is the image with native CRS = 32632 so the only one not being reprojected
-        assertTrue(
-                ((FileImageInputStreamExtImpl) paramValues.get(0))
-                        .getFile()
-                        .getAbsolutePath()
-                        .contains("green.tif"));
+        assertTrue(((FileImageInputStreamExtImpl) paramValues.get(0))
+                .getFile()
+                .getAbsolutePath()
+                .contains("green.tif"));
         imReader.dispose();
     }
 
@@ -944,8 +875,7 @@ public class HeterogenousCRSTest {
         Iterator it = sources.iterator();
         while (it.hasNext()) {
             Object source = it.next();
-            if (source instanceof RenderedOp) {
-                RenderedOp op = (RenderedOp) source;
+            if (source instanceof RenderedOp op) {
                 String opName = op.getOperationName();
                 if (opName.equalsIgnoreCase("ImageRead")) {
                     imageReads.remove(op);
@@ -958,8 +888,7 @@ public class HeterogenousCRSTest {
     }
 
     private void groupOperations(Object ri, Map<String, Set<RenderedOp>> operationsSet) {
-        if (ri instanceof RenderedOp) {
-            RenderedOp op = (RenderedOp) ri;
+        if (ri instanceof RenderedOp op) {
             String opName = op.getOperationName();
             Set<RenderedOp> set = operationsSet.get(opName);
             if (set == null) {
@@ -973,7 +902,6 @@ public class HeterogenousCRSTest {
                 Object source = it.next();
                 groupOperations(source, operationsSet);
             }
-            return;
         }
     }
 
@@ -1010,9 +938,7 @@ public class HeterogenousCRSTest {
                 String crs = (String) f.getAttribute("crs");
                 ReferencedEnvelope envelope =
                         (ReferencedEnvelope) f.getUserData().get(GranuleSource.NATIVE_BOUNDS_KEY);
-                assertTrue(
-                        CRS.equalsIgnoreMetadata(
-                                CRS.decode(crs, true), envelope.getCoordinateReferenceSystem()));
+                assertTrue(CRS.equalsIgnoreMetadata(CRS.decode(crs, true), envelope.getCoordinateReferenceSystem()));
             }
         }
     }
@@ -1045,38 +971,29 @@ public class HeterogenousCRSTest {
         ShapefileDataStore ds = new ShapefileDataStore(shapefileURL);
         List<Query> queries = new ArrayList<>();
         AtomicBoolean recordQueries = new AtomicBoolean(false);
-        DecoratingDataStore decoratingStore =
-                new DecoratingDataStore(ds) {
-                    @Override
-                    public SimpleFeatureSource getFeatureSource(String typeName)
-                            throws IOException {
-                        SimpleFeatureSource source = super.getFeatureSource(typeName);
-                        if (recordQueries.get()) {
-                            return new QueryCollectingFeatureSource(source, queries);
-                        }
-                        return source;
-                    }
-                };
+        DecoratingDataStore decoratingStore = new DecoratingDataStore(ds) {
+            @Override
+            public SimpleFeatureSource getFeatureSource(String typeName) throws IOException {
+                SimpleFeatureSource source = super.getFeatureSource(typeName);
+                if (recordQueries.get()) {
+                    return new QueryCollectingFeatureSource(source, queries);
+                }
+                return source;
+            }
+        };
 
         // setup and pass the repository
         DefaultRepository repository = new DefaultRepository();
         repository.register(TEST_STORE, decoratingStore);
 
-        ImageMosaicReader repoReader =
-                new ImageMosaicReader(testDirectory, new Hints(Hints.REPOSITORY, repository));
+        ImageMosaicReader repoReader = new ImageMosaicReader(testDirectory, new Hints(Hints.REPOSITORY, repository));
 
         // setup a grid geometry matching data, but a filter that won't let tiles be loaded
         ParameterValue<GridGeometry2D> ggp = AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
         GridEnvelope2D range = new GridEnvelope2D(0, 0, 158, 103);
-        GridGeometry2D gg =
-                new GridGeometry2D(
-                        range,
-                        new ReferencedEnvelope(
-                                11.6834779,
-                                11.8616874,
-                                47.6380806,
-                                47.7542552,
-                                CRS.decode("EPSG:4236", true)));
+        GridGeometry2D gg = new GridGeometry2D(
+                range,
+                new ReferencedEnvelope(11.6834779, 11.8616874, 47.6380806, 47.7542552, CRS.decode("EPSG:4236", true)));
         ggp.setValue(gg);
         ParameterValue<Filter> filter = ImageMosaicFormat.FILTER.createValue();
         filter.setValue(CQL.toFilter("location = 'IAmNotThere.tif'"));
@@ -1099,15 +1016,13 @@ public class HeterogenousCRSTest {
         assertThat(dryRunQuery.getFilter(), Matchers.instanceOf(BBOX.class));
         // data access query, also attribute filtering and sorting present
         Query dataQuery = queries.get(size - 2);
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
-        assertArrayEquals(
-                new SortBy[] {ff.sort("crs", SortOrder.ASCENDING)}, dataQuery.getSortBy());
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
+        assertArrayEquals(new SortBy[] {ff.sort("crs", SortOrder.ASCENDING)}, dataQuery.getSortBy());
         assertThat(dataQuery.getFilter(), Matchers.instanceOf(And.class));
     }
 
     /**
-     * Checks heteroCRS mosaic composition works even with property selection (e.g., the crs
-     * property is preserved)
+     * Checks heteroCRS mosaic composition works even with property selection (e.g., the crs property is preserved)
      *
      * @throws Exception
      */
@@ -1123,11 +1038,11 @@ public class HeterogenousCRSTest {
         // set up property selection
         File indexerFile = new File(testDirectory, "indexer.properties");
         Properties props = new Properties();
-        try (FileReader in = new FileReader(indexerFile)) {
+        try (FileReader in = new FileReader(indexerFile, StandardCharsets.UTF_8)) {
             props.load(in);
         }
         props.put(Utils.Prop.PROPERTY_SELECTION, "true");
-        try (FileWriter out = new FileWriter(indexerFile)) {
+        try (FileWriter out = new FileWriter(indexerFile, StandardCharsets.UTF_8)) {
             props.store(out, null);
         }
 
@@ -1143,15 +1058,12 @@ public class HeterogenousCRSTest {
 
         // check the granule descriptors have it all
         RasterManager rm = imReader.getRasterManager("hetero_utm");
-        assertTrue(
-                rm.getConfiguration().getCatalogConfigurationBean().isPropertySelectionEnabled());
+        assertTrue(rm.getConfiguration().getCatalogConfigurationBean().isPropertySelectionEnabled());
         GranuleCatalog catalog = rm.getGranuleCatalog();
-        catalog.getGranuleDescriptors(
-                new Query("hetero_utm"),
-                (granule, feature) -> {
-                    assertNotNull(feature.getProperty("crs"));
-                    assertNotNull(granule.getOriginator().getProperty("crs"));
-                });
+        catalog.getGranuleDescriptors(new Query("hetero_utm"), (granule, feature) -> {
+            assertNotNull(feature.getProperty("crs"));
+            assertNotNull(granule.getOriginator().getProperty("crs"));
+        });
 
         // done
         imReader.dispose();

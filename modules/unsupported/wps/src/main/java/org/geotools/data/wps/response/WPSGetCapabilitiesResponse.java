@@ -38,8 +38,7 @@ import org.xml.sax.SAXException;
  */
 public class WPSGetCapabilitiesResponse extends AbstractWPSGetCapabilitiesResponse {
 
-    public WPSGetCapabilitiesResponse(HTTPResponse httpResponse)
-            throws ServiceException, IOException {
+    public WPSGetCapabilitiesResponse(HTTPResponse httpResponse) throws ServiceException, IOException {
         this(httpResponse, null);
     }
 
@@ -63,8 +62,7 @@ public class WPSGetCapabilitiesResponse extends AbstractWPSGetCapabilitiesRespon
                 // object = DocumentFactory.getInstance(inputStream, hints, Level.WARNING);
                 object = parser.parse(inputStream);
             } catch (SAXException | ParserConfigurationException e) {
-                throw (ServiceException)
-                        new ServiceException("Error while parsing XML.").initCause(e);
+                throw (ServiceException) new ServiceException("Error while parsing XML.").initCause(e);
             }
 
             // if (object instanceof ServiceException) {
@@ -72,12 +70,12 @@ public class WPSGetCapabilitiesResponse extends AbstractWPSGetCapabilitiesRespon
             // }
 
             // try casting the response
-            if (object instanceof WPSCapabilitiesType) {
-                capabilities = (WPSCapabilitiesType) object;
+            if (object instanceof WPSCapabilitiesType type1) {
+                capabilities = type1;
             }
             // exception caught on server and returned
-            else if (object instanceof ExceptionReportType) {
-                excepResponse = (ExceptionReportType) object;
+            else if (object instanceof ExceptionReportType type) {
+                excepResponse = type;
             }
         }
     }

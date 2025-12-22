@@ -20,139 +20,88 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.zip.GZIPInputStream;
 import org.geotools.util.Base64;
 import org.geotools.util.factory.GeoTools;
 import org.geotools.util.logging.Logging;
 
 /**
- * A simple {@link HTTPClient} that creates a new {@link HttpURLConnection HTTP connection} for each
- * request.
+ * A simple {@link HTTPClient} that creates a new {@link HttpURLConnection HTTP connection} for each request.
  *
  * @author groldan
  */
-public class SimpleHttpClient implements HTTPClient, HTTPProxy {
+public class SimpleHttpClient extends AbstractHttpClient implements HTTPProxy {
 
     private static final Logger LOGGER = Logging.getLogger(SimpleHttpClient.class);
 
     private static final int DEFAULT_TIMEOUT = 30; // 30 seconds
 
-    private String user;
+    /** Max number of attempts to follow a redirect to avoid redirect loop * */
+    private static final int MAX_FOLLOW_REDIRECT =
+            Integer.getInteger("org.geotools.http.simpleHttpClient.maxFollowRedirect", 16);
 
-    private String password;
-
-    private int connectTimeout = DEFAULT_TIMEOUT;
-
-    private int readTimeout = DEFAULT_TIMEOUT;
-
-    private boolean tryGzip = true;
-
-    /**
-     * A SimpleHttpClient should be initiated by a call to
-     * HTTPFactoryFinder.getHttpClientFactory().getClient();
-     */
-    public SimpleHttpClient() {}
-
-    @Override
-    public String getUser() {
-        return user;
+    /** A SimpleHttpClient should be initiated by a call to HTTPFactoryFinder.getHttpClientFactory().getClient(); */
+    public SimpleHttpClient() {
+        this.connectTimeout = DEFAULT_TIMEOUT;
+        this.readTimeout = DEFAULT_TIMEOUT;
     }
 
-    @Override
-    public void setUser(String user) {
-        this.user = user;
-    }
-
-    @Override
-    public String getPassword() {
-        return password;
-    }
-
-    @Override
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    @Override
-    public int getConnectTimeout() {
-        return connectTimeout;
-    }
-
-    @Override
-    public void setConnectTimeout(int connectTimeout) {
-        this.connectTimeout = connectTimeout;
-    }
-
-    @Override
-    public int getReadTimeout() {
-        return readTimeout;
-    }
-
-    @Override
-    public void setReadTimeout(int readTimeout) {
-        this.readTimeout = readTimeout;
-    }
-
-    /** @see org.geotools.data.ows.HTTPClient#get(java.net.URL) */
+    /** @see org.geotools.http.HTTPClient#get(java.net.URL) */
     @Override
     public HTTPResponse get(final URL url) throws IOException {
         return this.get(url, null);
     }
 
+    /** @see org.geotools.http.HTTPClient#get(URL, Map) */
     @Override
     public HTTPResponse get(URL url, Map<String, String> headers) throws IOException {
         if (LOGGER.isLoggable(Level.FINE)) LOGGER.log(Level.FINE, "URL is " + url);
 
-        URLConnection connection = openConnection(url);
-        if (connection instanceof HttpURLConnection) {
-            ((HttpURLConnection) connection).setRequestMethod("GET");
+        if (isFile(url)) {
+            return this.createFileResponse(url);
         }
 
-        // Set User-Agent to a good default
-        connection.addRequestProperty(
-                "User-Agent", "GeoTools HTTPClient (" + GeoTools.getVersion() + ")");
-        if (headers != null) {
-            for (Map.Entry<String, String> headerNameValue : headers.entrySet()) {
-                if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.log(
-                            Level.FINE,
-                            "Adding header "
-                                    + headerNameValue.getKey()
-                                    + " = "
-                                    + headerNameValue.getValue());
-                }
-                connection.addRequestProperty(headerNameValue.getKey(), headerNameValue.getValue());
-            }
+        URLConnection connection = this.get(url, headers, 0);
+        if (connection == null) {
+            return null;
         }
-
-        connection.connect();
-
-        return new SimpleHTTPResponse(connection);
+        return new DefaultHttpResponse(connection);
     }
 
-    /**
-     * @see org.geotools.data.ows.HTTPClient#post(java.net.URL, java.io.InputStream,
-     *     java.lang.String)
-     */
+    /** @see org.geotools.http.HTTPClient#post(URL, InputStream, String, Map) */
+    @Override
+    public HTTPResponse post(URL url, InputStream content, String contentType) throws IOException {
+        return post(url, content, contentType, null);
+    }
+
+    /** @see org.geotools.http.HTTPClient#post(URL, InputStream, String) */
     @Override
     public HTTPResponse post(
-            final URL url, final InputStream postContent, final String postContentType)
+            final URL url, final InputStream postContent, final String postContentType, Map<String, String> headers)
             throws IOException {
 
-        URLConnection connection = openConnection(url);
-        if (connection instanceof HttpURLConnection) {
-            ((HttpURLConnection) connection).setRequestMethod("POST");
+        if (headers == null) {
+            headers = new HashMap<>(1);
+        } else {
+            headers = new HashMap<>(headers);
+        }
+        if (postContentType != null) {
+            headers.put("Content-type", postContentType);
+        }
+        URLConnection connection = openConnection(url, headers);
+        if (connection instanceof HttpURLConnection lConnection) {
+            lConnection.setRequestMethod("POST");
         }
         connection.setDoOutput(true);
-        if (postContentType != null) {
-            connection.setRequestProperty("Content-type", postContentType);
-        }
 
         connection.connect();
 
@@ -165,14 +114,42 @@ public class SimpleHttpClient implements HTTPClient, HTTPProxy {
             outputStream.flush();
         }
 
-        return new SimpleHTTPResponse(connection);
+        return new DefaultHttpResponse(connection);
     }
 
-    private URLConnection openConnection(URL finalURL) throws IOException {
+    private URLConnection get(URL url, Map<String, String> headers, int redirectionCount) throws IOException {
+
+        URLConnection connection = openConnection(url, headers);
+        if (connection instanceof HttpURLConnection lConnection) {
+            lConnection.setRequestMethod("GET");
+        }
+        connection.connect();
+
+        if (connection instanceof HttpURLConnection httpConnection) {
+            if (hasRedirect(httpConnection.getResponseCode())) {
+                return this.followRedirect(httpConnection, headers, redirectionCount);
+            }
+        }
+
+        return connection;
+    }
+
+    private URLConnection openConnection(URL finalURL, Map<String, String> headers) throws IOException {
+        Map<String, String> extraParams = getExtraParams();
+        if (!extraParams.isEmpty()) {
+            finalURL = appendURL(finalURL, extraParams);
+        }
+
         URLConnection connection = finalURL.openConnection();
         final boolean http = connection instanceof HttpURLConnection;
+        if (headers == null) {
+            headers = new HashMap<>();
+        } else {
+            headers = new HashMap<>(headers); // avoid parameter modification
+        }
+
         if (http && tryGzip) {
-            connection.addRequestProperty("Accept-Encoding", "gzip");
+            headers.put("Accept-Encoding", "gzip");
         }
         // mind, connect timeout is in seconds
         if (http && getConnectTimeout() > 0) {
@@ -188,105 +165,47 @@ public class SimpleHttpClient implements HTTPClient, HTTPProxy {
         if (http && username != null && password != null) {
             String userpassword = username + ":" + password;
             String encodedAuthorization =
-                    Base64.encodeBytes(
-                            userpassword.getBytes(StandardCharsets.UTF_8), Base64.DONT_BREAK_LINES);
-            connection.setRequestProperty("Authorization", "Basic " + encodedAuthorization);
+                    Base64.encodeBytes(userpassword.getBytes(StandardCharsets.UTF_8), Base64.DONT_BREAK_LINES);
+            headers.put("Authorization", "Basic " + encodedAuthorization);
+        }
+
+        // Set User-Agent to a good default
+        headers.put("User-Agent", "GeoTools HTTPClient (" + GeoTools.getVersion() + ")");
+
+        for (Map.Entry<String, String> headerNameValue : headers.entrySet()) {
+            if (LOGGER.isLoggable(Level.FINE)) {
+                LOGGER.log(
+                        Level.FINE, "Setting header " + headerNameValue.getKey() + " = " + headerNameValue.getValue());
+            }
+            connection.setRequestProperty(headerNameValue.getKey(), headerNameValue.getValue());
         }
         return connection;
     }
 
-    public static class SimpleHTTPResponse implements HTTPResponse {
+    private static boolean hasRedirect(int responseCode) {
+        return responseCode == HttpURLConnection.HTTP_SEE_OTHER
+                || responseCode == HttpURLConnection.HTTP_MOVED_PERM
+                || responseCode == HttpURLConnection.HTTP_MOVED_TEMP;
+    }
 
-        private URLConnection connection;
-
-        private InputStream responseStream;
-
-        @SuppressWarnings("PMD.CloseResource") // stream kept as field
-        public SimpleHTTPResponse(final URLConnection connection) throws IOException {
-            this.connection = connection;
-            InputStream inputStream = null;
+    private URLConnection followRedirect(
+            HttpURLConnection connection, Map<String, String> headers, int redirectionCount) throws IOException {
+        String redirect = connection.getHeaderField("Location");
+        if (redirect == null) {
+            LOGGER.warning("Tried to follow redirect but no url was provided in Location header");
+        } else if (redirectionCount < MAX_FOLLOW_REDIRECT) {
+            redirectionCount++;
             try {
-                inputStream = connection.getInputStream();
-                final String contentEncoding = connection.getContentEncoding();
-
-                if (contentEncoding != null
-                        && connection.getContentEncoding().indexOf("gzip") != -1) {
-                    inputStream = new GZIPInputStream(inputStream);
-                }
-            } catch (Exception e) {
-                if (inputStream != null) {
-                    inputStream.close();
-                }
-                throw e;
+                URL redirectURL = new URI(redirect).toURL();
+                LOGGER.fine("Following redirect to " + redirect);
+                return this.get(redirectURL, headers, redirectionCount);
+            } catch (URISyntaxException | MalformedURLException uri) {
+                LOGGER.warning("Tried to follow redirect but invalid url was provided in Location header: " + redirect);
             }
-            responseStream = inputStream;
+        } else {
+            LOGGER.warning(
+                    "Max number of follow redirect attempts (" + MAX_FOLLOW_REDIRECT + ") reached. Returning null");
         }
-
-        /** @see org.geotools.data.ows.HTTPResponse#dispose() */
-        @Override
-        public void dispose() {
-            if (responseStream != null) {
-                try {
-                    responseStream.close();
-                } catch (IOException e) {
-                    // ignore
-                }
-                responseStream = null;
-            }
-            if (connection != null) {
-                if (connection instanceof HttpURLConnection) {
-                    ((HttpURLConnection) connection).disconnect();
-                }
-                connection = null;
-            }
-        }
-
-        /** @see org.geotools.data.ows.HTTPResponse#getContentType() */
-        @Override
-        public String getContentType() {
-            return connection.getContentType();
-        }
-
-        @Override
-        public String getResponseHeader(String headerName) {
-            return connection.getHeaderField(headerName);
-        }
-
-        /** @see org.geotools.data.ows.HTTPResponse#getResponseStream() */
-        @Override
-        public InputStream getResponseStream() throws IOException {
-            return responseStream;
-        }
-
-        /** @see org.geotools.data.ows.HTTPResponse#getResponseCharset() */
-        @Override
-        public String getResponseCharset() {
-            String contentType = getContentType();
-            if (null == contentType) {
-                return null;
-            }
-            String[] split = contentType.split(";");
-
-            for (int i = 1; i < split.length; i++) {
-                String[] mimeParam = split[i].split("=");
-                if (mimeParam.length == 2 && "charset".equalsIgnoreCase(mimeParam[0])) {
-                    String charset = mimeParam[1];
-                    return charset.trim();
-                }
-            }
-            return null;
-        }
-    }
-
-    /** @see org.geotools.data.ows.HTTPClient#setTryGzip(boolean) */
-    @Override
-    public void setTryGzip(boolean tryGZIP) {
-        this.tryGzip = tryGZIP;
-    }
-
-    /** @see org.geotools.data.ows.HTTPClient#isTryGzip() */
-    @Override
-    public boolean isTryGzip() {
-        return tryGzip;
+        return null;
     }
 }

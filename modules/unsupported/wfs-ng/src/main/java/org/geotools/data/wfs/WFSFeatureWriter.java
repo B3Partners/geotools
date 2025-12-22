@@ -17,11 +17,11 @@
 package org.geotools.data.wfs;
 
 import java.io.IOException;
-import org.geotools.data.FeatureReader;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.store.DiffContentFeatureWriter;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class WFSFeatureWriter extends DiffContentFeatureWriter {
 
@@ -37,8 +37,7 @@ public class WFSFeatureWriter extends DiffContentFeatureWriter {
                 store,
                 localSate.getDiff(),
                 reader,
-                new SimpleFeatureBuilder(
-                        reader.getFeatureType(), new MutableIdentifierFeatureFactory()));
+                new SimpleFeatureBuilder(reader.getFeatureType(), new MutableIdentifierFeatureFactory()));
 
         if (autoCommit) {
             WFSDataStore dataStore = store.getDataStore();

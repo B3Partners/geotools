@@ -21,6 +21,10 @@ import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.store.FeatureCollectionWrapperTestSupport;
 import org.geotools.factory.CommonFactoryFinder;
@@ -32,31 +36,24 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
 
 /** @author ian */
 public class SpatialIndexFeatureCollectionTest extends FeatureCollectionWrapperTestSupport {
     private static final Logger LOGGER = Logger.getLogger("SpatialIndexFeatureCollectionTest");
 
-    FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
     /**
-     * Test method for {@link
-     * org.geotools.data.collection.SpatialIndexFeatureCollection#subCollection(org.opengis.filter.Filter)}.
+     * Test method for
+     * {@link org.geotools.data.collection.SpatialIndexFeatureCollection#subCollection(org.geotools.api.filter.Filter)}.
      */
     @Test
     public void testSimpleSubCollection() {
         // delegate has 5 points running diagonally from -140,45 -> -136,49
-        ReferencedEnvelope bbox =
-                new ReferencedEnvelope(-145, -139.5, 44, 47, DefaultGeographicCRS.WGS84);
+        ReferencedEnvelope bbox = new ReferencedEnvelope(-145, -139.5, 44, 47, DefaultGeographicCRS.WGS84);
 
         Filter filter =
-                ff.bbox(
-                        ff.property(delegate.getSchema().getGeometryDescriptor().getLocalName()),
-                        bbox);
+                ff.bbox(ff.property(delegate.getSchema().getGeometryDescriptor().getLocalName()), bbox);
         SpatialIndexFeatureCollection collection = null;
         try {
             collection = new SpatialIndexFeatureCollection(delegate);
@@ -70,8 +67,7 @@ public class SpatialIndexFeatureCollectionTest extends FeatureCollectionWrapperT
     @Test
     public void testLineSubCollection() {
         // delegate has 5 Lines running diagonally from -140,45 -> -136,49
-        ReferencedEnvelope bbox =
-                new ReferencedEnvelope(-145, -139.5, 44, 47, DefaultGeographicCRS.WGS84);
+        ReferencedEnvelope bbox = new ReferencedEnvelope(-145, -139.5, 44, 47, DefaultGeographicCRS.WGS84);
 
         Filter filter = ff.bbox(ff.property("otherGeom"), bbox);
         SpatialIndexFeatureCollection collection = null;
@@ -134,8 +130,7 @@ public class SpatialIndexFeatureCollectionTest extends FeatureCollectionWrapperT
 
             indexedCollection.add(feature);
         }
-        ReferencedEnvelope bbox =
-                new ReferencedEnvelope(-120, -42, -93, -33, DefaultGeographicCRS.WGS84);
+        ReferencedEnvelope bbox = new ReferencedEnvelope(-120, -42, -93, -33, DefaultGeographicCRS.WGS84);
         Filter filter = ff.bbox(ff.property("polyGeom"), bbox);
         SimpleFeatureCollection sub = indexedCollection.subCollection(filter);
         assertEquals(3, sub.size());

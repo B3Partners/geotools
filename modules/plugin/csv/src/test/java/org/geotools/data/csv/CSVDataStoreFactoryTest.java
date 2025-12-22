@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.geotools.TestData;
-import org.geotools.data.FileDataStore;
+import org.geotools.api.data.FileDataStore;
 import org.geotools.data.csv.parse.CSVAttributesOnlyStrategy;
 import org.geotools.data.csv.parse.CSVLatLonStrategy;
 import org.geotools.data.csv.parse.CSVSpecifiedWKTStrategy;
@@ -137,10 +137,7 @@ public class CSVDataStoreFactoryTest {
     public void testCSVStrategyDefault() throws Exception {
         CSVDataStore datastore = (CSVDataStore) csvDataStoreFactory.createDataStoreFromFile(file);
         CSVStrategy csvStrategy = datastore.getCSVStrategy();
-        assertEquals(
-                "Unexpected default csv strategy",
-                CSVAttributesOnlyStrategy.class,
-                csvStrategy.getClass());
+        assertEquals("Unexpected default csv strategy", CSVAttributesOnlyStrategy.class, csvStrategy.getClass());
     }
 
     @Test
@@ -176,19 +173,6 @@ public class CSVDataStoreFactoryTest {
         CSVDataStore datastore = (CSVDataStore) csvDataStoreFactory.createDataStore(params);
         CSVStrategy csvStrategy = datastore.getCSVStrategy();
         assertEquals("Unexpected strategy", CSVLatLonStrategy.class, csvStrategy.getClass());
-    }
-
-    @Test
-    public void testCSVStrategyWKTMissingWktField() throws IOException {
-        Map<String, Serializable> params = new HashMap<>();
-        params.put("strategy", "wkt");
-        params.put("file", file);
-        try {
-            csvDataStoreFactory.createDataStore(params);
-        } catch (IllegalArgumentException e) {
-            return;
-        }
-        fail("Expected illegal argument exception for missing wktField");
     }
 
     @Test

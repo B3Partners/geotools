@@ -17,6 +17,9 @@
 package org.geotools.filter.v2_0.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
 import org.geotools.filter.v2_0.FES;
 import org.geotools.gml3.v3_2.GML;
 import org.geotools.gml3.v3_2.GMLConfiguration;
@@ -24,9 +27,6 @@ import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.Encoder;
 import org.geotools.xsd.EncoderDelegate;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.spatial.BinarySpatialOperator;
 
 /**
  * <pre>
@@ -62,13 +62,12 @@ public class BinarySpatialOpTypeBinding extends AbstractComplexBinding {
     @Override
     public Object getProperty(Object object, QName name) throws Exception {
         Expression e = FESParseEncodeUtil.getProperty((BinarySpatialOperator) object, name);
-        if (e instanceof Literal && ((Literal) e).getValue() instanceof Geometry) {
-            return (EncoderDelegate)
-                    output -> {
-                        Encoder encoder = new Encoder(new GMLConfiguration());
-                        encoder.setInline(true);
-                        encoder.encode(((Literal) e).getValue(), GML.AbstractGeometry, output);
-                    };
+        if (e instanceof Literal literal && ((Literal) e).getValue() instanceof Geometry) {
+            return (EncoderDelegate) output -> {
+                Encoder encoder = new Encoder(new GMLConfiguration());
+                encoder.setInline(true);
+                encoder.encode(literal.getValue(), GML.AbstractGeometry, output);
+            };
         } else {
             return e;
         }

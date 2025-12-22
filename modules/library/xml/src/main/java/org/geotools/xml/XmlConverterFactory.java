@@ -48,13 +48,11 @@ public class XmlConverterFactory implements ConverterFactory {
         // make sure either source or target is String in order not to step over
         // TemporalConverterFactory
         if (String.class.equals(target)) {
-            if (java.util.Date.class.isAssignableFrom(source)
-                    || Calendar.class.isAssignableFrom(source)) {
+            if (java.util.Date.class.isAssignableFrom(source) || Calendar.class.isAssignableFrom(source)) {
                 return new XmlConverter();
             }
         } else if (String.class.equals(source)) {
-            if (java.util.Date.class.isAssignableFrom(target)
-                    || Calendar.class.isAssignableFrom(target)) {
+            if (java.util.Date.class.isAssignableFrom(target) || Calendar.class.isAssignableFrom(target)) {
                 return new XmlConverter();
             }
         }
@@ -79,8 +77,7 @@ public class XmlConverterFactory implements ConverterFactory {
             // JD: this is a bit of a hack but delegate to the
             // commons converter in case we are executing first.
             try {
-                Converter converter =
-                        new CommonsConverterFactory().createConverter(String.class, target, null);
+                Converter converter = new CommonsConverterFactory().createConverter(String.class, target, null);
 
                 if (converter != null) {
                     Object converted = null;
@@ -144,12 +141,10 @@ public class XmlConverterFactory implements ConverterFactory {
         private String convertToString(Object unconvertedValue) {
             String textValue = null;
 
-            if (unconvertedValue instanceof Calendar) {
-
-                Calendar cal = (Calendar) unconvertedValue;
+            if (unconvertedValue instanceof Calendar cal) {
                 textValue = DatatypeConverterImpl.getInstance().printDateTime(cal);
 
-            } else if (unconvertedValue instanceof java.sql.Date) {
+            } else if (unconvertedValue instanceof java.sql.Date sqlDate) {
                 DatatypeConverterImpl converter = DatatypeConverterImpl.getInstance();
                 Object hint = Hints.getSystemDefault(Hints.LOCAL_DATE_TIME_HANDLING);
                 Calendar cal;
@@ -158,11 +153,11 @@ public class XmlConverterFactory implements ConverterFactory {
                 } else {
                     cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
                 }
-                cal.setTimeInMillis(((java.util.Date) unconvertedValue).getTime());
+                cal.setTimeInMillis(sqlDate.getTime());
                 textValue = converter.printDate(cal);
-            } else if (unconvertedValue instanceof java.util.Date) {
+            } else if (unconvertedValue instanceof java.util.Date date) {
                 Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-                cal.setTimeInMillis(((java.util.Date) unconvertedValue).getTime());
+                cal.setTimeInMillis(date.getTime());
                 DatatypeConverterImpl converter = DatatypeConverterImpl.getInstance();
 
                 if (unconvertedValue instanceof java.sql.Time) {

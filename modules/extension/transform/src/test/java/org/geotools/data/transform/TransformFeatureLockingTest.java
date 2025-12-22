@@ -20,14 +20,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import org.geotools.api.data.FeatureLock;
+import org.geotools.api.data.SimpleFeatureLocking;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.filter.Filter;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.FeatureLock;
-import org.geotools.data.simple.SimpleFeatureLocking;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.filter.text.cql2.CQL;
 import org.geotools.filter.text.cql2.CQLException;
 import org.junit.Test;
-import org.opengis.filter.Filter;
 
 public class TransformFeatureLockingTest extends AbstractTransformTest {
 
@@ -56,8 +56,7 @@ public class TransformFeatureLockingTest extends AbstractTransformTest {
                 CQL.toFilter("name = 'Delaware'"));
     }
 
-    private void performLockingTest(
-            SimpleFeatureLocking fl1, SimpleFeatureLocking fl2, Filter filter)
+    private void performLockingTest(SimpleFeatureLocking fl1, SimpleFeatureLocking fl2, Filter filter)
             throws CQLException, IOException {
         final FeatureLock lock1 = new FeatureLock("lock", 10 * 60 * 1000);
         final FeatureLock lock2 = new FeatureLock("lock", 10 * 60 * 1000);

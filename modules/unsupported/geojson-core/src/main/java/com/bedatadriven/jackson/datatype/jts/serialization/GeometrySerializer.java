@@ -72,34 +72,33 @@ public class GeometrySerializer extends JsonSerializer<Geometry> {
     }
 
     @Override
-    public void serialize(Geometry value, JsonGenerator jgen, SerializerProvider provider)
-            throws IOException {
+    public void serialize(Geometry value, JsonGenerator jgen, SerializerProvider provider) throws IOException {
 
         writeGeometry(jgen, value);
     }
 
     public void writeGeometry(JsonGenerator jgen, Geometry value) throws IOException {
 
-        if (value instanceof Polygon) {
-            writePolygon(jgen, (Polygon) value);
+        if (value instanceof Polygon polygon1) {
+            writePolygon(jgen, polygon1);
 
-        } else if (value instanceof Point) {
-            writePoint(jgen, (Point) value);
+        } else if (value instanceof Point point1) {
+            writePoint(jgen, point1);
 
-        } else if (value instanceof MultiPoint) {
-            writeMultiPoint(jgen, (MultiPoint) value);
+        } else if (value instanceof MultiPoint point) {
+            writeMultiPoint(jgen, point);
 
-        } else if (value instanceof MultiPolygon) {
-            writeMultiPolygon(jgen, (MultiPolygon) value);
+        } else if (value instanceof MultiPolygon polygon) {
+            writeMultiPolygon(jgen, polygon);
 
-        } else if (value instanceof LineString) {
-            writeLineString(jgen, (LineString) value);
+        } else if (value instanceof LineString string1) {
+            writeLineString(jgen, string1);
 
-        } else if (value instanceof MultiLineString) {
-            writeMultiLineString(jgen, (MultiLineString) value);
+        } else if (value instanceof MultiLineString string) {
+            writeMultiLineString(jgen, string);
 
-        } else if (value instanceof GeometryCollection) {
-            writeGeometryCollection(jgen, (GeometryCollection) value);
+        } else if (value instanceof GeometryCollection collection) {
+            writeGeometryCollection(jgen, collection);
 
         } else {
             throw new JsonMappingException(
@@ -119,8 +118,7 @@ public class GeometrySerializer extends JsonSerializer<Geometry> {
         }
     }
 
-    private void writeGeometryCollection(JsonGenerator jgen, GeometryCollection value)
-            throws IOException {
+    private void writeGeometryCollection(JsonGenerator jgen, GeometryCollection value) throws IOException {
         jgen.writeStartObject();
         jgen.writeStringField(TYPE, GEOMETRY_COLLECTION);
         jgen.writeArrayFieldStart(GEOMETRIES);
@@ -146,8 +144,7 @@ public class GeometrySerializer extends JsonSerializer<Geometry> {
         jgen.writeEndObject();
     }
 
-    private void writeMultiLineString(JsonGenerator jgen, MultiLineString value)
-            throws IOException {
+    private void writeMultiLineString(JsonGenerator jgen, MultiLineString value) throws IOException {
         jgen.writeStartObject();
         jgen.writeStringField(TYPE, MULTI_LINE_STRING);
         jgen.writeArrayFieldStart(COORDINATES);

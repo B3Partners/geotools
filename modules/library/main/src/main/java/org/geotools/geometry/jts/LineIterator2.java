@@ -64,16 +64,16 @@ public final class LineIterator2 implements PathIterator {
     /** */
     public void init(LineString ls, AffineTransform at) {
 
-        if ((at == null) || (at.isIdentity())) {
+        if (at == null || at.isIdentity()) {
             this.at = null;
         } else {
             this.at = at;
         }
 
         CoordinateSequence coordinates = ls.getCoordinateSequence();
-        if (coordinates instanceof LiteCoordinateSequence) {
+        if (coordinates instanceof LiteCoordinateSequence sequence) {
             // array already there for us
-            allCoords = ((LiteCoordinateSequence) coordinates).getXYArray();
+            allCoords = sequence.getXYArray();
             actualCoords = coordinates.size();
         } else {
             // build the array
@@ -112,12 +112,12 @@ public final class LineIterator2 implements PathIterator {
     }
 
     /**
-     * Moves the iterator to the next segment of the path forwards along the primary direction of
-     * traversal as long as there are more points in that direction.
+     * Moves the iterator to the next segment of the path forwards along the primary direction of traversal as long as
+     * there are more points in that direction.
      */
     @Override
     public void next() {
-        if (currentCoord == (actualCoords - 1)) {
+        if (currentCoord == actualCoords - 1) {
             done = true;
         } else {
             currentCoord++;

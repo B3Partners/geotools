@@ -24,10 +24,10 @@ import java.util.GregorianCalendar;
 import java.util.TimeZone;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
+import org.geotools.api.temporal.Instant;
 import org.geotools.util.Converter;
 import org.geotools.util.ConverterFactory;
 import org.geotools.util.factory.Hints;
-import org.opengis.temporal.Instant;
 
 /**
  * Converter factory which created converting between the various temporal types.
@@ -57,11 +57,9 @@ import org.opengis.temporal.Instant;
  *   <li>{@link java.sql.Timestamp} to {@link java.util.Calendar}
  * </ul>
  *
- * <p>The hint {@link ConverterFactory#SAFE_CONVERSION} is used to control which conversions will be
- * applied.
+ * <p>The hint {@link ConverterFactory#SAFE_CONVERSION} is used to control which conversions will be applied.
  *
- * <p>The hint {@link #DATE_FORMAT} can be used to control the format of converting a temporal value
- * to a String.
+ * <p>The hint {@link #DATE_FORMAT} can be used to control the format of converting a temporal value to a String.
  *
  * @author Justin Deoliveira, The Open Planning Project
  * @since 2.4
@@ -74,7 +72,7 @@ public class TemporalConverterFactory implements ConverterFactory {
 
         if (hints != null) {
             Object safe = hints.get(ConverterFactory.SAFE_CONVERSION);
-            if (safe instanceof Boolean && ((Boolean) safe).booleanValue()) {
+            if (safe instanceof Boolean boolean1 && boolean1.booleanValue()) {
                 isSafeOnly = true;
             }
         }
@@ -124,13 +122,11 @@ public class TemporalConverterFactory implements ConverterFactory {
                     @Override
                     public <T> T convert(Object source, Class<T> target) throws Exception {
                         Date date = (Date) source;
-                        Calendar calendar =
-                                createConverter(Date.class, Calendar.class, null)
-                                        .convert(date, Calendar.class);
+                        Calendar calendar = createConverter(Date.class, Calendar.class, null)
+                                .convert(date, Calendar.class);
 
-                        return target.cast(
-                                createConverter(Calendar.class, XMLGregorianCalendar.class, null)
-                                        .convert(calendar, XMLGregorianCalendar.class));
+                        return target.cast(createConverter(Calendar.class, XMLGregorianCalendar.class, null)
+                                .convert(calendar, XMLGregorianCalendar.class));
                     }
                 };
             }
@@ -159,10 +155,7 @@ public class TemporalConverterFactory implements ConverterFactory {
                         Calendar calendar = (Calendar) source;
 
                         return target.cast(
-                                timeMillisToDate(
-                                        calendar.getTimeInMillis(),
-                                        target,
-                                        calendar.getTimeZone()));
+                                timeMillisToDate(calendar.getTimeInMillis(), target, calendar.getTimeZone()));
                     }
                 };
             }
@@ -170,10 +163,8 @@ public class TemporalConverterFactory implements ConverterFactory {
                 return new Converter() {
                     @Override
                     public <T> T convert(Object source, Class<T> target) throws Exception {
-                        if (source instanceof GregorianCalendar) {
-                            return target.cast(
-                                    DatatypeFactory.newInstance()
-                                            .newXMLGregorianCalendar((GregorianCalendar) source));
+                        if (source instanceof GregorianCalendar calendar) {
+                            return target.cast(DatatypeFactory.newInstance().newXMLGregorianCalendar(calendar));
                         }
 
                         return null;
@@ -196,13 +187,11 @@ public class TemporalConverterFactory implements ConverterFactory {
                 return new Converter() {
                     @Override
                     public <T> T convert(Object source, Class<T> target) throws Exception {
-                        Calendar calendar =
-                                createConverter(XMLGregorianCalendar.class, Calendar.class, null)
-                                        .convert(source, Calendar.class);
+                        Calendar calendar = createConverter(XMLGregorianCalendar.class, Calendar.class, null)
+                                .convert(source, Calendar.class);
                         if (calendar != null) {
-                            return target.cast(
-                                    createConverter(Calendar.class, target, null)
-                                            .convert(calendar, target));
+                            return target.cast(createConverter(Calendar.class, target, null)
+                                    .convert(calendar, target));
                         }
                         return null;
                     }
@@ -253,8 +242,8 @@ public class TemporalConverterFactory implements ConverterFactory {
     }
 
     /**
-     * Turns a timestamp specified in milliseconds into a date, making sure to shave off the
-     * un-necessary parts when building java.sql time related classes
+     * Turns a timestamp specified in milliseconds into a date, making sure to shave off the un-necessary parts when
+     * building java.sql time related classes
      *
      * @param time the number of milliseconds since January 1, 1970, 00:00:00 <b>GMT</b>
      */

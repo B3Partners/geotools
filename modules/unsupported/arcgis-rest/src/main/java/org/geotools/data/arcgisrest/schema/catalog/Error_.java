@@ -1,3 +1,21 @@
+/*
+ *    GeoTools - The Open Source Java GIS Toolkit
+ *    http://geotools.org
+ *
+ *    (C) 2018, Open Source Geospatial Foundation (OSGeo)
+ *
+ *    This library is free software; you can redistribute it and/or
+ *    modify it under the terms of the GNU Lesser General Public
+ *    License as published by the Free Software Foundation;
+ *    version 2.1 of the License.
+ *
+ *    This library is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    Lesser General Public License for more details.
+ *
+ */
+
 package org.geotools.data.arcgisrest.schema.catalog;
 
 import com.google.gson.annotations.Expose;
@@ -21,7 +39,7 @@ public class Error_ {
     /** (Required) */
     @SerializedName("details")
     @Expose
-    private List<String> details = new ArrayList<String>();
+    private List<String> details = new ArrayList<>();
 
     /**
      * (Required)
@@ -84,7 +102,11 @@ public class Error_ {
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(code).append(message).append(details).toHashCode();
+        return new HashCodeBuilder()
+                .append(code)
+                .append(message)
+                .append(details)
+                .toHashCode();
     }
 
     @Override

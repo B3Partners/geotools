@@ -17,60 +17,60 @@
 package org.geotools.filter.visitor;
 
 import java.util.logging.Logger;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.ExcludeFilter;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.IncludeFilter;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNil;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.Multiply;
+import org.geotools.api.filter.expression.NilExpression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.Subtract;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
+import org.geotools.api.filter.temporal.After;
+import org.geotools.api.filter.temporal.AnyInteracts;
+import org.geotools.api.filter.temporal.Before;
+import org.geotools.api.filter.temporal.Begins;
+import org.geotools.api.filter.temporal.BegunBy;
+import org.geotools.api.filter.temporal.During;
+import org.geotools.api.filter.temporal.EndedBy;
+import org.geotools.api.filter.temporal.Ends;
+import org.geotools.api.filter.temporal.Meets;
+import org.geotools.api.filter.temporal.MetBy;
+import org.geotools.api.filter.temporal.OverlappedBy;
+import org.geotools.api.filter.temporal.TContains;
+import org.geotools.api.filter.temporal.TEquals;
+import org.geotools.api.filter.temporal.TOverlaps;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.And;
-import org.opengis.filter.ExcludeFilter;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Id;
-import org.opengis.filter.IncludeFilter;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNil;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.Multiply;
-import org.opengis.filter.expression.NilExpression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.expression.Subtract;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
-import org.opengis.filter.temporal.After;
-import org.opengis.filter.temporal.AnyInteracts;
-import org.opengis.filter.temporal.Before;
-import org.opengis.filter.temporal.Begins;
-import org.opengis.filter.temporal.BegunBy;
-import org.opengis.filter.temporal.During;
-import org.opengis.filter.temporal.EndedBy;
-import org.opengis.filter.temporal.Ends;
-import org.opengis.filter.temporal.Meets;
-import org.opengis.filter.temporal.MetBy;
-import org.opengis.filter.temporal.OverlappedBy;
-import org.opengis.filter.temporal.TContains;
-import org.opengis.filter.temporal.TEquals;
-import org.opengis.filter.temporal.TOverlaps;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Extract a maximal envelope from the provided Filter.
@@ -78,28 +78,26 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  * <p>The maximal envelope is generated from:
  *
  * <ul>
- *   <li>all the literal geometry instances involved if spatial operations - using
- *       geom.getEnvelopeInternal().
+ *   <li>all the literal geometry instances involved if spatial operations - using geom.getEnvelopeInternal().
  *   <li>Filter.EXCLUDES will result in an empty envelope
  *   <li>Filter.INCLUDES will result in a "world" envelope with range Double.NEGATIVE_INFINITY to
  *       Double.POSITIVE_INFINITY for each axis.
  *   <li>all other non spatial filters will result in a world envelope
- *   <li>combinations in and will return the intersection of the envelopes, or an empty envelope if
- *       an exclude is in the mix, or null if the and is mixing non spatial filters
+ *   <li>combinations in and will return the intersection of the envelopes, or an empty envelope if an exclude is in the
+ *       mix, or null if the and is mixing non spatial filters
  *   <li>combinations in or will return the intersection of
  * </ul>
  *
- * Since geometry literals do not contains CRS information we can only produce a ReferencedEnvelope
- * without CRS information. You can call this function with an existing ReferencedEnvelope or with
- * your data CRS to correct for this limitation. ReferencedEnvelope example:
+ * Since geometry literals do not contains CRS information we can only produce a ReferencedEnvelope without CRS
+ * information. You can call this function with an existing ReferencedEnvelope or with your data CRS to correct for this
+ * limitation. ReferencedEnvelope example:
  *
  * <pre><code>
  * ReferencedEnvelope bbox = (ReferencedEnvelope)
  *     filter.accepts(new ExtractBoundsFilterVisitor(), dataCRS );
  * </code></pre>
  *
- * You can also call this function with an existing Envelope; if you are building up bounds based on
- * several filters.
+ * You can also call this function with an existing Envelope; if you are building up bounds based on several filters.
  *
  * <p>This is a replacement for FilterConsumer.
  *
@@ -108,14 +106,12 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 public class ExtractBoundsFilterVisitor extends NullFilterVisitor {
     public static NullFilterVisitor BOUNDS_VISITOR = new ExtractBoundsFilterVisitor();
 
-    private static Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(ExtractBoundsFilterVisitor.class);
+    private static Logger LOGGER = org.geotools.util.logging.Logging.getLogger(ExtractBoundsFilterVisitor.class);
 
     /**
      * This FilterVisitor is stateless - use ExtractBoundsFilterVisitor.BOUNDS_VISITOR.
      *
-     * <p>You may also subclass in order to reuse this functionality in your own FilterVisitor
-     * implementation.
+     * <p>You may also subclass in order to reuse this functionality in your own FilterVisitor implementation.
      */
     protected ExtractBoundsFilterVisitor() {}
 
@@ -127,12 +123,12 @@ public class ExtractBoundsFilterVisitor extends NullFilterVisitor {
     private ReferencedEnvelope bbox(Object data) {
         if (data == null) {
             return null;
-        } else if (data instanceof ReferencedEnvelope) {
-            return (ReferencedEnvelope) data;
-        } else if (data instanceof Envelope) {
-            return new ReferencedEnvelope((Envelope) data, null);
-        } else if (data instanceof CoordinateReferenceSystem) {
-            return new ReferencedEnvelope((CoordinateReferenceSystem) data);
+        } else if (data instanceof ReferencedEnvelope envelope1) {
+            return envelope1;
+        } else if (data instanceof Envelope envelope) {
+            return new ReferencedEnvelope(envelope, null);
+        } else if (data instanceof CoordinateReferenceSystem system) {
+            return new ReferencedEnvelope(system);
         }
         throw new ClassCastException("Could not cast data to ReferencedEnvelope");
     }
@@ -149,10 +145,7 @@ public class ExtractBoundsFilterVisitor extends NullFilterVisitor {
 
     protected Envelope infinity() {
         return new Envelope(
-                Double.NEGATIVE_INFINITY,
-                Double.POSITIVE_INFINITY,
-                Double.NEGATIVE_INFINITY,
-                Double.POSITIVE_INFINITY);
+                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
     }
 
     @Override
@@ -180,9 +173,7 @@ public class ExtractBoundsFilterVisitor extends NullFilterVisitor {
         ReferencedEnvelope bbox = bbox(data);
 
         Object value = expression.getValue();
-        if (value instanceof Geometry) {
-
-            Geometry geometry = (Geometry) value;
+        if (value instanceof Geometry geometry) {
             Envelope bounds = geometry.getEnvelopeInternal();
 
             if (bbox != null) {
@@ -191,8 +182,7 @@ public class ExtractBoundsFilterVisitor extends NullFilterVisitor {
             } else {
                 return bbox(bounds);
             }
-        } else if (value instanceof Envelope) {
-            Envelope bounds = (Envelope) value;
+        } else if (value instanceof Envelope bounds) {
             if (bbox != null) {
                 bbox.expandToInclude(bounds);
                 return bbox;
@@ -274,12 +264,10 @@ public class ExtractBoundsFilterVisitor extends NullFilterVisitor {
         // expand it by the distance.
         // We ignore the unit of measure for the moment
         Literal geometry = null;
-        if (filter.getExpression1() instanceof PropertyName
-                && filter.getExpression2() instanceof Literal) {
+        if (filter.getExpression1() instanceof PropertyName && filter.getExpression2() instanceof Literal) {
             geometry = (Literal) filter.getExpression2();
         }
-        if (filter.getExpression2() instanceof PropertyName
-                && filter.getExpression1() instanceof Literal) {
+        if (filter.getExpression2() instanceof PropertyName && filter.getExpression1() instanceof Literal) {
             geometry = (Literal) filter.getExpression2();
         }
 

@@ -11,13 +11,13 @@
  */
 package org.geotools.main;
 
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.util.SuppressFBWarnings;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Main examples used for sphinx documentation.-+*
@@ -36,8 +36,7 @@ public class MainExamples {
 
     // exampleRetype start
     void exampleRetype() throws Exception {
-        SimpleFeatureType origional =
-                DataUtilities.createType("LINE", "centerline:LineString,name:\"\",id:0");
+        SimpleFeatureType origional = DataUtilities.createType("LINE", "centerline:LineString,name:\"\",id:0");
         SimpleFeatureType modified = DataUtilities.createSubType(origional, "centerline");
 
         SimpleFeature feature = DataUtilities.template(origional);

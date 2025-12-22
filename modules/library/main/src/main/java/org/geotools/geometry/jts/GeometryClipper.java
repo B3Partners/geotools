@@ -37,9 +37,8 @@ import org.locationtech.jts.geom.TopologyException;
 import org.locationtech.jts.precision.GeometryPrecisionReducer;
 
 /**
- * A stateful geometry clipper, can clip linestring on a specified rectangle. Trivial benchmarks
- * report a speedup factor between 20 and 60 compared to JTS generic intersection algorithm. The
- * class is not thread safe.
+ * A stateful geometry clipper, can clip linestring on a specified rectangle. Trivial benchmarks report a speedup factor
+ * between 20 and 60 compared to JTS generic intersection algorithm. The class is not thread safe.
  *
  * @author Andrea Aime - OpenGeo
  */
@@ -76,16 +75,15 @@ public class GeometryClipper {
     }
 
     /**
-     * This will try to handle failures when clipping - i.e. because of invalid input geometries
-     * (often caused by simplification).
+     * This will try to handle failures when clipping - i.e. because of invalid input geometries (often caused by
+     * simplification).
      *
-     * <p>This attempts to do a normal clip(). If it fails, it will try to do more to ensure the
-     * clip works properly.
+     * <p>This attempts to do a normal clip(). If it fails, it will try to do more to ensure the clip works properly.
      *
      * <ol>
      *   <li>if its a polygon/multipolygon it will try to make the polygon valid and re-try the clip
-     *   <li>it will attempt to put the geometry on a precision grid (this will move the points
-     *       around) and re-try the clip
+     *   <li>it will attempt to put the geometry on a precision grid (this will move the points around) and re-try the
+     *       clip
      *   <li>will attempt to clip with ensureValid = false (ie geotools simple clipping)
      * </ol>
      *
@@ -99,19 +97,19 @@ public class GeometryClipper {
             return clip(g, ensureValid);
         } catch (TopologyException e) {
             try {
-                if (((g instanceof Polygon) || (g instanceof MultiPolygon)) && (!g.isValid())) {
+                if ((g instanceof Polygon || g instanceof MultiPolygon) && !g.isValid()) {
                     // its an invalid Polygon or MultiPolygon. Use buffer(0) to attempt to fix it
                     // do not use buffer(0) on points or lines - it returns an empty polygon
                     return clip(g.buffer(0), ensureValid);
                 }
             } catch (TopologyException e2) {
+                // ignored
             }
 
             if (scale != 0) {
                 // Step 2: Snap to provided scale
                 try {
-                    GeometryPrecisionReducer reducer =
-                            new GeometryPrecisionReducer(new PrecisionModel(scale));
+                    GeometryPrecisionReducer reducer = new GeometryPrecisionReducer(new PrecisionModel(scale));
 
                     // reduce method already tries to fix problems with geometry (ie buffer(0) if
                     // invalid)
@@ -129,6 +127,7 @@ public class GeometryClipper {
                     // Step 3: try again with ensureValid false
                     return clip(g, false);
                 } catch (TopologyException e3) {
+                    // ignored
                 }
             }
             return g; // unable to clip geometry
@@ -139,8 +138,8 @@ public class GeometryClipper {
      * Clips the geometry on the specified bounds.
      *
      * @param g The geometry to be clipped
-     * @param ensureValid If false there is no guarantee the polygons returned will be valid
-     *     according to JTS rules (but should still be good enough to be used for pure rendering)
+     * @param ensureValid If false there is no guarantee the polygons returned will be valid according to JTS rules (but
+     *     should still be good enough to be used for pure rendering)
      */
     public Geometry clip(Geometry g, boolean ensureValid) {
         // basic pre-flight checks
@@ -158,19 +157,19 @@ public class GeometryClipper {
         }
 
         // clip for good
-        if (g instanceof LineString) {
-            return clipLineString((LineString) g);
-        } else if (g instanceof Polygon) {
+        if (g instanceof LineString string) {
+            return clipLineString(string);
+        } else if (g instanceof Polygon polygon) {
             if (ensureValid) {
                 GeometryFactory gf = g.getFactory();
                 CoordinateSequenceFactory csf = gf.getCoordinateSequenceFactory();
                 Polygon fence = gf.createPolygon(buildBoundsString(gf, csf), null);
                 return g.intersection(fence);
             } else {
-                return clipPolygon((Polygon) g);
+                return clipPolygon(polygon);
             }
-        } else if (g instanceof GeometryCollection) {
-            return clipCollection((GeometryCollection) g, ensureValid);
+        } else if (g instanceof GeometryCollection collection) {
+            return clipCollection(collection, ensureValid);
         } else {
             // still don't know how to clip this
             return g;
@@ -178,8 +177,7 @@ public class GeometryClipper {
     }
 
     /** Cohen-Sutherland outcode, see http://en.wikipedia.org/wiki/Cohen%E2%80%93Sutherland */
-    private int computeOutCode(
-            double x, double y, double xmin, double ymin, double xmax, double ymax) {
+    private int computeOutCode(double x, double y, double xmin, double ymin, double xmax, double ymax) {
         int code = 0;
         if (y > ymax) code |= TOP;
         else if (y < ymin) code |= BOTTOM;
@@ -270,7 +268,7 @@ public class GeometryClipper {
         int outcode0 = computeOutCode(x0, y0, xmin, ymin, xmax, ymax);
         int outcode1 = computeOutCode(x1, y1, xmin, ymin, xmax, ymax);
 
-        return ((outcode0 & outcode1) > 0);
+        return (outcode0 & outcode1) > 0;
     }
 
     /** Checks if the point is inside the clipping bounds */
@@ -279,8 +277,8 @@ public class GeometryClipper {
     }
 
     /**
-     * Clips a polygon using the Liang-Barsky helper routine. Does not generate, in general, valid
-     * polygons (but still does generate polygons good enough for rendering)
+     * Clips a polygon using the Liang-Barsky helper routine. Does not generate, in general, valid polygons (but still
+     * does generate polygons good enough for rendering)
      */
     private Geometry clipPolygon(Polygon polygon) {
         final GeometryFactory gf = polygon.getFactory();
@@ -306,9 +304,8 @@ public class GeometryClipper {
     }
 
     /**
-     * The {@link #polygonClip(LinearRing)} routine can generate invalid rings fully on top of the
-     * clipping area borders (with no inside). Do a quick check that does not involve an expensive
-     * isValid() call
+     * The {@link #polygonClip(LinearRing)} routine can generate invalid rings fully on top of the clipping area borders
+     * (with no inside). Do a quick check that does not involve an expensive isValid() call
      *
      * @return The ring, or null if the ring was not valid
      */
@@ -325,7 +322,7 @@ public class GeometryClipper {
             double x = cs.getX(i);
             double y = cs.getY(i);
             // check if the current segment lies on the bbox side fully
-            if ((x == px && (x == xmin || x == xmax)) || (y == py && (y == ymin || y == ymax))) {
+            if (x == px && (x == xmin || x == xmax) || y == py && (y == ymin || y == ymax)) {
                 px = x;
                 py = y;
             } else {
@@ -349,12 +346,11 @@ public class GeometryClipper {
     }
 
     /**
-     * This routine uses the Liang-Barsky algorithm for polygon clipping as described in Foley & van
-     * Dam. It's more efficient Sutherland-Hodgman version, but produces redundent turning vertices
-     * at the corners of the clip region. This can make rendering as a series of triangles very
-     * awkward, but it's fine of your underlying graphics mechanism has a forgiving drawPolygon
-     * routine. This algorithm comes from http://www.longsteve.com/fixmybugs/?p=359, under a "DO
-     * WHAT THE FUCK YOU WANT TO PUBLIC LICENSE" (no kidding!)
+     * This routine uses the Liang-Barsky algorithm for polygon clipping as described in Foley & van Dam. It's more
+     * efficient Sutherland-Hodgman version, but produces redundent turning vertices at the corners of the clip region.
+     * This can make rendering as a series of triangles very awkward, but it's fine of your underlying graphics
+     * mechanism has a forgiving drawPolygon routine. This algorithm comes from
+     * http://www.longsteve.com/fixmybugs/?p=359, under a "DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE" (no kidding!)
      */
     private LinearRing polygonClip(LinearRing ring) {
         final double INFINITY = Double.MAX_VALUE;
@@ -389,14 +385,14 @@ public class GeometryClipper {
 
             // use this to determine which bounding lines for the clip region the
             // containing line hits first (from which side, to which other side)
-            if ((deltaX > 0) || (deltaX == 0 && x0 > xmax)) {
+            if (deltaX > 0 || deltaX == 0 && x0 > xmax) {
                 xIn = xmin;
                 xOut = xmax;
             } else {
                 xIn = xmax;
                 xOut = xmin;
             }
-            if ((deltaY > 0) || (deltaY == 0 && y0 > ymax)) {
+            if (deltaY > 0 || deltaY == 0 && y0 > ymax) {
                 yIn = ymin;
                 yOut = ymax;
             } else {
@@ -473,17 +469,17 @@ public class GeometryClipper {
                     if (0 < tOut1 && tIn2 <= 1.0) {
                         if (0 <= tIn2) { // visible segment
                             if (tInX > tInY) {
-                                out.add(xIn, y0 + (tInX * deltaY));
+                                out.add(xIn, y0 + tInX * deltaY);
                             } else {
-                                out.add(x0 + (tInY * deltaX), yIn);
+                                out.add(x0 + tInY * deltaX, yIn);
                             }
                         }
 
                         if (1.0 >= tOut1) {
                             if (tOutX < tOutY) {
-                                out.add(xOut, y0 + (tOutX * deltaY));
+                                out.add(xOut, y0 + tOutX * deltaY);
                             } else {
-                                out.add(x0 + (tOutY * deltaX), yOut);
+                                out.add(x0 + tOutY * deltaX, yOut);
                             }
                         } else {
                             out.add(x1, y1);
@@ -491,7 +487,7 @@ public class GeometryClipper {
                     }
                 }
 
-                if ((0 < tOut2 && tOut2 <= 1.0)) {
+                if (0 < tOut2 && tOut2 <= 1.0) {
                     out.add(xOut, yOut);
                 }
             }
@@ -509,8 +505,7 @@ public class GeometryClipper {
         }
 
         return ring.getFactory()
-                .createLinearRing(
-                        out.toCoordinateSequence(ring.getFactory().getCoordinateSequenceFactory()));
+                .createLinearRing(out.toCoordinateSequence(ring.getFactory().getCoordinateSequenceFactory()));
     }
 
     /** Builds a linear ring representing the clipping area */
@@ -563,14 +558,11 @@ public class GeometryClipper {
             if (gc instanceof MultiPoint) {
                 return gc.getFactory().createMultiPoint(result.toArray(new Point[result.size()]));
             } else if (gc instanceof MultiLineString) {
-                return gc.getFactory()
-                        .createMultiLineString(result.toArray(new LineString[result.size()]));
+                return gc.getFactory().createMultiLineString(result.toArray(new LineString[result.size()]));
             } else if (gc instanceof MultiPolygon) {
-                return gc.getFactory()
-                        .createMultiPolygon(result.toArray(new Polygon[result.size()]));
+                return gc.getFactory().createMultiPolygon(result.toArray(new Polygon[result.size()]));
             } else {
-                return gc.getFactory()
-                        .createGeometryCollection(result.toArray(new Geometry[result.size()]));
+                return gc.getFactory().createGeometryCollection(result.toArray(new Geometry[result.size()]));
             }
         }
     }
@@ -583,8 +575,7 @@ public class GeometryClipper {
     private void flattenCollection(List<Geometry> result) {
         for (int i = 0; i < result.size(); ) {
             Geometry g = result.get(i);
-            if (g instanceof GeometryCollection) {
-                GeometryCollection gc = (GeometryCollection) g;
+            if (g instanceof GeometryCollection gc) {
                 for (int j = 0; j < gc.getNumGeometries(); j++) {
                     result.add(gc.getGeometryN(j));
                 }
@@ -635,9 +626,7 @@ public class GeometryClipper {
                         segment[3] = y1;
                         double[] clippedSegment = clipSegment(segment);
                         if (clippedSegment != null) {
-                            CoordinateSequence cs =
-                                    JTS.createCS(
-                                            csf, 2, coords.getDimension(), coords.getMeasures());
+                            CoordinateSequence cs = JTS.createCS(csf, 2, coords.getDimension(), coords.getMeasures());
                             cs.setOrdinate(0, 0, clippedSegment[0]);
                             cs.setOrdinate(0, 1, clippedSegment[1]);
                             cs.setOrdinate(1, 0, clippedSegment[2]);

@@ -38,12 +38,13 @@ import java.util.stream.Collectors;
 import javax.swing.Icon;
 import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
 import org.apache.batik.util.XMLResourceDescriptor;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.data.ows.URLCheckers;
 import org.geotools.renderer.style.ExternalGraphicFactory;
 import org.geotools.renderer.style.GraphicCache;
 import org.geotools.util.CanonicalSet;
 import org.geotools.util.factory.Factory;
-import org.opengis.feature.Feature;
-import org.opengis.filter.expression.Expression;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -52,9 +53,9 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
- * External graphic factory accepting an Expression that can be evaluated to a URL pointing to a SVG
- * file. The <code>format</code> must be <code>image/svg+xml</code>, thought for backwards
- * compatibility <code>image/svg-xml</code> and <code>image/svg</code> are accepted as well.
+ * External graphic factory accepting an Expression that can be evaluated to a URL pointing to a SVG file. The <code>
+ * format</code> must be <code>image/svg+xml</code>, thought for backwards compatibility <code>image/svg-xml</code> and
+ * <code>image/svg</code> are accepted as well.
  *
  * @author Andrea Aime - TOPP
  */
@@ -102,8 +103,7 @@ public class SVGGraphicFactory implements Factory, ExternalGraphicFactory, Graph
         return new SVGIcon(svg, size);
     }
 
-    protected RenderableSVG toRenderableSVG(String svgfile, URL svgUrl)
-            throws SAXException, IOException {
+    protected RenderableSVG toRenderableSVG(String svgfile, URL svgUrl) throws SAXException, IOException {
         String parser = XMLResourceDescriptor.getXMLParserClassName();
         SAXSVGDocumentFactory f = new SAXSVGDocumentFactory(parser);
         String svgUri = svgfile;
@@ -114,6 +114,11 @@ public class SVGGraphicFactory implements Factory, ExternalGraphicFactory, Graph
                 svgUri = svgfile.substring(0, idx);
             }
         }
+
+        // validate the icon can actually be fetched, it may go to a random
+        // local filesystem location, or a remote server
+        URLCheckers.confirm(svgUri);
+
         Document doc = f.createDocument(svgUri);
         Map<String, String> parameters = getParametersFromUrl(svgfile);
         if (!parameters.isEmpty() || hasParameters(doc.getDocumentElement())) {
@@ -170,8 +175,8 @@ public class SVGGraphicFactory implements Factory, ExternalGraphicFactory, Graph
             NodeList childNodes = root.getChildNodes();
             for (int i = 0; i < childNodes.getLength(); i++) {
                 Node n = childNodes.item(i);
-                if (n != null && n instanceof Element) {
-                    if (hasParameters((Element) n)) {
+                if (n != null && n instanceof Element element) {
+                    if (hasParameters(element)) {
                         return true;
                     }
                 }
@@ -185,8 +190,8 @@ public class SVGGraphicFactory implements Factory, ExternalGraphicFactory, Graph
             NodeList childNodes = root.getChildNodes();
             for (int i = 0; i < childNodes.getLength(); i++) {
                 Node n = childNodes.item(i);
-                if (n != null && n instanceof Element) {
-                    replaceParameters((Element) n, parameters);
+                if (n != null && n instanceof Element element) {
+                    replaceParameters(element, parameters);
                 }
             }
         }
@@ -256,9 +261,7 @@ public class SVGGraphicFactory implements Factory, ExternalGraphicFactory, Graph
             double targetHeight = bounds.getHeight();
             if (size > 0) {
                 double shapeAspectRatio =
-                        (bounds.getHeight() > 0 && bounds.getWidth() > 0)
-                                ? bounds.getWidth() / bounds.getHeight()
-                                : 1.0;
+                        bounds.getHeight() > 0 && bounds.getWidth() > 0 ? bounds.getWidth() / bounds.getHeight() : 1.0;
                 targetWidth = shapeAspectRatio * size;
                 targetHeight = size;
             }

@@ -22,6 +22,10 @@ import static org.junit.Assert.assertFalse;
 import java.net.URL;
 import java.util.List;
 import org.geotools.TestData;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Function;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
@@ -30,10 +34,6 @@ import org.geotools.feature.NameImpl;
 import org.geotools.process.feature.BufferFeatureCollectionFactory;
 import org.junit.Test;
 import org.locationtech.jts.geom.MultiPolygon;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Function;
 
 public class ProcessFunctionTest {
 
@@ -46,14 +46,10 @@ public class ProcessFunctionTest {
         SimpleFeatureCollection features = store.getFeatureSource().getFeatures();
 
         // first param, the context feature collection
-        Function featuresParam =
-                ff.function("parameter", ff.literal(BufferFeatureCollectionFactory.FEATURES.key));
+        Function featuresParam = ff.function("parameter", ff.literal(BufferFeatureCollectionFactory.FEATURES.key));
         // second param, the buffer size
         Function bufferParam =
-                ff.function(
-                        "parameter",
-                        ff.literal(BufferFeatureCollectionFactory.BUFFER.key),
-                        ff.literal(1000));
+                ff.function("parameter", ff.literal(BufferFeatureCollectionFactory.BUFFER.key), ff.literal(1000));
         // build the function and call it
         Function buffer = ff.function("gt:BufferFeatureCollection", featuresParam, bufferParam);
 

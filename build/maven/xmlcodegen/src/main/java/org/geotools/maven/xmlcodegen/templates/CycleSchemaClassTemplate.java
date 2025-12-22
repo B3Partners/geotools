@@ -18,7 +18,6 @@
 
 package org.geotools.maven.xmlcodegen.templates;
 
-import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.List;
@@ -32,14 +31,14 @@ import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 
 import org.eclipse.xsd.XSDTypeDefinition;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.ComplexType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.feature.type.PropertyType;
+import org.geotools.api.feature.type.Schema;
 import org.geotools.maven.xmlcodegen.SchemaGenerator;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.ComplexType;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.feature.type.PropertyType;
-import org.opengis.feature.type.Schema;
 
 public class CycleSchemaClassTemplate
 {
@@ -52,9 +51,9 @@ public class CycleSchemaClassTemplate
     return result;
   }
 
-  public final String NL = nl == null ? (System.getProperties().getProperty("line.separator")) : nl;
+  public final String NL = nl == null ? System.getProperties().getProperty("line.separator") : nl;
   protected final String TEXT_1 = "";
-  protected final String TEXT_2 = NL + NL + "import java.util.ArrayList;" + NL + "import java.util.Collection;" + NL + "import java.util.List;" + NL + "import java.util.TreeMap;" + NL + "" + NL + "import org.geotools.feature.NameImpl;" + NL + "import org.geotools.feature.type.AbstractLazyAttributeTypeImpl;" + NL + "import org.geotools.feature.type.AbstractLazyComplexTypeImpl;" + NL + "import org.geotools.feature.type.AttributeDescriptorImpl;" + NL + "import org.geotools.feature.type.SchemaImpl;" + NL + "import org.opengis.feature.type.AttributeType;" + NL + "import org.opengis.feature.type.ComplexType;" + NL + "import org.opengis.feature.type.Name;" + NL + "import org.opengis.feature.type.PropertyDescriptor;" + NL + "import org.opengis.feature.type.Schema;";
+  protected final String TEXT_2 = NL + NL + "import java.util.ArrayList;" + NL + "import java.util.Collection;" + NL + "import java.util.List;" + NL + "import java.util.TreeMap;" + NL + "" + NL + "import org.geotools.feature.NameImpl;" + NL + "import org.geotools.feature.type.AbstractLazyAttributeTypeImpl;" + NL + "import org.geotools.feature.type.AbstractLazyComplexTypeImpl;" + NL + "import org.geotools.feature.type.AttributeDescriptorImpl;" + NL + "import org.geotools.feature.type.SchemaImpl;" + NL + "import org.geotools.api.feature.type.AttributeType;" + NL + "import org.geotools.api.feature.type.ComplexType;" + NL + "import org.geotools.api.feature.type.Name;" + NL + "import org.geotools.api.feature.type.PropertyDescriptor;" + NL + "import org.geotools.api.feature.type.Schema;";
   protected final String TEXT_3 = NL + "import ";
   protected final String TEXT_4 = ";";
   protected final String TEXT_5 = NL + NL + "public class ";
@@ -258,8 +257,7 @@ public class CycleSchemaClassTemplate
     stringBuffer.append(superType);
     stringBuffer.append(TEXT_34);
     
-            if (type instanceof ComplexType && !typeBindings.containsKey(name)) {
-                ComplexType cType = (ComplexType)type;
+            if (type instanceof ComplexType cType && !typeBindings.containsKey(name)) {
 
     stringBuffer.append(TEXT_35);
     

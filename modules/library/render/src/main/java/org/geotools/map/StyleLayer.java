@@ -16,7 +16,7 @@
  */
 package org.geotools.map;
 
-import org.geotools.styling.Style;
+import org.geotools.api.style.Style;
 
 /**
  * Layer responsible for rendering under control of a user supplied Style object.
@@ -27,9 +27,8 @@ import org.geotools.styling.Style;
  *   <li>style: Style
  * </ul>
  *
- * Please note that a StyleLayerDescriptor (defined by SLD) document is usually used to describe the
- * rendering requirements for an entire Map; while a Style (defined by SE) is focused on a single
- * layer of content
+ * Please note that a StyleLayerDescriptor (defined by SLD) document is usually used to describe the rendering
+ * requirements for an entire Map; while a Style (defined by SE) is focused on a single layer of content
  *
  * @since 8.0
  * @version 8.0

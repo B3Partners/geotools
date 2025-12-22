@@ -19,20 +19,20 @@
  */
 package org.geotools.referencing;
 
+import java.io.Serial;
 import java.util.HashMap;
 import java.util.Map;
+import org.geotools.api.metadata.extent.Extent;
+import org.geotools.api.referencing.ReferenceSystem;
+import org.geotools.api.util.InternationalString;
 import org.geotools.util.Utilities;
-import org.opengis.metadata.extent.Extent;
-import org.opengis.referencing.ReferenceSystem;
-import org.opengis.util.InternationalString;
 
 /**
  * Description of a spatial and temporal reference system used by a dataset.
  *
- * <p>This class is conceptually <cite>abstract</cite>, even if it is technically possible to
- * instantiate it. Typical applications should create instances of the most specific subclass with
- * {@code Default} prefix instead. An exception to this rule may occurs when it is not possible to
- * identify the exact type.
+ * <p>This class is conceptually <cite>abstract</cite>, even if it is technically possible to instantiate it. Typical
+ * applications should create instances of the most specific subclass with {@code Default} prefix instead. An exception
+ * to this rule may occurs when it is not possible to identify the exact type.
  *
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
@@ -40,27 +40,26 @@ import org.opengis.util.InternationalString;
  */
 public class AbstractReferenceSystem extends AbstractIdentifiedObject implements ReferenceSystem {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 3337659819553899435L;
 
-    /**
-     * List of localizable properties. To be given to {@link AbstractIdentifiedObject} constructor.
-     */
+    /** List of localizable properties. To be given to {@link AbstractIdentifiedObject} constructor. */
     private static final String[] LOCALIZABLES = {SCOPE_KEY};
 
     /** Area for which the (coordinate) reference system is valid. */
     private final Extent domainOfValidity;
 
     /**
-     * Description of domain of usage, or limitations of usage, for which this (coordinate)
-     * reference system object is valid.
+     * Description of domain of usage, or limitations of usage, for which this (coordinate) reference system object is
+     * valid.
      */
     private final InternationalString scope;
 
     /**
-     * Constructs a new reference system with the same values than the specified one. This copy
-     * constructor provides a way to wrap an arbitrary implementation into a Geotools one or a
-     * user-defined one (as a subclass), usually in order to leverage some implementation-specific
-     * API. This constructor performs a shallow copy, i.e. the properties are not cloned.
+     * Constructs a new reference system with the same values than the specified one. This copy constructor provides a
+     * way to wrap an arbitrary implementation into a Geotools one or a user-defined one (as a subclass), usually in
+     * order to leverage some implementation-specific API. This constructor performs a shallow copy, i.e. the properties
+     * are not cloned.
      *
      * @param object The reference system to copy.
      * @since 2.2
@@ -72,9 +71,8 @@ public class AbstractReferenceSystem extends AbstractIdentifiedObject implements
     }
 
     /**
-     * Constructs a reference system from a set of properties. The properties given in argument
-     * follow the same rules than for the {@linkplain
-     * AbstractIdentifiedObject#AbstractIdentifiedObject(Map) super-class constructor}.
+     * Constructs a reference system from a set of properties. The properties given in argument follow the same rules
+     * than for the {@linkplain AbstractIdentifiedObject#AbstractIdentifiedObject(Map) super-class constructor}.
      * Additionally, the following properties are understood by this construtor:
      *
      * <p>
@@ -104,19 +102,18 @@ public class AbstractReferenceSystem extends AbstractIdentifiedObject implements
     }
 
     /**
-     * Work around for RFE #4093999 in Sun's bug database ("Relax constraint on placement of
-     * this()/super() call in constructors").
+     * Work around for RFE #4093999 in Sun's bug database ("Relax constraint on placement of this()/super() call in
+     * constructors").
      */
-    private AbstractReferenceSystem(
-            final Map<String, ?> properties, final Map<String, Object> subProperties) {
+    private AbstractReferenceSystem(final Map<String, ?> properties, final Map<String, Object> subProperties) {
         super(properties, subProperties, LOCALIZABLES);
         domainOfValidity = (Extent) subProperties.get(DOMAIN_OF_VALIDITY_KEY);
         scope = (InternationalString) subProperties.get(SCOPE_KEY);
     }
 
     /**
-     * Area or region or timeframe in which this (coordinate) reference system is valid. Returns
-     * {@code null} if not available.
+     * Area or region or timeframe in which this (coordinate) reference system is valid. Returns {@code null} if not
+     * available.
      *
      * @since 2.4
      */
@@ -126,8 +123,8 @@ public class AbstractReferenceSystem extends AbstractIdentifiedObject implements
     }
 
     /**
-     * Description of domain of usage, or limitations of usage, for which this (coordinate)
-     * reference system object is valid. Returns {@code null} if not available.
+     * Description of domain of usage, or limitations of usage, for which this (coordinate) reference system object is
+     * valid. Returns {@code null} if not available.
      */
     @Override
     public InternationalString getScope() {
@@ -135,13 +132,13 @@ public class AbstractReferenceSystem extends AbstractIdentifiedObject implements
     }
 
     /**
-     * Compare this reference system with the specified object for equality. If {@code
-     * compareMetadata} is {@code true}, then all available properties are compared including
-     * {@linkplain #getDomainOfValidity()} valid area} and {@linkplain #getScope scope}.
+     * Compare this reference system with the specified object for equality. If {@code compareMetadata} is {@code true},
+     * then all available properties are compared including {@linkplain #getDomainOfValidity()} valid area} and
+     * {@linkplain #getScope scope}.
      *
      * @param object The object to compare to {@code this}.
-     * @param compareMetadata {@code true} for performing a strict comparaison, or {@code false} for
-     *     comparing only properties relevant to transformations.
+     * @param compareMetadata {@code true} for performing a strict comparaison, or {@code false} for comparing only
+     *     properties relevant to transformations.
      * @return {@code true} if both objects are equal.
      */
     @Override
@@ -151,8 +148,7 @@ public class AbstractReferenceSystem extends AbstractIdentifiedObject implements
                 return true;
             }
             final AbstractReferenceSystem that = (AbstractReferenceSystem) object;
-            return Utilities.equals(domainOfValidity, that.domainOfValidity)
-                    && Utilities.equals(scope, that.scope);
+            return Utilities.equals(domainOfValidity, that.domainOfValidity) && Utilities.equals(scope, that.scope);
         }
         return false;
     }

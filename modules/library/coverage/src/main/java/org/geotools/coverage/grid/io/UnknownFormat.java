@@ -17,17 +17,17 @@
 package org.geotools.coverage.grid.io;
 
 import java.util.HashMap;
+import org.geotools.api.coverage.grid.Format;
+import org.geotools.api.coverage.grid.GridCoverageWriter;
+import org.geotools.api.parameter.ParameterValueGroup;
 import org.geotools.coverage.grid.io.imageio.GeoToolsWriteParams;
 import org.geotools.util.factory.Hints;
-import org.opengis.coverage.grid.Format;
-import org.opengis.coverage.grid.GridCoverageWriter;
-import org.opengis.parameter.ParameterValueGroup;
 
 /**
  * This class can be used when a proper {@link Format} cannot be found for some input sources.
  *
- * <p>It implements the abstract method of {@link AbstractGridFormat} but it always returns null to
- * indicate that the format it represents is unknown.
+ * <p>It implements the abstract method of {@link AbstractGridFormat} but it always returns null to indicate that the
+ * format it represents is unknown.
  *
  * @author Jesse Eichar
  * @author Simone Giannecchini (simboss)
@@ -67,8 +67,7 @@ public class UnknownFormat extends AbstractGridFormat implements Format {
     /** @see AbstractGridFormat#getDefaultImageIOWriteParameters() */
     @Override
     public GeoToolsWriteParams getDefaultImageIOWriteParameters() {
-        throw new UnsupportedOperationException(
-                "Trying to get a writing parameters from an unknown format.");
+        throw new UnsupportedOperationException("Trying to get a writing parameters from an unknown format.");
     }
     /** @see AbstractGridFormat#accepts(Object) */
     @Override
@@ -82,8 +81,7 @@ public class UnknownFormat extends AbstractGridFormat implements Format {
      */
     @Override
     public ParameterValueGroup getReadParameters() {
-        throw new UnsupportedOperationException(
-                "Trying to get a reading parameters from an unknown format.");
+        throw new UnsupportedOperationException("Trying to get a reading parameters from an unknown format.");
     }
 
     /*
@@ -92,8 +90,7 @@ public class UnknownFormat extends AbstractGridFormat implements Format {
      */
     @Override
     public ParameterValueGroup getWriteParameters() {
-        throw new UnsupportedOperationException(
-                "Trying to get a writing parameters from an unknown format.");
+        throw new UnsupportedOperationException("Trying to get a writing parameters from an unknown format.");
     }
 
     @Override

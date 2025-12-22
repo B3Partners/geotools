@@ -17,18 +17,17 @@
 package org.geotools.data.wfs.internal;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.namespace.QName;
-import org.geotools.data.wfs.internal.parsers.XmlComplexFeatureParser;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.Filter;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.feature.collection.BaseFeatureCollection;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.Filter;
 
 /**
  * Feature collection for parsing complex features.
@@ -36,10 +35,8 @@ import org.opengis.filter.Filter;
  * @author Adam Brown (Curtin University of Technology)
  * @author Rini Angreani (CSIRO Earth Science and Resource Engineering)
  */
-public class WFSContentComplexFeatureCollection
-        extends BaseFeatureCollection<FeatureType, Feature> {
-    private static final Logger LOGGER =
-            Logging.getLogger(WFSContentComplexFeatureCollection.class);
+public class WFSContentComplexFeatureCollection extends BaseFeatureCollection<FeatureType, Feature> {
+    private static final Logger LOGGER = Logging.getLogger(WFSContentComplexFeatureCollection.class);
 
     private final WFSClient client;
 
@@ -51,34 +48,16 @@ public class WFSContentComplexFeatureCollection
 
     private final Filter filter;
 
-    /** @deprecated - Will not work when using POST */
-    @Deprecated
-    public WFSContentComplexFeatureCollection(
-            GetFeatureRequest request, FeatureType schema, QName name) throws IOException {
-        this(request, schema, name, Filter.INCLUDE, null);
-    }
-
-    /** @deprecated - Will not work when using POST */
-    @Deprecated
-    public WFSContentComplexFeatureCollection(
-            GetFeatureRequest request, FeatureType schema, QName name, Filter filter)
-            throws IOException {
-        this(request, schema, name, filter, null);
-    }
-
     /** Making a feature collection based on a request for a type without any filter. */
     public WFSContentComplexFeatureCollection(
             GetFeatureRequest request, FeatureType schema, QName name, WFSClient client) {
-        this(request, schema, name, Filter.INCLUDE, client);
+        this(request, schema, name, null, client);
     }
 
     /** Making a feature collection based on a request for a type with a filter. */
     public WFSContentComplexFeatureCollection(
-            GetFeatureRequest request,
-            FeatureType schema,
-            QName name,
-            Filter filter,
-            WFSClient client) {
+            GetFeatureRequest request, FeatureType schema, QName name, Filter filter, WFSClient client) {
+        Objects.requireNonNull(client);
         this.request = request;
         this.name = name;
         this.schema = schema;
@@ -87,20 +66,12 @@ public class WFSContentComplexFeatureCollection
     }
 
     /** Make sure to close the iterator. */
-    @SuppressWarnings("PMD.CloseResource") // wrapped and returned
     @Override
     public FeatureIterator<Feature> features() {
         try {
-            if (client == null) {
-                InputStream stream = request.getFinalURL().openStream();
-                XmlComplexFeatureParser parser =
-                        new XmlComplexFeatureParser(
-                                stream, schema, name, filter, request.getStrategy());
-                return new ComplexFeatureIteratorImpl(parser);
-            } else {
-                ComplexGetFeatureResponse response = client.issueComplexRequest(request);
-                return response.features();
-            }
+            ComplexGetFeatureResponse response = client.issueComplexRequest(request);
+            response.getParser().setFilter(filter);
+            return response.features();
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
             throw new RuntimeException("Couldn't read features of collection.", e);

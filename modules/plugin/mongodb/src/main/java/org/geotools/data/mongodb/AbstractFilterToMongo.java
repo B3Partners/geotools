@@ -28,69 +28,82 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import org.bson.types.ObjectId;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.BinaryComparisonOperator;
+import org.geotools.api.filter.ExcludeFilter;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.IncludeFilter;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNil;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.Multiply;
+import org.geotools.api.filter.expression.NilExpression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.Subtract;
+import org.geotools.api.filter.identity.Identifier;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
+import org.geotools.api.filter.temporal.After;
+import org.geotools.api.filter.temporal.AnyInteracts;
+import org.geotools.api.filter.temporal.Before;
+import org.geotools.api.filter.temporal.Begins;
+import org.geotools.api.filter.temporal.BegunBy;
+import org.geotools.api.filter.temporal.During;
+import org.geotools.api.filter.temporal.EndedBy;
+import org.geotools.api.filter.temporal.Ends;
+import org.geotools.api.filter.temporal.Meets;
+import org.geotools.api.filter.temporal.MetBy;
+import org.geotools.api.filter.temporal.OverlappedBy;
+import org.geotools.api.filter.temporal.TContains;
+import org.geotools.api.filter.temporal.TEquals;
+import org.geotools.api.filter.temporal.TOverlaps;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.GeographicCRS;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.data.mongodb.complex.JsonSelectAllFunction;
 import org.geotools.data.mongodb.complex.JsonSelectFunction;
+import org.geotools.data.util.DistanceBufferUtil;
 import org.geotools.filter.FilterAttributeExtractor;
+import org.geotools.geometry.jts.JTS;
+import org.geotools.referencing.CRS;
+import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.util.Converters;
+import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.And;
-import org.opengis.filter.BinaryComparisonOperator;
-import org.opengis.filter.ExcludeFilter;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.Id;
-import org.opengis.filter.IncludeFilter;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNil;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.Multiply;
-import org.opengis.filter.expression.NilExpression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.expression.Subtract;
-import org.opengis.filter.identity.Identifier;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
-import org.opengis.filter.temporal.After;
-import org.opengis.filter.temporal.AnyInteracts;
-import org.opengis.filter.temporal.Before;
-import org.opengis.filter.temporal.Begins;
-import org.opengis.filter.temporal.BegunBy;
-import org.opengis.filter.temporal.During;
-import org.opengis.filter.temporal.EndedBy;
-import org.opengis.filter.temporal.Ends;
-import org.opengis.filter.temporal.Meets;
-import org.opengis.filter.temporal.MetBy;
-import org.opengis.filter.temporal.OverlappedBy;
-import org.opengis.filter.temporal.TContains;
-import org.opengis.filter.temporal.TEquals;
-import org.opengis.filter.temporal.TOverlaps;
+import org.locationtech.jts.geom.Point;
 
 /**
  * Abstract visitor responsible for generating a BasicDBObject to use as a MongoDB query.
@@ -102,7 +115,14 @@ import org.opengis.filter.temporal.TOverlaps;
  */
 public abstract class AbstractFilterToMongo implements FilterVisitor, ExpressionVisitor {
 
+    public static final int HUNDRED_KM_IN_METERS = 100000;
+    protected static Logger LOGGER = org.geotools.util.logging.Logging.getLogger(AbstractFilterToMongo.class);
+
+    private static final int DEFAULT_SEGMENTS = 10;
     protected final MongoGeometryBuilder geometryBuilder;
+
+    /** The schmema the encoder will use as reference to drive filter encoding */
+    protected FeatureType featureType;
 
     /** The whole world in WGS84 */
     private static final Envelope WORLD = new Envelope(-179.99, 179.99, -89.99, 89.99);
@@ -116,20 +136,28 @@ public abstract class AbstractFilterToMongo implements FilterVisitor, Expression
     }
 
     protected BasicDBObject asDBObject(Object extraData) {
-        if (extraData instanceof BasicDBObject) {
-            return (BasicDBObject) extraData;
+        if (extraData instanceof BasicDBObject object) {
+            return object;
         }
         return new BasicDBObject();
     }
 
+    /**
+     * Sets the feature type the encoder is encoding a filter for.
+     *
+     * <p>The type of the attributes may drive how the filter is translated to a mongodb query document.
+     */
+    public void setFeatureType(FeatureType featureType) {
+        this.featureType = featureType;
+    }
     //
     // primitives
     //
     @Override
     public Object visit(Literal expression, Object extraData) {
         Class<?> targetType = null;
-        if (extraData != null && extraData instanceof Class) {
-            targetType = (Class<?>) extraData;
+        if (extraData != null && extraData instanceof Class<?> class1) {
+            targetType = class1;
         }
 
         return encodeLiteral(expression.getValue(), targetType);
@@ -145,14 +173,14 @@ public abstract class AbstractFilterToMongo implements FilterVisitor, Expression
     }
 
     /**
-     * Method responsible of retrieving the MongoDB geometry json path
+     * Method responsible for retrieving the MongoDB geometry json path
      *
      * @return the MongoDB json paath for the default geometry
      */
     protected abstract String getGeometryPath();
 
     /**
-     * Method responsible of mapping a PropertyName to the corresponding MongoDB json path
+     * Method responsible for mapping a PropertyName to the corresponding MongoDB json path
      *
      * @param property the string property name to map
      * @return the MongoDB json path
@@ -245,8 +273,7 @@ public abstract class AbstractFilterToMongo implements FilterVisitor, Expression
             output.put(strPn, dbObject);
         } else {
             // no PropertyName found throwing exception
-            throw new UnsupportedOperationException(
-                    "No propertyName found, cannot use $not as top level operator");
+            throw new UnsupportedOperationException("No propertyName found, cannot use $not as top level operator");
         }
         return output;
     }
@@ -275,8 +302,7 @@ public abstract class AbstractFilterToMongo implements FilterVisitor, Expression
         return encodeBinaryComparisonOp(filter, "$eq", extraData);
     }
 
-    BasicDBObject encodeBinaryComparisonOp(
-            BinaryComparisonOperator filter, String op, Object extraData) {
+    BasicDBObject encodeBinaryComparisonOp(BinaryComparisonOperator filter, String op, Object extraData) {
         BasicDBObject output = asDBObject(extraData);
 
         Expression left = filter.getExpression1();
@@ -299,9 +325,9 @@ public abstract class AbstractFilterToMongo implements FilterVisitor, Expression
     protected Class<?> getValueType(Expression e) {
 
         Class<?> ret = getValueTypeInternal(e);
-        if (ret == null && e instanceof Function)
+        if (ret == null && e instanceof Function function)
             // get the value type from the function return type
-            ret = getFunctionReturnType((Function) e);
+            ret = getFunctionReturnType(function);
         return ret;
     }
 
@@ -372,7 +398,7 @@ public abstract class AbstractFilterToMongo implements FilterVisitor, Expression
 
         String multi = filter.getWildCard();
         String single = filter.getSingleChar();
-        int flags = (filter.isMatchingCase()) ? 0 : Pattern.CASE_INSENSITIVE;
+        int flags = filter.isMatchingCase() ? 0 : Pattern.CASE_INSENSITIVE;
 
         String regex = filter.getLiteral().replace(multi, ".*").replace(single, ".");
         // force full string match
@@ -406,8 +432,7 @@ public abstract class AbstractFilterToMongo implements FilterVisitor, Expression
             objectIds.add(new ObjectId(id.toString()));
         }
 
-        Object objectIdDBO =
-                (objectIds.size() > 1) ? new BasicDBObject("$in", objectIds) : objectIds.get(0);
+        Object objectIdDBO = objectIds.size() > 1 ? new BasicDBObject("$in", objectIds) : objectIds.get(0);
 
         output.put("_id", objectIdDBO);
         return output;
@@ -432,11 +457,10 @@ public abstract class AbstractFilterToMongo implements FilterVisitor, Expression
 
         DBObject geometryDBObject = geometryBuilder.toObject(envelope);
         addCrsToGeometryDBObject(geometryDBObject);
-        DBObject dbo =
-                BasicDBObjectBuilder.start()
-                        .push("$geoIntersects")
-                        .add("$geometry", geometryDBObject)
-                        .get();
+        DBObject dbo = BasicDBObjectBuilder.start()
+                .push("$geoIntersects")
+                .add("$geometry", geometryDBObject)
+                .get();
 
         output.put((String) e1, dbo);
         return output;
@@ -454,11 +478,10 @@ public abstract class AbstractFilterToMongo implements FilterVisitor, Expression
 
         DBObject geometryDBObject = geometryBuilder.toObject(geometry);
         addCrsToGeometryDBObject(geometryDBObject);
-        DBObject dbo =
-                BasicDBObjectBuilder.start()
-                        .push("$geoIntersects")
-                        .add("$geometry", geometryDBObject)
-                        .get();
+        DBObject dbo = BasicDBObjectBuilder.start()
+                .push("$geoIntersects")
+                .add("$geometry", geometryDBObject)
+                .get();
 
         output.put((String) e1, dbo);
         return output;
@@ -475,11 +498,10 @@ public abstract class AbstractFilterToMongo implements FilterVisitor, Expression
 
         DBObject geometryDBObject = geometryBuilder.toObject(geometry);
         addCrsToGeometryDBObject(geometryDBObject);
-        DBObject dbo =
-                BasicDBObjectBuilder.start()
-                        .push("$geoWithin")
-                        .add("$geometry", geometryDBObject)
-                        .get();
+        DBObject dbo = BasicDBObjectBuilder.start()
+                .push("$geoWithin")
+                .add("$geometry", geometryDBObject)
+                .get();
 
         output.put((String) e1, dbo);
         return output;
@@ -519,9 +541,92 @@ public abstract class AbstractFilterToMongo implements FilterVisitor, Expression
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * DWITHIN filter is delegated to Mongo's $near operator for point geometry, otherwise it is delegated to
+     * $geoIntersects. To properly compute the buffer the azimuthal equidistant projection is being used.
+     *
+     * @param filter
+     * @param extraData
+     * @return
+     */
     @Override
     public Object visit(DWithin filter, Object extraData) {
-        throw new UnsupportedOperationException();
+        BasicDBObject output = asDBObject(extraData);
+
+        Object e1 = filter.getExpression1().accept(this, Geometry.class);
+
+        Geometry geometry = filter.getExpression2().evaluate(null, Geometry.class);
+
+        CoordinateReferenceSystem coordinateReferenceSystem = featureType.getCoordinateReferenceSystem();
+        double distanceInMeters = DistanceBufferUtil.getDistanceInMeters(filter);
+        DBObject dbo;
+        // If point use $near
+        if (geometry instanceof Point) {
+            DBObject geometryDBObject = geometryBuilder.toObject(geometry);
+            dbo = BasicDBObjectBuilder.start()
+                    .push("$near")
+                    .add("$geometry", geometryDBObject)
+                    .add("$maxDistance", distanceInMeters)
+                    .get();
+            // Other type of geometry, use $geoIntersects
+        } else {
+            try {
+                Point centroid = geometry.getCentroid();
+                CoordinateReferenceSystem azimuthalEquidistantCRS =
+                        computeAzimutalEquidistantCRS(centroid, coordinateReferenceSystem);
+                // Transform geometry to CRS that supports meters
+                MathTransform transform = CRS.findMathTransform(coordinateReferenceSystem, azimuthalEquidistantCRS);
+                geometry = JTS.transform(geometry, transform);
+                // Apply buffer in meters to geometry
+                Geometry bufferedGeometry = geometry.buffer(distanceInMeters, DEFAULT_SEGMENTS);
+
+                logAdditionalInformation(bufferedGeometry);
+
+                // Transform back to original with buffer applied
+                transform = CRS.findMathTransform(azimuthalEquidistantCRS, coordinateReferenceSystem);
+                geometry = JTS.transform(bufferedGeometry, transform);
+            } catch (FactoryException | TransformException e) {
+                throw new RuntimeException("Failed to compute polygon within distance from reference geometry", e);
+            }
+            DBObject geometryDBObject = geometryBuilder.toObject(geometry);
+            dbo = BasicDBObjectBuilder.start()
+                    .push("$geoIntersects")
+                    .add("$geometry", geometryDBObject)
+                    .get();
+        }
+
+        output.put((String) e1, dbo);
+        return output;
+    }
+
+    private void logAdditionalInformation(Geometry bufferedGeometry) {
+        Coordinate centroidCoordinate = bufferedGeometry.getCentroid().getCoordinate();
+        Coordinate[] coordinates = bufferedGeometry.getEnvelope().getCoordinates();
+
+        for (Coordinate coordinate : coordinates) {
+            if (coordinate.distance(centroidCoordinate) > HUNDRED_KM_IN_METERS) {
+                LOGGER.fine(
+                        "The size of input buffer to apply is bigger then 100 km. This may result in decreased precision of buffer operation.");
+                break;
+            }
+        }
+    }
+
+    private static CoordinateReferenceSystem computeAzimutalEquidistantCRS(
+            Point centroid, CoordinateReferenceSystem coordinateReferenceSystem)
+            throws FactoryException, TransformException {
+        if (!(coordinateReferenceSystem instanceof GeographicCRS)
+                || CRS.getAxisOrder(coordinateReferenceSystem).equals(CRS.AxisOrder.NORTH_EAST)) {
+            MathTransform mathTransform = CRS.findMathTransform(coordinateReferenceSystem, DefaultGeographicCRS.WGS84);
+            centroid = (Point) JTS.transform(centroid, mathTransform);
+        }
+
+        double lon = centroid.getX();
+        double lat = centroid.getY();
+
+        String autoCRS = "AUTO:97003,9001," + lon + "," + lat;
+
+        return CRS.decode(autoCRS);
     }
 
     @Override
@@ -551,11 +656,11 @@ public abstract class AbstractFilterToMongo implements FilterVisitor, Expression
 
     @Override
     public Object visit(Function function, Object extraData) {
-        if (function instanceof JsonSelectFunction) {
-            return ((JsonSelectFunction) function).getJsonPath();
+        if (function instanceof JsonSelectFunction selectFunction) {
+            return selectFunction.getJsonPath();
         }
-        if (function instanceof JsonSelectAllFunction) {
-            return ((JsonSelectAllFunction) function).getJsonPath();
+        if (function instanceof JsonSelectAllFunction allFunction) {
+            return allFunction.getJsonPath();
         }
         throw new UnsupportedOperationException();
     }
@@ -646,22 +751,21 @@ public abstract class AbstractFilterToMongo implements FilterVisitor, Expression
     }
 
     Object encodeLiteral(Object literal, Class<?> targetType) {
-        if (literal instanceof Envelope) {
-            return geometryBuilder.toObject((Envelope) literal);
-        } else if (literal instanceof Geometry) {
-            return geometryBuilder.toObject((Geometry) literal);
-        } else if (literal instanceof Date) {
+        if (literal instanceof Envelope envelope) {
+            return geometryBuilder.toObject(envelope);
+        } else if (literal instanceof Geometry geometry) {
+            return geometryBuilder.toObject(geometry);
+        } else if (literal instanceof Date date) {
             if (targetType != null && Date.class.isAssignableFrom(targetType)) {
                 // return date object as is, will be correctly encoded by BasicDBObject
                 return literal;
             }
             // by default, convert date to ISO-8601 string
-            return DateTimeFormatter.ISO_DATE_TIME.format(((Date) literal).toInstant());
-        } else if (literal instanceof String) {
+            return DateTimeFormatter.ISO_DATE_TIME.format(date.toInstant());
+        } else if (literal instanceof String string) {
             if (targetType != null && Date.class.isAssignableFrom(targetType)) {
                 // try parse string assuming it's ISO-8601 formatted
-                return Date.from(
-                        Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse((String) literal)));
+                return Date.from(Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse(string)));
             }
             // try to convert to the expected type
             return convertLiteral(literal, targetType);
@@ -677,8 +781,8 @@ public abstract class AbstractFilterToMongo implements FilterVisitor, Expression
     };
 
     /**
-     * Helper method that tries to convert a literal to the expected type. If the target type is not
-     * supported by MongoDB the string representation of the literal is returned.
+     * Helper method that tries to convert a literal to the expected type. If the target type is not supported by
+     * MongoDB the string representation of the literal is returned.
      */
     private Object convertLiteral(Object literal, Class<?> targetType) {
         if (literal == null) {
@@ -704,9 +808,7 @@ public abstract class AbstractFilterToMongo implements FilterVisitor, Expression
         return converted;
     }
 
-    /**
-     * Helper method that tries to convert a literal to a Java primitive type supported by MongoDB.
-     */
+    /** Helper method that tries to convert a literal to a Java primitive type supported by MongoDB. */
     private Object covertToPrimitive(Object literal) {
         for (Class<?> supportedType : SUPPORTED_PRIMITIVES_TYPES) {
             if (supportedType.isAssignableFrom(literal.getClass())) {

@@ -25,15 +25,15 @@ import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.Query;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
 import org.geotools.data.jdbc.datasource.ManageableDataSource;
 import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.jdbc.JDBCDataStoreFactory;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
 
 public class H2LinkedTableTest {
     H2DataStoreFactory factory;
@@ -48,9 +48,8 @@ public class H2LinkedTableTest {
         org.h2.Driver.load();
         try (Connection con = DriverManager.getConnection("jdbc:h2:geotools2", "sa", "sa")) {
             try (Statement stmt = con.createStatement()) {
-                stmt.execute(
-                        "DROP TABLE IF EXISTS \"test\"; "
-                                + "CREATE TABLE \"test\" as select * from SYSTEM_RANGE(1,2) as n;");
+                stmt.execute("DROP TABLE IF EXISTS \"test\"; "
+                        + "CREATE TABLE \"test\" as select * from SYSTEM_RANGE(1,2) as n;");
             }
         }
 
@@ -66,9 +65,8 @@ public class H2LinkedTableTest {
             assertTrue(ds.getDataSource() instanceof ManageableDataSource);
             try (Connection con = ds.getDataSource().getConnection()) {
                 try (Statement stmt = con.createStatement()) {
-                    String sql =
-                            "DROP TABLE IF EXISTS \"test_linked\"; CREATE LINKED TABLE \"test_linked\"(NULL, "
-                                    + "'jdbc:h2:geotools2', 'sa', 'sa', '\"test\"')";
+                    String sql = "DROP TABLE IF EXISTS \"test_linked\"; CREATE LINKED TABLE \"test_linked\"(NULL, "
+                            + "'jdbc:h2:geotools2', 'sa', 'sa', '\"test\"')";
                     stmt.execute(sql);
                 }
             }

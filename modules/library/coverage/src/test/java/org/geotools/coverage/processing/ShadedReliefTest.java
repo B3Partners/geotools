@@ -19,16 +19,16 @@ package org.geotools.coverage.processing;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import it.geosolutions.jaiext.shadedrelief.ShadedReliefAlgorithm;
 import java.awt.image.RenderedImage;
-import javax.media.jai.PlanarImage;
+import org.eclipse.imagen.PlanarImage;
+import org.eclipse.imagen.media.shadedrelief.ShadedReliefAlgorithm;
+import org.geotools.api.coverage.processing.OperationNotFoundException;
+import org.geotools.api.parameter.InvalidParameterValueException;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.coverage.processing.OperationNotFoundException;
-import org.opengis.parameter.InvalidParameterValueException;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
 
 /**
  * Tests the ShadedRelief operation.
@@ -97,10 +97,10 @@ public class ShadedReliefTest extends GridProcessingTestBase {
     }
 
     private ParameterValueGroup createDefaultParams(final GridCoverage2D coverage)
-            throws InvalidParameterValueException, OperationNotFoundException,
-                    ParameterNotFoundException {
+            throws InvalidParameterValueException, OperationNotFoundException, ParameterNotFoundException {
         // Getting parameters for doing a scale.
-        final ParameterValueGroup params = processor.getOperation("ShadedRelief").getParameters();
+        final ParameterValueGroup params =
+                processor.getOperation("ShadedRelief").getParameters();
         params.parameter("Source").setValue(coverage);
         params.parameter("roi").setValue(null);
         params.parameter("srcNoData").setValue(null);

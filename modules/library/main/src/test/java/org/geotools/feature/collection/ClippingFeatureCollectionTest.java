@@ -16,6 +16,8 @@
  */
 package org.geotools.feature.collection;
 
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -27,8 +29,6 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class ClippingFeatureCollectionTest {
 
@@ -54,10 +54,7 @@ public class ClippingFeatureCollectionTest {
             if (i < 2) {
                 // adding a Point that will not intersect the first
                 // two features
-                feature.getUserData()
-                        .put(
-                                Hints.GEOMETRY_CLIP,
-                                factory.createPoint(new Coordinate(i + 1, i + 1)));
+                feature.getUserData().put(Hints.GEOMETRY_CLIP, factory.createPoint(new Coordinate(i + 1, i + 1)));
             }
             delegate.add(feature);
         }

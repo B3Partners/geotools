@@ -22,9 +22,9 @@ import static org.junit.Assert.assertTrue;
 
 import au.com.objectix.jgridshift.GridShiftFile;
 import java.net.URL;
+import org.geotools.api.referencing.FactoryException;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.referencing.FactoryException;
 
 /**
  * Unit tests for {@link NTv2GridShiftFactory} public methods
@@ -36,8 +36,7 @@ public class NTv2GridShiftFactoryTest {
     private static final URL TEST_GRID = NTv2GridShiftFactoryTest.class.getResource("BALR2009.gsb");
     private static final URL INEXISTENT_GRID =
             NTv2GridShiftFactoryTest.class.getResource("this_NTv2_grid_does_not_exist");
-    private static final URL MALFORMED_GRID =
-            NTv2GridShiftFactoryTest.class.getResource("malformedNTv2grid.gsb");
+    private static final URL MALFORMED_GRID = NTv2GridShiftFactoryTest.class.getResource("malformedNTv2grid.gsb");
 
     private NTv2GridShiftFactory factory;
 
@@ -52,8 +51,8 @@ public class NTv2GridShiftFactoryTest {
     }
 
     /**
-     * Test method for {@link
-     * org.geotools.referencing.factory.gridshift.NTv2GridShiftFactory#isNTv2Grid(java.lang.String)}.
+     * Test method for
+     * {@link org.geotools.referencing.factory.gridshift.NTv2GridShiftFactory#isNTv2Grid(java.lang.String)}.
      */
     @Test
     public void testIsNTv2GridAvailable() {
@@ -64,8 +63,8 @@ public class NTv2GridShiftFactoryTest {
     }
 
     /**
-     * Test method for {@link
-     * org.geotools.referencing.factory.gridshift.NTv2GridShiftFactory#createNTv2Grid(java.lang.String)}.
+     * Test method for
+     * {@link org.geotools.referencing.factory.gridshift.NTv2GridShiftFactory#createNTv2Grid(java.lang.String)}.
      */
     @Test
     public void testCreateNTv2Grid() {

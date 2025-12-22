@@ -16,8 +16,9 @@
  */
 package org.geotools.styling;
 
+import org.geotools.api.style.Extent;
+import org.geotools.api.util.Cloneable;
 import org.geotools.util.Utilities;
-import org.opengis.util.Cloneable;
 
 public class ExtentImpl implements Extent, Cloneable {
     private String name;
@@ -49,11 +50,9 @@ public class ExtentImpl implements Extent, Cloneable {
             return true;
         }
 
-        if (obj instanceof ExtentImpl) {
-            ExtentImpl other = (ExtentImpl) obj;
+        if (obj instanceof ExtentImpl other) {
 
-            return Utilities.equals(this.name, other.name)
-                    && Utilities.equals(this.value, other.value);
+            return Utilities.equals(this.name, other.name) && Utilities.equals(this.value, other.value);
         }
 
         return false;
@@ -65,11 +64,11 @@ public class ExtentImpl implements Extent, Cloneable {
         int result = 0;
 
         if (name != null) {
-            result = (PRIME * result) + name.hashCode();
+            result = PRIME * result + name.hashCode();
         }
 
         if (value != null) {
-            result = (PRIME * result) + value.hashCode();
+            result = PRIME * result + value.hashCode();
         }
 
         return result;

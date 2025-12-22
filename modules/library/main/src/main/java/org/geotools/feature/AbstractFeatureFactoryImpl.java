@@ -17,26 +17,25 @@
 package org.geotools.feature;
 
 import java.util.Collection;
+import org.geotools.api.feature.Association;
+import org.geotools.api.feature.Attribute;
+import org.geotools.api.feature.ComplexAttribute;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.FeatureFactory;
+import org.geotools.api.feature.GeometryAttribute;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AssociationDescriptor;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.ComplexType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.referencing.crs.CRSFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.simple.SimpleFeatureImpl;
-import org.opengis.feature.Association;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.ComplexAttribute;
-import org.opengis.feature.Feature;
-import org.opengis.feature.FeatureFactory;
-import org.opengis.feature.GeometryAttribute;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AssociationDescriptor;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.ComplexType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.geometry.coordinate.GeometryFactory;
-import org.opengis.referencing.crs.CRSFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Factory for creating instances of the Attribute family of classes.
@@ -50,14 +49,12 @@ public abstract class AbstractFeatureFactoryImpl implements FeatureFactory {
 
     /** Factory used to create CRS objects */
     CRSFactory crsFactory;
-    /** Factory used to create geomtries */
-    GeometryFactory geometryFactory;
 
-    public FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    public FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
     /**
-     * Whether the features to be built should be self validating on construction and value setting,
-     * or not. But default, not, subclasses do override this value
+     * Whether the features to be built should be self validating on construction and value setting, or not. But
+     * default, not, subclasses do override this value
      */
     boolean validating = false;
 
@@ -67,14 +64,6 @@ public abstract class AbstractFeatureFactoryImpl implements FeatureFactory {
 
     public void setCRSFactory(CRSFactory crsFactory) {
         this.crsFactory = crsFactory;
-    }
-
-    public GeometryFactory getGeometryFactory() {
-        return geometryFactory;
-    }
-
-    public void setGeometryFactory(GeometryFactory geometryFactory) {
-        this.geometryFactory = geometryFactory;
     }
 
     @Override
@@ -101,14 +90,12 @@ public abstract class AbstractFeatureFactoryImpl implements FeatureFactory {
     }
 
     @Override
-    public ComplexAttribute createComplexAttribute(
-            Collection<Property> value, ComplexType type, String id) {
+    public ComplexAttribute createComplexAttribute(Collection<Property> value, ComplexType type, String id) {
         return new ComplexAttributeImpl(value, type, id == null ? null : ff.gmlObjectId(id));
     }
 
     @Override
-    public Feature createFeature(
-            Collection<Property> value, AttributeDescriptor descriptor, String id) {
+    public Feature createFeature(Collection<Property> value, AttributeDescriptor descriptor, String id) {
         return new FeatureImpl(value, descriptor, ff.featureId(id));
     }
 
@@ -127,8 +114,7 @@ public abstract class AbstractFeatureFactoryImpl implements FeatureFactory {
     }
 
     @Override
-    public SimpleFeature createSimpleFeautre(
-            Object[] array, AttributeDescriptor descriptor, String id) {
+    public SimpleFeature createSimpleFeautre(Object[] array, AttributeDescriptor descriptor, String id) {
         return createSimpleFeature(array, (SimpleFeatureType) descriptor, id);
     }
 }

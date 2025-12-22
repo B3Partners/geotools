@@ -30,6 +30,20 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.Multiply;
+import org.geotools.api.filter.expression.NilExpression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.Subtract;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.temporal.Instant;
+import org.geotools.api.temporal.Period;
 import org.geotools.filter.text.ecql.ECQL;
 import org.geotools.referencing.CRS;
 import org.geotools.util.Converters;
@@ -37,26 +51,12 @@ import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTWriter;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.Multiply;
-import org.opengis.filter.expression.NilExpression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.expression.Subtract;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.temporal.Instant;
-import org.opengis.temporal.Period;
 
 /**
  * This class is responsible to convert an expression to a CQL/ECQL valid expression.
  *
- * <p>Warning: This component is not published. It is part of module implementation. Client module
- * should not use this feature.
+ * <p>Warning: This component is not published. It is part of module implementation. Client module should not use this
+ * feature.
  *
  * @author Mauricio Pazos
  */
@@ -66,10 +66,7 @@ public class ExpressionToText implements ExpressionVisitor {
 
     boolean encodeEWKT;
 
-    /**
-     * Default constructor. The behavior of EWKT encoding is controlled by the {@link
-     * Hints#ENCODE_EWKT} hint
-     */
+    /** Default constructor. The behavior of EWKT encoding is controlled by the {@link Hints#ENCODE_EWKT} hint */
     public ExpressionToText() {
         this(ECQL.isEwktEncodingEnabled());
     }
@@ -77,16 +74,16 @@ public class ExpressionToText implements ExpressionVisitor {
     /**
      * Builds an {@link ExpressionToText}
      *
-     * @param encodeEWKT When true, it will encode {@link Geometry} as EWKT when a {@link
-     *     CoordinateReferenceSystem} object is found as the geometry user data
+     * @param encodeEWKT When true, it will encode {@link Geometry} as EWKT when a {@link CoordinateReferenceSystem}
+     *     object is found as the geometry user data
      */
     public ExpressionToText(boolean encodeEWKT) {
         this.encodeEWKT = encodeEWKT;
     }
 
     private static StringBuilder asStringBuilder(Object extraData) {
-        if (extraData instanceof StringBuilder) {
-            return (StringBuilder) extraData;
+        if (extraData instanceof StringBuilder builder) {
+            return builder;
         }
         return new StringBuilder();
     }
@@ -117,7 +114,7 @@ public class ExpressionToText implements ExpressionVisitor {
     }
 
     /* (non-Javadoc)
-     * @see org.opengis.filter.expression.ExpressionVisitor#visit(org.opengis.filter.expression.NilExpression, java.lang.Object)
+     * @see org.geotools.api.filter.expression.ExpressionVisitor#visit(org.geotools.api.filter.expression.NilExpression, java.lang.Object)
      */
     @Override
     public Object visit(NilExpression expression, Object extraData) {
@@ -129,7 +126,7 @@ public class ExpressionToText implements ExpressionVisitor {
     }
 
     /* (non-Javadoc)
-     * @see org.opengis.filter.expression.ExpressionVisitor#visit(org.opengis.filter.expression.Add, java.lang.Object)
+     * @see org.geotools.api.filter.expression.ExpressionVisitor#visit(org.geotools.api.filter.expression.Add, java.lang.Object)
      */
     @Override
     public Object visit(Add expression, Object extraData) {
@@ -142,7 +139,7 @@ public class ExpressionToText implements ExpressionVisitor {
     }
 
     /* (non-Javadoc)
-     * @see org.opengis.filter.expression.ExpressionVisitor#visit(org.opengis.filter.expression.Divide, java.lang.Object)
+     * @see org.geotools.api.filter.expression.ExpressionVisitor#visit(org.geotools.api.filter.expression.Divide, java.lang.Object)
      */
     @Override
     public Object visit(Divide expression, Object extraData) {
@@ -154,7 +151,7 @@ public class ExpressionToText implements ExpressionVisitor {
     }
 
     private void visitWithBrackets(Expression expression, StringBuilder output) {
-        boolean needsBrackets = (expression instanceof Subtract || expression instanceof Add);
+        boolean needsBrackets = expression instanceof Subtract || expression instanceof Add;
         // Make sure to include Subtract or Add expression between brackets to preserve
         // operator precedences.
         output.append(needsBrackets ? "(" : "");
@@ -163,7 +160,7 @@ public class ExpressionToText implements ExpressionVisitor {
     }
 
     /* (non-Javadoc)
-     * @see org.opengis.filter.expression.ExpressionVisitor#visit(org.opengis.filter.expression.Function, java.lang.Object)
+     * @see org.geotools.api.filter.expression.ExpressionVisitor#visit(org.geotools.api.filter.expression.Function, java.lang.Object)
      */
     @Override
     public Object visit(Function function, Object extraData) {
@@ -187,15 +184,14 @@ public class ExpressionToText implements ExpressionVisitor {
     }
 
     /* (non-Javadoc)
-     * @see org.opengis.filter.expression.ExpressionVisitor#visit(org.opengis.filter.expression.Literal, java.lang.Object)
+     * @see org.geotools.api.filter.expression.ExpressionVisitor#visit(org.geotools.api.filter.expression.Literal, java.lang.Object)
      */
     @Override
     public Object visit(Literal expression, Object extraData) {
         StringBuilder output = asStringBuilder(extraData);
 
         Object literal = expression.getValue();
-        if (literal instanceof Geometry) {
-            Geometry geometry = (Geometry) literal;
+        if (literal instanceof Geometry geometry) {
             if (geometry.getUserData() instanceof CoordinateReferenceSystem && encodeEWKT) {
                 CoordinateReferenceSystem crs = (CoordinateReferenceSystem) geometry.getUserData();
                 try {
@@ -204,10 +200,7 @@ public class ExpressionToText implements ExpressionVisitor {
                         output.append("SRID=").append(code).append(";");
                     }
                 } catch (FactoryException e) {
-                    LOGGER.log(
-                            Level.FINE,
-                            "Error while trying to get SRID for geometry, will not encode it",
-                            e);
+                    LOGGER.log(Level.FINE, "Error while trying to get SRID for geometry, will not encode it", e);
                 }
             }
             WKTWriter writer = new WKTWriter();
@@ -221,11 +214,10 @@ public class ExpressionToText implements ExpressionVisitor {
             if (date != null) {
                 return dateToText(date, output);
             }
-        } else if (literal instanceof Period) {
+        } else if (literal instanceof Period period) {
 
-            return periodToText((Period) literal, output);
-        } else if (literal instanceof Color) {
-            Color color = (Color) literal;
+            return periodToText(period, output);
+        } else if (literal instanceof Color color) {
 
             String redCode = Integer.toHexString(color.getRed());
             String greenCode = Integer.toHexString(color.getGreen());
@@ -269,7 +261,7 @@ public class ExpressionToText implements ExpressionVisitor {
     }
 
     /* (non-Javadoc)
-     * @see org.opengis.filter.expression.ExpressionVisitor#visit(org.opengis.filter.expression.Multiply, java.lang.Object)
+     * @see org.geotools.api.filter.expression.ExpressionVisitor#visit(org.geotools.api.filter.expression.Multiply, java.lang.Object)
      */
     @Override
     public Object visit(Multiply expression, Object extraData) {
@@ -281,7 +273,7 @@ public class ExpressionToText implements ExpressionVisitor {
     }
 
     /* (non-Javadoc)
-     * @see org.opengis.filter.expression.ExpressionVisitor#visit(org.opengis.filter.expression.PropertyName, java.lang.Object)
+     * @see org.geotools.api.filter.expression.ExpressionVisitor#visit(org.geotools.api.filter.expression.PropertyName, java.lang.Object)
      */
     @Override
     public Object visit(PropertyName expression, Object extraData) {
@@ -307,43 +299,42 @@ public class ExpressionToText implements ExpressionVisitor {
 
     static {
         Set<String> reservedWords = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-        reservedWords.addAll(
-                Arrays.asList(
-                        "NOT",
-                        "AND",
-                        "OR",
-                        "LIKE",
-                        "IS",
-                        "NULL",
-                        "EXISTS",
-                        "DOES-NOT-EXIST",
-                        "DURING",
-                        "AFTER",
-                        "BEFORE",
-                        "ID", // deprecated but accepted by the parser
-                        "IN",
-                        "INCLUDE",
-                        "EXCLUDE",
-                        "TRUE",
-                        "FALSE",
-                        "EQUALS",
-                        "DISJOINT",
-                        "INTERSECTS",
-                        "TOUCHES",
-                        "CROSSES",
-                        "WITHIN",
-                        "CONTAINS",
-                        "OVERLAPS",
-                        "RELATE",
-                        "DWITHIN",
-                        "BEYOND",
-                        "POINT",
-                        "LINESTRING",
-                        "POLYGON",
-                        "MULTIPOINT",
-                        "MULTILINESTRING",
-                        "MULTIPOLYGON",
-                        "GEOMETRYCOLLECTION"));
+        reservedWords.addAll(Arrays.asList(
+                "NOT",
+                "AND",
+                "OR",
+                "LIKE",
+                "IS",
+                "NULL",
+                "EXISTS",
+                "DOES-NOT-EXIST",
+                "DURING",
+                "AFTER",
+                "BEFORE",
+                "ID", // deprecated but accepted by the parser
+                "IN",
+                "INCLUDE",
+                "EXCLUDE",
+                "TRUE",
+                "FALSE",
+                "EQUALS",
+                "DISJOINT",
+                "INTERSECTS",
+                "TOUCHES",
+                "CROSSES",
+                "WITHIN",
+                "CONTAINS",
+                "OVERLAPS",
+                "RELATE",
+                "DWITHIN",
+                "BEYOND",
+                "POINT",
+                "LINESTRING",
+                "POLYGON",
+                "MULTIPOINT",
+                "MULTILINESTRING",
+                "MULTIPOLYGON",
+                "GEOMETRYCOLLECTION"));
         RESERVED_WORDS = Collections.unmodifiableSet(reservedWords);
     }
 
@@ -355,7 +346,7 @@ public class ExpressionToText implements ExpressionVisitor {
     }
 
     /* (non-Javadoc)
-     * @see org.opengis.filter.expression.ExpressionVisitor#visit(org.opengis.filter.expression.Subtract, java.lang.Object)
+     * @see org.geotools.api.filter.expression.ExpressionVisitor#visit(org.geotools.api.filter.expression.Subtract, java.lang.Object)
      */
     @Override
     public Object visit(Subtract expression, Object extraData) {

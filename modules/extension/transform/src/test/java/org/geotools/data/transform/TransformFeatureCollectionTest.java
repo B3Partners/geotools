@@ -12,13 +12,22 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import org.geotools.data.DataStore;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.Query;
 import org.geotools.data.property.PropertyDataStore;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
+import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.visitor.BoundsVisitor;
 import org.geotools.feature.visitor.CountVisitor;
@@ -32,10 +41,6 @@ import org.geotools.referencing.CRS;
 import org.geotools.util.logging.Logging;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.util.ProgressListener;
 
 public class TransformFeatureCollectionTest {
 
@@ -48,24 +53,19 @@ public class TransformFeatureCollectionTest {
 
         class TransformFeatureCollectionWrapper extends TransformFeatureCollection {
 
-            public TransformFeatureCollectionWrapper(
-                    SimpleFeatureSource source, Transformer transformer, Query query) {
+            public TransformFeatureCollectionWrapper(SimpleFeatureSource source, Transformer transformer, Query query) {
                 super(source, transformer, query);
             }
 
             @Override
-            protected void delegateVisitor(FeatureVisitor visitor, ProgressListener progress)
-                    throws IOException {
+            protected void delegateVisitor(FeatureVisitor visitor, ProgressListener progress) throws IOException {
                 passedDown = true;
                 super.delegateVisitor(visitor, progress);
             }
         }
 
         public TransformFeatureStoreWrapper(
-                SimpleFeatureStore store,
-                Name name,
-                List<Definition> definitions,
-                DataStore datastore)
+                SimpleFeatureStore store, Name name, List<Definition> definitions, DataStore datastore)
                 throws IOException {
             super(store, name, definitions);
         }
@@ -101,11 +101,9 @@ public class TransformFeatureCollectionTest {
         // just to make sure the loggin is not going to cause exceptions when turned on
         java.util.logging.ConsoleHandler handler = new java.util.logging.ConsoleHandler();
         handler.setLevel(java.util.logging.Level.FINE);
-        Logging.getLogger(TransformFeatureCollectionTest.class)
-                .setLevel(java.util.logging.Level.FINE);
+        Logging.getLogger(TransformFeatureCollectionTest.class).setLevel(java.util.logging.Level.FINE);
 
-        PropertyDataStore pds =
-                new PropertyDataStore(new File("./src/test/resources/org/geotools/data/transform"));
+        PropertyDataStore pds = new PropertyDataStore(new File("./src/test/resources/org/geotools/data/transform"));
         SOURCE = pds.getFeatureSource(STORE_NAME);
     }
 
@@ -119,20 +117,16 @@ public class TransformFeatureCollectionTest {
         UniqueVisitor uniqueVisitor = new UniqueVisitor("female");
         BoundsVisitor boundsVisitor = new BoundsVisitor();
 
-        FeatureCalc[] visitors = {
-            countVisitor, minVisitor, maxVisitor, uniqueVisitor, boundsVisitor
-        };
+        FeatureCalc[] visitors = {countVisitor, minVisitor, maxVisitor, uniqueVisitor, boundsVisitor};
         boolean[] expectedPass = {true, true, true, true, false};
         Object[] expectedResult = {
             10,
             282970d,
             5552233d,
-            new HashSet<>(
-                    Arrays.asList(
-                            1663099.0, 1262929.0, 343200.0, 2462797.0, 2356394.0, 931941.0,
-                            323930.0, 3149703.0, 5878369.0, 2652758.0)),
-            new ReferencedEnvelope(
-                    -109.047821, -75.045998, 35.989586, 42.50936100000001, CRS.decode("EPSG:4326"))
+            new HashSet<>(Arrays.asList(
+                    1663099.0, 1262929.0, 343200.0, 2462797.0, 2356394.0, 931941.0, 323930.0, 3149703.0, 5878369.0,
+                    2652758.0)),
+            new ReferencedEnvelope(-109.047821, -75.045998, 35.989586, 42.50936100000001, CRS.decode("EPSG:4326"))
         };
 
         checkVisitorApplication(transformed, visitors, expectedPass, expectedResult);
@@ -148,30 +142,23 @@ public class TransformFeatureCollectionTest {
         UniqueVisitor uniqueVisitor = new UniqueVisitor("num_of_female");
         BoundsVisitor boundsVisitor = new BoundsVisitor();
 
-        FeatureCalc[] visitors = {
-            countVisitor, minVisitor, maxVisitor, uniqueVisitor, boundsVisitor
-        };
+        FeatureCalc[] visitors = {countVisitor, minVisitor, maxVisitor, uniqueVisitor, boundsVisitor};
         boolean[] expectedPass = {true, true, true, true, false};
         Object[] expectedResult = {
             10,
             282970d,
             5552233d,
-            new HashSet<>(
-                    Arrays.asList(
-                            1663099.0, 1262929.0, 343200.0, 2462797.0, 2356394.0, 931941.0,
-                            323930.0, 3149703.0, 5878369.0, 2652758.0)),
-            new ReferencedEnvelope(
-                    -109.047821, -75.045998, 35.989586, 42.50936100000001, CRS.decode("EPSG:4326"))
+            new HashSet<>(Arrays.asList(
+                    1663099.0, 1262929.0, 343200.0, 2462797.0, 2356394.0, 931941.0, 323930.0, 3149703.0, 5878369.0,
+                    2652758.0)),
+            new ReferencedEnvelope(-109.047821, -75.045998, 35.989586, 42.50936100000001, CRS.decode("EPSG:4326"))
         };
 
         checkVisitorApplication(transformed, visitors, expectedPass, expectedResult);
     }
 
     public void checkVisitorApplication(
-            SimpleFeatureSource transformed,
-            FeatureCalc[] visitors,
-            boolean[] expectedPass,
-            Object[] expectedResult)
+            SimpleFeatureSource transformed, FeatureCalc[] visitors, boolean[] expectedPass, Object[] expectedResult)
             throws java.io.IOException {
         for (int i = 0; i < visitors.length; i++) {
             ((TransformFeatureStoreWrapper) transformed).setPassedDown(false);
@@ -196,16 +183,13 @@ public class TransformFeatureCollectionTest {
         UniqueVisitor uniqueVisitor = new UniqueVisitor("fips");
         BoundsVisitor boundsVisitor = new BoundsVisitor();
 
-        FeatureCalc[] visitors = {
-            countVisitor, minVisitor, maxVisitor, uniqueVisitor, boundsVisitor
-        };
+        FeatureCalc[] visitors = {countVisitor, minVisitor, maxVisitor, uniqueVisitor, boundsVisitor};
         boolean[] expectedPass = {true, true, true, true, false};
         Object[] expectedResult = {
             10,
             606900d,
             1.1430602E7,
-            new HashSet<>(
-                    Arrays.asList("11", "24", "17", "29", "08", "51", "20", "10", "54", "21")),
+            new HashSet<>(Arrays.asList("11", "24", "17", "29", "08", "51", "20", "10", "54", "21")),
             new ReferencedEnvelope(
                     -110.04782099895442,
                     -74.04752638847438,
@@ -215,6 +199,47 @@ public class TransformFeatureCollectionTest {
         };
 
         checkVisitorApplication(transformed, visitors, expectedPass, expectedResult);
+    }
+
+    @Test
+    public void testWithQueryOnCollection() throws Exception {
+        // https://osgeo-org.atlassian.net/browse/GEOT-7673
+        Query query = new Query();
+        query.setPropertyNames("state_fips", "state_name");
+        query.setMaxFeatures(1);
+
+        Transformer transformer = new Transformer(
+                SOURCE,
+                new NameImpl("test", "transformer"),
+                List.of(
+                        new Definition("state_fips"),
+                        new Definition("state_name"),
+                        new Definition("male"),
+                        new Definition("the_geom"),
+                        new Definition("solitary", ECQL.toExpression("drvalone"))),
+                null);
+
+        TransformFeatureCollection transformFeatureCollection =
+                new TransformFeatureCollection(SOURCE, transformer, query);
+        assertEquals(1, transformFeatureCollection.size());
+        assertEquals(2, transformFeatureCollection.getSchema().getAttributeCount());
+        assertEquals(
+                Set.of("state_fips", "state_name"),
+                transformFeatureCollection.getSchema().getAttributeDescriptors().stream()
+                        .map(AttributeDescriptor::getLocalName)
+                        .collect(Collectors.toSet()));
+
+        int count = 0;
+        try (SimpleFeatureIterator fi = (SimpleFeatureIterator) transformFeatureCollection.openIterator()) {
+            SimpleFeature f = fi.next();
+            count++;
+            assertEquals(
+                    Set.of("state_fips", "state_name"),
+                    f.getFeatureType().getAttributeDescriptors().stream()
+                            .map(AttributeDescriptor::getLocalName)
+                            .collect(Collectors.toSet()));
+        }
+        assertEquals(1, count);
     }
 
     public SimpleFeatureSource transformWithSelection() throws IOException {

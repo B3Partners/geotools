@@ -17,20 +17,20 @@
 package org.geotools.data.store;
 
 import java.io.IOException;
-import org.geotools.data.BatchFeatureEvent;
+import org.geotools.api.data.BatchFeatureEvent;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DiffFeatureWriter;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Transaction;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * FeatureWriter wrapper that issues events modifications as required.
  *
- * <p>It is the responsibility of a FeatureStore to issue events to interested parties as content is
- * modified. The {@link ContentState} keeps track of the listeners, while {@link
- * EventContentFeatureWriter} is willing to fire the events as needed.
+ * <p>It is the responsibility of a FeatureStore to issue events to interested parties as content is modified. The
+ * {@link ContentState} keeps track of the listeners, while {@link EventContentFeatureWriter} is willing to fire the
+ * events as needed.
  *
  * <p>Event generation happens in two passes:
  *
@@ -39,9 +39,9 @@ import org.opengis.feature.simple.SimpleFeatureType;
  *   <li>When commit() or rollback() is called a "batch" event is sent out
  * </ul>
  *
- * The only trick is the comment() event contains our only indication of the final FeatureIDs
- * generated for new features. The {@link BatchFeatureEvent} maintains a map of BEFORE/AFTER values
- * allowing any interested party to update their seleciton.
+ * The only trick is the comment() event contains our only indication of the final FeatureIDs generated for new
+ * features. The {@link BatchFeatureEvent} maintains a map of BEFORE/AFTER values allowing any interested party to
+ * update their seleciton.
  *
  * <p>Please note that if you are using {@link DiffFeatureWriter} it sends out events on its own.
  *
@@ -75,7 +75,7 @@ public class EventContentFeatureWriter implements FeatureWriter<SimpleFeatureTyp
     /**
      * Supplys FeatureTypeFrom reader
      *
-     * @see org.geotools.data.FeatureWriter#getFeatureType()
+     * @see FeatureWriter#getFeatureType()
      */
     @Override
     public SimpleFeatureType getFeatureType() {
@@ -85,7 +85,7 @@ public class EventContentFeatureWriter implements FeatureWriter<SimpleFeatureTyp
     /**
      * Next Feature from reader or new content.
      *
-     * @see org.geotools.data.FeatureWriter#next()
+     * @see FeatureWriter#next()
      */
     @Override
     public SimpleFeature next() throws IOException {
@@ -96,7 +96,7 @@ public class EventContentFeatureWriter implements FeatureWriter<SimpleFeatureTyp
         return feature;
     }
 
-    /** @see org.geotools.data.FeatureWriter#remove() */
+    /** @see FeatureWriter#remove() */
     @Override
     public void remove() throws IOException {
         if (writer == null) {
@@ -109,7 +109,7 @@ public class EventContentFeatureWriter implements FeatureWriter<SimpleFeatureTyp
     /**
      * Writes out the current feature.
      *
-     * @see org.geotools.data.FeatureWriter#write()
+     * @see FeatureWriter#write()
      */
     @Override
     public void write() throws IOException {
@@ -134,7 +134,7 @@ public class EventContentFeatureWriter implements FeatureWriter<SimpleFeatureTyp
     /**
      * Query for more content.
      *
-     * @see org.geotools.data.FeatureWriter#hasNext()
+     * @see FeatureWriter#hasNext()
      */
     @Override
     public boolean hasNext() throws IOException {
@@ -147,10 +147,10 @@ public class EventContentFeatureWriter implements FeatureWriter<SimpleFeatureTyp
     /**
      * Clean up resources associated with this writer.
      *
-     * <p>Diff is not clear()ed as it is assumed that it belongs to a Transaction.State object and
-     * may yet be written out.
+     * <p>Diff is not clear()ed as it is assumed that it belongs to a Transaction.State object and may yet be written
+     * out.
      *
-     * @see org.geotools.data.FeatureWriter#close()
+     * @see FeatureWriter#close()
      */
     @Override
     public void close() throws IOException {

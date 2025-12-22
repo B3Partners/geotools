@@ -19,9 +19,9 @@ package org.geotools.feature.collection;
 import java.io.Closeable;
 import java.util.Collection;
 import java.util.Iterator;
+import org.geotools.api.feature.Feature;
 import org.geotools.data.DataUtilities;
 import org.geotools.feature.FeatureIterator;
-import org.opengis.feature.Feature;
 
 /**
  * A convenience class for dealing with wrapping a Collection Iterator up as a FeatureIterator.
@@ -50,8 +50,8 @@ public class FeatureIteratorImpl<F extends Feature> implements FeatureIterator<F
     /**
      * Does another Feature exist in this Iteration.
      *
-     * <p>Iterator defin: Returns true if the iteration has more elements. (In other words, returns
-     * true if next would return an element rather than throwing an exception.)
+     * <p>Iterator defin: Returns true if the iteration has more elements. (In other words, returns true if next would
+     * return an element rather than throwing an exception.)
      *
      * @return true if more Features exist, false otherwise.
      */

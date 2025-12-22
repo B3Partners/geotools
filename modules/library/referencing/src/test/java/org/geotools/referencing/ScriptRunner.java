@@ -19,16 +19,16 @@ package org.geotools.referencing;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
+import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.util.TableWriter;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.operation.TransformException;
 
 /**
- * A console for running test scripts. Most of the work is already done by the subclass. {@code
- * ScriptRunner} mostly add statistics about the test executed. This class is used by {@link
- * ScriptTest}. It can also be run from the command line for executing all files specified in
- * argument.
+ * A console for running test scripts. Most of the work is already done by the subclass. {@code ScriptRunner} mostly add
+ * statistics about the test executed. This class is used by {@link ScriptTest}. It can also be run from the command
+ * line for executing all files specified in argument.
  *
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
@@ -78,7 +78,7 @@ public final class ScriptRunner extends Console {
                 table.write("Success rate:");
                 table.nextColumn();
                 table.setAlignment(TableWriter.ALIGN_RIGHT);
-                table.write(f.format((double) testPassed / (double) testRun));
+                table.write(f.format(testPassed / (double) testRun));
                 table.nextLine();
             }
             table.writeHorizontalSeparator();
@@ -91,7 +91,8 @@ public final class ScriptRunner extends Console {
         final String lineSeparator = System.getProperty("line.separator", "\r");
         try {
             for (final String filename : args) {
-                try (final LineNumberReader in = new LineNumberReader(new FileReader(filename))) {
+                try (final LineNumberReader in =
+                        new LineNumberReader(new FileReader(filename, StandardCharsets.UTF_8))) {
                     final ScriptRunner test = new ScriptRunner(in);
                     test.out.write("Running \"");
                     test.out.write(filename);

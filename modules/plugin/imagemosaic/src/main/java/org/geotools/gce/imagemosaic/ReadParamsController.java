@@ -21,33 +21,32 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.coverage.grid.io.DecimationPolicy;
 import org.geotools.coverage.grid.io.OverviewPolicy;
 import org.geotools.gce.imagemosaic.OverviewsController.OverviewLevel;
 import org.geotools.gce.imagemosaic.RasterManager.SpatialDomainManager;
+import org.geotools.image.util.ImageUtilities;
 import org.geotools.util.Utilities;
 import org.geotools.util.factory.Hints;
-import org.opengis.referencing.operation.TransformException;
 
 /**
- * Class that fills up properly read params given a {@link RasterLayerRequest}, an {@link
- * OverviewsController}
+ * Class that fills up properly read params given a {@link RasterLayerRequest}, an {@link OverviewsController}
  *
  * @author Simone Giannecchini, GeoSolutions SAS
  */
 public class ReadParamsController {
 
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(ReadParamsController.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(ReadParamsController.class);
 
     /**
-     * This method is responsible for evaluating possible subsampling factors once the best
-     * resolution level has been found, in case we have support for overviews, or starting from the
-     * original coverage in case there are no overviews available.
+     * This method is responsible for evaluating possible subsampling factors once the best resolution level has been
+     * found, in case we have support for overviews, or starting from the original coverage in case there are no
+     * overviews available.
      *
-     * <p>Anyhow this method should not be called directly but subclasses should make use of the
-     * setReadParams method instead in order to transparently look for overviews.
+     * <p>Anyhow this method should not be called directly but subclasses should make use of the setReadParams method
+     * instead in order to transparently look for overviews.
      */
     private static void performDecimation(
             final SpatialDomainManager spatialDomainManager,
@@ -109,46 +108,23 @@ public class ReadParamsController {
             // raster dimensions. The solution is to have the rater
             // dimensions on each level and to confront raster dimensions,
             // which means working
-            rasterWidth =
-                    (int) Math.round(spatialDomainManager.coverageBBox.getSpan(0) / selectedRes[0]);
-            rasterHeight =
-                    (int) Math.round(spatialDomainManager.coverageBBox.getSpan(1) / selectedRes[1]);
+            rasterWidth = (int) Math.round(spatialDomainManager.coverageBBox.getSpan(0) / selectedRes[0]);
+            rasterHeight = (int) Math.round(spatialDomainManager.coverageBBox.getSpan(1) / selectedRes[1]);
         }
         // /////////////////////////////////////////////////////////////////////
-        // DECIMATION ON READING
-        // Setting subsampling factors with some checks
-        // 1) the subsampling factors cannot be zero
-        // 2) the subsampling factors cannot be such that the w or h are
-        // zero
-        // /////////////////////////////////////////////////////////////////////
-        int subSamplingFactorX = (int) Math.floor(requestedRes[0] / selectedRes[0]);
-        subSamplingFactorX = subSamplingFactorX == 0 ? 1 : subSamplingFactorX;
-
-        while (subSamplingFactorX > 0 && rasterWidth / subSamplingFactorX <= 0)
-            subSamplingFactorX--;
-        subSamplingFactorX = subSamplingFactorX <= 0 ? 1 : subSamplingFactorX;
-
-        int subSamplingFactorY = (int) Math.floor(requestedRes[1] / selectedRes[1]);
-        subSamplingFactorY = subSamplingFactorY == 0 ? 1 : subSamplingFactorY;
-
-        while (subSamplingFactorY > 0 && rasterHeight / subSamplingFactorY <= 0)
-            subSamplingFactorY--;
-        subSamplingFactorY = subSamplingFactorY <= 0 ? 1 : subSamplingFactorY;
-
-        readParameters.setSourceSubsampling(subSamplingFactorX, subSamplingFactorY, 0, 0);
+        ImageUtilities.setSubsamplingFactors(readParameters, requestedRes, selectedRes, rasterWidth, rasterHeight);
     }
 
     /**
-     * This method is responsible for preparing the read param for doing an {@link
-     * ImageReader#read(int, ImageReadParam)}. It sets the passed {@link ImageReadParam} in terms of
-     * decimation on reading using the provided requestedEnvelope and requestedDim to evaluate the
-     * needed resolution. It also returns and {@link Integer} representing the index of the raster
-     * to be read when dealing with multipage raster.
+     * This method is responsible for preparing the read param for doing an {@link ImageReader#read(int,
+     * ImageReadParam)}. It sets the passed {@link ImageReadParam} in terms of decimation on reading using the provided
+     * requestedEnvelope and requestedDim to evaluate the needed resolution. It also returns and {@link Integer}
+     * representing the index of the raster to be read when dealing with multipage raster.
      *
-     * @param overviewPolicy it can be one of {@link Hints#VALUE_OVERVIEW_POLICY_IGNORE}, {@link
-     *     Hints#VALUE_OVERVIEW_POLICY_NEAREST}, {@link Hints#VALUE_OVERVIEW_POLICY_QUALITY} or
-     *     {@link Hints#VALUE_OVERVIEW_POLICY_SPEED}. It specifies the policy to compute the
-     *     overviews level upon request.
+     * @param overviewPolicy it can be one of {@link Hints#VALUE_OVERVIEW_POLICY_IGNORE},
+     *     {@link Hints#VALUE_OVERVIEW_POLICY_NEAREST}, {@link Hints#VALUE_OVERVIEW_POLICY_QUALITY} or
+     *     {@link Hints#VALUE_OVERVIEW_POLICY_SPEED}. It specifies the policy to compute the overviews level upon
+     *     request.
      * @param readParams an instance of {@link ImageReadParam} for setting the subsampling factors.
      * @return the index of the raster to read in the underlying data source.
      */
@@ -186,19 +162,17 @@ public class ReadParamsController {
 
         if (!overviewPolicy.equals(OverviewPolicy.IGNORE)) {
             imageChoice =
-                    overviewController.pickOverviewLevel(
-                            overviewPolicy, requestedResolution, virtualNativeResolution);
+                    overviewController.pickOverviewLevel(overviewPolicy, requestedResolution, virtualNativeResolution);
             if (virtualNativeResolution != null
                     && !Double.isNaN(virtualNativeResolution[0])
                     && !Double.isNaN(virtualNativeResolution[1])) {
                 if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine(
-                            "Specified Resolution is: resX="
-                                    + virtualNativeResolution[0]
-                                    + " ; resY="
-                                    + virtualNativeResolution[1]
-                                    + " . Choosing imageIndex = "
-                                    + imageChoice);
+                    LOGGER.fine("Specified Resolution is: resX="
+                            + virtualNativeResolution[0]
+                            + " ; resY="
+                            + virtualNativeResolution[1]
+                            + " . Choosing imageIndex = "
+                            + imageChoice);
                 }
             }
         }

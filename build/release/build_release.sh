@@ -20,6 +20,7 @@ function usage() {
   echo " SKIP_BUILD : Skips main release build"
   echo " SKIP_TAG : Skips tag on release branch"
   echo " SKIP_JAVADOCS : Skips javadoc build"
+  echo " MAVEN_FLAGS : Flags used in calls to mvn"
 }
 
 # parse options
@@ -149,11 +150,14 @@ fi
 
 target=`pwd`/target
 
-# build the javadocs
+# build the javadocs for website
 if [ "$SKIP_JAVADOCS" != true ]; then
   echo "building javadocs"
   pushd modules > /dev/null
   mvn $MAVEN_FLAGS -Dfmt.skip=true -DskipTests javadoc:aggregate
+  if [ -d "target/reports" ]; then
+    mv "target/reports" "target/site"
+  fi
   pushd target/site > /dev/null
   zip -r -q $target/geotools-$tag-doc.zip apidocs
   popd > /dev/null

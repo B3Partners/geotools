@@ -22,6 +22,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import org.geotools.api.filter.Filter;
 import org.geotools.coverage.grid.io.footprint.FootprintGeometryProvider;
 import org.geotools.coverage.grid.io.footprint.FootprintLoader;
 import org.geotools.coverage.grid.io.footprint.FootprintLoaderSpi;
@@ -31,11 +32,10 @@ import org.geotools.coverage.grid.io.footprint.SidecarFootprintProvider;
 import org.geotools.filter.text.ecql.ECQL;
 import org.geotools.util.URLs;
 import org.geotools.util.factory.Hints;
-import org.opengis.filter.Filter;
 
 /**
- * Factory class used for returning a {@link MultiLevelROIProvider} based on the input footprint
- * properties and files for mosaics
+ * Factory class used for returning a {@link MultiLevelROIProvider} based on the input footprint properties and files
+ * for mosaics
  *
  * @author Andrea Aime GeoSolutions
  * @author Nicola Lagomarsini GeoSolutions
@@ -66,9 +66,7 @@ public class MultiLevelROIProviderMosaicFactory extends MultiLevelROIProviderFac
             // see if we have the default whole mosaic footprint
             File defaultShapefileFootprint = new File(mosaicFolder, "footprints.shp");
             if (defaultShapefileFootprint.exists()) {
-                provider =
-                        buildShapefileSource(
-                                mosaicFolder, defaultShapefileFootprint.getName(), properties);
+                provider = buildShapefileSource(mosaicFolder, defaultShapefileFootprint.getName(), properties);
             } else {
                 provider = new SidecarFootprintProvider(mosaicFolder);
             }
@@ -77,16 +75,14 @@ public class MultiLevelROIProviderMosaicFactory extends MultiLevelROIProviderFac
         } else if (source.toLowerCase().endsWith(".shp")) {
             provider = buildShapefileSource(mosaicFolder, source, properties);
         } else if (MultiLevelROIProviderFactory.TYPE_RASTER.equals(source)) {
-            // Raster masking
-            return new MultiLevelROIRasterProvider(mosaicFolder);
+            return new MultiLevelROIRasterProvider(mosaicFolder, hints);
         } else if (MultiLevelROIProviderFactory.TYPE_MULTIPLE_SIDECAR.equals(source)) {
             return createMultiLevelROIOverviewsProvider(mosaicFolder, properties, hints);
         } else {
-            throw new IllegalArgumentException(
-                    "Invalid source type, it should be a reference "
-                            + "to a shapefile or 'sidecar', but was '"
-                            + source
-                            + "' instead");
+            throw new IllegalArgumentException("Invalid source type, it should be a reference "
+                    + "to a shapefile or 'sidecar', but was '"
+                    + source
+                    + "' instead");
         }
 
         // Create the provider
@@ -99,52 +95,42 @@ public class MultiLevelROIProviderMosaicFactory extends MultiLevelROIProviderFac
 
         // Getting the footprint loader SPI
         String footprintLoaderSpi =
-                (String)
-                        properties.get(MultiLevelROIGeometryOverviewsProvider.FOOTPRINT_LOADER_SPI);
+                (String) properties.get(MultiLevelROIGeometryOverviewsProvider.FOOTPRINT_LOADER_SPI);
 
         // Getting the footprint loader SPI for overviews (it may be null).
         String overviewsFootprintLoaderSpi =
-                (String)
-                        properties.get(
-                                MultiLevelROIGeometryOverviewsProvider
-                                        .OVERVIEWS_FOOTPRINT_LOADER_SPI);
+                (String) properties.get(MultiLevelROIGeometryOverviewsProvider.OVERVIEWS_FOOTPRINT_LOADER_SPI);
 
         // Get the overviews suffix String format
-        String overviewsSuffixFormat =
-                properties.getProperty(
-                        MultiLevelROIGeometryOverviewsProvider.OVERVIEWS_SUFFIX_FORMAT_KEY,
-                        MultiLevelROIGeometryOverviewsProvider.DEFAULT_OVERVIEWS_SUFFIX_FORMAT);
+        String overviewsSuffixFormat = properties.getProperty(
+                MultiLevelROIGeometryOverviewsProvider.OVERVIEWS_SUFFIX_FORMAT_KEY,
+                MultiLevelROIGeometryOverviewsProvider.DEFAULT_OVERVIEWS_SUFFIX_FORMAT);
 
         // Whether overviewsROI are provided in raster space (or model space)
         String overviewsRoiInRasterSpaceString =
-                properties.getProperty(
-                        MultiLevelROIGeometryOverviewsProvider.OVERVIEWS_ROI_IN_RASTER_SPACE_KEY);
-        boolean overviewsRoiInRasterSpace =
-                overviewsRoiInRasterSpaceString != null
-                        ? Boolean.parseBoolean(overviewsRoiInRasterSpaceString)
-                        : MultiLevelROIGeometryOverviewsProvider
-                                .DEFAULT_OVERVIEWS_ROI_IN_RASTER_SPACE;
+                properties.getProperty(MultiLevelROIGeometryOverviewsProvider.OVERVIEWS_ROI_IN_RASTER_SPACE_KEY);
+        boolean overviewsRoiInRasterSpace = overviewsRoiInRasterSpaceString != null
+                ? Boolean.parseBoolean(overviewsRoiInRasterSpaceString)
+                : MultiLevelROIGeometryOverviewsProvider.DEFAULT_OVERVIEWS_ROI_IN_RASTER_SPACE;
 
         FootprintLoaderSpi spi = null;
         FootprintLoader footprintLoader = null;
         FootprintLoader overviewsFootprintLoader = null;
         try {
             if (footprintLoaderSpi != null) {
-                spi =
-                        (FootprintLoaderSpi)
-                                Class.forName(footprintLoaderSpi)
-                                        .getDeclaredConstructor()
-                                        .newInstance();
+                spi = Class.forName(footprintLoaderSpi)
+                        .asSubclass(FootprintLoaderSpi.class)
+                        .getDeclaredConstructor()
+                        .newInstance();
                 footprintLoader = spi.createLoader();
                 overviewsFootprintLoader = footprintLoader;
 
                 if (overviewsFootprintLoaderSpi != null) {
                     // Use dedicate LoaderSPI for overviews
-                    spi =
-                            (FootprintLoaderSpi)
-                                    Class.forName(overviewsFootprintLoaderSpi)
-                                            .getDeclaredConstructor()
-                                            .newInstance();
+                    spi = Class.forName(overviewsFootprintLoaderSpi)
+                            .asSubclass(FootprintLoaderSpi.class)
+                            .getDeclaredConstructor()
+                            .newInstance();
                     overviewsFootprintLoader = spi.createLoader();
                 }
             }
@@ -162,8 +148,7 @@ public class MultiLevelROIProviderMosaicFactory extends MultiLevelROIProviderFac
                 | ClassNotFoundException
                 | NoSuchMethodException
                 | InvocationTargetException e) {
-            throw new IllegalArgumentException(
-                    "Exception occurred while creating FootprintLoader", e);
+            throw new IllegalArgumentException("Exception occurred while creating FootprintLoader", e);
         }
     }
 
@@ -176,10 +161,9 @@ public class MultiLevelROIProviderMosaicFactory extends MultiLevelROIProviderFac
 
         try {
             if (!shapefile.exists()) {
-                throw new IllegalArgumentException(
-                        "Tried to load the footprints from "
-                                + shapefile.getCanonicalPath()
-                                + " but the file was not found");
+                throw new IllegalArgumentException("Tried to load the footprints from "
+                        + shapefile.getCanonicalPath()
+                        + " but the file was not found");
             } else {
                 final Map<String, Serializable> params = new HashMap<>();
                 params.put("url", URLs.fileToUrl(shapefile));
@@ -195,8 +179,7 @@ public class MultiLevelROIProviderMosaicFactory extends MultiLevelROIProviderFac
                 return new GTDataStoreFootprintProvider(params, typeName, filter);
             }
         } catch (Exception e) {
-            throw new IllegalArgumentException(
-                    "Failed to create a shapefile based footprint provider", e);
+            throw new IllegalArgumentException("Failed to create a shapefile based footprint provider", e);
         }
     }
 }

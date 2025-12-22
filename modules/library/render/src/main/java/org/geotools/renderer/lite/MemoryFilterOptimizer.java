@@ -24,50 +24,48 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
 import org.apache.commons.lang3.tuple.Pair;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNil;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
 import org.geotools.filter.function.InFunction;
 import org.geotools.filter.visitor.DuplicatingFilterVisitor;
 import org.geotools.util.Converters;
-import org.opengis.annotation.Extension;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.And;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Id;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNil;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
 import org.xml.sax.helpers.NamespaceSupport;
 
 /**
- * Optimizes filter trees by replacing expressions/filters with memoized equivalents, also replaces
- * the generic property access machinery with straight index access when the target feature type is
- * a {@link SimpleFeatureType}.
+ * Optimizes filter trees by replacing expressions/filters with memoized equivalents, also replaces the generic property
+ * access machinery with straight index access when the target feature type is a {@link SimpleFeatureType}.
  */
 class MemoryFilterOptimizer extends DuplicatingFilterVisitor {
 
@@ -79,12 +77,12 @@ class MemoryFilterOptimizer extends DuplicatingFilterVisitor {
     SimpleFeatureType simpleFeatureType;
 
     /**
-     * Prepares to duplicate a filter for a given target schema. Only filters included in the
-     * memoizeCandidates set will be wrapped within a caching proxy
+     * Prepares to duplicate a filter for a given target schema. Only filters included in the memoizeCandidates set will
+     * be wrapped within a caching proxy
      */
     public MemoryFilterOptimizer(FeatureType schema, Set<Object> memoizeCandidates) {
-        if (schema instanceof SimpleFeatureType) {
-            this.simpleFeatureType = (SimpleFeatureType) schema;
+        if (schema instanceof SimpleFeatureType type) {
+            this.simpleFeatureType = type;
         }
         this.memoizeCandidates = memoizeCandidates;
     }
@@ -127,8 +125,8 @@ class MemoryFilterOptimizer extends DuplicatingFilterVisitor {
     }
 
     /**
-     * Check if it's possible generate an IN function from the provided OR filter. If the OR filter
-     * doesn't accomplish the conditions, returns null.
+     * Check if it's possible generate an IN function from the provided OR filter. If the OR filter doesn't accomplish
+     * the conditions, returns null.
      */
     private InFunction replaceWithInFilter(Or filter) {
         List<Filter> children = filter.getChildren();
@@ -265,8 +263,7 @@ class MemoryFilterOptimizer extends DuplicatingFilterVisitor {
         return memoize(filter, extraData, super::visit);
     }
 
-    public <T extends Filter> T memoize(
-            T filter, Object extraData, BiFunction<T, Object, Object> duplicator) {
+    public <T extends Filter> T memoize(T filter, Object extraData, BiFunction<T, Object, Object> duplicator) {
         // do we want to memoize this filter?
         if (!memoizeCandidates.contains(filter)) {
             // drill down, this clones and at the same time visits sub-filters
@@ -292,8 +289,7 @@ class MemoryFilterOptimizer extends DuplicatingFilterVisitor {
     public Object visit(PropertyName expression, Object extraData) {
         Expression replacement = expressionReplacements.get(expression);
         if (replacement == null) {
-            if (simpleFeatureType != null
-                    && simpleFeatureType.indexOf(expression.getPropertyName()) >= 0) {
+            if (simpleFeatureType != null && simpleFeatureType.indexOf(expression.getPropertyName()) >= 0) {
                 // index access is significantly faster, does not need memoization
                 replacement = new IndexPropertyName(simpleFeatureType, expression);
             } else if (memoizeCandidates.contains(expression)) {
@@ -341,8 +337,7 @@ class MemoryFilterOptimizer extends DuplicatingFilterVisitor {
 
         @Override
         public <T> T evaluate(Object object, Class<T> context) {
-            if (object instanceof SimpleFeature) {
-                SimpleFeature sf = (SimpleFeature) object;
+            if (object instanceof SimpleFeature sf) {
                 SimpleFeatureType other = sf.getFeatureType();
                 if (other == schema || other.getDescriptor(index).equals(descriptor)) {
                     // ContentFeatureSource/ContentFeatureCollection return a SimpleFeatureType
@@ -367,11 +362,7 @@ class MemoryFilterOptimizer extends DuplicatingFilterVisitor {
                         }
                     } catch (ArrayIndexOutOfBoundsException e) {
                         throw new RuntimeException(
-                                "Could not locate attribute at index "
-                                        + index
-                                        + " on feature "
-                                        + object,
-                                e);
+                                "Could not locate attribute at index " + index + " on feature " + object, e);
                     }
                 }
             }
@@ -391,8 +382,8 @@ class MemoryFilterOptimizer extends DuplicatingFilterVisitor {
     }
 
     /**
-     * Caches the result of the last property retrieved from the "feature", assuming the feature, as
-     * well as the target type, are the same as in the last invocation
+     * Caches the result of the last property retrieved from the "feature", assuming the feature, as well as the target
+     * type, are the same as in the last invocation
      */
     static class MemoizedPropertyName implements PropertyName {
         PropertyName delegate;
@@ -415,7 +406,6 @@ class MemoryFilterOptimizer extends DuplicatingFilterVisitor {
         }
 
         @Override
-        @Extension
         public Object evaluate(Object object) {
             if (object != lastFeature || lastContext != null) {
                 lastResult = delegate.evaluate(object);
@@ -426,7 +416,6 @@ class MemoryFilterOptimizer extends DuplicatingFilterVisitor {
         }
 
         @Override
-        @Extension
         @SuppressWarnings("unchecked")
         public <T> T evaluate(Object object, Class<T> context) {
             if (object != lastFeature || !Objects.equals(lastContext, context)) {
@@ -437,7 +426,6 @@ class MemoryFilterOptimizer extends DuplicatingFilterVisitor {
         }
 
         @Override
-        @Extension
         public Object accept(ExpressionVisitor visitor, Object extraData) {
             return delegate.accept(visitor, extraData);
         }

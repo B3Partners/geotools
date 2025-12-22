@@ -16,9 +16,11 @@
  */
 package org.geotools.metadata;
 
+import java.io.Serial;
+
 /**
- * Thrown when a setter method is invoked on a {@linkplain org.geotools.metadata.iso.MetadataEntity
- * metadata entity}, but this entity was declared unmodifiable.
+ * Thrown when a setter method is invoked on a {@linkplain org.geotools.metadata.iso.MetadataEntity metadata entity},
+ * but this entity was declared unmodifiable.
  *
  * @since 2.4
  * @version $Id$
@@ -26,6 +28,7 @@ package org.geotools.metadata;
  */
 public class UnmodifiableMetadataException extends UnsupportedOperationException {
     /** For cross-version compatibility. */
+    @Serial
     private static final long serialVersionUID = -1885135341334523675L;
 
     /**

@@ -18,7 +18,6 @@ package org.geotools.data;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.CharBuffer;
@@ -27,11 +26,11 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.util.NIOUtilities;
 import org.geotools.util.factory.Hints;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * @author Simone Giannecchini
@@ -70,8 +69,7 @@ public class PrjFileReader implements Closeable {
      * @param channel The channel to read from.
      * @throws IOException If an error occurs.
      */
-    public PrjFileReader(ReadableByteChannel channel, final Hints hints)
-            throws IOException, FactoryException {
+    public PrjFileReader(ReadableByteChannel channel, final Hints hints) throws IOException, FactoryException {
         try {
             Charset chars = StandardCharsets.ISO_8859_1;
             decoder = chars.newDecoder();
@@ -83,9 +81,7 @@ public class PrjFileReader implements Closeable {
             decoder.decode(buffer, charBuffer, true);
             buffer.limit(buffer.capacity());
             charBuffer.flip();
-            crs =
-                    ReferencingFactoryFinder.getCRSFactory(hints)
-                            .createFromWKT(charBuffer.toString());
+            crs = ReferencingFactoryFinder.getCRSFactory(hints).createFromWKT(charBuffer.toString());
         } finally {
             // we are done reading, so just close this
             close();
@@ -118,10 +114,9 @@ public class PrjFileReader implements Closeable {
     private void init() throws IOException {
         // create the ByteBuffer
         // if we have a FileChannel, lets map it
-        if (channel instanceof FileChannel && USE_MEMORY_MAPPED_BUFFERS) {
-            FileChannel fc = (FileChannel) channel;
+        if (channel instanceof FileChannel fc && USE_MEMORY_MAPPED_BUFFERS) {
             buffer = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
-            ((Buffer) buffer).position((int) fc.position());
+            buffer.position((int) fc.position());
         } else {
             // Some other type of channel
             // start with a 8K buffer, should be more than adequate
@@ -144,8 +139,8 @@ public class PrjFileReader implements Closeable {
     }
 
     /**
-     * The reader will close itself right after reading the CRS from the prj file, so no actual need
-     * to call it explicitly anymore.
+     * The reader will close itself right after reading the CRS from the prj file, so no actual need to call it
+     * explicitly anymore.
      */
     @Override
     public void close() throws IOException {

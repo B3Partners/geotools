@@ -27,6 +27,7 @@ import java.io.IOException;
 import javax.imageio.spi.ImageInputStreamSpi;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
+import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.imageio.MaskOverviewProvider;
 import org.geotools.coverage.grid.io.imageio.MaskOverviewProvider.SpiHelper;
@@ -37,17 +38,14 @@ import org.geotools.util.Utilities;
 import org.geotools.util.factory.Hints;
 
 /** GranuleAccessProvider for COG Granules. */
-public class CogGranuleAccessProvider extends DefaultGranuleAccessProvider
-        implements GranuleAccessProvider {
+public class CogGranuleAccessProvider extends DefaultGranuleAccessProvider implements GranuleAccessProvider {
 
     private static final ImageReaderSpi DEFAULT_COG_IMAGE_READER_SPI = new CogImageReaderSpi();
-    private static final ImageInputStreamSpi DEFAULT_COG_IMAGE_INPUT_STREAM_SPI =
-            new CogImageInputStreamSpi();
+    private static final ImageInputStreamSpi DEFAULT_COG_IMAGE_INPUT_STREAM_SPI = new CogImageInputStreamSpi();
 
     private static final AbstractGridFormat DEFAULT_COG_FORMAT = new GeoTiffFormat();
 
-    private static final String DEFAULT_RANGE_READER =
-            "it.geosolutions.imageioimpl.plugins.cog.HttpRangeReader";
+    private static final String DEFAULT_RANGE_READER = "it.geosolutions.imageioimpl.plugins.cog.HttpRangeReader";
 
     /** A COG configuration bean */
     private CogConfiguration cogConfig;
@@ -56,14 +54,13 @@ public class CogGranuleAccessProvider extends DefaultGranuleAccessProvider
         // A Cog Provider will always have at least a streamSpi and an ImageReaderSpi
         this(getHints(bean));
         SourceSPIProviderFactory urlSourceSpiProvider = bean.getUrlSourceSPIProvider();
-        if (urlSourceSpiProvider instanceof CogConfiguration) {
-            cogConfig = (CogConfiguration) urlSourceSpiProvider;
+        if (urlSourceSpiProvider instanceof CogConfiguration configuration) {
+            cogConfig = configuration;
         } else {
-            throw new RuntimeException(
-                    "This access provider needs a URL Source SPI Provider of "
-                            + "type CogConfiguration whilst "
-                            + urlSourceSpiProvider
-                            + " has been found.");
+            throw new RuntimeException("This access provider needs a URL Source SPI Provider of "
+                    + "type CogConfiguration whilst "
+                    + urlSourceSpiProvider
+                    + " has been found.");
         }
         this.skipExternalOverviews = bean.isSkipExternalOverviews();
     }
@@ -78,8 +75,7 @@ public class CogGranuleAccessProvider extends DefaultGranuleAccessProvider
             readerSpi = DEFAULT_COG_IMAGE_READER_SPI;
         }
         hints.put(GranuleAccessProvider.SUGGESTED_READER_SPI, readerSpi);
-        ImageInputStreamSpi imageInputStreamSpi =
-                createImageInputStreamSpiInstance(bean.getSuggestedIsSPI());
+        ImageInputStreamSpi imageInputStreamSpi = createImageInputStreamSpiInstance(bean.getSuggestedIsSPI());
         if (imageInputStreamSpi == null) {
             imageInputStreamSpi = DEFAULT_COG_IMAGE_INPUT_STREAM_SPI;
         }
@@ -119,13 +115,12 @@ public class CogGranuleAccessProvider extends DefaultGranuleAccessProvider
         if (ovrProvider == null) {
             SourceSPIProvider inputProvider = (SourceSPIProvider) input;
             spiHelper = new SpiHelper(inputProvider);
-            ovrProvider =
-                    new MaskOverviewProvider(
-                            null, inputProvider.getSourceUrl(), spiHelper, skipExternalOverviews);
+            AbstractGridCoverage2DReader reader = getGridCoverageReader();
+            ovrProvider = new MaskOverviewProvider(
+                    reader.getDatasetLayout(), inputProvider.getSourceUrl(), spiHelper, skipExternalOverviews);
         }
         if (ovrProvider == null) {
-            throw new IOException(
-                    "Unable to find a MaskOverviewProvider for the specified input: " + input);
+            throw new IOException("Unable to find a MaskOverviewProvider for the specified input: " + input);
         }
         return ovrProvider;
     }

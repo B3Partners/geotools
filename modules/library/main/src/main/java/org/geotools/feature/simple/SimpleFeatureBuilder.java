@@ -16,25 +16,26 @@
  */
 package org.geotools.feature.simple;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.FeatureFactory;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.DataUtilities;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.FeatureBuilder;
 import org.geotools.feature.type.Types;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.Feature;
-import org.opengis.feature.FeatureFactory;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
 
 /**
  * A builder for features.
@@ -59,17 +60,14 @@ import org.opengis.feature.type.Name;
  *  </pre>
  * </code>
  *
- * <p>This builder builds a feature by maintaining state. Each call to {@link #add(Object)} creates
- * a new attribute for the feature and stores it locally. When using the add method to add
- * attributes to the feature, values added must be added in the same order as the attributes as
- * defined by the feature type. The methods {@link #set(String, Object)} and {@link #set(int,
- * Object)} are used to add attributes out of order.
+ * <p>This builder builds a feature by maintaining state. Each call to {@link #add(Object)} creates a new attribute for
+ * the feature and stores it locally. When using the add method to add attributes to the feature, values added must be
+ * added in the same order as the attributes as defined by the feature type. The methods {@link #set(String, Object)}
+ * and {@link #set(int, Object)} are used to add attributes out of order.
  *
- * <p>Each time the builder builds a feature with a call to {@link #buildFeature(String)} the
- * internal state is reset.
+ * <p>Each time the builder builds a feature with a call to {@link #buildFeature(String)} the internal state is reset.
  *
- * <p>This builder can be used to copy features as well. The following code sample demonstrates:
- * <code>
+ * <p>This builder can be used to copy features as well. The following code sample demonstrates: <code>
  * <pre>
  *  //original feature
  *  SimpleFeature original = ...;
@@ -84,10 +82,9 @@ import org.opengis.feature.type.Name;
  *  </pre>
  * </code>
  *
- * <p>The builder also provides a number of static "short-hand" methods which can be used when its
- * not ideal to instantiate a new builder, thought this will trigger some extra object allocations.
- * In time critical code sections it's better to instantiate the builder once and use it to build
- * all the required features. <code>
+ * <p>The builder also provides a number of static "short-hand" methods which can be used when its not ideal to
+ * instantiate a new builder, thought this will trigger some extra object allocations. In time critical code sections
+ * it's better to instantiate the builder once and use it to build all the required features. <code>
  *   <pre>
  *   SimpleFeatureType type = ..;
  *   Object[] values = ...;
@@ -123,12 +120,12 @@ public class SimpleFeatureBuilder extends FeatureBuilder<FeatureType, Feature> {
     Map<String, Integer> index;
 
     /** the values */
-    // List<Object> values;
     Object[] values;
 
     /** pointer for next attribute */
     int next;
 
+    /** Attribute userData by index. */
     Map<Object, Object>[] userData;
 
     Map<Object, Object> featureUserData;
@@ -144,14 +141,15 @@ public class SimpleFeatureBuilder extends FeatureBuilder<FeatureType, Feature> {
         this.featureType = featureType;
         this.factory = factory;
 
-        if (featureType instanceof SimpleFeatureTypeImpl) {
-            index = ((SimpleFeatureTypeImpl) featureType).index;
+        if (featureType instanceof SimpleFeatureTypeImpl impl) {
+            index = impl.index;
         } else {
             this.index = SimpleFeatureTypeImpl.buildIndex(featureType);
         }
         reset();
     }
 
+    /** Reset the builder, for generating a new feature. */
     public void reset() {
         values = new Object[featureType.getAttributeCount()];
         next = 0;
@@ -159,7 +157,7 @@ public class SimpleFeatureBuilder extends FeatureBuilder<FeatureType, Feature> {
         featureUserData = null;
     }
 
-    /** Returns the simple feature type used by this builder as a feature template */
+    /** Returns the simple feature type used by this builder as a feature template. */
     @Override
     public SimpleFeatureType getFeatureType() {
         return featureType;
@@ -168,15 +166,16 @@ public class SimpleFeatureBuilder extends FeatureBuilder<FeatureType, Feature> {
     /**
      * Initialize the builder with the provided feature.
      *
-     * <p>This method adds all the attributes from the provided feature. It is useful when copying a
-     * feature.
+     * <p>This method adds all the attributes from the provided feature (along with user data if provided). It is useful
+     * when copying a feature.
+     *
+     * @param feature Feature to copy
      */
     public void init(SimpleFeature feature) {
         reset();
 
         // optimize the case in which we just build
-        if (feature instanceof SimpleFeatureImpl) {
-            SimpleFeatureImpl impl = (SimpleFeatureImpl) feature;
+        if (feature instanceof SimpleFeatureImpl impl) {
             System.arraycopy(impl.values, 0, values, 0, impl.values.length);
 
             if (impl.userData != null) {
@@ -196,24 +195,25 @@ public class SimpleFeatureBuilder extends FeatureBuilder<FeatureType, Feature> {
     /**
      * Adds an attribute.
      *
-     * <p>This method should be called repeatedly for the number of attributes as specified by the
-     * type of the feature.
+     * <p>This method should be called repeatedly for the number of attributes as specified by the type of the feature.
      */
     public void add(Object value) {
         set(next, value);
         next++;
     }
 
-    /** Adds a list of attributes. */
+    /** Adds a list of attributes, in order provided. */
     public void addAll(List<Object> values) {
         for (Object value : values) {
             add(value);
         }
     }
 
-    /** Adds an array of attributes. */
+    /** Adds an array of attributes, in order provided. */
     public void addAll(Object... values) {
-        addAll(Arrays.asList(values));
+        for (Object value : values) {
+            add(value);
+        }
     }
 
     /**
@@ -247,9 +247,14 @@ public class SimpleFeatureBuilder extends FeatureBuilder<FeatureType, Feature> {
     }
 
     /**
-     * Adds an attribute value by index. *
+     * Adds an attribute value by index.
      *
      * <p>This method can be used to add attribute values out of order.
+     *
+     * <p>The provided value is converted to an object of the required type if required.
+     *
+     * <p>If {@link #isValidating()} enabled the resulting object is validated against, any restrictions imposed by the
+     * attribute descriptor.
      *
      * @param index The index of the attribute.
      * @param value The value of the attribute.
@@ -264,6 +269,13 @@ public class SimpleFeatureBuilder extends FeatureBuilder<FeatureType, Feature> {
         if (validating) Types.validate(descriptor, values[index]);
     }
 
+    /**
+     * Convert value into the correct type for the descriptor (supplying a default value if required).
+     *
+     * @param value value, or {@code null}
+     * @param descriptor Attribute descriptor providing type information and default value
+     * @return object of the correct type for the descriptor
+     */
     private Object convert(Object value, AttributeDescriptor descriptor) {
         if (value == null) {
             // if the content is null and the descriptor says isNillable is false,
@@ -285,8 +297,8 @@ public class SimpleFeatureBuilder extends FeatureBuilder<FeatureType, Feature> {
     /**
      * Builds the feature.
      *
-     * <p>The specified <tt>id</tt> may be <code>null</code>. In this case an id will be generated
-     * internally by the builder.
+     * <p>The specified <tt>id</tt> may be <code>null</code>. In this case an id will be generated internally by the
+     * builder.
      *
      * <p>After this method returns, all internal builder state is reset.
      *
@@ -322,6 +334,10 @@ public class SimpleFeatureBuilder extends FeatureBuilder<FeatureType, Feature> {
             sf.getUserData().putAll(featureUserData);
         }
 
+        if (this.validating) {
+            Types.validate(sf);
+        }
+
         return sf;
     }
 
@@ -334,11 +350,11 @@ public class SimpleFeatureBuilder extends FeatureBuilder<FeatureType, Feature> {
     /**
      * Static method to build a new feature.
      *
-     * <p>If multiple features need to be created, this method should not be used and instead an
-     * instance should be instantiated directly.
+     * <p>If multiple features need to be created, this method should not be used and instead an instance should be
+     * instantiated directly.
      *
-     * <p>This method is a short-hand convenience which creates a builder instance internally and
-     * adds all the specified attributes.
+     * <p>This method is a short-hand convenience which creates a builder instance internally and adds all the specified
+     * attributes.
      *
      * @param type SimpleFeatureType defining the structure for the created feature
      * @param values Attribute values, must be in the order defined by SimpleFeatureType
@@ -351,27 +367,41 @@ public class SimpleFeatureBuilder extends FeatureBuilder<FeatureType, Feature> {
     }
 
     /**
-     * * Static method to build a new feature.
+     * Static method to build a new feature.
      *
-     * <p>If multiple features need to be created, this method should not be used and instead an
-     * instance should be instantiated directly.
+     * <p>Simple feature is very forgiving willing to convert values, and supply default values for any missing values.
+     *
+     * <p>If you have an array of values that exactly match your SimpleFeatureType it is faster to instantiate directly
+     * using {@link FeatureFactory#createSimpleFeautre(Object[], AttributeDescriptor, String)}.
      *
      * @param type SimpleFeatureType defining the structure for the created feature
      * @param values Attribute values, must be in the order defined by SimpleFeatureType
      * @param id FeatureID for the generated feature, use null to allow one to be supplied for you
      */
     public static SimpleFeature build(SimpleFeatureType type, List<Object> values, String id) {
+        final int ATTRIBUTE_COUNT = type.getAttributeCount();
+        final int VALUE_COUNT = values.size();
+        if (ATTRIBUTE_COUNT < VALUE_COUNT) {
+            LOGGER.fine("%s '%s' limited to the first %d values, out of a total %d values provided"
+                    .formatted(type.getTypeName(), id, ATTRIBUTE_COUNT, VALUE_COUNT));
+            values = values.subList(0, type.getAttributeCount());
+        } else if (ATTRIBUTE_COUNT > VALUE_COUNT) {
+            LOGGER.fine("%s '%s' used the first %d values, using default values for remaining %d attributes."
+                    .formatted(type.getTypeName(), id, VALUE_COUNT, ATTRIBUTE_COUNT - VALUE_COUNT));
+            values = new ArrayList<>(values);
+            values.addAll(Collections.nCopies(ATTRIBUTE_COUNT - VALUE_COUNT, null));
+        }
         return build(type, values.toArray(), id);
     }
 
     /**
      * Copy an existing feature (the values are reused so be careful with mutable values).
      *
-     * <p>If multiple features need to be copied, this method should not be used and instead an
-     * instance should be instantiated directly.
+     * <p>If multiple features need to be copied, this method should not be used and instead an instance should be
+     * instantiated directly.
      *
-     * <p>This method is a short-hand convenience which creates a builder instance and initializes
-     * it with the attributes from the specified feature.
+     * <p>This method is a short-hand convenience which creates a builder instance and initializes it with the
+     * attributes from the specified feature.
      */
     public static SimpleFeature copy(SimpleFeature original) {
         if (original == null) return null;
@@ -384,8 +414,8 @@ public class SimpleFeatureBuilder extends FeatureBuilder<FeatureType, Feature> {
     /**
      * Perform a "deep copy" an existing feature resuling in a duplicate of any geometry attributes.
      *
-     * <p>This method is scary, expensive and will result in a deep copy of Geometry which may take
-     * a significant amount of memory/time to perform.
+     * <p>This method is scary, expensive and will result in a deep copy of Geometry which may take a significant amount
+     * of memory/time to perform.
      *
      * @param original Content
      * @return copy
@@ -398,14 +428,12 @@ public class SimpleFeatureBuilder extends FeatureBuilder<FeatureType, Feature> {
             Object value = property.getValue();
             try {
                 Object copy = value;
-                if (value instanceof Geometry) {
-                    Geometry geometry = (Geometry) value;
+                if (value instanceof Geometry geometry) {
                     copy = geometry.copy();
                 }
                 builder.set(property.getName(), copy);
             } catch (Exception e) {
-                throw new IllegalAttributeException(
-                        (AttributeDescriptor) property.getDescriptor(), value, e);
+                throw new IllegalAttributeException((AttributeDescriptor) property.getDescriptor(), value, e);
             }
         }
         return builder.buildFeature(original.getID());
@@ -423,15 +451,14 @@ public class SimpleFeatureBuilder extends FeatureBuilder<FeatureType, Feature> {
     /**
      * Copies an existing feature, retyping it in the process.
      *
-     * <p>Be warned, this method will create its own SimpleFeatureBuilder, which will trigger a scan
-     * of the SPI looking for the current default feature factory, which is expensive and has
-     * scalability issues.
+     * <p>Be warned, this method will create its own SimpleFeatureBuilder, which will trigger a scan of the SPI looking
+     * for the current default feature factory, which is expensive and has scalability issues.
      *
-     * <p>If you need good performance consider using {@link
-     * SimpleFeatureBuilder#retype(SimpleFeature, SimpleFeatureBuilder)} instead.
+     * <p>If you need good performance consider using {@link SimpleFeatureBuilder#retype(SimpleFeature,
+     * SimpleFeatureBuilder)} instead.
      *
-     * <p>If the feature type contains attributes in which the original feature does not have a
-     * value for, the value in the resulting feature is set to <code>null</code>.
+     * <p>If the feature type contains attributes in which the original feature does not have a value for, the value in
+     * the resulting feature is set to <code>null</code>.
      *
      * @param feature The original feature.
      * @param featureType The target feature type.
@@ -449,8 +476,8 @@ public class SimpleFeatureBuilder extends FeatureBuilder<FeatureType, Feature> {
     /**
      * Copies an existing feature, retyping it in the process.
      *
-     * <p>If the feature type contains attributes in which the original feature does not have a
-     * value for, the value in the resulting feature is set to <code>null</code>.
+     * <p>If the feature type contains attributes in which the original feature does not have a value for, the value in
+     * the resulting feature is set to <code>null</code>.
      *
      * @param feature The original feature.
      * @param builder A builder for the target feature type
@@ -510,8 +537,9 @@ public class SimpleFeatureBuilder extends FeatureBuilder<FeatureType, Feature> {
     }
 
     /**
-     * Sets a feature wide use data key/value pair. The user data map is reset when the feature is
-     * built
+     * Sets a feature wide use data key/value pair.
+     *
+     * <p>The user data map is reset when the feature is built.
      */
     public SimpleFeatureBuilder featureUserData(Object key, Object value) {
         if (featureUserData == null) {
@@ -521,6 +549,11 @@ public class SimpleFeatureBuilder extends FeatureBuilder<FeatureType, Feature> {
         return this;
     }
 
+    /**
+     * True if values are validated when added to builder.
+     *
+     * @return
+     */
     public boolean isValidating() {
         return validating;
     }

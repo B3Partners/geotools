@@ -22,10 +22,13 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.sql.Connection;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.jdbc.JDBCDataStoreAPIOnlineTest;
 import org.geotools.jdbc.JDBCDataStoreAPITestSetup;
@@ -33,9 +36,6 @@ import org.geotools.util.Version;
 import org.geotools.util.factory.Hints;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
 
 public class PostgisDataStoreAPIOnlineTest extends JDBCDataStoreAPIOnlineTest {
 
@@ -58,7 +58,7 @@ public class PostgisDataStoreAPIOnlineTest extends JDBCDataStoreAPIOnlineTest {
     public void testSimplificationPreserveCollapsed() throws Exception {
         Version version;
         try (Connection cx = dataStore.getDataSource().getConnection()) {
-            PostGISDialect dialect = ((PostGISDialect) dataStore.getSQLDialect());
+            PostGISDialect dialect = (PostGISDialect) dataStore.getSQLDialect();
             version = dialect.getVersion(cx);
         }
 

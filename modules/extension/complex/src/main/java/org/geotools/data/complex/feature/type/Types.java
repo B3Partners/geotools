@@ -25,20 +25,20 @@ import org.eclipse.xsd.XSDContentTypeCategory;
 import org.eclipse.xsd.XSDDerivationMethod;
 import org.eclipse.xsd.XSDElementDeclaration;
 import org.eclipse.xsd.XSDTypeDefinition;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.ComplexType;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.feature.type.PropertyType;
 import org.geotools.util.logging.Logging;
 import org.geotools.xs.XSSchema;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.ComplexType;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.feature.type.PropertyType;
 
 /**
  * This is a set of utility methods used when <b>implementing</b> types.
  *
- * <p>This set of classes captures the all important how does it work questions, particularly with
- * respect to super types.
+ * <p>This set of classes captures the all important how does it work questions, particularly with respect to super
+ * types.
  *
  * @author Jody Garnett (Refractions Research)
  * @author Justin Deoliveira (The Open Planning Project)
@@ -67,8 +67,8 @@ public class Types extends org.geotools.feature.type.Types {
     }
 
     /**
-     * Return true if the type is either a simple type or has a simple type as its supertype. In
-     * particular, complex types with simple content will return true.
+     * Return true if the type is either a simple type or has a simple type as its supertype. In particular, complex
+     * types with simple content will return true.
      */
     public static boolean isSimpleContentType(PropertyType type) {
         if (type == XSSchema.ANYSIMPLETYPE_TYPE) {
@@ -89,8 +89,8 @@ public class Types extends org.geotools.feature.type.Types {
         if (type instanceof GeometryType) {
             return true;
         }
-        if (type instanceof ComplexTypeProxy) {
-            if (((ComplexTypeProxy) type).getSubject() instanceof GeometryType) {
+        if (type instanceof ComplexTypeProxy proxy) {
+            if (proxy.getSubject() instanceof GeometryType) {
                 return true;
             }
         }
@@ -122,10 +122,8 @@ public class Types extends org.geotools.feature.type.Types {
             // type was derived from xs:anyType: check derivation mode and content type category
             Map<Object, Object> userData = type.getUserData();
             if (userData != null && userData.get(XSDTypeDefinition.class) != null) {
-                XSDTypeDefinition typeDef =
-                        (XSDTypeDefinition) userData.get(XSDTypeDefinition.class);
-                if (typeDef instanceof XSDComplexTypeDefinition) {
-                    XSDComplexTypeDefinition complexTypeDef = (XSDComplexTypeDefinition) typeDef;
+                XSDTypeDefinition typeDef = (XSDTypeDefinition) userData.get(XSDTypeDefinition.class);
+                if (typeDef instanceof XSDComplexTypeDefinition complexTypeDef) {
                     XSDContentTypeCategory category = complexTypeDef.getContentTypeCategory();
                     XSDDerivationMethod derivMethod = complexTypeDef.getDerivationMethod();
 

@@ -20,6 +20,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -31,12 +32,14 @@ import java.sql.Types;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.jdbc.NullPrimaryKey;
@@ -60,9 +63,6 @@ import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 import org.locationtech.jts.io.WKTWriter;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
 
 public class TeradataDialect extends PreparedStatementSQLDialect {
 
@@ -81,35 +81,26 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
     /** key for spatial index table */
     static final String SPATIAL_INDEX = "org.geotools.data.teradata.spatialIndex";
 
-    static final Map<String, Class<?>> TYPE_TO_CLASS =
-            new HashMap<String, Class<?>>() {
-                {
-                    put("GEOMETRY", Geometry.class);
-                    put("POINT", Point.class);
-                    put("LINESTRING", LineString.class);
-                    put("POLYGON", Polygon.class);
+    static final Map<String, Class<?>> TYPE_TO_CLASS = Map.of(
+            "GEOMETRY", Geometry.class,
+            "POINT", Point.class,
+            "LINESTRING", LineString.class,
+            "POLYGON", Polygon.class,
+            "MULTIPOINT", MultiPoint.class,
+            "MULTILINESTRING", MultiLineString.class,
+            "MULTIPOLYGON", MultiPolygon.class,
+            "GEOMETRYCOLLECTION", GeometryCollection.class,
+            "GEOSEQUENCE", Geometry.class);
 
-                    put("MULTIPOINT", MultiPoint.class);
-                    put("MULTILINESTRING", MultiLineString.class);
-                    put("MULTIPOLYGON", MultiPolygon.class);
-                    put("GEOMETRYCOLLECTION", GeometryCollection.class);
-                    put("GEOSEQUENCE", Geometry.class);
-                }
-            };
-
-    static final Map<Class<?>, String> CLASS_TO_TYPE =
-            new HashMap<Class<?>, String>() {
-                {
-                    put(Geometry.class, "GEOMETRY");
-                    put(Point.class, "POINT");
-                    put(LineString.class, "LINESTRING");
-                    put(Polygon.class, "POLYGON");
-                    put(MultiPoint.class, "MULTIPOINT");
-                    put(MultiLineString.class, "MULTILINESTRING");
-                    put(MultiPolygon.class, "MULTIPOLYGON");
-                    put(GeometryCollection.class, "GEOMETRYCOLLECTION");
-                }
-            };
+    static final Map<Class<?>, String> CLASS_TO_TYPE = Map.of(
+            Geometry.class, "GEOMETRY",
+            Point.class, "POINT",
+            LineString.class, "LINESTRING",
+            Polygon.class, "POLYGON",
+            MultiPoint.class, "MULTIPOINT",
+            MultiLineString.class, "MULTILINESTRING",
+            MultiPolygon.class, "MULTIPOLYGON",
+            GeometryCollection.class, "GEOMETRYCOLLECTION");
 
     /** loose bbox flag */
     boolean looseBBOXEnabled = false;
@@ -169,14 +160,10 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
         }
 
         // JD: for some reason this does not work if we use a prepared statement
-        String sql =
-                String.format(
-                        "SET QUERY_BAND='%s;' FOR SESSION",
-                        QueryBand.APPLICATION
-                                + "="
-                                + (application != null
-                                        ? application
-                                        : TeradataDataStoreFactory.APPLICATION.sample));
+        String sql = "SET QUERY_BAND='%s;' FOR SESSION"
+                .formatted(QueryBand.APPLICATION
+                        + "="
+                        + (application != null ? application : TeradataDataStoreFactory.APPLICATION.sample));
         if (LOGGER.isLoggable(Level.FINE)) {
             LOGGER.fine(sql);
         }
@@ -200,8 +187,7 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public boolean includeTable(String schemaName, String tableName, Connection cx)
-            throws SQLException {
+    public boolean includeTable(String schemaName, String tableName, Connection cx) throws SQLException {
 
         if (tableName.equalsIgnoreCase("geometry_columns")) {
             return false;
@@ -221,19 +207,18 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public void setGeometryValue(
-            Geometry g, int dimension, int srid, Class binding, PreparedStatement ps, int column)
+    public void setGeometryValue(Geometry g, int dimension, int srid, Class binding, PreparedStatement ps, int column)
             throws SQLException {
         if (g != null) {
-            if (g instanceof LinearRing) {
+            if (g instanceof LinearRing ring) {
                 // teradata does not handle linear rings, convert to just a line string
-                g = g.getFactory().createLineString(((LinearRing) g).getCoordinateSequence());
+                g = g.getFactory().createLineString(ring.getCoordinateSequence());
             }
 
             // TODO: use WKB instead of WKT
             String wkt = new WKTWriter().write(g);
             if (wkt.length() > 64000) {
-                ByteArrayInputStream bin = new ByteArrayInputStream(wkt.getBytes());
+                ByteArrayInputStream bin = new ByteArrayInputStream(wkt.getBytes(StandardCharsets.UTF_8));
                 ps.setAsciiStream(column, bin, bin.available());
             } else {
                 ps.setString(column, wkt);
@@ -291,7 +276,7 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
                 return null;
             }
             try (InputStream in = clob.getAsciiStream()) {
-                return new WKTReader(factory).read(new InputStreamReader(in));
+                return new WKTReader(factory).read(new InputStreamReader(in, StandardCharsets.UTF_8));
             }
         } catch (ParseException e) {
             throw (IOException) new IOException("Error parsing geometry").initCause(e);
@@ -304,8 +289,7 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public Envelope decodeGeometryEnvelope(ResultSet rs, int column, Connection cx)
-            throws SQLException, IOException {
+    public Envelope decodeGeometryEnvelope(ResultSet rs, int column, Connection cx) throws SQLException, IOException {
         Geometry envelope = getWkbReader(null).read(rs, column);
         if (envelope != null) {
             return envelope.getEnvelopeInternal();
@@ -358,8 +342,7 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public List<ReferencedEnvelope> getOptimizedBounds(
-            String schema, SimpleFeatureType featureType, Connection cx)
+    public List<ReferencedEnvelope> getOptimizedBounds(String schema, SimpleFeatureType featureType, Connection cx)
             throws SQLException, IOException {
         if (!estimatedBounds) {
             return null;
@@ -397,7 +380,7 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
             //   .append(" AND ymax is NOT NULL");
 
             if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.fine(String.format("%s;1=%s;2=%s", sql.toString(), schema, tableName));
+                LOGGER.fine("%s;1=%s;2=%s".formatted(sql.toString(), schema, tableName));
             }
 
             PreparedStatement ps = cx.prepareStatement(sql.toString());
@@ -412,19 +395,16 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
                     List<ReferencedEnvelope> envs = new ArrayList<>();
                     if (rs.next()) {
                         int srid = rs.getInt(5);
-                        ReferencedEnvelope env =
-                                new ReferencedEnvelope(
-                                        rs.getDouble(1),
-                                        rs.getDouble(3),
-                                        rs.getDouble(2),
-                                        rs.getDouble(4),
-                                        CRS.decode("EPSG:" + srid));
+                        ReferencedEnvelope env = new ReferencedEnvelope(
+                                rs.getDouble(1),
+                                rs.getDouble(3),
+                                rs.getDouble(2),
+                                rs.getDouble(4),
+                                CRS.decode("EPSG:" + srid));
 
                         // check for "empty" envelope, means values were not set in geometry_columns
                         // table, fall out
-                        if (env.isEmpty()
-                                || env.isNull()
-                                || (env.getWidth() == 0 && env.getMinX() == 0)) {
+                        if (env.isEmpty() || env.isNull() || env.getWidth() == 0 && env.getMinX() == 0) {
                             throw new Exception("Empty universe in geometry columns");
                         }
                         envs.add(env);
@@ -443,16 +423,14 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
         }
 
         // fall back on tessellation entry
-        List<TessellationInfo> tinfos =
-                lookupTessellationInfos(cx, schema, featureType.getTypeName(), null);
+        List<TessellationInfo> tinfos = lookupTessellationInfos(cx, schema, featureType.getTypeName(), null);
         if (tinfos.isEmpty()) {
             return null;
         }
 
         List<ReferencedEnvelope> envs = new ArrayList<>();
         for (TessellationInfo tinfo : tinfos) {
-            GeometryDescriptor gatt =
-                    (GeometryDescriptor) featureType.getDescriptor(tinfo.getColumName());
+            GeometryDescriptor gatt = (GeometryDescriptor) featureType.getDescriptor(tinfo.getColumName());
 
             ReferencedEnvelope env = new ReferencedEnvelope(gatt.getCoordinateReferenceSystem());
             env.init(tinfo.getUBounds());
@@ -463,9 +441,9 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
     }
 
     /**
-     * Prevent deadlock - old behavior in JDBCFeatureSource was to disable autocommit in
-     * getReaderInternal to work around a postgres bug. This caused database deadlock many times as
-     * the 'read' transaction would never complete and subsequent writes would lock.
+     * Prevent deadlock - old behavior in JDBCFeatureSource was to disable autocommit in getReaderInternal to work
+     * around a postgres bug. This caused database deadlock many times as the 'read' transaction would never complete
+     * and subsequent writes would lock.
      *
      * @return true
      */
@@ -483,8 +461,7 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public Integer getGeometrySRID(
-            String schemaName, String tableName, String columnName, Connection cx)
+    public Integer getGeometrySRID(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
 
         StringBuffer sql = new StringBuffer("SELECT ref.AUTH_SRID FROM ");
@@ -497,10 +474,7 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
         sql.append(" AND col.F_GEOMETRY_COLUMN = ? ");
         sql.append(" AND col.SRID = ref.SRID");
 
-        LOGGER.log(
-                Level.FINE,
-                String.format(
-                        "%s; 1=%s, 2=%s, 3=%s", sql.toString(), schemaName, tableName, columnName));
+        LOGGER.log(Level.FINE, "%s; 1=%s, 2=%s, 3=%s".formatted(sql.toString(), schemaName, tableName, columnName));
 
         PreparedStatement ps = cx.prepareStatement(sql.toString());
         try {
@@ -513,10 +487,7 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
                 if (rs.next()) {
                     return rs.getInt(1);
                 } else {
-                    LOGGER.warning(
-                            String.format(
-                                    "No SRID entry for %s, %s, %s",
-                                    schemaName, tableName, columnName));
+                    LOGGER.warning("No SRID entry for %s, %s, %s".formatted(schemaName, tableName, columnName));
                 }
             } finally {
                 dataStore.closeSafe(rs);
@@ -564,8 +535,7 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public Object getLastAutoGeneratedValue(
-            String schemaName, String tableName, String columnName, Connection cx)
+    public Object getLastAutoGeneratedValue(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
 
         StringBuffer sql = new StringBuffer("SELECT TOP 1 ");
@@ -612,10 +582,7 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
         sql.append("WHERE F_TABLE_SCHEMA = ? AND F_TABLE_NAME = ? AND F_GEOMETRY_COLUMN = ?");
 
         if (LOGGER.isLoggable(Level.FINE)) {
-            LOGGER.fine(
-                    String.format(
-                            "%s; 1=%s, 2=%s, 3=%s",
-                            sql.toString(), schemaName, tableName, columnName));
+            LOGGER.fine("%s; 1=%s, 2=%s, 3=%s".formatted(sql.toString(), schemaName, tableName, columnName));
         }
 
         PreparedStatement ps = cx.prepareStatement(sql.toString());
@@ -639,14 +606,12 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
         return null;
     }
     /** Looks up tessellation info for the schema/table/geometry. */
-    TessellationInfo lookupTessellationInfo(
-            Connection cx, String schemaName, String tableName, String columnName)
+    TessellationInfo lookupTessellationInfo(Connection cx, String schemaName, String tableName, String columnName)
             throws SQLException {
         if (columnName == null) {
             throw new IllegalArgumentException("Column name must not be null");
         }
-        List<TessellationInfo> tinfos =
-                lookupTessellationInfos(cx, schemaName, tableName, columnName);
+        List<TessellationInfo> tinfos = lookupTessellationInfos(cx, schemaName, tableName, columnName);
         return !tinfos.isEmpty() ? tinfos.get(0) : null;
     }
 
@@ -671,23 +636,20 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
      * </pre>
      */
     List<TessellationInfo> lookupTessellationInfos(
-            Connection cx, String schemaName, String tableName, String columnName)
-            throws SQLException {
+            Connection cx, String schemaName, String tableName, String columnName) throws SQLException {
 
         DatabaseMetaData metadata = cx.getMetaData();
-        ResultSet tables =
-                metadata.getTables(
-                        null,
-                        dataStore.escapeNamePattern(metadata, "sysspatial"),
-                        dataStore.escapeNamePattern(metadata, TESSELLATION),
-                        new String[] {"TABLE"});
+        ResultSet tables = metadata.getTables(
+                null,
+                dataStore.escapeNamePattern(metadata, "sysspatial"),
+                dataStore.escapeNamePattern(metadata, TESSELLATION),
+                new String[] {"TABLE"});
         try {
             if (!tables.next()) {
-                LOGGER.warning(
-                        "sysspatial."
-                                + TESSELLATION
-                                + " does not exist. Unable to "
-                                + " perform spatially index queries.");
+                LOGGER.warning("sysspatial."
+                        + TESSELLATION
+                        + " does not exist. Unable to "
+                        + " perform spatially index queries.");
                 return Collections.emptyList();
             }
         } finally {
@@ -727,12 +689,11 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
             try {
                 if (rs.next()) {
                     TessellationInfo tinfo = new TessellationInfo();
-                    tinfo.setUBounds(
-                            new Envelope(
-                                    rs.getDouble("U_XMIN"),
-                                    rs.getDouble("U_XMAX"),
-                                    rs.getDouble("U_YMIN"),
-                                    rs.getDouble("U_YMAX")));
+                    tinfo.setUBounds(new Envelope(
+                            rs.getDouble("U_XMIN"),
+                            rs.getDouble("U_XMAX"),
+                            rs.getDouble("U_YMIN"),
+                            rs.getDouble("U_YMAX")));
                     tinfo.setNx(rs.getInt("G_NX"));
                     tinfo.setNy(rs.getInt("G_NY"));
                     tinfo.setLevels(rs.getInt("LEVELS"));
@@ -744,13 +705,11 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
                     tinfo.setTableName(tableName);
 
                     // look up the spatial index table
-                    tables =
-                            metadata.getTables(
-                                    null,
-                                    dataStore.escapeNamePattern(metadata, schemaName),
-                                    dataStore.escapeNamePattern(
-                                            metadata, tableName + "_" + columnName + "_idx"),
-                                    new String[] {"TABLE", "VIEW"});
+                    tables = metadata.getTables(
+                            null,
+                            dataStore.escapeNamePattern(metadata, schemaName),
+                            dataStore.escapeNamePattern(metadata, tableName + "_" + columnName + "_idx"),
+                            new String[] {"TABLE", "VIEW"});
                     try {
                         if (tables.next()) {
                             tinfo.setIndexTableName(tables.getString("TABLE_NAME"));
@@ -772,19 +731,17 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
     }
 
     /** Returns the database typename of the column by inspecting the metadata. */
-    public String lookupSqlTypeName(
-            Connection cx, String schemaName, String tableName, String columnName)
+    public String lookupSqlTypeName(Connection cx, String schemaName, String tableName, String columnName)
             throws SQLException {
 
         ResultSet columns = null;
         try {
             DatabaseMetaData metaData = cx.getMetaData();
-            columns =
-                    metaData.getColumns(
-                            null,
-                            dataStore.escapeNamePattern(metaData, schemaName),
-                            dataStore.escapeNamePattern(metaData, tableName),
-                            dataStore.escapeNamePattern(metaData, columnName));
+            columns = metaData.getColumns(
+                    null,
+                    dataStore.escapeNamePattern(metaData, schemaName),
+                    dataStore.escapeNamePattern(metaData, tableName),
+                    dataStore.escapeNamePattern(metaData, columnName));
             if (!columns.next()) {
                 throw new SQLException("Could not find column metadata");
             }
@@ -804,34 +761,28 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public void postCreateAttribute(
-            AttributeDescriptor att, String tableName, String schemaName, Connection cx)
+    public void postCreateAttribute(AttributeDescriptor att, String tableName, String schemaName, Connection cx)
             throws SQLException {
         if (att instanceof GeometryDescriptor) {
             // look up tessellation info
-            TessellationInfo tinfo =
-                    lookupTessellationInfo(cx, schemaName, tableName, att.getLocalName());
+            TessellationInfo tinfo = lookupTessellationInfo(cx, schemaName, tableName, att.getLocalName());
             if (tinfo != null) {
                 att.getUserData().put(TessellationInfo.KEY, tinfo);
             } else {
-                LOGGER.fine(
-                        String.format(
-                                "%s.%s.(%s) does not have tessellation entry.",
-                                schemaName, tableName, att.getLocalName()));
+                LOGGER.fine("%s.%s.(%s) does not have tessellation entry."
+                        .formatted(schemaName, tableName, att.getLocalName()));
             }
         }
     }
 
     @Override
-    public void postCreateTable(String schemaName, SimpleFeatureType featureType, Connection cx)
-            throws SQLException {
+    public void postCreateTable(String schemaName, SimpleFeatureType featureType, Connection cx) throws SQLException {
 
         String tableName = featureType.getName().getLocalPart();
 
         // register all geometry columns in the database
         for (AttributeDescriptor att : featureType.getAttributeDescriptors()) {
-            if (att instanceof GeometryDescriptor) {
-                GeometryDescriptor gd = (GeometryDescriptor) att;
+            if (att instanceof GeometryDescriptor gd) {
 
                 // figure out the native db srid
                 int srid = 0;
@@ -846,8 +797,7 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
                 }
 
                 if (epsg != null) {
-                    String sql =
-                            "SELECT SRID FROM SYSSPATIAL.spatial_ref_sys" + " WHERE AUTH_SRID = ?";
+                    String sql = "SELECT SRID FROM SYSSPATIAL.spatial_ref_sys" + " WHERE AUTH_SRID = ?";
                     LOGGER.log(Level.FINE, sql + ";{0}", epsg);
 
                     PreparedStatement ps = cx.prepareStatement(sql);
@@ -874,16 +824,12 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
                 geomType = geomType != null ? geomType : "GEOMETRY";
 
                 // insert into geometry columns table
-                String sql =
-                        "INSERT INTO SYSSPATIAL.GEOMETRY_COLUMNS (F_TABLE_CATALOG, F_TABLE_SCHEMA, "
-                                + "F_TABLE_NAME, F_GEOMETRY_COLUMN, COORD_DIMENSION, SRID, GEOM_TYPE) "
-                                + "VALUES (?, ?, ?, ?, 2, ?, ?)";
-                LOGGER.log(
-                        Level.FINE,
-                        sql + ";{0},{1},{2},{3},{4},{5}",
-                        new Object[] {
-                            "", schemaName, tableName, gd.getLocalName(), srid, geomType
-                        });
+                String sql = "INSERT INTO SYSSPATIAL.GEOMETRY_COLUMNS (F_TABLE_CATALOG, F_TABLE_SCHEMA, "
+                        + "F_TABLE_NAME, F_GEOMETRY_COLUMN, COORD_DIMENSION, SRID, GEOM_TYPE) "
+                        + "VALUES (?, ?, ?, ?, 2, ?, ?)";
+                LOGGER.log(Level.FINE, sql + ";{0},{1},{2},{3},{4},{5}", new Object[] {
+                    "", schemaName, tableName, gd.getLocalName(), srid, geomType
+                });
 
                 PreparedStatement ps = cx.prepareStatement(sql);
                 try {
@@ -900,10 +846,7 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
                 }
 
                 // create the spatial index table
-                PrimaryKey pkey =
-                        dataStore
-                                .getPrimaryKeyFinder()
-                                .getPrimaryKey(dataStore, schemaName, tableName, cx);
+                PrimaryKey pkey = dataStore.getPrimaryKeyFinder().getPrimaryKey(dataStore, schemaName, tableName, cx);
                 if (!(pkey instanceof NullPrimaryKey)) {
                     String indexTableName = tableName + "_" + gd.getLocalName() + "_idx";
                     String hashIndex = indexTableName + "_idx";
@@ -948,8 +891,7 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
                     for (PrimaryKeyColumn col : pkey.getColumns()) {
                         encodeColumnName(null, col.getName(), sb);
 
-                        String typeName =
-                                lookupSqlTypeName(cx, schemaName, tableName, col.getName());
+                        String typeName = lookupSqlTypeName(cx, schemaName, tableName, col.getName());
                         sb.append(" ").append(typeName).append(" NOT NULL, ");
                     }
                     if (!pkey.getColumns().isEmpty()) {
@@ -970,13 +912,8 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
                     }
 
                     // create hash
-                    sb =
-                            new StringBuffer(
-                                    "CREATE HASH INDEX "
-                                            + hashIndex
-                                            + " (cellid) ON "
-                                            + indexTableName
-                                            + " ORDER BY (cellid)");
+                    sb = new StringBuffer(
+                            "CREATE HASH INDEX " + hashIndex + " (cellid) ON " + indexTableName + " ORDER BY (cellid)");
                     sql = sb.toString();
                     LOGGER.fine(sql);
                     try {
@@ -986,17 +923,15 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
                         dataStore.closeSafe(ps);
                     }
 
-                    installTriggers(
-                            cx, tableName, gd.getLocalName(), indexTableName, pkey.getColumns());
+                    installTriggers(cx, tableName, gd.getLocalName(), indexTableName, pkey.getColumns());
 
                 } else {
-                    LOGGER.warning(
-                            "No primary key for "
-                                    + schemaName
-                                    + "."
-                                    + tableName
-                                    + ". Unable"
-                                    + " to create spatial index.");
+                    LOGGER.warning("No primary key for "
+                            + schemaName
+                            + "."
+                            + tableName
+                            + ". Unable"
+                            + " to create spatial index.");
                 }
             }
 
@@ -1035,10 +970,8 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
         return true;
     }
 
-    static Pattern ORDER_BY_QUERY =
-            Pattern.compile(".*(ORDER BY (?:,? *\"?[\\w]+\"?(?: (?:ASC)|(:?DESC))?)+)");
-    static Pattern ORDER_BY =
-            Pattern.compile("ORDER BY (?:,? *\"?[\\w]+\"?(?: (?:ASC)|(:?DESC))?)+");
+    static Pattern ORDER_BY_QUERY = Pattern.compile(".*(ORDER BY (?:,? *\"?[\\w]+\"?(?: (?:ASC)|(:?DESC))?)+)");
+    static Pattern ORDER_BY = Pattern.compile("ORDER BY (?:,? *\"?[\\w]+\"?(?: (?:ASC)|(:?DESC))?)+");
 
     @Override
     public void applyLimitOffset(StringBuffer sql, int limit, int offset) {
@@ -1072,8 +1005,11 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
                 sql.append(orderBy).append(" ");
             }
 
-            long max = (limit == Integer.MAX_VALUE ? Long.MAX_VALUE : limit + offset);
-            sql.append("QUALIFY row_num > ").append(offset).append(" AND row_num <= ").append(max);
+            long max = limit == Integer.MAX_VALUE ? Long.MAX_VALUE : limit + offset;
+            sql.append("QUALIFY row_num > ")
+                    .append(offset)
+                    .append(" AND row_num <= ")
+                    .append(max);
         }
     }
 
@@ -1083,26 +1019,22 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public void onSelect(PreparedStatement select, Connection cx, SimpleFeatureType featureType)
-            throws SQLException {
+    public void onSelect(PreparedStatement select, Connection cx, SimpleFeatureType featureType) throws SQLException {
         setQueryBand(cx, "SELECT");
     }
 
     @Override
-    public void onDelete(PreparedStatement delete, Connection cx, SimpleFeatureType featureType)
-            throws SQLException {
+    public void onDelete(PreparedStatement delete, Connection cx, SimpleFeatureType featureType) throws SQLException {
         setQueryBand(cx, "DELETE");
     }
 
     @Override
-    public void onInsert(PreparedStatement insert, Connection cx, SimpleFeatureType featureType)
-            throws SQLException {
+    public void onInsert(PreparedStatement insert, Connection cx, SimpleFeatureType featureType) throws SQLException {
         setQueryBand(cx, "INSERT");
     }
 
     @Override
-    public void onUpdate(PreparedStatement update, Connection cx, SimpleFeatureType featureType)
-            throws SQLException {
+    public void onUpdate(PreparedStatement update, Connection cx, SimpleFeatureType featureType) throws SQLException {
         setQueryBand(cx, "UPDATE");
     }
 
@@ -1116,7 +1048,7 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
         qb.append(QueryBand.PROCESS).append("=").append(process).append(";");
 
         if (LOGGER.isLoggable(Level.FINE)) {
-            LOGGER.fine(String.format("%s;1=%s", sql, qb.toString()));
+            LOGGER.fine("%s;1=%s".formatted(sql, qb.toString()));
         }
 
         PreparedStatement ps = cx.prepareStatement(sql);
@@ -1143,11 +1075,7 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
     }
 
     private void installInsertTrigger(
-            Connection cx,
-            String tableName,
-            String geomName,
-            String indexTableName,
-            List<PrimaryKeyColumn> primaryKeys)
+            Connection cx, String tableName, String geomName, String indexTableName, List<PrimaryKeyColumn> primaryKeys)
             throws SQLException {
         String referencing = "REFERENCING NEW TABLE AS nt";
         String triggerAction = "INSERT";
@@ -1156,11 +1084,7 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
     }
 
     private void installUpdateTrigger(
-            Connection cx,
-            String tableName,
-            String geomName,
-            String indexTableName,
-            List<PrimaryKeyColumn> primaryKeys)
+            Connection cx, String tableName, String geomName, String indexTableName, List<PrimaryKeyColumn> primaryKeys)
             throws SQLException {
         String referencing = "REFERENCING NEW TABLE AS nt";
         String triggerAction = "UPDATE";
@@ -1172,11 +1096,7 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
     }
 
     private void installDeleteTrigger(
-            Connection cx,
-            String tableName,
-            String geomName,
-            String indexTableName,
-            List<PrimaryKeyColumn> primaryKeys)
+            Connection cx, String tableName, String geomName, String indexTableName, List<PrimaryKeyColumn> primaryKeys)
             throws SQLException {
         String referencing = "REFERENCING OLD TABLE AS ot";
         String triggerAction = "DELETE";
@@ -1186,8 +1106,7 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
         installTrigger(cx, tableName, geomName, triggerAction, referencing, buf.toString());
     }
 
-    private String createTriggerInsert(
-            String indexTable, String geometryName, List<PrimaryKeyColumn> primaryKeys) {
+    private String createTriggerInsert(String indexTable, String geometryName, List<PrimaryKeyColumn> primaryKeys) {
         StringBuffer buf = new StringBuffer();
         for (int i = 0; i < primaryKeys.size(); i++) {
             encodeColumnName(null, primaryKeys.get(i).getName(), buf);
@@ -1195,18 +1114,17 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
                 buf.append(',');
             }
         }
-        String tinsert =
-                "INSERT INTO {0} SELECT "
-                        + buf.toString()
-                        + ","
-                        + "      sysspatial.tessellate_index("
-                        + "      \"{1}\".ST_MBR().Xmin(), "
-                        + "      \"{1}\".ST_MBR().Ymin(), "
-                        + "      \"{1}\".ST_MBR().Xmax(), "
-                        + "      \"{1}\".ST_MBR().Ymax(), "
-                        + "      {2,number,0.0#}, {3,number,0.0#}, {4,number,0.0#}, {5,number,0.0#}, "
-                        + "      {6,number,0}, {7,number,0}, {8,number,0}, {9,number,0.0#}, {10,number,0})"
-                        + " from nt WHERE {1} IS NOT NULL;";
+        String tinsert = "INSERT INTO {0} SELECT "
+                + buf.toString()
+                + ","
+                + "      sysspatial.tessellate_index("
+                + "      \"{1}\".ST_MBR().Xmin(), "
+                + "      \"{1}\".ST_MBR().Ymin(), "
+                + "      \"{1}\".ST_MBR().Xmax(), "
+                + "      \"{1}\".ST_MBR().Ymax(), "
+                + "      {2,number,0.0#}, {3,number,0.0#}, {4,number,0.0#}, {5,number,0.0#}, "
+                + "      {6,number,0}, {7,number,0}, {8,number,0}, {9,number,0.0#}, {10,number,0})"
+                + " from nt WHERE {1} IS NOT NULL;";
         int west = -180;
         int south = -90;
         int east = 180;
@@ -1217,18 +1135,7 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
         double scale = .01;
         int shift = 0;
         return MessageFormat.format(
-                tinsert,
-                indexTable,
-                geometryName,
-                west,
-                south,
-                east,
-                north,
-                nx,
-                ny,
-                level,
-                scale,
-                shift);
+                tinsert, indexTable, geometryName, west, south, east, north, nx, ny, level, scale, shift);
     }
 
     private void installTrigger(
@@ -1239,16 +1146,9 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
             String referencing,
             String triggerStmt)
             throws SQLException {
-        String triggerName =
-                tableName + "_" + geomName + "_m" + triggerAction.substring(0, 1).toLowerCase();
-        String sql =
-                "CREATE TRIGGER "
-                        + triggerName
-                        + " AFTER "
-                        + triggerAction
-                        + " ON "
-                        + tableName
-                        + "\n";
+        String triggerName = tableName + "_" + geomName + "_m"
+                + triggerAction.substring(0, 1).toLowerCase();
+        String sql = "CREATE TRIGGER " + triggerName + " AFTER " + triggerAction + " ON " + tableName + "\n";
         sql = sql + referencing + "\n";
         sql = sql + "FOR EACH STATEMENT BEGIN ATOMIC (\n";
         sql = sql + triggerStmt + "\n) END;";
@@ -1262,11 +1162,7 @@ public class TeradataDialect extends PreparedStatementSQLDialect {
     }
 
     void installTriggers(
-            Connection cx,
-            String tableName,
-            String geomName,
-            String indexTableName,
-            List<PrimaryKeyColumn> primaryKeys)
+            Connection cx, String tableName, String geomName, String indexTableName, List<PrimaryKeyColumn> primaryKeys)
             throws SQLException {
         /*
         "CREATE TRIGGER \"{0}_{1}_mi\" AFTER INSERT ON {12}"

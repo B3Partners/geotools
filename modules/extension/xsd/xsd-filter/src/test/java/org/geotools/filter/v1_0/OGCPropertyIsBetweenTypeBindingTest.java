@@ -19,12 +19,12 @@ package org.geotools.filter.v1_0;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.xsd.Binding;
 import org.junit.Test;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
 import org.w3c.dom.Document;
 
 public class OGCPropertyIsBetweenTypeBindingTest extends FilterTestSupport {
@@ -77,8 +77,10 @@ public class OGCPropertyIsBetweenTypeBindingTest extends FilterTestSupport {
                 1,
                 doc.getElementsByTagNameNS(OGC.NAMESPACE, OGC.PropertyName.getLocalPart())
                         .getLength());
-        assertEquals(1, doc.getElementsByTagNameNS(OGC.NAMESPACE, "LowerBoundary").getLength());
-        assertEquals(1, doc.getElementsByTagNameNS(OGC.NAMESPACE, "UpperBoundary").getLength());
+        assertEquals(
+                1, doc.getElementsByTagNameNS(OGC.NAMESPACE, "LowerBoundary").getLength());
+        assertEquals(
+                1, doc.getElementsByTagNameNS(OGC.NAMESPACE, "UpperBoundary").getLength());
     }
 
     @Test
@@ -89,7 +91,9 @@ public class OGCPropertyIsBetweenTypeBindingTest extends FilterTestSupport {
                 1,
                 doc.getElementsByTagNameNS(OGC.NAMESPACE, OGC.PropertyName.getLocalPart())
                         .getLength());
-        assertEquals(1, doc.getElementsByTagNameNS(OGC.NAMESPACE, "LowerBoundary").getLength());
-        assertEquals(1, doc.getElementsByTagNameNS(OGC.NAMESPACE, "UpperBoundary").getLength());
+        assertEquals(
+                1, doc.getElementsByTagNameNS(OGC.NAMESPACE, "LowerBoundary").getLength());
+        assertEquals(
+                1, doc.getElementsByTagNameNS(OGC.NAMESPACE, "UpperBoundary").getLength());
     }
 }

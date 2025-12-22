@@ -20,12 +20,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Checks the datastore can work against unknown columns
@@ -47,10 +47,8 @@ public abstract class JDBCSkipColumnOnlineTest extends JDBCTestSupport {
     @Override
     protected void connect() throws Exception {
         super.connect();
-        schema =
-                DataUtilities.createType(
-                        dataStore.getNamespaceURI() + "." + SKIPCOLUMN,
-                        ID + ":0," + GEOM + ":Point," + NAME + ":String");
+        schema = DataUtilities.createType(
+                dataStore.getNamespaceURI() + "." + SKIPCOLUMN, ID + ":0," + GEOM + ":Point," + NAME + ":String");
     }
 
     @Test
@@ -61,7 +59,8 @@ public abstract class JDBCSkipColumnOnlineTest extends JDBCTestSupport {
 
     @Test
     public void testReadFeatures() throws Exception {
-        SimpleFeatureCollection fc = dataStore.getFeatureSource(tname(SKIPCOLUMN)).getFeatures();
+        SimpleFeatureCollection fc =
+                dataStore.getFeatureSource(tname(SKIPCOLUMN)).getFeatures();
         assertEquals(1, fc.size());
         try (SimpleFeatureIterator fr = fc.features()) {
             assertTrue(fr.hasNext());

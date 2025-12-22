@@ -23,9 +23,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.filter.expression.Function;
 import org.geotools.filter.FilterFactoryImpl;
 import org.junit.Test;
-import org.opengis.filter.expression.Function;
 
 public class LiterateTest {
 
@@ -39,14 +39,13 @@ public class LiterateTest {
         map.put("list1", list1);
         map.put("list2", list2);
 
-        Function exp =
-                ff.function(
-                        "literate",
-                        ff.property("index"),
-                        ff.function("size", ff.property("list1")),
-                        ff.multiply(
-                                ff.function("litem", ff.property("list1"), ff.property("index")),
-                                ff.function("litem", ff.property("list2"), ff.property("index"))));
+        Function exp = ff.function(
+                "literate",
+                ff.property("index"),
+                ff.function("size", ff.property("list1")),
+                ff.multiply(
+                        ff.function("litem", ff.property("list1"), ff.property("index")),
+                        ff.function("litem", ff.property("list2"), ff.property("index"))));
         Object value = exp.evaluate(map);
         assertTrue(value instanceof List);
         assertEquals(Arrays.asList(4.0, 6.0, 6.0, 4.0), value);
@@ -58,12 +57,11 @@ public class LiterateTest {
         Map<String, Object> map = new HashMap<>();
         map.put("list1", list);
 
-        Function exp =
-                ff.function(
-                        "literate",
-                        ff.property("index"),
-                        ff.function("size", ff.property("list1")),
-                        ff.function("litem", ff.property("list1"), ff.property("index")));
+        Function exp = ff.function(
+                "literate",
+                ff.property("index"),
+                ff.function("size", ff.property("list1")),
+                ff.function("litem", ff.property("list1"), ff.property("index")));
         Object value = exp.evaluate(map);
         assertTrue(value instanceof List);
         assertEquals(Arrays.asList(), value);

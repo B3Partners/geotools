@@ -16,21 +16,21 @@
  */
 package org.geotools.geometry.jts;
 
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.CoordinateSequenceFactory;
 import org.locationtech.jts.geom.impl.CoordinateArraySequenceFactory;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 
 /**
- * A default implementation of {@linkplain CoordinateSequenceTransformer coordinate sequence
- * transformer}. This transformer applies the coordinate transformations immediately (which means
- * that caller are immediately notified if a transformation fails).
+ * A default implementation of {@linkplain CoordinateSequenceTransformer coordinate sequence transformer}. This
+ * transformer applies the coordinate transformations immediately (which means that caller are immediately notified if a
+ * transformation fails).
  *
- * <p>This transformer support {@linkplain MathTransform math transform} with up to 3 source or
- * target dimensions. This transformer is not thread-safe.
+ * <p>This transformer support {@linkplain MathTransform math transform} with up to 3 source or target dimensions. This
+ * transformer is not thread-safe.
  *
  * @since 2.1
  * @version $Id$
@@ -39,11 +39,11 @@ import org.opengis.referencing.operation.TransformException;
  */
 public class DefaultCoordinateSequenceTransformer implements CoordinateSequenceTransformer {
     /**
-     * A buffer for coordinate transformations. We choose a length which is divisible by both 2 and
-     * 3, since JTS coordinates may be up to three-dimensional. If the number of coordinates point
-     * to transform is greater than the buffer capacity, then the buffer will be flushed to the
-     * destination array before to continue. We avoid to create a buffer as large than the number of
-     * point to transforms, because it would consume a large amount of memory for big geometries.
+     * A buffer for coordinate transformations. We choose a length which is divisible by both 2 and 3, since JTS
+     * coordinates may be up to three-dimensional. If the number of coordinates point to transform is greater than the
+     * buffer capacity, then the buffer will be flushed to the destination array before to continue. We avoid to create
+     * a buffer as large than the number of point to transforms, because it would consume a large amount of memory for
+     * big geometries.
      */
     private final transient double[] buffer = new double[96];
 
@@ -61,8 +61,7 @@ public class DefaultCoordinateSequenceTransformer implements CoordinateSequenceT
 
     /** {@inheritDoc} */
     @Override
-    public CoordinateSequence transform(
-            final CoordinateSequence sequence, final MathTransform transform)
+    public CoordinateSequence transform(final CoordinateSequence sequence, final MathTransform transform)
             throws TransformException {
         final int sourceDim = transform.getSourceDimensions();
         final int targetDim = transform.getTargetDimensions();
@@ -75,9 +74,8 @@ public class DefaultCoordinateSequenceTransformer implements CoordinateSequenceT
 
         // create a target CS so that the dimensions not contemplated in the source CS
         // are copied over (think Z or M with a 2d CRS)
-        int targetCSDim = targetDim + (sequence.getDimension() - sourceDim);
-        CoordinateSequence result =
-                JTS.createCS(csFactory, sequence.size(), targetCSDim, sequence.getMeasures());
+        int targetCSDim = targetDim + sequence.getDimension() - sourceDim;
+        CoordinateSequence result = JTS.createCS(csFactory, sequence.size(), targetCSDim, sequence.getMeasures());
 
         for (int i = 0; i < size; i++) {
             switch (sourceDim) {
@@ -104,7 +102,7 @@ public class DefaultCoordinateSequenceTransformer implements CoordinateSequenceT
                  * The buffer is full, or we just copied the last coordinates.
                  * Transform the coordinates and flush to the destination array.
                  */
-                assert (ib % sourceDim) == 0;
+                assert ib % sourceDim == 0;
 
                 final int n = ib / sourceDim;
                 transform.transform(buffer, 0, buffer, 0, n);
@@ -120,8 +118,7 @@ public class DefaultCoordinateSequenceTransformer implements CoordinateSequenceT
                     }
                     // copy over the non transformed portion
                     for (; oi < targetCSDim; oi++) {
-                        result.setOrdinate(
-                                it, oi, sequence.getOrdinate(it, oi + (targetDim - sourceDim)));
+                        result.setOrdinate(it, oi, sequence.getOrdinate(it, oi + targetDim - sourceDim));
                     }
                     // force to NaN eventual extra ordinates the sequence has (some are fixed size,
                     // wont'
@@ -133,7 +130,7 @@ public class DefaultCoordinateSequenceTransformer implements CoordinateSequenceT
                     }
                     it++;
                 }
-                assert ib == (n * targetDim);
+                assert ib == n * targetDim;
                 ib = 0;
                 remainingBeforeFlush = Math.min(bufferCapacity, size - (i + 1));
             }

@@ -24,28 +24,27 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.datum.PixelInCell;
+import org.geotools.api.referencing.operation.MathTransform2D;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.io.range.RangeType;
 import org.geotools.coverage.io.util.DateRangeTreeSet;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.operation.builder.GridToEnvelopeMapper;
 import org.geotools.util.DateRange;
 import org.geotools.util.NumberRange;
-import org.opengis.filter.Filter;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.datum.PixelInCell;
-import org.opengis.referencing.operation.MathTransform2D;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * Request information from a {@link CoverageSource}.
  *
- * <p>Note that we are working with the assumption that the queried coverage has separable
- * dimensions.
+ * <p>Note that we are working with the assumption that the queried coverage has separable dimensions.
  */
 public class CoverageReadRequest extends CoverageRequest {
 
@@ -59,8 +58,8 @@ public class CoverageReadRequest extends CoverageRequest {
     protected Rectangle rasterArea;
 
     /**
-     * The requested area in geographic coordinates, which means the area in destination world space
-     * which we want to get data for.
+     * The requested area in geographic coordinates, which means the area in destination world space which we want to
+     * get data for.
      *
      * @uml.property name="geographicArea"
      */
@@ -69,8 +68,8 @@ public class CoverageReadRequest extends CoverageRequest {
     /**
      * The request {@link MathTransform2D} which would map the pixel into the requested world area.
      *
-     * <p>Note that having a raster are and a world area is not enough, unless we have a simple
-     * scale-and-translate grid-to-workd transform.
+     * <p>Note that having a raster are and a world area is not enough, unless we have a simple scale-and-translate
+     * grid-to-workd transform.
      *
      * @uml.property name="gridToWorldTransform"
      */
@@ -113,13 +112,11 @@ public class CoverageReadRequest extends CoverageRequest {
 
     /**
      * @see org.geotools.coverage.io.CoverageReadRequest#setDomainSubset(java.awt.Rectangle,
-     *     org.opengis.referencing.operation.MathTransform2D,
-     *     org.opengis.referencing.crs.CoordinateReferenceSystem)
+     *     org.geotools.api.referencing.operation.MathTransform2D,
+     *     org.geotools.api.referencing.crs.CoordinateReferenceSystem)
      */
     public void setDomainSubset(
-            final Rectangle rasterArea,
-            final MathTransform2D gridToWorldTrasform,
-            final CoordinateReferenceSystem crs)
+            final Rectangle rasterArea, final MathTransform2D gridToWorldTrasform, final CoordinateReferenceSystem crs)
             throws MismatchedDimensionException, TransformException {
 
         // get input elements
@@ -127,15 +124,13 @@ public class CoverageReadRequest extends CoverageRequest {
         this.gridToWorldTransform = gridToWorldTrasform;
 
         // create a bbox
-        GeneralEnvelope env =
-                CRS.transform(
-                        gridToWorldTrasform, new ReferencedEnvelope(rasterArea.getBounds2D(), crs));
+        GeneralBounds env = CRS.transform(gridToWorldTrasform, new ReferencedEnvelope(rasterArea.getBounds2D(), crs));
         this.geographicArea = new ReferencedEnvelope(new ReferencedEnvelope(env), crs);
     }
 
     /**
      * @see org.geotools.coverage.io.CoverageReadRequest#setDomainSubset(java.awt.Rectangle,
-     *     org.opengis.geometry.BoundingBox, org.opengis.referencing.datum.PixelInCell)
+     *     org.geotools.api.geometry.BoundingBox, org.geotools.api.referencing.datum.PixelInCell)
      */
     public void setDomainSubset(final Rectangle rasterArea, final ReferencedEnvelope worldArea) {
         // get input elements
@@ -146,8 +141,7 @@ public class CoverageReadRequest extends CoverageRequest {
 
         // create a math transform
         final GridToEnvelopeMapper mapper =
-                new GridToEnvelopeMapper(
-                        new GridEnvelope2D(rasterArea), new ReferencedEnvelope(worldArea));
+                new GridToEnvelopeMapper(new GridEnvelope2D(rasterArea), new ReferencedEnvelope(worldArea));
         mapper.setPixelAnchor(PixelInCell.CELL_CENTER);
         this.gridToWorldTransform = (MathTransform2D) mapper.createTransform();
     }

@@ -18,14 +18,14 @@ package org.geotools.feature.collection;
 
 import static org.junit.Assert.assertNotNull;
 
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterVisitor;
 import org.geotools.data.DataTestCase;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.junit.Test;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterVisitor;
 
 public class SubFeatureCollectionTest extends DataTestCase {
     DefaultFeatureCollection features = new DefaultFeatureCollection(null, null);
@@ -44,20 +44,18 @@ public class SubFeatureCollectionTest extends DataTestCase {
 
     @Test
     public void testBounds() {
-        SimpleFeatureCollection subCollection =
-                features.subCollection(
-                        new Filter() {
+        SimpleFeatureCollection subCollection = features.subCollection(new Filter() {
 
-                            @Override
-                            public Object accept(FilterVisitor arg0, Object arg1) {
-                                return null;
-                            }
+            @Override
+            public Object accept(FilterVisitor arg0, Object arg1) {
+                return null;
+            }
 
-                            @Override
-                            public boolean evaluate(Object arg0) {
-                                return true;
-                            }
-                        });
+            @Override
+            public boolean evaluate(Object arg0) {
+                return true;
+            }
+        });
 
         // Should not throw an UnsupportedOperationException
         // TODO Not semantically testing the bounds

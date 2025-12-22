@@ -6,9 +6,11 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Transaction;
 import org.geotools.data.shapefile.files.ShpFiles;
 import org.geotools.data.shapefile.index.LockTimeoutException;
 import org.geotools.data.shapefile.index.TreeException;
@@ -29,8 +31,6 @@ import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.util.Stopwatch;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 @RunWith(Parameterized.class)
 @SuppressWarnings("PMD.SystemPrintln")
@@ -67,7 +67,7 @@ public class ShapeFileIndexerStressTest {
 
         @Override
         public String toString() {
-            return String.format("|%,d|%s|", featureCount, Stopwatch.getTimeString(ellapsed));
+            return "|%,d|%s|".formatted(featureCount, Stopwatch.getTimeString(ellapsed));
         }
     }
 
@@ -79,15 +79,11 @@ public class ShapeFileIndexerStressTest {
 
         dataStore = new ShapefileDataStore(url);
         dataStore.setIndexCreationEnabled(false);
-        SimpleFeatureType featureType =
-                DataUtilities.createType(typeName, "id:0,the_geom:LineString");
+        SimpleFeatureType featureType = DataUtilities.createType(typeName, "id:0,the_geom:LineString");
         dataStore.createSchema(featureType);
-        LOGGER.info(String.format("Setting up %,d features shapefile %s...", featureCount, file));
+        LOGGER.info("Setting up %,d features shapefile %s...".formatted(featureCount, file));
         addFeatures(dataStore, featureType, featureCount);
-        LOGGER.info(
-                String.format(
-                        "%,d features shapefile %s, %,d bytes...",
-                        featureCount, file, file.length()));
+        LOGGER.info("%,d features shapefile %s, %,d bytes...".formatted(featureCount, file, file.length()));
     }
 
     @After
@@ -99,8 +95,7 @@ public class ShapeFileIndexerStressTest {
         }
     }
 
-    private void addFeatures(ShapefileDataStore store, SimpleFeatureType type, final int count)
-            throws IOException {
+    private void addFeatures(ShapefileDataStore store, SimpleFeatureType type, final int count) throws IOException {
         try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
                 store.getFeatureWriterAppend(Transaction.AUTO_COMMIT)) {
             int recno = 0;
@@ -151,8 +146,7 @@ public class ShapeFileIndexerStressTest {
     }
 
     @Test
-    public void testIndex()
-            throws TreeException, StoreException, IOException, LockTimeoutException {
+    public void testIndex() throws TreeException, StoreException, IOException, LockTimeoutException {
         ShapeFileIndexer indexer = new ShapeFileIndexer();
         indexer.setShapeFileName(new ShpFiles(file));
         Stopwatch sw = new Stopwatch();

@@ -16,6 +16,7 @@
  */
 package org.geotools.gce.imagemosaic;
 
+import it.geosolutions.imageio.pam.PAMDataset;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -26,12 +27,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+import org.geotools.api.data.CloseableIterator;
+import org.geotools.api.data.FileResourceInfo;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortOrder;
 import org.geotools.coverage.grid.io.DimensionDescriptor;
+import org.geotools.coverage.grid.io.PAMResourceInfo;
 import org.geotools.coverage.util.FeatureUtilities;
-import org.geotools.data.CloseableIterator;
 import org.geotools.data.DefaultResourceInfo;
-import org.geotools.data.FileResourceInfo;
-import org.geotools.data.Query;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.visitor.BoundsVisitor;
@@ -47,32 +54,26 @@ import org.geotools.util.NumberRange;
 import org.geotools.util.Range;
 import org.geotools.util.URLs;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.sort.SortOrder;
 
 /**
- * {@link FileResourceInfo} implementation for ImageMosaic. The specific implementation is able to
- * retrieve support files such as, as an instance, prj and world file for TIFFs.
+ * {@link FileResourceInfo} implementation for ImageMosaic. The specific implementation is able to retrieve support
+ * files such as, as an instance, prj and world file for TIFFs.
  */
-public class ImageMosaicFileResourceInfo extends DefaultResourceInfo implements FileResourceInfo {
+public class ImageMosaicFileResourceInfo extends DefaultResourceInfo implements FileResourceInfo, PAMResourceInfo {
 
     static final Logger LOGGER = Logging.getLogger(ImageMosaicFileResourceInfo.class);
 
     /**
-     * A {@link CloseableIterator} implementation taking care of retrieving {@link FileGroup}s from
-     * a {@link SimpleFeatureIterator}.
+     * A {@link CloseableIterator} implementation taking care of retrieving {@link FileGroup}s from a
+     * {@link SimpleFeatureIterator}.
      *
-     * <p>Note on files grouping: Each returned FileGroup should contain a different file. When
-     * dealing with multidimensional data, multiple features can contain same file (records will be
-     * different in terms of time value, elevation value, and so on. Therefore, we need to aggregate
-     * features related to the same file location by scanning the underlying iterator and caching
-     * the next feature which doesn't belong to same file.
+     * <p>Note on files grouping: Each returned FileGroup should contain a different file. When dealing with
+     * multidimensional data, multiple features can contain same file (records will be different in terms of time value,
+     * elevation value, and so on. Therefore, we need to aggregate features related to the same file location by
+     * scanning the underlying iterator and caching the next feature which doesn't belong to same file.
      *
-     * <p>Important note: the featureIterator need to be get using a sortBy clause on location to
-     * make sure underlying features come sorted by location.
+     * <p>Important note: the featureIterator need to be get using a sortBy clause on location to make sure underlying
+     * features come sorted by location.
      */
     class CloseableFileGroupIterator implements CloseableIterator<FileGroup> {
 
@@ -143,9 +144,9 @@ public class ImageMosaicFileResourceInfo extends DefaultResourceInfo implements 
         }
 
         /**
-         * Aggregate multipleFeatures related to the same file, on the same {@link FileGroup}. This
-         * is usually needed when the underlying coverage isn't a simple 2D coverage but it has
-         * multiple dimensions (as an instance, time, elevation, custom...)
+         * Aggregate multipleFeatures related to the same file, on the same {@link FileGroup}. This is usually needed
+         * when the underlying coverage isn't a simple 2D coverage but it has multiple dimensions (as an instance, time,
+         * elevation, custom...)
          *
          * <p>The method also look for supportFiles.
          *
@@ -161,8 +162,7 @@ public class ImageMosaicFileResourceInfo extends DefaultResourceInfo implements 
             if (collector != null) {
                 supportFiles = collector.getSupportFiles(filePath);
             }
-            Map<String, Object> metadataMap =
-                    computeGroupMetadata(filePath, aggregate, firstFeature);
+            Map<String, Object> metadataMap = computeGroupMetadata(filePath, aggregate, firstFeature);
 
             return new FileGroup(file, supportFiles, metadataMap);
         }
@@ -171,8 +171,7 @@ public class ImageMosaicFileResourceInfo extends DefaultResourceInfo implements 
         private Map<String, Object> computeGroupMetadata(
                 String filePath, boolean aggregate, SimpleFeature firstFeature) {
             Map<String, Object> metadataMap = null;
-            List<DimensionDescriptor> dimensionDescriptors =
-                    rasterManager.getDimensionDescriptors();
+            List<DimensionDescriptor> dimensionDescriptors = rasterManager.getDimensionDescriptors();
             // extract metadata for the available domains
             if (dimensionDescriptors != null && !dimensionDescriptors.isEmpty()) {
                 Filter filter = FF.equals(FF.property("location"), FF.literal(filePath));
@@ -207,8 +206,7 @@ public class ImageMosaicFileResourceInfo extends DefaultResourceInfo implements 
 
                     addBBOX(aggregate, filter, firstFeature, metadataMap);
                 } catch (IOException e) {
-                    throw new RuntimeException(
-                            "Exception occurred while parsing the feature domains", e);
+                    throw new RuntimeException("Exception occurred while parsing the feature domains", e);
                 }
             }
             return metadataMap;
@@ -216,10 +214,7 @@ public class ImageMosaicFileResourceInfo extends DefaultResourceInfo implements 
 
         /** Add the bbox element to the metadata Map */
         private void addBBOX(
-                boolean aggregate,
-                Filter filter,
-                SimpleFeature firstFeature,
-                Map<String, Object> metadataMap)
+                boolean aggregate, Filter filter, SimpleFeature firstFeature, Map<String, Object> metadataMap)
                 throws IOException {
             ReferencedEnvelope envelope = null;
             if (aggregate) {
@@ -237,18 +232,13 @@ public class ImageMosaicFileResourceInfo extends DefaultResourceInfo implements 
         }
 
         /** Add a metadata element to the FileGroup metadata map */
-        private void addMetadaElement(
-                String name, Comparable min, Comparable max, Map<String, Object> metadataMap) {
+        private void addMetadaElement(String name, Comparable min, Comparable max, Map<String, Object> metadataMap) {
             if (Utils.TIME_DOMAIN.equalsIgnoreCase(name) || min instanceof Date) {
                 metadataMap.put(name.toUpperCase(), new DateRange((Date) min, (Date) max));
             } else if (Utils.ELEVATION_DOMAIN.equalsIgnoreCase(name) || min instanceof Number) {
                 metadataMap.put(
                         name.toUpperCase(),
-                        NumberRange.create(
-                                ((Number) min).doubleValue(),
-                                true,
-                                ((Number) max).doubleValue(),
-                                true));
+                        NumberRange.create(((Number) min).doubleValue(), true, ((Number) max).doubleValue(), true));
             } else {
                 metadataMap.put(name, new Range<>(String.class, (String) min, (String) max));
             }
@@ -260,11 +250,11 @@ public class ImageMosaicFileResourceInfo extends DefaultResourceInfo implements 
         }
     }
 
-    private static final FilterFactory2 FF = FeatureUtilities.DEFAULT_FILTER_FACTORY;
+    private static final FilterFactory FF = FeatureUtilities.DEFAULT_FILTER_FACTORY;
 
     /**
-     * parentLocation used to rebuild full file paths in case the imageMosaic is storing granules
-     * location on DB with relative paths
+     * parentLocation used to rebuild full file paths in case the imageMosaic is storing granules location on DB with
+     * relative paths
      */
     private String parentLocation;
 
@@ -272,8 +262,8 @@ public class ImageMosaicFileResourceInfo extends DefaultResourceInfo implements 
     private String locationAttributeName;
 
     /**
-     * The RasterManager used to retrieve granule index info such as typeName, PathType,
-     * granuleCatalog, dimensions and attributes
+     * The RasterManager used to retrieve granule index info such as typeName, PathType, granuleCatalog, dimensions and
+     * attributes
      */
     private RasterManager rasterManager;
 
@@ -289,8 +279,8 @@ public class ImageMosaicFileResourceInfo extends DefaultResourceInfo implements 
     /**
      * ImageMosaicFileResourceInfo constructor
      *
-     * @param rasterManager manager the {@link RasterManager} instance for underlying index info
-     *     retrieval and management
+     * @param rasterManager manager the {@link RasterManager} instance for underlying index info retrieval and
+     *     management
      * @param parentLocation the granules parentLocation (relative paths refer to that)
      * @param locationAttributeName the actual location attribute name
      */
@@ -315,10 +305,7 @@ public class ImageMosaicFileResourceInfo extends DefaultResourceInfo implements 
             Filter filter = updatedQuery.getFilter();
 
             // TODO: Improve this check since it may contain multiple filters
-            if (!"location".equalsIgnoreCase(locationAttributeName)
-                    && filter instanceof LikeFilterImpl) {
-                // Rewrap the filter to update the file search
-                LikeFilterImpl likeFilter = (LikeFilterImpl) filter;
+            if (!"location".equalsIgnoreCase(locationAttributeName) && filter instanceof LikeFilterImpl likeFilter) {
                 AttributeExpressionImpl impl = (AttributeExpressionImpl) likeFilter.getExpression();
                 String attribute = impl.getPropertyName();
                 String value = likeFilter.getLiteral();
@@ -330,19 +317,15 @@ public class ImageMosaicFileResourceInfo extends DefaultResourceInfo implements 
                 }
             }
             final List<SortBy> clauses = new ArrayList<>(1);
-            clauses.add(
-                    new SortByImpl(
-                            FeatureUtilities.DEFAULT_FILTER_FACTORY.property(locationAttributeName),
-                            SortOrder.ASCENDING));
+            clauses.add(new SortByImpl(
+                    FeatureUtilities.DEFAULT_FILTER_FACTORY.property(locationAttributeName), SortOrder.ASCENDING));
             final SortBy[] sb = clauses.toArray(new SortBy[] {});
             final boolean isSortBySupported =
                     granuleCatalog.getQueryCapabilities(typeName).supportsSorting(sb);
             if (isSortBySupported) {
                 updatedQuery.setSortBy(sb);
             } else {
-                LOGGER.severe(
-                        "Sorting parameter ignored, underlying datastore cannot sort on "
-                                + Arrays.toString(sb));
+                LOGGER.severe("Sorting parameter ignored, underlying datastore cannot sort on " + Arrays.toString(sb));
             }
             updatedQuery.setTypeName(typeName);
 
@@ -355,5 +338,16 @@ public class ImageMosaicFileResourceInfo extends DefaultResourceInfo implements 
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
         }
+    }
+
+    @Override
+    public PAMDataset getPAMDataset() {
+        return rasterManager.getPamDataset();
+    }
+
+    @Override
+    public boolean reloadPAMDataset() throws IOException {
+        rasterManager.reloadPamDataset();
+        return true;
     }
 }

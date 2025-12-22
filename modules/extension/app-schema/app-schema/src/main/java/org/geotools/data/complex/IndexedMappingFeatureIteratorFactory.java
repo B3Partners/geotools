@@ -16,10 +16,10 @@
  */
 package org.geotools.data.complex;
 
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.filter.Filter;
 import org.geotools.data.complex.IndexQueryManager.QueryIndexCoverage;
-import org.opengis.filter.Filter;
 
 /**
  * Factory for IndexedMappingFeatureIterator subclasses
@@ -51,8 +51,8 @@ public class IndexedMappingFeatureIteratorFactory {
     }
 
     /**
-     * Build IndexedMappingFeatureIterator instance for partial or total index query coverage.
-     * return null if no index coverage detected for the query
+     * Build IndexedMappingFeatureIterator instance for partial or total index query coverage. return null if no index
+     * coverage detected for the query
      *
      * @return IndexedMappingFeatureIterator instance
      */

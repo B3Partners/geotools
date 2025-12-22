@@ -18,6 +18,9 @@ package org.geotools.process.vector;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
@@ -39,11 +42,13 @@ import org.locationtech.jts.triangulate.DelaunayTriangulationBuilder;
 import org.locationtech.jts.triangulate.quadedge.QuadEdge;
 import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
 import org.locationtech.jts.triangulate.quadedge.Vertex;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.util.ProgressListener;
 
 public class Contours {
+
+    private enum PointType {
+        Point,
+        MultiPoint
+    }
 
     private static final GeometryFactory GF = new GeometryFactory();
 
@@ -61,16 +66,16 @@ public class Contours {
         }
         ArrayList<Coordinate> coords = new ArrayList<>();
 
-        String ptype = "POINT";
+        PointType ptype = PointType.Point;
         if (MultiPoint.class.equals(
                 features.getSchema().getGeometryDescriptor().getType().getBinding())) {
-            ptype = "MULTI";
+            ptype = PointType.MultiPoint;
         }
         try (SimpleFeatureIterator itr = (SimpleFeatureIterator) features.features()) {
             while (itr.hasNext()) {
                 SimpleFeature f = itr.next();
                 ArrayList<Point> points = new ArrayList<>();
-                if (ptype == "POINT") {
+                if (ptype == PointType.Point) {
                     points.add((Point) f.getDefaultGeometry());
                 } else {
                     MultiPoint mp = (MultiPoint) f.getDefaultGeometry();
@@ -106,7 +111,7 @@ public class Contours {
         int steps = levels.length;
         for (double contourValue : levels) {
             if (progressListener != null) {
-                progressListener.progress((100 / steps) * percent);
+                progressListener.progress(100 / steps * percent);
             }
             ArrayList<LineString> lines = extractContour(primaryEdges, contourValue);
 
@@ -150,8 +155,7 @@ public class Contours {
      * @param contourValue
      * @return
      */
-    public ArrayList<LineString> extractContour(
-            Collection<QuadEdge> primaryEdges, double contourValue) {
+    public ArrayList<LineString> extractContour(Collection<QuadEdge> primaryEdges, double contourValue) {
         ArrayList<LineString> lines = new ArrayList<>();
         for (QuadEdge edge : primaryEdges) {
             Vertex[] v = new Vertex[3];

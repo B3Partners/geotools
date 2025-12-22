@@ -24,6 +24,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -36,7 +37,7 @@ import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.geotools.gce.imagemosaic.ImageMosaicFormat;
 import org.geotools.gce.imagemosaic.ImageMosaicReader;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.util.URLs;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
@@ -60,17 +61,15 @@ class Utils {
         //
         // if it is a URL or a String let's try to see if we can get a file to
         // check if we have to build the index
-        if (source instanceof File) {
-            sourceFile = (File) source;
+        if (source instanceof File file) {
+            sourceFile = file;
             sourceURL = URLs.fileToUrl(sourceFile);
-        } else if (source instanceof URL) {
-            sourceURL = (URL) source;
+        } else if (source instanceof URL rL) {
+            sourceURL = rL;
             if (sourceURL.getProtocol().equals("file")) {
                 sourceFile = URLs.urlToFile(sourceURL);
             }
-        } else if (source instanceof String) {
-            // is it a File?
-            final String tempSource = (String) source;
+        } else if (source instanceof String tempSource) {
             File tempFile = new File(tempSource);
             if (!tempFile.exists()) {
                 // is it a URL
@@ -152,12 +151,9 @@ class Utils {
         }
 
         // check the gdal case and move files if necessary
-        if (!zeroLevelDirectory.exists()
-                && (directories != null && numericDirectories.length == directories.length)) {
+        if (!zeroLevelDirectory.exists() && directories != null && numericDirectories.length == directories.length) {
             LOGGER.log(
-                    Level.INFO,
-                    "Detected gdal_retile file structure, "
-                            + "moving root files to the '0' subdirectory");
+                    Level.INFO, "Detected gdal_retile file structure, " + "moving root files to the '0' subdirectory");
             if (zeroLevelDirectory.mkdir()) {
                 if (LOGGER.isLoggable(Level.FINE)) {
                     LOGGER.fine("Created '0' subidr, now moving files");
@@ -203,9 +199,7 @@ class Utils {
             for (File subdir : directories) {
                 if (mosaicFactory.accepts(subdir, hints)) {
                     if (LOGGER.isLoggable(Level.FINE)) {
-                        LOGGER.fine(
-                                "Trying to build mosaic for the directory:"
-                                        + subdir.getAbsolutePath());
+                        LOGGER.fine("Trying to build mosaic for the directory:" + subdir.getAbsolutePath());
                     }
                     ImageMosaicReader reader = null;
                     try {
@@ -224,9 +218,7 @@ class Utils {
                     }
                 } else {
                     if (LOGGER.isLoggable(Level.INFO)) {
-                        LOGGER.info(
-                                "Unable to build mosaic for the directory:"
-                                        + subdir.getAbsolutePath());
+                        LOGGER.info("Unable to build mosaic for the directory:" + subdir.getAbsolutePath());
                     }
                 }
             }
@@ -272,7 +264,7 @@ class Utils {
         }
         properties.put("LevelsDirs", sbDirNames.toString());
         properties.put("Levels", sbLevels.toString().trim());
-        GeneralEnvelope envelope = mosaics.get(0).getEnvelope();
+        GeneralBounds envelope = mosaics.get(0).getEnvelope();
         properties.put(
                 "Envelope2D",
                 envelope.getMinimum(0)
@@ -286,23 +278,17 @@ class Utils {
         try (OutputStream os = new FileOutputStream(sourceFile)) {
             properties.store(os, "Automatically generated");
         } catch (IOException e) {
-            LOGGER.log(
-                    Level.INFO,
-                    "We could not generate the pyramid property file " + sourceFile.getPath(),
-                    e);
+            LOGGER.log(Level.INFO, "We could not generate the pyramid property file " + sourceFile.getPath(), e);
             return null;
         }
 
         // build the .prj file if possible
         if (envelope.getCoordinateReferenceSystem() != null) {
             File prjFile = new File(directory, directory.getName() + ".prj");
-            try (PrintWriter pw = new PrintWriter(new FileOutputStream(prjFile))) {
+            try (PrintWriter pw = new PrintWriter(new FileOutputStream(prjFile), false, StandardCharsets.UTF_8)) {
                 pw.print(envelope.getCoordinateReferenceSystem().toString());
             } catch (IOException e) {
-                LOGGER.log(
-                        Level.INFO,
-                        "We could not write out the projection file " + prjFile.getPath(),
-                        e);
+                LOGGER.log(Level.INFO, "We could not write out the projection file " + prjFile.getPath(), e);
                 return null;
             }
         }
@@ -345,13 +331,11 @@ class Utils {
                         continue;
                     }
                     double[][] compareLevels = reader.getResolutionLevels(coverageName);
-                    boolean homogeneous =
-                            org.geotools.gce.imagemosaic.Utils.homogeneousCheck(
-                                    resolutionLevels.length, resolutionLevels, compareLevels);
+                    boolean homogeneous = org.geotools.gce.imagemosaic.Utils.homogeneousCheck(
+                            resolutionLevels.length, resolutionLevels, compareLevels);
                     if (!homogeneous) {
                         // Relax this in the future
-                        throw new IllegalArgumentException(
-                                "Coverages need to have same levels structure");
+                        throw new IllegalArgumentException("Coverages need to have same levels structure");
                     }
                 }
             }
@@ -365,8 +349,8 @@ class Utils {
      * Prepares a message with the status of the provided file.
      *
      * @param sourceFile The {@link File} to provided the status message for
-     * @return a status message for the provided {@link File} or a {@link NullPointerException} in
-     *     case the {@link File}is <code>null</code>.
+     * @return a status message for the provided {@link File} or a {@link NullPointerException} in case the
+     *     {@link File}is <code>null</code>.
      */
     private static String fileStatus(File sourceFile) {
         if (sourceFile == null) {
@@ -391,11 +375,7 @@ class Utils {
     static class MosaicInfo implements Comparable<MosaicInfo> {
         @Override
         public String toString() {
-            return "MosaicInfo [directory="
-                    + directory
-                    + ", resolutions="
-                    + Arrays.toString(resolutions)
-                    + "]";
+            return "MosaicInfo [directory=" + directory + ", resolutions=" + Arrays.toString(resolutions) + "]";
         }
 
         File directory;
@@ -404,7 +384,7 @@ class Utils {
 
         String coverageName;
 
-        GeneralEnvelope envelope;
+        GeneralBounds envelope;
 
         String coverageNames = null;
 
@@ -445,7 +425,7 @@ class Utils {
             return directory.getName();
         }
 
-        GeneralEnvelope getEnvelope() {
+        GeneralBounds getEnvelope() {
             return envelope;
         }
 

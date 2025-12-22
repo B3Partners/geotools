@@ -23,12 +23,12 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.store.ContentDataStore;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.feature.NameImpl;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
 
 public class FlatGeobufDirectoryDataStore extends ContentDataStore {
 
@@ -57,8 +57,7 @@ public class FlatGeobufDirectoryDataStore extends ContentDataStore {
         }
         File file = new File(directory, typeName);
         if (!file.exists()) {
-            throw new IOException(
-                    "Can't delete " + file.getAbsolutePath() + " because it doesn't exist!");
+            throw new IOException("Can't delete " + file.getAbsolutePath() + " because it doesn't exist!");
         }
         file.delete();
     }
@@ -102,8 +101,7 @@ public class FlatGeobufDirectoryDataStore extends ContentDataStore {
     }
 
     @Override
-    protected ContentFeatureSource createFeatureSource(ContentEntry contentEntry)
-            throws IOException {
+    protected ContentFeatureSource createFeatureSource(ContentEntry contentEntry) throws IOException {
         return getDataStore(contentEntry.getTypeName()).createFeatureSource(contentEntry);
     }
 }

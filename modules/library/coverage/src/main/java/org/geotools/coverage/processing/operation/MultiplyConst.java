@@ -16,27 +16,25 @@
  */
 package org.geotools.coverage.processing.operation;
 
-// JAI dependencies (for javadoc)
+// ImageN dependencies (for javadoc)
 
-import it.geosolutions.jaiext.JAIExt;
-import it.geosolutions.jaiext.algebra.AlgebraDescriptor.Operator;
 import java.awt.image.RenderedImage;
+import java.io.Serial;
 import java.util.Map;
-import javax.media.jai.ParameterBlockJAI;
-import javax.media.jai.operator.MultiplyConstDescriptor;
+import org.eclipse.imagen.ParameterBlockImageN;
+import org.eclipse.imagen.media.algebra.AlgebraDescriptor.Operator;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.OperationJAI;
 import org.geotools.util.NumberRange;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.util.InternationalString;
 
 /**
- * Multiplies every sample values of the source coverage by constants (one for each band). If the
- * number of constants supplied is less than the number of bands of the destination, then the
- * constant from entry 0 is applied to all the bands. Otherwise, a constant from a different entry
- * is applied to each band.
+ * Multiplies every sample values of the source coverage by constants (one for each band). If the number of constants
+ * supplied is less than the number of bands of the destination, then the constant from entry 0 is applied to all the
+ * bands. Otherwise, a constant from a different entry is applied to each band.
  *
  * <p><STRONG>Name:</STRONG>&nbsp;<CODE>"MultiplyConst"</CODE><br>
  * <STRONG>JAI operator:</STRONG>&nbsp;<CODE>"{@linkplain MultiplyConstDescriptor MultiplyConst}"
@@ -70,19 +68,20 @@ import org.opengis.util.InternationalString;
  * @since 2.2
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
- * @see org.geotools.coverage.processing.Operations#multiply(org.opengis.coverage.Coverage,
- *     double[])
+ * @see org.geotools.coverage.processing.Operations#multiply(org.geotools.api.coverage.Coverage, double[])
  * @see MultiplyConstDescriptor
  * @todo Should operates on {@code sampleToGeophysics} transform when possible. See <A
  *     HREF="http://jira.codehaus.org/browse/GEOT-610">GEOT-610</A>.
  */
 public class MultiplyConst extends OperationJAI {
+    private static final String OPERATION_CONST = "operationConst";
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -1077713495023498436L;
 
     /** Constructs a default {@code "MultiplyConst"} operation. */
     public MultiplyConst() {
-        super("MultiplyConst", getOperationDescriptor(JAIExt.getOperationName("MultiplyConst")));
+        super("MultiplyConst", getOperationDescriptor(OPERATION_CONST));
     }
 
     @Override
@@ -100,18 +99,16 @@ public class MultiplyConst extends OperationJAI {
             final NumberRange range = ranges[0];
             final double min = range.getMinimum() * c;
             final double max = range.getMaximum() * c;
-            return (max < min) ? NumberRange.create(max, min) : NumberRange.create(min, max);
+            return max < min ? NumberRange.create(max, min) : NumberRange.create(min, max);
         }
         return super.deriveRange(ranges, parameters);
     }
 
     @Override
-    protected void handleJAIEXTParams(
-            ParameterBlockJAI parameters, ParameterValueGroup parameters2) {
-        GridCoverage2D source = (GridCoverage2D) parameters2.parameter("source0").getValue();
-        if (JAIExt.isJAIExtOperation("operationConst")) {
-            parameters.set(Operator.MULTIPLY, 1);
-        }
+    protected void handleJAIEXTParams(ParameterBlockImageN parameters, ParameterValueGroup parameters2) {
+        GridCoverage2D source =
+                (GridCoverage2D) parameters2.parameter("source0").getValue();
+        parameters.set(Operator.MULTIPLY, 1);
         handleROINoDataInternal(parameters, source, "operationConst", 2, 3);
     }
 
@@ -123,7 +120,6 @@ public class MultiplyConst extends OperationJAI {
             MathTransform gridToCRS,
             GridCoverage2D[] sources,
             Parameters parameters) {
-        return handleROINoDataProperties(
-                null, parameters.parameters, sources[0], "operationConst", 2, 3, 4);
+        return handleROINoDataProperties(null, parameters.parameters, sources[0], "operationConst", 2, 3, 4);
     }
 }

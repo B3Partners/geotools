@@ -22,11 +22,11 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.List;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.Transaction;
 import org.geotools.feature.NameImpl;
 import org.junit.Test;
-import org.opengis.feature.type.Name;
 
 /**
  * Test the behaviour of {@link ContentEntry}.
@@ -38,20 +38,18 @@ public class ContentEntryTest {
     /** Test that the a Transaction is removed from state when the Transaction is closed. */
     @Test
     public void transactionCacheClearedOnTransactionClose() {
-        ContentDataStore dataStore =
-                new ContentDataStore() {
+        ContentDataStore dataStore = new ContentDataStore() {
 
-                    @Override
-                    protected List<Name> createTypeNames() throws IOException {
-                        return null;
-                    }
+            @Override
+            protected List<Name> createTypeNames() throws IOException {
+                return null;
+            }
 
-                    @Override
-                    protected ContentFeatureSource createFeatureSource(ContentEntry entry)
-                            throws IOException {
-                        return null;
-                    }
-                };
+            @Override
+            protected ContentFeatureSource createFeatureSource(ContentEntry entry) throws IOException {
+                return null;
+            }
+        };
 
         @SuppressWarnings("PMD.CloseResource") // need to test after closing
         Transaction transaction = new DefaultTransaction();

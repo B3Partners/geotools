@@ -3,27 +3,26 @@ package org.geotools.brewer.styling.builder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import org.geotools.styling.FeatureTypeConstraint;
-import org.geotools.styling.NamedLayer;
-import org.geotools.styling.NamedStyle;
-import org.geotools.styling.PointSymbolizer;
-import org.geotools.styling.StyledLayerDescriptor;
-import org.geotools.styling.UserLayer;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.style.FeatureTypeConstraint;
+import org.geotools.api.style.NamedLayer;
+import org.geotools.api.style.NamedStyle;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.StyledLayerDescriptor;
+import org.geotools.api.style.UserLayer;
 import org.junit.Test;
-import org.opengis.filter.PropertyIsGreaterThan;
 
 public class SLDTest extends AbstractStyleTest {
 
     @Test
     public void testSimpleNamed() {
-        StyledLayerDescriptor sld =
-                new NamedLayerBuilder()
-                        .name("states")
-                        .style()
-                        .featureTypeStyle()
-                        .rule()
-                        .point()
-                        .buildSLD();
+        StyledLayerDescriptor sld = new NamedLayerBuilder()
+                .name("states")
+                .style()
+                .featureTypeStyle()
+                .rule()
+                .point()
+                .buildSLD();
         // print(sld);
 
         StyleCollector collector = new StyleCollector();
@@ -37,8 +36,11 @@ public class SLDTest extends AbstractStyleTest {
 
     @Test
     public void testNamedStyle() {
-        StyledLayerDescriptor sld =
-                new NamedLayerBuilder().name("states").style().name("population").buildSLD();
+        StyledLayerDescriptor sld = new NamedLayerBuilder()
+                .name("states")
+                .style()
+                .name("population")
+                .buildSLD();
         // print(sld);
 
         StyleCollector collector = new StyleCollector();
@@ -57,8 +59,7 @@ public class SLDTest extends AbstractStyleTest {
 
     @Test
     public void testRemoteOWS() {
-        PropertyIsGreaterThan tenMillionPeople =
-                ff.greater(ff.property("PERSONS"), ff.literal(10000000));
+        PropertyIsGreaterThan tenMillionPeople = ff.greater(ff.property("PERSONS"), ff.literal(10000000));
 
         UserLayerBuilder lb = new UserLayerBuilder();
         lb.remoteOWS("http://geoserver.org/geoserver/ows", "WFS");
@@ -72,8 +73,7 @@ public class SLDTest extends AbstractStyleTest {
         assertSimpleStyle(collector);
 
         UserLayer layer = (UserLayer) collector.layers.get(0);
-        assertEquals(
-                "http://geoserver.org/geoserver/ows", layer.getRemoteOWS().getOnlineResource());
+        assertEquals("http://geoserver.org/geoserver/ows", layer.getRemoteOWS().getOnlineResource());
         assertEquals("WFS", layer.getRemoteOWS().getService());
         FeatureTypeConstraint constraint = layer.getLayerFeatureConstraints()[0];
         assertEquals("states", constraint.getFeatureTypeName());

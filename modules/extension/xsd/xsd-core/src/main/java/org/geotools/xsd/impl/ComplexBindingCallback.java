@@ -34,8 +34,7 @@ public abstract class ComplexBindingCallback implements Visitor {
     protected final Node node;
     protected final MutablePicoContainer context;
 
-    public ComplexBindingCallback(
-            ElementInstance instance, Node node, MutablePicoContainer context) {
+    public ComplexBindingCallback(ElementInstance instance, Node node, MutablePicoContainer context) {
         this.instance = instance;
         this.node = node;
         this.context = context;
@@ -43,8 +42,8 @@ public abstract class ComplexBindingCallback implements Visitor {
 
     @Override
     public void visit(Binding binding) {
-        if (binding instanceof ComplexBinding) {
-            doCallback((ComplexBinding) binding);
+        if (binding instanceof ComplexBinding complexBinding) {
+            doCallback(complexBinding);
         }
     }
 

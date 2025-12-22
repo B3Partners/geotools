@@ -20,9 +20,9 @@ import java.awt.image.ColorModel;
 import java.awt.image.IndexColorModel;
 import java.awt.image.SampleModel;
 import java.util.Arrays;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.gce.imagemosaic.MosaicConfigurationBean;
 import org.geotools.gce.imagemosaic.catalog.CatalogConfigurationBean;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Simple builder which builds the configuration bean of a mosaic configuration.
@@ -38,8 +38,8 @@ public class MosaicBeanBuilder {
     public MosaicBeanBuilder() {}
 
     /**
-     * <code>true</code> if we need to expand to RGB(A) the single tiles in case they use a
-     * different {@link IndexColorModel}.
+     * <code>true</code> if we need to expand to RGB(A) the single tiles in case they use a different
+     * {@link IndexColorModel}.
      */
     private boolean expandToRGB;
 
@@ -72,9 +72,8 @@ public class MosaicBeanBuilder {
     private String auxiliaryDatastorePath;
 
     /**
-     * mosaic's dummy sample model useful to store dataType and number of bands. All the other
-     * fields shouldn't be queried since they are meaningless for the whole mosaic (width, height,
-     * ...)
+     * mosaic's dummy sample model useful to store dataType and number of bands. All the other fields shouldn't be
+     * queried since they are meaningless for the whole mosaic (width, height, ...)
      */
     private SampleModel sampleModel;
 

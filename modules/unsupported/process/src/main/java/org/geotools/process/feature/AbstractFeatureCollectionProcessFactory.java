@@ -19,21 +19,20 @@ package org.geotools.process.feature;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.process.ProcessFactory;
 import org.geotools.process.impl.SingleProcessFactory;
 import org.geotools.text.Text;
 
 /**
- * Base class for process factories which perform an operation on each feature in a feature
- * collection.
+ * Base class for process factories which perform an operation on each feature in a feature collection.
  *
  * <p>Subclasses must implement:
  *
  * <ul>
  *   <li>{@link ProcessFactory#getTitle()}
- *   <li>{@link ProcessFactory#getDescription()}
+ *   <li>{@link ProcessFactory#getDescription(Name)}
  *   <li>{@link #addParameters(Map)}
  *   <li>
  * </ul>
@@ -43,12 +42,8 @@ import org.geotools.text.Text;
  */
 public abstract class AbstractFeatureCollectionProcessFactory extends SingleProcessFactory {
     /** Features for operation */
-    public static final Parameter<FeatureCollection> FEATURES =
-            new Parameter<>(
-                    "features",
-                    FeatureCollection.class,
-                    Text.text("Features"),
-                    Text.text("Features to process"));
+    public static final Parameter<FeatureCollection> FEATURES = new Parameter<>(
+            "features", FeatureCollection.class, Text.text("Features"), Text.text("Features to process"));
 
     /** Adds the {@link #FEATURES} parameter and then delegates to {@link #addParameters(Map)}. */
     @Override
@@ -62,11 +57,11 @@ public abstract class AbstractFeatureCollectionProcessFactory extends SingleProc
     /**
      * Method for subclasses to add parameter descriptors for the process.
      *
-     * <p>Subclasses should not add a parameter for the input feature collection as this is done by
-     * the case class. Example implementation for a simple buffer example:
+     * <p>Subclasses should not add a parameter for the input feature collection as this is done by the case class.
+     * Example implementation for a simple buffer example:
      *
      * <pre>
-     * protected void addParameters(Map<String, Parameter<?>> parameters) {
+     * protected void addParameters(Map&lt;String, Parameter&lt;?&gt;&gt; parameters) {
      *    parameters.put(BUFFER.key, BUFFER);
      * }
      * </pre>

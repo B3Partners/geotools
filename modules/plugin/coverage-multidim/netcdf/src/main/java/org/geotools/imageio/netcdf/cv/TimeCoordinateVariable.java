@@ -21,10 +21,10 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.logging.Logger;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.imageio.netcdf.utilities.NetCDFCRSUtilities;
 import org.geotools.imageio.netcdf.utilities.NetCDFTimeUtilities;
 import org.geotools.imageio.netcdf.utilities.NetCDFUtilities;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import ucar.nc2.Attribute;
 import ucar.nc2.constants.AxisType;
 import ucar.nc2.dataset.CoordinateAxis;
@@ -65,8 +65,7 @@ class TimeCoordinateVariable extends CoordinateVariable<Date> {
 
         baseTimeUnits = NetCDFTimeUtilities.getTimeUnits(units, null);
         if (baseTimeUnits == -1) {
-            throw new IllegalArgumentException(
-                    "Couldn't determine time units from unit string '" + units + "'");
+            throw new IllegalArgumentException("Couldn't determine time units from unit string '" + units + "'");
         }
         if (origin != null) {
             origin = NetCDFTimeUtilities.trimFractionalPart(origin);
@@ -74,13 +73,10 @@ class TimeCoordinateVariable extends CoordinateVariable<Date> {
             origin = NetCDFTimeUtilities.checkDateDigits(origin);
 
             try {
-                epoch =
-                        (Date)
-                                NetCDFUtilities.getAxisFormat(AxisType.Time, origin)
-                                        .parseObject(origin);
+                epoch = (Date)
+                        NetCDFUtilities.getAxisFormat(AxisType.Time, origin).parseObject(origin);
             } catch (ParseException e) {
-                LOGGER.warning(
-                        "Error while parsing time Axis. Skip setting the TemporalExtent from coordinateAxis");
+                LOGGER.warning("Error while parsing time Axis. Skip setting the TemporalExtent from coordinateAxis");
             }
         }
         init();

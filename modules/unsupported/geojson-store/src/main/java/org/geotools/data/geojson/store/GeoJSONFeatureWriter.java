@@ -22,10 +22,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.logging.Logger;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
 import org.geotools.data.geojson.GeoJSONWriter;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentState;
@@ -33,11 +35,8 @@ import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.util.URLs;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
-public class GeoJSONFeatureWriter
-        implements FeatureWriter<SimpleFeatureType, SimpleFeature>, AutoCloseable {
+public class GeoJSONFeatureWriter implements FeatureWriter<SimpleFeatureType, SimpleFeature>, AutoCloseable {
     Logger LOGGER = Logging.getLogger("org.geotools.data.geojson");
     /** State of current transaction */
     private ContentState state;
@@ -67,8 +66,7 @@ public class GeoJSONFeatureWriter
         String typeName = query.getTypeName();
         File file = URLs.urlToFile(((GeoJSONDataStore) state.getEntry().getDataStore()).getUrl());
         File directory = file.getParentFile();
-        this.temp =
-                File.createTempFile(typeName + System.currentTimeMillis(), "geojson", directory);
+        this.temp = File.createTempFile(typeName + System.currentTimeMillis(), "geojson", directory);
 
         this.writer = new GeoJSONWriter(new FileOutputStream(this.temp));
         this.writer.setEncodeFeatureBounds(writeBounds);
@@ -157,8 +155,7 @@ public class GeoJSONFeatureWriter
                 this.delegate.close();
                 this.delegate = null;
             }
-            File file =
-                    URLs.urlToFile(((GeoJSONDataStore) state.getEntry().getDataStore()).getUrl());
+            File file = URLs.urlToFile(((GeoJSONDataStore) state.getEntry().getDataStore()).getUrl());
 
             Files.copy(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } finally {

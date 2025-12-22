@@ -16,7 +16,6 @@
  */
 package org.geotools.coverageio;
 
-import it.geosolutions.imageio.imageioimpl.imagereadmt.ImageReadDescriptorMT;
 import it.geosolutions.imageio.stream.AccessibleStream;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
@@ -32,7 +31,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageReader;
 import javax.imageio.spi.ImageReaderSpi;
-import javax.media.jai.JAI;
+import org.geotools.api.coverage.grid.GridCoverage;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.data.ServiceInfo;
+import org.geotools.api.geometry.Bounds;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.datum.PixelInCell;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
@@ -41,14 +49,11 @@ import org.geotools.coverage.grid.io.footprint.MultiLevelROI;
 import org.geotools.coverage.grid.io.footprint.MultiLevelROIProvider;
 import org.geotools.coverage.grid.io.footprint.MultiLevelROIProviderFactory;
 import org.geotools.coverage.util.CoverageUtilities;
-import org.geotools.data.DataSourceException;
 import org.geotools.data.DefaultResourceInfo;
 import org.geotools.data.DefaultServiceInfo;
 import org.geotools.data.PrjFileReader;
-import org.geotools.data.ResourceInfo;
-import org.geotools.data.ServiceInfo;
 import org.geotools.data.WorldFileReader;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.geometry.PixelTranslation;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -56,13 +61,6 @@ import org.geotools.referencing.CRS;
 import org.geotools.util.URLs;
 import org.geotools.util.factory.Hints;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.coverage.grid.GridCoverage;
-import org.opengis.geometry.Envelope;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.datum.PixelInCell;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * Base class for GridCoverage data access
@@ -70,25 +68,14 @@ import org.opengis.referencing.operation.TransformException;
  * @author Daniele Romagnoli, GeoSolutions
  * @author Simone Giannecchini, GeoSolutions
  */
-public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DReader
-        implements GridCoverage2DReader {
+public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DReader implements GridCoverage2DReader {
 
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(BaseGridCoverage2DReader.class);
-
-    /** registering ImageReadMT JAI operation (for multithread ImageRead) */
-    static {
-        try {
-            ImageReadDescriptorMT.register(JAI.getDefaultInstance());
-        } catch (Throwable e) {
-            if (LOGGER.isLoggable(Level.FINE)) LOGGER.log(Level.FINE, e.getLocalizedMessage(), e);
-        }
-    }
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(BaseGridCoverage2DReader.class);
 
     /**
-     * The format specific world file extension. As an instance, world file related to ecw datasets
-     * have .ecw extension while mrsid world file are .sdw
+     * The format specific world file extension. As an instance, world file related to ecw datasets have .ecw extension
+     * while mrsid world file are .sdw
      */
     private final String worldFileExt;
 
@@ -102,8 +89,8 @@ public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DRea
     protected MultiLevelROI multiLevelRoi;
 
     /**
-     * Implement this method to setup the coverage properties (Envelope, CRS, GridRange) using the
-     * provided {@code ImageReader}
+     * Implement this method to setup the coverage properties (Envelope, CRS, GridRange) using the provided
+     * {@code ImageReader}
      */
     protected abstract void setCoverageProperties(ImageReader reader) throws IOException;
 
@@ -121,11 +108,12 @@ public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DRea
 
     private ServiceInfo serviceInfo;
 
-    private ResourceInfo resourceInfo;
+    protected ResourceInfo resourceInfo;
+
+    protected Double nodata;
 
     /**
-     * Creates a new instance of a {@link BaseGridCoverage2DReader}. I assume nothing about file
-     * extension.
+     * Creates a new instance of a {@link BaseGridCoverage2DReader}. I assume nothing about file extension.
      *
      * @param input Source object for which we want to build a {@link BaseGridCoverage2DReader}.
      * @param hints Hints to be used by this reader throughout his life.
@@ -177,8 +165,7 @@ public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DRea
             getResolutionInfo(reader);
 
         } catch (IOException | TransformException e) {
-            if (LOGGER.isLoggable(Level.SEVERE))
-                LOGGER.log(Level.SEVERE, e.getLocalizedMessage(), e);
+            if (LOGGER.isLoggable(Level.SEVERE)) LOGGER.log(Level.SEVERE, e.getLocalizedMessage(), e);
 
             throw new DataSourceException(e);
         } finally {
@@ -192,15 +179,13 @@ public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DRea
                 try {
                     reader.reset();
                 } catch (Exception e) {
-                    if (LOGGER.isLoggable(Level.FINE))
-                        LOGGER.log(Level.FINE, e.getLocalizedMessage(), e);
+                    if (LOGGER.isLoggable(Level.FINE)) LOGGER.log(Level.FINE, e.getLocalizedMessage(), e);
                 }
 
                 try {
                     reader.dispose();
                 } catch (Exception e) {
-                    if (LOGGER.isLoggable(Level.FINE))
-                        LOGGER.log(Level.FINE, e.getLocalizedMessage(), e);
+                    if (LOGGER.isLoggable(Level.FINE)) LOGGER.log(Level.FINE, e.getLocalizedMessage(), e);
                 }
             }
         }
@@ -208,8 +193,7 @@ public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DRea
 
     private void setRoiProvider() throws IOException {
         Geometry granuleGeometry = JTS.toGeometry(new ReferencedEnvelope(originalEnvelope));
-        roiProvider =
-                MultiLevelROIProviderFactory.createFootprintProvider(inputFile, granuleGeometry);
+        roiProvider = MultiLevelROIProviderFactory.createFootprintProvider(inputFile, granuleGeometry);
         if (roiProvider != null) {
             multiLevelRoi = roiProvider.getMultiScaleROI(null);
         }
@@ -237,15 +221,13 @@ public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DRea
     }
 
     /**
-     * Checks the input provided to this {@link BaseGridCoverage2DReader} and sets all the other
-     * objects and flags accordingly.
+     * Checks the input provided to this {@link BaseGridCoverage2DReader} and sets all the other objects and flags
+     * accordingly.
      *
-     * @param input provided to this {@link BaseGridCoverage2DReader}. Actually supported input
-     *     types for the underlying ImageIO-Ext GDAL framework are: {@code File}, {@code URL}
-     *     pointing to a file and {@link AccessibleStream}
+     * @param input provided to this {@link BaseGridCoverage2DReader}. Actually supported input types for the underlying
+     *     ImageIO-Ext GDAL framework are: {@code File}, {@code URL} pointing to a file and {@link AccessibleStream}
      */
-    private void checkSource(Object input)
-            throws UnsupportedEncodingException, IOException, FileNotFoundException {
+    private void checkSource(Object input) throws UnsupportedEncodingException, IOException, FileNotFoundException {
 
         // //
         //
@@ -253,9 +235,7 @@ public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DRea
         //
         // //
         // if it is an URL pointing to a File I convert it to a file.
-        if (input instanceof URL) {
-            // URL that point to a file
-            final URL sourceURL = ((URL) input);
+        if (input instanceof URL sourceURL) {
             this.source = sourceURL;
 
             if (sourceURL.getProtocol().compareToIgnoreCase("file") == 0) {
@@ -266,12 +246,10 @@ public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DRea
             }
         }
 
-        if (input instanceof AccessibleStream) {
+        if (input instanceof AccessibleStream accessible) {
             if (source == null) {
                 source = input;
             }
-
-            AccessibleStream accessible = (AccessibleStream) input;
             if (accessible.getTarget() instanceof File) {
                 inputFile = (File) accessible.getTarget();
                 input = inputFile;
@@ -279,9 +257,9 @@ public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DRea
         }
 
         // string to file conversion attempt (other readers do it too)
-        if (input instanceof String) {
+        if (input instanceof String string) {
             try {
-                final File sourceFile = new File((String) input);
+                final File sourceFile = new File(string);
                 if (sourceFile.exists()) {
                     input = sourceFile;
                 } else {
@@ -298,8 +276,7 @@ public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DRea
         // File
         //
         // //
-        if (input instanceof File) {
-            final File sourceFile = (File) input;
+        if (input instanceof File sourceFile) {
 
             if (source == null) {
                 source = sourceFile;
@@ -310,15 +287,14 @@ public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DRea
             }
 
             if (!sourceFile.exists() || sourceFile.isDirectory() || !sourceFile.canRead()) {
-                throw new DataSourceException(
-                        "Provided file does not exist or is a directory or is not readable!");
+                throw new DataSourceException("Provided file does not exist or is a directory or is not readable!");
             }
 
             this.parentPath = sourceFile.getParent();
             coverageName = sourceFile.getName();
 
             final int dotIndex = coverageName.lastIndexOf(".");
-            coverageName = (dotIndex == -1) ? coverageName : coverageName.substring(0, dotIndex);
+            coverageName = dotIndex == -1 ? coverageName : coverageName.substring(0, dotIndex);
         } else {
             throw new IllegalArgumentException("Unsupported input type");
         }
@@ -349,12 +325,11 @@ public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DRea
         highestRes = CoverageUtilities.getResolution((AffineTransform) raster2Model);
 
         if (LOGGER.isLoggable(Level.FINE))
-            LOGGER.fine(
-                    new StringBuffer("Highest Resolution = [")
-                            .append(highestRes[0])
-                            .append(",")
-                            .append(highestRes[1])
-                            .toString());
+            LOGGER.fine(new StringBuffer("Highest Resolution = [")
+                    .append(highestRes[0])
+                    .append(",")
+                    .append(highestRes[1])
+                    .toString());
     }
 
     /**
@@ -363,8 +338,7 @@ public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DRea
      * @param params a {@code GeneralParameterValue} array to customize the read operation.
      */
     @Override
-    public GridCoverage2D read(GeneralParameterValue[] params)
-            throws IllegalArgumentException, IOException {
+    public GridCoverage2D read(GeneralParameterValue... params) throws IllegalArgumentException, IOException {
 
         // Setup a new coverage request
         final RasterLayerRequest request = new RasterLayerRequest(params, this);
@@ -379,8 +353,8 @@ public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DRea
     }
 
     /**
-     * Gets the coordinate reference system that will be associated to the {@link GridCoverage} by
-     * looking for a related PRJ.
+     * Gets the coordinate reference system that will be associated to the {@link GridCoverage} by looking for a related
+     * PRJ.
      */
     protected void parsePRJFile() {
 
@@ -392,7 +366,7 @@ public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DRea
             // read the prj serviceInfo from the file
             try (FileInputStream inStream = new FileInputStream(prj);
                     FileChannel channel = inStream.getChannel();
-                    PrjFileReader projReader = new PrjFileReader(channel); ) {
+                    PrjFileReader projReader = new PrjFileReader(channel)) {
                 this.crs = projReader.getCoordinateReferenceSystem();
                 // If some exception occurs, warn about the error but proceed
                 // using a default CRS
@@ -404,16 +378,12 @@ public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DRea
         }
     }
 
-    /**
-     * Checks whether a world file is associated with the data source. If found, set a proper
-     * envelope.
-     */
+    /** Checks whether a world file is associated with the data source. If found, set a proper envelope. */
     protected void parseWorldFile() {
-        final String worldFilePath =
-                new StringBuffer(this.parentPath)
-                        .append(GridCoverageUtilities.SEPARATOR)
-                        .append(coverageName)
-                        .toString();
+        final String worldFilePath = new StringBuffer(this.parentPath)
+                .append(GridCoverageUtilities.SEPARATOR)
+                .append(coverageName)
+                .toString();
 
         File file2Parse = null;
         boolean worldFileExists = false;
@@ -451,10 +421,9 @@ public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DRea
                 //
                 // //
                 MathTransform tempTransform =
-                        PixelTranslation.translate(
-                                raster2Model, PixelInCell.CELL_CENTER, PixelInCell.CELL_CORNER);
-                final Envelope gridRange = new GeneralEnvelope((GridEnvelope2D) originalGridRange);
-                final GeneralEnvelope coverageEnvelope = CRS.transform(tempTransform, gridRange);
+                        PixelTranslation.translate(raster2Model, PixelInCell.CELL_CENTER, PixelInCell.CELL_CORNER);
+                final Bounds gridRange = new GeneralBounds((GridEnvelope2D) originalGridRange);
+                final GeneralBounds coverageEnvelope = CRS.transform(tempTransform, gridRange);
                 originalEnvelope = coverageEnvelope;
                 return;
             } catch (TransformException | IOException | IllegalStateException e) {
@@ -468,8 +437,7 @@ public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DRea
     }
 
     /**
-     * Information about this source. Subclasses should provide additional format specific
-     * information.
+     * Information about this source. Subclasses should provide additional format specific information.
      *
      * @return ServiceInfo describing getSource().
      */
@@ -483,19 +451,17 @@ public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DRea
         serviceInfo = localInfo;
         localInfo.setDescription(source.toString());
 
-        if (source instanceof URL) {
-            URL url = (URL) source;
+        if (source instanceof URL url) {
             localInfo.setTitle(url.getFile());
 
             try {
                 localInfo.setSource(url.toURI());
             } catch (URISyntaxException e) {
             }
-        } else if (source instanceof File) {
-            File file = (File) source;
+        } else if (source instanceof File file) {
             String filename = file.getName();
 
-            if ((filename == null) || (filename.length() == 0)) {
+            if (filename == null || filename.length() == 0) {
                 localInfo.setTitle(file.getName());
             }
 
@@ -531,14 +497,13 @@ public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DRea
     /**
      * Returns a {@link RasterLayerResponse} from the specified {@link RasterLayerRequest}.
      *
-     * @param request a previously set {@link RasterLayerRequest} defining a set of parameters to
-     *     get a specific coverage
+     * @param request a previously set {@link RasterLayerRequest} defining a set of parameters to get a specific
+     *     coverage
      * @return the computed {@code RasterLayerResponse}
      * @todo Future versions may cache requestes<->responses using hashing
      */
     private RasterLayerResponse requestCoverage(RasterLayerRequest request) {
-        final RasterLayerResponse response =
-                new RasterLayerResponse(request, coverageFactory, readerSPI);
+        final RasterLayerResponse response = new RasterLayerResponse(request, coverageFactory, readerSPI);
         try {
             response.compute();
         } catch (IOException e) {
@@ -566,5 +531,9 @@ public abstract class BaseGridCoverage2DReader extends AbstractGridCoverage2DRea
 
     protected MultiLevelROI getMultiLevelRoi() {
         return multiLevelRoi;
+    }
+
+    public Double getNodata() {
+        return nodata;
     }
 }

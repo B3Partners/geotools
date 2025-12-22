@@ -16,12 +16,12 @@
  */
 package org.geotools.data.store;
 
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
 
 /**
  * FeatureIterator wrapper which re-types features on the fly based on a target feature type.
@@ -41,8 +41,7 @@ public class ReTypingFeatureIterator implements SimpleFeatureIterator {
 
     SimpleFeatureBuilder builder;
 
-    public ReTypingFeatureIterator(
-            SimpleFeatureIterator delegate, SimpleFeatureType source, SimpleFeatureType target) {
+    public ReTypingFeatureIterator(SimpleFeatureIterator delegate, SimpleFeatureType source, SimpleFeatureType target) {
         this.delegate = delegate;
         this.target = target;
         types = typeAttributes(source, target);
@@ -86,11 +85,9 @@ public class ReTypingFeatureIterator implements SimpleFeatureIterator {
      * @return Mapping from originoal to target FeatureType
      * @throws IllegalArgumentException if unable to provide a mapping
      */
-    protected AttributeDescriptor[] typeAttributes(
-            SimpleFeatureType original, SimpleFeatureType target) {
+    protected AttributeDescriptor[] typeAttributes(SimpleFeatureType original, SimpleFeatureType target) {
         if (target.equals(original)) {
-            throw new IllegalArgumentException(
-                    "FeatureReader allready produces contents with the correct schema");
+            throw new IllegalArgumentException("FeatureReader allready produces contents with the correct schema");
         }
 
         if (target.getAttributeCount() > original.getAttributeCount()) {

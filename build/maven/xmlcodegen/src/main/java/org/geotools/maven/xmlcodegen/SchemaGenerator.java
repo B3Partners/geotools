@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -40,6 +39,13 @@ import org.eclipse.xsd.XSDSimpleTypeDefinition;
 import org.eclipse.xsd.XSDTypeDefinition;
 import org.eclipse.xsd.util.XSDConstants;
 import org.eclipse.xsd.util.XSDUtil;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.ComplexType;
+import org.geotools.api.feature.type.FeatureTypeFactory;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.feature.type.Schema;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.type.FeatureTypeFactoryImpl;
 import org.geotools.feature.type.SchemaImpl;
@@ -54,20 +60,12 @@ import org.geotools.graph.traverse.standard.DirectedDepthFirstTopologicalIterato
 import org.geotools.graph.util.graph.CycleDetector;
 import org.geotools.graph.util.graph.DirectedCycleDetector;
 import org.geotools.util.Utilities;
-import org.geotools.xsd.Schemas;
 import org.geotools.xs.XS;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.ComplexType;
-import org.opengis.feature.type.FeatureTypeFactory;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.feature.type.Schema;
+import org.geotools.xsd.Schemas;
 
 /**
  * Parses an XML schema to procuce an instance of
- * {@link org.opengis.feature.type.Schema}.
+ * {@link org.geotools.api.feature.type.Schema}.
  *
  *         <p>
  *
@@ -313,9 +311,8 @@ public class SchemaGenerator extends AbstractGenerator {
     public XSDTypeDefinition getXSDType(AttributeType type) {
         for (Entry<XSDTypeDefinition, AttributeType> xsdTypeDefinitionAttributeTypeEntry :
                 types.entrySet()) {
-            Entry entry = (Entry) xsdTypeDefinitionAttributeTypeEntry;
-            XSDTypeDefinition xsdType = (XSDTypeDefinition) entry.getKey();
-            AttributeType gtType = (AttributeType) entry.getValue();
+            XSDTypeDefinition xsdType = xsdTypeDefinitionAttributeTypeEntry.getKey();
+            AttributeType gtType = xsdTypeDefinitionAttributeTypeEntry.getValue();
 
             if (gtType.equals(type)) {
                 return xsdType;
@@ -346,9 +343,9 @@ public class SchemaGenerator extends AbstractGenerator {
                     continue;
                 }
 
-                if (xsdType instanceof XSDSimpleTypeDefinition) {
+                if (xsdType instanceof XSDSimpleTypeDefinition definition) {
                     logger.fine(xsdType.getName());
-                    createType((XSDSimpleTypeDefinition) xsdType, 0);
+                    createType(definition, 0);
                 }
             }
         }
@@ -368,10 +365,10 @@ public class SchemaGenerator extends AbstractGenerator {
                     continue;
                 }
 
-                if (xsdType instanceof XSDComplexTypeDefinition) {
+                if (xsdType instanceof XSDComplexTypeDefinition definition) {
                     logger.fine(xsdType.getName());
                     try {
-                        createType((XSDComplexTypeDefinition) xsdType, 0);
+                        createType(definition, 0);
                     } catch (Exception e) {
                         logger.warning("XERRORX generating " + xsdType);
                         e.printStackTrace();
@@ -430,8 +427,7 @@ public class SchemaGenerator extends AbstractGenerator {
                 gg.add(new Object[]{type, superType});
             }
 
-            if (type instanceof ComplexType) {
-                ComplexType cType = (ComplexType) type;
+            if (type instanceof ComplexType cType) {
 
                 //add an edge for each descriptor
                 Collection atts = cType.getDescriptors();
@@ -490,8 +486,8 @@ public class SchemaGenerator extends AbstractGenerator {
 	}
 
 	protected final AttributeType createType(XSDTypeDefinition xsdType, int depth) {
-		if (xsdType instanceof XSDSimpleTypeDefinition) {
-			return createType((XSDSimpleTypeDefinition)xsdType, depth);
+		if (xsdType instanceof XSDSimpleTypeDefinition definition) {
+			return createType(definition, depth);
 		}
 		else {
 			return createType((XSDComplexTypeDefinition)xsdType, depth);
@@ -512,7 +508,7 @@ public class SchemaGenerator extends AbstractGenerator {
         AttributeType superType = null;
         XSDTypeDefinition baseType = xsdType.getBaseType();
 
-        if ((baseType != null) && !baseType.equals(xsdType)) {
+        if (baseType != null && !baseType.equals(xsdType)) {
             if (baseType.getName() != null) {
                 //ignore unamed types
                 //superType = createType((XSDSimpleTypeDefinition)baseType);

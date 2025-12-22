@@ -21,8 +21,12 @@ import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import javax.media.jai.iterator.RectIter;
-import javax.media.jai.iterator.RectIterFactory;
+import org.eclipse.imagen.iterator.RectIter;
+import org.eclipse.imagen.iterator.RectIterFactory;
+import org.geotools.api.coverage.grid.GridCoverageReader;
+import org.geotools.api.coverage.grid.GridCoverageWriter;
+import org.geotools.api.geometry.Bounds;
+import org.geotools.api.geometry.Position;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
@@ -31,10 +35,6 @@ import org.geotools.gce.grassraster.format.GrassCoverageFormatFactory;
 import org.geotools.util.URLs;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.coverage.grid.GridCoverageReader;
-import org.opengis.coverage.grid.GridCoverageWriter;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.geometry.Envelope;
 
 /**
  * Test the grass raster reader abd writer.
@@ -71,7 +71,7 @@ public class GrassRasterReaderWriterTest {
         File newPitFile = new File(parentFile, "newpit");
         // writing it down
         GridCoverageWriter writer = format.getWriter(newPitFile);
-        writer.write(gc, null);
+        writer.write(gc);
 
         // check it again through reading
         readGc(format, newPitFile);
@@ -87,15 +87,15 @@ public class GrassRasterReaderWriterTest {
 
     private GridCoverage2D readGc(AbstractGridFormat format, File fileToRead) throws IOException {
         GridCoverageReader reader = format.getReader(fileToRead);
-        GridCoverage2D gc = ((GridCoverage2D) reader.read(null));
+        GridCoverage2D gc = (GridCoverage2D) reader.read();
         Assert.assertNotNull(gc);
 
         checkMatrixEqual(gc.getRenderedImage(), mapData, 0);
 
-        Envelope envelope = gc.getEnvelope();
-        DirectPosition lowerCorner = envelope.getLowerCorner();
+        Bounds envelope = gc.getEnvelope();
+        Position lowerCorner = envelope.getLowerCorner();
         double[] westSouth = lowerCorner.getCoordinate();
-        DirectPosition upperCorner = envelope.getUpperCorner();
+        Position upperCorner = envelope.getUpperCorner();
         double[] eastNorth = upperCorner.getCoordinate();
 
         GridGeometry2D gridGeometry = gc.getGridGeometry();

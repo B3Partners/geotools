@@ -23,25 +23,25 @@ import static org.junit.Assert.assertTrue;
 import java.awt.Color;
 import java.io.File;
 import java.net.URL;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.PointPlacement;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.Symbolizer;
+import org.geotools.api.style.TextSymbolizer;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.function.EnvFunction;
-import org.geotools.styling.Graphic;
-import org.geotools.styling.PointPlacement;
-import org.geotools.styling.PointSymbolizer;
-import org.geotools.styling.Rule;
-import org.geotools.styling.Style;
 import org.geotools.styling.StyleBuilder;
-import org.geotools.styling.Symbolizer;
-import org.geotools.styling.TextSymbolizer;
 import org.geotools.test.TestData;
 import org.junit.Test;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.Function;
 
 public class RenderingBufferExtractorTest {
     StyleBuilder sb = new StyleBuilder();
-    FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
     @Test
     public void testTextNoStroke() {
@@ -79,9 +79,7 @@ public class RenderingBufferExtractorTest {
 
     @Test
     public void testSimpleGraphic() {
-        PointSymbolizer ps =
-                sb.createPointSymbolizer(
-                        sb.createGraphic(null, sb.createMark(sb.MARK_CIRCLE), null));
+        PointSymbolizer ps = sb.createPointSymbolizer(sb.createGraphic(null, sb.createMark(sb.MARK_CIRCLE), null));
         ps.getGraphic().setSize(sb.literalExpression(15));
         Style style = sb.createStyle(ps);
 
@@ -95,9 +93,7 @@ public class RenderingBufferExtractorTest {
     public void testReachableExternalGraphic() {
         URL resource = TestData.getResource(this, "draw.png");
         PointSymbolizer ps =
-                sb.createPointSymbolizer(
-                        sb.createGraphic(
-                                null, null, sb.createExternalGraphic(resource, "image/png")));
+                sb.createPointSymbolizer(sb.createGraphic(null, null, sb.createExternalGraphic(resource, "image/png")));
         ps.getGraphic().setSize(sb.literalExpression(null));
         Style style = sb.createStyle(ps);
 
@@ -112,9 +108,7 @@ public class RenderingBufferExtractorTest {
         File file = new File(TestData.getResource(this, "draw.png").toURI());
         URL resource = new File(file.getParent(), "draw-not-there.png").toURI().toURL();
         PointSymbolizer ps =
-                sb.createPointSymbolizer(
-                        sb.createGraphic(
-                                null, null, sb.createExternalGraphic(resource, "image/png")));
+                sb.createPointSymbolizer(sb.createGraphic(null, null, sb.createExternalGraphic(resource, "image/png")));
         ps.getGraphic().setSize(sb.literalExpression(null));
         Style style = sb.createStyle(ps);
 
@@ -146,10 +140,8 @@ public class RenderingBufferExtractorTest {
 
     @Test
     public void testPropertyWidth() {
-        Symbolizer ls =
-                sb.createLineSymbolizer(
-                        sb.createStroke(
-                                sb.colorExpression(Color.BLACK), sb.attributeExpression("gimbo")));
+        Symbolizer ls = sb.createLineSymbolizer(
+                sb.createStroke(sb.colorExpression(Color.BLACK), sb.attributeExpression("gimbo")));
         Symbolizer ps = sb.createPolygonSymbolizer(sb.createStroke(12), sb.createFill());
         Rule r = sb.createRule(ls, ps);
         MetaBufferEstimator rbe = new MetaBufferEstimator();
@@ -160,11 +152,8 @@ public class RenderingBufferExtractorTest {
 
     @Test
     public void testEnvironmentWidth() {
-        Symbolizer ls =
-                sb.createLineSymbolizer(
-                        sb.createStroke(
-                                sb.colorExpression(Color.BLACK),
-                                ff.function("env", ff.literal("thickness"), ff.literal(10))));
+        Symbolizer ls = sb.createLineSymbolizer(sb.createStroke(
+                sb.colorExpression(Color.BLACK), ff.function("env", ff.literal("thickness"), ff.literal(10))));
         Rule r = sb.createRule(ls);
         MetaBufferEstimator rbe = new MetaBufferEstimator();
 
@@ -187,8 +176,7 @@ public class RenderingBufferExtractorTest {
     @Test
     public void testConstantFunction() {
         Function cos = ff.function("cos", ff.literal(Math.toRadians(Math.PI)));
-        Symbolizer ls =
-                sb.createLineSymbolizer(sb.createStroke(sb.colorExpression(Color.BLACK), cos));
+        Symbolizer ls = sb.createLineSymbolizer(sb.createStroke(sb.colorExpression(Color.BLACK), cos));
         Rule r = sb.createRule(ls);
         MetaBufferEstimator rbe = new MetaBufferEstimator();
 
@@ -201,8 +189,7 @@ public class RenderingBufferExtractorTest {
     @Test
     public void testMath() {
         Add add = ff.add(ff.literal("5"), ff.literal("-2"));
-        Symbolizer ls =
-                sb.createLineSymbolizer(sb.createStroke(sb.colorExpression(Color.BLACK), add));
+        Symbolizer ls = sb.createLineSymbolizer(sb.createStroke(sb.colorExpression(Color.BLACK), add));
         Rule r = sb.createRule(ls);
         MetaBufferEstimator rbe = new MetaBufferEstimator();
 
@@ -214,12 +201,8 @@ public class RenderingBufferExtractorTest {
 
     @Test
     public void testLiteralParseStroke() {
-        Style style =
-                sb.createStyle(
-                        sb.createLineSymbolizer(
-                                sb.createStroke(
-                                        sb.colorExpression(Color.BLACK),
-                                        sb.literalExpression("10.0"))));
+        Style style = sb.createStyle(sb.createLineSymbolizer(
+                sb.createStroke(sb.colorExpression(Color.BLACK), sb.literalExpression("10.0"))));
         MetaBufferEstimator rbe = new MetaBufferEstimator();
         rbe.visit(style);
         assertEquals(10, rbe.getBuffer());
@@ -228,12 +211,8 @@ public class RenderingBufferExtractorTest {
 
     @Test
     public void testNpePreventionStroke() {
-        Style style =
-                sb.createStyle(
-                        sb.createLineSymbolizer(
-                                sb.createStroke(
-                                        sb.colorExpression(Color.BLACK),
-                                        sb.literalExpression(null))));
+        Style style = sb.createStyle(
+                sb.createLineSymbolizer(sb.createStroke(sb.colorExpression(Color.BLACK), sb.literalExpression(null))));
         MetaBufferEstimator rbe = new MetaBufferEstimator();
         rbe.visit(style);
         assertEquals(1, rbe.getBuffer());

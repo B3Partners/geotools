@@ -20,28 +20,28 @@ import java.awt.Color;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.temporal.AnyInteracts;
+import org.geotools.api.filter.temporal.Begins;
+import org.geotools.api.filter.temporal.BegunBy;
+import org.geotools.api.filter.temporal.EndedBy;
+import org.geotools.api.filter.temporal.Ends;
+import org.geotools.api.filter.temporal.Meets;
+import org.geotools.api.filter.temporal.MetBy;
+import org.geotools.api.filter.temporal.OverlappedBy;
+import org.geotools.api.filter.temporal.TContains;
+import org.geotools.api.filter.temporal.TEquals;
+import org.geotools.api.filter.temporal.TOverlaps;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.text.ecql.ECQL;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.temporal.AnyInteracts;
-import org.opengis.filter.temporal.Begins;
-import org.opengis.filter.temporal.BegunBy;
-import org.opengis.filter.temporal.EndedBy;
-import org.opengis.filter.temporal.Ends;
-import org.opengis.filter.temporal.Meets;
-import org.opengis.filter.temporal.MetBy;
-import org.opengis.filter.temporal.OverlappedBy;
-import org.opengis.filter.temporal.TContains;
-import org.opengis.filter.temporal.TEquals;
-import org.opengis.filter.temporal.TOverlaps;
 
 /**
  * FilterToCQLTest
@@ -122,8 +122,7 @@ public class FilterToCQLTest {
     @Test
     public void testBeforeAndAfter() throws Exception {
 
-        cqlTest(
-                "dateAttr AFTER 2006-10-10T01:30:00+00:00 AND dateAttr BEFORE 2010-12-31T01:30:00+00:00");
+        cqlTest("dateAttr AFTER 2006-10-10T01:30:00+00:00 AND dateAttr BEFORE 2010-12-31T01:30:00+00:00");
     }
 
     @Test
@@ -301,9 +300,7 @@ public class FilterToCQLTest {
         Assert.assertNotNull(filter);
 
         // double quote escaped by repeating should be unescaped to just one
-        Assert.assertEquals(
-                "the\"geom",
-                ((PropertyName) (((Intersects) filter).getExpression1())).getPropertyName());
+        Assert.assertEquals("the\"geom", ((PropertyName) ((Intersects) filter).getExpression1()).getPropertyName());
 
         FilterToCQL toCQL = new FilterToCQL();
         String output = filter.accept(toCQL, null).toString();

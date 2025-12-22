@@ -18,17 +18,17 @@ package org.geotools.data.wfs;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
-import org.geotools.data.FeatureReader;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.FeatureType;
 import org.geotools.data.wfs.internal.GetFeatureResponse;
 import org.geotools.data.wfs.internal.GetParser;
 import org.geotools.data.wfs.internal.parsers.EmfAppSchemaParser;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.FeatureType;
 
 /**
- * Adapts a {@link GetParser<SimpleFeature>} to the geotools {@link FeatureReader} interface, being
- * the base for all the data content related implementations in the WFS module.
+ * Adapts a {@link GetParser<SimpleFeature>} to the geotools {@link FeatureReader} interface, being the base for all the
+ * data content related implementations in the WFS module.
  */
 class WFSFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFeature> {
 
@@ -40,16 +40,15 @@ class WFSFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFeature
 
     private GetFeatureResponse response;
 
-    public WFSFeatureReader(
-            final GetParser<SimpleFeature> parser, final GetFeatureResponse response)
+    public WFSFeatureReader(final GetParser<SimpleFeature> parser, final GetFeatureResponse response)
             throws IOException {
         this.response = response;
         this.parser = parser;
         this.next = parser.parse();
         if (this.next != null) {
             FeatureType parsedType = next.getFeatureType();
-            if (parsedType instanceof SimpleFeatureType) {
-                this.featureType = (SimpleFeatureType) parsedType;
+            if (parsedType instanceof SimpleFeatureType type) {
+                this.featureType = type;
             } else {
                 // this is the FeatureType as parsed by the StreamingParser, we need a simple view
                 this.featureType = EmfAppSchemaParser.toSimpleFeatureType(parsedType);
@@ -77,8 +76,7 @@ class WFSFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFeature
     @Override
     public SimpleFeatureType getFeatureType() {
         if (featureType == null) {
-            throw new IllegalStateException(
-                    "No features were retrieved, shouldn't be calling getFeatureType()");
+            throw new IllegalStateException("No features were retrieved, shouldn't be calling getFeatureType()");
         }
         return featureType;
     }

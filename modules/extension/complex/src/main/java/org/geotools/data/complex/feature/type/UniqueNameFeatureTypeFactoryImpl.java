@@ -19,23 +19,23 @@ package org.geotools.data.complex.feature.type;
 
 import java.util.Collection;
 import java.util.List;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.util.InternationalString;
 import org.geotools.feature.type.FeatureTypeFactoryImpl;
 import org.geotools.feature.type.FeatureTypeImpl;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.filter.Filter;
-import org.opengis.util.InternationalString;
 
 /**
- * A specialisation of {@link FeatureTypeFactoryImpl} that returns {@link UniqueNameFeatureTypeImpl}
- * instead of {@link FeatureTypeImpl} to avoid equality tests on types with cyclic definitions.
+ * A specialisation of {@link FeatureTypeFactoryImpl} that returns {@link UniqueNameFeatureTypeImpl} instead of
+ * {@link FeatureTypeImpl} to avoid equality tests on types with cyclic definitions.
  *
- * <p>Users of this factory must not use it to create multiple FeatureType instances with the same
- * name unless they represent the same type, because other parts of the implementation will assume
- * they are equal, and if they are not, Bad Things Will Happen.
+ * <p>Users of this factory must not use it to create multiple FeatureType instances with the same name unless they
+ * represent the same type, because other parts of the implementation will assume they are equal, and if they are not,
+ * Bad Things Will Happen.
  *
  * @author Ben Caradoc-Davies (CSIRO Earth Science and Resource Engineering)
  * @see GEOT-3354
@@ -43,14 +43,11 @@ import org.opengis.util.InternationalString;
 public class UniqueNameFeatureTypeFactoryImpl extends FeatureTypeFactoryImpl {
 
     /**
-     * Override superclass to return {@link UniqueNameFeatureTypeImpl} instead of {@link
-     * FeatureTypeImpl}.
+     * Override superclass to return {@link UniqueNameFeatureTypeImpl} instead of {@link FeatureTypeImpl}.
      *
-     * @see
-     *     org.geotools.feature.type.FeatureTypeFactoryImpl#createFeatureType(org.opengis.feature.type.Name,
-     *     java.util.Collection, org.opengis.feature.type.GeometryDescriptor, boolean,
-     *     java.util.List, org.opengis.feature.type.AttributeType,
-     *     org.opengis.util.InternationalString)
+     * @see org.geotools.feature.type.FeatureTypeFactoryImpl#createFeatureType(org.geotools.api.feature.type.Name,
+     *     java.util.Collection, org.geotools.api.feature.type.GeometryDescriptor, boolean, java.util.List,
+     *     org.geotools.api.feature.type.AttributeType, org.geotools.api.util.InternationalString)
      */
     @Override
     public FeatureType createFeatureType(

@@ -19,6 +19,7 @@ package org.geotools.gml3.bindings;
 import java.util.List;
 import javax.xml.namespace.QName;
 import org.eclipse.xsd.XSDElementDeclaration;
+import org.geotools.api.feature.Feature;
 import org.geotools.gml2.FeatureTypeCache;
 import org.geotools.gml3.GML;
 import org.geotools.gml3.XSDIdRegistry;
@@ -28,7 +29,6 @@ import org.geotools.xsd.Configuration;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 import org.geotools.xsd.SchemaIndex;
-import org.opengis.feature.Feature;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -140,9 +140,7 @@ public class AbstractFeatureTypeBinding extends AbstractComplexBinding {
     }
 
     @Override
-    public List<Object[]> getProperties(Object object, XSDElementDeclaration element)
-            throws Exception {
-        return encodingUtils.AbstractFeatureTypeGetProperties(
-                object, element, schemaIndex, configuration);
+    public List<Object[]> getProperties(Object object, XSDElementDeclaration element) throws Exception {
+        return encodingUtils.AbstractFeatureTypeGetProperties(object, element, schemaIndex, configuration);
     }
 }

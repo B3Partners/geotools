@@ -46,8 +46,7 @@ public abstract class AbstractReaderWriter implements GraphReaderWriter {
     }
 
     /**
-     * Sets a property. Some properties dont have values associated with them, they are just set,
-     * and unset.
+     * Sets a property. Some properties dont have values associated with them, they are just set, and unset.
      *
      * @param name Name of property
      */
@@ -64,6 +63,6 @@ public abstract class AbstractReaderWriter implements GraphReaderWriter {
     /** @see GraphReaderWriter#getProperty(String) */
     @Override
     public Object getProperty(String name) {
-        return (m_properties.get(name));
+        return m_properties.get(name);
     }
 }

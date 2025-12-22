@@ -24,7 +24,13 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.media.jai.Interpolation;
+import org.eclipse.imagen.Interpolation;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.MathTransform2D;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.io.CoverageReadRequest;
 import org.geotools.coverage.io.RasterLayout;
@@ -41,12 +47,6 @@ import org.geotools.imageio.netcdf.utilities.NetCDFUtilities.ParameterBehaviour;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.util.DateRange;
 import org.geotools.util.NumberRange;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.MathTransform2D;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * A class to handle coverage requests to a reader for a single 2D layer..
@@ -57,8 +57,7 @@ import org.opengis.referencing.operation.TransformException;
 class NetCDFRequest extends CoverageReadRequest {
 
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(NetCDFRequest.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(NetCDFRequest.class);
 
     /** The Interpolation required to serve this request */
     // TODO: CUSTOMIZE INTERPOLATION request.getInterpolation();
@@ -100,25 +99,20 @@ class NetCDFRequest extends CoverageReadRequest {
         initInputCoverageProperties();
     }
 
-    /**
-     * Initialize coverage input properties by collecting them from a {@link CoverageSourceWrapper}
-     */
+    /** Initialize coverage input properties by collecting them from a {@link CoverageSourceWrapper} */
     private void initInputCoverageProperties() throws IOException {
         VariableAdapter.UnidataSpatialDomain spatialDomain =
-                (org.geotools.imageio.netcdf.VariableAdapter.UnidataSpatialDomain)
-                        (source.getSpatialDomain());
+                (org.geotools.imageio.netcdf.VariableAdapter.UnidataSpatialDomain) source.getSpatialDomain();
 
         // Getting spatial context
-        final Set<? extends RasterLayout> rasterElements =
-                spatialDomain.getRasterElements(false, null);
+        final Set<? extends RasterLayout> rasterElements = spatialDomain.getRasterElements(false, null);
         final GridGeometry2D gridGeometry2D = spatialDomain.getGridGeometry();
         final AffineTransform gridToCRS = (AffineTransform) gridGeometry2D.getGridToCRS();
         final double[] coverageFullResolution = CoverageUtilities.getResolution(gridToCRS);
         final MathTransform raster2Model = gridGeometry2D.getGridToCRS();
         final ReferencedEnvelope bbox = spatialDomain.getReferencedEnvelope();
         final ReferencedEnvelope referencedEnvelope = new ReferencedEnvelope(bbox);
-        final CoordinateReferenceSystem spatialReferenceSystem2D =
-                spatialDomain.getCoordinateReferenceSystem2D();
+        final CoordinateReferenceSystem spatialReferenceSystem2D = spatialDomain.getCoordinateReferenceSystem2D();
         rasterArea = rasterElements.iterator().next().toRectangle();
 
         // Setting up Coverage info
@@ -182,19 +176,15 @@ class NetCDFRequest extends CoverageReadRequest {
                             horizontalDomain.getGridGeometry().getGridToCRS2D(),
                             horizontalDomain.getCoordinateReferenceSystem2D());
                 } catch (TransformException e) {
-                    request.setDomainSubset(
-                            requestedRasterArea,
-                            ReferencedEnvelope.reference(requestedBoundingBox));
+                    request.setDomainSubset(requestedRasterArea, ReferencedEnvelope.reference(requestedBoundingBox));
                     LOGGER.log(
                             Level.SEVERE,
-                            "Transform exception while setting the domain subset to: "
-                                    + requestedRasterArea,
+                            "Transform exception while setting the domain subset to: " + requestedRasterArea,
                             e);
                 }
             } else {
                 // TODO: Check for center/corner anchor point
-                request.setDomainSubset(
-                        requestedRasterArea, ReferencedEnvelope.reference(requestedBoundingBox));
+                request.setDomainSubset(requestedRasterArea, ReferencedEnvelope.reference(requestedBoundingBox));
             }
         }
 
@@ -232,21 +222,19 @@ class NetCDFRequest extends CoverageReadRequest {
                 }
                 request.setVerticalSubset(verticalSubset);
             } else {
-                final NumberRange<Double> requestedVerticalEnv = verticalSubset.iterator().next();
+                final NumberRange<Double> requestedVerticalEnv =
+                        verticalSubset.iterator().next();
 
                 if (verticalExtent != null
                         && !verticalExtent.isEmpty()
                         && !verticalExtent.iterator().next().contains(requestedVerticalEnv)) {
                     // Find the nearest vertical Envelope
-                    NumberRange<Double> nearestEnvelope = verticalExtent.iterator().next();
+                    NumberRange<Double> nearestEnvelope =
+                            verticalExtent.iterator().next();
 
-                    double minimumDistance =
-                            Math.abs(
-                                    nearestEnvelope.getMinimum()
-                                            - requestedVerticalEnv.getMinimum());
+                    double minimumDistance = Math.abs(nearestEnvelope.getMinimum() - requestedVerticalEnv.getMinimum());
                     for (NumberRange<Double> env : verticalExtent) {
-                        double distance =
-                                Math.abs(env.getMinimum() - requestedVerticalEnv.getMinimum());
+                        double distance = Math.abs(env.getMinimum() - requestedVerticalEnv.getMinimum());
                         if (distance < minimumDistance) {
                             nearestEnvelope = env;
                             minimumDistance = distance;

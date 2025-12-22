@@ -18,13 +18,16 @@ package org.geotools.styling;
 
 import javax.measure.Unit;
 import javax.measure.quantity.Length;
+import org.geotools.api.style.Description;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.StyleVisitor;
+import org.geotools.api.style.TraversingStyleVisitor;
+import org.geotools.api.util.Cloneable;
 import org.geotools.util.SimpleInternationalString;
-import org.opengis.style.StyleVisitor;
-import org.opengis.util.Cloneable;
 
 /**
- * Provides a Java representation of the PointSymbolizer. This defines how points are to be
- * rendered.
+ * Provides a Java representation of the PointSymbolizer. This defines how points are to be rendered.
  *
  * @author Ian Turton, CCG
  * @author Johann Sorel (Geomatys)
@@ -41,13 +44,10 @@ public class PointSymbolizerImpl extends AbstractSymbolizer implements PointSymb
                 null,
                 null,
                 null,
-                new DescriptionImpl(
-                        new SimpleInternationalString("title"),
-                        new SimpleInternationalString("abstract")));
+                new DescriptionImpl(new SimpleInternationalString("title"), new SimpleInternationalString("abstract")));
     }
 
-    protected PointSymbolizerImpl(
-            Graphic graphic, Unit<Length> uom, String geom, String name, Description desc) {
+    protected PointSymbolizerImpl(Graphic graphic, Unit<Length> uom, String geom, String name, Description desc) {
         super(name, desc, geom, uom);
         this.graphic = GraphicImpl.cast(graphic);
     }
@@ -58,7 +58,7 @@ public class PointSymbolizerImpl extends AbstractSymbolizer implements PointSymb
      * @return The Graphic to be used when drawing a point
      */
     @Override
-    public GraphicImpl getGraphic() {
+    public Graphic getGraphic() {
         return graphic;
     }
 
@@ -68,7 +68,7 @@ public class PointSymbolizerImpl extends AbstractSymbolizer implements PointSymb
      * @param graphic New value of property graphic.
      */
     @Override
-    public void setGraphic(org.opengis.style.Graphic graphic) {
+    public void setGraphic(org.geotools.api.style.Graphic graphic) {
         if (this.graphic == graphic) {
             return;
         }
@@ -81,12 +81,12 @@ public class PointSymbolizerImpl extends AbstractSymbolizer implements PointSymb
      * @param visitor The StyleVisitor to accept.
      */
     @Override
-    public Object accept(StyleVisitor visitor, Object data) {
+    public Object accept(TraversingStyleVisitor visitor, Object data) {
         return visitor.visit(this, data);
     }
 
     @Override
-    public void accept(org.geotools.styling.StyleVisitor visitor) {
+    public void accept(StyleVisitor visitor) {
         visitor.visit(this);
     }
 
@@ -101,7 +101,7 @@ public class PointSymbolizerImpl extends AbstractSymbolizer implements PointSymb
 
         try {
             clone = (PointSymbolizerImpl) super.clone();
-            if (graphic != null) clone.graphic = (GraphicImpl) ((Cloneable) graphic).clone();
+            if (graphic != null) clone.graphic = (GraphicImpl) graphic.clone();
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e); // this should never happen.
         }
@@ -113,7 +113,7 @@ public class PointSymbolizerImpl extends AbstractSymbolizer implements PointSymb
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + ((graphic == null) ? 0 : graphic.hashCode());
+        result = prime * result + (graphic == null ? 0 : graphic.hashCode());
         return result;
     }
 
@@ -129,14 +129,12 @@ public class PointSymbolizerImpl extends AbstractSymbolizer implements PointSymb
         return true;
     }
 
-    static PointSymbolizerImpl cast(org.opengis.style.Symbolizer symbolizer) {
+    static PointSymbolizerImpl cast(org.geotools.api.style.Symbolizer symbolizer) {
         if (symbolizer == null) {
             return null;
-        } else if (symbolizer instanceof PointSymbolizerImpl) {
-            return (PointSymbolizerImpl) symbolizer;
-        } else if (symbolizer instanceof org.opengis.style.PointSymbolizer) {
-            org.opengis.style.PointSymbolizer pointSymbolizer =
-                    (org.opengis.style.PointSymbolizer) symbolizer;
+        } else if (symbolizer instanceof PointSymbolizerImpl impl) {
+            return impl;
+        } else if (symbolizer instanceof org.geotools.api.style.PointSymbolizer pointSymbolizer) {
             PointSymbolizerImpl copy = new PointSymbolizerImpl();
             copy.setDescription(pointSymbolizer.getDescription());
             copy.setGeometryPropertyName(pointSymbolizer.getGeometryPropertyName());

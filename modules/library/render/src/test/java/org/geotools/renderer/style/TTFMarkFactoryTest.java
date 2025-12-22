@@ -17,13 +17,13 @@
 package org.geotools.renderer.style;
 
 import java.awt.Shape;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.renderer.lite.StreamingRenderer;
 import org.geotools.test.TestData;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.filter.FilterFactory;
 
 public class TTFMarkFactoryTest {
     private TTFMarkFactory ttf;
@@ -35,10 +35,7 @@ public class TTFMarkFactoryTest {
         ff = CommonFactoryFinder.getFilterFactory(null);
     }
 
-    /**
-     * Checks various malformed ttf paths, some that should be ignored, some that we should complain
-     * about
-     */
+    /** Checks various malformed ttf paths, some that should be ignored, some that we should complain about */
     @Test
     public void testInvalidPaths() throws Exception {
         Assert.assertNull(ttf.getShape(null, ff.literal("font://invalid"), null));
@@ -91,8 +88,9 @@ public class TTFMarkFactoryTest {
     /** Checks valid paths */
     @Test
     public void testLocalFont() throws Exception {
-        String fontPath =
-                TestData.getResource(StreamingRenderer.class, "recreate.ttf").toURI().toString();
+        String fontPath = TestData.getResource(StreamingRenderer.class, "recreate.ttf")
+                .toURI()
+                .toString();
         Shape shape = ttf.getShape(null, ff.literal("ttf://" + fontPath + "#U+0021"), null);
         Assert.assertNotNull(shape);
         Assert.assertTrue(shape.getBounds2D().getWidth() <= 1);

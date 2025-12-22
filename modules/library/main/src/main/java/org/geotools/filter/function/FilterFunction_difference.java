@@ -20,19 +20,18 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_difference extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "difference",
-                    parameter("difference", Geometry.class),
-                    parameter("geometry1", Geometry.class),
-                    parameter("geometry2", Geometry.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "difference",
+            parameter("difference", Geometry.class),
+            parameter("geometry1", Geometry.class),
+            parameter("geometry2", Geometry.class));
 
     public FilterFunction_difference() {
         super(NAME);
@@ -59,6 +58,6 @@ public class FilterFunction_difference extends FunctionExpressionImpl {
                     "Filter Function problem for function difference argument #1 - expected type Geometry");
         }
 
-        return (StaticGeometry.difference(arg0, arg1));
+        return StaticGeometry.difference(arg0, arg1);
     }
 }

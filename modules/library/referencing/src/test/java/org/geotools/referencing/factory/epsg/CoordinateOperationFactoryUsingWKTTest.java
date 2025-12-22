@@ -26,6 +26,10 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.util.Properties;
 import java.util.Set;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.CoordinateOperation;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.ReferencingFactoryFinder;
@@ -33,11 +37,6 @@ import org.geotools.util.factory.AbstractFactory;
 import org.geotools.util.factory.Hints;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.CoordinateOperation;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * Tests the {@link testCoordinateOperationFactoryUsingWKT} public methods.
@@ -63,16 +62,11 @@ public class CoordinateOperationFactoryUsingWKTTest {
     /** @throws java.lang.Exception */
     @Before
     public void setUp() throws Exception {
-        ReferencingFactoryFinder.addAuthorityFactory(
-                new FactoryUsingWKT(null, AbstractFactory.MAXIMUM_PRIORITY));
+        ReferencingFactoryFinder.addAuthorityFactory(new FactoryUsingWKT(null, AbstractFactory.MAXIMUM_PRIORITY));
 
-        factory =
-                (CoordinateOperationFactoryUsingWKT)
-                        ReferencingFactoryFinder.getCoordinateOperationAuthorityFactory(
-                                "EPSG",
-                                new Hints(
-                                        Hints.COORDINATE_OPERATION_AUTHORITY_FACTORY,
-                                        CoordinateOperationFactoryUsingWKT.class));
+        factory = (CoordinateOperationFactoryUsingWKT) ReferencingFactoryFinder.getCoordinateOperationAuthorityFactory(
+                "EPSG",
+                new Hints(Hints.COORDINATE_OPERATION_AUTHORITY_FACTORY, CoordinateOperationFactoryUsingWKT.class));
 
         // Read definitions
         properties = new Properties();
@@ -82,10 +76,7 @@ public class CoordinateOperationFactoryUsingWKTTest {
     /** @throws Exception */
     @Test
     public void testExtraDirectoryHint() throws Exception {
-        Hints hints =
-                new Hints(
-                        Hints.COORDINATE_OPERATION_AUTHORITY_FACTORY,
-                        CoordinateOperationFactoryUsingWKT.class);
+        Hints hints = new Hints(Hints.COORDINATE_OPERATION_AUTHORITY_FACTORY, CoordinateOperationFactoryUsingWKT.class);
         try {
             hints.put(Hints.CRS_AUTHORITY_EXTRA_DIRECTORY, "invalid");
             fail("Should of been tossed out as an invalid hint");
@@ -93,19 +84,15 @@ public class CoordinateOperationFactoryUsingWKTTest {
             // This is the expected exception.
         }
         String directory = new File(".").getAbsolutePath();
-        hints =
-                new Hints(
-                        Hints.COORDINATE_OPERATION_AUTHORITY_FACTORY,
-                        CoordinateOperationFactoryUsingWKT.class);
+        hints = new Hints(Hints.COORDINATE_OPERATION_AUTHORITY_FACTORY, CoordinateOperationFactoryUsingWKT.class);
         hints.put(Hints.CRS_AUTHORITY_EXTRA_DIRECTORY, directory);
 
         CoordinateOperationFactoryUsingWKT fact =
-                (CoordinateOperationFactoryUsingWKT)
-                        ReferencingFactoryFinder.getCoordinateOperationAuthorityFactory(
-                                "EPSG",
-                                new Hints(
-                                        Hints.COORDINATE_OPERATION_AUTHORITY_FACTORY,
-                                        CoordinateOperationFactoryUsingWKT.class));
+                (CoordinateOperationFactoryUsingWKT) ReferencingFactoryFinder.getCoordinateOperationAuthorityFactory(
+                        "EPSG",
+                        new Hints(
+                                Hints.COORDINATE_OPERATION_AUTHORITY_FACTORY,
+                                CoordinateOperationFactoryUsingWKT.class));
 
         // BTW testing the inverse construction
         CoordinateOperation co = fact.createCoordinateOperation(INVERSE_CRS_PAIR);
@@ -114,7 +101,7 @@ public class CoordinateOperationFactoryUsingWKTTest {
         crs = CRS.decode(SOURCE_CRS);
         assertSame(crs, co.getTargetCRS());
 
-        assertTrue(co.getMathTransform() instanceof MathTransform);
+        assertNotNull(co.getMathTransform());
         double[] p = new double[2];
         co.getMathTransform().transform(DST_TEST_POINT, 0, p, 0, 1);
         assertEquals(p[0], SRC_TEST_POINT[0], 1e-8);
@@ -129,15 +116,15 @@ public class CoordinateOperationFactoryUsingWKTTest {
 
     /** Test method for {@link CoordinateOperationFactoryUsingWKT#createCoordinateOperation}. */
     @Test
+    @SuppressWarnings("CatchFail")
     public void testCreateCoordinateOperation() throws TransformException {
 
         try {
             assertNull(factory.createCoordinateOperation(INVALID_CRS));
         } catch (FactoryException e) {
-            fail(
-                    factory.getClass().getSimpleName()
-                            + " threw a FactoryException when requesting"
-                            + "a nonexistent operation. Instead, a NoSuchAuthorityCodeException was expected.");
+            fail(factory.getClass().getSimpleName()
+                    + " threw a FactoryException when requesting"
+                    + "a nonexistent operation. Instead, a NoSuchAuthorityCodeException was expected.");
         }
 
         try {
@@ -152,40 +139,34 @@ public class CoordinateOperationFactoryUsingWKTTest {
             assertSame(crs, co.getTargetCRS());
 
             // Test MathTransform
-            assertTrue(co.getMathTransform() instanceof MathTransform);
+            assertNotNull(co.getMathTransform());
             double[] p = new double[2];
             co.getMathTransform().transform(SRC_TEST_POINT, 0, p, 0, 1);
             assertEquals(p[0], DST_TEST_POINT[0], 1e-8);
             assertEquals(p[1], DST_TEST_POINT[1], 1e-8);
         } catch (FactoryException e) {
-            fail(
-                    factory.getClass().getSimpleName()
-                            + " threw a FactoryException when creating"
-                            + " coordinate operation from an existing code.");
+            fail(factory.getClass().getSimpleName()
+                    + " threw a FactoryException when creating"
+                    + " coordinate operation from an existing code.");
         }
     }
 
-    /**
-     * Test method for {@link
-     * CoordinateOperationFactoryUsingWKT#createFromCoordinateReferenceSystemCodes}.
-     */
+    /** Test method for {@link CoordinateOperationFactoryUsingWKT#createFromCoordinateReferenceSystemCodes}. */
     @Test
+    @SuppressWarnings("CatchFail")
     public void testCreateFromCoordinateReferenceSystemCodes() throws TransformException {
         try {
-            Set<CoordinateOperation> cos =
-                    factory.createFromCoordinateReferenceSystemCodes(INVALID_CRS, INVALID_CRS);
+            Set<CoordinateOperation> cos = factory.createFromCoordinateReferenceSystemCodes(INVALID_CRS, INVALID_CRS);
             assertTrue(cos.isEmpty());
         } catch (FactoryException e) {
-            fail(
-                    factory.getClass().getSimpleName()
-                            + " threw a FactoryException when requesting"
-                            + "a nonexistent operation. Instead, a NoSuchAuthorityCodeException was expected.");
+            fail(factory.getClass().getSimpleName()
+                    + " threw a FactoryException when requesting"
+                    + "a nonexistent operation. Instead, a NoSuchAuthorityCodeException was expected.");
         }
 
         try {
             // Test CoordinateOperation
-            Set<CoordinateOperation> cos =
-                    factory.createFromCoordinateReferenceSystemCodes(SOURCE_CRS, TARGET_CRS);
+            Set<CoordinateOperation> cos = factory.createFromCoordinateReferenceSystemCodes(SOURCE_CRS, TARGET_CRS);
             assertEquals(1, cos.size());
             CoordinateOperation co = cos.iterator().next();
             assertNotNull(co);
@@ -197,16 +178,15 @@ public class CoordinateOperationFactoryUsingWKTTest {
             assertSame(crs, co.getTargetCRS());
 
             // Test MathTransform
-            assertTrue(co.getMathTransform() instanceof MathTransform);
+            assertNotNull(co.getMathTransform());
             double[] p = new double[2];
             co.getMathTransform().transform(SRC_TEST_POINT, 0, p, 0, 1);
             assertEquals(p[0], DST_TEST_POINT[0], 1e-8);
             assertEquals(p[1], DST_TEST_POINT[1], 1e-8);
         } catch (FactoryException e) {
-            fail(
-                    factory.getClass().getSimpleName()
-                            + " threw a FactoryException when creating"
-                            + " coordinate operation from an existing code.");
+            fail(factory.getClass().getSimpleName()
+                    + " threw a FactoryException when creating"
+                    + " coordinate operation from an existing code.");
         }
     }
 }

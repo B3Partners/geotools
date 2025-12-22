@@ -18,6 +18,7 @@ package org.geotools.swing.process;
 
 import java.awt.Dialog;
 import java.awt.HeadlessException;
+import java.io.Serial;
 import org.geotools.swing.wizard.JWizard;
 
 /**
@@ -29,20 +30,21 @@ import org.geotools.swing.wizard.JWizard;
  * TBD
  * </pre></code>
  *
- * <p>If you wish to customize this wizard (as an example to allow users to draw a geometry directly
- * rather than use WKT) pelase use this class as a starting point or code example With this in mind
- * the two pages used here are intended for reuse.
+ * <p>If you wish to customize this wizard (as an example to allow users to draw a geometry directly rather than use
+ * WKT) pelase use this class as a starting point or code example With this in mind the two pages used here are intended
+ * for reuse.
  *
- * <p>The *ProcessSelectionPage* is interesting in that it defines the next page that is to be
- * displayed. It does this based on the selected process description and is a good example of an
- * dynamic wizard.
+ * <p>The *ProcessSelectionPage* is interesting in that it defines the next page that is to be displayed. It does this
+ * based on the selected process description and is a good example of an dynamic wizard.
  *
  * @author Jody Garnett (LISAsoft)
  * @since 8.0
  * @version $Id$
  */
 public class JProcessWizard extends JWizard {
+    @Serial
     private static final long serialVersionUID = -5885825548881784615L;
+
     private ProcessSelectionPage selectionPage;
 
     /** Create a JProcessWizard for use */

@@ -23,7 +23,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.geotools.data.CloseableIterator;
+import org.geotools.api.data.CloseableIterator;
 import org.geotools.data.shapefile.index.Data;
 import org.geotools.data.shapefile.shp.IndexFile;
 import org.locationtech.jts.geom.Envelope;
@@ -31,8 +31,7 @@ import org.locationtech.jts.geom.Envelope;
 /**
  * Java porting of mapserver quadtree implementation.<br>
  * <br>
- * Note that this implementation is <b>not thread safe</b>, so don't share the same instance across
- * two or more threads.
+ * Note that this implementation is <b>not thread safe</b>, so don't share the same instance across two or more threads.
  *
  * <p>TODO: example of typical use...
  *
@@ -42,8 +41,7 @@ public class QuadTree implements Closeable {
 
     private static final double SPLITRATIO = 0.55d;
 
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(QuadTree.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(QuadTree.class);
 
     private Node root;
     private int numShapes;
@@ -117,8 +115,7 @@ public class QuadTree implements Closeable {
     }
 
     /** Inserts a shape record id in the quadtree */
-    public void insert(Node node, final int recno, final Envelope recBounds, final int maxDepth)
-            throws StoreException {
+    public void insert(Node node, final int recno, final Envelope recBounds, final int maxDepth) throws StoreException {
 
         if (maxDepth > 1 && node.getNumSubNodes() > 0) {
             /*
@@ -233,7 +230,7 @@ public class QuadTree implements Closeable {
             node.setBounds(subNode.getBounds());
         }
 
-        return (node.getNumSubNodes() == 0 && node.getNumShapeIds() == 0);
+        return node.getNumSubNodes() == 0 && node.getNumShapeIds() == 0;
     }
 
     /**
@@ -246,7 +243,7 @@ public class QuadTree implements Closeable {
         Envelope[] ret = new Envelope[2];
         double range, calc;
 
-        if ((in.getMaxX() - in.getMinX()) > (in.getMaxY() - in.getMinY())) {
+        if (in.getMaxX() - in.getMinX() > in.getMaxY() - in.getMinY()) {
             // Split in X direction
             range = in.getMaxX() - in.getMinX();
 

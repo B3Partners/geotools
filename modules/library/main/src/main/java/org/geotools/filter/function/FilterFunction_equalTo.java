@@ -20,44 +20,35 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.MultiValuedFilter.MatchAction;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.MultiValuedFilter.MatchAction;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
 
 public class FilterFunction_equalTo extends FunctionExpressionImpl {
-    private static FilterFactory2 ff;
+    private static FilterFactory ff;
 
-    private static FilterFactory2 getFilterFactory2() {
+    private static FilterFactory getFilterFactory() {
         if (ff == null) {
-            ff = CommonFactoryFinder.getFilterFactory2();
+            ff = CommonFactoryFinder.getFilterFactory();
         }
         return ff;
     }
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
+    public static FunctionName NAME = new FunctionNameImpl(
+            "equalTo",
+            parameter(
                     "equalTo",
-                    parameter(
-                            "equalTo",
-                            Boolean.class,
-                            "equal to",
-                            "Can be used to compare for equality two numbers, two strings, two dates, and so on."),
-                    parameter(
-                            "a",
-                            Object.class,
-                            "a",
-                            "Can be any object type: date, string, number, etc..."),
-                    parameter(
-                            "b",
-                            Object.class,
-                            "b",
-                            "Can be any object type: date, string, number, etc..."),
-                    parameter("matchAction", String.class, 0, 1));
+                    Boolean.class,
+                    "equal to",
+                    "Can be used to compare for equality two numbers, two strings, two dates, and so on."),
+            parameter("a", Object.class, "a", "Can be any object type: date, string, number, etc..."),
+            parameter("b", Object.class, "b", "Can be any object type: date, string, number, etc..."),
+            parameter("matchAction", String.class, 0, 1));
 
     public FilterFunction_equalTo() {
         super(NAME);
@@ -78,10 +69,9 @@ public class FilterFunction_equalTo extends FunctionExpressionImpl {
                         "Filter Function problem for function equalTo argument #2 - expected one of ANY, ONE or ALL");
             }
         }
-        Filter equalTo =
-                matchAction == null
-                        ? getFilterFactory2().equal(arg0, arg1, false)
-                        : getFilterFactory2().equal(arg0, arg1, false, matchAction);
+        Filter equalTo = matchAction == null
+                ? getFilterFactory().equal(arg0, arg1, false)
+                : getFilterFactory().equal(arg0, arg1, false, matchAction);
 
         return equalTo.evaluate(feature);
     }

@@ -57,8 +57,7 @@ public class AStarShortestPathFinder implements GraphWalker {
     }
 
     /**
-     * Performs the graph traversal and calculates the shortest path from the source node to destiny
-     * node in the graph.
+     * Performs the graph traversal and calculates the shortest path from the source node to destiny node in the graph.
      */
     public void calculate() {
         m_traversal.init();
@@ -69,16 +68,15 @@ public class AStarShortestPathFinder implements GraphWalker {
     @Override
     public int visit(Graphable element, GraphTraversal traversal) {
         if (element.equals(m_target)) {
-            return (GraphTraversal.STOP);
+            return GraphTraversal.STOP;
         } else {
-            return (GraphTraversal.CONTINUE);
+            return GraphTraversal.CONTINUE;
         }
     }
 
     /**
-     * Returns a path <B>from</B> the target <B>to</B> the source. If the desired path is the
-     * opposite (from the source to the target), the <i>reverse</i> or the <i>riterator</i> methods
-     * from the <b>Path<b> class can be used.
+     * Returns a path <B>from</B> the target <B>to</B> the source. If the desired path is the opposite (from the source
+     * to the target), the <i>reverse</i> or the <i>riterator</i> methods from the <b>Path<b> class can be used.
      *
      * @see Path#riterator()
      * @see Path#reverse()
@@ -96,7 +94,7 @@ public class AStarShortestPathFinder implements GraphWalker {
         if (!path.getLast().equals(m_iterator.getSource())) {
             throw new WrongPathException("getPath: The path obtained doesn't begin correctly");
         }
-        return (path);
+        return path;
     }
 
     /**

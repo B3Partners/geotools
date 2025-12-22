@@ -16,15 +16,15 @@
  */
 package org.geotools.s3.geotiff;
 
-import org.geotools.data.DataSourceException;
+import org.geotools.api.data.DataSourceException;
 import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.s3.S3ImageInputStreamImpl;
 import org.geotools.s3.S3ImageInputStreamImplSpi;
 import org.geotools.util.factory.Hints;
 
 /**
- * Very simple wrapper around GeoTIff reader in order to support S3 geotiff. The goal is to have
- * this go away eventually and to be able to support S3 with just the original GeoTiff reader
+ * Very simple wrapper around GeoTIff reader in order to support S3 geotiff. The goal is to have this go away eventually
+ * and to be able to support S3 with just the original GeoTiff reader
  */
 public class S3GeoTiffReader extends GeoTiffReader {
     public S3GeoTiffReader(Object input) throws DataSourceException {
@@ -40,12 +40,13 @@ public class S3GeoTiffReader extends GeoTiffReader {
         closeMe = true;
     }
 
+    @SuppressWarnings("PMD.CloseResource")
     public S3GeoTiffReader(Object input, Hints uHints) throws DataSourceException {
         super(input, uHints);
         closeMe = true;
         this.inStreamSPI = new S3ImageInputStreamImplSpi();
-        if (input instanceof S3ImageInputStreamImpl) {
-            String fileName = ((S3ImageInputStreamImpl) input).getFileName();
+        if (input instanceof S3ImageInputStreamImpl impl) {
+            String fileName = impl.getFileName();
             final int dotIndex = fileName.lastIndexOf('.');
             if (dotIndex != -1 && dotIndex != fileName.length()) {
                 this.coverageName = fileName.substring(0, dotIndex);

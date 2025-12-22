@@ -20,6 +20,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.logging.Logger;
+import org.geotools.api.data.CloseableIterator;
 import org.geotools.util.logging.Logging;
 
 /**
@@ -35,10 +36,11 @@ public class DefaultCloseableIterator<T> implements CloseableIterator<T> {
 
     protected Closeable closeableItem;
 
+    @SuppressWarnings("PMD.CloseResource")
     public DefaultCloseableIterator(Iterator<T> wrapped) {
         this.wrapped = wrapped;
-        if (wrapped instanceof Closeable) {
-            this.closeableItem = (Closeable) wrapped;
+        if (wrapped instanceof Closeable closeable) {
+            this.closeableItem = closeable;
         } else {
             this.closeableItem = null;
         }
@@ -91,9 +93,10 @@ public class DefaultCloseableIterator<T> implements CloseableIterator<T> {
                 close();
             } finally {
                 LOGGER.warning(
-                        "CloseableIterator need to be closed by the client. "
-                                + "There is code not closing it."
-                                + "\nAuto closing at finalize().");
+                        """
+                        CloseableIterator need to be closed by the client. \
+                        There is code not closing it.
+                        Auto closing at finalize().""");
             }
         }
     }

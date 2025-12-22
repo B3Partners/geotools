@@ -18,10 +18,10 @@ package org.geotools.filter;
 
 import java.util.Collection;
 import java.util.Collections;
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.util.Converters;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Straight implementation of GeoAPI interface.
@@ -34,8 +34,7 @@ public class IsBetweenImpl extends CompareFilterImpl implements PropertyIsBetwee
 
     protected MatchAction matchAction;
 
-    protected IsBetweenImpl(
-            Expression lower, Expression expression, Expression upper, MatchAction matchAction) {
+    protected IsBetweenImpl(Expression lower, Expression expression, Expression upper, MatchAction matchAction) {
         super(lower, upper);
         this.expression = expression;
         this.matchAction = matchAction;
@@ -71,27 +70,19 @@ public class IsBetweenImpl extends CompareFilterImpl implements PropertyIsBetwee
             return false;
         }
 
-        if (!(object0 instanceof Collection)
-                && !(object1 instanceof Collection)
-                && !(object2 instanceof Collection)) {
+        if (!(object0 instanceof Collection) && !(object1 instanceof Collection) && !(object2 instanceof Collection)) {
             return evaluateInternal(object0, object1, object2);
         }
 
         @SuppressWarnings("unchecked")
         Collection<Object> oValues =
-                object0 instanceof Collection
-                        ? (Collection<Object>) object0
-                        : Collections.singletonList(object0);
+                object0 instanceof Collection ? (Collection<Object>) object0 : Collections.singletonList(object0);
         @SuppressWarnings("unchecked")
         Collection<Object> leftValues =
-                object1 instanceof Collection
-                        ? (Collection<Object>) object1
-                        : Collections.singletonList(object1);
+                object1 instanceof Collection ? (Collection<Object>) object1 : Collections.singletonList(object1);
         @SuppressWarnings("unchecked")
         Collection<Object> rightValues =
-                object2 instanceof Collection
-                        ? (Collection<Object>) object2
-                        : Collections.singletonList(object2);
+                object2 instanceof Collection ? (Collection<Object>) object2 : Collections.singletonList(object2);
 
         int count = 0;
 
@@ -120,7 +111,7 @@ public class IsBetweenImpl extends CompareFilterImpl implements PropertyIsBetwee
 
         switch (matchAction) {
             case ONE:
-                return (count == 1);
+                return count == 1;
             case ALL:
                 return true;
             case ANY:
@@ -201,8 +192,8 @@ public class IsBetweenImpl extends CompareFilterImpl implements PropertyIsBetwee
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + ((expression == null) ? 0 : expression.hashCode());
-        result = prime * result + ((matchAction == null) ? 0 : matchAction.hashCode());
+        result = prime * result + (expression == null ? 0 : expression.hashCode());
+        result = prime * result + (matchAction == null ? 0 : matchAction.hashCode());
         return result;
     }
 

@@ -25,24 +25,24 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.geotools.data.DataAccess;
-import org.geotools.data.FeatureListener;
-import org.geotools.data.Query;
-import org.geotools.data.QueryCapabilities;
-import org.geotools.data.ResourceInfo;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.FeatureListener;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.QueryCapabilities;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.sort.SortBy;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.sort.SortBy;
 
 /**
  * A feature source that can transform a source feature source using a set of expressions
@@ -51,11 +51,10 @@ import org.opengis.filter.sort.SortBy;
  *
  * <ul>
  *   <li>hide, rename fields - compute new fields
- *   <li>build geom from x,y (we need to add a new Point filter function and have a special
- *       treatment of it in simplifying filter visitor so that it turns bbox filters against it into
- *       a filter on x,y)
- *   <li>on the fly simplification for WFS (just use environment variables) and in general dynamic
- *       processing based on params without stored queries
+ *   <li>build geom from x,y (we need to add a new Point filter function and have a special treatment of it in
+ *       simplifying filter visitor so that it turns bbox filters against it into a filter on x,y)
+ *   <li>on the fly simplification for WFS (just use environment variables) and in general dynamic processing based on
+ *       params without stored queries
  * </ul>
  *
  * @author Andrea Aime - GeoSolutions
@@ -64,26 +63,22 @@ public class TransformFeatureSource implements SimpleFeatureSource {
 
     protected static final Logger LOGGER = Logging.getLogger(TransformFeatureSource.class);
 
-    protected static final FilterFactory2 FF = CommonFactoryFinder.getFilterFactory2();
+    protected static final FilterFactory FF = CommonFactoryFinder.getFilterFactory();
 
     protected Transformer transformer;
 
     protected SimpleFeatureSource source;
 
     /**
-     * Creates a transformed feature source from the original source, giving it a certain name and a
-     * set of computed properties
+     * Creates a transformed feature source from the original source, giving it a certain name and a set of computed
+     * properties
      */
-    public TransformFeatureSource(
-            SimpleFeatureSource source, Name name, List<Definition> definitions)
+    public TransformFeatureSource(SimpleFeatureSource source, Name name, List<Definition> definitions)
             throws IOException {
         this.transformer = new Transformer(source, name, definitions, null);
         this.source = source;
 
-        LOGGER.log(
-                Level.FINE,
-                "Transformed target schema for this feature source is {0}",
-                transformer.getSchema());
+        LOGGER.log(Level.FINE, "Transformed target schema for this feature source is {0}", transformer.getSchema());
     }
 
     @Override
@@ -131,7 +126,7 @@ public class TransformFeatureSource implements SimpleFeatureSource {
             }
 
             @Override
-            public boolean supportsSorting(SortBy[] sortAttributes) {
+            public boolean supportsSorting(SortBy... sortAttributes) {
                 // we use external sorting if any of the sort attributes is computed
                 for (SortBy sortBy : sortAttributes) {
                     if (sortBy == SortBy.NATURAL_ORDER || sortBy == SortBy.REVERSE_ORDER) {

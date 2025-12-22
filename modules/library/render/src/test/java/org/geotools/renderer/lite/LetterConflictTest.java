@@ -35,14 +35,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.style.Style;
 import org.geotools.data.property.PropertyDataStore;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.FeatureLayer;
 import org.geotools.map.MapContent;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.renderer.label.LabelCacheImpl;
-import org.geotools.styling.Style;
 import org.geotools.test.TestData;
 import org.geotools.util.logging.Logging;
 import org.junit.Assert;
@@ -57,8 +57,7 @@ public class LetterConflictTest {
      *
      * <p>Build with mvn -P image.interactive
      */
-    static final boolean IMAGE_INTERACTIVE =
-            Boolean.getBoolean("org.geotools.image.test.interactive");
+    static final boolean IMAGE_INTERACTIVE = Boolean.getBoolean("org.geotools.image.test.interactive");
 
     /**
      * Forces the image comparison / output tests to be skipped.
@@ -85,8 +84,8 @@ public class LetterConflictTest {
     @Before
     public void setUp() throws Exception {
 
-        File property_line =
-                new File(TestData.getResource(this, "letterConflict1.properties").toURI());
+        File property_line = new File(
+                TestData.getResource(this, "letterConflict1.properties").toURI());
         PropertyDataStore ds_line = new PropertyDataStore(property_line.getParentFile());
 
         fs_line1 = ds_line.getFeatureSource("letterConflict1");
@@ -228,7 +227,7 @@ public class LetterConflictTest {
                 t0 = System.nanoTime();
                 image1 = RendererBaseTest.renderImage(renderer, bounds2, null);
                 t1 = System.nanoTime();
-                ta += (t1 - t0);
+                ta += t1 - t0;
             }
             LOGGER.fine("time false " + ta / 10000000);
             mc.dispose();
@@ -247,14 +246,12 @@ public class LetterConflictTest {
                 image2 = RendererBaseTest.renderImage(renderer, bounds2, null);
                 t3 = System.nanoTime();
                 // System.out.println("time true " + (t3 - t2) + " ms");
-                ta += (t3 - t2);
+                ta += t3 - t2;
             }
             LOGGER.fine("time true " + ta / 10000000);
             mc.dispose();
 
-            Assert.assertTrue(
-                    "More labels in image2 than image1",
-                    countDarkPixels(image2) >= countDarkPixels(image1));
+            Assert.assertTrue("More labels in image2 than image1", countDarkPixels(image2) >= countDarkPixels(image1));
 
             writeImage("letterConflictEnabledPerfFalse", image1);
             writeImage("letterConflictEnabledPerfTrue", image2);
@@ -299,8 +296,7 @@ public class LetterConflictTest {
      *
      * @param testName test name used as window name
      */
-    static void showImage(String testName, long timeOut, final BufferedImage image)
-            throws InterruptedException {
+    static void showImage(String testName, long timeOut, final BufferedImage image) throws InterruptedException {
         boolean HEADLESS = Boolean.getBoolean("java.awt.headless");
 
         if (HEADLESS || IMAGE_SKIP) {
@@ -310,29 +306,26 @@ public class LetterConflictTest {
         if (IMAGE_INTERACTIVE && TestData.isInteractiveTest()) {
             try {
                 Frame frame = new Frame(testName);
-                frame.addWindowListener(
-                        new WindowAdapter() {
-                            @Override
-                            public void windowClosing(WindowEvent e) {
-                                e.getWindow().dispose();
-                            }
-                        });
+                frame.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosing(WindowEvent e) {
+                        e.getWindow().dispose();
+                    }
+                });
 
-                Panel p =
-                        new Panel() {
-                            /** <code>serialVersionUID</code> field */
-                            private static final long serialVersionUID = 1L;
+                Panel p = new Panel() {
+                    /** <code>serialVersionUID</code> field */
+                    private static final long serialVersionUID = 1L;
 
-                            {
-                                setPreferredSize(
-                                        new Dimension(image.getWidth(), image.getHeight()));
-                            }
+                    {
+                        setPreferredSize(new Dimension(image.getWidth(), image.getHeight()));
+                    }
 
-                            @Override
-                            public void paint(Graphics g) {
-                                g.drawImage(image, 0, 0, this);
-                            }
-                        };
+                    @Override
+                    public void paint(Graphics g) {
+                        g.drawImage(image, 0, 0, this);
+                    }
+                };
 
                 frame.add(p);
                 frame.pack();

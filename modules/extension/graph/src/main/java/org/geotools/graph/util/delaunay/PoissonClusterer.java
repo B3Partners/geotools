@@ -20,12 +20,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.graph.structure.Edge;
 import org.geotools.graph.structure.Graph;
 import org.geotools.graph.structure.Node;
 import org.geotools.graph.structure.basic.BasicGraph;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.expression.Expression;
 
 /** @author jfc173 */
 public class PoissonClusterer {
@@ -49,18 +49,12 @@ public class PoissonClusterer {
             Object baseObj = base.evaluate(nextFeature);
             if (!(baseObj instanceof Number)) {
                 throw new RuntimeException(
-                        "Expression "
-                                + base
-                                + " must evaluate to a number on feature "
-                                + nextFeature);
+                        "Expression " + base + " must evaluate to a number on feature " + nextFeature);
             }
             Object targetObj = target.evaluate(nextFeature);
             if (!(targetObj instanceof Number)) {
                 throw new RuntimeException(
-                        "Expression "
-                                + target
-                                + " must evaluate to a number on feature "
-                                + nextFeature);
+                        "Expression " + target + " must evaluate to a number on feature " + nextFeature);
             }
             double totalBase = ((Number) baseObj).doubleValue();
             double totalTarget = ((Number) targetObj).doubleValue();
@@ -82,31 +76,26 @@ public class PoissonClusterer {
                     } else {
                         DelaunayNode neighbor = (DelaunayNode) nextEdge.getOtherNode(next);
                         if (neighbor == null) {
-                            throw new RuntimeException(
-                                    "We have a problem.  "
-                                            + next
-                                            + " and "
-                                            + neighbor
-                                            + " should be neighbors via "
-                                            + nextEdge
-                                            + ", but aren't.");
+                            throw new RuntimeException("We have a problem.  "
+                                    + next
+                                    + " and "
+                                    + neighbor
+                                    + " should be neighbors via "
+                                    + nextEdge
+                                    + ", but aren't.");
                         }
                         SimpleFeature neighborFeature = neighbor.getFeature();
                         newNodes.add(neighbor);
 
                         if (!(baseObj instanceof Number)) {
                             throw new RuntimeException(
-                                    "Expression "
-                                            + base
-                                            + " must evaluate to a number on feature "
-                                            + neighborFeature);
+                                    "Expression " + base + " must evaluate to a number on feature " + neighborFeature);
                         }
                         if (!(targetObj instanceof Number)) {
-                            throw new RuntimeException(
-                                    "Expression "
-                                            + target
-                                            + " must evaluate to a number on feature "
-                                            + neighborFeature);
+                            throw new RuntimeException("Expression "
+                                    + target
+                                    + " must evaluate to a number on feature "
+                                    + neighborFeature);
                         }
                         totalBase = totalBase + ((Number) baseObj).doubleValue();
                         totalTarget = totalTarget + ((Number) targetObj).doubleValue();
@@ -130,7 +119,7 @@ public class PoissonClusterer {
                             DelaunayNode farNode = (DelaunayNode) nextEdge.getOtherNode(next2);
                             //                            System.out.println("checking " + farNode +
                             // " in " + newNodes);
-                            if (!(newNodes.contains(farNode))) {
+                            if (!newNodes.contains(farNode)) {
                                 nodesToAdd.add(farNode);
                                 edgesToAdd.add(nextEdge);
                                 //                                System.out.println("adding node "
@@ -152,17 +141,11 @@ public class PoissonClusterer {
                     SimpleFeature nextFeature2 = nextNode.getFeature();
                     if (!(baseObj instanceof Number)) {
                         throw new RuntimeException(
-                                "Expression "
-                                        + base
-                                        + " must evaluate to a number on feature "
-                                        + nextFeature2);
+                                "Expression " + base + " must evaluate to a number on feature " + nextFeature2);
                     }
                     if (!(targetObj instanceof Number)) {
                         throw new RuntimeException(
-                                "Expression "
-                                        + target
-                                        + " must evaluate to a number on feature "
-                                        + nextFeature2);
+                                "Expression " + target + " must evaluate to a number on feature " + nextFeature2);
                     }
                     totalBase = totalBase + ((Number) baseObj).doubleValue();
                     totalTarget = totalTarget + ((Number) targetObj).doubleValue();
@@ -170,9 +153,7 @@ public class PoissonClusterer {
             }
             double expectedTarget = meanRate * totalBase;
 
-            double top =
-                    ((Math.pow(Math.E, (0 - expectedTarget))
-                            * (Math.pow(expectedTarget, totalTarget))));
+            double top = Math.pow(Math.E, 0 - expectedTarget) * Math.pow(expectedTarget, totalTarget);
             double bottom = fact((int) Math.round(totalTarget));
             double poissonProb = top / bottom;
             //            System.out.println("testing " + newNodes);
@@ -198,7 +179,7 @@ public class PoissonClusterer {
     }
 
     private static double iterFact(int i, int f) {
-        if ((i == 0) || (i == 1)) {
+        if (i == 0 || i == 1) {
             return f;
         } else {
             return iterFact(i - 1, i * f);

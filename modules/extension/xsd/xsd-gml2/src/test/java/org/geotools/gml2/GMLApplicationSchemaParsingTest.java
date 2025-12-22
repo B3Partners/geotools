@@ -24,11 +24,11 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.xsd.StreamingParser;
 import org.junit.Assert;
 import org.junit.Test;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
 import org.w3c.dom.Document;
 
 public class GMLApplicationSchemaParsingTest {
@@ -113,8 +113,7 @@ public class GMLApplicationSchemaParsingTest {
 
             // update hte schema location
             String schemaLocation = getClass().getResource("test.xsd").toString();
-            document.getDocumentElement()
-                    .setAttribute("xsi:schemaLocation", TEST.NAMESPACE + " " + schemaLocation);
+            document.getDocumentElement().setAttribute("xsi:schemaLocation", TEST.NAMESPACE + " " + schemaLocation);
 
             // reserialize the document
             Transformer tx = TransformerFactory.newInstance().newTransformer();
@@ -122,8 +121,7 @@ public class GMLApplicationSchemaParsingTest {
         }
         try (InputStream in = new FileInputStream(schemaFile)) {
 
-            StreamingParser parser =
-                    new StreamingParser(new GMLConfiguration(), in, "//TestFeature");
+            StreamingParser parser = new StreamingParser(new GMLConfiguration(), in, "//TestFeature");
 
             for (int i = 0; i < 3; i++) {
                 SimpleFeature f = (SimpleFeature) parser.parse();

@@ -24,17 +24,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.FilterAttributeExtractor;
 import org.geotools.filter.IllegalFilterException;
 import org.geotools.util.Converters;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.PropertyName;
 
 /**
  * Generates a list of unique values from a collection
@@ -52,8 +52,7 @@ public class UniqueVisitor implements FeatureCalc, FeatureAttributeVisitor, Limi
     boolean preserveOrder = false;
     static FilterFactory factory = CommonFactoryFinder.getFilterFactory();
 
-    public UniqueVisitor(int attributeTypeIndex, SimpleFeatureType type)
-            throws IllegalFilterException {
+    public UniqueVisitor(int attributeTypeIndex, SimpleFeatureType type) throws IllegalFilterException {
         this(type, attributeTypeIndex);
     }
 
@@ -74,8 +73,7 @@ public class UniqueVisitor implements FeatureCalc, FeatureAttributeVisitor, Limi
         }
     }
 
-    public UniqueVisitor(SimpleFeatureType type, String... attributeNames)
-            throws IllegalFilterException {
+    public UniqueVisitor(SimpleFeatureType type, String... attributeNames) throws IllegalFilterException {
         for (String an : attributeNames) {
             String attrName = type.getDescriptor(an).getLocalName();
             expressions.add(factory.property(attrName));
@@ -145,7 +143,7 @@ public class UniqueVisitor implements FeatureCalc, FeatureAttributeVisitor, Limi
 
         if (value != null) {
             if (!set.contains(value) && !skipped.contains(value)) {
-                if (currentItem >= startIndex && currentItem < (startIndex + maxFeatures)) {
+                if (currentItem >= startIndex && currentItem < startIndex + maxFeatures) {
                     set.add(value);
                 } else {
                     skipped.add(value);
@@ -165,7 +163,7 @@ public class UniqueVisitor implements FeatureCalc, FeatureAttributeVisitor, Limi
             skipped = new LinkedHashSet<>();
         }
         if (!set.contains(uniqueVal) && !skipped.contains(uniqueVal)) {
-            if (currentItem >= startIndex && currentItem < (startIndex + maxFeatures)) {
+            if (currentItem >= startIndex && currentItem < startIndex + maxFeatures) {
                 set.add(uniqueVal);
             } else {
                 skipped.add(uniqueVal);
@@ -183,7 +181,7 @@ public class UniqueVisitor implements FeatureCalc, FeatureAttributeVisitor, Limi
     }
 
     public Set getUnique() {
-        /** Return a list of unique values from the collection */
+        /* Return a list of unique values from the collection */
         return set;
     }
 
@@ -208,7 +206,7 @@ public class UniqueVisitor implements FeatureCalc, FeatureAttributeVisitor, Limi
     }
 
     public void reset() {
-        /** Reset the unique and current minimum for the features in the collection */
+        /* Reset the unique and current minimum for the features in the collection */
         this.set = createNewSet(Collections.emptyList());
         this.skipped = new HashSet<>();
 
@@ -231,8 +229,8 @@ public class UniqueVisitor implements FeatureCalc, FeatureAttributeVisitor, Limi
 
     private String getPropertyName(Expression e) {
         String name = null;
-        if (e instanceof PropertyName) {
-            name = ((PropertyName) e).getPropertyName();
+        if (e instanceof PropertyName propertyName) {
+            name = propertyName.getPropertyName();
         } else {
             FilterAttributeExtractor extractor = new FilterAttributeExtractor();
             e.accept(extractor, null);
@@ -244,7 +242,6 @@ public class UniqueVisitor implements FeatureCalc, FeatureAttributeVisitor, Limi
 
     public static class UniqueResult extends AbstractCalcResult {
 
-        private List<String> attributeNames;
         private Set<Object> unique;
         private boolean preserveOrder = false;
 
@@ -274,8 +271,7 @@ public class UniqueVisitor implements FeatureCalc, FeatureAttributeVisitor, Limi
         @Override
         public boolean isCompatible(CalcResult targetResults) {
             // list each calculation result which can merge with this type of result
-            if (targetResults instanceof UniqueResult || targetResults == CalcResult.NULL_RESULT)
-                return true;
+            if (targetResults instanceof UniqueResult || targetResults == CalcResult.NULL_RESULT) return true;
             return false;
         }
 

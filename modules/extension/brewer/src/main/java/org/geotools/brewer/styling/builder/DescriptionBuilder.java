@@ -16,9 +16,9 @@
  */
 package org.geotools.brewer.styling.builder;
 
-import org.geotools.styling.Description;
+import org.geotools.api.style.Description;
+import org.geotools.api.util.InternationalString;
 import org.geotools.util.SimpleInternationalString;
-import org.opengis.util.InternationalString;
 
 public class DescriptionBuilder extends AbstractStyleBuilder<Description> {
 
@@ -93,7 +93,6 @@ public class DescriptionBuilder extends AbstractStyleBuilder<Description> {
 
     @Override
     protected void buildStyleInternal(StyleBuilder sb) {
-        throw new UnsupportedOperationException(
-                "Does not make sense to build a style out of a description");
+        throw new UnsupportedOperationException("Does not make sense to build a style out of a description");
     }
 }

@@ -18,14 +18,14 @@ package org.geotools.filter.attribute.extractor;
 
 import java.util.HashSet;
 import java.util.Set;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.filter.AttributeExpressionImpl;
 import org.geotools.filter.FilterAttributeExtractor;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class FilterAttributeExtractorTest {
 
@@ -48,8 +48,6 @@ public class FilterAttributeExtractorTest {
         Set<String> attributeTypesDescriptorsNames = new HashSet<>();
         attributeTypesDescriptorsNames.add("type");
         // checking that there is the there is a "type" AttributeDescriptor
-        Assert.assertEquals(
-                attributeTypesDescriptorsNames,
-                fae.visit(new AttributeExpressionImpl("type"), feature));
+        Assert.assertEquals(attributeTypesDescriptorsNames, fae.visit(new AttributeExpressionImpl("type"), feature));
     }
 }

@@ -18,13 +18,13 @@
 package org.geotools.process.raster;
 
 import java.io.IOException;
-import javax.media.jai.Interpolation;
+import org.eclipse.imagen.Interpolation;
+import org.geotools.api.parameter.ParameterValueGroup;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.CoverageProcessor;
 import org.geotools.process.factory.DescribeParameter;
 import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
-import org.opengis.parameter.ParameterValueGroup;
 
 /**
  * Applies a generic scale and translate operation to a coverage
@@ -32,25 +32,18 @@ import org.opengis.parameter.ParameterValueGroup;
  * @author Andrea Aime - GeoSolutions
  * @author ETj <etj at geo-solutions.it>
  */
-@DescribeProcess(
-        title = "Scale Coverage",
-        description = "Returns a scaled and translated version of a given raster")
+@DescribeProcess(title = "Scale Coverage", description = "Returns a scaled and translated version of a given raster")
 public class ScaleCoverage implements RasterProcess {
 
     private static final CoverageProcessor PROCESSOR = CoverageProcessor.getInstance();
 
     @DescribeResult(name = "result", description = "Scaled raster")
     public GridCoverage2D execute(
-            @DescribeParameter(name = "coverage", description = "Input raster")
-                    GridCoverage2D coverage,
-            @DescribeParameter(name = "xScale", description = "Scale factor along the x axis")
-                    double xScale,
-            @DescribeParameter(name = "yScale", description = "Scale factor along the y axis")
-                    double yScale,
-            @DescribeParameter(name = "xTranslate", description = "Offset along the x axis")
-                    double xTranslate,
-            @DescribeParameter(name = "yTranslate", description = "Offset along the y axis")
-                    double yTranslate,
+            @DescribeParameter(name = "coverage", description = "Input raster") GridCoverage2D coverage,
+            @DescribeParameter(name = "xScale", description = "Scale factor along the x axis") double xScale,
+            @DescribeParameter(name = "yScale", description = "Scale factor along the y axis") double yScale,
+            @DescribeParameter(name = "xTranslate", description = "Offset along the x axis") double xTranslate,
+            @DescribeParameter(name = "yTranslate", description = "Offset along the y axis") double yTranslate,
             @DescribeParameter(
                             name = "interpolation",
                             description =

@@ -19,28 +19,23 @@ package org.geotools.filter.function;
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
 import java.util.List;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 /**
- * Select one item for a list. Allows expressions to be used as index (as opposed to the []
- * notation). The first item in the list is 0.
+ * Select one item for a list. Allows expressions to be used as index (as opposed to the [] notation). The first item in
+ * the list is 0.
  *
  * @author Niels Charlier
  */
 public class LitemFunction extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "litem",
-                    parameter(
-                            "result",
-                            Object.class,
-                            "Result",
-                            "The item in the list on this position"),
-                    parameter("source", List.class, "Source", "The list"),
-                    parameter("index", Integer.class, "Index", "Zero-based position index"));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "litem",
+            parameter("result", Object.class, "Result", "The item in the list on this position"),
+            parameter("source", List.class, "Source", "The list"),
+            parameter("index", Integer.class, "Index", "Zero-based position index"));
 
     public LitemFunction() {
         super(NAME);

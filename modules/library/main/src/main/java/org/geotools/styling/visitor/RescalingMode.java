@@ -16,21 +16,22 @@
  */
 package org.geotools.styling.visitor;
 
-import java.util.HashMap;
+import static java.util.Map.entry;
+
 import java.util.Map;
 import javax.measure.Unit;
 import javax.measure.UnitConverter;
 import javax.measure.quantity.Length;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.measure.Units;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
 import si.uom.SI;
 import systems.uom.common.USCustomary;
 
 /**
- * Helper class that allows rescaling to pixels numbers that might carry a unit specification along
- * with them, handling the case where real world units should not be rescaled (dpi rescaling) as
- * well as the simpler case where everything should be rescaled (uom rescaling)
+ * Helper class that allows rescaling to pixels numbers that might carry a unit specification along with them, handling
+ * the case where real world units should not be rescaled (dpi rescaling) as well as the simpler case where everything
+ * should be rescaled (uom rescaling)
  */
 enum RescalingMode {
     /** Rescales the values and maintains the units */
@@ -77,15 +78,11 @@ enum RescalingMode {
         }
     },
 
-    /**
-     * Rescales feet and meter to pixel based on the scale factor (interpreted as a scale
-     * denominator)
-     */
+    /** Rescales feet and meter to pixel based on the scale factor (interpreted as a scale denominator) */
     RealWorld {
         @Override
         public String rescaleToStringInternal(double scaleFactor, Measure measure) {
-            return String.valueOf(
-                    measure.value * computeRescaleMultiplier(scaleFactor, measure.uom));
+            return String.valueOf(measure.value * computeRescaleMultiplier(scaleFactor, measure.uom));
         }
 
         /**
@@ -138,16 +135,9 @@ enum RescalingMode {
         }
     }
 
-    /**
-     * Translates between units and their shortcuts (we can only get the full name from the unit
-     * object
-     */
-    final Map<Unit, String> UNIT_SYMBOLS =
-            new HashMap<Unit, String>() {
-                {
-                    put(Units.PIXEL, "px");
-                    put(USCustomary.FOOT, "ft");
-                    put(SI.METRE, "m");
-                }
-            };
+    /** Translates between units and their shortcuts (we can only get the full name from the unit object */
+    final Map<Unit, String> UNIT_SYMBOLS = Map.ofEntries(
+            entry(Units.PIXEL, "px"), //
+            entry(USCustomary.FOOT, "ft"),
+            entry(SI.METRE, "m"));
 }

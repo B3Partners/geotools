@@ -99,11 +99,7 @@ public class NetCDFImageReaderSpi extends ImageReaderSpi {
 
         List<String> mimeTypesList = new ArrayList<>();
         Collections.addAll(
-                mimeTypesList,
-                NetCDFUtilities.NETCDF3_MIMETYPE,
-                "image/netcdf",
-                "image/x-netcdf",
-                "image/x-nc");
+                mimeTypesList, NetCDFUtilities.NETCDF3_MIMETYPE, "image/netcdf", "image/x-netcdf", "image/x-nc");
 
         if (NetCDFUtilities.isGribAvailable()) {
             Collections.addAll(suffixesList, "grib", "grib2", "grb", "grb2");
@@ -154,23 +150,26 @@ public class NetCDFImageReaderSpi extends ImageReaderSpi {
     /** @see javax.imageio.spi.IIOServiceProvider#getDescription(java.util.Locale) */
     @Override
     public String getDescription(Locale locale) {
-        return new StringBuffer("NetCDF-CF Image Reader, version ").append(version).toString();
+        return new StringBuffer("NetCDF-CF Image Reader, version ")
+                .append(version)
+                .toString();
     }
 
     @Override
+    @SuppressWarnings("PMD.CloseResource") // FileImageInputStreamExtImpl
     public boolean canDecodeInput(Object source) throws IOException {
         URI input = null;
-        if (source instanceof URI) {
-            input = (URI) source;
-        } else if (source instanceof File) {
-            input = ((File) source).toURI();
-        } else if (source instanceof FileImageInputStreamExtImpl) {
-            input = ((FileImageInputStreamExtImpl) source).getFile().toURI();
+        if (source instanceof URI rI) {
+            input = rI;
+        } else if (source instanceof File file) {
+            input = file.toURI();
+        } else if (source instanceof FileImageInputStreamExtImpl impl) {
+            input = impl.getFile().toURI();
             if (LOGGER.isLoggable(Level.FINE)) {
                 LOGGER.fine("Found a valid FileImageInputStream");
             }
-        } else if (source instanceof URIImageInputStream) {
-            input = ((URIImageInputStream) source).getUri();
+        } else if (source instanceof URIImageInputStream stream) {
+            input = stream.getUri();
         }
 
         if (input != null) {

@@ -16,27 +16,27 @@
  */
 package org.geotools.data.transform;
 
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.BinaryExpression;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.Multiply;
+import org.geotools.api.filter.expression.NilExpression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.Subtract;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.filter.function.FilterFunction_Convert;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.BinaryExpression;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.Multiply;
-import org.opengis.filter.expression.NilExpression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.expression.Subtract;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * Utility class that tries to figure out the resulting type of an expression against a given
- * feature type by using static analysis.
+ * Utility class that tries to figure out the resulting type of an expression against a given feature type by using
+ * static analysis.
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -50,9 +50,8 @@ class ExpressionTypeEvaluator implements ExpressionVisitor {
     }
 
     /**
-     * Returns the coordinate reference system of the last encontered geometry property. Unless a
-     * filter function that reprojects geometries is used, that's also the crs of the eventual
-     * output, in case it's a Geometry, that is.
+     * Returns the coordinate reference system of the last encontered geometry property. Unless a filter function that
+     * reprojects geometries is used, that's also the crs of the eventual output, in case it's a Geometry, that is.
      */
     public CoordinateReferenceSystem getCoordinateReferenceSystem() {
         return this.crs;
@@ -91,12 +90,11 @@ class ExpressionTypeEvaluator implements ExpressionVisitor {
         AttributeDescriptor result = expression.evaluate(schema, AttributeDescriptor.class);
         if (result == null) {
             throw new IllegalArgumentException(
-                    "Original feature type does not have a property named "
-                            + expression.getPropertyName());
+                    "Original feature type does not have a property named " + expression.getPropertyName());
         }
 
-        if (result instanceof GeometryDescriptor) {
-            this.crs = ((GeometryDescriptor) result).getCoordinateReferenceSystem();
+        if (result instanceof GeometryDescriptor descriptor) {
+            this.crs = descriptor.getCoordinateReferenceSystem();
         }
         return result.getType().getBinding();
     }
@@ -110,8 +108,7 @@ class ExpressionTypeEvaluator implements ExpressionVisitor {
 
         if (c1 == Integer.class && c2 == Integer.class) {
             return Integer.class;
-        } else if ((c1 == Integer.class || c1 == Long.class)
-                && (c2 == Integer.class || c2 == Long.class)) {
+        } else if ((c1 == Integer.class || c1 == Long.class) && (c2 == Integer.class || c2 == Long.class)) {
             return Long.class;
         } else {
             return Double.class;
@@ -122,12 +119,12 @@ class ExpressionTypeEvaluator implements ExpressionVisitor {
         Class result = (Class) expression.accept(this, null);
 
         // not a number, if a literal see if its contents can be cast to one
-        if (!(Number.class.isAssignableFrom(result)) && expression instanceof Literal) {
+        if (!Number.class.isAssignableFrom(result) && expression instanceof Literal) {
             Double value = expression.evaluate(null, Double.class);
             if (value != null) {
                 if (value.longValue() == value.doubleValue()) {
                     // integer type, keep it simple, int or long
-                    if ((value < Integer.MAX_VALUE) && value > Integer.MIN_VALUE) {
+                    if (value < Integer.MAX_VALUE && value > Integer.MIN_VALUE) {
                         result = Integer.class;
                     } else {
                         result = Long.class;

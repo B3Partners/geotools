@@ -17,20 +17,19 @@
 package org.geotools.referencing.wkt;
 
 import java.io.PrintWriter;
+import java.text.MessageFormat;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.util.Utilities;
 import org.geotools.util.XArray;
-import org.geotools.util.logging.LoggedFormat;
 
 /**
- * An element in a <cite>Well Know Text</cite> (WKT). A {@code Element} is made of {@link String},
- * {@link Number} and other {@link Element}. For example:
+ * An element in a <cite>Well Know Text</cite> (WKT). A {@code Element} is made of {@link String}, {@link Number} and
+ * other {@link Element}. For example:
  *
  * <blockquote>
  *
@@ -40,9 +39,8 @@ import org.geotools.util.logging.LoggedFormat;
  *
  * </blockquote>
  *
- * Each {@code Element} object can contains an arbitrary amount of other elements. The result is a
- * tree, which can be printed with {@link #print}. Elements can be pull in a <cite>first in, first
- * out</cite> order.
+ * Each {@code Element} object can contains an arbitrary amount of other elements. The result is a tree, which can be
+ * printed with {@link #print}. Elements can be pull in a <cite>first in, first out</cite> order.
  *
  * @since 2.0
  * @version $Id$
@@ -57,8 +55,8 @@ public final class Element {
     public final String keyword;
 
     /**
-     * An ordered list of {@link String}s, {@link Number}s and other {@link Element}s. May be {@code
-     * null} if the keyword was not followed by a pair of brackets (e.g. "NORTH").
+     * An ordered list of {@link String}s, {@link Number}s and other {@link Element}s. May be {@code null} if the
+     * keyword was not followed by a pair of brackets (e.g. "NORTH").
      */
     private final List<Object> list;
 
@@ -78,11 +76,10 @@ public final class Element {
      * Constructs a new {@code Element}.
      *
      * @param text The text to parse.
-     * @param position In input, the position where to start parsing from. In output, the first
-     *     character after the separator.
+     * @param position In input, the position where to start parsing from. In output, the first character after the
+     *     separator.
      */
-    Element(final AbstractParser parser, final String text, final ParsePosition position)
-            throws ParseException {
+    Element(final AbstractParser parser, final String text, final ParsePosition position) throws ParseException {
         /*
          * Find the first keyword in the specified string. If a keyword is found, then
          * the position is set to the index of the first character after the keyword.
@@ -115,8 +112,7 @@ public final class Element {
                 list = null;
                 return;
             }
-        } while (!parseOptionalSeparator(
-                text, position, parser.symbols.openingBrackets[bracketIndex]));
+        } while (!parseOptionalSeparator(text, position, parser.symbols.openingBrackets[bracketIndex]));
         list = new LinkedList<>();
         /*
          * Parse all elements inside the bracket. Elements are parsed sequentially
@@ -167,17 +163,15 @@ public final class Element {
     }
 
     /**
-     * Returns {@code true} if the next non-whitespace character is the specified separator. Search
-     * is performed in string {@code text} from position {@code position}. If the separator is
-     * found, then the position is set to the first character after the separator. Otherwise, the
-     * position is set on the first non-blank character.
+     * Returns {@code true} if the next non-whitespace character is the specified separator. Search is performed in
+     * string {@code text} from position {@code position}. If the separator is found, then the position is set to the
+     * first character after the separator. Otherwise, the position is set on the first non-blank character.
      *
      * @param text The text to parse.
-     * @param position In input, the position where to start parsing from. In output, the first
-     *     character after the separator.
+     * @param position In input, the position where to start parsing from. In output, the first character after the
+     *     separator.
      * @param separator The character to search.
-     * @return {@code true} if the next non-whitespace character is the separator, or {@code false}
-     *     otherwise.
+     * @return {@code true} if the next non-whitespace character is the separator, or {@code false} otherwise.
      */
     private static boolean parseOptionalSeparator(
             final String text, final ParsePosition position, final char separator) {
@@ -200,18 +194,16 @@ public final class Element {
     }
 
     /**
-     * Moves to the next non-whitespace character and checks if this character is the specified
-     * separator. If the separator is found, it is skipped. Otherwise, this method thrown a {@link
-     * ParseException}.
+     * Moves to the next non-whitespace character and checks if this character is the specified separator. If the
+     * separator is found, it is skipped. Otherwise, this method thrown a {@link ParseException}.
      *
      * @param text The text to parse.
-     * @param position In input, the position where to start parsing from. In output, the first
-     *     character after the separator.
+     * @param position In input, the position where to start parsing from. In output, the first character after the
+     *     separator.
      * @param separator The character to search.
      * @throws ParseException if the separator was not found.
      */
-    private void parseSeparator(
-            final String text, final ParsePosition position, final char separator)
+    private void parseSeparator(final String text, final ParsePosition position, final char separator)
             throws ParseException {
         if (!parseOptionalSeparator(text, position, separator)) {
             position.setErrorIndex(position.getIndex());
@@ -226,12 +218,12 @@ public final class Element {
     //////////////////////////////////////////////////////////////////////////////////////
     /**
      * Returns a {@link ParseException} with the specified cause. A localized string <code>
-     * "Error in <{@link #keyword}>"</code> will be prepend to the message. The error index will be
-     * the starting index of this {@code Element}.
+     * "Error in <{@link #keyword}>"</code> will be prepend to the message. The error index will be the starting index
+     * of this {@code Element}.
      *
      * @param cause The cause of the failure, or {@code null} if none.
-     * @param message The message explaining the cause of the failure, or {@code null} for reusing
-     *     the same message than {@code cause}.
+     * @param message The message explaining the cause of the failure, or {@code null} for reusing the same message than
+     *     {@code cause}.
      * @return The exception to be thrown.
      */
     public ParseException parseFailed(final Exception cause, String message) {
@@ -245,10 +237,9 @@ public final class Element {
     }
 
     /**
-     * Returns a {@link ParseException} with a "Unparsable string" message. The error message is
-     * built from the specified string starting at the specified position. Properties {@link
-     * ParsePosition#getIndex} and {@link ParsePosition#getErrorIndex} must be accurate before this
-     * method is invoked.
+     * Returns a {@link ParseException} with a "Unparsable string" message. The error message is built from the
+     * specified string starting at the specified position. Properties {@link ParsePosition#getIndex} and
+     * {@link ParsePosition#getErrorIndex} must be accurate before this method is invoked.
      *
      * @param text The unparsable string.
      * @param position The position in the string.
@@ -256,7 +247,8 @@ public final class Element {
      */
     private ParseException unparsableString(final String text, final ParsePosition position) {
         final int errorIndex = position.getErrorIndex();
-        String message = LoggedFormat.formatUnparsable(text, position.getIndex(), errorIndex, null);
+        position.getIndex();
+        String message = "Cannot parse '" + text + "', error at index " + errorIndex + ".";
         message = complete(message);
         return trim("unparsableString", new ParseException(message, errorIndex));
     }
@@ -271,9 +263,7 @@ public final class Element {
         return trim(
                 "missingCharacter",
                 new ParseException(
-                        complete(
-                                Errors.format(
-                                        ErrorKeys.MISSING_CHARACTER_$1, Character.valueOf(c))),
+                        complete(MessageFormat.format(ErrorKeys.MISSING_CHARACTER_$1, Character.valueOf(c))),
                         position));
     }
 
@@ -289,8 +279,7 @@ public final class Element {
         }
         return trim(
                 "missingParameter",
-                new ParseException(
-                        complete(Errors.format(ErrorKeys.MISSING_PARAMETER_$1, key)), error));
+                new ParseException(complete(MessageFormat.format(ErrorKeys.MISSING_PARAMETER_$1, key)), error));
     }
 
     /**
@@ -301,14 +290,14 @@ public final class Element {
      */
     private String complete(String message) {
         if (keyword != null) {
-            message = Errors.format(ErrorKeys.IN_$1, keyword) + ' ' + message;
+            message = MessageFormat.format(ErrorKeys.IN_$1, keyword) + ' ' + message;
         }
         return message;
     }
 
     /**
-     * Remove the exception factory method from the stack trace. The factory is not the place where
-     * the failure occurs; the error occurs in the factory's caller.
+     * Remove the exception factory method from the stack trace. The factory is not the place where the failure occurs;
+     * the error occurs in the factory's caller.
      *
      * @param factory The name of the factory method.
      * @param exception The exception to trim.
@@ -326,9 +315,9 @@ public final class Element {
     }
 
     /**
-     * Returns {@code true} if this element is the root element. For example in a WKT like {@code
-     * "GEOGCS["name", DATUM["name, ...]]"}, this is true for {@code "GEOGCS"} and false for all
-     * other elements inside, like {@code "DATUM"}.
+     * Returns {@code true} if this element is the root element. For example in a WKT like {@code "GEOGCS["name",
+     * DATUM["name, ...]]"}, this is true for {@code "GEOGCS"} and false for all other elements inside, like
+     * {@code "DATUM"}.
      *
      * @return {@code true} if this element is the root element.
      * @since 2.3
@@ -353,9 +342,9 @@ public final class Element {
         final Iterator iterator = list.iterator();
         while (iterator.hasNext()) {
             final Object object = iterator.next();
-            if (object instanceof Number) {
+            if (object instanceof Number number) {
                 iterator.remove();
-                return ((Number) object).doubleValue();
+                return number.doubleValue();
             }
         }
         throw missingParameter(key);
@@ -372,13 +361,11 @@ public final class Element {
         final Iterator iterator = list.iterator();
         while (iterator.hasNext()) {
             final Object object = iterator.next();
-            if (object instanceof Number) {
+            if (object instanceof Number number) {
                 iterator.remove();
-                final Number number = (Number) object;
                 if (number instanceof Float || number instanceof Double) {
                     throw new ParseException(
-                            complete(Errors.format(ErrorKeys.ILLEGAL_ARGUMENT_$2, key, number)),
-                            offset);
+                            complete(MessageFormat.format(ErrorKeys.ILLEGAL_ARGUMENT_$2, key, number)), offset);
                 }
                 return number.intValue();
             }
@@ -411,9 +398,9 @@ public final class Element {
         final Iterator iterator = list.iterator();
         while (iterator.hasNext()) {
             final Object object = iterator.next();
-            if (object instanceof String) {
+            if (object instanceof String string) {
                 iterator.remove();
-                return (String) object;
+                return string;
             }
         }
         return null;
@@ -438,16 +425,14 @@ public final class Element {
      * Removes the next {@link Element} from the list and returns it.
      *
      * @param key The element name (e.g. <code>"PRIMEM"</code>).
-     * @return The next {@link Element} on the list, or {@code null} if no more element is
-     *     available.
+     * @return The next {@link Element} on the list, or {@code null} if no more element is available.
      */
     public Element pullOptionalElement(String key) {
         key = key.toUpperCase();
         final Iterator iterator = list.iterator();
         while (iterator.hasNext()) {
             final Object object = iterator.next();
-            if (object instanceof Element) {
-                final Element element = (Element) object;
+            if (object instanceof Element element) {
                 if (element.list != null && element.keyword.equals(key)) {
                     iterator.remove();
                     return element;
@@ -458,8 +443,8 @@ public final class Element {
     }
 
     /**
-     * Removes and returns the next {@link Element} with no bracket. The key is used only for only
-     * for formatting an error message.
+     * Removes and returns the next {@link Element} with no bracket. The key is used only for only for formatting an
+     * error message.
      *
      * @param key The parameter name. Used only for formatting an error message.
      * @return The next {@link Element} in the list, with no bracket.
@@ -469,8 +454,7 @@ public final class Element {
         final Iterator iterator = list.iterator();
         while (iterator.hasNext()) {
             final Object object = iterator.next();
-            if (object instanceof Element) {
-                final Element element = (Element) object;
+            if (object instanceof Element element) {
                 if (element.list == null) {
                     iterator.remove();
                     return element;
@@ -481,8 +465,7 @@ public final class Element {
     }
 
     /**
-     * Removes and returns the next {@link Element} with no bracket, if available, or null
-     * otherwise.
+     * Removes and returns the next {@link Element} with no bracket, if available, or null otherwise.
      *
      * @return The next {@link Element} in the list, with no bracket, or null if none was found
      * @throws ParseException if no more void element is available.
@@ -491,8 +474,7 @@ public final class Element {
         final Iterator iterator = list.iterator();
         while (iterator.hasNext()) {
             final Object object = iterator.next();
-            if (object instanceof Element) {
-                final Element element = (Element) object;
+            if (object instanceof Element element) {
                 if (element.list == null) {
                     iterator.remove();
                     return element;
@@ -503,8 +485,8 @@ public final class Element {
     }
 
     /**
-     * Returns the next element, or {@code null} if there is no more element. The element is
-     * <strong>not</strong> removed from the list.
+     * Returns the next element, or {@code null} if there is no more element. The element is <strong>not</strong>
+     * removed from the list.
      *
      * @return The next element, or {@code null} if there is no more elements.
      */
@@ -520,15 +502,12 @@ public final class Element {
     public void close() throws ParseException {
         if (list != null && !list.isEmpty()) {
             throw new ParseException(
-                    complete(Errors.format(ErrorKeys.UNEXPECTED_PARAMETER_$1, list.get(0))),
+                    complete(MessageFormat.format(ErrorKeys.UNEXPECTED_PARAMETER_$1, list.get(0))),
                     offset + keyword.length());
         }
     }
 
-    /**
-     * Returns the keyword. This overriding is needed for correct formatting of the error message in
-     * {@link #close}.
-     */
+    /** Returns the keyword. This overriding is needed for correct formatting of the error message in {@link #close}. */
     @Override
     public String toString() {
         return keyword;
@@ -548,8 +527,8 @@ public final class Element {
             return;
         }
         for (final Object object : list) {
-            if (object instanceof Element) {
-                ((Element) object).print(out, level + 1);
+            if (object instanceof Element element) {
+                element.print(out, level + 1);
             } else {
                 out.print(Utilities.spaces(tabWidth * (level + 1)));
                 out.println(object);

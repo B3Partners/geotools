@@ -22,31 +22,29 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.NativeFilter;
+import org.geotools.api.filter.spatial.BBOX;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.NativeFilter;
-import org.opengis.filter.spatial.BBOX;
 
 public abstract class JDBCNativeFilterOnlineTest extends JDBCTestSupport {
 
-    protected final FilterFactory2 filterFactory = CommonFactoryFinder.getFilterFactory2(null);
+    protected final FilterFactory filterFactory = CommonFactoryFinder.getFilterFactory(null);
 
     @Test
     public void testNativeFilterExecution() throws Exception {
         // build the filter that will be send to the database
         BBOX boundingBoxFilter =
-                filterFactory.bbox(
-                        tname("location"), -5, -5, 5, 5, DefaultGeographicCRS.WGS84.toString());
+                filterFactory.bbox(tname("location"), -5, -5, 5, 5, DefaultGeographicCRS.WGS84.toString());
         Filter filter = filterFactory.and(boundingBoxFilter, getNativeFilter());
         // retrieve the features that match the filter above
-        ContentFeatureSource featureSource =
-                dataStore.getFeatureSource(tname("gt_jdbc_test_measurements"));
+        ContentFeatureSource featureSource = dataStore.getFeatureSource(tname("gt_jdbc_test_measurements"));
         assertThat(featureSource, notNullValue());
         try (SimpleFeatureIterator iterator = featureSource.getFeatures(filter).features()) {
             List<SimpleFeature> features = new ArrayList<>();
@@ -60,8 +58,8 @@ public abstract class JDBCNativeFilterOnlineTest extends JDBCTestSupport {
     }
 
     /**
-     * Builds a native filter that consider only the measurement of type temperature or type wind,
-     * and with a value greater than 15:
+     * Builds a native filter that consider only the measurement of type temperature or type wind, and with a value
+     * greater than 15:
      *
      * <p>{@code (TYPE = 'temperature' OR TYPE = 'wind') AND value > 15 }.
      */

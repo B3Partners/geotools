@@ -30,66 +30,59 @@ import javax.measure.Unit;
 import tech.units.indriya.unit.TransformedUnit;
 
 /**
- * UnitFormat configured to parse units. Since usually we don't know the citation in use for a
- * particular unit literal definition, this format includes the aliases of EPSG and ESRI citations,
- * in order to be able to parse the widest possible range of units.
+ * UnitFormat configured to parse units. Since usually we don't know the citation in use for a particular unit literal
+ * definition, this format includes the aliases of EPSG and ESRI citations, in order to be able to parse the widest
+ * possible range of units.
  */
 // this is in `org.geotools.measure` instead of `org.geotools.referencing.wkt`, because
 // `Units.autoCorrect` depends on it & we need `Units` for the unit definitions in gt-measure there
-public final class WktUnitFormat {
+public final class WktUnitFormat extends BaseUnitFormatter {
 
     public static UnitFormatter getInstance() {
         return INSTANCE;
     }
 
-    private static final List<UnitDefinition> UNIT_DEFINITIONS =
-            Stream.of(
-                            UnitDefinitions.DIMENSIONLESS,
-                            UnitDefinitions.CONSTANTS,
-                            UnitDefinitions.SI_BASE,
-                            UnitDefinitions.SI_DERIVED,
-                            UnitDefinitions.NON_SI,
-                            UnitDefinitions.US_CUSTOMARY,
-                            UnitDefinitions.WKT)
-                    .flatMap(Collection::stream)
-                    .collect(Collectors.toList());
+    private static final List<UnitDefinition> UNIT_DEFINITIONS = Stream.of(
+                    UnitDefinitions.DIMENSIONLESS,
+                    UnitDefinitions.CONSTANTS,
+                    UnitDefinitions.SI_BASE,
+                    UnitDefinitions.SI_DERIVED,
+                    UnitDefinitions.NON_SI,
+                    UnitDefinitions.US_CUSTOMARY,
+                    UnitDefinitions.WKT)
+            .flatMap(Collection::stream)
+            .collect(Collectors.toUnmodifiableList());
 
-    private static final WktUnitFormatterImpl INSTANCE = new WktUnitFormatterImpl(UNIT_DEFINITIONS);
+    private static final WktUnitFormat INSTANCE = new WktUnitFormat(UNIT_DEFINITIONS);
 
-    private WktUnitFormat() {}
+    private HashMap<UnitWrapper, Unit<?>> unitWrapperToUnitMap;
 
-    static class WktUnitFormatterImpl extends BaseUnitFormatter implements UnitFormatter {
+    WktUnitFormat(List<UnitDefinition> unitDefinitions) {
+        super(unitDefinitions);
+    }
 
-        private HashMap<UnitWrapper, Unit<?>> unitWrapperToUnitMap;
-
-        WktUnitFormatterImpl(List<UnitDefinition> unitDefinitions) {
-            super(unitDefinitions);
+    @Override
+    public void addLabel(Unit<?> unit, String label) {
+        super.addLabel(unit, label);
+        if (unitWrapperToUnitMap == null) {
+            unitWrapperToUnitMap = new HashMap<>();
         }
-
-        @Override
-        protected void addUnit(Unit<?> unit) {
-            if (unitWrapperToUnitMap == null) {
-                unitWrapperToUnitMap = new HashMap<>();
-            }
-            unitWrapperToUnitMap.put(new UnitWrapper(unit), unit);
-        }
-
-        /**
-         * Returns an equivalent unit instance based on the provided unit. First, it tries to get
-         * one of the reference units defined in the JSR 385 implementation in use. If no equivalent
-         * reference unit is defined, it returns the provided unit
-         */
-        @SuppressWarnings("unchecked")
-        public <Q extends Quantity<Q>> Unit<Q> getEquivalentUnit(Unit<Q> unit) {
-            return (Unit<Q>)
-                    INSTANCE.unitWrapperToUnitMap.getOrDefault(new UnitWrapper(unit), unit);
-        }
+        unitWrapperToUnitMap.put(new UnitWrapper(unit), unit);
     }
 
     /**
-     * This wrapper is used to compare equivalent units using the {@link Units#equals} method. It
-     * implements hashCode and equals method in a coherent way, so it can be used in a HashMap to
-     * retrieve equivalent units.
+     * Returns an equivalent unit instance based on the provided unit. First, it tries to get one of the reference units
+     * defined in the JSR 385 implementation in use. If no equivalent reference unit is defined, it returns the provided
+     * unit
+     */
+    @SuppressWarnings("unchecked")
+    public <Q extends Quantity<Q>> Unit<Q> getEquivalentUnit(Unit<Q> unit) {
+        return (Unit<Q>) INSTANCE.unitWrapperToUnitMap.getOrDefault(new UnitWrapper(unit), unit);
+    }
+
+    /**
+     * This wrapper is used to compare equivalent units using the {@link Units#equals} method. It implements hashCode
+     * and equals method in a coherent way, so it can be used in a HashMap to retrieve equivalent units.
      *
      * @author cesar
      */
@@ -102,8 +95,8 @@ public final class WktUnitFormat {
 
         @Override
         public boolean equals(Object obj) {
-            if (obj instanceof UnitWrapper) {
-                return Units.equals(unit, ((UnitWrapper) obj).getUnit());
+            if (obj instanceof UnitWrapper wrapper) {
+                return Units.equals(unit, wrapper.getUnit());
             }
             return false;
         }
@@ -120,6 +113,7 @@ public final class WktUnitFormat {
                     float factor1 = (float) unit.getConverterToAny(systemUnit).convert(1.0);
                     return Objects.hash(systemUnit, Float.floatToIntBits(factor1));
                 } catch (Throwable e) {
+                    // Fall back to standard hashCode if conversion fails
                 }
             }
             return unit.hashCode();

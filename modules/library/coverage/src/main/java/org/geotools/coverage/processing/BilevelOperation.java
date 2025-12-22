@@ -16,15 +16,16 @@
  */
 package org.geotools.coverage.processing;
 
+import java.io.Serial;
 import java.util.Arrays;
-import javax.media.jai.operator.BinarizeDescriptor;
+import org.eclipse.imagen.media.binarize.BinarizeDescriptor;
+import org.geotools.api.coverage.processing.OperationNotFoundException;
 import org.geotools.coverage.Category;
 import org.geotools.coverage.GridSampleDimension;
-import org.opengis.coverage.processing.OperationNotFoundException;
 
 /**
- * Wraps any JAI operation producing a bilevel image. An example of such operation is {@link
- * BinarizeDescriptor Binarize}.
+ * Wraps any ImageN operation producing a bilevel image. An example of such operation is {@link BinarizeDescriptor
+ * Binarize}.
  *
  * @since 2.2
  * @version $Id$
@@ -32,20 +33,18 @@ import org.opengis.coverage.processing.OperationNotFoundException;
  */
 public class BilevelOperation extends OperationJAI {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 8975871552152978976L;
 
     /** The sample dimension for the resulting image. */
     private static final GridSampleDimension SAMPLE_DIMENSION =
-            new GridSampleDimension(
-                    "Bilevel SampleDimension",
-                    new Category[] {Category.FALSE, Category.TRUE},
-                    null);
+            new GridSampleDimension("Bilevel SampleDimension", new Category[] {Category.FALSE, Category.TRUE}, null);
 
     /**
-     * Constructs a bilevel operation with an OGC's name identical to the JAI name.
+     * Constructs a bilevel operation with an OGC's name identical to the ImageN name.
      *
-     * @param name The JAI operation name.
-     * @throws OperationNotFoundException if no JAI descriptor was found for the given name.
+     * @param name The ImageN operation name.
+     * @throws OperationNotFoundException if no ImageN descriptor was found for the given name.
      */
     public BilevelOperation(final String name) throws OperationNotFoundException {
         super(name);

@@ -18,12 +18,12 @@ package org.geotools.brewer.styling.builder;
 
 import javax.measure.Unit;
 import javax.measure.quantity.Length;
-import org.geotools.styling.LineSymbolizer;
-import org.geotools.styling.RasterSymbolizer;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.OverlapBehavior;
-import org.opengis.style.PolygonSymbolizer;
-import org.opengis.style.Symbolizer;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.OverlapBehaviorEnum;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.RasterSymbolizer;
+import org.geotools.api.style.Symbolizer;
 
 public class RasterSymbolizerBuilder extends SymbolizerBuilder<RasterSymbolizer> {
     private String name;
@@ -40,7 +40,7 @@ public class RasterSymbolizerBuilder extends SymbolizerBuilder<RasterSymbolizer>
 
     private ColorMapBuilder colorMap = new ColorMapBuilder(this).unset();
 
-    private OverlapBehavior overlapsBehaviour;
+    private OverlapBehaviorEnum overlapsBehaviour;
 
     private ContrastEnhancementBuilder contrast = new ContrastEnhancementBuilder(this).unset();
 
@@ -118,7 +118,7 @@ public class RasterSymbolizerBuilder extends SymbolizerBuilder<RasterSymbolizer>
         return shadedRelief;
     }
 
-    public RasterSymbolizerBuilder overlapBehavior(OverlapBehavior behavior) {
+    public RasterSymbolizerBuilder overlapBehavior(OverlapBehaviorEnum behavior) {
         unset = false;
         this.overlapsBehaviour = behavior;
         return this;
@@ -129,19 +129,18 @@ public class RasterSymbolizerBuilder extends SymbolizerBuilder<RasterSymbolizer>
         if (unset) {
             return null;
         }
-        RasterSymbolizer symbolizer =
-                sf.rasterSymbolizer(
-                        name,
-                        geometry,
-                        description.build(),
-                        uom,
-                        opacity,
-                        channelSelection.build(),
-                        overlapsBehaviour,
-                        colorMap.build(),
-                        contrast.build(),
-                        shadedRelief.build(),
-                        outline != null ? outline.build() : null);
+        RasterSymbolizer symbolizer = sf.rasterSymbolizer(
+                name,
+                geometry,
+                description.build(),
+                uom,
+                opacity,
+                channelSelection.build(),
+                overlapsBehaviour,
+                colorMap.build(),
+                contrast.build(),
+                shadedRelief.build(),
+                outline != null ? outline.build() : null);
         symbolizer.getOptions().putAll(options);
         return symbolizer;
     }
@@ -166,13 +165,9 @@ public class RasterSymbolizerBuilder extends SymbolizerBuilder<RasterSymbolizer>
         colorMap.reset(symbolizer.getColorMap());
         contrast.reset(symbolizer.getContrastEnhancement());
         if (symbolizer.getImageOutline() instanceof LineSymbolizer) {
-            this.outline =
-                    new LineSymbolizerBuilder()
-                            .reset((LineSymbolizer) symbolizer.getImageOutline());
+            this.outline = new LineSymbolizerBuilder().reset((LineSymbolizer) symbolizer.getImageOutline());
         } else if (symbolizer.getImageOutline() instanceof PolygonSymbolizer) {
-            this.outline =
-                    new PolygonSymbolizerBuilder()
-                            .reset((PolygonSymbolizer) symbolizer.getImageOutline());
+            this.outline = new PolygonSymbolizerBuilder().reset((PolygonSymbolizer) symbolizer.getImageOutline());
         }
         unset = false;
         return this;

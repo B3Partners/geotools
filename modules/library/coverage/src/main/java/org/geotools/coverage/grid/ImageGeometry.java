@@ -18,19 +18,20 @@ package org.geotools.coverage.grid;
 
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
+import java.io.Serial;
 import java.io.Serializable;
+import org.geotools.api.coverage.grid.GridGeometry;
+import org.geotools.api.util.Cloneable;
 import org.geotools.referencing.operation.transform.AffineTransform2D;
 import org.geotools.util.Classes;
 import org.geotools.util.Utilities;
-import org.opengis.coverage.grid.GridGeometry;
-import org.opengis.util.Cloneable;
 
 /**
- * A simple grid geometry holding the grid range as a {@linkplain Rectangle rectangle} and the
- * <cite>grid to CRS</cite> relationship as an {@linkplain AffineTransform affine transform}. This
- * grid geometry does not hold any Coordinate Reference System information. Because of that, it is
- * not suitable to {@link GridCoverage2D} (the later rather use {@link GridGeometry2D}). But it is
- * sometime used with plain {@linkplain java.awt.image.RenderedImage rendered image} instances.
+ * A simple grid geometry holding the grid range as a {@linkplain Rectangle rectangle} and the <cite>grid to CRS</cite>
+ * relationship as an {@linkplain AffineTransform affine transform}. This grid geometry does not hold any Coordinate
+ * Reference System information. Because of that, it is not suitable to {@link GridCoverage2D} (the later rather use
+ * {@link GridGeometry2D}). But it is sometime used with plain {@linkplain java.awt.image.RenderedImage rendered image}
+ * instances.
  *
  * @since 2.5
  * @version $Id$
@@ -40,6 +41,7 @@ import org.opengis.util.Cloneable;
  */
 public class ImageGeometry implements GridGeometry, Serializable, Cloneable {
     /** For cross-version compatibility. */
+    @Serial
     private static final long serialVersionUID = 1985363181119389264L;
 
     /** The grid range. */
@@ -49,8 +51,7 @@ public class ImageGeometry implements GridGeometry, Serializable, Cloneable {
     private final AffineTransform2D gridToCRS;
 
     /**
-     * Creates a grid geometry from the specified bounds and <cite>grid to CRS</cite> affine
-     * transform.
+     * Creates a grid geometry from the specified bounds and <cite>grid to CRS</cite> affine transform.
      *
      * @param bounds The image bounds in pixel coordinates.
      * @param gridToCRS The affine transform from pixel coordinates to "real world" coordinates.
@@ -73,8 +74,8 @@ public class ImageGeometry implements GridGeometry, Serializable, Cloneable {
     }
 
     /**
-     * Returns a string representation of this grid geometry. The returned string is implementation
-     * dependent. It is usually provided for debugging purposes.
+     * Returns a string representation of this grid geometry. The returned string is implementation dependent. It is
+     * usually provided for debugging purposes.
      */
     @Override
     public String toString() {
@@ -100,8 +101,7 @@ public class ImageGeometry implements GridGeometry, Serializable, Cloneable {
         }
         if (object != null && object.getClass().equals(getClass())) {
             final ImageGeometry that = (ImageGeometry) object;
-            return Utilities.equals(gridRange, that.gridRange)
-                    && Utilities.equals(gridToCRS, that.gridToCRS);
+            return Utilities.equals(gridRange, that.gridRange) && Utilities.equals(gridToCRS, that.gridToCRS);
         }
         return false;
     }

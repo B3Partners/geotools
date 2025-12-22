@@ -16,21 +16,21 @@
  */
 package org.geotools.util.factory;
 
+import java.io.Serial;
+import java.text.MessageFormat;
 import java.util.function.Predicate;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 
 /**
- * Thrown when {@link FactoryRegistry} is invoked recursively for the same category. This exception
- * is often the result of a programming error. It happen typically when an implementation of some
- * {@code FooFactory} interface queries in their constructor, directly or indirectly, {@link
- * FactoryRegistry#getFactory(Class, Predicate, Hints, Hints.Key)}} for the same category (namely
- * {@code FooFactory.class}). Factories implemented as wrappers around other factories of the same
- * kind are the most likely to fall in this canvas. If this {@code RecursiveSearchException} was not
- * throw, the application would typically dies with a {@link StackOverflowError}.
+ * Thrown when {@link FactoryRegistry} is invoked recursively for the same category. This exception is often the result
+ * of a programming error. It happen typically when an implementation of some {@code FooFactory} interface queries in
+ * their constructor, directly or indirectly, {@link FactoryRegistry#getFactory(Class, Predicate, Hints, Hints.Key)}}
+ * for the same category (namely {@code FooFactory.class}). Factories implemented as wrappers around other factories of
+ * the same kind are the most likely to fall in this canvas. If this {@code RecursiveSearchException} was not throw, the
+ * application would typically dies with a {@link StackOverflowError}.
  *
- * <p>A workaround for this exception is to invoke {@code getServiceProvider} outside the
- * constuctor, when a method first need it.
+ * <p>A workaround for this exception is to invoke {@code getServiceProvider} outside the constuctor, when a method
+ * first need it.
  *
  * @since 2.3
  * @version $Id$
@@ -38,11 +38,12 @@ import org.geotools.metadata.i18n.Errors;
  */
 public class RecursiveSearchException extends FactoryRegistryException {
     /** For cross-version compatibility. */
+    @Serial
     private static final long serialVersionUID = -2028654588882874110L;
 
     /** Creates a new exception with a default message determined from the specified category. */
     public RecursiveSearchException(final Class<?> category) {
-        super(Errors.format(ErrorKeys.RECURSIVE_CALL_$1, category));
+        super(MessageFormat.format(ErrorKeys.RECURSIVE_CALL_$1, category));
     }
 
     /** Creates a new exception with the specified detail message. */

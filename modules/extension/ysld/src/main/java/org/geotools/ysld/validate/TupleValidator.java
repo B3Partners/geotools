@@ -66,9 +66,8 @@ public class TupleValidator extends StatefulValidator implements Cloneable {
             context.error("Unexpected End of Sequence", evt.getStartMark());
         } else if (valuesValidated != getSubValidators().size()) {
             context.error(
-                    String.format(
-                            "Expected tuple of size %d but was %d",
-                            getSubValidators().size(), valuesValidated),
+                    "Expected tuple of size %d but was %d"
+                            .formatted(getSubValidators().size(), valuesValidated),
                     evt.getStartMark());
         }
         state = State.DONE;
@@ -94,7 +93,7 @@ public class TupleValidator extends StatefulValidator implements Cloneable {
                 valuesValidated++;
                 break;
             default:
-                context.error(String.format("Unexpected scalar '%s'", val), evt.getStartMark());
+                context.error("Unexpected scalar '%s'".formatted(val), evt.getStartMark());
                 break;
         }
     }
@@ -111,8 +110,7 @@ public class TupleValidator extends StatefulValidator implements Cloneable {
             state = State.NEW;
             valuesValidated = 0;
         } else {
-            throw new IllegalStateException(
-                    "TupleValidator.reset() called in invalid state: " + state.toString());
+            throw new IllegalStateException("TupleValidator.reset() called in invalid state: " + state.toString());
         }
     }
 
@@ -129,9 +127,7 @@ public class TupleValidator extends StatefulValidator implements Cloneable {
                 valuesValidated++;
                 break;
             default:
-                context.error(
-                        String.format("Unexpected alias '%s'", evt.getAnchor()),
-                        evt.getStartMark());
+                context.error("Unexpected alias '%s'".formatted(evt.getAnchor()), evt.getStartMark());
                 break;
         }
     }

@@ -16,26 +16,26 @@
  */
 package org.geotools.filter.spatial;
 
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.SingleCRS;
 import org.geotools.filter.visitor.DuplicatingFilterVisitor;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.SingleCRS;
 
 /**
- * Returns a clone of the provided filter where all geometries and bboxes that do not have a CRS
- * gets the specified default one.
+ * Returns a clone of the provided filter where all geometries and bboxes that do not have a CRS gets the specified
+ * default one.
  *
  * @author Andrea Aime - The Open Planning Project
  */
 public class DefaultCRSFilterVisitor extends DuplicatingFilterVisitor {
     private CoordinateReferenceSystem defaultCrs;
 
-    public DefaultCRSFilterVisitor(FilterFactory2 factory, CoordinateReferenceSystem defaultCrs) {
+    public DefaultCRSFilterVisitor(FilterFactory factory, CoordinateReferenceSystem defaultCrs) {
         super(factory);
         this.defaultCrs = defaultCrs;
     }
@@ -44,22 +44,18 @@ public class DefaultCRSFilterVisitor extends DuplicatingFilterVisitor {
     public Object visit(BBOX filter, Object extraData) {
         // if no srs is specified we can't transform anyways
         ReferencedEnvelope envelope = ReferencedEnvelope.reference(filter.getBounds());
-        if (envelope != null && envelope.getCoordinateReferenceSystem() != null)
-            return super.visit(filter, extraData);
+        if (envelope != null && envelope.getCoordinateReferenceSystem() != null) return super.visit(filter, extraData);
 
         if (defaultCrs == null
                 || filter.getBounds() == null
                 || defaultCrs.getCoordinateSystem().getDimension()
                         == filter.getBounds().getDimension()) {
             return getFactory(extraData)
-                    .bbox(
-                            filter.getExpression1(),
-                            ReferencedEnvelope.create(filter.getBounds(), defaultCrs));
+                    .bbox(filter.getExpression1(), ReferencedEnvelope.create(filter.getBounds(), defaultCrs));
         } else {
             try {
                 SingleCRS horizontalCRS = CRS.getHorizontalCRS(defaultCrs);
-                ReferencedEnvelope bounds =
-                        ReferencedEnvelope.create(filter.getBounds(), horizontalCRS);
+                ReferencedEnvelope bounds = ReferencedEnvelope.create(filter.getBounds(), horizontalCRS);
                 return getFactory(extraData).bbox(filter.getExpression1(), bounds);
             } catch (Exception e) {
                 throw new RuntimeException("Failed to create filter with defaulted CRS", e);

@@ -20,12 +20,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import org.opengis.geometry.DirectPosition;
+import org.geotools.api.geometry.Position;
 
 /**
- * Generates TIN with respect to delaunay criterion. It means that there are no alien vertices in
- * the circumcircle of each triangle. The algorithm that is used is also known as incremental
- * insertion.
+ * Generates TIN with respect to delaunay criterion. It means that there are no alien vertices in the circumcircle of
+ * each triangle. The algorithm that is used is also known as incremental insertion.
  *
  * @since 2.4
  * @version $Id$
@@ -42,10 +41,9 @@ class TriangulationFactory {
      * @param pt Array of points for triangulation.
      * @throws TriangulationException when the vertices are outside of the specified quad.
      */
-    protected TriangulationFactory(Quadrilateral quad, DirectPosition... pt)
-            throws TriangulationException {
+    protected TriangulationFactory(Quadrilateral quad, Position... pt) throws TriangulationException {
 
-        List<DirectPosition> vertices = new ArrayList<>(Arrays.asList(pt));
+        List<Position> vertices = new ArrayList<>(Arrays.asList(pt));
 
         if (!quad.containsAll(vertices)) {
             throw new TriangulationException("Point is outside triangles");
@@ -53,7 +51,7 @@ class TriangulationFactory {
 
         this.triangles = quad.getTriangles();
 
-        for (DirectPosition vertex : vertices) {
+        for (Position vertex : vertices) {
             insertPoint(vertex);
         }
     }
@@ -68,14 +66,13 @@ class TriangulationFactory {
     }
 
     /**
-     * This is the test loop, that starts to tests of triangles until the result of insertation of
-     * triangle evokes changes in TIN.
+     * This is the test loop, that starts to tests of triangles until the result of insertation of triangle evokes
+     * changes in TIN.
      *
      * @param ChangedTriangles List of changed triangles
      * @throws TriangulationException TriangulationException
      */
-    protected void recursiveDelaunayTest(List<TINTriangle> ChangedTriangles)
-            throws TriangulationException {
+    protected void recursiveDelaunayTest(List<TINTriangle> ChangedTriangles) throws TriangulationException {
         int i = ChangedTriangles.size();
 
         while (i != 0) {
@@ -92,8 +89,7 @@ class TriangulationFactory {
      * @return List of changed triangles
      * @throws TriangulationException TriangulationException
      */
-    protected List<TINTriangle> insertTriangles(List<TINTriangle> trian)
-            throws TriangulationException {
+    protected List<TINTriangle> insertTriangles(List<TINTriangle> trian) throws TriangulationException {
         List<TINTriangle> ChangedTriangles = new ArrayList<>();
 
         for (TINTriangle trig : trian) {
@@ -109,20 +105,19 @@ class TriangulationFactory {
     }
 
     /**
-     * Tests whether there is a alien vertex in the circumcircle of triangle. When there is, the
-     * diagonal of quad made by these triangles changes.
+     * Tests whether there is a alien vertex in the circumcircle of triangle. When there is, the diagonal of quad made
+     * by these triangles changes.
      *
      * @param triangle to be tested
      * @return List of changed triangles
      */
-    private List<TINTriangle> delaunayCircleTest(TINTriangle triangle)
-            throws TriangulationException {
+    private List<TINTriangle> delaunayCircleTest(TINTriangle triangle) throws TriangulationException {
         List<TINTriangle> changedTriangles = new ArrayList<>();
 
         Iterator<TINTriangle> j = triangle.getAdjacentTriangles().iterator();
         int ct = 0;
 
-        while (j.hasNext() && (changedTriangles.size() == ct)) {
+        while (j.hasNext() && changedTriangles.size() == ct) {
             TINTriangle adjacent = j.next();
 
             // The delaunay test
@@ -132,8 +127,7 @@ class TriangulationFactory {
                 triangles.remove(triangle);
                 triangles.remove(adjacent);
 
-                List<TINTriangle> NewTriangles =
-                        new ArrayList<>(alternativeTriangles(triangle, adjacent));
+                List<TINTriangle> NewTriangles = new ArrayList<>(alternativeTriangles(triangle, adjacent));
 
                 triangles.addAll(NewTriangles);
                 changedTriangles = NewTriangles;
@@ -151,7 +145,7 @@ class TriangulationFactory {
      * @param newVertex new vertex
      * @throws TriangulationException when {@code newVertex} is outside triangles
      */
-    public void insertPoint(DirectPosition newVertex) throws TriangulationException {
+    public void insertPoint(Position newVertex) throws TriangulationException {
         TINTriangle triangleContainingNewVertex = triangleContains(newVertex);
 
         if (triangleContainingNewVertex == null) {
@@ -170,10 +164,9 @@ class TriangulationFactory {
      * @return triangles ABD and ADC, or null if ABCD is not convex
      * @throws TriangulationException if {@code ABC} and {@code BCD} are not adjacent
      */
-    private List<TINTriangle> alternativeTriangles(TINTriangle ABC, TINTriangle BCD)
-            throws TriangulationException {
-        ArrayList<DirectPosition> ABCvertices = new ArrayList<>();
-        ArrayList<DirectPosition> BCDvertices = new ArrayList<>();
+    private List<TINTriangle> alternativeTriangles(TINTriangle ABC, TINTriangle BCD) throws TriangulationException {
+        ArrayList<Position> ABCvertices = new ArrayList<>();
+        ArrayList<Position> BCDvertices = new ArrayList<>();
 
         ABCvertices.add(ABC.p0);
         ABCvertices.add(ABC.p1);
@@ -182,11 +175,11 @@ class TriangulationFactory {
         BCDvertices.add(BCD.p1);
         BCDvertices.add(BCD.p2);
 
-        ArrayList<DirectPosition> sharedVertices = new ArrayList<>();
-        ArrayList<DirectPosition> unsharedVertices = new ArrayList<>();
+        ArrayList<Position> sharedVertices = new ArrayList<>();
+        ArrayList<Position> unsharedVertices = new ArrayList<>();
 
         // Finds shared and unshared vertices
-        for (DirectPosition vertex : ABCvertices) {
+        for (Position vertex : ABCvertices) {
             if (!BCDvertices.contains(vertex)) {
                 unsharedVertices.add(vertex);
             } else if (BCDvertices.contains(vertex)) {
@@ -208,12 +201,8 @@ class TriangulationFactory {
         BCD.removeAdjacent(ABC);
 
         // new triangles are generated
-        TINTriangle trigA =
-                new TINTriangle(
-                        sharedVertices.get(0), unsharedVertices.get(0), unsharedVertices.get(1));
-        TINTriangle trigB =
-                new TINTriangle(
-                        unsharedVertices.get(0), unsharedVertices.get(1), sharedVertices.get(1));
+        TINTriangle trigA = new TINTriangle(sharedVertices.get(0), unsharedVertices.get(0), unsharedVertices.get(1));
+        TINTriangle trigB = new TINTriangle(unsharedVertices.get(0), unsharedVertices.get(1), sharedVertices.get(1));
 
         // Adjacent triangles are added
         trigA.addAdjacentTriangle(trigB);
@@ -247,7 +236,7 @@ class TriangulationFactory {
      * @param p The Coordinate to be tested
      * @return the triangle containing p, or null if there is no triangle that contains p
      */
-    private TINTriangle triangleContains(DirectPosition p) {
+    private TINTriangle triangleContains(Position p) {
         for (TINTriangle triangle : triangles) {
             if (triangle.containsOrIsVertex(p)) {
                 return triangle;

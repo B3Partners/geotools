@@ -7,12 +7,14 @@ package org.geotools.data.postgis;
 
 import static org.junit.Assert.assertEquals;
 
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.jdbc.JDBCUuidOnlineTest;
 import org.geotools.jdbc.JDBCUuidTestSetup;
@@ -20,8 +22,6 @@ import org.geotools.util.factory.Hints;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /** @author kbyte */
 public class PostGISUuidOnlineTest extends JDBCUuidOnlineTest {
@@ -39,10 +39,8 @@ public class PostGISUuidOnlineTest extends JDBCUuidOnlineTest {
         GeometryFactory gf = new GeometryFactory();
         Point p = gf.createPoint(new Coordinate(138.6, -34.93));
 
-        SimpleFeature feature1 =
-                SimpleFeatureBuilder.build(type, new Object[] {p}, uuid1.toString());
-        feature1.getUserData()
-                .put(Hints.USE_PROVIDED_FID, false); // false, so that a UUID will be generated
+        SimpleFeature feature1 = SimpleFeatureBuilder.build(type, new Object[] {p}, uuid1.toString());
+        feature1.getUserData().put(Hints.USE_PROVIDED_FID, false); // false, so that a UUID will be generated
         // feature1.getUserData().put(Hints.PROVIDED_FID, uuid1);
 
         return DataUtilities.collection(feature1);
@@ -51,8 +49,7 @@ public class PostGISUuidOnlineTest extends JDBCUuidOnlineTest {
     @Override
     public void testUUIDAsPrimaryKey() throws Exception {
         try (Transaction transaction = new DefaultTransaction()) {
-            SimpleFeatureStore featureStore =
-                    (SimpleFeatureStore) dataStore.getFeatureSource(tname("uuidt"));
+            SimpleFeatureStore featureStore = (SimpleFeatureStore) dataStore.getFeatureSource(tname("uuidt"));
             featureStore.setTransaction(transaction);
 
             featureStore.addFeatures(createFeatureCollection());

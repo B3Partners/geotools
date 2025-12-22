@@ -30,13 +30,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.Query;
-import org.geotools.data.ResourceInfo;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.wfs.WFSDataStore;
 import org.geotools.data.wfs.WFSDataStoreFactory;
 import org.geotools.data.wfs.WFSTestData;
@@ -50,17 +61,6 @@ import org.geotools.referencing.CRS.AxisOrder;
 import org.geotools.test.OnlineTestSupport;
 import org.geotools.util.logging.Logging;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.Id;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /** Online tests only run if {@link #serverUrl} can be reached, and fixture file wfs is found */
 public abstract class AbstractWfsDataStoreOnlineTest extends OnlineTestSupport {
@@ -88,14 +88,14 @@ public abstract class AbstractWfsDataStoreOnlineTest extends OnlineTestSupport {
     private final int featureCount;
 
     /**
-     * The filter used for the count test, may be null if {@link #testFeatureSourceGetCountFilter()}
-     * and {@link #testFeatureSourceGetFeatures()} are not expected to be run
+     * The filter used for the count test, may be null if {@link #testFeatureSourceGetCountFilter()} and
+     * {@link #testFeatureSourceGetFeatures()} are not expected to be run
      */
     private final Id fidFilter;
 
     /**
-     * The filter used for the filter test, may be null if {@link
-     * #testFeatureSourceGetFeaturesFilter()} is not expected to run.
+     * The filter used for the filter test, may be null if {@link #testFeatureSourceGetFeaturesFilter()} is not expected
+     * to run.
      */
     private final Filter spatialFilter;
 
@@ -207,8 +207,7 @@ public abstract class AbstractWfsDataStoreOnlineTest extends OnlineTestSupport {
 
         bounds = featureSource.getBounds(query);
         assertNotNull(bounds);
-        assertSame(
-                "the bounds were not reprojected", queryCrs, bounds.getCoordinateReferenceSystem());
+        assertSame("the bounds were not reprojected", queryCrs, bounds.getCoordinateReferenceSystem());
 
         final String geometryName =
                 featureSource.getSchema().getGeometryDescriptor().getLocalName();
@@ -227,18 +226,14 @@ public abstract class AbstractWfsDataStoreOnlineTest extends OnlineTestSupport {
         assertEquals(featureCount, featureSource.getCount(Query.ALL));
     }
 
-    /**
-     * Performs a FeatureSource.getCount(Query) with the constructor provided fid filter if the
-     * filter is not null.
-     */
+    /** Performs a FeatureSource.getCount(Query) with the constructor provided fid filter if the filter is not null. */
     @Test
     public void testFeatureSourceGetCountFilter() throws Exception {
 
         if (featureCount >= 0) { // server doesn't support feature count anyway, skip
             if (fidFilter == null) {
                 LOGGER.info(
-                        "Ignoring testFeatureSourceGetCountFilter "
-                                + "since the subclass didn't provide a fid filter");
+                        "Ignoring testFeatureSourceGetCountFilter " + "since the subclass didn't provide a fid filter");
                 return;
             }
 
@@ -256,9 +251,7 @@ public abstract class AbstractWfsDataStoreOnlineTest extends OnlineTestSupport {
     public void testFeatureSourceGetFeatures() throws Exception {
 
         if (fidFilter == null) {
-            LOGGER.info(
-                    "Ignoring testFeatureSourceGetCountFilter "
-                            + "since the subclass didn't provide a fid filter");
+            LOGGER.info("Ignoring testFeatureSourceGetCountFilter " + "since the subclass didn't provide a fid filter");
             return;
         }
 
@@ -289,8 +282,7 @@ public abstract class AbstractWfsDataStoreOnlineTest extends OnlineTestSupport {
 
         if (spatialFilter == null) {
             LOGGER.info(
-                    "Ignoring testFeatureSourceGetCountFilter "
-                            + "since the subclass didn't provide a spatial filter");
+                    "Ignoring testFeatureSourceGetCountFilter " + "since the subclass didn't provide a spatial filter");
             return;
         }
 
@@ -370,13 +362,7 @@ public abstract class AbstractWfsDataStoreOnlineTest extends OnlineTestSupport {
         features.getBounds();
         features.getSchema();
 
-        Query query =
-                new Query(
-                        testType.FEATURETYPENAME,
-                        Filter.INCLUDE,
-                        20,
-                        Query.ALL_NAMES,
-                        "work already");
+        Query query = new Query(testType.FEATURETYPENAME, Filter.INCLUDE, 20, Query.ALL_NAMES, "work already");
         features = source.getFeatures(query);
         features.size();
 
@@ -396,58 +382,56 @@ public abstract class AbstractWfsDataStoreOnlineTest extends OnlineTestSupport {
         final ReferencedEnvelope bounds = featureSource.getBounds();
         String srsName = CRS.toSRS(bounds.getCoordinateReferenceSystem());
 
-        final BBOX bbox =
-                AxisOrder.EAST_NORTH == CRS.getAxisOrder(bounds.getCoordinateReferenceSystem())
-                                || WFSDataStoreFactory.AXIS_ORDER_COMPLIANT.equals(axisOrder)
-                        ? ff.bbox(
-                                defaultGeometryName,
-                                bounds.getMinX(),
-                                bounds.getMinY(),
-                                bounds.getMaxX(),
-                                bounds.getMaxY(),
-                                srsName)
-                        : ff.bbox(
-                                defaultGeometryName,
-                                bounds.getMinY(),
-                                bounds.getMinX(),
-                                bounds.getMaxY(),
-                                bounds.getMaxX(),
-                                srsName);
+        final BBOX bbox = AxisOrder.EAST_NORTH == CRS.getAxisOrder(bounds.getCoordinateReferenceSystem())
+                        || WFSDataStoreFactory.AXIS_ORDER_COMPLIANT.equals(axisOrder)
+                ? ff.bbox(
+                        defaultGeometryName,
+                        bounds.getMinX(),
+                        bounds.getMinY(),
+                        bounds.getMaxX(),
+                        bounds.getMaxY(),
+                        srsName)
+                : ff.bbox(
+                        defaultGeometryName,
+                        bounds.getMinY(),
+                        bounds.getMinX(),
+                        bounds.getMaxY(),
+                        bounds.getMaxX(),
+                        srsName);
 
         /** This one does not implement the deprecated geotools filter interfaces */
-        final BBOX strictBBox =
-                new BBOX() {
+        final BBOX strictBBox = new BBOX() {
 
-                    @Override
-                    public boolean evaluate(Object object) {
-                        return bbox.evaluate(object);
-                    }
+            @Override
+            public boolean evaluate(Object object) {
+                return bbox.evaluate(object);
+            }
 
-                    @Override
-                    public Object accept(FilterVisitor visitor, Object extraData) {
-                        return bbox.accept(visitor, extraData);
-                    }
+            @Override
+            public Object accept(FilterVisitor visitor, Object extraData) {
+                return bbox.accept(visitor, extraData);
+            }
 
-                    @Override
-                    public Expression getExpression2() {
-                        return bbox.getExpression2();
-                    }
+            @Override
+            public Expression getExpression2() {
+                return bbox.getExpression2();
+            }
 
-                    @Override
-                    public Expression getExpression1() {
-                        return bbox.getExpression1();
-                    }
+            @Override
+            public Expression getExpression1() {
+                return bbox.getExpression1();
+            }
 
-                    @Override
-                    public MatchAction getMatchAction() {
-                        return MatchAction.ANY;
-                    }
+            @Override
+            public MatchAction getMatchAction() {
+                return MatchAction.ANY;
+            }
 
-                    @Override
-                    public BoundingBox getBounds() {
-                        return bbox.getBounds();
-                    }
-                };
+            @Override
+            public BoundingBox getBounds() {
+                return bbox.getBounds();
+            }
+        };
 
         final Query query = new Query(ft.getTypeName());
         query.setPropertyNames(defaultGeometryName);
@@ -488,30 +472,29 @@ public abstract class AbstractWfsDataStoreOnlineTest extends OnlineTestSupport {
         ReferencedEnvelope lonLat = bounds.transform(wgs84LonLat, true);
         ReferencedEnvelope latLon = bounds.transform(wgs84LatLon, true);
 
-        final BBOX lonLatFilter =
-                ff.bbox(
-                        defaultGeometryName,
-                        lonLat.getMinimum(0),
-                        lonLat.getMinimum(1),
-                        lonLat.getMaximum(0),
-                        lonLat.getMaximum(1),
-                        null);
+        final BBOX lonLatFilter = ff.bbox(
+                defaultGeometryName,
+                lonLat.getMinimum(0),
+                lonLat.getMinimum(1),
+                lonLat.getMaximum(0),
+                lonLat.getMaximum(1),
+                null);
 
-        final BBOX latLonFiler =
-                ff.bbox(
-                        defaultGeometryName,
-                        latLon.getMinimum(0),
-                        latLon.getMinimum(1),
-                        latLon.getMaximum(0),
-                        latLon.getMaximum(1),
-                        null);
+        final BBOX latLonFiler = ff.bbox(
+                defaultGeometryName,
+                latLon.getMinimum(0),
+                latLon.getMinimum(1),
+                latLon.getMaximum(0),
+                latLon.getMaximum(1),
+                null);
 
         final Query query = new Query(ft.getTypeName());
         query.setPropertyNames(defaultGeometryName);
         query.setFilter(lonLatFilter);
         query.setCoordinateSystem(wgs84LonLat);
 
-        final int expectedCount = wfs.getFeatureSource(query.getTypeName()).getFeatures().size();
+        final int expectedCount =
+                wfs.getFeatureSource(query.getTypeName()).getFeatures().size();
 
         try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
                 wfs.getFeatureReader(query, Transaction.AUTO_COMMIT)) {
@@ -560,7 +543,6 @@ public abstract class AbstractWfsDataStoreOnlineTest extends OnlineTestSupport {
     public void testFeatureReaderWithFilterBBox() throws Exception {
 
         ReferencedEnvelope bbox = wfs.getFeatureSource(testType.FEATURETYPENAME).getBounds();
-        WFSOnlineTestSupport.doFeatureReaderWithBBox(
-                wfs, testType.FEATURETYPENAME, defaultGeometryName, bbox);
+        WFSOnlineTestSupport.doFeatureReaderWithBBox(wfs, testType.FEATURETYPENAME, defaultGeometryName, bbox);
     }
 }

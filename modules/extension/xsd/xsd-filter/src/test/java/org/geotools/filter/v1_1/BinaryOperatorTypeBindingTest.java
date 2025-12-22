@@ -19,12 +19,12 @@ package org.geotools.filter.v1_1;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.BinaryExpression;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Multiply;
+import org.geotools.api.filter.expression.Subtract;
 import org.junit.Test;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.BinaryExpression;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Multiply;
-import org.opengis.filter.expression.Subtract;
 import org.w3c.dom.Document;
 
 public class BinaryOperatorTypeBindingTest extends FilterTestSupport {
@@ -55,7 +55,8 @@ public class BinaryOperatorTypeBindingTest extends FilterTestSupport {
 
         assertEquals(
                 2,
-                dom.getElementsByTagNameNS(OGC.NAMESPACE, OGC.Literal.getLocalPart()).getLength());
+                dom.getElementsByTagNameNS(OGC.NAMESPACE, OGC.Literal.getLocalPart())
+                        .getLength());
     }
 
     @Test
@@ -78,7 +79,8 @@ public class BinaryOperatorTypeBindingTest extends FilterTestSupport {
         Document dom = encode(FilterMockData.sub(), OGC.Sub);
         assertEquals(
                 2,
-                dom.getElementsByTagNameNS(OGC.NAMESPACE, OGC.Literal.getLocalPart()).getLength());
+                dom.getElementsByTagNameNS(OGC.NAMESPACE, OGC.Literal.getLocalPart())
+                        .getLength());
     }
 
     @Test
@@ -101,7 +103,8 @@ public class BinaryOperatorTypeBindingTest extends FilterTestSupport {
         Document dom = encode(FilterMockData.div(), OGC.Div);
         assertEquals(
                 2,
-                dom.getElementsByTagNameNS(OGC.NAMESPACE, OGC.Literal.getLocalPart()).getLength());
+                dom.getElementsByTagNameNS(OGC.NAMESPACE, OGC.Literal.getLocalPart())
+                        .getLength());
     }
 
     @Test
@@ -124,6 +127,7 @@ public class BinaryOperatorTypeBindingTest extends FilterTestSupport {
         Document dom = encode(FilterMockData.mul(), OGC.Mul);
         assertEquals(
                 2,
-                dom.getElementsByTagNameNS(OGC.NAMESPACE, OGC.Literal.getLocalPart()).getLength());
+                dom.getElementsByTagNameNS(OGC.NAMESPACE, OGC.Literal.getLocalPart())
+                        .getLength());
     }
 }

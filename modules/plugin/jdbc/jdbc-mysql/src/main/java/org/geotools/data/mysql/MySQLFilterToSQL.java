@@ -17,26 +17,26 @@
 package org.geotools.data.mysql;
 
 import java.io.IOException;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.DistanceBufferOperator;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
 import org.geotools.data.jdbc.FilterToSQL;
 import org.geotools.filter.FilterCapabilities;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LinearRing;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.DistanceBufferOperator;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
 
 public class MySQLFilterToSQL extends FilterToSQL {
 
@@ -72,9 +72,9 @@ public class MySQLFilterToSQL extends FilterToSQL {
     @Override
     protected void visitLiteralGeometry(Literal expression) throws IOException {
         Geometry g = (Geometry) evaluateLiteral(expression, Geometry.class);
-        if (g instanceof LinearRing) {
+        if (g instanceof LinearRing ring) {
             // WKT does not support linear rings
-            g = g.getFactory().createLineString(((LinearRing) g).getCoordinateSequence());
+            g = g.getFactory().createLineString(ring.getCoordinateSequence());
         }
         if (usePreciseSpatialOps) {
             out.write("ST_GeomFromText('" + g.toText() + "', " + currentSRID + ")");
@@ -85,18 +85,12 @@ public class MySQLFilterToSQL extends FilterToSQL {
 
     @Override
     protected Object visitBinarySpatialOperator(
-            BinarySpatialOperator filter,
-            PropertyName property,
-            Literal geometry,
-            boolean swapped,
-            Object extraData) {
+            BinarySpatialOperator filter, PropertyName property, Literal geometry, boolean swapped, Object extraData) {
 
         if (usePreciseSpatialOps) {
-            return visitBinarySpatialOperatorEnhanced(
-                    filter, property, geometry, swapped, extraData);
+            return visitBinarySpatialOperatorEnhanced(filter, property, geometry, swapped, extraData);
         } else {
-            return visitBinarySpatialOperator(
-                    filter, property, (Expression) geometry, swapped, extraData);
+            return visitBinarySpatialOperator(filter, property, (Expression) geometry, swapped, extraData);
         }
     }
 
@@ -111,11 +105,7 @@ public class MySQLFilterToSQL extends FilterToSQL {
     }
     /** pre-5.6 spatial functions. */
     protected Object visitBinarySpatialOperator(
-            BinarySpatialOperator filter,
-            Expression e1,
-            Expression e2,
-            boolean swapped,
-            Object extraData) {
+            BinarySpatialOperator filter, Expression e1, Expression e2, boolean swapped, Object extraData) {
 
         try {
 
@@ -136,7 +126,7 @@ public class MySQLFilterToSQL extends FilterToSQL {
                 return extraData;
             }
 
-            if (filter instanceof DistanceBufferOperator) {
+            if (filter instanceof DistanceBufferOperator operator) {
                 out.write("Distance(");
                 e1.accept(this, extraData);
                 out.write(", ");
@@ -150,7 +140,7 @@ public class MySQLFilterToSQL extends FilterToSQL {
                 } else {
                     throw new RuntimeException("Unknown distance operator");
                 }
-                out.write(Double.toString(((DistanceBufferOperator) filter).getDistance()));
+                out.write(Double.toString(operator.getDistance()));
             } else if (!(filter instanceof BBOX)) {
                 if (filter instanceof Contains) {
                     out.write("Contains(");
@@ -193,15 +183,11 @@ public class MySQLFilterToSQL extends FilterToSQL {
 
     /** supported if version of MySQL is at least 5.6. */
     protected Object visitBinarySpatialOperatorEnhanced(
-            BinarySpatialOperator filter,
-            Expression e1,
-            Expression e2,
-            boolean swapped,
-            Object extraData) {
+            BinarySpatialOperator filter, Expression e1, Expression e2, boolean swapped, Object extraData) {
 
         try {
 
-            if (filter instanceof DistanceBufferOperator) {
+            if (filter instanceof DistanceBufferOperator operator) {
                 out.write("ST_Distance(");
                 e1.accept(this, extraData);
                 out.write(", ");
@@ -215,7 +201,7 @@ public class MySQLFilterToSQL extends FilterToSQL {
                 } else {
                     throw new RuntimeException("Unknown distance operator");
                 }
-                out.write(Double.toString(((DistanceBufferOperator) filter).getDistance()));
+                out.write(Double.toString(operator.getDistance()));
             } else if (filter instanceof BBOX) {
                 out.write("MBRIntersects(");
                 e1.accept(this, extraData);

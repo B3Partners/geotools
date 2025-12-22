@@ -17,6 +17,8 @@
  */
 package org.geotools.process.raster;
 
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.geometry.jts.JTS;
@@ -31,20 +33,16 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
- * A process that build a regular cell grid where each pixel represents its effective area in the
- * envelope in square meters.
+ * A process that build a regular cell grid where each pixel represents its effective area in the envelope in square
+ * meters.
  *
- * <p>Internally the process uses a reprojection to EckertIV to ensure proper area computation.
- * Current limitations:
+ * <p>Internally the process uses a reprojection to EckertIV to ensure proper area computation. Current limitations:
  *
  * <ul>
  *   <li>won't work for very large rasters since it allocates the entire grid in memory
- *   <li>area accuracy increases as the cell size shrinks, avoid having cells that occupy sizeable
- *       chunks of the world
+ *   <li>area accuracy increases as the cell size shrinks, avoid having cells that occupy sizeable chunks of the world
  * </ul>
  *
  * @author Luca Paolino - GeoSolutions
@@ -61,18 +59,11 @@ public class AreaGridProcess implements RasterProcess {
     public GridCoverage2D execute(
             @DescribeParameter(
                             name = "envelope",
-                            description =
-                                    "Bounding box for the computed raster, in WGS84 geographic coordinates.")
+                            description = "Bounding box for the computed raster, in WGS84 geographic coordinates.")
                     ReferencedEnvelope bounds,
-            @DescribeParameter(
-                            name = "width",
-                            description = "Width of the output raster in pixels",
-                            minValue = 1)
+            @DescribeParameter(name = "width", description = "Width of the output raster in pixels", minValue = 1)
                     int width,
-            @DescribeParameter(
-                            name = "height",
-                            description = "Height of the output raster in pixels",
-                            minValue = 1)
+            @DescribeParameter(name = "height", description = "Height of the output raster in pixels", minValue = 1)
                     int height)
             throws ProcessException {
 
@@ -88,8 +79,7 @@ public class AreaGridProcess implements RasterProcess {
         try {
             Polygon polygon = null;
 
-            CoordinateReferenceSystem sourceCRS =
-                    org.geotools.referencing.crs.DefaultGeographicCRS.WGS84;
+            CoordinateReferenceSystem sourceCRS = org.geotools.referencing.crs.DefaultGeographicCRS.WGS84;
             CoordinateReferenceSystem targetCRS = CRS.parseWKT(targetCRSWKT);
             MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
             double pX = bounds.getMinX();
@@ -142,9 +132,9 @@ public class AreaGridProcess implements RasterProcess {
             GridCoverage2D grid = coverageFactory.create("AreaGridCoverage", matrix, bounds);
             return grid;
 
-        } catch (org.opengis.referencing.FactoryException ef) {
+        } catch (org.geotools.api.referencing.FactoryException ef) {
             throw new ProcessException("Unable to create the target CRS", ef);
-        } catch (org.opengis.referencing.operation.TransformException et) {
+        } catch (org.geotools.api.referencing.operation.TransformException et) {
             throw new ProcessException("Unable to tranform the coordinate system", et);
         }
     }

@@ -18,10 +18,10 @@ package org.geotools.gml3.v3_2.gts;
 
 import java.util.Set;
 import javax.xml.namespace.QName;
+import org.geotools.api.feature.type.Schema;
 import org.geotools.gml3.v3_2.GML;
 import org.geotools.gml3.v3_2.gco.GCO;
 import org.geotools.xsd.XSD;
-import org.opengis.feature.type.Schema;
 
 /**
  * This interface contains the qualified names of all the types,elements, and attributes in the
@@ -77,8 +77,7 @@ public final class GTS extends GML.DelegatingXSD {
 
     /* Elements */
     /** @generated */
-    public static final QName TM_PeriodDuration =
-            new QName("http://www.isotc211.org/2005/gts", "TM_PeriodDuration");
+    public static final QName TM_PeriodDuration = new QName("http://www.isotc211.org/2005/gts", "TM_PeriodDuration");
 
     /* Attributes */
 

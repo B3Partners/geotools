@@ -20,7 +20,9 @@ package org.geotools.swing.tool;
 import java.awt.geom.AffineTransform;
 import java.lang.ref.WeakReference;
 import java.util.logging.Logger;
-import org.geotools.geometry.DirectPosition2D;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.geometry.Position2D;
 import org.geotools.map.Layer;
 import org.geotools.map.MapBoundsEvent;
 import org.geotools.map.MapBoundsListener;
@@ -28,12 +30,9 @@ import org.geotools.map.MapContent;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.operation.transform.AffineTransform2D;
 import org.geotools.util.logging.Logging;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
- * Abstract base class for helper classes used by {@linkplain InfoTool} to query features in map
- * layers.
+ * Abstract base class for helper classes used by {@linkplain InfoTool} to query features in map layers.
  *
  * @author Michael Bedward
  * @since 2.6
@@ -43,8 +42,8 @@ public abstract class InfoToolHelper implements MapBoundsListener {
     private static final Logger LOGGER = Logging.getLogger(InfoToolHelper.class);
 
     /**
-     * String key used for the position element in the {@code Map} passed to {@linkplain #getInfo(
-     * org.geotools.util.KVP )}.
+     * String key used for the position element in the {@code Map} passed to
+     * {@linkplain #getInfo(org.geotools.geometry.Position2D)}.
      */
     public static final String KEY_POSITION = "pos";
 
@@ -55,7 +54,7 @@ public abstract class InfoToolHelper implements MapBoundsListener {
     private MathTransform transform;
 
     /**
-     * CAlled by the helper lookup system when selecting a helper for a given layer.
+     * Called by the helper lookup system when selecting a helper for a given layer.
      *
      * @param layer the layer
      * @return {@code true} is this helper can handle the layer
@@ -64,27 +63,24 @@ public abstract class InfoToolHelper implements MapBoundsListener {
     public abstract boolean isSupportedLayer(Layer layer);
 
     /**
-     * Gets layer data at the specified position. If there are no feature data at the position, an
-     * empty {@code InfoToolResult} object is returned.
+     * Gets layer data at the specified position. If there are no feature data at the position, an empty
+     * {@code InfoToolResult} object is returned.
      *
      * @param pos query position
      * @return layer data
      * @throws Exception on error querying the layer
      */
-    public abstract InfoToolResult getInfo(DirectPosition2D pos) throws Exception;
+    public abstract InfoToolResult getInfo(Position2D pos) throws Exception;
 
     /**
-     * Checks if this helper is holding a reference to a {@code MapContent} and a {@code
-     * Layer}.Helpers only hold a {@code WeakReference} to both the map content and layer to avoid
-     * blocking garbage collection when layers are discarded.
+     * Checks if this helper is holding a reference to a {@code MapContent} and a {@code Layer}.Helpers only hold a
+     * {@code WeakReference} to both the map content and layer to avoid blocking garbage collection when layers are
+     * discarded.
      *
      * @return {@code true} if both map content and layer references are valid
      */
     public boolean isValid() {
-        return contentRef != null
-                && contentRef.get() != null
-                && layerRef != null
-                && layerRef.get() != null;
+        return contentRef != null && contentRef.get() != null && layerRef != null && layerRef.get() != null;
     }
 
     /**
@@ -132,8 +128,8 @@ public abstract class InfoToolHelper implements MapBoundsListener {
     }
 
     /**
-     * A method from the {@code MapBoundsListener} interface used to listen for a change to the map
-     * content's coordinate reference system.
+     * A method from the {@code MapBoundsListener} interface used to listen for a change to the map content's coordinate
+     * reference system.
      */
     @Override
     public void mapBoundsChanged(MapBoundsEvent event) {
@@ -141,11 +137,11 @@ public abstract class InfoToolHelper implements MapBoundsListener {
     }
 
     /**
-     * Gets the {@code MathTransform} used to convert coordinates from the projection being used by
-     * the {@code MapContent} to that of the {@code Layer}.
+     * Gets the {@code MathTransform} used to convert coordinates from the projection being used by the
+     * {@code MapContent} to that of the {@code Layer}.
      *
-     * @return the transform or {@code null} if the layer's CRS is the same as that of the map
-     *     content, or if either has no CRS defined
+     * @return the transform or {@code null} if the layer's CRS is the same as that of the map content, or if either has
+     *     no CRS defined
      */
     protected MathTransform getContentToLayerTransform() {
         if (transform == null && !transformFailed) {

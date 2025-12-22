@@ -21,26 +21,26 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.media.jai.ImageLayout;
-import javax.media.jai.PlanarImage;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
+import org.eclipse.imagen.ImageLayout;
+import org.eclipse.imagen.PlanarImage;
+import org.eclipse.imagen.media.viewer.ImageViewer;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.io.GridFormatFactorySpi;
 import org.geotools.test.TestData;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 
 /**
  * @author Daniele Romagnoli, GeoSolutions
  * @author Simone Giannecchini (simboss), GeoSolutions
- *     <p>Base testing class initializing JAI properties to be used during tests.
+ *     <p>Base testing class initializing ImageN properties to be used during tests.
  */
-@SuppressWarnings("deprecation")
 public class GDALTestCase {
 
-    protected static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(GDALTestCase.class);
+    protected static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(GDALTestCase.class);
 
     protected static void forceDataLoading(final GridCoverage2D gc) {
         Assert.assertNotNull(gc);
@@ -48,10 +48,10 @@ public class GDALTestCase {
         if (TestData.isInteractiveTest()) {
             final JFrame frame = new JFrame();
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.getContentPane()
-                    .add(
-                            new javax.media.jai.widget.ScrollingImagePanel(
-                                    gc.getRenderedImage(), 800, 800));
+            ImageViewer viewer = new ImageViewer();
+            viewer.setImage(gc.getRenderedImage());
+            viewer.setSize(800, 800);
+            frame.getContentPane().add(viewer);
             frame.pack();
             SwingUtilities.invokeLater(() -> frame.setVisible(true));
         } else {
@@ -59,16 +59,10 @@ public class GDALTestCase {
         }
     }
 
-    /**
-     * A String containing the name of the supported format. It will be used to customize the
-     * messages.
-     */
+    /** A String containing the name of the supported format. It will be used to customize the messages. */
     private String supportedFormat;
 
-    /**
-     * The {@code GridFormatFactorySpi} provided by the specific subclass to handle a specific
-     * format.
-     */
+    /** The {@code GridFormatFactorySpi} provided by the specific subclass to handle a specific format. */
     private GridFormatFactorySpi factorySpi;
 
     public GDALTestCase(final String supportedFormat, final GridFormatFactorySpi factorySpi) {
@@ -78,12 +72,15 @@ public class GDALTestCase {
 
     @Before
     public void setUp() throws Exception {
-        if (!testingEnabled()) return;
+        // skip all tests if gdal-java is not found
+        Assume.assumeTrue(testingEnabled());
+
         try {
-            final File file = TestData.file(this, "test.zip");
-            if (file != null && file.exists() && file.canRead())
+            final File file = new File(TestData.file(this, null), "test.zip");
+            if (file.exists()) {
                 // unzip it
                 TestData.unzipFile(this, "test.zip");
+            }
         } catch (FileNotFoundException e) {
             LOGGER.log(Level.SEVERE, "can not locate test-data for \"test.zip\"");
         } catch (Exception e1) {

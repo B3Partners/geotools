@@ -72,9 +72,7 @@ public class MultiSurfaceTypeBinding extends AbstractComplexBinding {
     }
 
     public MultiSurfaceTypeBinding(
-            GeometryFactory gFactory,
-            CoordinateSequenceFactory csFactory,
-            ArcParameters arcParameters) {
+            GeometryFactory gFactory, CoordinateSequenceFactory csFactory, ArcParameters arcParameters) {
         this(gFactory);
         this.cs = csFactory;
         this.arcParameters = arcParameters;
@@ -121,8 +119,7 @@ public class MultiSurfaceTypeBinding extends AbstractComplexBinding {
             surfaces.addAll(Arrays.asList(node.getChildValue(Polygon[].class)));
         }
 
-        CurvedGeometryFactory factory =
-                GML3ParsingUtils.getCurvedGeometryFactory(arcParameters, gf, null);
+        CurvedGeometryFactory factory = GML3ParsingUtils.getCurvedGeometryFactory(arcParameters, gf, null);
 
         return factory.createMultiSurface(surfaces);
     }
@@ -130,8 +127,7 @@ public class MultiSurfaceTypeBinding extends AbstractComplexBinding {
     @Override
     public Object getProperty(Object object, QName name) throws Exception {
         if ("surfaceMember".equals(name.getLocalPart())) {
-            if ((object instanceof MultiSurface)) {
-                MultiPolygon multiSurface = (MultiPolygon) object;
+            if (object instanceof MultiPolygon multiSurface) {
                 Polygon[] members = new Polygon[multiSurface.getNumGeometries()];
 
                 for (int i = 0; i < members.length; i++) {

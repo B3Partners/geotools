@@ -19,25 +19,23 @@ package org.geotools.filter.function.color;
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
 import java.awt.Color;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 /**
- * Mix lesscss.org color function. Takes two colors and mixes them together based on a weight (and
- * their eventual alpha)
+ * Mix lesscss.org color function. Takes two colors and mixes them together based on a weight (and their eventual alpha)
  *
  * @author Andrea Aime - GeoSolutions
  */
 public class MixFunction extends FunctionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "mix",
-                    parameter("result", Color.class),
-                    parameter("color1", Color.class),
-                    parameter("color2", Color.class),
-                    parameter("weight", Double.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "mix",
+            parameter("result", Color.class),
+            parameter("color1", Color.class),
+            parameter("color2", Color.class),
+            parameter("weight", Double.class));
 
     public MixFunction() {
         this.functionName = NAME;
@@ -56,7 +54,7 @@ public class MixFunction extends FunctionImpl {
         // adjust weight based on alpha
         double da = color1.getAlpha() - color2.getAlpha();
         double w = weight * 2 - 1;
-        double w1 = (((w * da == -1) ? w : (w + da) / (1 + w * da)) + 1) / 2.0;
+        double w1 = ((w * da == -1 ? w : (w + da) / (1 + w * da)) + 1) / 2.0;
         double w2 = 1 - w1;
 
         // mix colors

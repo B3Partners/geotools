@@ -21,19 +21,19 @@ package org.geotools.filter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.BinaryExpression;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.expression.AddImpl;
 import org.geotools.filter.expression.DivideImpl;
 import org.geotools.filter.expression.MultiplyImpl;
 import org.geotools.filter.expression.SubtractImpl;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.BinaryExpression;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
 import org.xml.sax.Attributes;
 
 /**
@@ -43,12 +43,11 @@ import org.xml.sax.Attributes;
  */
 public class ExpressionSAXParser {
     /** The logger for the filter module. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(ExpressionSAXParser.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(ExpressionSAXParser.class);
 
     /** Factory to construct filters. */
-    @SuppressWarnings("PMD.UnusedPrivateField")
-    private FilterFactory2 ff;
+    @SuppressWarnings({"PMD.UnusedPrivateField", "UnusedVariable"})
+    private FilterFactory ff;
 
     private FunctionFinder functionFinder = new FunctionFinder(null);
 
@@ -75,16 +74,16 @@ public class ExpressionSAXParser {
     private SimpleFeatureType schema;
 
     /**
-     * If the message from the SAX characters function should be read. For example when the
-     * expression is expecting character values.
+     * If the message from the SAX characters function should be read. For example when the expression is expecting
+     * character values.
      */
     private boolean readChars = false;
 
     public ExpressionSAXParser() {
-        this(CommonFactoryFinder.getFilterFactory2());
+        this(CommonFactoryFinder.getFilterFactory());
     }
 
-    public ExpressionSAXParser(FilterFactory2 factory) {
+    public ExpressionSAXParser(FilterFactory factory) {
         this(null, factory);
     }
     /**
@@ -93,21 +92,20 @@ public class ExpressionSAXParser {
      * @param schema The schema for attributes (null is fine, as the code for this is not in place.
      */
     public ExpressionSAXParser(SimpleFeatureType schema) {
-        this(schema, CommonFactoryFinder.getFilterFactory2());
+        this(schema, CommonFactoryFinder.getFilterFactory());
     }
     /** Constructor injection */
-    public ExpressionSAXParser(SimpleFeatureType schema, FilterFactory2 factory) {
+    public ExpressionSAXParser(SimpleFeatureType schema, FilterFactory factory) {
         this.schema = schema;
         ff = factory;
     }
     /** Setter injection */
-    public void setFilterFactory(FilterFactory2 factory) {
+    public void setFilterFactory(FilterFactory factory) {
         ff = factory;
     }
 
     /**
-     * Initializes the factory to create a new expression. Called when the filter handler reaches a
-     * new expression.
+     * Initializes the factory to create a new expression. Called when the filter handler reaches a new expression.
      *
      * @param declaredType The string representation of the expression type.
      * @throws IllegalFilterException If there are problems creating expressions.
@@ -128,8 +126,7 @@ public class ExpressionSAXParser {
                 if (function != null && function instanceof FunctionExpression) {
                     curExprssn = function;
                 } else {
-                    throw new IllegalFilterException(
-                            name + " not availabel as FunctionExpressio:" + function);
+                    throw new IllegalFilterException(name + " not availabel as FunctionExpressio:" + function);
                 }
                 LOGGER.finer("is <function> expression");
             }
@@ -213,20 +210,17 @@ public class ExpressionSAXParser {
                     // currentState = "accumulate";  //leave unchanged
                     LOGGER.finer("just added a parameter for a function: " + currentState);
 
-                    if (((FunctionExpression) curExprssn).getFunctionName().getArgumentCount()
-                            == expressions.size()) {
+                    if (((FunctionExpression) curExprssn).getFunctionName().getArgumentCount() == expressions.size()) {
                         // hay, we've parsed all the arguments!
                         currentState = "complete";
 
                         // accumalationOfExpressions
                         ((FunctionExpression) curExprssn).setParameters(expressions);
                     } else {
-                        expFactory =
-                                new ExpressionSAXParser(schema); // we're gonna get more expressions
+                        expFactory = new ExpressionSAXParser(schema); // we're gonna get more expressions
                     }
                 } else {
-                    throw new IllegalFilterException(
-                            "Attempted to add sub expression in a bad state: " + currentState);
+                    throw new IllegalFilterException("Attempted to add sub expression in a bad state: " + currentState);
                 }
             }
         } else if (declaredType.equals(message) && currentState.equals("complete")) {
@@ -235,8 +229,7 @@ public class ExpressionSAXParser {
             readChars = false;
             readyFlag = true;
         } else { // otherwise, throw exception
-            throw new IllegalFilterException(
-                    "Reached end of unready, non-nested expression: " + currentState);
+            throw new IllegalFilterException("Reached end of unready, non-nested expression: " + currentState);
         }
     }
 
@@ -254,10 +247,10 @@ public class ExpressionSAXParser {
      *
      * @param message the incoming chars from the SAX handler.
      * @throws IllegalFilterException If there are problems with filter constrcution.
-     * @task TODO: this function is a mess, but it's mostly due to filters being loosely coupled
-     *     with schemas, so we have to make a lot of guesses.
-     * @task TODO: Revisit stripping leading characters. Needed now to get things working, and may
-     *     be the best choice in the end, but it should be thought through more.
+     * @task TODO: this function is a mess, but it's mostly due to filters being loosely coupled with schemas, so we
+     *     have to make a lot of guesses.
+     * @task TODO: Revisit stripping leading characters. Needed now to get things working, and may be the best choice in
+     *     the end, but it should be thought through more.
      */
     public void message(String message, boolean convertToNumber) throws IllegalFilterException {
         // TODO 2:
@@ -375,15 +368,15 @@ public class ExpressionSAXParser {
      * Sets the appropriate state.
      *
      * @param expression the expression being evaluated.
-     * @return <tt>leftValue</tt> if curExprssn is a mathExpression, an empty string if a literal or
-     *     attribute, illegal expression thrown otherwise.
+     * @return <tt>leftValue</tt> if curExprssn is a mathExpression, an empty string if a literal or attribute, illegal
+     *     expression thrown otherwise.
      * @throws IllegalFilterException if the current expression is not math, attribute, or literal.
      */
-    private static String setInitialState(org.opengis.filter.expression.Expression expression)
+    private static String setInitialState(org.geotools.api.filter.expression.Expression expression)
             throws IllegalFilterException {
         if (expression instanceof BinaryExpression) {
             return "leftValue";
-        } else if ((expression instanceof PropertyName) || (expression instanceof Literal)) {
+        } else if (expression instanceof PropertyName || expression instanceof Literal) {
             return "";
         } else if (expression instanceof FunctionExpression) {
             return "accumulate"; // start storing values!
@@ -421,21 +414,17 @@ public class ExpressionSAXParser {
     }
 
     /**
-     * stolen from the DOM parser -- for a list of attributes, find the "name" ie. for <Function
-     * name="geomLength"> return "geomLength" NOTE: if someone uses <Function name="geomLength"> or
-     * <Function ogc:name="geomLength"> this will work, if they use a different prefix, it will not.
+     * stolen from the DOM parser -- for a list of attributes, find the "name" ie. for <Function name="geomLength">
+     * return "geomLength" NOTE: if someone uses <Function name="geomLength"> or <Function ogc:name="geomLength"> this
+     * will work, if they use a different prefix, it will not.
      */
     public String getFunctionName(Attributes map) {
         String result = map.getValue("name");
         if (result == null) {
-            result =
-                    map.getValue(
-                            "ogc:name"); // highly unlikely for this to happen.  But, it might...
+            result = map.getValue("ogc:name"); // highly unlikely for this to happen.  But, it might...
         }
         if (result == null) {
-            result =
-                    map.getValue(
-                            "ows:name"); // highly unlikely for this to happen.  But, it might...
+            result = map.getValue("ows:name"); // highly unlikely for this to happen.  But, it might...
         }
         return result;
     }

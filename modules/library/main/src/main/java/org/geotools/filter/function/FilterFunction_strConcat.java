@@ -20,18 +20,17 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_strConcat extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "strConcat",
-                    parameter("strConcat", String.class),
-                    parameter("string1", String.class),
-                    parameter("string2", String.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "strConcat",
+            parameter("strConcat", String.class),
+            parameter("string1", String.class),
+            parameter("string2", String.class));
 
     public FilterFunction_strConcat() {
         super(NAME);
@@ -59,6 +58,6 @@ public class FilterFunction_strConcat extends FunctionExpressionImpl {
                     "Filter Function problem for function strConcat argument #1 - expected type String");
         }
 
-        return (StaticGeometry.strConcat(arg0, arg1));
+        return StaticGeometry.strConcat(arg0, arg1);
     }
 }

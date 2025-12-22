@@ -16,8 +16,8 @@
  */
 package org.geotools.gce.imagemosaic.catalog;
 
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.gce.imagemosaic.GranuleDescriptor;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * Simple interface for creating visitors to a {@link GranuleCatalog} implementation.
@@ -33,10 +33,7 @@ public interface GranuleCatalogVisitor {
      */
     public void visit(final GranuleDescriptor granule, SimpleFeature feature);
 
-    /**
-     * Returns true if the visit has been completed and there is no more need to scan though the
-     * other granules
-     */
+    /** Returns true if the visit has been completed and there is no more need to scan though the other granules */
     public default boolean isVisitComplete() {
         return false;
     }

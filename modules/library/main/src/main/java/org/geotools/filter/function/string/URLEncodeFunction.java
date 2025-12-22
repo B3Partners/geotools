@@ -21,9 +21,9 @@ import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 /**
  * URL encodes a string.
@@ -32,8 +32,7 @@ import org.opengis.filter.capability.FunctionName;
  *
  * <ol>
  *   <li>Literal: String to be URL encoded
- *   <li>Literal: (Optional) Boolean indicating if string should be form URL encoded (defaults to
- *       false)
+ *   <li>Literal: (Optional) Boolean indicating if string should be form URL encoded (defaults to false)
  *
  * @see URLEncoder#encode(String)
  * @author Billy Newman (BIT Systems)
@@ -41,12 +40,11 @@ import org.opengis.filter.capability.FunctionName;
 public class URLEncodeFunction extends FunctionExpressionImpl {
 
     /** The FunctionName */
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "strURLEncode",
-                    String.class,
-                    parameter("encodeable", String.class),
-                    parameter("formUrlEncode", Boolean.class, 0, 1));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "strURLEncode",
+            String.class,
+            parameter("encodeable", String.class),
+            parameter("formUrlEncode", Boolean.class, 0, 1));
 
     /** Create a new FilterFunction_strURLEncode instance */
     public URLEncodeFunction() {
@@ -92,8 +90,7 @@ public class URLEncodeFunction extends FunctionExpressionImpl {
             return encoded;
         } catch (UnsupportedEncodingException e) {
             throw new IllegalArgumentException(
-                    "Filter Function problem for function strURLEncode argument #0 - "
-                            + e.getMessage());
+                    "Filter Function problem for function strURLEncode argument #0 - " + e.getMessage());
         }
     }
 }

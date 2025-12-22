@@ -24,23 +24,23 @@ import java.io.Serializable;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataAccessFinder;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.appschema.filter.FilterFactoryImplNamespaceAware;
-import org.geotools.data.DataAccess;
-import org.geotools.data.DataAccessFinder;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.Query;
 import org.geotools.data.complex.feature.type.Types;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.test.AppSchemaTestSupport;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.PropertyName;
 import org.xml.sax.helpers.NamespaceSupport;
 
 public class ClientPropertiesTest extends AppSchemaTestSupport {
@@ -55,7 +55,7 @@ public class ClientPropertiesTest extends AppSchemaTestSupport {
 
     private FeatureSource<FeatureType, Feature> mfSource;
 
-    private FilterFactory2 ff;
+    private FilterFactory ff;
 
     @Before
     public void setUp() throws Exception {
@@ -67,9 +67,7 @@ public class ClientPropertiesTest extends AppSchemaTestSupport {
 
         /** Load mapped feature data access */
         Map<String, Serializable> dsParams = new HashMap<>();
-        URL url =
-                PropSelectionTest.class.getResource(
-                        schemaBase + "MappedFeatureClientProperties.xml");
+        URL url = PropSelectionTest.class.getResource(schemaBase + "MappedFeatureClientProperties.xml");
         assertNotNull(url);
 
         dsParams.put("dbtype", "app-schema");
@@ -108,9 +106,7 @@ public class ClientPropertiesTest extends AppSchemaTestSupport {
             while (iterator.hasNext()) {
                 Feature feature = iterator.next();
                 String name = namePn.evaluate(feature, String.class);
-                assertEquals(
-                        "urn:x-test:classifierScheme:TestAuthority:" + name,
-                        clientProp1.evaluate(feature));
+                assertEquals("urn:x-test:classifierScheme:TestAuthority:" + name, clientProp1.evaluate(feature));
                 assertEquals("static_property", clientProp2.evaluate(feature));
                 featureCount++;
             }

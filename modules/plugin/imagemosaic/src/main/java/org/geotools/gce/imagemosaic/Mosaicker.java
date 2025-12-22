@@ -18,8 +18,6 @@
 package org.geotools.gce.imagemosaic;
 
 import it.geosolutions.imageio.pam.PAMDataset;
-import it.geosolutions.jaiext.range.NoDataContainer;
-import it.geosolutions.jaiext.vectorbin.ROIGeometry;
 import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
@@ -29,14 +27,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.media.jai.BorderExtender;
-import javax.media.jai.ImageLayout;
-import javax.media.jai.JAI;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.ROI;
-import javax.media.jai.RenderedOp;
-import javax.media.jai.operator.MosaicDescriptor;
-import javax.media.jai.operator.MosaicType;
+import org.eclipse.imagen.BorderExtender;
+import org.eclipse.imagen.ImageLayout;
+import org.eclipse.imagen.ImageN;
+import org.eclipse.imagen.PlanarImage;
+import org.eclipse.imagen.ROI;
+import org.eclipse.imagen.RenderedOp;
+import org.eclipse.imagen.media.mosaic.MosaicDescriptor;
+import org.eclipse.imagen.media.mosaic.MosaicType;
+import org.eclipse.imagen.media.range.NoDataContainer;
+import org.eclipse.imagen.media.vectorbin.ROIGeometry;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.coverage.grid.io.footprint.FootprintBehavior;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -46,8 +48,6 @@ import org.geotools.image.util.ImageUtilities;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * A class doing the mosaic operation on top of a List of {@link MosaicElement}s.
@@ -70,10 +70,7 @@ public class Mosaicker {
 
     private RasterLayerResponse rasterLayerResponse;
 
-    public Mosaicker(
-            RasterLayerResponse rasterLayerResponse,
-            MosaicInputs inputs,
-            MergeBehavior mergeBehavior) {
+    public Mosaicker(RasterLayerResponse rasterLayerResponse, MosaicInputs inputs, MergeBehavior mergeBehavior) {
         this.inputs = new ArrayList<>(inputs.getSources());
         this.sourceThreshold = inputs.getSourceThreshold();
         this.doInputTransparency = inputs.isDoInputTransparency();
@@ -83,28 +80,27 @@ public class Mosaicker {
     }
 
     /**
-     * @param useFinalImageLayout whether the layout should be created from the requested bounds or
-     *     no layout should be provided
+     * @param useFinalImageLayout whether the layout should be created from the requested bounds or no layout should be
+     *     provided
      */
     private RenderingHints prepareHints(boolean useFinalImageLayout) {
         final RenderingHints localHints = new RenderingHints(null);
 
         if (useFinalImageLayout) {
             // build final layout and use it for cropping purposes
-            final ImageLayout layout =
-                    new ImageLayout(
-                            rasterLayerResponse.getRasterBounds().x,
-                            rasterLayerResponse.getRasterBounds().y,
-                            rasterLayerResponse.getRasterBounds().width,
-                            rasterLayerResponse.getRasterBounds().height);
+            final ImageLayout layout = new ImageLayout(
+                    rasterLayerResponse.getRasterBounds().x,
+                    rasterLayerResponse.getRasterBounds().y,
+                    rasterLayerResponse.getRasterBounds().width,
+                    rasterLayerResponse.getRasterBounds().height);
             Dimension tileDimensions = rasterLayerResponse.getRequest().getTileDimensions();
             if (tileDimensions == null) {
-                tileDimensions = (Dimension) JAI.getDefaultTileSize().clone();
+                tileDimensions = (Dimension) ImageN.getDefaultTileSize().clone();
             }
             layout.setTileGridXOffset(0).setTileGridYOffset(0);
             layout.setTileHeight(tileDimensions.height).setTileWidth(tileDimensions.width);
 
-            localHints.add(new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout));
+            localHints.add(new RenderingHints(ImageN.KEY_IMAGE_LAYOUT, layout));
         }
 
         // look for additional hints for caching and tile scheduling
@@ -115,7 +111,7 @@ public class Mosaicker {
             localHints.add(ImageUtilities.BORDER_EXTENDER_HINTS); // default
             BorderExtender be = Utils.getBorderExtenderHint(responseHints);
             if (be != null) {
-                localHints.add(new RenderingHints(JAI.KEY_BORDER_EXTENDER, be));
+                localHints.add(new RenderingHints(ImageN.KEY_BORDER_EXTENDER, be));
             }
 
             Hints jaiHints = Utils.setupJAIHints(responseHints);
@@ -123,17 +119,15 @@ public class Mosaicker {
                 localHints.add(jaiHints);
             }
         }
-        if (rasterLayerResponse.getGeometryMask() != null
-                && rasterLayerResponse.isSetRoiProperty()) {
+        if (rasterLayerResponse.getGeometryMask() != null && rasterLayerResponse.isSetRoiProperty()) {
             localHints.add(new RenderingHints(ImageWorker.FORCE_MOSAIC_ROI_PROPERTY, true));
         }
         return localHints;
     }
 
     /**
-     * Once we reach this method it means that we have loaded all the images which were intersecting
-     * the requested envelope. Next step is to create the final mosaic image and cropping it to the
-     * exact requested envelope.
+     * Once we reach this method it means that we have loaded all the images which were intersecting the requested
+     * envelope. Next step is to create the final mosaic image and cropping it to the exact requested envelope.
      *
      * @return A {@link MosaicElement}}.
      */
@@ -142,34 +136,31 @@ public class Mosaicker {
     }
 
     /**
-     * Once we reach this method it means that we have loaded all the images which were intersecting
-     * the requested envelope. Next step is to create the final mosaic image and cropping it to the
-     * exact requested envelope.
+     * Once we reach this method it means that we have loaded all the images which were intersecting the requested
+     * envelope. Next step is to create the final mosaic image and cropping it to the exact requested envelope.
      *
      * @return A {@link MosaicElement}}.
-     * @param useFinalImageLayout whether the final image layout requested should be used. if false
-     *     then a default layout will be used. useful if your mosaic layout doesn't match the final
-     *     layout. default layout will be whatever layout is necessary to do the mosaic op
+     * @param useFinalImageLayout whether the final image layout requested should be used. if false then a default
+     *     layout will be used. useful if your mosaic layout doesn't match the final layout. default layout will be
+     *     whatever layout is necessary to do the mosaic op
      */
     public MosaicElement createMosaic(boolean useFinalImageLayout) throws IOException {
         return createMosaic(useFinalImageLayout, false);
     }
 
     /**
-     * Once we reach this method it means that we have loaded all the images which were intersecting
-     * the requested envelope. Next step is to create the final mosaic image and cropping it to the
-     * exact requested envelope.
+     * Once we reach this method it means that we have loaded all the images which were intersecting the requested
+     * envelope. Next step is to create the final mosaic image and cropping it to the exact requested envelope.
      *
      * @return A {@link MosaicElement}}.
-     * @param useFinalImageLayout whether the final image layout requested should be used. if false
-     *     then a default layout will be used. useful if your mosaic layout doesn't match the final
-     *     layout. default layout
-     * @param skipSingleElementOptimization whether the single element case should be optimized.
-     *     some callers wish to skip this since there are a few differences along this path that can
-     *     cause issues (namely using the final image layout for operations)
+     * @param useFinalImageLayout whether the final image layout requested should be used. if false then a default
+     *     layout will be used. useful if your mosaic layout doesn't match the final layout. default layout
+     * @param skipSingleElementOptimization whether the single element case should be optimized. some callers wish to
+     *     skip this since there are a few differences along this path that can cause issues (namely using the final
+     *     image layout for operations)
      */
-    public MosaicElement createMosaic(
-            boolean useFinalImageLayout, boolean skipSingleElementOptimization) throws IOException {
+    public MosaicElement createMosaic(boolean useFinalImageLayout, boolean skipSingleElementOptimization)
+            throws IOException {
 
         // anything to do?
         final int size = inputs.size();
@@ -187,16 +178,14 @@ public class Mosaicker {
         //
         // SPECIAL CASE
         // 1 single tile, we try not do a mosaic.
-        MosaicType mosaicType =
-                rasterLayerResponse.getRequest().isBlend()
-                        ? MosaicDescriptor.MOSAIC_TYPE_BLEND
-                        : MosaicDescriptor.MOSAIC_TYPE_OVERLAY;
+        MosaicType mosaicType = rasterLayerResponse.getRequest().isBlend()
+                ? MosaicDescriptor.MOSAIC_TYPE_BLEND
+                : MosaicDescriptor.MOSAIC_TYPE_OVERLAY;
         if (!skipSingleElementOptimization && size == 1 && Utils.OPTIMIZE_CROP) {
             // prepare input
             MosaicElement in = inputs.get(0);
             if (in == null) {
-                throw new NullPointerException(
-                        "The list of MosaicElements contains one element but it's null");
+                throw new NullPointerException("The list of MosaicElements contains one element but it's null");
             }
             PAMDataset pamDataset = in.pamDataset;
 
@@ -210,8 +199,7 @@ public class Mosaicker {
                     // do we need to crop? (image is bigger than requested?)
                     if (!rasterLayerResponse.getRasterBounds().contains(imageBounds)) {
                         // we have to crop
-                        XRectangle2D.intersect(
-                                imageBounds, rasterLayerResponse.getRasterBounds(), imageBounds);
+                        XRectangle2D.intersect(imageBounds, rasterLayerResponse.getRasterBounds(), imageBounds);
 
                         if (imageBounds.isEmpty()) {
                             // return back a constant image
@@ -220,17 +208,12 @@ public class Mosaicker {
                         // crop
                         ImageWorker iw = new ImageWorker(mosaic);
                         iw.setRenderingHints(localHints);
-                        iw.crop(
-                                imageBounds.x,
-                                imageBounds.y,
-                                imageBounds.width,
-                                imageBounds.height);
+                        iw.crop(imageBounds.x, imageBounds.y, imageBounds.width, imageBounds.height);
                         mosaic = iw.getRenderedImage();
                         // Propagate NoData
                         PlanarImage t = PlanarImage.wrapRenderedImage(mosaic);
                         if (iw.getNoData() != null) {
-                            t.setProperty(
-                                    NoDataContainer.GC_NODATA, new NoDataContainer(iw.getNoData()));
+                            t.setProperty(NoDataContainer.GC_NODATA, new NoDataContainer(iw.getNoData()));
                             mosaic = t;
                         }
                         imageBounds = t.getBounds();
@@ -238,33 +221,27 @@ public class Mosaicker {
 
                     // and, do we need to add a BORDER around the image?
                     if (!imageBounds.contains(rasterLayerResponse.getRasterBounds())) {
-                        mosaic =
-                                MergeBehavior.FLAT.process(
-                                        new RenderedImage[] {mosaic},
-                                        rasterLayerResponse.getBackgroundValues(),
-                                        sourceThreshold,
-                                        (hasAlpha || doInputTransparency)
-                                                ? new PlanarImage[] {in.alphaChannel}
-                                                : new PlanarImage[] {null},
-                                        new ROI[] {in.roi},
-                                        mosaicType,
-                                        localHints);
-                        ROIGeometry envelopeROI =
-                                new ROIGeometry(
-                                        JTS.toGeometry(
-                                                new ReferencedEnvelope(
-                                                        rasterLayerResponse.getRasterBounds(),
-                                                        null)));
+                        mosaic = MergeBehavior.FLAT.process(
+                                new RenderedImage[] {mosaic},
+                                rasterLayerResponse.getBackgroundValues(),
+                                sourceThreshold,
+                                hasAlpha || doInputTransparency
+                                        ? new PlanarImage[] {in.alphaChannel}
+                                        : new PlanarImage[] {null},
+                                new ROI[] {in.roi},
+                                mosaicType,
+                                localHints);
+                        ROIGeometry envelopeROI = new ROIGeometry(
+                                JTS.toGeometry(new ReferencedEnvelope(rasterLayerResponse.getRasterBounds(), null)));
                         roi = roi.add(envelopeROI);
                         if (rasterLayerResponse.getFootprintBehavior() != FootprintBehavior.None) {
                             // Adding globalRoi to the output
                             RenderedOp rop = (RenderedOp) mosaic;
                             rop.setProperty("ROI", in.roi);
 
-                            mosaic =
-                                    rasterLayerResponse
-                                            .getFootprintBehavior()
-                                            .postProcessMosaic(mosaic, in.roi, localHints);
+                            mosaic = rasterLayerResponse
+                                    .getFootprintBehavior()
+                                    .postProcessMosaic(mosaic, in.roi, localHints);
                         }
                     }
 
@@ -319,18 +296,17 @@ public class Mosaicker {
         if (realAlphas == 0) alphas = null;
 
         // execute mosaic
-        final RenderedImage mosaic =
-                mergeBehavior.process(
-                        sources,
-                        rasterLayerResponse.getBackgroundValues(),
-                        sourceThreshold,
-                        (hasAlpha || doInputTransparency) ? alphas : null,
-                        rois,
-                        mosaicType,
-                        localHints);
+        final RenderedImage mosaic = mergeBehavior.process(
+                sources,
+                rasterLayerResponse.getBackgroundValues(),
+                sourceThreshold,
+                hasAlpha || doInputTransparency ? alphas : null,
+                rois,
+                mosaicType,
+                localHints);
 
         Object property = mosaic.getProperty("ROI");
-        ROI overallROI = (property instanceof ROI) ? (ROI) property : null;
+        ROI overallROI = property instanceof ROI roi ? roi : null;
 
         if (rasterMask != null) {
             if (overallROI == null) {
@@ -352,8 +328,7 @@ public class Mosaicker {
             double[] bg = rasterLayerResponse.getBackgroundValues();
             footprintBehavior = bg != null ? FootprintBehavior.Cut : FootprintBehavior.Transparent;
         }
-        final RenderedImage postProcessed =
-                footprintBehavior.postProcessMosaic(mosaic, overallROI, localHints);
+        final RenderedImage postProcessed = footprintBehavior.postProcessMosaic(mosaic, overallROI, localHints);
 
         // prepare for next step
         if (hasAlpha || doInputTransparency) {
@@ -373,19 +348,15 @@ public class Mosaicker {
         ROIGeometry rasterMask = null;
         if (geometryMask != null) {
             if (rasterLayerResponse.isHeterogeneousCRS()) {
-                LOGGER.warning(
-                        "Geometry Mask is not currently supported with heterogeneous CRS mosaics. Ignoring it");
+                LOGGER.warning("Geometry Mask is not currently supported with heterogeneous CRS mosaics. Ignoring it");
                 return null;
             }
             Geometry mappedMask = null;
             try {
                 // Convert the geometryMask in raster space
-                mappedMask =
-                        JTS.transform(
-                                geometryMask, rasterLayerResponse.getFinalWorldToGridCorner());
+                mappedMask = JTS.transform(geometryMask, rasterLayerResponse.getFinalWorldToGridCorner());
             } catch (MismatchedDimensionException | TransformException e) {
-                throw new IOException(
-                        "Exception occurred while transforming the provided geometryMask", e);
+                throw new IOException("Exception occurred while transforming the provided geometryMask", e);
             }
             double maskingBuffer = rasterLayerResponse.getMaskingBufferPixels();
             if (maskingBuffer > 0) {
@@ -397,9 +368,7 @@ public class Mosaicker {
                 mappedMaskBox = mappedMaskBox.buffer(maskingBuffer);
                 mappedMask = mappedMask.intersection(mappedMaskBox);
             }
-            rasterMask =
-                    new ROIGeometry(
-                            mappedMask, Utils.setupJAIHints(rasterLayerResponse.getHints()));
+            rasterMask = new ROIGeometry(mappedMask, Utils.setupJAIHints(rasterLayerResponse.getHints()));
         }
         return rasterMask;
     }

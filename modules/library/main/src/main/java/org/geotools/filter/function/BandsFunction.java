@@ -17,15 +17,15 @@
 package org.geotools.filter.function;
 
 import java.awt.image.RenderedImage;
+import org.geotools.api.coverage.grid.GridCoverage;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.util.Converters;
-import org.opengis.coverage.grid.GridCoverage;
-import org.opengis.filter.capability.FunctionName;
 
 /**
- * Return the number of bands of the evaluation context, which is supposed to be a coverage, or an
- * object that can be converted to on.
+ * Return the number of bands of the evaluation context, which is supposed to be a coverage, or an object that can be
+ * converted to on.
  */
 public class BandsFunction extends FunctionExpressionImpl {
     public static FunctionName NAME = new FunctionNameImpl("bands", Integer.class);

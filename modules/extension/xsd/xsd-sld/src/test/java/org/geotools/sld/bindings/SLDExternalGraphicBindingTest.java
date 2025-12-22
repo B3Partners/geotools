@@ -19,7 +19,7 @@ package org.geotools.sld.bindings;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import org.geotools.styling.ExternalGraphic;
+import org.geotools.api.style.ExternalGraphic;
 import org.geotools.xlink.XLINK;
 import org.junit.Test;
 import org.w3c.dom.Element;
@@ -35,7 +35,8 @@ public class SLDExternalGraphicBindingTest extends SLDTestSupport {
         document.appendChild(document.createElementNS(SLD.NAMESPACE, "ExternalGraphic"));
 
         Element r = document.createElementNS(SLD.NAMESPACE, "OnlineResource");
-        r.setAttributeNS(XLINK.NAMESPACE, "href", getClass().getResource("eclipse.png").toString());
+        r.setAttributeNS(
+                XLINK.NAMESPACE, "href", getClass().getResource("eclipse.png").toString());
 
         Element f = document.createElementNS(SLD.NAMESPACE, "Format");
         f.appendChild(document.createTextNode("image/png"));

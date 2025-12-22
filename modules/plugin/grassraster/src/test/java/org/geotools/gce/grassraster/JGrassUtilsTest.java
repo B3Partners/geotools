@@ -18,15 +18,15 @@ package org.geotools.gce.grassraster;
 
 import java.awt.image.RenderedImage;
 import java.io.IOException;
-import javax.media.jai.iterator.RectIter;
-import javax.media.jai.iterator.RectIterFactory;
+import org.eclipse.imagen.iterator.RectIter;
+import org.eclipse.imagen.iterator.RectIterFactory;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.referencing.CRS;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Test the {@link JGrassMapEnvironment} class and the created paths.
@@ -58,11 +58,9 @@ public class JGrassUtilsTest {
         double w = 1640710.0;
         double e = 1640920.0;
         CoordinateReferenceSystem crs = CRS.decode("EPSG:32632");
-        GridCoverage2D elevationCoverage =
-                JGrassUtilities.buildCoverage("elevation", mapData, n, s, w, e, crs, true);
+        GridCoverage2D elevationCoverage = JGrassUtilities.buildCoverage("elevation", mapData, n, s, w, e, crs, true);
 
-        RenderedImage scaledJAIImage =
-                JGrassUtilities.scaleJAIImage(5, 4, elevationCoverage.getRenderedImage(), null);
+        RenderedImage scaledJAIImage = JGrassUtilities.scaleJAIImage(5, 4, elevationCoverage.getRenderedImage(), null);
         checkMatrixEqual(scaledJAIImage, mapDataAfter, 0.0);
     }
 

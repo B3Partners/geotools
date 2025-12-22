@@ -26,13 +26,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.geotools.styling.ResourceLocator;
-import org.geotools.styling.StyledLayerDescriptor;
+import org.geotools.api.style.ResourceLocator;
+import org.geotools.api.style.StyledLayerDescriptor;
+import org.geotools.styling.zoom.ZoomContextFinder;
 import org.geotools.ysld.UomMapper;
 
 /**
- * Parses a Yaml/Ysld stream into GeoTools style objects by returning a {@link
- * StyledLayerDescriptor} from the {@link #parse()} method.
+ * Parses a Yaml/Ysld stream into GeoTools style objects by returning a {@link StyledLayerDescriptor} from the
+ * {@link #parse()} method.
  */
 public class YsldParser extends YamlParser {
 
@@ -40,15 +41,13 @@ public class YsldParser extends YamlParser {
 
     UomMapper uomMapper = new UomMapper();
 
-    ResourceLocator locator =
-            uri -> {
-                try {
-                    return new URL(uri);
-                } catch (MalformedURLException e) {
-                    throw new IllegalArgumentException(
-                            String.format("'%s' is not a valid URI", uri), e);
-                }
-            };
+    ResourceLocator locator = uri -> {
+        try {
+            return new URL(uri);
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException("'%s' is not a valid URI".formatted(uri), e);
+        }
+    };
 
     public YsldParser(InputStream ysld) throws IOException {
         super(ysld);
@@ -58,7 +57,7 @@ public class YsldParser extends YamlParser {
         super(reader);
     }
 
-    public void setZoomContextFinders(List<ZoomContextFinder> zCtxtFinders) {
+    public void setZoomContextFinders(List<org.geotools.styling.zoom.ZoomContextFinder> zCtxtFinders) {
         this.zCtxtFinders = zCtxtFinders;
     }
 
@@ -70,10 +69,7 @@ public class YsldParser extends YamlParser {
         this.uomMapper = uomMapper;
     }
 
-    /**
-     * Parse the yaml provided to this instance into a {@link StyledLayerDescriptor} and return the
-     * result.
-     */
+    /** Parse the yaml provided to this instance into a {@link StyledLayerDescriptor} and return the result. */
     public StyledLayerDescriptor parse() throws IOException {
 
         // Hand off to the base class to parse the yaml, and provide a Ysld parser handler that will

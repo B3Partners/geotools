@@ -23,15 +23,15 @@ import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.util.NullProgressListener;
 import org.geotools.feature.visitor.NearestVisitor;
 import org.geotools.filter.FunctionImpl;
 import org.geotools.filter.IllegalFilterException;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
 
 /**
  * Finds the nearest value to the provided one in the attribute domain.
@@ -42,18 +42,14 @@ import org.opengis.filter.expression.Literal;
 public class Collection_NearestFunction extends FunctionImpl {
 
     /** The logger for the filter module. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(Collection_NearestFunction.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(Collection_NearestFunction.class);
 
     SimpleFeatureCollection previousFeatureCollection = null;
 
     Object match = null;
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "Collection_Nearest",
-                    parameter("expression", Expression.class),
-                    parameter("value", Comparable.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "Collection_Nearest", parameter("expression", Expression.class), parameter("value", Comparable.class));
 
     /** Creates a new instance of Collection_MaxFunction */
     public Collection_NearestFunction() {

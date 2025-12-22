@@ -20,17 +20,16 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LinearRing;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_exteriorRing extends FunctionExpressionImpl {
 
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "exteriorRing", LinearRing.class, parameter("geometry", Geometry.class));
+            new FunctionNameImpl("exteriorRing", LinearRing.class, parameter("geometry", Geometry.class));
 
     public FilterFunction_exteriorRing() {
         super(NAME);
@@ -48,6 +47,6 @@ public class FilterFunction_exteriorRing extends FunctionExpressionImpl {
                     "Filter Function problem for function exteriorRing argument #0 - expected type Geometry");
         }
 
-        return (StaticGeometry.exteriorRing(arg0));
+        return StaticGeometry.exteriorRing(arg0);
     }
 }

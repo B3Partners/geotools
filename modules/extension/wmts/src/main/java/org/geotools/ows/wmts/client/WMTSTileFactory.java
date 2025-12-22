@@ -22,6 +22,9 @@ import java.util.logging.Logger;
 import javax.measure.Unit;
 import javax.measure.UnitConverter;
 import javax.measure.quantity.Length;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.cs.AxisDirection;
+import org.geotools.api.referencing.cs.CoordinateSystem;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.ows.wmts.model.TileMatrix;
 import org.geotools.ows.wmts.model.TileMatrixLimits;
@@ -33,9 +36,6 @@ import org.geotools.tile.TileIdentifier;
 import org.geotools.tile.TileService;
 import org.geotools.tile.impl.ZoomLevel;
 import org.geotools.util.logging.Logging;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.cs.AxisDirection;
-import org.opengis.referencing.cs.CoordinateSystem;
 import si.uom.NonSI;
 import si.uom.SI;
 
@@ -59,18 +59,16 @@ public class WMTSTileFactory extends TileFactory {
     /**
      * Return a tile with the proper row and column indexes.
      *
-     * <p>Please notice that the tile indexes are purely computed on the zoom level details, but the
-     * MatrixLimits in a given layer may make the row/col invalid for that layer.
+     * <p>Please notice that the tile indexes are purely computed on the zoom level details, but the MatrixLimits in a
+     * given layer may make the row/col invalid for that layer.
      */
     @Override
-    public Tile findTileAtCoordinate(
-            double lon, double lat, ZoomLevel zoomLevel, TileService service) {
+    public Tile findTileAtCoordinate(double lon, double lat, ZoomLevel zoomLevel, TileService service) {
         return create(service.identifyTileAtCoordinate(lon, lat, zoomLevel), service);
     }
 
     /** Find the first valid Upper Left tile for the current layer. */
-    public Tile findUpperLeftTile(
-            double lon, double lat, WMTSZoomLevel zoomLevel, WMTSTileService service) {
+    public Tile findUpperLeftTile(double lon, double lat, WMTSZoomLevel zoomLevel, WMTSTileService service) {
         // get the tile in the tilematrix
         Tile matrixTile = findTileAtCoordinate(lon, lat, zoomLevel, service);
         return constrainToUpperLeftTile(matrixTile, zoomLevel, service);
@@ -99,11 +97,9 @@ public class WMTSTileFactory extends TileFactory {
     }
 
     /** If the tile is outside the limits, take a valid one which can be used to start a loop on. */
-    public WMTSTile constrainToUpperLeftTile(
-            Tile matrixTile, WMTSZoomLevel zl, WMTSTileService service) {
+    public WMTSTile constrainToUpperLeftTile(Tile matrixTile, WMTSZoomLevel zl, WMTSTileService service) {
 
-        TileMatrixLimits limits =
-                getLimits(service.getMatrixSetLink(), service.getMatrixSet(), zl.getZoomLevel());
+        TileMatrixLimits limits = getLimits(service.getMatrixSetLink(), service.getMatrixSet(), zl.getZoomLevel());
 
         long origxTile = matrixTile.getTileIdentifier().getX();
         long origyTile = matrixTile.getTileIdentifier().getY();
@@ -118,23 +114,19 @@ public class WMTSTileFactory extends TileFactory {
 
         if (origxTile != xTile || origyTile != yTile) {
             if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.fine(
-                        "findUpperLeftTile: constraining tile within limits: ("
-                                + origxTile
-                                + ","
-                                + origyTile
-                                + ") -> ("
-                                + xTile
-                                + ","
-                                + yTile
-                                + ")");
+                LOGGER.fine("findUpperLeftTile: constraining tile within limits: ("
+                        + origxTile
+                        + ","
+                        + origyTile
+                        + ") -> ("
+                        + xTile
+                        + ","
+                        + yTile
+                        + ")");
             }
         }
 
-        return (WMTSTile)
-                create(
-                        new WMTSTileIdentifier((int) xTile, (int) yTile, zl, service.getName()),
-                        service);
+        return (WMTSTile) create(new WMTSTileIdentifier((int) xTile, (int) yTile, zl, service.getName()), service);
     }
 
     @Override
@@ -155,8 +147,7 @@ public class WMTSTileFactory extends TileFactory {
     }
 
     /** */
-    public static ReferencedEnvelope getExtentFromTileName(
-            WMTSTileIdentifier tileIdentifier, TileService service) {
+    public static ReferencedEnvelope getExtentFromTileName(WMTSTileIdentifier tileIdentifier, TileService service) {
         WMTSZoomLevel zl = new WMTSZoomLevel(tileIdentifier.getZ(), (WMTSTileService) service);
         TileMatrix tileMatrix =
                 ((WMTSTileService) service).getMatrixSet().getMatrices().get(zl.getZoomLevel());
@@ -165,8 +156,8 @@ public class WMTSTileFactory extends TileFactory {
         CoordinateSystem coordinateSystem = crs.getCoordinateSystem();
 
         double pixelSpan = getPixelSpan(tileMatrix);
-        double tileSpanY = (tileMatrix.getTileHeight() * pixelSpan);
-        double tileSpanX = (tileMatrix.getTileWidth() * pixelSpan);
+        double tileSpanY = tileMatrix.getTileHeight() * pixelSpan;
+        double tileSpanX = tileMatrix.getTileWidth() * pixelSpan;
 
         double tileMatrixMinX;
         double tileMatrixMaxY;
@@ -195,6 +186,10 @@ public class WMTSTileFactory extends TileFactory {
     }
 
     /** */
+    @SuppressWarnings(
+            "EqualsIncompatibleType") // REVISIT: (if (unit.equals(NonSI.DEGREE_ANGLE))) Calling equals on incompatible
+    // types Unit<Length> and Unit<Angle>. They are incompatible because Length and Angle are incompatible. (see
+    // https://errorprone.info/bugpattern/EqualsIncompatibleType)
     static double getPixelSpan(TileMatrix tileMatrix) {
         CoordinateSystem coordinateSystem = tileMatrix.getCrs().getCoordinateSystem();
         @SuppressWarnings("unchecked")

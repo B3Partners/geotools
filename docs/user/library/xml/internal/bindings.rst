@@ -129,7 +129,7 @@ The default execution behavior is to execute after its "parent" binding has exec
    
    So this begs the final question When would I want to bind to an element or attribute directly?. The most common case would be when a schema contains multiple elements of the same XML schema type, but which map to different Java types.
    
-   A good example of this are the mappings from the filter schema to the gt-opengis filter object model. Consider the following element declarations for various binary comparison operations::
+   A good example of this are the mappings from the filter schema to the gt-api filter object model. Consider the following element declarations for various binary comparison operations::
      
      <xsd:element name="PropertyIsEqualTo" type="ogc:BinaryComparisonOpType" />
      <xsd:element name="PropertyIsNotEqualTo" type="ogc:BinaryComparisonOpType" />
@@ -139,17 +139,17 @@ The default execution behavior is to execute after its "parent" binding has exec
      <xsd:element name="PropertyIsGreaterThanOrEqualTo" type="ogc:BinaryComparisonOpType" />
    
    
-   And the associated gt-opengis java interface mappings:
+   And the associated gt-api java interface mappings:
    
    ===================================== ======================================================
    Element                               Interface
    ===================================== ======================================================
-   ``PropertyIsEqualTo``                 ``org.opengis.filter.PropertyIsEqualTo``
-   ``PropertyIsNotEqualTo``              ``org.opengis.filter.PropertyIsNotEqualTo``
-   ``PropertyIsLessThan``                ``org.opengis.filter.PropertyIsLessThan``
-   ``PropertyIsLessThanOrEqualTo``       ``org.opengis.filter.PropertyIsLessThanOrEqualTo``
-   ``PropertyIsGreaterThan``             ``org.opengis.filter.PropertyIsGreaterThan``
-   ``PropertyIsGreaterThanOrEqualTo``    ``org.opengis.filter.PropertyIsGreaterThanOrEqualTo``
+   ``PropertyIsEqualTo``                 ``org.geotools.api.filter.PropertyIsEqualTo``
+   ``PropertyIsNotEqualTo``              ``org.geotools.api.filter.PropertyIsNotEqualTo``
+   ``PropertyIsLessThan``                ``org.geotools.api.filter.PropertyIsLessThan``
+   ``PropertyIsLessThanOrEqualTo``       ``org.geotools.api.filter.PropertyIsLessThanOrEqualTo``
+   ``PropertyIsGreaterThan``             ``org.geotools.api.filter.PropertyIsGreaterThan``
+   ``PropertyIsGreaterThanOrEqualTo``    ``org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo``
    ===================================== ======================================================
    
    All of the elements are of the same XML type "BinaryComparisonOpType", but each maps to a different Java interface, so it makes sense to have a specific binding for each element, instead of having a single binding for the type do the work.

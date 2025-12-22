@@ -8,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
+import org.geotools.api.feature.type.Name;
 import org.geotools.feature.NameImpl;
 import org.geotools.process.Processors;
 import org.geotools.process.factory.DescribeProcess;
@@ -15,7 +16,6 @@ import org.geotools.process.factory.DescribeResult;
 import org.geotools.util.factory.FactoryIteratorProvider;
 import org.geotools.util.factory.GeoTools;
 import org.junit.Test;
-import org.opengis.feature.type.Name;
 
 public class VectorProcessFactoryTest {
 
@@ -32,18 +32,17 @@ public class VectorProcessFactoryTest {
     public void testAddCustomProcess() {
         assertNull(Processors.createProcess(new NameImpl("vec", "Custom")));
 
-        FactoryIteratorProvider p =
-                new FactoryIteratorProvider() {
-                    @Override
-                    public <T> Iterator<T> iterator(Class<T> category) {
-                        if (category == VectorProcess.class) {
-                            @SuppressWarnings("unchecked")
-                            T t = (T) new CustomProcess();
-                            return Arrays.asList(t).iterator();
-                        }
-                        return null;
-                    }
-                };
+        FactoryIteratorProvider p = new FactoryIteratorProvider() {
+            @Override
+            public <T> Iterator<T> iterator(Class<T> category) {
+                if (category == VectorProcess.class) {
+                    @SuppressWarnings("unchecked")
+                    T t = (T) new CustomProcess();
+                    return Arrays.asList(t).iterator();
+                }
+                return null;
+            }
+        };
         GeoTools.addFactoryIteratorProvider(p);
         try {
             Processors.reset();

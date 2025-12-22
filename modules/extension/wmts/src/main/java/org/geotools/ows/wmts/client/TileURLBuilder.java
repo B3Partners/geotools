@@ -23,8 +23,7 @@ import java.util.logging.Logger;
 import org.geotools.util.logging.Logging;
 
 /**
- * Convenience class that creates a URL from a templateURL by exchanging {TileMatrix}, {TileCol} and
- * {TileRow}
+ * Convenience class that creates a URL from a templateURL by exchanging {TileMatrix}, {TileCol} and {TileRow}
  *
  * @author Roar Brænden
  */
@@ -104,7 +103,7 @@ class TileURLBuilder {
         final StringBuilder builder = new StringBuilder(urlLength);
         try {
             String encodedtileMatrix = URLEncoder.encode(tileMatrix, "UTF-8");
-            parts.forEach((part) -> part.append(builder, encodedtileMatrix, tileCol, tileRow));
+            parts.forEach(part -> part.append(builder, encodedtileMatrix, tileCol, tileRow));
             final String url = builder.toString();
             urlLength = Math.max(urlLength, url.length());
             return url;

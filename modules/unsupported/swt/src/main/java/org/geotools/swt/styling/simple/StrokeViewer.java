@@ -26,7 +26,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.geotools.styling.SLD;
-import org.geotools.styling.Stroke;
+import org.geotools.api.style.Stroke;
 import org.geotools.styling.StyleBuilder;
 import org.geotools.swt.utils.Messages;
 
@@ -74,15 +74,15 @@ public class StrokeViewer {
     private class Listener implements SelectionListener, ModifyListener {
         public void widgetSelected(SelectionEvent e) {
             sync(e);
-        };
+        }
 
         public void widgetDefaultSelected(SelectionEvent e) {
             sync(e);
-        };
+        }
 
         public void modifyText(final ModifyEvent e) {
             sync(AbstractSimpleConfigurator.selectionEvent(e));
-        };
+        }
 
         private void sync(SelectionEvent cause) {
             try {
@@ -117,7 +117,7 @@ public class StrokeViewer {
                 StrokeViewer.this.percent.setEnabled(StrokeViewer.this.enabled);
             }
         }
-    };
+    }
 
     Listener sync = new Listener();
 

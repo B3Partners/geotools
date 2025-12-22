@@ -37,12 +37,11 @@ public class SimpleContentHandler extends XSIElementHandler {
     @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
     public int hashCode() {
-        return LOCALNAME.hashCode() * ((child == null) ? 1 : child.hashCode());
+        return LOCALNAME.hashCode() * (child == null ? 1 : child.hashCode());
     }
 
     /**
-     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String,
-     *     org.xml.sax.Attributes)
+     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
     public void startElement(String namespaceURI, String localName, Attributes atts) {
@@ -62,8 +61,7 @@ public class SimpleContentHandler extends XSIElementHandler {
                 if (child == null) {
                     child = lh;
                 } else {
-                    throw new SAXNotRecognizedException(
-                            getLocalName() + " may only have one child declaration.");
+                    throw new SAXNotRecognizedException(getLocalName() + " may only have one child declaration.");
                 }
 
                 return lh;
@@ -76,8 +74,7 @@ public class SimpleContentHandler extends XSIElementHandler {
                 if (child == null) {
                     child = lh;
                 } else {
-                    throw new SAXNotRecognizedException(
-                            getLocalName() + " may only have one child declaration.");
+                    throw new SAXNotRecognizedException(getLocalName() + " may only have one child declaration.");
                 }
 
                 return lh;

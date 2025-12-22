@@ -16,8 +16,8 @@
  */
 package org.geotools.data.h2;
 
+import org.geotools.api.filter.NativeFilter;
 import org.geotools.jdbc.JDBCNativeFilterOnlineTest;
-import org.opengis.filter.NativeFilter;
 
 public final class H2NativeFilterOnlineTest extends JDBCNativeFilterOnlineTest {
 
@@ -28,7 +28,6 @@ public final class H2NativeFilterOnlineTest extends JDBCNativeFilterOnlineTest {
 
     @Override
     protected NativeFilter getNativeFilter() {
-        return filterFactory.nativeFilter(
-                "(\"type\" = 'temperature' OR \"type\" = 'wind') AND \"value\" > 15");
+        return filterFactory.nativeFilter("(\"type\" = 'temperature' OR \"type\" = 'wind') AND \"value\" > 15");
     }
 }

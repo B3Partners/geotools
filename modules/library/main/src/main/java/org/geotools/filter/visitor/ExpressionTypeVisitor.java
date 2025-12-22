@@ -16,79 +16,66 @@
  */
 package org.geotools.filter.visitor;
 
+import static java.util.Map.entry;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.BinaryExpression;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.Multiply;
+import org.geotools.api.filter.expression.NilExpression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.Subtract;
 import org.geotools.filter.function.FilterFunction_if_then_else;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.BinaryExpression;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.Multiply;
-import org.opengis.filter.expression.NilExpression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.expression.Subtract;
 
 /**
- * Returns the output type of the visited expression, taking into account functions output types,
- * property types, and general promotion rules in arithmetic expressions
+ * Returns the output type of the visited expression, taking into account functions output types, property types, and
+ * general promotion rules in arithmetic expressions
  *
  * @author Andrea Aime - GeoSolutions
  */
 public class ExpressionTypeVisitor implements ExpressionVisitor {
 
-    static final Map<Class<?>, List<Class<?>>> PROMOTIONS =
-            new HashMap<Class<?>, List<Class<?>>>() {
-                {
-                    put(
+    static final Map<Class<?>, List<Class<?>>> PROMOTIONS = Map.ofEntries(
+            entry(
+                    Byte.class,
+                    List.of(
                             Byte.class,
-                            Arrays.asList(
-                                    Byte.class,
-                                    Short.class,
-                                    Integer.class,
-                                    Long.class,
-                                    Float.class,
-                                    Double.class,
-                                    BigInteger.class,
-                                    BigDecimal.class));
-                    put(
                             Short.class,
-                            Arrays.asList(
-                                    Short.class,
-                                    Integer.class,
-                                    Long.class,
-                                    Float.class,
-                                    Double.class,
-                                    BigInteger.class,
-                                    BigDecimal.class));
-                    put(
                             Integer.class,
-                            Arrays.asList(
-                                    Integer.class,
-                                    Long.class,
-                                    Float.class,
-                                    Double.class,
-                                    BigInteger.class,
-                                    BigDecimal.class));
-                    put(
                             Long.class,
-                            Arrays.asList(
-                                    Long.class, Double.class, BigInteger.class, BigDecimal.class));
-                    put(Float.class, Arrays.asList(Float.class, Double.class, BigDecimal.class));
-                    put(Double.class, Arrays.asList(Double.class, BigDecimal.class));
-                    put(BigInteger.class, Arrays.asList(BigInteger.class, BigDecimal.class));
-                }
-            };
+                            Float.class,
+                            Double.class,
+                            BigInteger.class,
+                            BigDecimal.class)),
+            entry(
+                    Short.class,
+                    List.of(
+                            Short.class,
+                            Integer.class,
+                            Long.class,
+                            Float.class,
+                            Double.class,
+                            BigInteger.class,
+                            BigDecimal.class)),
+            entry(
+                    Integer.class,
+                    List.of(Integer.class, Long.class, Float.class, Double.class, BigInteger.class, BigDecimal.class)),
+            entry(Long.class, List.of(Long.class, Double.class, BigInteger.class, BigDecimal.class)),
+            entry(Float.class, List.of(Float.class, Double.class, BigDecimal.class)),
+            entry(Double.class, List.of(Double.class, BigDecimal.class)),
+            entry(BigInteger.class, List.of(BigInteger.class, BigDecimal.class)));
 
     FeatureType featureType;
 
@@ -157,8 +144,8 @@ public class ExpressionTypeVisitor implements ExpressionVisitor {
     }
 
     /**
-     * Traverses the super-classes trying to find a common superclass. Won't consider interfaces
-     * (good enough for the moment, all basic types we handle have a common superclass)
+     * Traverses the super-classes trying to find a common superclass. Won't consider interfaces (good enough for the
+     * moment, all basic types we handle have a common superclass)
      */
     Class<?> getCommonSuperclass(Class<?> c1, Class<?> c2) {
         Class<?> curr = c1;
@@ -182,8 +169,7 @@ public class ExpressionTypeVisitor implements ExpressionVisitor {
     }
 
     /**
-     * Special case for the if then else function, which stores parameters in the second and third
-     * list items
+     * Special case for the if then else function, which stores parameters in the second and third list items
      *
      * @param expression IfThenElse function
      * @return The common ancestor type of the two parameters possibly returned by if then else

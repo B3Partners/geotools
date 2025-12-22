@@ -33,6 +33,7 @@ import java.io.Writer;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -61,6 +62,9 @@ import net.opengis.wfs.WFSCapabilitiesType;
 import org.eclipse.xsd.XSDComplexTypeDefinition;
 import org.eclipse.xsd.XSDElementDeclaration;
 import org.eclipse.xsd.XSDSchema;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.capability.FilterCapabilities;
+import org.geotools.api.filter.capability.Operator;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.util.URLs;
@@ -72,9 +76,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.capability.FilterCapabilities;
-import org.opengis.filter.capability.Operator;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -89,20 +90,19 @@ public class WFSParsingTest {
 
     @Test
     public void testParseEmptyGetCapabilities() throws Exception {
-        String xml =
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                        + "<WFS_Capabilities "
-                        + "  version=\"1.0.0\" "
-                        + "  xmlns=\"http://www.opengis.net/wfs\""
-                        + "  xmlns:ogc=\"http://www.opengis.net/ogc\""
-                        + "  xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
-                        + "  xsi:schemaLocation=\"http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-capabilities.xsd\">"
-                        + "</WFS_Capabilities>";
+        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                + "<WFS_Capabilities "
+                + "  version=\"1.0.0\" "
+                + "  xmlns=\"http://www.opengis.net/wfs\""
+                + "  xmlns:ogc=\"http://www.opengis.net/ogc\""
+                + "  xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
+                + "  xsi:schemaLocation=\"http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-capabilities.xsd\">"
+                + "</WFS_Capabilities>";
 
         configuration = new org.geotools.wfs.v1_0.WFSCapabilitiesConfiguration();
 
         Parser parser = new Parser(configuration);
-        Object parsed = parser.parse(new ByteArrayInputStream(xml.getBytes()));
+        Object parsed = parser.parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
         assertNotNull(parsed);
         assertTrue(parsed.getClass().getName(), parsed instanceof WFSCapabilitiesType);
         WFSCapabilitiesType caps = (WFSCapabilitiesType) parsed;
@@ -116,8 +116,7 @@ public class WFSParsingTest {
         configuration = new org.geotools.wfs.v1_0.WFSCapabilitiesConfiguration();
 
         Parser parser = new Parser(configuration);
-        Object parsed =
-                parser.parse(getClass().getResourceAsStream("geoserver-GetCapabilities.xml"));
+        Object parsed = parser.parse(getClass().getResourceAsStream("geoserver-GetCapabilities.xml"));
 
         assertNotNull(parsed);
         assertTrue(parsed.getClass().getName(), parsed instanceof WFSCapabilitiesType);
@@ -139,8 +138,7 @@ public class WFSParsingTest {
     public void testParseGetCapabilitiesDeegree() throws Exception {
         Parser parser = new Parser(configuration);
         WFSCapabilitiesType caps =
-                (WFSCapabilitiesType)
-                        parser.parse(getClass().getResourceAsStream("deegree-GetCapabilities.xml"));
+                (WFSCapabilitiesType) parser.parse(getClass().getResourceAsStream("deegree-GetCapabilities.xml"));
 
         assertNotNull(caps);
         assertEquals("1.0.0", caps.getVersion());
@@ -213,7 +211,8 @@ public class WFSParsingTest {
                 "http://localhost:8080/geoserver/wfs?request=GetCapabilities",
                 dcp1.getHTTP().getGet().get(0).getHref());
         assertEquals(
-                "http://localhost:8080/geoserver/wfs", dcp2.getHTTP().getPost().get(0).getHref());
+                "http://localhost:8080/geoserver/wfs",
+                dcp2.getHTTP().getPost().get(0).getHref());
 
         assertEquals("DescribeFeatureType", om.getOperation().get(1).getName());
         assertEquals(2, om.getOperation().get(1).getDCP().size());
@@ -272,7 +271,9 @@ public class WFSParsingTest {
         assertNotNull(fc.getSpatialCapabilities());
         assertNotNull(fc.getSpatialCapabilities().getSpatialOperators());
         assertNotNull(fc.getSpatialCapabilities().getSpatialOperators().getOperators());
-        assertEquals(11, fc.getSpatialCapabilities().getSpatialOperators().getOperators().size());
+        assertEquals(
+                11,
+                fc.getSpatialCapabilities().getSpatialOperators().getOperators().size());
 
         assertNotNull(fc.getSpatialCapabilities().getSpatialOperators().getOperator("Disjoint"));
         assertNotNull(fc.getSpatialCapabilities().getSpatialOperators().getOperator("Equals"));
@@ -350,21 +351,14 @@ public class WFSParsingTest {
 
             // http://cite.opengeospatial.org/gmlsf
             // http://localhost:8080/geoserver/wfs?service=WFS&amp;version=1.1.0&amp;request=DescribeFeatureType&amp;typeName=sf:PrimitiveGeoFeature
-            String schemaLocation =
-                    doc.getDocumentElement()
-                            .getAttributeNS(
-                                    "http://www.w3.org/2001/XMLSchema-instance", "schemaLocation");
+            String schemaLocation = doc.getDocumentElement()
+                    .getAttributeNS("http://www.w3.org/2001/XMLSchema-instance", "schemaLocation");
             String absolutePath = URLs.fileToUrl(tmp).toExternalForm();
 
-            schemaLocation =
-                    schemaLocation.replaceAll(
-                            "http://cite.opengeospatial.org/gmlsf .*",
-                            "http://cite.opengeospatial.org/gmlsf " + absolutePath);
+            schemaLocation = schemaLocation.replaceAll(
+                    "http://cite.opengeospatial.org/gmlsf .*", "http://cite.opengeospatial.org/gmlsf " + absolutePath);
             doc.getDocumentElement()
-                    .setAttributeNS(
-                            "http://www.w3.org/2001/XMLSchema-instance",
-                            "schemaLocation",
-                            schemaLocation);
+                    .setAttributeNS("http://www.w3.org/2001/XMLSchema-instance", "schemaLocation", schemaLocation);
 
             tmp = File.createTempFile("geoserver-GetFeature", "xml");
             tmp.deleteOnExit();
@@ -381,8 +375,7 @@ public class WFSParsingTest {
             List featureCollections = fc.getFeature();
             assertEquals(1, featureCollections.size());
 
-            SimpleFeatureCollection featureCollection =
-                    (SimpleFeatureCollection) featureCollections.get(0);
+            SimpleFeatureCollection featureCollection = (SimpleFeatureCollection) featureCollections.get(0);
             assertEquals(5, featureCollection.size());
 
             try (SimpleFeatureIterator features = featureCollection.features()) {
@@ -404,8 +397,7 @@ public class WFSParsingTest {
                 assertTrue(intProperty.getClass().getName(), intProperty instanceof BigInteger);
 
                 assertEquals(BigInteger.valueOf(155), intProperty);
-                assertEquals(
-                        new URI("http://www.opengeospatial.org/"), f.getAttribute("uriProperty"));
+                assertEquals(new URI("http://www.opengeospatial.org/"), f.getAttribute("uriProperty"));
                 assertEquals(Float.valueOf(12765.0f), f.getAttribute("measurand"));
                 assertTrue(f.getAttribute("dateProperty") instanceof Date);
                 assertEquals(BigDecimal.valueOf(5.03), f.getAttribute("decimalProperty"));
@@ -414,8 +406,8 @@ public class WFSParsingTest {
     }
 
     void copy(InputStream in, File to) throws Exception {
-        try (Writer writer = new BufferedWriter(new FileWriter(to))) {
-            InputStreamReader reader = new InputStreamReader(in);
+        try (Writer writer = new BufferedWriter(new FileWriter(to, StandardCharsets.UTF_8))) {
+            InputStreamReader reader = new InputStreamReader(in, StandardCharsets.UTF_8);
 
             int b = -1;
 
@@ -442,8 +434,7 @@ public class WFSParsingTest {
     }
 
     @Test
-    public void testParseTransactionResponse()
-            throws IOException, SAXException, ParserConfigurationException {
+    public void testParseTransactionResponse() throws IOException, SAXException, ParserConfigurationException {
         Parser parser = new Parser(configuration);
         Object parsed = parser.parse(getClass().getResourceAsStream("transactionResponse.xml"));
 

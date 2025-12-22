@@ -19,13 +19,14 @@
  */
 package org.geotools.metadata.iso.citation;
 
+import java.io.Serial;
 import java.util.Collection;
 import java.util.Collections;
 import net.opengis.ows11.AddressType;
+import org.geotools.api.metadata.citation.Address;
+import org.geotools.api.util.InternationalString;
 import org.geotools.metadata.iso.MetadataEntity;
 import org.geotools.util.SimpleInternationalString;
-import org.opengis.metadata.citation.Address;
-import org.opengis.util.InternationalString;
 
 /**
  * Location of the responsible individual or organization.
@@ -37,6 +38,7 @@ import org.opengis.util.InternationalString;
  */
 public class AddressImpl extends MetadataEntity implements Address {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 2278687294173262546L;
 
     /** State, province of the location. */
@@ -73,10 +75,8 @@ public class AddressImpl extends MetadataEntity implements Address {
         if (address.getAdministrativeArea() != null)
             setAdministrativeArea(new SimpleInternationalString(address.getAdministrativeArea()));
         if (address.getCity() != null) setCity(new SimpleInternationalString(address.getCity()));
-        if (address.getCountry() != null)
-            setCountry(new SimpleInternationalString(address.getCountry()));
-        if (address.getDeliveryPoint() != null)
-            setDeliveryPoints(Collections.singleton(address.getDeliveryPoint()));
+        if (address.getCountry() != null) setCountry(new SimpleInternationalString(address.getCountry()));
+        if (address.getDeliveryPoint() != null) setDeliveryPoints(Collections.singleton(address.getDeliveryPoint()));
         if (address.getElectronicMailAddress() != null)
             setElectronicMailAddresses(Collections.singleton(address.getElectronicMailAddress()));
         if (address.getPostalCode() != null) setPostalCode(address.getPostalCode());
@@ -121,7 +121,7 @@ public class AddressImpl extends MetadataEntity implements Address {
     /** Returns the address line for the location (as described in ISO 11180, Annex A). */
     @Override
     public Collection<String> getDeliveryPoints() {
-        return (deliveryPoints = nonNullCollection(deliveryPoints, String.class));
+        return deliveryPoints = nonNullCollection(deliveryPoints, String.class);
     }
 
     /** Set the address line for the location (as described in ISO 11180, Annex A). */
@@ -129,12 +129,10 @@ public class AddressImpl extends MetadataEntity implements Address {
         deliveryPoints = copyCollection(newValues, deliveryPoints, String.class);
     }
 
-    /**
-     * Returns the address of the electronic mailbox of the responsible organization or individual.
-     */
+    /** Returns the address of the electronic mailbox of the responsible organization or individual. */
     @Override
     public Collection<String> getElectronicMailAddresses() {
-        return (electronicMailAddresses = nonNullCollection(electronicMailAddresses, String.class));
+        return electronicMailAddresses = nonNullCollection(electronicMailAddresses, String.class);
     }
 
     /** Set the address of the electronic mailbox of the responsible organization or individual. */

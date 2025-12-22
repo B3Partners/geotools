@@ -20,14 +20,14 @@ package org.geotools.filter.text.ecql;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.filter.text.cql2.CQLException;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.PropertyName;
 
 /**
  * Test for IN Predicate
@@ -153,13 +153,9 @@ public class ECQLINPredicateTest {
 
         Or filterId = (Or) filter;
         List<Filter> filterList = filterId.getChildren();
-        Assert.assertFalse(
-                "one or more expressions in Or filter was expected", filterList.isEmpty());
+        Assert.assertFalse("one or more expressions in Or filter was expected", filterList.isEmpty());
     }
-    /**
-     * This is successful if each PropertyIsEqual filter has on the left hand the same property
-     * name.
-     */
+    /** This is successful if each PropertyIsEqual filter has on the left hand the same property name. */
     protected void assertFilterHasProperty(final Or filter, final String expectedName) {
 
         List<Filter> filterlist = filter.getChildren();

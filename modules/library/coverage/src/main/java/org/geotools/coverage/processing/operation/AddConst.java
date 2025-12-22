@@ -16,29 +16,27 @@
  */
 package org.geotools.coverage.processing.operation;
 
-// JAI dependencies (for javadoc)
+// ImageN dependencies (for javadoc)
 
-import it.geosolutions.jaiext.JAIExt;
-import it.geosolutions.jaiext.algebra.AlgebraDescriptor.Operator;
 import java.awt.image.RenderedImage;
+import java.io.Serial;
 import java.util.Map;
-import javax.media.jai.ParameterBlockJAI;
-import javax.media.jai.operator.AddConstDescriptor;
+import org.eclipse.imagen.ParameterBlockImageN;
+import org.eclipse.imagen.media.algebra.AlgebraDescriptor.Operator;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.OperationJAI;
 import org.geotools.util.NumberRange;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.util.InternationalString;
 
 // Geotools dependencies
 
 /**
- * Adds constants (one for each band) to every sample values of the source coverage. If the number
- * of constants supplied is less than the number of bands of the destination, then the constant from
- * entry 0 is applied to all the bands. Otherwise, a constant from a different entry is applied to
- * each band.
+ * Adds constants (one for each band) to every sample values of the source coverage. If the number of constants supplied
+ * is less than the number of bands of the destination, then the constant from entry 0 is applied to all the bands.
+ * Otherwise, a constant from a different entry is applied to each band.
  *
  * <p><STRONG>Name:</STRONG>&nbsp;<CODE>"AddConst"</CODE><br>
  * <STRONG>JAI operator:</STRONG>&nbsp;<CODE>"{@linkplain AddConstDescriptor AddConst}"</CODE><br>
@@ -71,7 +69,7 @@ import org.opengis.util.InternationalString;
  * @since 2.2
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
- * @see org.geotools.coverage.processing.Operations#add(org.opengis.coverage.Coverage, double[])
+ * @see org.geotools.coverage.processing.Operations#add(org.geotools.api.coverage.Coverage, double[])
  * @see AddConstDescriptor
  * @todo Should operates on {@code sampleToGeophysics} transform when possible. See <A
  *     HREF="http://jira.codehaus.org/browse/GEOT-610">GEOT-610</A>.
@@ -80,11 +78,12 @@ public class AddConst extends OperationJAI {
     private static final String OPERATION_CONST = "operationConst";
     private static final String ADD_CONST = "AddConst";
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 5443686039059774671L;
 
     /** Constructs a default {@code "AddConst"} operation. */
     public AddConst() {
-        super(ADD_CONST, getOperationDescriptor(JAIExt.getOperationName(ADD_CONST)));
+        super(ADD_CONST, getOperationDescriptor(OPERATION_CONST));
     }
 
     @Override
@@ -108,12 +107,10 @@ public class AddConst extends OperationJAI {
     }
 
     @Override
-    protected void handleJAIEXTParams(
-            ParameterBlockJAI parameters, ParameterValueGroup parameters2) {
-        GridCoverage2D source = (GridCoverage2D) parameters2.parameter("source0").getValue();
-        if (JAIExt.isJAIExtOperation(OPERATION_CONST)) {
-            parameters.set(Operator.SUM, 1);
-        }
+    protected void handleJAIEXTParams(ParameterBlockImageN parameters, ParameterValueGroup parameters2) {
+        GridCoverage2D source =
+                (GridCoverage2D) parameters2.parameter("source0").getValue();
+        parameters.set(Operator.SUM, 1);
         handleROINoDataInternal(parameters, source, OPERATION_CONST, 2, 3);
     }
 
@@ -125,7 +122,6 @@ public class AddConst extends OperationJAI {
             MathTransform gridToCRS,
             GridCoverage2D[] sources,
             Parameters parameters) {
-        return handleROINoDataProperties(
-                null, parameters.parameters, sources[0], OPERATION_CONST, 2, 3, 4);
+        return handleROINoDataProperties(null, parameters.parameters, sources[0], OPERATION_CONST, 2, 3, 4);
     }
 }

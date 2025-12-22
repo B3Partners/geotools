@@ -17,13 +17,13 @@
 package org.geotools.filter.v1_0.capabilities;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.capability.ArithmeticOperators;
+import org.geotools.api.filter.capability.ComparisonOperators;
+import org.geotools.api.filter.capability.ScalarCapabilities;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.capability.ArithmeticOperators;
-import org.opengis.filter.capability.ComparisonOperators;
-import org.opengis.filter.capability.ScalarCapabilities;
 
 /**
  * Binding object for the type http://www.opengis.net/ogc:Scalar_CapabilitiesType.
@@ -80,8 +80,7 @@ public class Scalar_CapabilitiesTypeBinding extends AbstractComplexBinding {
     @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         // &lt;xsd:element ref="ogc:Logical_Operators"/&gt;
-        boolean logical =
-                node.hasChild("Logical_Operators") || node.hasChild("LogicalOperators"); /* 1.1 */
+        boolean logical = node.hasChild("Logical_Operators") || node.hasChild("LogicalOperators"); /* 1.1 */
 
         // &lt;xsd:element name="Comparison_Operators" type="ogc:Comparison_OperatorsType"/&gt;
         ComparisonOperators comparison = node.getChildValue(ComparisonOperators.class);
@@ -96,8 +95,7 @@ public class Scalar_CapabilitiesTypeBinding extends AbstractComplexBinding {
     public Object getProperty(Object object, QName name) throws Exception {
         ScalarCapabilities scalar = (ScalarCapabilities) object;
 
-        if ((OGC.Logical_Operators.equals(name)
-                        || org.geotools.filter.v1_1.OGC.LogicalOperators.equals(name))
+        if ((OGC.Logical_Operators.equals(name) || org.geotools.filter.v1_1.OGC.LogicalOperators.equals(name))
                 && scalar.hasLogicalOperators()) {
             return new Object();
         }

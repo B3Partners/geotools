@@ -23,8 +23,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.NativeFilter;
+import org.geotools.api.filter.expression.Function;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.Query;
 import org.geotools.data.store.ContentFeatureCollection;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.data.util.FeatureStreams;
@@ -33,10 +37,6 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.NativeFilter;
-import org.opengis.filter.expression.Function;
 
 public final class PostgisNativeFilterOnlineTest extends JDBCNativeFilterOnlineTest {
 
@@ -56,15 +56,11 @@ public final class PostgisNativeFilterOnlineTest extends JDBCNativeFilterOnlineT
         ContentFeatureSource fs = dataStore.getFeatureSource(tname("gt_jdbc_test_measurements"));
         FilterFactory ff = dataStore.getFilterFactory();
         GeometryFactory gf = dataStore.getGeometryFactory();
-        Function nearest =
-                ff.function(
-                        "pgNearest",
-                        ff.literal(gf.createPoint(new Coordinate(0, 0))),
-                        ff.literal(1));
-        Query q =
-                new Query(tname("gt_jdbc_test_measurements"), ff.equals(nearest, ff.literal(true)));
+        Function nearest = ff.function("pgNearest", ff.literal(gf.createPoint(new Coordinate(0, 0))), ff.literal(1));
+        Query q = new Query(tname("gt_jdbc_test_measurements"), ff.equals(nearest, ff.literal(true)));
         SimpleFeature feature = DataUtilities.first(fs.getFeatures(q));
-        assertEquals("POINT (1 2)", feature.getDefaultGeometryProperty().getValue().toString());
+        assertEquals(
+                "POINT (1 2)", feature.getDefaultGeometryProperty().getValue().toString());
     }
 
     /** Check pgNearest filter with 3 results */
@@ -76,13 +72,8 @@ public final class PostgisNativeFilterOnlineTest extends JDBCNativeFilterOnlineT
         ContentFeatureSource fs = dataStore.getFeatureSource(tname("gt_jdbc_test_measurements"));
         FilterFactory ff = dataStore.getFilterFactory();
         GeometryFactory gf = dataStore.getGeometryFactory();
-        Function nearest =
-                ff.function(
-                        "pgNearest",
-                        ff.literal(gf.createPoint(new Coordinate(0, 0))),
-                        ff.literal(3));
-        Query q =
-                new Query(tname("gt_jdbc_test_measurements"), ff.equals(nearest, ff.literal(true)));
+        Function nearest = ff.function("pgNearest", ff.literal(gf.createPoint(new Coordinate(0, 0))), ff.literal(3));
+        Query q = new Query(tname("gt_jdbc_test_measurements"), ff.equals(nearest, ff.literal(true)));
         ContentFeatureCollection fc = fs.getFeatures(q);
         try (Stream<SimpleFeature> featuresStream = FeatureStreams.toFeatureStream(fc)) {
             List<SimpleFeature> featuresList = featuresStream.collect(Collectors.toList());

@@ -1,16 +1,35 @@
+/*
+ *    GeoTools - The Open Source Java GIS Toolkit
+ *    http://geotools.org
+ *
+ *    (C) 2018, Open Source Geospatial Foundation (OSGeo)
+ *
+ *    This library is free software; you can redistribute it and/or
+ *    modify it under the terms of the GNU Lesser General Public
+ *    License as published by the Free Software Foundation;
+ *    version 2.1 of the License.
+ *
+ *    This library is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    Lesser General Public License for more details.
+ *
+ */
+
 package org.geotools.data.arcgisrest.schema.webservice;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Outline {
 
     /** (Required) */
     @SerializedName("color")
     @Expose
-    private List<Integer> color = new ArrayList<Integer>();
+    private List<Integer> color = new ArrayList<>();
     /** (Required) */
     @SerializedName("width")
     @Expose
@@ -114,13 +133,9 @@ public class Outline {
             return false;
         }
         Outline rhs = ((Outline) other);
-        return (((((this.width == rhs.width)
-                                        || ((this.width != null) && this.width.equals(rhs.width)))
-                                && ((this.style == rhs.style)
-                                        || ((this.style != null) && this.style.equals(rhs.style))))
-                        && ((this.color == rhs.color)
-                                || ((this.color != null) && this.color.equals(rhs.color))))
-                && ((this.type == rhs.type)
-                        || ((this.type != null) && this.type.equals(rhs.type))));
+        return Objects.equals(this.width, rhs.width)
+                && Objects.equals(this.style, rhs.style)
+                && Objects.equals(this.color, rhs.color)
+                && Objects.equals(this.type, rhs.type);
     }
 }

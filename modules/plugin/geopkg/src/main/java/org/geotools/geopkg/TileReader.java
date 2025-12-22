@@ -78,10 +78,7 @@ public class TileReader implements Iterator<Tile>, Closeable {
     }
 
     @Override
-    @SuppressWarnings({
-        "PMD.CloseResource",
-        "PMD.UseTryWithResources"
-    }) // actually closes everything
+    @SuppressWarnings({"PMD.UseTryWithResources"})
     public void close() throws IOException {
         try {
             try {

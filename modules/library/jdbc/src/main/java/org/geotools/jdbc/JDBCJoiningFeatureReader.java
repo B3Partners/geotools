@@ -24,13 +24,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.jdbc.JoinInfo.JoinPart;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
 
 /**
  * Feature reader that wraps multiple feature readers in a join query.
@@ -71,17 +71,10 @@ public class JDBCJoiningFeatureReader extends JDBCFeatureReader {
         init(cx, featureSource, featureType, join, query);
     }
 
-    void init(
-            Connection cx,
-            JDBCFeatureSource featureSource,
-            SimpleFeatureType featureType,
-            JoinInfo join,
-            Query query)
+    void init(Connection cx, JDBCFeatureSource featureSource, SimpleFeatureType featureType, JoinInfo join, Query query)
             throws SQLException, IOException {
         joinReaders = new ArrayList<>();
-        int offset =
-                featureType.getAttributeCount()
-                        + getPrimaryKeyOffset(featureSource, getPrimaryKey(), featureType);
+        int offset = featureType.getAttributeCount() + getPrimaryKeyOffset(featureSource, getPrimaryKey(), featureType);
 
         for (JoinPart part : join.getParts()) {
             SimpleFeatureType ft = part.getQueryFeatureType();
@@ -106,17 +99,14 @@ public class JDBCJoiningFeatureReader extends JDBCFeatureReader {
                         }
                     };
             joinReaders.add(joinReader);
-            offset +=
-                    ft.getAttributeCount()
-                            + getPrimaryKeyOffset(featureSource, joinReader.getPrimaryKey(), ft);
+            offset += ft.getAttributeCount() + getPrimaryKeyOffset(featureSource, joinReader.getPrimaryKey(), ft);
         }
 
         // builder for the final joined feature
         joinFeatureBuilder = new SimpleFeatureBuilder(retype(featureType, join));
     }
 
-    private int getPrimaryKeyOffset(
-            JDBCFeatureSource featureSource, PrimaryKey pk, SimpleFeatureType featureType) {
+    private int getPrimaryKeyOffset(JDBCFeatureSource featureSource, PrimaryKey pk, SimpleFeatureType featureType) {
         // if we are not exposing them, they are all extras
         int pkSize = pk.getColumns().size();
         if (!featureSource.isExposePrimaryKeyColumns()) {
@@ -147,8 +137,7 @@ public class JDBCJoiningFeatureReader extends JDBCFeatureReader {
 
     @Override
     @SuppressWarnings("PMD.CloseResource") // reader closed elsewhere
-    public SimpleFeature next()
-            throws IOException, IllegalArgumentException, NoSuchElementException {
+    public SimpleFeature next() throws IOException, IllegalArgumentException, NoSuchElementException {
         // read the regular feature
         SimpleFeature f = super.next();
 

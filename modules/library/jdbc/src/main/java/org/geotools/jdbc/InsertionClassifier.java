@@ -21,16 +21,15 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
 import org.geotools.util.factory.Hints;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
 
 /**
- * PreparedStatement inserts must be split in function of those criteria: - useExisting - type of
- * the geometries
+ * PreparedStatement inserts must be split in function of those criteria: - useExisting - type of the geometries
  *
  * <p>This class allows to do the splitting.
  */
@@ -85,7 +84,7 @@ class InsertionClassifier {
 
     @Override
     public int hashCode() {
-        int result = (useExisting ? 1 : 0);
+        int result = useExisting ? 1 : 0;
         result = 31 * result + geometryTypes.hashCode();
         return result;
     }

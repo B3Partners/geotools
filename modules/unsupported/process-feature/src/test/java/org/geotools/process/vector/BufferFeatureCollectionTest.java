@@ -17,6 +17,8 @@
  */
 package org.geotools.process.vector;
 
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
@@ -32,15 +34,12 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.impl.CoordinateArraySequence;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.FilterFactory;
 
 public class BufferFeatureCollectionTest {
 
     FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
     @Test
-    @SuppressWarnings("PMD.SimplifiableTestAssertion") // geometry equality
     public void testExecutePoint() throws Exception {
         SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
         tb.setName("featureType");
@@ -68,14 +67,12 @@ public class BufferFeatureCollectionTest {
                 Assert.assertTrue(expected.equals((Geometry) sf.getDefaultGeometry()));
             }
 
-            Assert.assertEquals(
-                    new ReferencedEnvelope(-500, 501, -500, 501, null), output.getBounds());
+            Assert.assertEquals(new ReferencedEnvelope(-500, 501, -500, 501, null), output.getBounds());
             Assert.assertEquals(2, output.size());
         }
     }
 
     @Test
-    @SuppressWarnings("PMD.SimplifiableTestAssertion") // geometry equality
     public void testExecuteLineString() throws Exception {
         SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
         tb.setName("featureType");
@@ -114,14 +111,12 @@ public class BufferFeatureCollectionTest {
                 Assert.assertTrue(expected.equals((Geometry) sf.getDefaultGeometry()));
             }
 
-            Assert.assertEquals(
-                    new ReferencedEnvelope(-500, 507, -500, 507, null), output.getBounds());
+            Assert.assertEquals(new ReferencedEnvelope(-500, 507, -500, 507, null), output.getBounds());
             Assert.assertEquals(5, output.size());
         }
     }
 
     @Test
-    @SuppressWarnings("PMD.SimplifiableTestAssertion") // geometry equality
     public void testExecutePolygon() throws Exception {
         SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
         tb.setName("featureType");
@@ -165,14 +160,12 @@ public class BufferFeatureCollectionTest {
                 Assert.assertTrue(expected.equals((Geometry) sf.getDefaultGeometry()));
             }
 
-            Assert.assertEquals(
-                    new ReferencedEnvelope(-500, 506, -500, 506, null), output.getBounds());
+            Assert.assertEquals(new ReferencedEnvelope(-500, 506, -500, 506, null), output.getBounds());
             Assert.assertEquals(5, output.size());
         }
     }
 
     @Test
-    @SuppressWarnings("PMD.SimplifiableTestAssertion") // geometry equality
     public void testExecuteBufferAttribute() throws Exception {
         SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
         tb.setName("featureType");

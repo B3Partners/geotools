@@ -19,6 +19,8 @@ package org.geotools.data.vpf.readers;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.vpf.VPFFeatureClass;
 import org.geotools.data.vpf.VPFFeatureType;
 import org.geotools.data.vpf.VPFLibrary;
@@ -26,8 +28,6 @@ import org.geotools.data.vpf.file.VPFFile;
 import org.geotools.data.vpf.file.VPFFileFactory;
 import org.geotools.data.vpf.ifc.FileConstants;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * Generates the geometry for a connected node based on attributes already in the feature
@@ -62,26 +62,25 @@ public class ConnectedNodeGeometryFactory extends VPFGeometryFactory implements 
         String tileDirectory = baseDirectory;
 
         // If the primitive table is there, this coverage is not tiled
-        if (!new File(tileDirectory.concat(File.separator).concat(CONNECTED_NODE_PRIMITIVE))
-                .exists()) {
-            Short tileId =
-                    Short.valueOf(Short.parseShort(values.getAttribute("tile_id").toString()));
+        if (!new File(tileDirectory.concat(File.separator).concat(CONNECTED_NODE_PRIMITIVE)).exists()) {
+            Short tileId = Short.valueOf(
+                    Short.parseShort(values.getAttribute("tile_id").toString()));
             VPFLibrary vpf = featureClass.getCoverage().getLibrary();
             String tileName = vpf.getTileMap().get(tileId);
 
             if (tileName != null) {
 
-                tileDirectory =
-                        tileDirectory.concat(File.separator).concat(tileName.toUpperCase()).trim();
+                tileDirectory = tileDirectory
+                        .concat(File.separator)
+                        .concat(tileName.toUpperCase())
+                        .trim();
             }
         }
-        if (!new File(tileDirectory.concat(File.separator).concat(CONNECTED_NODE_PRIMITIVE))
-                .exists()) {
+        if (!new File(tileDirectory.concat(File.separator).concat(CONNECTED_NODE_PRIMITIVE)).exists()) {
             return null;
         }
 
-        String nodeTableName =
-                tileDirectory.concat(File.separator).concat(CONNECTED_NODE_PRIMITIVE);
+        String nodeTableName = tileDirectory.concat(File.separator).concat(CONNECTED_NODE_PRIMITIVE);
         VPFFile nodeFile = VPFFileFactory.getInstance().getFile(nodeTableName);
         SimpleFeature row = nodeFile.getRowFromId("id", nodeId);
         Geometry result = (Geometry) row.getAttribute("coordinate");

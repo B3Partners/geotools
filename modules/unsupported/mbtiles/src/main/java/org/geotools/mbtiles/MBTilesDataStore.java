@@ -23,7 +23,11 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import org.geotools.data.DataSourceException;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.store.ContentDataStore;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
@@ -33,10 +37,6 @@ import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultEngineeringCRS;
 import org.geotools.util.logging.Logging;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class MBTilesDataStore extends ContentDataStore {
 
@@ -52,9 +52,7 @@ public class MBTilesDataStore extends ContentDataStore {
             crs = CRS.decode("EPSG:3857", true);
         } catch (FactoryException e) {
             LOGGER.log(
-                    Level.WARNING,
-                    "Could not initialize web mercator, geometry fields will use an engineering CRS",
-                    e);
+                    Level.WARNING, "Could not initialize web mercator, geometry fields will use an engineering CRS", e);
             crs = DefaultEngineeringCRS.GENERIC_2D;
         }
         DEFAULT_CRS = crs;
@@ -74,8 +72,7 @@ public class MBTilesDataStore extends ContentDataStore {
         this.mbtiles = mbtiles;
         MBTilesMetadata metadata = mbtiles.loadMetaData();
         if (!MBTilesMetadata.t_format.PBF.equals(metadata.getFormat())) {
-            throw new DataSourceException(
-                    "Expected 'PBF' as the format, but found " + metadata.getFormat());
+            throw new DataSourceException("Expected 'PBF' as the format, but found " + metadata.getFormat());
         }
         if (metadata.getJson() == null) {
             throw new DataSourceException(
@@ -115,10 +112,9 @@ public class MBTilesDataStore extends ContentDataStore {
             geometryName = geometryName + i;
         }
         if (attributeNames.contains(geometryName)) {
-            throw new RuntimeException(
-                    "Unexpected, could not find a unique geometry name after appending the first "
-                            + MAX_ATTEMPTS
-                            + " integers to 'the_geom'");
+            throw new RuntimeException("Unexpected, could not find a unique geometry name after appending the first "
+                    + MAX_ATTEMPTS
+                    + " integers to 'the_geom'");
         }
         return geometryName;
     }

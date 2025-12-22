@@ -20,29 +20,29 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.BinaryComparisonOperator;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.filter.visitor.DuplicatingFilterVisitor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.filter.And;
-import org.opengis.filter.BinaryComparisonOperator;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
 
 /**
- * Amends the differences between our in-memory two-valued logic and the database own three-valued
- * logic making sure we treat null values just like in memory (avoiding the third "unknown" status)
+ * Amends the differences between our in-memory two-valued logic and the database own three-valued logic making sure we
+ * treat null values just like in memory (avoiding the third "unknown" status)
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -50,10 +50,7 @@ class NullHandlingVisitor extends DuplicatingFilterVisitor {
 
     private FeatureType schema;
 
-    /**
-     * When providing the schema, the attributes will have null checks added only if they are marked
-     * as nillable
-     */
+    /** When providing the schema, the attributes will have null checks added only if they are marked as nillable */
     public NullHandlingVisitor(FeatureType schema) {
         this.schema = schema;
     }
@@ -67,7 +64,9 @@ class NullHandlingVisitor extends DuplicatingFilterVisitor {
 
     @Override
     public Object visit(PropertyIsNotEqualTo filter, Object extraData) {
-        return guardAgainstNulls((BinaryComparisonOperator) super.visit(filter, extraData));
+        PropertyIsEqualTo equal = ff.equal(filter.getExpression1(), filter.getExpression2(), filter.isMatchingCase());
+        Filter visited = (Filter) visit(equal, extraData);
+        return ff.not(visited);
     }
 
     @Override
@@ -122,8 +121,7 @@ class NullHandlingVisitor extends DuplicatingFilterVisitor {
         int maxListSize = 0;
         for (Filter child : filter.getChildren()) {
             // not equal comparisons are simplified another way
-            if (child instanceof PropertyIsNotEqualTo
-                    || !(child instanceof BinaryComparisonOperator)) {
+            if (child instanceof PropertyIsNotEqualTo || !(child instanceof BinaryComparisonOperator)) {
                 grouped.put(child, child.accept(this, null));
             } else {
                 String name = getComparisonPropertyName((BinaryComparisonOperator) child);
@@ -171,32 +169,27 @@ class NullHandlingVisitor extends DuplicatingFilterVisitor {
     }
 
     /**
-     * Given a binary comparison, returns the property name in case the comparison is between a
-     * property and a literal
+     * Given a binary comparison, returns the property name in case the comparison is between a property and a literal
      */
     private String getComparisonPropertyName(BinaryComparisonOperator filter) {
-        if (filter.getExpression1() instanceof PropertyName
-                && filter.getExpression2() instanceof Literal) {
+        if (filter.getExpression1() instanceof PropertyName && filter.getExpression2() instanceof Literal) {
             return ((PropertyName) filter.getExpression1()).getPropertyName();
-        } else if (filter.getExpression2() instanceof PropertyName
-                && filter.getExpression1() instanceof Literal) {
+        } else if (filter.getExpression2() instanceof PropertyName && filter.getExpression1() instanceof Literal) {
             return ((PropertyName) filter.getExpression2()).getPropertyName();
         }
         return null;
     }
 
     /**
-     * Guards the filter against potential null values in the target property name (if it is a
-     * property name, to start with)
+     * Guards the filter against potential null values in the target property name (if it is a property name, to start
+     * with)
      */
     private Filter guardAgainstNulls(Filter filter, Expression potentialPropertyName) {
-        if (potentialPropertyName instanceof PropertyName) {
-            PropertyName pn = (PropertyName) potentialPropertyName;
+        if (potentialPropertyName instanceof PropertyName pn) {
             String name = pn.getPropertyName();
             if (isNillable(name)) {
                 Not notNull = ff.not(ff.isNull(ff.property(name)));
-                if (filter instanceof And) {
-                    And and = (And) filter;
+                if (filter instanceof And and) {
                     List<Filter> children = new ArrayList<>(and.getChildren());
                     children.add(notNull);
                     return ff.and(children);
@@ -210,9 +203,8 @@ class NullHandlingVisitor extends DuplicatingFilterVisitor {
     }
 
     /**
-     * Returns if a property can contain null values, or not. If we don't have the schema
-     * information, or we don't know the property, we are going to assume the property is nillable
-     * to stay on the safe side
+     * Returns if a property can contain null values, or not. If we don't have the schema information, or we don't know
+     * the property, we are going to assume the property is nillable to stay on the safe side
      */
     private boolean isNillable(String name) {
         if (schema == null) {

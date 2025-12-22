@@ -19,6 +19,8 @@ package org.geotools.process.vector;
 import static org.junit.Assert.assertTrue;
 
 import java.awt.geom.Point2D;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.DefaultFeatureCollection;
@@ -32,25 +34,21 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.impl.PackedCoordinateSequenceFactory;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.util.ProgressListener;
 
 /** @author Martin Davis - OpenGeo */
 public class HeatmapProcessTest {
 
     /**
-     * A test of a simple surface, validating that the process can be invoked and return a
-     * reasonable result in a simple situation.
+     * A test of a simple surface, validating that the process can be invoked and return a reasonable result in a simple
+     * situation.
      *
-     * <p>Test includes data which lies outside the heatmap buffer area, to check that it is
-     * filtered correctly (i.e. does not cause out-of-range errors, and does not affect generated
-     * surface).
+     * <p>Test includes data which lies outside the heatmap buffer area, to check that it is filtered correctly (i.e.
+     * does not cause out-of-range errors, and does not affect generated surface).
      */
     @Test
     public void testSimpleSurface() {
 
-        ReferencedEnvelope bounds =
-                new ReferencedEnvelope(0, 10, 0, 10, DefaultGeographicCRS.WGS84);
+        ReferencedEnvelope bounds = new ReferencedEnvelope(0, 10, 0, 10, DefaultGeographicCRS.WGS84);
         Coordinate[] data = {
             new Coordinate(4, 4),
             new Coordinate(4, 6),
@@ -63,17 +61,16 @@ public class HeatmapProcessTest {
         ProgressListener monitor = null;
 
         HeatmapProcess process = new HeatmapProcess();
-        GridCoverage2D cov =
-                process.execute(
-                        fc, // data
-                        20, // radius
-                        null, // weightAttr
-                        1, // pixelsPerCell
-                        bounds, // outputEnv
-                        100, // outputWidth
-                        100, // outputHeight
-                        monitor // monitor)
-                        );
+        GridCoverage2D cov = process.execute(
+                fc, // data
+                20, // radius
+                null, // weightAttr
+                1, // pixelsPerCell
+                bounds, // outputEnv
+                100, // outputWidth
+                100, // outputHeight
+                monitor // monitor)
+                );
 
         // following tests are checking for an appropriate shape for the surface
 
@@ -84,7 +81,7 @@ public class HeatmapProcessTest {
 
         // peaks are roughly equal
         float peakDiff = Math.abs(center1 - center2);
-        assert (peakDiff < center1 / 10);
+        assert peakDiff < center1 / 10;
 
         // dip between peaks
         assertTrue(midway > center1 / 2);

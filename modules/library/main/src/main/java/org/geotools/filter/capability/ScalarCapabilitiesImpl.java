@@ -16,9 +16,9 @@
  */
 package org.geotools.filter.capability;
 
-import org.opengis.filter.capability.ArithmeticOperators;
-import org.opengis.filter.capability.ComparisonOperators;
-import org.opengis.filter.capability.ScalarCapabilities;
+import org.geotools.api.filter.capability.ArithmeticOperators;
+import org.geotools.api.filter.capability.ComparisonOperators;
+import org.geotools.api.filter.capability.ScalarCapabilities;
 
 /**
  * Implementation of the ScalarCapabilities interface.
@@ -47,15 +47,13 @@ public class ScalarCapabilitiesImpl implements ScalarCapabilities {
     }
 
     public ScalarCapabilitiesImpl(ScalarCapabilities copy) {
-        arithmeticOperators =
-                copy.getArithmeticOperators() == null
-                        ? new ArithmeticOperatorsImpl()
-                        : new ArithmeticOperatorsImpl(copy.getArithmeticOperators());
+        arithmeticOperators = copy.getArithmeticOperators() == null
+                ? new ArithmeticOperatorsImpl()
+                : new ArithmeticOperatorsImpl(copy.getArithmeticOperators());
 
-        comparisonOperators =
-                copy.getComparisonOperators() == null
-                        ? new ComparisonOperatorsImpl()
-                        : new ComparisonOperatorsImpl(copy.getComparisonOperators());
+        comparisonOperators = copy.getComparisonOperators() == null
+                ? new ComparisonOperatorsImpl()
+                : new ComparisonOperatorsImpl(copy.getComparisonOperators());
 
         logicalOperators = copy.hasLogicalOperators();
     }
@@ -87,24 +85,22 @@ public class ScalarCapabilitiesImpl implements ScalarCapabilities {
         return logicalOperators;
     }
 
-    public static ComparisonOperatorsImpl toComparisonOperatorsImpl(
-            ComparisonOperators comparisonOperators) {
+    public static ComparisonOperatorsImpl toComparisonOperatorsImpl(ComparisonOperators comparisonOperators) {
         if (comparisonOperators == null) {
             return new ComparisonOperatorsImpl();
         }
-        if (comparisonOperators instanceof ComparisonOperatorsImpl) {
-            return (ComparisonOperatorsImpl) comparisonOperators;
+        if (comparisonOperators instanceof ComparisonOperatorsImpl impl) {
+            return impl;
         } else {
             return new ComparisonOperatorsImpl(comparisonOperators);
         }
     }
 
-    private static ArithmeticOperatorsImpl toArithmeticOperatorsImpl(
-            ArithmeticOperators arithmeticOperators) {
+    private static ArithmeticOperatorsImpl toArithmeticOperatorsImpl(ArithmeticOperators arithmeticOperators) {
         if (arithmeticOperators == null) {
             return new ArithmeticOperatorsImpl();
-        } else if (arithmeticOperators instanceof ArithmeticOperatorsImpl) {
-            return (ArithmeticOperatorsImpl) arithmeticOperators;
+        } else if (arithmeticOperators instanceof ArithmeticOperatorsImpl impl) {
+            return impl;
         } else {
             return new ArithmeticOperatorsImpl(arithmeticOperators);
         }
@@ -127,12 +123,8 @@ public class ScalarCapabilitiesImpl implements ScalarCapabilities {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result =
-                prime * result
-                        + ((arithmeticOperators == null) ? 0 : arithmeticOperators.hashCode());
-        result =
-                prime * result
-                        + ((comparisonOperators == null) ? 0 : comparisonOperators.hashCode());
+        result = prime * result + (arithmeticOperators == null ? 0 : arithmeticOperators.hashCode());
+        result = prime * result + (comparisonOperators == null ? 0 : comparisonOperators.hashCode());
         result = prime * result + (logicalOperators ? 1231 : 1237);
         return result;
     }

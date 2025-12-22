@@ -19,10 +19,10 @@ package org.geotools.filter.v1_1.capabilities;
 import static org.junit.Assert.assertEquals;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.capability.GeometryOperand;
 import org.geotools.filter.v1_1.OGC;
 import org.geotools.xsd.Binding;
 import org.junit.Test;
-import org.opengis.filter.capability.GeometryOperand;
 import org.w3c.dom.Document;
 
 /**
@@ -84,10 +84,7 @@ public class GeometryOperandTypeBindingTest extends OGCTestSupport {
     @Test
     public void testEncode() throws Exception {
         Document dom =
-                encode(
-                        GeometryOperand.Envelope,
-                        new QName(OGC.NAMESPACE, "GeometryOperand"),
-                        OGC.GeometryOperandType);
+                encode(GeometryOperand.Envelope, new QName(OGC.NAMESPACE, "GeometryOperand"), OGC.GeometryOperandType);
         assertEquals("gml:Envelope", dom.getDocumentElement().getFirstChild().getNodeValue());
     }
 }

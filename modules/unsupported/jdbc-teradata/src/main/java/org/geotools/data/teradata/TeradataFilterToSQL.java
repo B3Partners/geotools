@@ -20,6 +20,21 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.DistanceBufferOperator;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
 import org.geotools.filter.FilterCapabilities;
 import org.geotools.jdbc.PreparedFilterToSQL;
 import org.geotools.jdbc.PrimaryKeyColumn;
@@ -27,21 +42,6 @@ import org.geotools.jdbc.SQLDialect;
 import org.geotools.util.logging.Logging;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.DistanceBufferOperator;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
 
 public class TeradataFilterToSQL extends PreparedFilterToSQL {
 
@@ -93,15 +93,10 @@ public class TeradataFilterToSQL extends PreparedFilterToSQL {
 
     @Override
     protected Object visitBinarySpatialOperator(
-            BinarySpatialOperator filter,
-            PropertyName property,
-            Literal geometry,
-            boolean swapped,
-            Object extraData) {
+            BinarySpatialOperator filter, PropertyName property, Literal geometry, boolean swapped, Object extraData) {
         try {
-            if (filter instanceof DistanceBufferOperator) {
-                visitDistanceSpatialOperator(
-                        (DistanceBufferOperator) filter, property, geometry, swapped, extraData);
+            if (filter instanceof DistanceBufferOperator operator) {
+                visitDistanceSpatialOperator(operator, property, geometry, swapped, extraData);
             } else {
                 visitComparisonSpatialOperator(filter, property, geometry, swapped, extraData);
             }
@@ -112,14 +107,10 @@ public class TeradataFilterToSQL extends PreparedFilterToSQL {
     }
 
     void visitDistanceSpatialOperator(
-            DistanceBufferOperator filter,
-            PropertyName property,
-            Literal geometry,
-            boolean swapped,
-            Object extraData)
+            DistanceBufferOperator filter, PropertyName property, Literal geometry, boolean swapped, Object extraData)
             throws IOException {
 
-        if ((filter instanceof DWithin && !swapped) || (filter instanceof Beyond && swapped)) {
+        if (filter instanceof DWithin && !swapped || filter instanceof Beyond && swapped) {
             encodeIndexPredicate(property, geometry);
 
             property.accept(this, extraData);
@@ -129,7 +120,7 @@ public class TeradataFilterToSQL extends PreparedFilterToSQL {
             out.write(Double.toString(filter.getDistance()));
             out.write(")");
         }
-        if ((filter instanceof DWithin && swapped) || (filter instanceof Beyond && !swapped)) {
+        if (filter instanceof DWithin && swapped || filter instanceof Beyond && !swapped) {
             encodeIndexPredicate(property, geometry);
 
             property.accept(this, extraData);
@@ -141,11 +132,7 @@ public class TeradataFilterToSQL extends PreparedFilterToSQL {
     }
 
     void visitComparisonSpatialOperator(
-            BinarySpatialOperator filter,
-            PropertyName property,
-            Literal geometry,
-            boolean swapped,
-            Object extraData)
+            BinarySpatialOperator filter, PropertyName property, Literal geometry, boolean swapped, Object extraData)
             throws IOException {
 
         if (!(filter instanceof Disjoint)) {
@@ -196,26 +183,22 @@ public class TeradataFilterToSQL extends PreparedFilterToSQL {
         TessellationInfo tinfo =
                 (TessellationInfo) currentGeometry.getUserData().get(TessellationInfo.KEY);
         if (tinfo == null) {
-            LOGGER.info(
-                    "Tessellation info not available for "
-                            + currentGeometry.getLocalName()
-                            + ", unable to perform spatially indexed query");
+            LOGGER.info("Tessellation info not available for "
+                    + currentGeometry.getLocalName()
+                    + ", unable to perform spatially indexed query");
             return false;
         }
 
         if (tinfo.getIndexTableName() == null) {
-            LOGGER.info(
-                    "Tessellation info available for "
-                            + currentGeometry.getLocalName()
-                            + ", but index table does not exist, unable to perform spatially index query.");
+            LOGGER.info("Tessellation info available for "
+                    + currentGeometry.getLocalName()
+                    + ", but index table does not exist, unable to perform spatially index query.");
             return false;
         }
 
         if (primaryKey == null || primaryKey.getColumns().isEmpty()) {
             LOGGER.info(
-                    "No primary key for "
-                            + featureType.getTypeName()
-                            + ", unable to perform spatially indexed query");
+                    "No primary key for " + featureType.getTypeName() + ", unable to perform spatially indexed query");
             return false;
         }
 
@@ -228,12 +211,11 @@ public class TeradataFilterToSQL extends PreparedFilterToSQL {
 
         if (!uenv.contains(oenv)) {
             if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.fine(
-                        "Bounds:"
-                                + oenv
-                                + " falls outside of univerise bounds: "
-                                + uenv
-                                + ". Unable to perform index query.");
+                LOGGER.fine("Bounds:"
+                        + oenv
+                        + " falls outside of univerise bounds: "
+                        + uenv
+                        + ". Unable to perform index query.");
             }
             return false;
         }
@@ -245,14 +227,13 @@ public class TeradataFilterToSQL extends PreparedFilterToSQL {
         double coverage = uenv.intersection(oenv).getArea() / uenv.getArea();
         if (coverage > 0.5) {
             if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.fine(
-                        "Bounds:"
-                                + oenv
-                                + " covers "
-                                + (coverage * 100)
-                                + " of universe bounds: "
-                                + uenv
-                                + ". Forgoing index query.");
+                LOGGER.fine("Bounds:"
+                        + oenv
+                        + " covers "
+                        + coverage * 100
+                        + " of universe bounds: "
+                        + uenv
+                        + ". Forgoing index query.");
             }
             return false;
         }
@@ -282,9 +263,8 @@ public class TeradataFilterToSQL extends PreparedFilterToSQL {
         out.write(escapeName(tinfo.getIndexTableName()));
         out.write(" t, TABLE (SYSSPATIAL.tessellate_search(1,");
 
-        out.write(
-                String.format(
-                        "%f, %f, %f, %f, %f, %f, %f, %f, %d, %d, %d, %f, %d)) AS i ",
+        out.write("%f, %f, %f, %f, %f, %f, %f, %f, %d, %d, %d, %f, %d)) AS i "
+                .formatted(
                         oenv.getMinX(),
                         oenv.getMinY(),
                         oenv.getMaxX(),

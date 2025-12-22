@@ -16,11 +16,12 @@
  */
 package org.geotools.process.raster;
 
-import it.geosolutions.jaiext.range.Range;
 import java.awt.RenderingHints;
 import java.awt.image.RenderedImage;
-import javax.media.jai.RenderedOp;
-import javax.media.jai.operator.ExtremaDescriptor;
+import java.text.MessageFormat;
+import org.eclipse.imagen.media.range.Range;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.CoverageProcessor;
 import org.geotools.image.ImageWorker;
@@ -30,9 +31,6 @@ import org.geotools.process.ProcessException;
 import org.geotools.process.factory.DescribeParameter;
 import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
-import org.geotools.renderer.i18n.Errors;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.util.ProgressListener;
 
 /**
  * A transparency holes-dashes filling process
@@ -46,8 +44,7 @@ public class TransparencyFillProcess implements RasterProcess {
 
     @DescribeResult(name = "result", description = "The processed coverage")
     public GridCoverage2D execute(
-            @DescribeParameter(name = "data", description = "Input coverage")
-                    GridCoverage2D coverage,
+            @DescribeParameter(name = "data", description = "Input coverage") GridCoverage2D coverage,
             @DescribeParameter(
                             name = "width",
                             description = "Width inside which searching for nearest pixel value",
@@ -60,7 +57,7 @@ public class TransparencyFillProcess implements RasterProcess {
             throws ProcessException {
 
         if (coverage == null) {
-            throw new ProcessException(Errors.format(ErrorKeys.NULL_ARGUMENT_$1, "coverage"));
+            throw new ProcessException(MessageFormat.format(ErrorKeys.NULL_ARGUMENT_$1, "coverage"));
         }
         RenderedImage ri = coverage.getRenderedImage();
         boolean hasTransparency = false;
@@ -83,10 +80,9 @@ public class TransparencyFillProcess implements RasterProcess {
         if (numBands == 4 || numBands == 2) {
             // Looking for statistics on alpha channel
             renderingHints = ImageUtilities.getRenderingHints(ri);
-            RenderedOp extremaOp =
-                    ExtremaDescriptor.create(ri, null, 1, 1, false, 1, renderingHints);
-            double[][] extrema = (double[][]) extremaOp.getProperty("Extrema");
-            double[] mins = extrema[0];
+            ImageWorker worker = new ImageWorker(ri);
+            worker.setRenderingHints(renderingHints);
+            double[] mins = worker.getMinimums();
             // check if alpha is 255 on every pixel (fully opaque)
             hasTransparency = !(mins[mins.length - 1] == 255); // fully opaque
         }

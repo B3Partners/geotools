@@ -22,8 +22,11 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.Query;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.Query;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.DirectLayer;
@@ -33,9 +36,6 @@ import org.geotools.map.MapContent;
 import org.geotools.map.MapLayerListener;
 import org.geotools.map.MapViewport;
 import org.geotools.renderer.style.SLDStyleFactory;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyleFactory;
 
 /**
  * Data structure holding a MapContent that has its own compositing base
@@ -52,10 +52,9 @@ class CompositingGroup {
         List<Layer> layers = new ArrayList<>();
         for (Layer layer : mc.layers()) {
             Style style = layer.getStyle();
-            if (layer instanceof DirectLayer) {
-                layers.add(new WrappingDirectLayer((DirectLayer) layer));
-            } else if (layer instanceof ZGroupLayer) {
-                ZGroupLayer zLayer = (ZGroupLayer) layer;
+            if (layer instanceof DirectLayer directLayer) {
+                layers.add(new WrappingDirectLayer(directLayer));
+            } else if (layer instanceof ZGroupLayer zLayer) {
                 if (zLayer.isCompositingBase()) {
                     addToCompositingMapContents(graphics, screenSize, result, layers);
                 }
@@ -93,10 +92,7 @@ class CompositingGroup {
     }
 
     private static void addToCompositingMapContents(
-            Graphics2D graphics,
-            Rectangle screenSize,
-            List<CompositingGroup> compositingContents,
-            List<Layer> layers) {
+            Graphics2D graphics, Rectangle screenSize, List<CompositingGroup> compositingContents, List<Layer> layers) {
         Composite composite = getComposite(layers);
         addToCompositingMapContents(graphics, screenSize, compositingContents, layers, composite);
     }
@@ -122,8 +118,8 @@ class CompositingGroup {
 
     private static Composite getComposite(List<Layer> layers) {
         Layer layer = layers.get(0);
-        if (layer instanceof ZGroupLayer) {
-            return ((ZGroupLayer) layer).getComposite();
+        if (layer instanceof ZGroupLayer groupLayer) {
+            return groupLayer.getComposite();
         }
         Style styles = layer.getStyle();
         List<FeatureTypeStyle> featureTypeStyles = styles.featureTypeStyles();
@@ -177,7 +173,7 @@ class CompositingGroup {
     }
 
     static boolean isCompositingBase(FeatureTypeStyle fts) {
-        return "true".equalsIgnoreCase(fts.getOptions().get(FeatureTypeStyle.COMPOSITE_BASE));
+        return "true".equalsIgnoreCase(fts.getOptions().get(org.geotools.api.style.FeatureTypeStyle.COMPOSITE_BASE));
     }
 
     Graphics2D graphics;
@@ -206,8 +202,7 @@ class CompositingGroup {
     }
 
     /**
-     * Wraps direct layer so that dispose does not get called when wrapping inside a compositing
-     * group
+     * Wraps direct layer so that dispose does not get called when wrapping inside a compositing group
      *
      * @author Andrea Aime
      */

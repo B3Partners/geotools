@@ -24,6 +24,7 @@ import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.filter.function.FilterFunction_offset.OffsetOrdinateFilter;
@@ -36,17 +37,11 @@ import org.locationtech.jts.geom.GeometryComponentFilter;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.filter.capability.FunctionName;
 
-public class FilterFunction_isometric extends FunctionExpressionImpl
-        implements GeometryTransformation {
+public class FilterFunction_isometric extends FunctionExpressionImpl implements GeometryTransformation {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "isometric",
-                    Geometry.class,
-                    parameter("geometry", Geometry.class),
-                    parameter("extrusion", Double.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "isometric", Geometry.class, parameter("geometry", Geometry.class), parameter("extrusion", Double.class));
 
     public FilterFunction_isometric() {
         super(NAME);
@@ -64,19 +59,18 @@ public class FilterFunction_isometric extends FunctionExpressionImpl
             List<Polygon> faces = extractor.getFaces(geom.getFactory(), extrusion);
 
             // add the "cap"
-            if (geom instanceof Polygon) {
+            if (geom instanceof Polygon polygon1) {
                 Polygon offseted = (Polygon) geom.copy();
                 offseted.apply(new OffsetOrdinateFilter(0, extrusion));
-                faces.add(0, (Polygon) geom);
+                faces.add(0, polygon1);
                 faces.add(offseted);
-            } else if (geom instanceof GeometryCollection) {
-                GeometryCollection gc = (GeometryCollection) geom;
+            } else if (geom instanceof GeometryCollection gc) {
                 for (int i = 0; i < gc.getNumGeometries(); i++) {
                     Geometry g = gc.getGeometryN(i);
-                    if (g instanceof Polygon) {
+                    if (g instanceof Polygon polygon) {
                         Polygon offseted = (Polygon) g.copy();
                         offseted.apply(new OffsetOrdinateFilter(0, extrusion));
-                        faces.add(0, (Polygon) g);
+                        faces.add(0, polygon);
                         faces.add(offseted);
                     }
                 }
@@ -91,9 +85,8 @@ public class FilterFunction_isometric extends FunctionExpressionImpl
     }
 
     /**
-     * Returns an translated rendering envelope if the offsets are not using feature attributes. If
-     * the offsets are feature dependent the user will have to expand the rendering area via the
-     * renderer buffer parameter
+     * Returns an translated rendering envelope if the offsets are not using feature attributes. If the offsets are
+     * feature dependent the user will have to expand the rendering area via the renderer buffer parameter
      */
     @Override
     public ReferencedEnvelope invert(ReferencedEnvelope renderingEnvelope) {
@@ -114,8 +107,8 @@ public class FilterFunction_isometric extends FunctionExpressionImpl
 
         @Override
         public void filter(Geometry geom) {
-            if (geom instanceof LineString) {
-                extractSegments(((LineString) geom).getCoordinateSequence());
+            if (geom instanceof LineString string) {
+                extractSegments(string.getCoordinateSequence());
             }
         }
 

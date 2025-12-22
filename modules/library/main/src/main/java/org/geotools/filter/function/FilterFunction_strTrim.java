@@ -20,15 +20,14 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_strTrim extends FunctionExpressionImpl {
 
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "strTrim", parameter("trim", String.class), parameter("string", String.class));
+            new FunctionNameImpl("strTrim", parameter("trim", String.class), parameter("string", String.class));
 
     public FilterFunction_strTrim() {
         super(NAME);
@@ -49,6 +48,6 @@ public class FilterFunction_strTrim extends FunctionExpressionImpl {
                     "Filter Function problem for function strTrim argument #0 - expected type String");
         }
 
-        return (StaticGeometry.strTrim(arg0));
+        return StaticGeometry.strTrim(arg0);
     }
 }

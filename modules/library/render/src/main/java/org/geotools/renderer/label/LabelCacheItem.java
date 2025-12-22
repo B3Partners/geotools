@@ -21,10 +21,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.geotools.api.style.TextSymbolizer;
 import org.geotools.geometry.jts.LiteShape2;
 import org.geotools.renderer.style.TextStyle2D;
-import org.geotools.styling.TextSymbolizer;
-import org.geotools.styling.TextSymbolizer.PolygonAlignOptions;
 import org.locationtech.jts.geom.Geometry;
 
 /**
@@ -41,7 +40,7 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
         NONE,
         STRETCH,
         PROPORTIONAL
-    };
+    }
 
     TextStyle2D textStyle;
 
@@ -81,7 +80,7 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
 
     double goodnessOfFit = 0;
 
-    PolygonAlignOptions polygonAlign = PolygonAlignOptions.NONE;
+    TextSymbolizer.PolygonAlignOptions polygonAlign = org.geotools.api.style.TextSymbolizer.PolygonAlignOptions.NONE;
 
     GraphicResize graphicsResize = GraphicResize.NONE;
 
@@ -106,8 +105,8 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
     TextSymbolizer.GraphicPlacement graphicPlacement;
 
     /**
-     * A value between 0 and 1 representing the portion of the label that overlaps with the geometry
-     * (atm used only for polygons)
+     * A value between 0 and 1 representing the portion of the label that overlaps with the geometry (atm used only for
+     * polygons)
      */
     public void setGoodnessOfFit(double goodnessOfFit) {
         this.goodnessOfFit = goodnessOfFit;
@@ -141,11 +140,7 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
 
     /** Construct <code>LabelCacheItem</code>. */
     public LabelCacheItem(
-            String layerId,
-            TextStyle2D textStyle,
-            LiteShape2 shape,
-            String label,
-            TextSymbolizer symbolizer) {
+            String layerId, TextStyle2D textStyle, LiteShape2 shape, String label, TextSymbolizer symbolizer) {
         this.textStyle = textStyle;
         this.geoms.add(shape.getGeometry());
         this.label = label;
@@ -211,8 +206,8 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
     }
 
     /**
-     * Max amount of pixels the label will be moved around trying to find a non conflicting location
-     * (how and if the moving will be done is geometry type dependent)
+     * Max amount of pixels the label will be moved around trying to find a non conflicting location (how and if the
+     * moving will be done is geometry type dependent)
      */
     public int getMaxDisplacement() {
         return maxDisplacement;
@@ -223,8 +218,8 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
     }
 
     /**
-     * defines the actual angle towards which displacement of label will take place (applies only in
-     * polygon or point features)
+     * defines the actual angle towards which displacement of label will take place (applies only in polygon or point
+     * features)
      */
     public int[] getDisplacementAngles() {
         return displacementAngles;
@@ -288,8 +283,8 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
     }
 
     /**
-     * Max angle between two subsequence characters in a curved label, in degrees. Good visual
-     * results are obtained with an angle of less than 25 degrees.
+     * Max angle between two subsequence characters in a curved label, in degrees. Good visual results are obtained with
+     * an angle of less than 25 degrees.
      */
     public double getMaxAngleDelta() {
         return maxAngleDelta;
@@ -299,9 +294,7 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
         this.maxAngleDelta = maxAngleDelta;
     }
 
-    /**
-     * Automatically wraps long labels when the label width, in pixels, exceeds the autowrap length
-     */
+    /** Automatically wraps long labels when the label width, in pixels, exceeds the autowrap length */
     public int getAutoWrap() {
         return autoWrap;
     }
@@ -321,8 +314,8 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
     }
 
     /**
-     * If enabled, text will be forced to follow a left to right alignement (that makes it readable)
-     * no matter what the natural orientation of the line is
+     * If enabled, text will be forced to follow a left to right alignement (that makes it readable) no matter what the
+     * natural orientation of the line is
      */
     public boolean isForceLeftToRightEnabled() {
         return forceLeftToRightEnabled;
@@ -338,8 +331,8 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
     }
 
     /**
-     * Sets conflict resolution for this label. When on, this label outline/bbox will be stored in
-     * the conflict resolution map and will prevent every other label to be drawn in the same area
+     * Sets conflict resolution for this label. When on, this label outline/bbox will be stored in the conflict
+     * resolution map and will prevent every other label to be drawn in the same area
      */
     public void setConflictResolutionEnabled(boolean conflictResolutionEnabled) {
         this.conflictResolutionEnabled = conflictResolutionEnabled;
@@ -361,11 +354,11 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
         this.graphicMargin = graphicMargin;
     }
 
-    void setPolygonAlign(PolygonAlignOptions polygonAlign) {
+    void setPolygonAlign(TextSymbolizer.PolygonAlignOptions polygonAlign) {
         this.polygonAlign = polygonAlign;
     }
 
-    PolygonAlignOptions getPolygonAlign() {
+    TextSymbolizer.PolygonAlignOptions getPolygonAlign() {
         return polygonAlign;
     }
 
@@ -410,7 +403,9 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
     }
 
     public TextSymbolizer.GraphicPlacement getGraphicPlacement() {
-        return graphicPlacement == null ? TextSymbolizer.GraphicPlacement.LABEL : graphicPlacement;
+        return graphicPlacement == null
+                ? org.geotools.api.style.TextSymbolizer.GraphicPlacement.LABEL
+                : graphicPlacement;
     }
 
     public void setGraphicPlacement(TextSymbolizer.GraphicPlacement graphicPlacement) {
@@ -421,8 +416,8 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((label == null) ? 0 : label.hashCode());
-        result = prime * result + ((symbolizer == null) ? 0 : System.identityHashCode(symbolizer));
+        result = prime * result + (label == null ? 0 : label.hashCode());
+        result = prime * result + (symbolizer == null ? 0 : System.identityHashCode(symbolizer));
         return result;
     }
 

@@ -19,18 +19,15 @@ package org.geotools.mbstyle.function;
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
 import java.util.Collection;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 /** Returns the size of a given list */
 public class ListSizeFunction extends FunctionExpressionImpl {
 
     public static final FunctionName NAME =
-            new FunctionNameImpl(
-                    "listSize",
-                    parameter("list", Collection.class),
-                    parameter("size", Integer.class));
+            new FunctionNameImpl("listSize", parameter("list", Collection.class), parameter("size", Integer.class));
 
     public ListSizeFunction() {
         super(NAME);

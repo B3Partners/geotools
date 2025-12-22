@@ -24,6 +24,7 @@ import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationConfig;
+import com.fasterxml.jackson.databind.cfg.CacheProvider;
 import com.fasterxml.jackson.databind.ser.DefaultSerializerProvider;
 import com.fasterxml.jackson.databind.ser.SerializerFactory;
 import java.io.BufferedOutputStream;
@@ -31,6 +32,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
+import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.Collection;
 import java.util.Date;
@@ -39,6 +41,17 @@ import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.feature.type.PropertyType;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.geometry.jts.JTS;
@@ -50,17 +63,6 @@ import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.feature.type.PropertyType;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * Wrapper to handle writing GeoJSON FeatureCollections
@@ -80,7 +82,7 @@ public class GeoJSONWriter implements AutoCloseable {
             FastDateFormat.getInstance(DEFAULT_DATE_FORMAT, DEFAULT_TIME_ZONE);
 
     /** Maximum number of decimal places (see https://xkcd.com/2170/ before changing it) */
-    private int maxDecimals = 4;
+    private int maxDecimals = JtsModule.DEFAULT_MAX_DECIMALS;
 
     private OutputStream out;
 
@@ -262,21 +264,25 @@ public class GeoJSONWriter implements AutoCloseable {
         } else if (binding == Boolean.class) {
             g.writeBoolean((boolean) value);
         } else if (Date.class.isAssignableFrom(binding)) {
-            g.writeString(DEFAULT_DATE_FORMATTER.format(value));
-        } else if (Object.class.isAssignableFrom(binding) && value instanceof JsonNode) {
-            ((JsonNode) value)
-                    .serialize(
-                            g,
-                            new DefaultSerializerProvider(
-                                    mapper.getSerializerProvider(),
-                                    mapper.getSerializationConfig(),
-                                    mapper.getSerializerFactory()) {
-                                @Override
-                                public DefaultSerializerProvider createInstance(
-                                        SerializationConfig config, SerializerFactory jsf) {
-                                    throw new UnsupportedOperationException();
-                                }
-                            });
+            g.writeString(this.dateFormatter.format(value));
+        } else if (Object.class.isAssignableFrom(binding) && value instanceof JsonNode node) {
+            node.serialize(
+                    g,
+                    new DefaultSerializerProvider(
+                            mapper.getSerializerProvider(),
+                            mapper.getSerializationConfig(),
+                            mapper.getSerializerFactory()) {
+                        @Override
+                        public DefaultSerializerProvider createInstance(
+                                SerializationConfig config, SerializerFactory jsf) {
+                            throw new UnsupportedOperationException();
+                        }
+
+                        @Override
+                        public DefaultSerializerProvider withCaches(CacheProvider cacheProvider) {
+                            throw new UnsupportedOperationException();
+                        }
+                    });
         } else if (binding.isArray()) {
             g.writeStartArray();
             int length = Array.getLength(value);
@@ -286,7 +292,7 @@ public class GeoJSONWriter implements AutoCloseable {
             g.writeEndArray();
         } else if (Collection.class.isAssignableFrom(binding)) {
             g.writeStartArray();
-            for (Object v : ((Collection) value)) {
+            for (Object v : (Collection) value) {
                 writeValue(g, v, v == null ? null : v.getClass());
             }
             g.writeEndArray();
@@ -305,10 +311,7 @@ public class GeoJSONWriter implements AutoCloseable {
             return collection;
         }
         CoordinateReferenceSystem inCRS =
-                currentFeature
-                        .getDefaultGeometryProperty()
-                        .getDescriptor()
-                        .getCoordinateReferenceSystem();
+                currentFeature.getDefaultGeometryProperty().getDescriptor().getCoordinateReferenceSystem();
         if (transform == null || inCRS != lastCRS) {
             lastCRS = inCRS;
             try {
@@ -335,9 +338,7 @@ public class GeoJSONWriter implements AutoCloseable {
     private void writeBbox(JsonGenerator g, Geometry defaultGeometry) throws IOException {
         g.writeFieldName("bbox");
         final Envelope envelope = defaultGeometry.getEnvelopeInternal();
-        double[] coords = {
-            envelope.getMinX(), envelope.getMinY(), envelope.getMaxX(), envelope.getMaxY()
-        };
+        double[] coords = {envelope.getMinX(), envelope.getMinY(), envelope.getMaxX(), envelope.getMaxY()};
         formatter.setMaximumFractionDigits(maxDecimals);
         g.writeStartArray();
         for (double c : coords) {
@@ -376,8 +377,15 @@ public class GeoJSONWriter implements AutoCloseable {
 
     /** Utility encoding a single JTS geometry in GeoJSON, and returning it as a string */
     public static String toGeoJSON(Geometry geometry) {
+        return toGeoJSON(geometry, JtsModule.DEFAULT_MAX_DECIMALS);
+    }
+
+    /**
+     * Utility encoding a single JTS geometry in GeoJSON with configurable max decimals, and returning it as a string
+     */
+    public static String toGeoJSON(Geometry geometry, int maxDecimals) {
         ObjectMapper lMapper = new ObjectMapper();
-        lMapper.registerModule(new JtsModule());
+        lMapper.registerModule(new JtsModule(maxDecimals));
         try {
             return lMapper.writeValueAsString(geometry);
         } catch (JsonProcessingException e) {
@@ -396,7 +404,7 @@ public class GeoJSONWriter implements AutoCloseable {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return new String(out.toByteArray());
+        return new String(out.toByteArray(), StandardCharsets.UTF_8);
     }
 
     /** Utility encoding a @link {@link SimpleFeatureCollection}}, and returning it as a string */
@@ -411,12 +419,9 @@ public class GeoJSONWriter implements AutoCloseable {
         } catch (IOException e) {
             // very hard to actually generate this
             LOGGER.warning("Unexpected IOException converting featureCollection to GeoJSON");
-            LOGGER.log(
-                    Level.FINE,
-                    "Unexpected IOException converting featureCollection to GeoJSON",
-                    e);
+            LOGGER.log(Level.FINE, "Unexpected IOException converting featureCollection to GeoJSON", e);
         }
-        return new String(out.toByteArray());
+        return new String(out.toByteArray(), StandardCharsets.UTF_8);
     }
 
     /** Set to true to encode the feature collection CRS field. Defaults to false. */
@@ -439,9 +444,8 @@ public class GeoJSONWriter implements AutoCloseable {
     }
 
     /**
-     * Set how many decimals should be used in writing out the coordinates. Users should consult
-     * https://xkcd.com/2170/ before changing this value, unless they are using a CRS different from
-     * 4326.
+     * Set how many decimals should be used in writing out the coordinates. Users should consult https://xkcd.com/2170/
+     * before changing this value, unless they are using a CRS different from 4326.
      *
      * @param number - the number of digits after the decimal place marker
      */
@@ -459,7 +463,7 @@ public class GeoJSONWriter implements AutoCloseable {
         }
         try (SimpleFeatureIterator itr = features.features()) {
             while (itr.hasNext()) {
-                SimpleFeature feature = (SimpleFeature) itr.next();
+                SimpleFeature feature = itr.next();
                 write(feature);
             }
         }
@@ -469,17 +473,14 @@ public class GeoJSONWriter implements AutoCloseable {
         bounds = bbox;
     }
 
-    /**
-     * Returns true if the generated JSON is for a single feature, without a feature collection
-     * wrapper around it.
-     */
+    /** Returns true if the generated JSON is for a single feature, without a feature collection wrapper around it. */
     public boolean isSingleFeature() {
         return singleFeature;
     }
 
     /**
-     * Turns on and off the single feature mode. In single feature mode the feature collection
-     * wrapper elements won't be emitted. Defaults to false.
+     * Turns on and off the single feature mode. In single feature mode the feature collection wrapper elements won't be
+     * emitted. Defaults to false.
      *
      * @param singleFeature
      */
@@ -499,8 +500,8 @@ public class GeoJSONWriter implements AutoCloseable {
     }
 
     /**
-     * Sets the Timezone used to format the date fields. <code>null</code> is a valid value, the JVM
-     * local timezone will be used in that case.
+     * Sets the Timezone used to format the date fields. <code>null</code> is a valid value, the JVM local timezone will
+     * be used in that case.
      */
     public void setTimeZone(TimeZone tz) {
         this.dateFormatter = FastDateFormat.getInstance(dateFormatter.getPattern(), tz);

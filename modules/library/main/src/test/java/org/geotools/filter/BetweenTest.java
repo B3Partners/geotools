@@ -24,6 +24,9 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.logging.Logger;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.PropertyIsBetween;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
@@ -32,9 +35,6 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.PrecisionModel;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.PropertyIsBetween;
 
 /**
  * tests for between filters.
@@ -43,8 +43,7 @@ import org.opengis.filter.PropertyIsBetween;
  */
 public class BetweenTest {
     /** Standard logging instance */
-    protected static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(BetweenTest.class);
+    protected static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(BetweenTest.class);
 
     @Test
     public void testContains() throws Exception {
@@ -69,31 +68,16 @@ public class BetweenTest {
         LOGGER.fine("schema has value in it ? " + (schema.getDescriptor("value") != null));
 
         GeometryFactory gf = new GeometryFactory(new PrecisionModel());
-        SimpleFeature f1 =
-                SimpleFeatureBuilder.build(
-                        schema,
-                        new Object[] {Integer.valueOf(12), gf.createPoint(new Coordinate(12, 12))},
-                        null);
-        SimpleFeature f2 =
-                SimpleFeatureBuilder.build(
-                        schema,
-                        new Object[] {Integer.valueOf(3), gf.createPoint(new Coordinate(3, 3))},
-                        null);
-        SimpleFeature f3 =
-                SimpleFeatureBuilder.build(
-                        schema,
-                        new Object[] {Integer.valueOf(15), gf.createPoint(new Coordinate(15, 15))},
-                        null);
-        SimpleFeature f4 =
-                SimpleFeatureBuilder.build(
-                        schema,
-                        new Object[] {Integer.valueOf(5), gf.createPoint(new Coordinate(5, 5))},
-                        null);
-        SimpleFeature f5 =
-                SimpleFeatureBuilder.build(
-                        schema,
-                        new Object[] {Integer.valueOf(30), gf.createPoint(new Coordinate(30, 30))},
-                        null);
+        SimpleFeature f1 = SimpleFeatureBuilder.build(
+                schema, new Object[] {Integer.valueOf(12), gf.createPoint(new Coordinate(12, 12))}, null);
+        SimpleFeature f2 = SimpleFeatureBuilder.build(
+                schema, new Object[] {Integer.valueOf(3), gf.createPoint(new Coordinate(3, 3))}, null);
+        SimpleFeature f3 = SimpleFeatureBuilder.build(
+                schema, new Object[] {Integer.valueOf(15), gf.createPoint(new Coordinate(15, 15))}, null);
+        SimpleFeature f4 = SimpleFeatureBuilder.build(
+                schema, new Object[] {Integer.valueOf(5), gf.createPoint(new Coordinate(5, 5))}, null);
+        SimpleFeature f5 = SimpleFeatureBuilder.build(
+                schema, new Object[] {Integer.valueOf(30), gf.createPoint(new Coordinate(30, 30))}, null);
 
         assertTrue(a.evaluate(f1)); // in between
         assertFalse(a.evaluate(f2)); // too small
@@ -104,7 +88,7 @@ public class BetweenTest {
 
     @Test
     public void testEquals() throws Exception {
-        org.opengis.filter.FilterFactory ff = CommonFactoryFinder.getFilterFactory();
+        org.geotools.api.filter.FilterFactory ff = CommonFactoryFinder.getFilterFactory();
         PropertyIsBetween f1 = ff.between(ff.property("abc"), ff.literal(10), ff.literal(20));
         PropertyIsBetween f2 = ff.between(ff.property("efg"), ff.literal(10), ff.literal(20));
         PropertyIsBetween f3 = ff.between(ff.property("abc"), ff.literal(10), ff.literal(20));

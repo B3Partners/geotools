@@ -23,26 +23,25 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.type.ComplexType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.util.InternationalString;
 import org.geotools.feature.NameImpl;
-import org.opengis.feature.Property;
-import org.opengis.feature.type.ComplexType;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.filter.Filter;
-import org.opengis.util.InternationalString;
 
 /**
- * A replacement for {@link ComplexTypeImpl} with lazy evaluation of descriptors, to support
- * cyclically-defined types. Note that type equality is defined by name, so do not allow different
- * types with the same name to be put in any Collection.
+ * A replacement for {@link ComplexTypeImpl} with lazy evaluation of descriptors, to support cyclically-defined types.
+ * Note that type equality is defined by name, so do not allow different types with the same name to be put in any
+ * Collection.
  *
  * <p>Inspired by {@link ComplexTypeImpl}.
  *
  * @author Ben Caradoc-Davies (CSIRO Earth Science and Resource Engineering)
  * @see ComplexTypeImpl
  */
-public abstract class AbstractLazyComplexTypeImpl extends AbstractLazyAttributeTypeImpl
-        implements ComplexType {
+public abstract class AbstractLazyComplexTypeImpl extends AbstractLazyAttributeTypeImpl implements ComplexType {
 
     private Collection<PropertyDescriptor> descriptors;
 
@@ -59,8 +58,8 @@ public abstract class AbstractLazyComplexTypeImpl extends AbstractLazyAttributeT
     }
 
     /**
-     * Subclasses must override this method to return the list of descriptors that define the
-     * properties of this type. This method will only be called once at most.
+     * Subclasses must override this method to return the list of descriptors that define the properties of this type.
+     * This method will only be called once at most.
      *
      * <p>If the type has no properties, return either an empty collection or null.
      *
@@ -94,21 +93,21 @@ public abstract class AbstractLazyComplexTypeImpl extends AbstractLazyAttributeT
         return (Class<Collection<Property>>) super.getBinding();
     }
 
-    /** @see org.opengis.feature.type.ComplexType#getDescriptors() */
+    /** @see org.geotools.api.feature.type.ComplexType#getDescriptors() */
     @Override
     public Collection<PropertyDescriptor> getDescriptors() {
         requireDescriptors();
         return descriptors;
     }
 
-    /** @see org.opengis.feature.type.ComplexType#getDescriptor(org.opengis.feature.type.Name) */
+    /** @see org.geotools.api.feature.type.ComplexType#getDescriptor(org.geotools.api.feature.type.Name) */
     @Override
     public PropertyDescriptor getDescriptor(Name name) {
         requireDescriptors();
         return descriptorMap.get(name);
     }
 
-    /** @see org.opengis.feature.type.ComplexType#isInline() */
+    /** @see org.geotools.api.feature.type.ComplexType#isInline() */
     @Override
     public boolean isInline() {
         return false;
@@ -121,12 +120,12 @@ public abstract class AbstractLazyComplexTypeImpl extends AbstractLazyAttributeT
     }
 
     /**
-     * The namespace-ignorant version of {@link #getDescriptor(Name)}. Note that we honour the same
-     * permissive algorithm as {@link ComplexTypeImpl}: (1) try no-namespace, (2) try
-     * container-namespace, (2) search for match ignoring namespace. <b>*Shudder*</b>. Warning: Any
-     * code that uses this method instead of {@link #getDescriptor(Name)} is * inherently unsafe.
+     * The namespace-ignorant version of {@link #getDescriptor(Name)}. Note that we honour the same permissive algorithm
+     * as {@link ComplexTypeImpl}: (1) try no-namespace, (2) try container-namespace, (2) search for match ignoring
+     * namespace. <b>*Shudder*</b>. Warning: Any code that uses this method instead of {@link #getDescriptor(Name)} is *
+     * inherently unsafe.
      *
-     * @see org.opengis.feature.type.ComplexType#getDescriptor(java.lang.String)
+     * @see org.geotools.api.feature.type.ComplexType#getDescriptor(java.lang.String)
      */
     @Override
     public PropertyDescriptor getDescriptor(String name) {

@@ -17,7 +17,6 @@
  */
 package org.geotools.gce.image;
 
-import it.geosolutions.jaiext.range.NoDataContainer;
 import java.awt.geom.AffineTransform;
 import java.awt.image.ComponentColorModel;
 import java.awt.image.DataBuffer;
@@ -31,38 +30,40 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Set;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
-import javax.media.jai.JAI;
-import javax.media.jai.ParameterBlockJAI;
+import org.eclipse.imagen.media.range.NoDataContainer;
+import org.geotools.api.coverage.grid.Format;
+import org.geotools.api.coverage.grid.GridCoverage;
+import org.geotools.api.coverage.grid.GridCoverageWriter;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.io.AbstractGridCoverageWriter;
 import org.geotools.coverage.util.CoverageUtilities;
-import org.geotools.data.DataSourceException;
 import org.geotools.image.ImageWorker;
 import org.geotools.image.io.ImageIOExt;
 import org.geotools.parameter.Parameter;
 import org.geotools.referencing.operation.matrix.XAffineTransform;
 import org.geotools.util.factory.Hints;
-import org.opengis.coverage.grid.Format;
-import org.opengis.coverage.grid.GridCoverage;
-import org.opengis.coverage.grid.GridCoverageWriter;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.TransformException;
 
 /**
- * Writes a GridCoverage to a raster image file and an accompanying world file. The destination
- * specified must point to the location of the raster file to write to, as this is how the format is
- * determined. The directory that file is located in must also already exist.
+ * Writes a GridCoverage to a raster image file and an accompanying world file. The destination specified must point to
+ * the location of the raster file to write to, as this is how the format is determined. The directory that file is
+ * located in must also already exist.
  *
  * @author Simone Giannecchini, GeoSolutions
  * @author rgould
  * @author Alessio Fabiani, GeoSolutions
  */
-public final class WorldImageWriter extends AbstractGridCoverageWriter
-        implements GridCoverageWriter {
+public final class WorldImageWriter extends AbstractGridCoverageWriter implements GridCoverageWriter {
     /** format for this writer */
     private Format format = new WorldImageFormat();
 
@@ -74,16 +75,16 @@ public final class WorldImageWriter extends AbstractGridCoverageWriter
     private String extension = "png";
 
     /**
-     * Destination must be a File. The directory it resides in must already exist. It must point to
-     * where the raster image is to be located. The world image will be derived from there.
+     * Destination must be a File. The directory it resides in must already exist. It must point to where the raster
+     * image is to be located. The world image will be derived from there.
      */
     public WorldImageWriter(Object destination) {
         this(destination, null);
     }
 
     /**
-     * Destination must be a File. The directory it resides in must already exist. It must point to
-     * where the raster image is to be located. The world image will be derived from there.
+     * Destination must be a File. The directory it resides in must already exist. It must point to where the raster
+     * image is to be located. The world image will be derived from there.
      */
     public WorldImageWriter(Object destination, Hints hints) {
         this.destination = destination;
@@ -94,7 +95,7 @@ public final class WorldImageWriter extends AbstractGridCoverageWriter
         if (this.destination instanceof String) {
             this.destination = new File((String) destination);
         } else if (this.destination instanceof URL) {
-            final URL url = ((URL) destination);
+            final URL url = (URL) destination;
             if (url.getProtocol().equalsIgnoreCase("file")) {
                 String auth = url.getAuthority();
                 String path = url.getPath();
@@ -104,8 +105,7 @@ public final class WorldImageWriter extends AbstractGridCoverageWriter
 
                 this.destination = new File(path);
             } else {
-                throw new RuntimeException(
-                        "WorldImageWriter::write:It is not possible writing to an URL!");
+                throw new RuntimeException("WorldImageWriter::write:It is not possible writing to an URL!");
             }
         }
 
@@ -124,7 +124,7 @@ public final class WorldImageWriter extends AbstractGridCoverageWriter
     /**
      * (non-Javadoc)
      *
-     * @see org.opengis.coverage.grid.GridCoverageWriter#getFormat()
+     * @see org.geotools.api.coverage.grid.GridCoverageWriter#getFormat()
      */
     @Override
     public Format getFormat() {
@@ -132,24 +132,23 @@ public final class WorldImageWriter extends AbstractGridCoverageWriter
     }
 
     /**
-     * Takes a GridCoverage and writes the image to the destination file. It then reads the format
-     * of the file and writes an accompanying world file. It will throw a
-     * FileFormatNotCompatibleWithGridCoverageException if Destination is not a File (URL is a
-     * read-only format!).
+     * Takes a GridCoverage and writes the image to the destination file. It then reads the format of the file and
+     * writes an accompanying world file. It will throw a FileFormatNotCompatibleWithGridCoverageException if
+     * Destination is not a File (URL is a read-only format!).
      *
      * @param coverage the GridCoverage to write.
      * @param parameters no parameters are accepted. Currently ignored.
-     * @see org.opengis.coverage.grid.GridCoverageWriter#write(org.geotools.gc.GridCoverage,
-     *     org.opengis.parameter.GeneralParameterValue[])
+     * @see org.geotools.api.coverage.grid.GridCoverageWriter#write(org.geotools.gc.GridCoverage,
+     *     org.geotools.api.parameter.GeneralParameterValue[])
      */
     @Override
-    public void write(GridCoverage coverage, GeneralParameterValue[] parameters)
+    public void write(GridCoverage coverage, GeneralParameterValue... parameters)
             throws IllegalArgumentException, IOException {
         final GridCoverage2D gc = (GridCoverage2D) coverage;
-        // checking parameters
-        // if provided we have to use them
+        // checking parameters, if provided we have to use them
         // specifically this is one of the way we can provide an output format
-        if (parameters != null) {
+        // beware a call with no values mean an empty array.
+        if (parameters != null && parameters.length > 0) {
             this.extension = ((Parameter) parameters[0]).stringValue();
         }
 
@@ -158,9 +157,7 @@ public final class WorldImageWriter extends AbstractGridCoverageWriter
         // WorldFile and projection file.
         //
         // ////////////////////////////////////////////////////////////////////
-        if (destination instanceof File) {
-            // files destinations
-            File imageFile = (File) destination;
+        if (destination instanceof File imageFile) {
             final String path = imageFile.getAbsolutePath();
             final int index = path.lastIndexOf(".");
             final String baseFile = index >= 0 ? path.substring(0, index) : path;
@@ -194,24 +191,21 @@ public final class WorldImageWriter extends AbstractGridCoverageWriter
     }
 
     /**
-     * This method is responsible for creating a projection file using the WKT representation of
-     * this coverage's coordinate reference system. We can reuse this file in order to rebuild later
-     * the crs.
+     * This method is responsible for creating a projection file using the WKT representation of this coverage's
+     * coordinate reference system. We can reuse this file in order to rebuild later the crs.
      */
     private static void createProjectionFile(
-            final String baseFile, final CoordinateReferenceSystem coordinateReferenceSystem)
-            throws IOException {
+            final String baseFile, final CoordinateReferenceSystem coordinateReferenceSystem) throws IOException {
         final File prjFile = new File(new StringBuffer(baseFile).append(".prj").toString());
-        try (BufferedWriter out = new BufferedWriter(new FileWriter(prjFile))) {
+        try (BufferedWriter out = new BufferedWriter(new FileWriter(prjFile, StandardCharsets.UTF_8))) {
             out.write(coordinateReferenceSystem.toWKT());
         }
     }
 
     /**
-     * This method is responsible fro creating a world file to georeference an image given the image
-     * bounding box and the image geometry. The name of the file is composed by the name of the
-     * image file with a proper extension, depending on the format (see WorldImageFormat). The
-     * projection is in the world file.
+     * This method is responsible fro creating a world file to georeference an image given the image bounding box and
+     * the image geometry. The name of the file is composed by the name of the image file with a proper extension,
+     * depending on the format (see WorldImageFormat). The projection is in the world file.
      *
      * @param gc Envelope of this image.
      * @param image Image to be used.
@@ -219,18 +213,16 @@ public final class WorldImageWriter extends AbstractGridCoverageWriter
      * @throws IOException In case we cannot create the world file.
      */
     private static void createWorldFile(
-            final GridCoverage gc,
-            final RenderedImage image,
-            final String baseFile,
-            final String extension)
+            final GridCoverage gc, final RenderedImage image, final String baseFile, final String extension)
             throws IOException, TransformException {
         // /////////////////////////////////////////////////////////////////////
         //
         // CRS information
         //
         // ////////////////////////////////////////////////////////////////////
-        final AffineTransform gridToWorld = (AffineTransform) gc.getGridGeometry().getGridToCRS();
-        final boolean lonFirst = (XAffineTransform.getSwapXY(gridToWorld) != -1);
+        final AffineTransform gridToWorld =
+                (AffineTransform) gc.getGridGeometry().getGridToCRS();
+        final boolean lonFirst = XAffineTransform.getSwapXY(gridToWorld) != -1;
 
         // /////////////////////////////////////////////////////////////////////
         //
@@ -241,10 +233,10 @@ public final class WorldImageWriter extends AbstractGridCoverageWriter
         // inside the grid to world transform.
         //
         // ////////////////////////////////////////////////////////////////////
-        final double xPixelSize = (lonFirst) ? gridToWorld.getScaleX() : gridToWorld.getShearY();
-        final double rotation1 = (lonFirst) ? gridToWorld.getShearX() : gridToWorld.getScaleX();
-        final double rotation2 = (lonFirst) ? gridToWorld.getShearY() : gridToWorld.getScaleY();
-        final double yPixelSize = (lonFirst) ? gridToWorld.getScaleY() : gridToWorld.getShearX();
+        final double xPixelSize = lonFirst ? gridToWorld.getScaleX() : gridToWorld.getShearY();
+        final double rotation1 = lonFirst ? gridToWorld.getShearX() : gridToWorld.getScaleX();
+        final double rotation2 = lonFirst ? gridToWorld.getShearY() : gridToWorld.getScaleY();
+        final double yPixelSize = lonFirst ? gridToWorld.getScaleY() : gridToWorld.getShearX();
         final double xLoc = gridToWorld.getTranslateX();
         final double yLoc = gridToWorld.getTranslateY();
 
@@ -260,7 +252,7 @@ public final class WorldImageWriter extends AbstractGridCoverageWriter
         if (!it.hasNext()) throw new DataSourceException("Unable to parse extension " + extension);
         buff.append((String) it.next());
         final File worldFile = new File(buff.toString());
-        try (PrintWriter out = new PrintWriter(new FileOutputStream(worldFile))) {
+        try (PrintWriter out = new PrintWriter(new FileOutputStream(worldFile), false, StandardCharsets.UTF_8)) {
             out.println(xPixelSize);
             out.println(rotation1);
             out.println(rotation2);
@@ -278,18 +270,15 @@ public final class WorldImageWriter extends AbstractGridCoverageWriter
      * @param outstream OutputStream
      */
     private static void encode(
-            final GridCoverage2D sourceCoverage,
-            final ImageOutputStream outstream,
-            final String extension)
+            final GridCoverage2D sourceCoverage, final ImageOutputStream outstream, final String extension)
             throws IOException {
 
         // do we have a source coverage?
         if (sourceCoverage == null) {
-            throw new IllegalArgumentException(
-                    "A coverage must be provided in order for write to succeed!");
+            throw new IllegalArgumentException("A coverage must be provided in order for write to succeed!");
         }
 
-        RenderedImage image = (sourceCoverage).getRenderedImage();
+        RenderedImage image = sourceCoverage.getRenderedImage();
         final ImageWorker worker = new ImageWorker(image);
         // Setting NoData and ROI if present
         worker.setROI(CoverageUtilities.getROIProperty(sourceCoverage));
@@ -302,15 +291,15 @@ public final class WorldImageWriter extends AbstractGridCoverageWriter
         //
         // /////////////////////////////////////////////////////////////////////
         if (image.getColorModel() instanceof IndexColorModel
-                && (image.getSampleModel().getNumBands() > 1)) {
+                && image.getSampleModel().getNumBands() > 1) {
             worker.retainBands(1);
             image = worker.getRenderedImage();
         }
 
         /**
-         * For the moment we do not work with DirectColorModel but instead we switch to component
-         * color model which is really easier to handle even if it much more memory expensive. Once
-         * we are in component color model is really easy to go to Gif and similar.
+         * For the moment we do not work with DirectColorModel but instead we switch to component color model which is
+         * really easier to handle even if it much more memory expensive. Once we are in component color model is really
+         * easy to go to Gif and similar.
          */
         if (image.getColorModel() instanceof DirectColorModel) {
             worker.forceComponentColorModel();
@@ -323,29 +312,27 @@ public final class WorldImageWriter extends AbstractGridCoverageWriter
         if (extension.compareToIgnoreCase("gif") == 0) {
 
             /**
-             * IndexColorModel with more than 8 bits for sample might be a problem because GIF
-             * allows only 8 bits based palette therefore I prefere switching to component color
-             * model in order to handle this properly. NOTE. The only transfert types avalaible for
-             * IndexColorModel are byte and ushort.
+             * IndexColorModel with more than 8 bits for sample might be a problem because GIF allows only 8 bits based
+             * palette therefore I prefere switching to component color model in order to handle this properly. NOTE.
+             * The only transfert types avalaible for IndexColorModel are byte and ushort.
              */
             if (image.getColorModel() instanceof IndexColorModel
-                    && (image.getSampleModel().getTransferType() != DataBuffer.TYPE_BYTE)) {
+                    && image.getSampleModel().getTransferType() != DataBuffer.TYPE_BYTE) {
                 worker.forceComponentColorModel();
                 image = worker.getRenderedImage();
             }
 
             /**
-             * component color model is not well digested by the gif encoder we need to go to
-             * indecolor model somehow. This code for the moment remove transparency, but I am
-             * confident I will find a way to add that.
+             * component color model is not well digested by the gif encoder we need to go to indecolor model somehow.
+             * This code for the moment remove transparency, but I am confident I will find a way to add that.
              */
             if (image.getColorModel() instanceof ComponentColorModel) {
                 worker.forceIndexColorModelForGIF(true);
                 image = worker.getRenderedImage();
             } else
             /**
-             * IndexColorModel with full transparency support is not suitable for gif images we need
-             * to go to bitmask loosing some informations. we have only one full transparent color.
+             * IndexColorModel with full transparency support is not suitable for gif images we need to go to bitmask
+             * loosing some informations. we have only one full transparent color.
              */
             if (image.getColorModel() instanceof IndexColorModel) {
                 worker.forceIndexColorModelForGIF(true);
@@ -371,13 +358,15 @@ public final class WorldImageWriter extends AbstractGridCoverageWriter
         // }
         // }
 
-        /** write using JAI encoders */
-        final ParameterBlockJAI pbjImageWrite = new ParameterBlockJAI("ImageWrite");
-        pbjImageWrite.addSource(image);
-        pbjImageWrite.setParameter("Output", outstream);
-        pbjImageWrite.setParameter("VerifyOutput", Boolean.FALSE);
-        pbjImageWrite.setParameter("Format", extension);
-        JAI.create("ImageWrite", pbjImageWrite);
+        /** write using ImageN encoders */
+        ImageTypeSpecifier specifier = ImageTypeSpecifier.createFromRenderedImage(image);
+        Iterator<ImageWriter> writers = ImageIO.getImageWriters(specifier, extension);
+        if (!writers.hasNext()) {
+            throw new IllegalArgumentException("Could not find a writer for format " + extension + " and image ");
+        }
+        ImageWriter writer = writers.next();
+        writer.setOutput(outstream);
+        writer.write(image);
         outstream.flush();
         outstream.close();
     }

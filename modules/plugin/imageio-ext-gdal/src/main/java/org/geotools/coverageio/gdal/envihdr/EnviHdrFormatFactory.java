@@ -29,15 +29,14 @@ import org.geotools.coverageio.BaseGridFormatFactorySPI;
 public class EnviHdrFormatFactory extends BaseGridFormatFactorySPI implements GridFormatFactorySpi {
 
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(EnviHdrFormatFactory.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(EnviHdrFormatFactory.class);
 
     @Override
     public boolean isAvailable() {
         boolean available = true;
 
         // if these classes are here, then the runtime environment has
-        // access to JAI and the JAI ImageI/O toolbox.
+        // access to ImageN and the ImageN ImageI/O toolbox.
         try {
             Class.forName("it.geosolutions.imageio.plugins.envihdr.ENVIHdrImageReaderSpi");
             available = new ENVIHdrImageReaderSpi().isAvailable();
@@ -47,8 +46,7 @@ public class EnviHdrFormatFactory extends BaseGridFormatFactorySPI implements Gr
                 else LOGGER.fine("EnviHdrFormatFactory is not available.");
             }
         } catch (ClassNotFoundException cnf) {
-            if (LOGGER.isLoggable(Level.FINE))
-                LOGGER.fine("EnviHdrFormatFactory is not available.");
+            if (LOGGER.isLoggable(Level.FINE)) LOGGER.fine("EnviHdrFormatFactory is not available.");
 
             available = false;
         }

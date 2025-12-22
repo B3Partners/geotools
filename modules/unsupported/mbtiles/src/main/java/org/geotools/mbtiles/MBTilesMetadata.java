@@ -23,11 +23,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.geotools.api.geometry.Bounds;
+import org.geotools.api.referencing.FactoryException;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.geotools.util.logging.Logging;
-import org.opengis.geometry.Envelope;
-import org.opengis.referencing.FactoryException;
 
 /** The well known contents of the metadata table */
 public class MBTilesMetadata {
@@ -35,8 +35,7 @@ public class MBTilesMetadata {
     private static Logger LOGGER = Logging.getLogger(MBTilesMetadata.class);
 
     protected static Pattern patternEnvelope =
-            Pattern.compile(
-                    " *(\\-?[0-9\\.]*) *, *(\\-?[0-9\\.]*) *, *(\\-?[0-9\\.]*) *, *(\\-?[0-9\\.]*) *");
+            Pattern.compile(" *(\\-?[0-9\\.]*) *, *(\\-?[0-9\\.]*) *, *(\\-?[0-9\\.]*) *, *(\\-?[0-9\\.]*) *");
 
     protected static Pattern patternCenter =
             Pattern.compile(" *(\\-?[0-9\\.]*) *, *(\\-?[0-9\\.]*) *, *(\\-?[0-9\\.]*) *");
@@ -53,14 +52,11 @@ public class MBTilesMetadata {
 
         public static t_type lookUp(final String s) throws IllegalArgumentException {
             return Arrays.stream(t_type.values())
-                    .filter((t) -> t.identifier.equalsIgnoreCase(s))
+                    .filter(t -> t.identifier.equalsIgnoreCase(s))
                     .findAny()
-                    .orElseThrow(
-                            () ->
-                                    new IllegalArgumentException(
-                                            String.format("Unknown mbtiles type '%s'", s)));
+                    .orElseThrow(() -> new IllegalArgumentException("Unknown mbtiles type '%s'".formatted(s)));
         }
-    };
+    }
 
     public enum t_format {
         JPG,
@@ -69,7 +65,7 @@ public class MBTilesMetadata {
 
         /** Not part of the spec but used by some implementations of MBTiles for vector tiles */
         PBF
-    };
+    }
 
     protected String name;
 
@@ -81,7 +77,7 @@ public class MBTilesMetadata {
 
     protected t_format format;
 
-    protected Envelope bounds;
+    protected Bounds bounds;
 
     protected String attribution;
 
@@ -133,11 +129,11 @@ public class MBTilesMetadata {
         this.format = format;
     }
 
-    public Envelope getBounds() {
+    public Bounds getBounds() {
         return bounds;
     }
 
-    public void setBounds(Envelope bounds) {
+    public void setBounds(Bounds bounds) {
         this.bounds = bounds;
     }
 
@@ -216,12 +212,8 @@ public class MBTilesMetadata {
             setType(null);
         } else {
             if (typeStr.equalsIgnoreCase("BASE_LAYER")) {
-                LOGGER.log(
-                        Level.WARNING,
-                        () ->
-                                String.format(
-                                        "MBTiles file has invalid type '%s', using '%s' instead",
-                                        typeStr, t_type.BASE_LAYER));
+                LOGGER.log(Level.WARNING, () -> "MBTiles file has invalid type '%s', using '%s' instead"
+                        .formatted(typeStr, t_type.BASE_LAYER));
                 setType(t_type.BASE_LAYER);
             } else {
                 setType(t_type.lookUp(typeStr));
@@ -243,17 +235,14 @@ public class MBTilesMetadata {
         } else {
             Matcher matcherEnvelope = patternEnvelope.matcher(boundsStr);
             if (!matcherEnvelope.matches()) {
-                throw new IllegalArgumentException(
-                        "Envelope not in correct format: minx,miny,maxx,maxy");
+                throw new IllegalArgumentException("Envelope not in correct format: minx,miny,maxx,maxy");
             }
             double minx = Double.parseDouble(matcherEnvelope.group(1));
             double miny = Double.parseDouble(matcherEnvelope.group(2));
             double maxx = Double.parseDouble(matcherEnvelope.group(3));
             double maxy = Double.parseDouble(matcherEnvelope.group(4));
             try {
-                setBounds(
-                        new ReferencedEnvelope(
-                                minx, maxx, miny, maxy, CRS.decode("EPSG:4326", true)));
+                setBounds(new ReferencedEnvelope(minx, maxx, miny, maxy, CRS.decode("EPSG:4326", true)));
             } catch (FactoryException e) {
                 LOGGER.log(Level.SEVERE, e.getMessage(), e);
             }
@@ -266,8 +255,7 @@ public class MBTilesMetadata {
         } else {
             Matcher matcherCenter = patternCenter.matcher(centerStr);
             if (!matcherCenter.matches()) {
-                throw new IllegalArgumentException(
-                        "Center not in correct format: longitude,latitude,zoom level");
+                throw new IllegalArgumentException("Center not in correct format: longitude,latitude,zoom level");
             }
             double lon = Double.parseDouble(matcherCenter.group(1));
             double lat = Double.parseDouble(matcherCenter.group(2));
@@ -293,8 +281,8 @@ public class MBTilesMetadata {
     }
 
     /**
-     * The description of vector tiles internal structure is a JSON document added in the "json" key
-     * (by mbtiles specification)
+     * The description of vector tiles internal structure is a JSON document added in the "json" key (by mbtiles
+     * specification)
      */
     public String getJson() {
         return json;

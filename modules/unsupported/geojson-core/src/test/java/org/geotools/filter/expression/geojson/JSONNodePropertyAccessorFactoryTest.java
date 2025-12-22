@@ -16,10 +16,10 @@
  */
 package org.geotools.filter.expression.geojson;
 
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
 
 public class JSONNodePropertyAccessorFactoryTest {
 
@@ -32,8 +32,7 @@ public class JSONNodePropertyAccessorFactoryTest {
 
     @Test
     public void test() {
-        Assert.assertNotNull(
-                factory.createPropertyAccessor(SimpleFeature.class, "xpath", null, null));
+        Assert.assertNotNull(factory.createPropertyAccessor(SimpleFeature.class, "xpath", null, null));
         Assert.assertNull(factory.createPropertyAccessor(SimpleFeature.class, null, null, null));
     }
 }

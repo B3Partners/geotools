@@ -31,9 +31,15 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import javax.xml.namespace.QName;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.crs.ReprojectFeatureReader;
 import org.geotools.data.wfs.TestHttpClient;
 import org.geotools.data.wfs.TestHttpResponse;
@@ -45,12 +51,6 @@ import org.geotools.ows.ServiceException;
 import org.geotools.referencing.CRS;
 import org.junit.Test;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Unit test suite for WFSContentDataStore
@@ -60,8 +60,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  */
 public class DataStoreTest {
 
-    private QName qTypeName =
-            new QName("http://www.fgdc.gov/framework/073004/gubs", "GovernmentalUnitCE", "gubs");
+    private QName qTypeName = new QName("http://www.fgdc.gov/framework/073004/gubs", "GovernmentalUnitCE", "gubs");
 
     /** Test method for {@link WFS_1_1_0_DataStore#getTypeNames()}. */
     @Test
@@ -95,10 +94,7 @@ public class DataStoreTest {
         assertEquals(new HashSet<>(expectedTypeNames), new HashSet<>(names));
     }
 
-    /**
-     * Test method for {@link
-     * org.geotools.wfs.v_1_1_0.data.WFS_1_1_0_DataStore#getSchema(java.lang.String)}.
-     */
+    /** Test method for {@link org.geotools.wfs.v_1_1_0.data.WFS_1_1_0_DataStore#getSchema(java.lang.String)}. */
     @Test
     public void testGetSchema() throws IOException, ServiceException {
         TestWFSClient wfs = createWFSClient();
@@ -140,8 +136,8 @@ public class DataStoreTest {
     }
 
     /**
-     * Test for the useDefaultSRS parameter set to true. Query in a CRS different from the
-     * DefaultSRS should be done in DefaultSRS and then reprojected.
+     * Test for the useDefaultSRS parameter set to true. Query in a CRS different from the DefaultSRS should be done in
+     * DefaultSRS and then reprojected.
      */
     @Test
     public void testUseDefaultSRS()
@@ -177,12 +173,11 @@ public class DataStoreTest {
     }
 
     /**
-     * Test for the useDefaultSRS parameter set to false. Query in a CRS listed in OtherSRS should
-     * be done in OtherSRS and not reprojected.
+     * Test for the useDefaultSRS parameter set to false. Query in a CRS listed in OtherSRS should be done in OtherSRS
+     * and not reprojected.
      */
     @Test
-    public void testUseOtherSRS()
-            throws IOException, NoSuchAuthorityCodeException, FactoryException, ServiceException {
+    public void testUseOtherSRS() throws IOException, NoSuchAuthorityCodeException, FactoryException, ServiceException {
 
         TestWFSClient wfs = createWFSClient();
         wfs.mockGetFeatureRequest(CUBEWERX_GOVUNITCE.DATA, qTypeName, Filter.INCLUDE);
@@ -218,8 +213,8 @@ public class DataStoreTest {
     }
 
     /**
-     * Test for the useDefaultSRS parameter set to false and OtherSRS specified in urn form. Query
-     * in a CRS listed in OtherSRS should be done in OtherSRS and not reprojected.
+     * Test for the useDefaultSRS parameter set to false and OtherSRS specified in urn form. Query in a CRS listed in
+     * OtherSRS should be done in OtherSRS and not reprojected.
      */
     @Test
     public void testUseOtherSRSUsingURN()
@@ -239,11 +234,8 @@ public class DataStoreTest {
             assertNotNull(featureReader);
 
             assertEquals(
-                    GML2EncodingUtils.epsgCode(otherCrs),
-                    GML2EncodingUtils.epsgCode(
-                            featureReader.getFeatureType().getCoordinateReferenceSystem()));
-            // GetFeatureRequest request = wfs.getRequest();
-            // assertEquals("urn:ogc:def:crs:EPSG::3857", request.getSrsName());
+                    GML2EncodingUtils.toURI(otherCrs),
+                    GML2EncodingUtils.toURI(featureReader.getFeatureType().getCoordinateReferenceSystem()));
         }
     }
 
@@ -272,13 +264,11 @@ public class DataStoreTest {
     }
 
     private TestWFSClient createWFSClient() throws IOException, ServiceException {
-        URL capabilitiesUrl =
-                new URL(
-                        "http://frameworkwfs.usgs.gov/framework/wfs/wfs.cgi?DATASTORE=Framework&REQUEST=GetCapabilities&SERVICE=WFS");
+        URL capabilitiesUrl = new URL(
+                "http://frameworkwfs.usgs.gov/framework/wfs/wfs.cgi?DATASTORE=Framework&REQUEST=GetCapabilities&SERVICE=WFS");
 
         TestHttpClient client = new TestHttpClient();
-        client.expectGet(
-                capabilitiesUrl, new TestHttpResponse(CUBEWERX_GOVUNITCE.CAPABILITIES, "text/xml"));
+        client.expectGet(capabilitiesUrl, new TestHttpResponse(CUBEWERX_GOVUNITCE.CAPABILITIES, "text/xml"));
 
         TestWFSClient wfs = new TestWFSClient(capabilitiesUrl, client);
 

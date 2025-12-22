@@ -21,63 +21,62 @@ package org.geotools.referencing.factory;
 
 import java.util.Set;
 import javax.measure.Unit;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.referencing.AuthorityFactory;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.IdentifiedObject;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CompoundCRS;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.DerivedCRS;
+import org.geotools.api.referencing.crs.EngineeringCRS;
+import org.geotools.api.referencing.crs.GeocentricCRS;
+import org.geotools.api.referencing.crs.GeographicCRS;
+import org.geotools.api.referencing.crs.ImageCRS;
+import org.geotools.api.referencing.crs.ProjectedCRS;
+import org.geotools.api.referencing.crs.TemporalCRS;
+import org.geotools.api.referencing.crs.VerticalCRS;
+import org.geotools.api.referencing.cs.CSAuthorityFactory;
+import org.geotools.api.referencing.cs.CartesianCS;
+import org.geotools.api.referencing.cs.CoordinateSystem;
+import org.geotools.api.referencing.cs.CoordinateSystemAxis;
+import org.geotools.api.referencing.cs.CylindricalCS;
+import org.geotools.api.referencing.cs.EllipsoidalCS;
+import org.geotools.api.referencing.cs.PolarCS;
+import org.geotools.api.referencing.cs.SphericalCS;
+import org.geotools.api.referencing.cs.TimeCS;
+import org.geotools.api.referencing.cs.VerticalCS;
+import org.geotools.api.referencing.datum.Datum;
+import org.geotools.api.referencing.datum.DatumAuthorityFactory;
+import org.geotools.api.referencing.datum.Ellipsoid;
+import org.geotools.api.referencing.datum.EngineeringDatum;
+import org.geotools.api.referencing.datum.GeodeticDatum;
+import org.geotools.api.referencing.datum.ImageDatum;
+import org.geotools.api.referencing.datum.PrimeMeridian;
+import org.geotools.api.referencing.datum.TemporalDatum;
+import org.geotools.api.referencing.datum.VerticalDatum;
+import org.geotools.api.referencing.operation.CoordinateOperation;
+import org.geotools.api.referencing.operation.CoordinateOperationAuthorityFactory;
+import org.geotools.api.util.InternationalString;
 import org.geotools.util.ObjectCache;
 import org.geotools.util.ObjectCaches;
 import org.geotools.util.factory.BufferedFactory;
 import org.geotools.util.factory.FactoryRegistryException;
 import org.geotools.util.factory.GeoTools;
 import org.geotools.util.factory.Hints;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.referencing.AuthorityFactory;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.IdentifiedObject;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CompoundCRS;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.DerivedCRS;
-import org.opengis.referencing.crs.EngineeringCRS;
-import org.opengis.referencing.crs.GeocentricCRS;
-import org.opengis.referencing.crs.GeographicCRS;
-import org.opengis.referencing.crs.ImageCRS;
-import org.opengis.referencing.crs.ProjectedCRS;
-import org.opengis.referencing.crs.TemporalCRS;
-import org.opengis.referencing.crs.VerticalCRS;
-import org.opengis.referencing.cs.CSAuthorityFactory;
-import org.opengis.referencing.cs.CartesianCS;
-import org.opengis.referencing.cs.CoordinateSystem;
-import org.opengis.referencing.cs.CoordinateSystemAxis;
-import org.opengis.referencing.cs.CylindricalCS;
-import org.opengis.referencing.cs.EllipsoidalCS;
-import org.opengis.referencing.cs.PolarCS;
-import org.opengis.referencing.cs.SphericalCS;
-import org.opengis.referencing.cs.TimeCS;
-import org.opengis.referencing.cs.VerticalCS;
-import org.opengis.referencing.datum.Datum;
-import org.opengis.referencing.datum.DatumAuthorityFactory;
-import org.opengis.referencing.datum.Ellipsoid;
-import org.opengis.referencing.datum.EngineeringDatum;
-import org.opengis.referencing.datum.GeodeticDatum;
-import org.opengis.referencing.datum.ImageDatum;
-import org.opengis.referencing.datum.PrimeMeridian;
-import org.opengis.referencing.datum.TemporalDatum;
-import org.opengis.referencing.datum.VerticalDatum;
-import org.opengis.referencing.operation.CoordinateOperation;
-import org.opengis.referencing.operation.CoordinateOperationAuthorityFactory;
-import org.opengis.util.InternationalString;
 
 /**
- * An authority factory that caches all objects created by delegate factories. This class is set up
- * to cache the full complement of referencing objects: In many cases a single implementation will
- * be used for several the authority factory interfaces - but this is not a requirement. The
- * behaviour of the {@code createFoo(String)} methods first looks if a previously created object
- * exists for the given code. If such an object exists, it is returned directly. The testing of the
- * cache is synchronized and may block if the referencing object is under construction.
+ * An authority factory that caches all objects created by delegate factories. This class is set up to cache the full
+ * complement of referencing objects: In many cases a single implementation will be used for several the authority
+ * factory interfaces - but this is not a requirement. The behaviour of the {@code createFoo(String)} methods first
+ * looks if a previously created object exists for the given code. If such an object exists, it is returned directly.
+ * The testing of the cache is synchronized and may block if the referencing object is under construction.
  *
- * <p>If the object is not yet created, the definition is delegated to the appropriate the
- * {@linkplain an AuthorityFactory authority factory} and the result is cached for next time.
+ * <p>If the object is not yet created, the definition is delegated to the appropriate the {@linkplain an
+ * AuthorityFactory authority factory} and the result is cached for next time.
  *
- * <p>This object is responsible for owning a {{ReferencingObjectCache}}; there are several
- * implementations to choose from on construction.
+ * <p>This object is responsible for owning a {{ReferencingObjectCache}}; there are several implementations to choose
+ * from on construction.
  *
  * @since 2.4
  * @version $Id$
@@ -115,9 +114,8 @@ public final class CachedAuthorityDecorator extends AbstractAuthorityFactory
     /**
      * Constructs an instance wrapping the specified factory with a default cache.
      *
-     * <p>The provided authority factory must implement {@link DatumAuthorityFactory}, {@link
-     * CSAuthorityFactory}, {@link CRSAuthorityFactory} and {@link
-     * CoordinateOperationAuthorityFactory} .
+     * <p>The provided authority factory must implement {@link DatumAuthorityFactory}, {@link CSAuthorityFactory},
+     * {@link CRSAuthorityFactory} and {@link CoordinateOperationAuthorityFactory} .
      *
      * @param factory The factory to cache. Can not be {@code null}.
      */
@@ -126,21 +124,18 @@ public final class CachedAuthorityDecorator extends AbstractAuthorityFactory
     }
 
     /**
-     * Constructs an instance wrapping the specified factory. The {@code maxStrongReferences}
-     * argument specify the maximum number of objects to keep by strong reference. If a greater
-     * amount of objects are created, then the strong references for the oldest ones are replaced by
-     * weak references.
+     * Constructs an instance wrapping the specified factory. The {@code maxStrongReferences} argument specify the
+     * maximum number of objects to keep by strong reference. If a greater amount of objects are created, then the
+     * strong references for the oldest ones are replaced by weak references.
      *
-     * <p>This constructor is protected because subclasses must declare which of the {@link
-     * DatumAuthorityFactory}, {@link CSAuthorityFactory}, {@link CRSAuthorityFactory} {@link
-     * SearchableAuthorityFactory} and {@link CoordinateOperationAuthorityFactory} interfaces they
-     * choose to implement.
+     * <p>This constructor is protected because subclasses must declare which of the {@link DatumAuthorityFactory},
+     * {@link CSAuthorityFactory}, {@link CRSAuthorityFactory} {@link SearchableAuthorityFactory} and
+     * {@link CoordinateOperationAuthorityFactory} interfaces they choose to implement.
      *
      * @param factory The factory to cache. Can not be {@code null}.
      * @param cache The cache to use
      */
-    protected CachedAuthorityDecorator(
-            AuthorityFactory factory, ObjectCache<Object, Object> cache) {
+    CachedAuthorityDecorator(AuthorityFactory factory, ObjectCache<Object, Object> cache) {
         super(((ReferencingFactory) factory).getPriority()); // TODO
         this.cache = cache;
         authority = factory;
@@ -152,15 +147,14 @@ public final class CachedAuthorityDecorator extends AbstractAuthorityFactory
     }
 
     /** Utility method used to produce cache based on hint */
-    protected static <K, V> ObjectCache<K, V> createCache(final Hints hints)
-            throws FactoryRegistryException {
+    static <K, V> ObjectCache<K, V> createCache(final Hints hints) throws FactoryRegistryException {
         return ObjectCaches.create(hints);
     }
 
     //
     // Utility Methods and Cache Care and Feeding
     //
-    protected String toKey(String code) {
+    String toKey(String code) {
         return ObjectCaches.toKey(getAuthority(), code);
     }
 
@@ -192,8 +186,7 @@ public final class CachedAuthorityDecorator extends AbstractAuthorityFactory
     }
 
     @Override
-    public Set<String> getAuthorityCodes(Class<? extends IdentifiedObject> type)
-            throws FactoryException {
+    public Set<String> getAuthorityCodes(Class<? extends IdentifiedObject> type) throws FactoryException {
         return authority.getAuthorityCodes(type);
     }
 
@@ -225,8 +218,7 @@ public final class CachedAuthorityDecorator extends AbstractAuthorityFactory
     }
 
     @Override
-    public CoordinateReferenceSystem createCoordinateReferenceSystem(String code)
-            throws FactoryException {
+    public CoordinateReferenceSystem createCoordinateReferenceSystem(String code) throws FactoryException {
         final String key = toKey(code);
         CoordinateReferenceSystem crs = (CoordinateReferenceSystem) cache.get(key);
         if (crs == null) {
@@ -776,9 +768,7 @@ public final class CachedAuthorityDecorator extends AbstractAuthorityFactory
                 cache.writeLock(key);
                 operations = (Set<CoordinateOperation>) cache.peek(key);
                 if (operations == null) {
-                    operations =
-                            operationAuthority.createFromCoordinateReferenceSystemCodes(
-                                    sourceCode, targetCode);
+                    operations = operationAuthority.createFromCoordinateReferenceSystemCodes(sourceCode, targetCode);
                     // can we not trust operationAuthority to return us an unmodifiableSet ?
                     // operations = Collections.unmodifiableSet( operations );
 

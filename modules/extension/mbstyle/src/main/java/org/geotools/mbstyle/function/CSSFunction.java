@@ -17,13 +17,13 @@
 package org.geotools.mbstyle.function;
 
 import java.awt.Color;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.data.util.ColorConverterFactory;
 import org.geotools.filter.FunctionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.text.Text;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Generate a Color using {@link ColorConverterFactory}, the input is expected to be a String.
@@ -34,8 +34,7 @@ import org.opengis.filter.expression.Expression;
  *   <li>string: string defining color
  * </ol>
  *
- * We are using this function, rather than the default converter in order to force the use of
- * CONVERT_CSS_TO_COLOR.
+ * We are using this function, rather than the default converter in order to force the use of CONVERT_CSS_TO_COLOR.
  *
  * @author Jody Garnett (Boundless)
  */
@@ -45,12 +44,11 @@ public class CSSFunction extends FunctionImpl {
 
     static {
         Parameter<Color> color = new Parameter<>("color", Color.class, 1, 1);
-        Parameter<Double> string =
-                new Parameter<>(
-                        "string",
-                        Double.class,
-                        Text.text("String"),
-                        Text.text("Color definition provided as hex, rgb, or css color name."));
+        Parameter<Double> string = new Parameter<>(
+                "string",
+                Double.class,
+                Text.text("String"),
+                Text.text("Color definition provided as hex, rgb, or css color name."));
         NAME = new FunctionNameImpl("css", color, string);
     }
 

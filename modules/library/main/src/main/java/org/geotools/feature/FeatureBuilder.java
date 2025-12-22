@@ -17,22 +17,22 @@
 package org.geotools.feature;
 
 import java.rmi.server.UID;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.FeatureFactory;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.PropertyDescriptor;
 import org.geotools.filter.identity.FeatureIdImpl;
 import org.geotools.util.Converters;
-import org.opengis.feature.Feature;
-import org.opengis.feature.FeatureFactory;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.PropertyDescriptor;
 
 /**
- * This class provides some common functionality for builders and defines an abstraction for Feature
- * builders' public interfaces.
+ * This class provides some common functionality for builders and defines an abstraction for Feature builders' public
+ * interfaces.
  *
  * @author Adam Brown (Curtin University of Technology)
- * @param <FT> The kind of FeatureType whose feature the builder will build. Allows you to enforce a
- *     stricter specialist type; eg. SimpleFeatureType.
- * @param <F> The kind of Feature that the builder will build. Allows you to enforce a stricter
- *     specialist type; eg. SimpleFeature.
+ * @param <FT> The kind of FeatureType whose feature the builder will build. Allows you to enforce a stricter specialist
+ *     type; eg. SimpleFeatureType.
+ * @param <F> The kind of Feature that the builder will build. Allows you to enforce a stricter specialist type; eg.
+ *     SimpleFeature.
  */
 public abstract class FeatureBuilder<FT extends FeatureType, F extends Feature> {
     /** the feature type */

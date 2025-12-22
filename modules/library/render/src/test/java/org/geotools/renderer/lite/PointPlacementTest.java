@@ -8,15 +8,15 @@ import java.awt.RenderingHints;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.style.Style;
 import org.geotools.data.property.PropertyDataStore;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.FeatureLayer;
 import org.geotools.map.MapContent;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.renderer.label.LabelCacheImpl;
 import org.geotools.renderer.style.FontCache;
-import org.geotools.styling.Style;
 import org.geotools.test.TestData;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,10 +40,8 @@ public class PointPlacementTest {
         bounds = new ReferencedEnvelope(0, 10, 0, 10, DefaultGeographicCRS.WGS84);
 
         // load font
-        Font f =
-                Font.createFont(
-                        Font.TRUETYPE_FONT,
-                        TestData.getResource(this, "recreate.ttf").openStream());
+        Font f = Font.createFont(
+                Font.TRUETYPE_FONT, TestData.getResource(this, "recreate.ttf").openStream());
         FontCache.getDefaultInstance().registerFont(f);
 
         //        System.setProperty("org.geotools.test.interactive", "true");

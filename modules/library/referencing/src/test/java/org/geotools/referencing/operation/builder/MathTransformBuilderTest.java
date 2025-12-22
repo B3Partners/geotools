@@ -23,17 +23,17 @@ import static org.junit.Assert.fail;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import org.geotools.geometry.DirectPosition2D;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.geometry.Position2D;
 import org.geotools.referencing.crs.DefaultEngineeringCRS;
 import org.geotools.referencing.operation.matrix.GeneralMatrix;
 import org.geotools.referencing.operation.transform.AffineTransform2D;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * A test for the MathTransformBuilders.
@@ -62,8 +62,7 @@ public final class MathTransformBuilderTest {
      * @param seed for random generating.
      * @param includeAccuracy set true to generate points with accuracy.
      */
-    private List<MappedPosition> generateCoords(
-            int numberOfVertices, long seed, boolean includeAccuracy) {
+    private List<MappedPosition> generateCoords(int numberOfVertices, long seed, boolean includeAccuracy) {
         CoordinateReferenceSystem crs = DefaultEngineeringCRS.CARTESIAN_2D;
         return generateCoordsWithCRS(numberOfVertices, crs, seed, includeAccuracy);
     }
@@ -77,10 +76,7 @@ public final class MathTransformBuilderTest {
      * @param includeAccuracy set true to generate points with accuracy.
      */
     private List<MappedPosition> generateCoordsWithCRS(
-            int numberOfVertices,
-            CoordinateReferenceSystem crs,
-            long seed,
-            boolean includeAccuracy) {
+            int numberOfVertices, CoordinateReferenceSystem crs, long seed, boolean includeAccuracy) {
         List<MappedPosition> vert = new ArrayList<>();
         Random randomCoord = new Random(seed);
         for (int i = 0; i < numberOfVertices; i++) {
@@ -88,9 +84,7 @@ public final class MathTransformBuilderTest {
             double ys = randomCoord.nextDouble() * 1000;
             double xd = randomCoord.nextDouble() * 1000;
             double yd = randomCoord.nextDouble() * 1000;
-            MappedPosition p =
-                    new MappedPosition(
-                            new DirectPosition2D(crs, xs, ys), new DirectPosition2D(crs, xd, yd));
+            MappedPosition p = new MappedPosition(new Position2D(crs, xs, ys), new Position2D(crs, xd, yd));
             if (includeAccuracy) {
                 p.setAccuracy(randomCoord.nextDouble());
             }
@@ -105,19 +99,17 @@ public final class MathTransformBuilderTest {
      * @param mt mathTransform that will be tested
      * @param pts MappedPositions of source and target values.
      */
-    private void transformTest(MathTransform mt, List<MappedPosition> pts)
-            throws FactoryException, TransformException {
+    private void transformTest(MathTransform mt, List<MappedPosition> pts) throws FactoryException, TransformException {
         double[] points = new double[pts.size() * 2];
         double[] ptCalculated = new double[pts.size() * 2];
         for (int i = 0; i < pts.size(); i++) {
-            points[(2 * i)] = pts.get(i).getSource().getCoordinate()[0];
-            points[(2 * i) + 1] = pts.get(i).getSource().getCoordinate()[1];
+            points[2 * i] = pts.get(i).getSource().getCoordinate()[0];
+            points[2 * i + 1] = pts.get(i).getSource().getCoordinate()[1];
         }
         mt.transform(points, 0, ptCalculated, 0, pts.size());
         for (int i = 0; i < pts.size(); i++) {
             assertEquals(pts.get(i).getTarget().getCoordinate()[0], ptCalculated[2 * i], 0.001);
-            assertEquals(
-                    pts.get(i).getTarget().getCoordinate()[1], ptCalculated[(2 * i) + 1], 0.001);
+            assertEquals(pts.get(i).getTarget().getCoordinate()[1], ptCalculated[2 * i + 1], 0.001);
         }
     }
 
@@ -126,11 +118,11 @@ public final class MathTransformBuilderTest {
     public void testRubberBuilder() throws FactoryException, TransformException {
         List<MappedPosition> pts = generateCoords(20, 8324);
         CoordinateReferenceSystem crs = DefaultEngineeringCRS.CARTESIAN_2D;
-        List<DirectPosition> dpl = new ArrayList<>();
-        dpl.add(new DirectPosition2D(crs, 1000, 0));
-        dpl.add(new DirectPosition2D(crs, 0, 0));
-        dpl.add(new DirectPosition2D(crs, 0, 1000));
-        dpl.add(new DirectPosition2D(crs, 1000, 1000));
+        List<Position> dpl = new ArrayList<>();
+        dpl.add(new Position2D(crs, 1000, 0));
+        dpl.add(new Position2D(crs, 0, 0));
+        dpl.add(new Position2D(crs, 0, 1000));
+        dpl.add(new Position2D(crs, 1000, 1000));
         MathTransformBuilder ppc = new RubberSheetBuilder(pts, dpl);
         transformTest(ppc.getMathTransform(), pts);
         assertTrue(ppc.getErrorStatistics().rms() < 0.00001);
@@ -183,8 +175,7 @@ public final class MathTransformBuilderTest {
             List<MappedPosition> pts = generateCoords(3, 1245);
             AdvancedAffineBuilder aab = new AdvancedAffineBuilder(pts);
             aab.setConstrain(AdvancedAffineBuilder.SXY, 0);
-            AffineToGeometric a2g =
-                    new AffineToGeometric((AffineTransform2D) aab.getMathTransform());
+            AffineToGeometric a2g = new AffineToGeometric((AffineTransform2D) aab.getMathTransform());
             Assert.assertEquals(a2g.getSkew(), 0, 0.000000001);
         } catch (Exception e) {
             fail(e.getMessage());
@@ -208,12 +199,12 @@ public final class MathTransformBuilderTest {
     }
 
     /**
-     * Implements the method for testing the calculation of least square method. The main
-     * requirement of least square method is that A<sup>T<sup>PAx + A<sup>T<sup>PX = 0.
+     * Implements the method for testing the calculation of least square method. The main requirement of least square
+     * method is that A<sup>T<sup>PAx + A<sup>T<sup>PX = 0.
      *
      * @author jezekjas
      */
-    final class LSMTester extends ProjectiveTransformBuilder {
+    static final class LSMTester extends ProjectiveTransformBuilder {
         LSMTester(List<MappedPosition> pts) {
             super(pts);
         }

@@ -31,23 +31,23 @@ public class GeometryUtil {
     private static PrecisionModel precModel;
 
     public static boolean isEqual(Coordinate[] c1, Coordinate[] c2) {
-        return (isEqual(c1, c2, false));
+        return isEqual(c1, c2, false);
     }
 
     public static boolean isEqual(Coordinate[] c1, Coordinate[] c2, boolean reverse) {
-        if (c1.length != c2.length) return (false);
+        if (c1.length != c2.length) return false;
 
         if (!reverse) {
             for (int i = 0; i < c1.length; i++) {
-                if (!c1[i].equals(c2[i])) return (false);
+                if (!c1[i].equals(c2[i])) return false;
             }
-            return (true);
+            return true;
         }
 
         for (int i = 0; i < c1.length; i++) {
-            if (!c1[i].equals(c2[c1.length - i - 1])) return (false);
+            if (!c1[i].equals(c2[c1.length - i - 1])) return false;
         }
-        return (true);
+        return true;
     }
 
     public static LineString joinLinestrings(LineString l1, LineString l2) {
@@ -74,8 +74,7 @@ public class GeometryUtil {
             for (int i = 0; i < l1.getNumPoints() - 1; i++) {
                 merged[i + l2.getNumPoints()] = l1.getCoordinateN(i + 1);
             }
-        } else if (l1.getCoordinateN(l1.getNumPoints() - 1)
-                .equals(l2.getCoordinateN(l2.getNumPoints() - 1))) {
+        } else if (l1.getCoordinateN(l1.getNumPoints() - 1).equals(l2.getCoordinateN(l2.getNumPoints() - 1))) {
             // tip to tip
             for (int i = 0; i < l1.getNumPoints(); i++) {
                 merged[i] = l1.getCoordinateN(i);
@@ -92,9 +91,9 @@ public class GeometryUtil {
             for (int i = 0; i < l1.getNumPoints() - 1; i++) {
                 merged[i + l2.getNumPoints()] = l1.getCoordinateN(i + 1);
             }
-        } else return (null);
+        } else return null;
 
-        return (gf().createLineString(merged));
+        return gf().createLineString(merged);
     }
 
     public static double angleBetween(LineSegment l1, LineSegment l2, double tol) {
@@ -103,19 +102,15 @@ public class GeometryUtil {
         double s1 = (l1.p1.y - l1.p0.y) / (l1.p1.x - l1.p0.x);
         double s2 = (l2.p1.y - l2.p0.y) / (l2.p1.x - l2.p0.x);
 
-        if (Math.abs(s1 - s2) < tol) return (0);
-        if (Math.abs(s1 + s2) < tol) return (Math.PI);
+        if (Math.abs(s1 - s2) < tol) return 0;
+        if (Math.abs(s1 + s2) < tol) return Math.PI;
 
         // not of equal slope, transform lines so that they are tail to tip and
         // use the cosine law to calculate angle between
 
         // transform line segments tail to tail, originating at (0,0)
-        LineSegment tls1 =
-                new LineSegment(
-                        new Coordinate(0, 0), new Coordinate(l1.p1.x - l1.p0.x, l1.p1.y - l1.p0.y));
-        LineSegment tls2 =
-                new LineSegment(
-                        new Coordinate(0, 0), new Coordinate(l2.p1.x - l2.p0.x, l2.p1.y - l2.p0.y));
+        LineSegment tls1 = new LineSegment(new Coordinate(0, 0), new Coordinate(l1.p1.x - l1.p0.x, l1.p1.y - l1.p0.y));
+        LineSegment tls2 = new LineSegment(new Coordinate(0, 0), new Coordinate(l2.p1.x - l2.p0.x, l2.p1.y - l2.p0.y));
 
         // line segment for third side of triangle
         LineSegment ls3 = new LineSegment(tls1.p1, tls2.p1);
@@ -124,25 +119,23 @@ public class GeometryUtil {
         double a = tls1.getLength();
         double b = tls2.getLength();
 
-        return (Math.acos((a * a + b * b - c * c) / (2 * a * b)));
+        return Math.acos((a * a + b * b - c * c) / (2 * a * b));
     }
 
     public static double angleBetween(LineString l1, LineString l2, double tol) {
         LineSegment ls1 =
-                new LineSegment(
-                        l1.getCoordinateN(l1.getNumPoints() - 2),
-                        l1.getCoordinateN(l1.getNumPoints() - 1));
+                new LineSegment(l1.getCoordinateN(l1.getNumPoints() - 2), l1.getCoordinateN(l1.getNumPoints() - 1));
         LineSegment ls2 = new LineSegment(l2.getCoordinateN(0), l2.getCoordinateN(1));
 
-        return (angleBetween(ls1, ls2, tol));
+        return angleBetween(ls1, ls2, tol);
     }
 
     public static double dx(LineString ls) {
-        return (ls.getPointN(ls.getNumPoints() - 1).getX() - ls.getPointN(0).getX());
+        return ls.getPointN(ls.getNumPoints() - 1).getX() - ls.getPointN(0).getX();
     }
 
     public static double dy(LineString ls) {
-        return (ls.getPointN(ls.getNumPoints() - 1).getY() - ls.getPointN(0).getY());
+        return ls.getPointN(ls.getNumPoints() - 1).getY() - ls.getPointN(0).getY();
     }
 
     //  public static Geometry reverseGeometry(Geometry geometry) {
@@ -164,13 +157,13 @@ public class GeometryUtil {
     //  }
 
     public static Geometry reverseGeometry(Geometry geom, boolean modify) {
-        if (geom instanceof Point) return (geom);
+        if (geom instanceof Point) return geom;
         if (geom instanceof LineString) {
             Coordinate[] reversed = reverseCoordinates(geom.getCoordinates(), modify);
-            if (modify) return (geom);
-            else return (gf().createLineString(reversed));
+            if (modify) return geom;
+            else return gf().createLineString(reversed);
         }
-        return (null);
+        return null;
     }
 
     public static Coordinate[] reverseCoordinates(Coordinate[] c, boolean modify) {
@@ -183,13 +176,13 @@ public class GeometryUtil {
                 c[c.length - 1 - i] = tmp;
             }
 
-            return (c);
+            return c;
         } else {
             Coordinate[] cnew = new Coordinate[c.length];
             for (int i = 0; i < c.length; i++) {
                 cnew[i] = c[c.length - 1 - i];
             }
-            return (cnew);
+            return cnew;
         }
     }
 
@@ -203,7 +196,7 @@ public class GeometryUtil {
                 avg += ls.getPointN(i).distance(to);
             }
         }
-        return (avg / ((double) n));
+        return avg / n;
     }
 
     public static LineString simplifyLineString(LineString line) {
@@ -220,33 +213,28 @@ public class GeometryUtil {
         x /= n;
         y /= n;
 
-        LineString simple =
-                gf().createLineString(
-                                new Coordinate[] {
-                                    line.getCoordinateN(0),
-                                    new Coordinate(x, y),
-                                    line.getCoordinateN(n - 1)
-                                });
+        LineString simple = gf().createLineString(
+                        new Coordinate[] {line.getCoordinateN(0), new Coordinate(x, y), line.getCoordinateN(n - 1)});
 
-        return (simple);
+        return simple;
     }
 
     public static PrecisionModel basicPrecisionModel() {
-        return (pm());
+        return pm();
     }
 
     public static GeometryFactory gf() {
         if (geomFactory == null) {
             geomFactory = new GeometryFactory();
         }
-        return (geomFactory);
+        return geomFactory;
     }
 
     public static PrecisionModel pm() {
         if (precModel == null) {
             precModel = new PrecisionModel();
         }
-        return (precModel);
+        return precModel;
     }
 
     //  public static LineString normalize(LineString line, double sample) {
@@ -272,9 +260,9 @@ public class GeometryUtil {
                 int n = (int) (distance(c, 0, 1) / sample);
                 if (n > 1) {
                     nadd += n - 1;
-                    add[0] = distance(c, 0, 1) / ((double) n);
+                    add[0] = distance(c, 0, 1) / n;
                 }
-            } else return (line);
+            } else return line;
         } else {
             int i = 0;
             while (i < c.length - 2) {
@@ -290,9 +278,9 @@ public class GeometryUtil {
                     } else break;
                 }
 
-                int n = (int) (distance(c, i, j) / (sample));
+                int n = (int) (distance(c, i, j) / sample);
                 if (n > 1) {
-                    add[i] = distance(c, i, j) / ((double) n);
+                    add[i] = distance(c, i, j) / n;
                     nadd += n - 1;
                 }
 
@@ -321,13 +309,13 @@ public class GeometryUtil {
                             int n = (int) (distance(c, l, k) / sample);
                             if (n > 1) {
                                 add[l] = 0d;
-                                nadd -= (n - 1);
+                                nadd -= n - 1;
                             }
 
                             // recalculate
                             n = (int) (distance(c, l, c.length - 1) / sample);
                             if (n > 1) {
-                                add[l] = distance(c, l, c.length - 1) / ((double) n);
+                                add[l] = distance(c, l, c.length - 1) / n;
                                 nadd += n - 1;
                             }
                         }
@@ -339,7 +327,7 @@ public class GeometryUtil {
                             int n = (int) (distance(c, k, c.length - 1) / sample);
                             if (n > 1) {
                                 nadd += n - 1;
-                                add[k] = distance(c, k, c.length - 1) / ((double) n);
+                                add[k] = distance(c, k, c.length - 1) / n;
                             }
                         }
                     }
@@ -401,8 +389,8 @@ public class GeometryUtil {
                     }
                     if (next == -1) continue;
 
-                    double dx = (c[next].x - c[i].x) * (add[i]) / distance(c, i, next);
-                    double dy = (c[next].y - c[i].y) * (add[i]) / distance(c, i, next);
+                    double dx = (c[next].x - c[i].x) * add[i] / distance(c, i, next);
+                    double dy = (c[next].y - c[i].y) * add[i] / distance(c, i, next);
 
                     int n = (int) (distance(c, i, next) / add[i] + +0.000001);
                     for (int k = 1; k < n; k++) {
@@ -419,7 +407,7 @@ public class GeometryUtil {
         //      else System.out.println("null");
         //    }
 
-        return (gf().createLineString(newc));
+        return gf().createLineString(newc);
     }
 
     public static double distance(Coordinate[] c, int i, int j) {
@@ -434,6 +422,6 @@ public class GeometryUtil {
             dist += c[k].distance(c[k + 1]);
         }
 
-        return (dist);
+        return dist;
     }
 }

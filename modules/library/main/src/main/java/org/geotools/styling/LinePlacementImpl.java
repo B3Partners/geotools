@@ -17,13 +17,15 @@
 package org.geotools.styling;
 
 import java.util.logging.Logger;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.LinePlacement;
+import org.geotools.api.style.StyleVisitor;
+import org.geotools.api.style.TraversingStyleVisitor;
+import org.geotools.api.util.Cloneable;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.util.Utilities;
 import org.geotools.util.factory.GeoTools;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.StyleVisitor;
-import org.opengis.util.Cloneable;
 
 /**
  * Default implementation of LinePlacement.
@@ -34,8 +36,7 @@ import org.opengis.util.Cloneable;
  */
 public class LinePlacementImpl implements LinePlacement, Cloneable {
     /** The logger for the default core module. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(LinePlacementImpl.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(LinePlacementImpl.class);
 
     private FilterFactory filterFactory;
 
@@ -50,7 +51,7 @@ public class LinePlacementImpl implements LinePlacement, Cloneable {
         this(CommonFactoryFinder.getFilterFactory(GeoTools.getDefaultHints()));
     }
 
-    public LinePlacementImpl(org.opengis.style.LinePlacement placement) {
+    public LinePlacementImpl(org.geotools.api.style.LinePlacement placement) {
         this.gap = placement.getGap();
         this.initialGap = placement.getInitialGap();
         this.generalized = placement.isGeneralizeLine();
@@ -134,12 +135,12 @@ public class LinePlacementImpl implements LinePlacement, Cloneable {
     }
 
     @Override
-    public Object accept(StyleVisitor visitor, Object data) {
+    public Object accept(TraversingStyleVisitor visitor, Object data) {
         return visitor.visit(this, data);
     }
 
     @Override
-    public void accept(org.geotools.styling.StyleVisitor visitor) {
+    public void accept(StyleVisitor visitor) {
         visitor.visit(this);
     }
 
@@ -164,8 +165,7 @@ public class LinePlacementImpl implements LinePlacement, Cloneable {
             return true;
         }
 
-        if (obj instanceof LinePlacementImpl) {
-            LinePlacementImpl other = (LinePlacementImpl) obj;
+        if (obj instanceof LinePlacementImpl other) {
 
             return Utilities.equals(perpendicularOffset, other.perpendicularOffset)
                     && Utilities.equals(repeated, other.repeated)
@@ -187,31 +187,31 @@ public class LinePlacementImpl implements LinePlacement, Cloneable {
         int result = 17;
 
         if (perpendicularOffset != null) {
-            result = (result * PRIME) + perpendicularOffset.hashCode();
+            result = result * PRIME + perpendicularOffset.hashCode();
         }
 
         if (gap != null) {
-            result = (result * PRIME) + gap.hashCode();
+            result = result * PRIME + gap.hashCode();
         }
 
         if (initialGap != null) {
-            result = (result * PRIME) + initialGap.hashCode();
+            result = result * PRIME + initialGap.hashCode();
         }
 
-        result = (result * PRIME) + Boolean.valueOf(generalized).hashCode();
-        result = (result * PRIME) + Boolean.valueOf(aligned).hashCode();
-        result = (result * PRIME) + Boolean.valueOf(repeated).hashCode();
+        result = result * PRIME + Boolean.valueOf(generalized).hashCode();
+        result = result * PRIME + Boolean.valueOf(aligned).hashCode();
+        result = result * PRIME + Boolean.valueOf(repeated).hashCode();
 
         return result;
     }
 
-    static LinePlacementImpl cast(org.opengis.style.LabelPlacement placement) {
+    static LinePlacementImpl cast(org.geotools.api.style.LabelPlacement placement) {
         if (placement == null) {
             return null;
-        } else if (placement instanceof LinePlacementImpl) {
-            return (LinePlacementImpl) placement;
-        } else if (placement instanceof LinePlacement) {
-            LinePlacementImpl copy = new LinePlacementImpl((LinePlacement) placement);
+        } else if (placement instanceof LinePlacementImpl impl) {
+            return impl;
+        } else if (placement instanceof LinePlacement linePlacement) {
+            LinePlacementImpl copy = new LinePlacementImpl(linePlacement);
             return copy;
         }
         return null;

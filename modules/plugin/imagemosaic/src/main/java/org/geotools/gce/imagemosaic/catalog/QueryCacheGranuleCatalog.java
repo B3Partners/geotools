@@ -23,8 +23,10 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
@@ -32,8 +34,6 @@ import org.geotools.feature.collection.DecoratingSimpleFeatureCollection;
 import org.geotools.feature.collection.DecoratingSimpleFeatureIterator;
 import org.geotools.util.SoftValueHashMap;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class QueryCacheGranuleCatalog extends DelegatingGranuleCatalog {
 
@@ -51,8 +51,7 @@ public class QueryCacheGranuleCatalog extends DelegatingGranuleCatalog {
          *
          * @param iterator Iterator to be used as a delegate.
          */
-        public CachingFeatureIterator(
-                Query query, SimpleFeatureType schema, SimpleFeatureIterator iterator) {
+        public CachingFeatureIterator(Query query, SimpleFeatureType schema, SimpleFeatureIterator iterator) {
             super(iterator);
             this.query = query;
             this.schema = schema;
@@ -113,11 +112,9 @@ public class QueryCacheGranuleCatalog extends DelegatingGranuleCatalog {
 
     private final int maxAge;
 
-    private final SoftValueHashMap<Query, ExpiringFeatureCollection> queryCache =
-            new SoftValueHashMap<>();
+    private final SoftValueHashMap<Query, ExpiringFeatureCollection> queryCache = new SoftValueHashMap<>();
 
-    public QueryCacheGranuleCatalog(
-            AbstractGTDataStoreGranuleCatalog adaptee, int maxCachedFeatures, int maxAge) {
+    public QueryCacheGranuleCatalog(AbstractGTDataStoreGranuleCatalog adaptee, int maxCachedFeatures, int maxAge) {
         super(adaptee);
         this.maxCachedFeatures = maxCachedFeatures;
         this.maxAge = maxAge;
@@ -137,9 +134,7 @@ public class QueryCacheGranuleCatalog extends DelegatingGranuleCatalog {
                     LOGGER.log(Level.FINE, () -> "Cache hit on query: " + q);
                     return cached;
                 } else {
-                    LOGGER.log(
-                            Level.FINE,
-                            () -> "Cache found, but expired, refreshing, on query: " + q);
+                    LOGGER.log(Level.FINE, () -> "Cache found, but expired, refreshing, on query: " + q);
                 }
             } else {
                 LOGGER.log(Level.FINE, "Cache miss on query: " + q);
@@ -157,8 +152,7 @@ public class QueryCacheGranuleCatalog extends DelegatingGranuleCatalog {
     }
 
     @Override
-    public void addGranules(
-            String typeName, Collection<SimpleFeature> granules, Transaction transaction)
+    public void addGranules(String typeName, Collection<SimpleFeature> granules, Transaction transaction)
             throws IOException {
         queryCache.clear();
         super.addGranules(typeName, granules, transaction);
@@ -171,8 +165,7 @@ public class QueryCacheGranuleCatalog extends DelegatingGranuleCatalog {
     }
 
     @Override
-    public void addGranule(String typeName, SimpleFeature granule, Transaction transaction)
-            throws IOException {
+    public void addGranule(String typeName, SimpleFeature granule, Transaction transaction) throws IOException {
         queryCache.clear();
         super.addGranule(typeName, granule, transaction);
     }

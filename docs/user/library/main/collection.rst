@@ -1,5 +1,5 @@
-``FeatureCollection``
----------------------
+FeatureCollection
+-----------------
 
 A ``FeatureCollection`` is a collection of Features similar to a JDBC ``ResultSet``. 
 
@@ -216,8 +216,8 @@ You can create new features and add them to this ``FeatureCollection`` as needed
   DefaultFeatureCollection featureCollection = new DefaultFeatureCollection("internal",TYPE);
   WKTReader2 wkt = new WKTReader2();
   
-  featureCollection.add( SimpleFeatureBuilder.build( TYPE, new Object[]{ wkt.read("POINT(1,2)"), "name1"}, null) );
-  featureCollection.add( SimpleFeatureBuilder.build( TYPE, new Object[]{ wkt.read("POINT(4,4)"), "name2"}, null) );
+  featureCollection.add( SimpleFeatureBuilder.build( TYPE, new Object[]{ wkt.read("POINT(1 2)"), "name1"}, null) );
+  featureCollection.add( SimpleFeatureBuilder.build( TYPE, new Object[]{ wkt.read("POINT(4 4)"), "name2"}, null) );
 
 To FeatureSource
 ''''''''''''''''
@@ -278,8 +278,8 @@ These implementations of SimpleFeatureCollection will each offer different perfo
     WKTReader2 wkt = new WKTReader2();
     
     ArrayList<SimpleFeature> list = new ArrayList<SimpleFeature>();
-    list.add( SimpleFeatureBuilder.build( TYPE, new Object[]{ wkt.read("POINT(1,2)"), "name1"}, null) );
-    list.add( SimpleFeatureBuilder.build( TYPE, new Object[]{ wkt.read("POINT(4,4)"), "name2"}, null) );
+    list.add( SimpleFeatureBuilder.build( TYPE, new Object[]{ wkt.read("POINT(1 2)"), "name1"}, null) );
+    list.add( SimpleFeatureBuilder.build( TYPE, new Object[]{ wkt.read("POINT(4 4)"), "name2"}, null) );
     
     SimpleFeatureCollection collection = new ListFeatureCollection(TYPE,list);
     
@@ -307,8 +307,8 @@ These implementations of SimpleFeatureCollection will each offer different perfo
     WKTReader2 wkt = new WKTReader2();
     
     SimpleFeatureCollection collection = new SpatialIndexFeatureCollection();
-    collection.add( SimpleFeatureBuilder.build( TYPE, new Object[]{ wkt.read("POINT(1,2)"), "name1"} ));
-    collection.add( SimpleFeatureBuilder.build( TYPE, new Object[]{ wkt.read("POINT(4,4)"), "name1"} ));
+    collection.add( SimpleFeatureBuilder.build( TYPE, new Object[]{ wkt.read("POINT(1 2)"), "name1"} ));
+    collection.add( SimpleFeatureBuilder.build( TYPE, new Object[]{ wkt.read("POINT(4 4)"), "name1"} ));
     
     // Fast spatial Access
     SimpleFeatureSource source = DataUtilities.source( collection );
@@ -467,7 +467,7 @@ Function               Visitor                    Notes
   
   Here is an example of using Collection_Sum on a ``FeatureCollection``::
     
-    FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+    FilterFactory ff = CommonFactoryFinder.getFilterFactory();
     Function sum = ff.function("Collection_Sum", ff.property("age"));
     
     Object value = sum.evaluate( featureCollection );
@@ -477,7 +477,7 @@ Function               Visitor                    Notes
   
   Here is an example of using Collection_Max on a ``FeatureCollection``::
     
-    FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+    FilterFactory ff = CommonFactoryFinder.getFilterFactory();
     Function sum = ff.function("Collection_Max", ff.property("age"));
     
     Object value = sum.evaluate( featureCollection );

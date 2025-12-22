@@ -21,6 +21,10 @@ import static org.junit.Assert.assertNotEquals;
 
 import java.util.Calendar;
 import java.util.Date;
+import org.geotools.api.temporal.IndeterminateValue;
+import org.geotools.api.temporal.OrdinalEra;
+import org.geotools.api.temporal.OrdinalPosition;
+import org.geotools.api.temporal.TemporalReferenceSystem;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
 import org.geotools.temporal.reference.DefaultOrdinalEra;
@@ -29,10 +33,6 @@ import org.geotools.util.SimpleInternationalString;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.temporal.IndeterminateValue;
-import org.opengis.temporal.OrdinalEra;
-import org.opengis.temporal.OrdinalPosition;
-import org.opengis.temporal.TemporalReferenceSystem;
 
 /** @author Mehdi Sidhoum (Geomatys) */
 public class DefaultOrdinalPositionTest {
@@ -50,16 +50,13 @@ public class DefaultOrdinalPositionTest {
         Date beginning1 = cal.getTime();
         cal.set(1000, 0, 1);
         Date end1 = cal.getTime();
-        OrdinalEra ordinalEra1 =
-                new DefaultOrdinalEra(new SimpleInternationalString("Mesozoic"), beginning1, end1);
+        OrdinalEra ordinalEra1 = new DefaultOrdinalEra(new SimpleInternationalString("Mesozoic"), beginning1, end1);
         cal.set(1000, 1, 1);
         Date beginning2 = cal.getTime();
         cal.set(2000, 0, 1);
         Date end2 = cal.getTime();
-        OrdinalEra ordinalEra2 =
-                new DefaultOrdinalEra(new SimpleInternationalString("Cenozoic"), beginning2, end2);
-        ordinalPosition1 =
-                new DefaultOrdinalPosition(frame, IndeterminateValue.UNKNOWN, ordinalEra1);
+        OrdinalEra ordinalEra2 = new DefaultOrdinalEra(new SimpleInternationalString("Cenozoic"), beginning2, end2);
+        ordinalPosition1 = new DefaultOrdinalPosition(frame, IndeterminateValue.UNKNOWN, ordinalEra1);
         ordinalPosition2 = new DefaultOrdinalPosition(frame, IndeterminateValue.AFTER, ordinalEra2);
     }
 
@@ -84,8 +81,7 @@ public class DefaultOrdinalPositionTest {
         Date beginning = cal.getTime();
         cal.set(2012, 12, 23);
         Date end = cal.getTime();
-        OrdinalEra ordinalEra =
-                new DefaultOrdinalEra(new SimpleInternationalString("Era"), beginning, end);
+        OrdinalEra ordinalEra = new DefaultOrdinalEra(new SimpleInternationalString("Era"), beginning, end);
         ((DefaultOrdinalPosition) ordinalPosition1).setOrdinalPosition(ordinalEra);
         assertNotEquals(ordinalPosition1.getOrdinalPosition(), result);
     }

@@ -14,26 +14,23 @@ package org.geotools.tutorial.csv2;
 import com.csvreader.CsvReader;
 import java.io.IOException;
 import java.util.NoSuchElementException;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.Query;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.store.ContentState;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class CSVFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFeature> {
 
     /** State used when reading file */
     protected ContentState state;
 
-    /**
-     * Current row number - used in the generation of FeatureId. TODO: Subclass ContentState to
-     * track row
-     */
+    /** Current row number - used in the generation of FeatureId. TODO: Subclass ContentState to track row */
     private int row;
 
     protected CsvReader reader;
@@ -57,6 +54,7 @@ public class CSVFeatureReader implements FeatureReader<SimpleFeatureType, Simple
         row = 0;
     }
     /** Access FeatureType (documenting avaiable attributes) */
+    @Override
     public SimpleFeatureType getFeatureType() {
         return state.getFeatureType();
     }
@@ -74,8 +72,8 @@ public class CSVFeatureReader implements FeatureReader<SimpleFeatureType, Simple
      * @throws IllegalAttributeException for invalid data
      * @throws NoSuchElementException If hasNext() indicates no more features are available
      */
-    public SimpleFeature next()
-            throws IOException, IllegalArgumentException, NoSuchElementException {
+    @Override
+    public SimpleFeature next() throws IOException, IllegalArgumentException, NoSuchElementException {
         SimpleFeature feature;
         if (next != null) {
             feature = next;
@@ -90,6 +88,7 @@ public class CSVFeatureReader implements FeatureReader<SimpleFeatureType, Simple
      *
      * @return <code>true</code> if additional content is available
      */
+    @Override
     public boolean hasNext() throws IOException {
         if (next != null) {
             return true;
@@ -138,6 +137,7 @@ public class CSVFeatureReader implements FeatureReader<SimpleFeatureType, Simple
 
     // close start
     /** Close the FeatureReader when not in use. */
+    @Override
     public void close() throws IOException {
         if (reader != null) {
             reader.close();

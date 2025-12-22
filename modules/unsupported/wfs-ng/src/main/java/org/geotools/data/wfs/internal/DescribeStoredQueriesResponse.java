@@ -25,6 +25,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
@@ -32,7 +33,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import net.opengis.wfs20.DescribeStoredQueriesResponseType;
 import net.opengis.wfs20.StoredQueryDescriptionType;
 import org.apache.commons.io.IOUtils;
-import org.geotools.data.DataSourceException;
+import org.geotools.api.data.DataSourceException;
 import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
 import org.geotools.xsd.Configuration;
@@ -59,7 +60,7 @@ public class DescribeStoredQueriesResponse extends WFSResponse {
                 rawResponse = buff.toByteArray();
             }
             if (RESPONSES.isLoggable(Level.FINE)) {
-                RESPONSES.fine("Full ListStoredQueries response: " + new String(rawResponse));
+                RESPONSES.fine("Full ListStoredQueries response: " + new String(rawResponse, StandardCharsets.UTF_8));
             }
             try {
                 DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
@@ -74,8 +75,7 @@ public class DescribeStoredQueriesResponse extends WFSResponse {
             describeStoredQueriesResponse = parseStoredQueries(rawDocument, WFS_2_0_CONFIGURATION);
 
             if (null == describeStoredQueriesResponse) {
-                throw new IllegalStateException(
-                        "Unable to parse DescribeStoredQueriesResponse document");
+                throw new IllegalStateException("Unable to parse DescribeStoredQueriesResponse document");
             }
 
         } finally {
@@ -83,8 +83,8 @@ public class DescribeStoredQueriesResponse extends WFSResponse {
         }
     }
 
-    private DescribeStoredQueriesResponseType parseStoredQueries(
-            Document document, Configuration wfsConfig) throws DataSourceException {
+    private DescribeStoredQueriesResponseType parseStoredQueries(Document document, Configuration wfsConfig)
+            throws DataSourceException {
         DOMParser parser = new DOMParser(wfsConfig, document);
         final Object parsed;
         try {

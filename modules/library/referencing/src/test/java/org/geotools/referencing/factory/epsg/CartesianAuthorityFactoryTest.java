@@ -4,15 +4,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Set;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.ReferenceIdentifier;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultEngineeringCRS;
 import org.geotools.referencing.wkt.Formattable;
 import org.junit.Test;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.ReferenceIdentifier;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class CartesianAuthorityFactoryTest {
 
@@ -32,8 +32,7 @@ public class CartesianAuthorityFactoryTest {
 
     @Test
     public void testIdentifier() throws NoSuchAuthorityCodeException, FactoryException {
-        Set<ReferenceIdentifier> identifiers =
-                CartesianAuthorityFactory.GENERIC_2D.getIdentifiers();
+        Set<ReferenceIdentifier> identifiers = CartesianAuthorityFactory.GENERIC_2D.getIdentifiers();
         assertEquals(1, identifiers.size());
         final ReferenceIdentifier id = identifiers.iterator().next();
         assertEquals(Citations.EPSG, id.getAuthority());
@@ -52,8 +51,10 @@ public class CartesianAuthorityFactoryTest {
         CoordinateReferenceSystem epsg0 = CRS.decode("EPSG:" + CODE);
         CoordinateReferenceSystem epsg42101 = CRS.decode("EPSG:42101");
 
-        assertTrue(CRS.findMathTransform(DefaultEngineeringCRS.GENERIC_2D, epsg42101).isIdentity());
-        assertTrue(CRS.findMathTransform(epsg42101, DefaultEngineeringCRS.GENERIC_2D).isIdentity());
+        assertTrue(CRS.findMathTransform(DefaultEngineeringCRS.GENERIC_2D, epsg42101)
+                .isIdentity());
+        assertTrue(CRS.findMathTransform(epsg42101, DefaultEngineeringCRS.GENERIC_2D)
+                .isIdentity());
 
         assertTrue(CRS.findMathTransform(epsg0, epsg42101).isIdentity());
         assertTrue(CRS.findMathTransform(epsg42101, epsg0).isIdentity());
@@ -66,20 +67,19 @@ public class CartesianAuthorityFactoryTest {
         String wkt = formattable.toWKT(Citations.EPSG, 2);
 
         final String lineSep = System.getProperty("line.separator", "\n");
-        String expected =
-                "LOCAL_CS[\"Wildcard 2D cartesian plane in metric unit\", "
-                        + lineSep
-                        + "  LOCAL_DATUM[\"Unknown\", 0], "
-                        + lineSep
-                        + "  UNIT[\"m\", 1.0], "
-                        + lineSep
-                        + "  AXIS[\"x\", EAST], "
-                        + lineSep
-                        + "  AXIS[\"y\", NORTH], "
-                        + lineSep
-                        + "  AUTHORITY[\"EPSG\",\""
-                        + CODE
-                        + "\"]]";
+        String expected = "LOCAL_CS[\"Wildcard 2D cartesian plane in metric unit\", "
+                + lineSep
+                + "  LOCAL_DATUM[\"Unknown\", 0], "
+                + lineSep
+                + "  UNIT[\"m\", 1.0], "
+                + lineSep
+                + "  AXIS[\"x\", EAST], "
+                + lineSep
+                + "  AXIS[\"y\", NORTH], "
+                + lineSep
+                + "  AUTHORITY[\"EPSG\",\""
+                + CODE
+                + "\"]]";
 
         // System.out.println(wkt);
         assertEquals(expected, wkt);

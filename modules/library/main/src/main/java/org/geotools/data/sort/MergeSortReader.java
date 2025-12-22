@@ -21,13 +21,13 @@ import java.io.RandomAccessFile;
 import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
-import org.geotools.data.simple.SimpleFeatureReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.data.SimpleFeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
 /**
- * Reads from a list of {@link FeatureBlockReader} backed by a {@link RandomAccessFile} and performs
- * the classic merge-sort algorithm
+ * Reads from a list of {@link FeatureBlockReader} backed by a {@link RandomAccessFile} and performs the classic
+ * merge-sort algorithm
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -58,8 +58,7 @@ class MergeSortReader implements SimpleFeatureReader {
     }
 
     @Override
-    public SimpleFeature next()
-            throws IOException, IllegalArgumentException, NoSuchElementException {
+    public SimpleFeature next() throws IOException, IllegalArgumentException, NoSuchElementException {
         if (readers.isEmpty()) {
             throw new NoSuchElementException();
         }

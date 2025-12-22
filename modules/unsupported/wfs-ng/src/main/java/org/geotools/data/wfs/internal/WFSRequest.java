@@ -23,12 +23,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import javax.xml.namespace.QName;
 import org.apache.commons.io.IOUtils;
 import org.geotools.data.ows.AbstractRequest;
 import org.geotools.data.ows.Request;
 import org.geotools.http.HTTPResponse;
+import org.geotools.ows.ServiceException;
 import org.geotools.util.factory.FactoryNotFoundException;
 import org.geotools.util.logging.Logging;
 
@@ -48,8 +50,7 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
 
     private String handle;
 
-    public WFSRequest(
-            final WFSOperationType operation, final WFSConfig config, final WFSStrategy strategy) {
+    public WFSRequest(final WFSOperationType operation, final WFSConfig config, final WFSStrategy strategy) {
 
         super(url(operation, config, strategy), null);
         this.operation = operation;
@@ -107,8 +108,7 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
         return strategy;
     }
 
-    private static URL url(
-            final WFSOperationType operation, final WFSConfig config, final WFSStrategy strategy) {
+    private static URL url(final WFSOperationType operation, final WFSConfig config, final WFSStrategy strategy) {
 
         final boolean suportsGet = strategy.supportsOperation(operation, GET);
         final boolean suportsPost = strategy.supportsOperation(operation, POST);
@@ -181,16 +181,13 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
     }
 
     @Override
-    public WFSResponse createResponse(HTTPResponse response) throws IOException {
+    public WFSResponse createResponse(HTTPResponse response) throws ServiceException, IOException {
 
         final String contentType = response.getContentType();
 
         if (contentType == null) {
             Logging.getLogger(WFSRequest.class)
-                    .warning(
-                            this.getOperation()
-                                    + " request returned null content type for URL "
-                                    + getFinalURL());
+                    .warning(this.getOperation() + " request returned null content type for URL " + getFinalURL());
         }
 
         WFSResponseFactory responseFactory;
@@ -202,7 +199,7 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
                 if (contentType != null && contentType.startsWith("text")) {
                     byte[] buff = new byte[1024];
                     response.getResponseStream().read(buff);
-                    Loggers.MODULE.info("Failed response snippet: " + new String(buff));
+                    Loggers.MODULE.info("Failed response snippet: " + new String(buff, StandardCharsets.UTF_8));
                 }
                 throw fnf;
             } catch (Exception ignore) {

@@ -19,11 +19,12 @@
  */
 package org.geotools.metadata.iso.citation;
 
+import java.io.Serial;
 import java.util.Collection;
 import java.util.Collections;
 import net.opengis.ows11.TelephoneType;
+import org.geotools.api.metadata.citation.Telephone;
 import org.geotools.metadata.iso.MetadataEntity;
-import org.opengis.metadata.citation.Telephone;
 
 /**
  * Telephone numbers for contacting the responsible individual or organization.
@@ -34,12 +35,10 @@ import org.opengis.metadata.citation.Telephone;
  */
 public class TelephoneImpl extends MetadataEntity implements Telephone {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 4920157673337669241L;
 
-    /**
-     * Telephone numbers by which individuals can speak to the responsible organization or
-     * individual.
-     */
+    /** Telephone numbers by which individuals can speak to the responsible organization or individual. */
     private Collection<String> voices;
 
     /** Telephone numbers of a facsimile machine for the responsible organization or individual. */
@@ -64,19 +63,17 @@ public class TelephoneImpl extends MetadataEntity implements Telephone {
     }
 
     /**
-     * Returns the telephone numbers by which individuals can speak to the responsible organization
-     * or individual.
+     * Returns the telephone numbers by which individuals can speak to the responsible organization or individual.
      *
      * @since 2.4
      */
     @Override
     public Collection<String> getVoices() {
-        return (voices = nonNullCollection(voices, String.class));
+        return voices = nonNullCollection(voices, String.class);
     }
 
     /**
-     * Set the telephone numbers by which individuals can speak to the responsible organization or
-     * individual.
+     * Set the telephone numbers by which individuals can speak to the responsible organization or individual.
      *
      * @since 2.4
      */
@@ -85,19 +82,17 @@ public class TelephoneImpl extends MetadataEntity implements Telephone {
     }
 
     /**
-     * Returns the telephone numbers of a facsimile machine for the responsible organization or
-     * individual.
+     * Returns the telephone numbers of a facsimile machine for the responsible organization or individual.
      *
      * @since 2.4
      */
     @Override
     public Collection<String> getFacsimiles() {
-        return (facsimiles = nonNullCollection(facsimiles, String.class));
+        return facsimiles = nonNullCollection(facsimiles, String.class);
     }
 
     /**
-     * Set the telephone number of a facsimile machine for the responsible organization or
-     * individual.
+     * Set the telephone number of a facsimile machine for the responsible organization or individual.
      *
      * @since 2.4
      */

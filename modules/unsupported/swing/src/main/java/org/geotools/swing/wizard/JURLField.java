@@ -25,8 +25,8 @@ import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import net.miginfocom.swing.MigLayout;
-import org.geotools.data.FileDataStoreFactorySpi;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.FileDataStoreFactorySpi;
+import org.geotools.api.data.Parameter;
 import org.geotools.swing.data.JFileDataStoreChooser;
 import org.geotools.swing.wizard.JWizard.Controller;
 import org.geotools.util.URLs;
@@ -60,12 +60,12 @@ public class JURLField extends ParamField {
     protected void browse() {
         JFileChooser dialog;
         Object format = this.parameter.metadata.get(Parameter.EXT);
-        if (format instanceof FileDataStoreFactorySpi) {
-            dialog = new JFileDataStoreChooser((FileDataStoreFactorySpi) format);
-        } else if (format instanceof String) {
-            dialog = new JFileDataStoreChooser((String) format);
-        } else if (format instanceof String[]) {
-            dialog = new JFileDataStoreChooser((String[]) format);
+        if (format instanceof FileDataStoreFactorySpi spi) {
+            dialog = new JFileDataStoreChooser(spi);
+        } else if (format instanceof String string) {
+            dialog = new JFileDataStoreChooser(string);
+        } else if (format instanceof String[] strings) {
+            dialog = new JFileDataStoreChooser(strings);
         } else {
             dialog = new JFileChooser();
         }
@@ -130,14 +130,12 @@ public class JURLField extends ParamField {
 
     @Override
     public void setValue(Object value) {
-        if (value instanceof File) {
-            File file = (File) value;
+        if (value instanceof File file) {
             field.setText(file.toString());
-        } else if (value instanceof URL) {
-            URL url = (URL) value;
+        } else if (value instanceof URL url) {
             field.setText(url.toExternalForm());
-        } else if (value instanceof String) {
-            field.setText((String) value);
+        } else if (value instanceof String string) {
+            field.setText(string);
         }
     }
 

@@ -26,8 +26,8 @@ import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 
 @SuppressWarnings("ComparableType")
-public class SurfaceArrayPropertyTypeBinding
-        extends org.geotools.gml3.bindings.SurfaceArrayPropertyTypeBinding implements Comparable {
+public class SurfaceArrayPropertyTypeBinding extends org.geotools.gml3.bindings.SurfaceArrayPropertyTypeBinding
+        implements Comparable {
 
     protected GeometryFactory gf;
 
@@ -64,14 +64,12 @@ public class SurfaceArrayPropertyTypeBinding
         // array.
         for (Node child : node.getChildren()) {
             Object nodeValue = child.getValue();
-            if (nodeValue instanceof MultiPolygon) { // Surface
-                MultiPolygon surface = (MultiPolygon) nodeValue;
+            if (nodeValue instanceof MultiPolygon surface) {
                 for (int i = 0; i < surface.getNumGeometries(); i++) {
                     Polygon polygon = (Polygon) surface.getGeometryN(i);
                     polygons.add(polygon);
                 }
-            } else if (nodeValue instanceof Polygon) { // Polygon
-                Polygon polygon = (Polygon) nodeValue;
+            } else if (nodeValue instanceof Polygon polygon) {
                 polygons.add(polygon);
             }
         }

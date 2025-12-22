@@ -25,24 +25,24 @@ import java.util.Set;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
+import org.geotools.api.metadata.Identifier;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.referencing.AuthorityFactory;
+import org.geotools.api.referencing.Factory;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CRSFactory;
+import org.geotools.api.referencing.cs.CSAuthorityFactory;
+import org.geotools.api.referencing.cs.CSFactory;
+import org.geotools.api.referencing.datum.DatumAuthorityFactory;
+import org.geotools.api.referencing.datum.DatumFactory;
+import org.geotools.api.referencing.operation.CoordinateOperationAuthorityFactory;
+import org.geotools.api.referencing.operation.CoordinateOperationFactory;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.util.Classes;
 import org.geotools.util.OptionalDependencies;
 import org.geotools.util.X364;
 import org.geotools.util.factory.BufferedFactory;
 import org.geotools.util.factory.OptionalFactory;
-import org.opengis.metadata.Identifier;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.referencing.AuthorityFactory;
-import org.opengis.referencing.Factory;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CRSFactory;
-import org.opengis.referencing.cs.CSAuthorityFactory;
-import org.opengis.referencing.cs.CSFactory;
-import org.opengis.referencing.datum.DatumAuthorityFactory;
-import org.opengis.referencing.datum.DatumFactory;
-import org.opengis.referencing.operation.CoordinateOperationAuthorityFactory;
-import org.opengis.referencing.operation.CoordinateOperationFactory;
 
 /**
  * Build a tree of factory dependencies.
@@ -53,8 +53,8 @@ import org.opengis.referencing.operation.CoordinateOperationFactory;
  */
 public class FactoryDependencies {
     /**
-     * A list of interfaces that may be implemented by this class. Used for the properties printed
-     * between parenthesis by {@link #createTree()}.
+     * A list of interfaces that may be implemented by this class. Used for the properties printed between parenthesis
+     * by {@link #createTree()}.
      */
     private static final Class[] TYPES = {
         CRSFactory.class,
@@ -72,38 +72,22 @@ public class FactoryDependencies {
 
     /** Labels for {@link #TYPES}. */
     private static final String[] TYPE_LABELS = {
-        "crs",
-        "crs",
-        "cs",
-        "cs",
-        "datum",
-        "datum",
-        "operation",
-        "operation",
-        "buffered",
-        "optional",
-        "registered"
+        "crs", "crs", "cs", "cs", "datum", "datum", "operation", "operation", "buffered", "optional", "registered"
     };
 
     /**
-     * The number of elements in {@link #TYPES} which are referencing factories. They are printed in
-     * a different color than the last elements.
+     * The number of elements in {@link #TYPES} which are referencing factories. They are printed in a different color
+     * than the last elements.
      */
     private static final int FACTORY_COUNT = TYPES.length - 3;
 
     /** The factory to format. */
     private final Factory factory;
 
-    /**
-     * {@code true} for applying colors on a ANSI X3.64 (aka ECMA-48 and ISO/IEC 6429) compliant
-     * output device.
-     */
+    /** {@code true} for applying colors on a ANSI X3.64 (aka ECMA-48 and ISO/IEC 6429) compliant output device. */
     private boolean colorEnabled;
 
-    /**
-     * {@code true} for printing attributes {@link #TYPE_LABELS} between parenthesis after the
-     * factory name.
-     */
+    /** {@code true} for printing attributes {@link #TYPE_LABELS} between parenthesis after the factory name. */
     private boolean attributes;
 
     /** Creates a new dependency tree for the specified factory. */
@@ -111,33 +95,28 @@ public class FactoryDependencies {
         this.factory = factory;
     }
 
-    /**
-     * Returns {@code true} if syntax coloring is enabled. Syntax coloring is disabled by default.
-     */
+    /** Returns {@code true} if syntax coloring is enabled. Syntax coloring is disabled by default. */
     public boolean isColorEnabled() {
         return colorEnabled;
     }
 
     /**
-     * Enables or disables syntax coloring on ANSI X3.64 (aka ECMA-48 and ISO/IEC 6429) compatible
-     * terminal. By default, syntax coloring is disabled.
+     * Enables or disables syntax coloring on ANSI X3.64 (aka ECMA-48 and ISO/IEC 6429) compatible terminal. By default,
+     * syntax coloring is disabled.
      */
     public void setColorEnabled(final boolean enabled) {
         colorEnabled = enabled;
     }
 
-    /**
-     * Returns {@code true} if attributes are to be printed. By default, attributes are not printed.
-     */
+    /** Returns {@code true} if attributes are to be printed. By default, attributes are not printed. */
     public boolean isAttributeEnabled() {
         return attributes;
     }
 
     /**
-     * Enables or disables the addition of attributes after factory names. Attributes are labels
-     * like "{@code crs}", "{@code datum}", <cite>etc.</cite> put between parenthesis. They give
-     * indications on the services implemented by the factory (e.g. {@link CRSAuthorityFactory},
-     * {@link DatumAuthorityFactory}, <cite>etc.</cite>).
+     * Enables or disables the addition of attributes after factory names. Attributes are labels like "{@code crs}",
+     * "{@code datum}", <cite>etc.</cite> put between parenthesis. They give indications on the services implemented by
+     * the factory (e.g. {@link CRSAuthorityFactory}, {@link DatumAuthorityFactory}, <cite>etc.</cite>).
      */
     public void setAttributeEnabled(final boolean enabled) {
         attributes = enabled;
@@ -166,13 +145,12 @@ public class FactoryDependencies {
     /** Returns the dependencies for the specified factory. */
     private MutableTreeNode createTree(final Factory factory, final Set<Factory> done) {
         final DefaultMutableTreeNode root = createNode(factory);
-        if (factory instanceof ReferencingFactory) {
-            final Collection<?> dep = ((ReferencingFactory) factory).dependencies();
+        if (factory instanceof ReferencingFactory referencingFactory) {
+            final Collection<?> dep = referencingFactory.dependencies();
             if (dep != null) {
                 for (final Object element : dep) {
                     final MutableTreeNode child;
-                    if (element instanceof Factory) {
-                        final Factory candidate = (Factory) element;
+                    if (element instanceof Factory candidate) {
                         if (!done.add(candidate)) {
                             continue;
                         }
@@ -181,9 +159,7 @@ public class FactoryDependencies {
                             throw new AssertionError(); // Should never happen.
                         }
                     } else {
-                        child =
-                                OptionalDependencies.createTreeNode(
-                                        String.valueOf(element), element, false);
+                        child = OptionalDependencies.createTreeNode(String.valueOf(element), element, false);
                     }
                     root.add(child);
                 }
@@ -194,10 +170,9 @@ public class FactoryDependencies {
 
     /** Creates a single node for the specified factory. */
     private DefaultMutableTreeNode createNode(final Factory factory) {
-        final StringBuilder buffer =
-                new StringBuilder(Classes.getShortClassName(factory)).append('[');
-        if (factory instanceof AuthorityFactory) {
-            final Citation authority = ((AuthorityFactory) factory).getAuthority();
+        final StringBuilder buffer = new StringBuilder(Classes.getShortClassName(factory)).append('[');
+        if (factory instanceof AuthorityFactory authorityFactory) {
+            final Citation authority = authorityFactory.getAuthority();
             if (authority != null) {
                 final Collection<? extends Identifier> identifiers = authority.getIdentifiers();
                 if (identifiers != null && !identifiers.isEmpty()) {

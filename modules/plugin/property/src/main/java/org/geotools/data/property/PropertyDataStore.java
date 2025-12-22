@@ -23,12 +23,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.ServiceInfo;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultServiceInfo;
-import org.geotools.data.Query;
-import org.geotools.data.ServiceInfo;
 import org.geotools.data.store.ContentDataStore;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
@@ -37,8 +40,6 @@ import org.geotools.feature.FeatureTypes;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.type.FeatureTypeFactoryImpl;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
 
 /**
  * Sample DataStore implementation, please see formal tutorial included with users docs.
@@ -78,10 +79,9 @@ public class PropertyDataStore extends ContentDataStore {
         String typeName = featureType.getTypeName();
         File file = new File(dir, typeName + ".properties");
         if (file.exists()) {
-            throw new FileNotFoundException(
-                    "Unable to create a new property file: file exists " + file);
+            throw new FileNotFoundException("Unable to create a new property file: file exists " + file);
         }
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
             writer.write("_=");
             writer.write(DataUtilities.encodeType(featureType));
             writer.flush();
@@ -158,8 +158,7 @@ public class PropertyDataStore extends ContentDataStore {
         }
         File file = new File(dir, typeName);
         if (!file.exists()) {
-            throw new IOException(
-                    "Can't delete " + file.getAbsolutePath() + " because it doesn't exist!");
+            throw new IOException("Can't delete " + file.getAbsolutePath() + " because it doesn't exist!");
         }
         file.delete();
     }

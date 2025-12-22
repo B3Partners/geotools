@@ -21,17 +21,17 @@ import java.awt.image.ColorModel;
 import java.awt.image.IndexColorModel;
 import java.awt.image.MultiPixelPackedSampleModel;
 import java.awt.image.RenderedImage;
-import javax.media.jai.ROI;
-import javax.media.jai.ROIShape;
+import org.eclipse.imagen.ROI;
+import org.eclipse.imagen.ROIShape;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.gce.imagemosaic.GranuleDescriptor.GranuleLoadingResult;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.image.ImageWorker;
 import org.geotools.referencing.CRS;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * Support class helping to remove images not contributing pixels to the final mosaic based on the
- * image ROIs (thus, working in raster space after the images are read)
+ * Support class helping to remove images not contributing pixels to the final mosaic based on the image ROIs (thus,
+ * working in raster space after the images are read)
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -51,10 +51,7 @@ public class ROIExcessGranuleRemover {
     CoordinateReferenceSystem targetCRS;
 
     public ROIExcessGranuleRemover(
-            Rectangle rasterBounds,
-            int tileWidth,
-            int tileHeight,
-            CoordinateReferenceSystem targetCRS) {
+            Rectangle rasterBounds, int tileWidth, int tileHeight, CoordinateReferenceSystem targetCRS) {
         this.rasterBounds = rasterBounds;
         this.tileWidth = tileWidth;
         this.tileHeight = tileHeight;
@@ -65,11 +62,8 @@ public class ROIExcessGranuleRemover {
         // check we are working in the uniform CRS case
         CoordinateReferenceSystem granuleCRS =
                 result.getGranuleDescriptor().getGranuleEnvelope().getCoordinateReferenceSystem();
-        if (granuleCRS != null
-                && targetCRS != null
-                && !CRS.equalsIgnoreMetadata(granuleCRS, targetCRS)) {
-            throw new UnsupportedOperationException(
-                    "Excess granule removal not yet supported with heterogeneous CRS");
+        if (granuleCRS != null && targetCRS != null && !CRS.equalsIgnoreMetadata(granuleCRS, targetCRS)) {
+            throw new UnsupportedOperationException("Excess granule removal not yet supported with heterogeneous CRS");
         }
 
         // early bail out if possible
@@ -98,11 +92,7 @@ public class ROIExcessGranuleRemover {
                 // TODO: check if the image has palette
                 // with fully transparent pixels, binarize it and use it as a ROI?
                 Rectangle bounds =
-                        new Rectangle(
-                                raster.getMinX(),
-                                raster.getMinY(),
-                                raster.getWidth(),
-                                raster.getHeight());
+                        new Rectangle(raster.getMinX(), raster.getMinY(), raster.getWidth(), raster.getHeight());
                 roi = new ROIShape(bounds);
             }
         }
@@ -112,13 +102,8 @@ public class ROIExcessGranuleRemover {
             essential = false;
         } else {
             if (binarizator == null) {
-                binarizator =
-                        new Binarizator(
-                                JTS.toPolygon(rasterBounds),
-                                rasterBounds.width,
-                                rasterBounds.height,
-                                tileWidth,
-                                tileHeight);
+                binarizator = new Binarizator(
+                        JTS.toPolygon(rasterBounds), rasterBounds.width, rasterBounds.height, tileWidth, tileHeight);
             }
             essential = binarizator.add(roi);
         }

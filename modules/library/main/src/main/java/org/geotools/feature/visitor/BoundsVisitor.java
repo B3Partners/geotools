@@ -29,7 +29,7 @@ public class BoundsVisitor implements FeatureCalc {
     ReferencedEnvelope bounds = new ReferencedEnvelope();
 
     @Override
-    public void visit(org.opengis.feature.Feature feature) {
+    public void visit(org.geotools.api.feature.Feature feature) {
         bounds.include(feature.getBounds());
     }
 
@@ -81,8 +81,7 @@ public class BoundsVisitor implements FeatureCalc {
                 return this;
             }
 
-            if (resultsToAdd instanceof BoundsResult) {
-                BoundsResult boundsToAdd = (BoundsResult) resultsToAdd;
+            if (resultsToAdd instanceof BoundsResult boundsToAdd) {
 
                 // add one set to the other (to create one big unique list)
                 ReferencedEnvelope newBounds = new ReferencedEnvelope(bbox);

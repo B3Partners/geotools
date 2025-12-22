@@ -20,8 +20,11 @@ import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import javax.media.jai.iterator.RectIter;
-import javax.media.jai.iterator.RectIterFactory;
+import org.eclipse.imagen.iterator.RectIter;
+import org.eclipse.imagen.iterator.RectIterFactory;
+import org.geotools.api.coverage.grid.GridCoverageReader;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
@@ -34,9 +37,6 @@ import org.geotools.util.URLs;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.coverage.grid.GridCoverageReader;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Reader tests for different active region cases.
@@ -254,31 +254,22 @@ public class AdvancedReaderTest {
         checkMatrixEqual(readCoverage.getRenderedImage(), mapData, 0);
     }
 
-    private GridCoverage2D read(File file, JGrassRegion r, CoordinateReferenceSystem crs)
-            throws IOException {
+    private GridCoverage2D read(File file, JGrassRegion r, CoordinateReferenceSystem crs) throws IOException {
         GeneralParameterValue[] readParams = new GeneralParameterValue[1];
         Parameter<GridGeometry2D> readGG = new Parameter<>(AbstractGridFormat.READ_GRIDGEOMETRY2D);
         GridEnvelope2D gridEnvelope = new GridEnvelope2D(0, 0, r.getCols(), r.getRows());
-        ReferencedEnvelope env =
-                new ReferencedEnvelope(r.getWest(), r.getEast(), r.getSouth(), r.getNorth(), crs);
+        ReferencedEnvelope env = new ReferencedEnvelope(r.getWest(), r.getEast(), r.getSouth(), r.getNorth(), crs);
         readGG.setValue(new GridGeometry2D(gridEnvelope, env));
         readParams[0] = readGG;
 
         AbstractGridFormat format = new GrassCoverageFormatFactory().createFormat();
         GridCoverageReader reader = format.getReader(file);
-        GridCoverage2D gc = ((GridCoverage2D) reader.read(readParams));
+        GridCoverage2D gc = (GridCoverage2D) reader.read(readParams);
         return gc;
     }
 
     private GridCoverage2D readFile(
-            File file,
-            int cols,
-            int rows,
-            double n,
-            double s,
-            double w,
-            double e,
-            CoordinateReferenceSystem crs)
+            File file, int cols, int rows, double n, double s, double w, double e, CoordinateReferenceSystem crs)
             throws Exception {
         // JGrassRegion jgr = new JGrassRegion(w, e, s, n, rows, cols);
         // return read(file, jgr, crs);
@@ -298,7 +289,7 @@ public class AdvancedReaderTest {
         // do the reading
         AbstractGridFormat format = new GrassCoverageFormatFactory().createFormat();
         GridCoverageReader reader = format.getReader(file);
-        GridCoverage2D gc = ((GridCoverage2D) reader.read(readParams));
+        GridCoverage2D gc = (GridCoverage2D) reader.read(readParams);
 
         // readgrassraster stop
         return gc;

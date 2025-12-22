@@ -19,16 +19,15 @@ package org.geotools.data.gen;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
-import org.geotools.data.FeatureReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
 /**
  * @author Christian Mueller
  *     <p>Implementation of {@link FeatureReader} for {@link PreGeneralizedSimpleFeature}
  */
-public class PreGeneralizedFeatureReader
-        implements FeatureReader<SimpleFeatureType, SimpleFeature> {
+public class PreGeneralizedFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFeature> {
     protected SimpleFeatureType featureTyp;
 
     protected SimpleFeatureType returnedFeatureType;
@@ -71,16 +70,10 @@ public class PreGeneralizedFeatureReader
     }
 
     @Override
-    public SimpleFeature next()
-            throws IOException, IllegalArgumentException, NoSuchElementException {
+    public SimpleFeature next() throws IOException, IllegalArgumentException, NoSuchElementException {
         SimpleFeature next = backendReader.next();
         if (next == null) return null;
         return new PreGeneralizedSimpleFeature(
-                featureTyp,
-                returnedFeatureType,
-                indexMapping,
-                next,
-                geomPropertyName,
-                backendGeomPropertyName);
+                featureTyp, returnedFeatureType, indexMapping, next, geomPropertyName, backendGeomPropertyName);
     }
 }

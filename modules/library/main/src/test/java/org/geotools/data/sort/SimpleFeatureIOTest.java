@@ -17,20 +17,25 @@
 package org.geotools.data.sort;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.jts.GeometryBuilder;
 import org.geotools.referencing.CRS;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
 
 /** Testing class for {@link SimpleFeatureIO} util type */
 public class SimpleFeatureIOTest {
@@ -38,6 +43,12 @@ public class SimpleFeatureIOTest {
     private static final String NAME_FIELD = "name";
     private static final String BASE_STRING = "Testing Simple Feature IO big string";
     private static final int MULTIPLIER = 3333;
+
+    @Before
+    @After
+    public void resetProperty() {
+        System.clearProperty(SimpleFeatureIO.ENABLE_DESERIALIZATION);
+    }
 
     /** Test for big string (bytes > 65535) encoding/decoding */
     @Test
@@ -54,18 +65,15 @@ public class SimpleFeatureIOTest {
     }
 
     private void checkStringNameEncodeDecode(String name)
-            throws IOException, NoSuchAuthorityCodeException, FactoryException,
-                    FileNotFoundException {
+            throws IOException, NoSuchAuthorityCodeException, FactoryException, FileNotFoundException {
         File tempFile = File.createTempFile("temp", "simpleFeatureIO");
         SimpleFeatureTypeBuilder typeBuilder = new SimpleFeatureTypeBuilder();
         typeBuilder.setName("type1");
         typeBuilder.add(NAME_FIELD, String.class);
         typeBuilder.add("location", Point.class, CRS.decode("EPSG:4326"));
         SimpleFeatureType type = typeBuilder.buildFeatureType();
-        if (name.getBytes().length >= SimpleFeatureIO.MAX_BYTES_LENGTH)
-            type.getDescriptor(NAME_FIELD)
-                    .getUserData()
-                    .put(SimpleFeatureIO.BIG_STRING, Boolean.TRUE);
+        if (name.getBytes(StandardCharsets.UTF_8).length >= SimpleFeatureIO.MAX_BYTES_LENGTH)
+            type.getDescriptor(NAME_FIELD).getUserData().put(SimpleFeatureIO.BIG_STRING, Boolean.TRUE);
         // create a feature
         SimpleFeatureBuilder fbuilder = new SimpleFeatureBuilder(type);
         fbuilder.set(NAME_FIELD, name);
@@ -90,5 +98,58 @@ public class SimpleFeatureIOTest {
             sb.append(BASE_STRING);
         }
         return sb.toString();
+    }
+
+    @Test
+    public void testDeserializationDefault() throws Exception {
+        // deserialization will only be allowed when SimpleFeatureIO is created with an empty file
+        doTestDeserialization(false, true);
+    }
+
+    @Test
+    public void testDeserializationEnabled() throws Exception {
+        System.setProperty(SimpleFeatureIO.ENABLE_DESERIALIZATION, "true");
+        doTestDeserialization(false, false);
+    }
+
+    @Test
+    public void testDeserializationDisabled() throws Exception {
+        System.setProperty(SimpleFeatureIO.ENABLE_DESERIALIZATION, "false");
+        doTestDeserialization(true, true);
+    }
+
+    private static void doTestDeserialization(boolean exception1, boolean exception2) throws Exception {
+        URI uri = URI.create("http://localhost/");
+        File tempFile = File.createTempFile("temp", "simpleFeatureIODeserialization");
+        SimpleFeatureTypeBuilder typeBuilder = new SimpleFeatureTypeBuilder();
+        typeBuilder.setName("type2");
+        typeBuilder.add("uri", URI.class);
+        SimpleFeatureType type = typeBuilder.buildFeatureType();
+        SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(type);
+        featureBuilder.set("uri", uri);
+        // created with an empty file
+        SimpleFeatureIO sfio1 = new SimpleFeatureIO(tempFile, type);
+        try {
+            sfio1.write(featureBuilder.buildFeature("1"));
+            sfio1.seek(0);
+            if (exception1) {
+                assertThrows(IllegalStateException.class, () -> sfio1.read());
+            } else {
+                assertEquals(uri, sfio1.read().getAttribute("uri"));
+            }
+        } finally {
+            sfio1.close(false);
+        }
+        // created with an non-empty file
+        SimpleFeatureIO sfio2 = new SimpleFeatureIO(tempFile, type);
+        try {
+            if (exception2) {
+                assertThrows(IllegalStateException.class, () -> sfio2.read());
+            } else {
+                assertEquals(uri, sfio2.read().getAttribute("uri"));
+            }
+        } finally {
+            sfio2.close(true);
+        }
     }
 }

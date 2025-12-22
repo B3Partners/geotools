@@ -16,6 +16,9 @@
  */
 package org.geotools.coverage.io.netcdf.cf;
 
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Unmarshaller;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
@@ -23,16 +26,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
 import org.geotools.util.logging.Logging;
 
 /**
  * A NetCDF CF (ClimateForecast) parser.
  *
- * <p>It can be used to load from a standard name table (XML) all the available CF compliant
- * standard names and the related information, such as canonical units, descriptions and alias.
+ * <p>It can be used to load from a standard name table (XML) all the available CF compliant standard names and the
+ * related information, such as canonical units, descriptions and alias.
  *
  * <p>See <a href="http://cfconventions.org/standard-names.html">CF Convention: Standard names</a>
  */

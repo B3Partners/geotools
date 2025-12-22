@@ -52,13 +52,13 @@ public class BasicDirectedEdge extends BasicGraphable implements DirectedEdge {
     /** @see DirectedEdge#getInNode() */
     @Override
     public DirectedNode getInNode() {
-        return (m_in);
+        return m_in;
     }
 
     /** @see DirectedEdge#getOutNode() */
     @Override
     public DirectedNode getOutNode() {
-        return (m_out);
+        return m_out;
     }
 
     /**
@@ -68,7 +68,7 @@ public class BasicDirectedEdge extends BasicGraphable implements DirectedEdge {
      */
     @Override
     public Node getNodeA() {
-        return (m_in);
+        return m_in;
     }
 
     /**
@@ -78,19 +78,18 @@ public class BasicDirectedEdge extends BasicGraphable implements DirectedEdge {
      */
     @Override
     public Node getNodeB() {
-        return (m_out);
+        return m_out;
     }
 
     /** @see Edge#getOtherNode(Node) */
     @Override
     public Node getOtherNode(Node node) {
-        return (m_in.equals(node) ? m_out : m_out.equals(node) ? m_in : null);
+        return m_in.equals(node) ? m_out : m_out.equals(node) ? m_in : null;
     }
 
     /**
-     * Removes the edge from the out list of the in node and from the in list of the out node. Nodes
-     * are switched and then the edge is added to the in list of the new out node, and to the out
-     * list of the new in node.
+     * Removes the edge from the out list of the in node and from the in list of the out node. Nodes are switched and
+     * then the edge is added to the in list of the new out node, and to the out list of the new in node.
      *
      * @see Edge#reverse()
      */
@@ -126,7 +125,7 @@ public class BasicDirectedEdge extends BasicGraphable implements DirectedEdge {
         // remove this edge
         related.remove(this);
 
-        return (related.iterator());
+        return related.iterator();
 
         //
         // ArrayList related = new ArrayList();
@@ -178,7 +177,7 @@ public class BasicDirectedEdge extends BasicGraphable implements DirectedEdge {
             // it is in related to itself
             if (!de.equals(this)) in.add(de);
         }
-        return (in.iterator());
+        return in.iterator();
     }
 
     /**
@@ -195,19 +194,16 @@ public class BasicDirectedEdge extends BasicGraphable implements DirectedEdge {
             // it is in related to itself
             if (!de.equals(this)) out.add(de);
         }
-        return (out.iterator());
+        return out.iterator();
     }
 
     /** @see Edge#compareNodes(Edge) */
     @Override
     public int compareNodes(Edge other) {
-        if (other instanceof DirectedEdge) {
-            DirectedEdge de = (DirectedEdge) other;
-            if (de.getInNode().equals(m_in) && de.getOutNode().equals(m_out))
-                return (EQUAL_NODE_ORIENTATION);
-            if (de.getInNode().equals(m_out) && de.getOutNode().equals(m_in))
-                return (OPPOSITE_NODE_ORIENTATION);
+        if (other instanceof DirectedEdge de) {
+            if (de.getInNode().equals(m_in) && de.getOutNode().equals(m_out)) return EQUAL_NODE_ORIENTATION;
+            if (de.getInNode().equals(m_out) && de.getOutNode().equals(m_in)) return OPPOSITE_NODE_ORIENTATION;
         }
-        return (UNEQUAL_NODE_ORIENTATION);
+        return UNEQUAL_NODE_ORIENTATION;
     }
 }

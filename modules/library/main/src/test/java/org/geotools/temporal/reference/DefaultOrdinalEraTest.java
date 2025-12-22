@@ -22,12 +22,12 @@ import static org.junit.Assert.assertNotEquals;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import org.geotools.api.temporal.OrdinalEra;
+import org.geotools.api.util.InternationalString;
 import org.geotools.util.SimpleInternationalString;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.temporal.OrdinalEra;
-import org.opengis.util.InternationalString;
 
 /** @author Mehdi Sidhoum (Geomatys) */
 public class DefaultOrdinalEraTest {
@@ -47,10 +47,8 @@ public class DefaultOrdinalEraTest {
         Date beginning2 = cal.getTime();
         cal.set(2012, 1, 1);
         Date end2 = cal.getTime();
-        ordinalEra1 =
-                new DefaultOrdinalEra(new SimpleInternationalString("old Era"), beginning1, end1);
-        ordinalEra2 =
-                new DefaultOrdinalEra(new SimpleInternationalString("new Era"), beginning2, end2);
+        ordinalEra1 = new DefaultOrdinalEra(new SimpleInternationalString("old Era"), beginning1, end1);
+        ordinalEra2 = new DefaultOrdinalEra(new SimpleInternationalString("new Era"), beginning2, end2);
     }
 
     @After
@@ -124,9 +122,7 @@ public class DefaultOrdinalEraTest {
         DefaultOrdinalEra result = ((DefaultOrdinalEra) ordinalEra1).getGroup();
         cal.set(1900, 0, 0);
         ((DefaultOrdinalEra) ordinalEra1)
-                .setGroup(
-                        new DefaultOrdinalEra(
-                                new SimpleInternationalString(""), cal.getTime(), new Date()));
+                .setGroup(new DefaultOrdinalEra(new SimpleInternationalString(""), cal.getTime(), new Date()));
         assertNotEquals(((DefaultOrdinalEra) ordinalEra1).getGroup(), result);
     }
 

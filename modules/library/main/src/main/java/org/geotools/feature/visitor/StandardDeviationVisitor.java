@@ -20,9 +20,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Determines the standard deviation.
@@ -85,13 +85,12 @@ public class StandardDeviationVisitor implements FeatureCalc, FeatureAttributeVi
 
     public void setValue(Object value) {
         reset();
-        if (value instanceof Result) {
-            this.result = (Result) value;
-        } else if (value instanceof Number) {
-            this.result = new Result(((Number) value).doubleValue());
+        if (value instanceof Result result1) {
+            this.result = result1;
+        } else if (value instanceof Number number) {
+            this.result = new Result(number.doubleValue());
         } else {
-            throw new IllegalArgumentException(
-                    "Result must be a " + Result.class.getName() + " or a Number");
+            throw new IllegalArgumentException("Result must be a " + Result.class.getName() + " or a Number");
         }
     }
 
@@ -103,8 +102,7 @@ public class StandardDeviationVisitor implements FeatureCalc, FeatureAttributeVi
     @Override
     public Optional<List<Class>> getResultType(List<Class> inputTypes) {
         if (inputTypes == null || inputTypes.size() != 1)
-            throw new IllegalArgumentException(
-                    "Expecting a single type in input, not " + inputTypes);
+            throw new IllegalArgumentException("Expecting a single type in input, not " + inputTypes);
 
         return Optional.of(Collections.singletonList(Double.class));
     }
@@ -119,11 +117,11 @@ public class StandardDeviationVisitor implements FeatureCalc, FeatureAttributeVi
     }
 
     public void visit(SimpleFeature feature) {
-        visit((org.opengis.feature.Feature) feature);
+        visit((org.geotools.api.feature.Feature) feature);
     }
 
     @Override
-    public void visit(org.opengis.feature.Feature feature) {
+    public void visit(org.geotools.api.feature.Feature feature) {
         Object value = expr.evaluate(feature);
 
         if (value == null) {
@@ -131,8 +129,8 @@ public class StandardDeviationVisitor implements FeatureCalc, FeatureAttributeVi
             return; // don't store this value
         }
 
-        if (value instanceof Double) {
-            double doubleVal = ((Double) value).doubleValue();
+        if (value instanceof Double double1) {
+            double doubleVal = double1.doubleValue();
             if (Double.isNaN(doubleVal) || Double.isInfinite(doubleVal)) {
                 countNaN++; // increment the NaN count
                 return; // don't store NaN value

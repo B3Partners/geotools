@@ -18,15 +18,16 @@
 package org.geotools.referencing.operation.projection;
 
 import java.awt.geom.Point2D;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.operation.MathTransform;
 
+@SuppressWarnings("FloatingPointLiteralPrecision")
 public class CylindricalEqualArea extends MapProjection {
 
     private static final double DTR = Math.PI / 180.0;
@@ -39,8 +40,7 @@ public class CylindricalEqualArea extends MapProjection {
     private double trueScaleLatitude;
     private double trueScaleLatitudeDeg;
 
-    protected CylindricalEqualArea(final ParameterValueGroup parameters)
-            throws ParameterNotFoundException {
+    protected CylindricalEqualArea(final ParameterValueGroup parameters) throws ParameterNotFoundException {
         super(parameters);
 
         // Set trueScaleLatitude ("lat_ts" in Proj4)
@@ -49,7 +49,7 @@ public class CylindricalEqualArea extends MapProjection {
 
         es = excentricitySquared;
         e = excentricity;
-        one_es = 1 - (excentricitySquared);
+        one_es = 1 - excentricitySquared;
 
         double t = trueScaleLatitude;
         scaleFactor = Math.cos(t);
@@ -77,12 +77,11 @@ public class CylindricalEqualArea extends MapProjection {
     }
 
     /**
-     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in
-     * radians) and stores the result in {@code xy} (linear distance on a unit sphere).
+     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in radians) and stores the
+     * result in {@code xy} (linear distance on a unit sphere).
      */
     @Override
-    protected Point2D transformNormalized(double lam, double phi, final Point2D xy)
-            throws ProjectionException {
+    protected Point2D transformNormalized(double lam, double phi, final Point2D xy) throws ProjectionException {
         double x, y;
         if (isSpherical) {
             x = scaleFactor * lam;
@@ -99,13 +98,9 @@ public class CylindricalEqualArea extends MapProjection {
         }
     }
 
-    /**
-     * Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in
-     * {@code lp}.
-     */
+    /** Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in {@code lp}. */
     @Override
-    protected Point2D inverseTransformNormalized(double x, double y, final Point2D lp)
-            throws ProjectionException {
+    protected Point2D inverseTransformNormalized(double x, double y, final Point2D lp) throws ProjectionException {
         double lam, phi;
         if (isSpherical) {
 
@@ -132,16 +127,16 @@ public class CylindricalEqualArea extends MapProjection {
 
     public static class Provider extends AbstractProvider {
 
-        static final ParameterDescriptorGroup PARAMETERS =
-                createDescriptorGroup(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(Citations.GEOTOOLS, "Cylindrical_Equal_Area"),
-                            new NamedIdentifier(Citations.OGC, "Cylindrical_Equal_Area"),
-                            // new NamedIdentifier(Citations.EPSG,     "Cylindrical_Equal_Area"),
-                            new NamedIdentifier(Citations.ESRI, "Cylindrical_Equal_Area"),
-                            new NamedIdentifier(Citations.GEOTIFF, "CT_CylindricalEqualArea")
-                        },
-                        getParameterDescriptors());
+        static final ParameterDescriptorGroup PARAMETERS = createDescriptorGroup(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(Citations.GEOTOOLS, "Cylindrical_Equal_Area"),
+                    new NamedIdentifier(Citations.OGC, "Cylindrical_Equal_Area"),
+                    // new NamedIdentifier(Citations.EPSG,     "Cylindrical_Equal_Area"),
+                    new NamedIdentifier(Citations.ESRI, "Cylindrical_Equal_Area"),
+                    new NamedIdentifier(Citations.GEOTIFF, "CT_CylindricalEqualArea"),
+                    new NamedIdentifier(Citations.PROJ, "cea")
+                },
+                getParameterDescriptors());
 
         public Provider() {
             super(PARAMETERS);
@@ -163,25 +158,18 @@ public class CylindricalEqualArea extends MapProjection {
         */
         protected static ParameterDescriptor[] getParameterDescriptors() {
             return new ParameterDescriptor[] {
-                SEMI_MAJOR,
-                SEMI_MINOR,
-                CENTRAL_MERIDIAN,
-                STANDARD_PARALLEL_1,
-                FALSE_EASTING,
-                FALSE_NORTHING
+                SEMI_MAJOR, SEMI_MINOR, CENTRAL_MERIDIAN, STANDARD_PARALLEL_1, FALSE_EASTING, FALSE_NORTHING
             };
         }
     }
 
     public static class BehrmannProvider extends AbstractProvider {
 
-        static final ParameterDescriptorGroup PARAMETERS =
-                createDescriptorGroup(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(Citations.GEOTOOLS, "Behrmann"),
-                            new NamedIdentifier(Citations.ESRI, "54017")
-                        },
-                        Provider.getParameterDescriptors());
+        static final ParameterDescriptorGroup PARAMETERS = createDescriptorGroup(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(Citations.GEOTOOLS, "Behrmann"), new NamedIdentifier(Citations.ESRI, "54017")
+                },
+                Provider.getParameterDescriptors());
 
         public BehrmannProvider() {
             super(PARAMETERS);
@@ -197,14 +185,12 @@ public class CylindricalEqualArea extends MapProjection {
 
     public static class LambertCylindricalEqualAreaProvider extends AbstractProvider {
 
-        static final ParameterDescriptorGroup PARAMETERS =
-                createDescriptorGroup(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(
-                                    Citations.GEOTOOLS,
-                                    "Lambert Cylindrical Equal Area (Spherical)"),
-                        },
-                        Provider.getParameterDescriptors());
+        static final ParameterDescriptorGroup PARAMETERS = createDescriptorGroup(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(Citations.GEOTOOLS, "Lambert Cylindrical Equal Area (Spherical)"),
+                    new NamedIdentifier(Citations.PROJ, "cea")
+                },
+                Provider.getParameterDescriptors());
 
         public LambertCylindricalEqualAreaProvider() {
             super(PARAMETERS);
@@ -251,18 +237,13 @@ public class CylindricalEqualArea extends MapProjection {
 
             if (e >= 1.0e-7) {
                 con = e * sinphi;
-                return (one_es
-                        * (sinphi / (1. - con * con)
-                                - (.5 / e) * Math.log((1. - con) / (1. + con))));
-            } else return (sinphi + sinphi);
+                return one_es * (sinphi / (1. - con * con) - .5 / e * Math.log((1. - con) / (1. + con)));
+            } else return sinphi + sinphi;
         }
 
         public static double authlat(double beta, double[] APA) {
             double t = beta + beta;
-            return (beta
-                    + APA[0] * Math.sin(t)
-                    + APA[1] * Math.sin(t + t)
-                    + APA[2] * Math.sin(t + t + t));
+            return beta + APA[0] * Math.sin(t) + APA[1] * Math.sin(t + t) + APA[2] * Math.sin(t + t + t);
         }
     }
 }

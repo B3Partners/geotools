@@ -34,23 +34,27 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
+import org.geotools.api.data.DataStoreFactorySpi;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.coverage.grid.GridCoverage2D;
-import org.geotools.data.DataStoreFactorySpi;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.Transaction;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
@@ -74,9 +78,6 @@ import org.locationtech.jts.io.WKBReader;
 import org.locationtech.jts.io.WKBWriter;
 import org.locationtech.jts.io.WKTReader;
 import org.locationtech.jts.io.WKTWriter;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Tests for the raster to vector FootprintExtractionProcess.
@@ -103,12 +104,10 @@ public class FootprintExtractionProcessTest {
     static enum WritingFormat {
         WKB {
             @Override
-            void write(Geometry geometry, File outputFile, CoordinateReferenceSystem crs)
-                    throws IOException {
+            void write(Geometry geometry, File outputFile, CoordinateReferenceSystem crs) throws IOException {
                 final WKBWriter wkbWriter = new WKBWriter(2);
                 try (final OutputStream outputStream = new FileOutputStream(outputFile);
-                        final BufferedOutputStream bufferedStream =
-                                new BufferedOutputStream(outputStream)) {
+                        final BufferedOutputStream bufferedStream = new BufferedOutputStream(outputStream)) {
                     final OutStream outStream = new OutputStreamOutStream(bufferedStream);
                     wkbWriter.write(geometry, outStream);
                 }
@@ -116,8 +115,7 @@ public class FootprintExtractionProcessTest {
         },
         WKT {
             @Override
-            void write(Geometry geometry, File outputFile, CoordinateReferenceSystem crs)
-                    throws IOException {
+            void write(Geometry geometry, File outputFile, CoordinateReferenceSystem crs) throws IOException {
                 final WKTWriter wktWriter = new WKTWriter(2);
                 final StringWriter wkt = new StringWriter();
 
@@ -127,7 +125,7 @@ public class FootprintExtractionProcessTest {
                 // write to file
                 if (outputFile != null) {
                     try (BufferedWriter bufferedWriter =
-                            new BufferedWriter(new FileWriter(outputFile))) {
+                            new BufferedWriter(new FileWriter(outputFile, StandardCharsets.UTF_8))) {
                         bufferedWriter.write(wkt.toString());
                     }
                 }
@@ -135,8 +133,7 @@ public class FootprintExtractionProcessTest {
         },
         SHAPEFILE {
             @Override
-            void write(Geometry geometry, File outputFile, CoordinateReferenceSystem crs)
-                    throws IOException {
+            void write(Geometry geometry, File outputFile, CoordinateReferenceSystem crs) throws IOException {
 
                 // create feature type
                 final SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
@@ -167,8 +164,7 @@ public class FootprintExtractionProcessTest {
                 params.put(CREATE_SPATIAL_INDEX, Boolean.TRUE);
                 params.put("url", URLs.fileToUrl(outputFile));
 
-                final ShapefileDataStore ds =
-                        (ShapefileDataStore) factory.createNewDataStore(params);
+                final ShapefileDataStore ds = (ShapefileDataStore) factory.createNewDataStore(params);
                 ds.createSchema(featureType);
                 if (crs != null) {
                     ds.forceSchemaCRS(crs);
@@ -179,8 +175,7 @@ public class FootprintExtractionProcessTest {
 
                 SimpleFeatureSource source = ds.getFeatureSource(ds.getTypeNames()[0]);
 
-                if (source instanceof SimpleFeatureStore) {
-                    SimpleFeatureStore store = (SimpleFeatureStore) source;
+                if (source instanceof SimpleFeatureStore store) {
 
                     store.setTransaction(transaction);
                     try { // NOPMD Catch needs transaction
@@ -202,8 +197,7 @@ public class FootprintExtractionProcessTest {
             }
         };
 
-        abstract void write(Geometry geometry, File outputFile, CoordinateReferenceSystem crs)
-                throws IOException;
+        abstract void write(Geometry geometry, File outputFile, CoordinateReferenceSystem crs) throws IOException;
     }
 
     @Before
@@ -216,7 +210,7 @@ public class FootprintExtractionProcessTest {
     }
 
     private static Geometry wktRead(File geometryFile) throws IOException, ParseException {
-        try (FileReader fileReader = new FileReader(geometryFile)) {
+        try (FileReader fileReader = new FileReader(geometryFile, StandardCharsets.UTF_8)) {
             WKTReader wktReader = new WKTReader();
             return wktReader.read(fileReader);
         }
@@ -238,9 +232,8 @@ public class FootprintExtractionProcessTest {
         GridCoverage2D cov = null;
         try {
             reader = new GeoTiffReader(cloudFile);
-            cov = reader.read(null);
-            SimpleFeatureCollection fc =
-                    process.execute(cov, null, 10d, false, null, true, true, null, null);
+            cov = reader.read();
+            SimpleFeatureCollection fc = process.execute(cov, null, 10d, false, null, true, true, null, null);
             assertEquals(1, fc.size());
 
             SimpleFeature feature = DataUtilities.first(fc);
@@ -270,9 +263,8 @@ public class FootprintExtractionProcessTest {
         GridCoverage2D cov = null;
         try {
             reader = new GeoTiffReader(cloudFile);
-            cov = reader.read(null);
-            SimpleFeatureCollection fc =
-                    process.execute(cov, null, 10d, true, 4d, true, true, null, null);
+            cov = reader.read();
+            SimpleFeatureCollection fc = process.execute(cov, null, 10d, true, 4d, true, true, null, null);
             assertEquals(2, fc.size());
             try (FeatureIterator<SimpleFeature> iter = fc.features()) {
 
@@ -314,14 +306,12 @@ public class FootprintExtractionProcessTest {
         GridCoverage2D cov = null;
         try {
             reader = new GeoTiffReader(cloudFile);
-            cov = reader.read(null);
-            SimpleFeatureCollection fc =
-                    process.execute(cov, null, 10d, false, null, false, true, null, null);
+            cov = reader.read();
+            SimpleFeatureCollection fc = process.execute(cov, null, 10d, false, null, false, true, null, null);
 
             SimpleFeature feature = DataUtilities.first(fc);
             Geometry geometry = (Geometry) feature.getDefaultGeometry();
-            final int removeCollinearLength =
-                    referenceGeometry.getGeometryN(0).getCoordinates().length;
+            final int removeCollinearLength = referenceGeometry.getGeometryN(0).getCoordinates().length;
             assertEquals(133, removeCollinearLength);
 
             // The computed polygon should have more vertices due to collinear point not being
@@ -353,7 +343,7 @@ public class FootprintExtractionProcessTest {
         GridCoverage2D cov = null;
         try {
             reader = new GeoTiffReader(cloudFile);
-            cov = reader.read(null);
+            cov = reader.read();
 
             // Exclude pixels with luminance less than 20.
             final int referenceLuminance = 10;
@@ -370,17 +360,15 @@ public class FootprintExtractionProcessTest {
 
             // These positions identify a couple of dark pixels of the cloud edge
             raster.getPixel(9, 13, darkPixel);
-            double luminance =
-                    ImageUtilities.RGB_TO_GRAY_MATRIX[0][0] * darkPixel[0]
-                            + ImageUtilities.RGB_TO_GRAY_MATRIX[0][1] * darkPixel[1]
-                            + ImageUtilities.RGB_TO_GRAY_MATRIX[0][2] * darkPixel[2];
+            double luminance = ImageUtilities.RGB_TO_GRAY_MATRIX[0][0] * darkPixel[0]
+                    + ImageUtilities.RGB_TO_GRAY_MATRIX[0][1] * darkPixel[1]
+                    + ImageUtilities.RGB_TO_GRAY_MATRIX[0][2] * darkPixel[2];
             assertTrue(luminance < referenceLuminance);
 
             raster.getPixel(15, 7, darkPixel);
-            luminance =
-                    ImageUtilities.RGB_TO_GRAY_MATRIX[0][0] * darkPixel[0]
-                            + ImageUtilities.RGB_TO_GRAY_MATRIX[0][1] * darkPixel[1]
-                            + ImageUtilities.RGB_TO_GRAY_MATRIX[0][2] * darkPixel[2];
+            luminance = ImageUtilities.RGB_TO_GRAY_MATRIX[0][0] * darkPixel[0]
+                    + ImageUtilities.RGB_TO_GRAY_MATRIX[0][1] * darkPixel[1]
+                    + ImageUtilities.RGB_TO_GRAY_MATRIX[0][2] * darkPixel[2];
             assertTrue(luminance < referenceLuminance);
 
             // The computed polygon should have different shape due to dark pixels being excluded
@@ -409,7 +397,7 @@ public class FootprintExtractionProcessTest {
         GridCoverage2D cov = null;
         try {
             reader = new GeoTiffReader(islandFile);
-            cov = reader.read(null);
+            cov = reader.read();
 
             // Test removing black areas and clouds
             List<Range<Integer>> exclusionRanges = new ArrayList<>();
@@ -445,15 +433,14 @@ public class FootprintExtractionProcessTest {
         GridCoverage2D cov = null;
         try {
             reader = new GeoTiffReader(cloudFile);
-            cov = reader.read(null);
+            cov = reader.read();
             BandSelectProcess select = new BandSelectProcess();
             cov = select.execute(cov, new int[] {0}, null);
             List<Range<Integer>> exclusionRange = new ArrayList<>();
 
             // Exclude any value so the process will not find anything
             exclusionRange.add(new Range<>(Integer.class, 0, 255));
-            SimpleFeatureCollection fc =
-                    process.execute(cov, exclusionRange, 10d, false, null, true, true, null, null);
+            SimpleFeatureCollection fc = process.execute(cov, exclusionRange, 10d, false, null, true, true, null, null);
             assertEquals(1, fc.size());
 
             // Check no results are returned as an empty MultiPolygon
@@ -496,9 +483,8 @@ public class FootprintExtractionProcessTest {
         GridCoverage2D cov = null;
         try {
             reader = new GeoTiffReader(cloudFile);
-            cov = reader.read(null);
-            SimpleFeatureCollection fc =
-                    process.execute(cov, null, 10d, false, null, true, true, null, null);
+            cov = reader.read();
+            SimpleFeatureCollection fc = process.execute(cov, null, 10d, false, null, true, true, null, null);
             assertEquals(1, fc.size());
 
             SimpleFeature feature = DataUtilities.first(fc);
@@ -544,7 +530,7 @@ public class FootprintExtractionProcessTest {
             throws IOException {
         Utilities.ensureNonNull("writingFormat", writingFormat);
         Utilities.ensureNonNull("geometry", geometry);
-        if ((outputFile != null) && outputFile.exists()) {
+        if (outputFile != null && outputFile.exists()) {
             FileUtils.deleteQuietly(outputFile);
         }
 

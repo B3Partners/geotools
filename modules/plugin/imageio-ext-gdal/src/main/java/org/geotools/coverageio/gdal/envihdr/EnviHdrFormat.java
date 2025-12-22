@@ -19,11 +19,11 @@ package org.geotools.coverageio.gdal.envihdr;
 import it.geosolutions.imageio.plugins.envihdr.ENVIHdrImageReaderSpi;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.coverage.grid.Format;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.geometry.MismatchedDimensionException;
 import org.geotools.coverageio.gdal.BaseGDALGridFormat;
-import org.geotools.data.DataSourceException;
 import org.geotools.util.factory.Hints;
-import org.opengis.coverage.grid.Format;
-import org.opengis.geometry.MismatchedDimensionException;
 
 /**
  * @author Mathew Wyatt, CSIRO Australia
@@ -32,13 +32,9 @@ import org.opengis.geometry.MismatchedDimensionException;
 public final class EnviHdrFormat extends BaseGDALGridFormat implements Format {
 
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(EnviHdrFormat.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(EnviHdrFormat.class);
 
-    /**
-     * Constructor for the {@code BaseGDALGridFormat}. It is invoked by the underlying
-     * implementations.
-     */
+    /** Constructor for the {@code BaseGDALGridFormat}. It is invoked by the underlying implementations. */
     public EnviHdrFormat() {
         super(new ENVIHdrImageReaderSpi());
 

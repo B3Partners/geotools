@@ -7,14 +7,14 @@
                                                                                 
         Version: $Id$              
      ======================================================================= -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                                 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                                 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.geotools</groupId>
     <artifactId>library</artifactId>
-    <version>29-SNAPSHOT</version>
+    <version>35-SNAPSHOT</version>
   </parent>
 
   <!-- =========================================================== -->
@@ -78,19 +78,20 @@
   <!-- =========================================================== -->
   <dependencies>
     <dependency>
+      <groupId>javax.measure</groupId>
+      <artifactId>unit-api</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-main</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-coverage</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-cql</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>com.conversantmedia</groupId>
@@ -101,13 +102,11 @@
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-epsg-hsql</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-sample-data</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -117,58 +116,39 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>javax.media</groupId>
-      <artifactId>jai_codec</artifactId>
-      <!-- The version number is specified in the parent POM. -->
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>javax.media</groupId>
-      <artifactId>jai_imageio</artifactId>
-      <!-- The version number is specified in the parent POM. -->
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-property</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-geotiff</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-imagemosaic</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-imagemosaic</artifactId>
-      <version>${project.version}</version>
       <classifier>tests</classifier>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-arcgrid</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools.xsd</groupId>
       <artifactId>gt-xsd-sld</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-shapefile</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -184,12 +164,12 @@
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-image</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-all</artifactId>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-main</artifactId>
+      <classifier>tests</classifier>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -201,10 +181,10 @@
         <artifactId>maven-jar-plugin</artifactId>
         <executions>
           <execution>
-            <phase>package</phase>
             <goals>
               <goal>test-jar</goal>
             </goals>
+            <phase>package</phase>
           </execution>
         </executions>
       </plugin>
@@ -214,7 +194,7 @@
         <configuration>
           <systemPropertyVariables>
             <!-- settings these properties on Test's code won't work due to order of initialization -->
-            <it.geosolutions.jaiext.scale2>true</it.geosolutions.jaiext.scale2>
+            <org.eclipse.imagen.media.scale2>true</org.eclipse.imagen.media.scale2>
             <buildDirectory>${project.build.directory}</buildDirectory>
           </systemPropertyVariables>
         </configuration>

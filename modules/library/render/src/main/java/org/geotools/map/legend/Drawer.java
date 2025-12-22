@@ -28,6 +28,20 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.RasterSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.Symbolizer;
+import org.geotools.api.style.TextSymbolizer;
 import org.geotools.data.DataUtilities;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.SchemaException;
@@ -38,18 +52,8 @@ import org.geotools.renderer.style.GraphicStyle2D;
 import org.geotools.renderer.style.MarkStyle2D;
 import org.geotools.renderer.style.SLDStyleFactory;
 import org.geotools.renderer.style.Style2D;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.LineSymbolizer;
-import org.geotools.styling.Mark;
-import org.geotools.styling.PointSymbolizer;
-import org.geotools.styling.PolygonSymbolizer;
-import org.geotools.styling.RasterSymbolizer;
-import org.geotools.styling.Rule;
 import org.geotools.styling.SLD;
-import org.geotools.styling.Style;
 import org.geotools.styling.StyleBuilder;
-import org.geotools.styling.Symbolizer;
-import org.geotools.styling.TextSymbolizer;
 import org.geotools.util.NumberRange;
 import org.geotools.util.factory.GeoTools;
 import org.locationtech.jts.geom.Coordinate;
@@ -63,15 +67,8 @@ import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.operation.MathTransform;
 
-/**
- * This class is used to isolate GeoTools from the specific graphic library being used for
- * rendering.
- */
+/** This class is used to isolate GeoTools from the specific graphic library being used for rendering. */
 public class Drawer {
 
     private GeometryFactory gf = new GeometryFactory();
@@ -94,8 +91,7 @@ public class Drawer {
      *
      * <p>Feature coordintes are in the same coordinates as the image.
      *
-     * <p>You may call this method multiple times to draw several features onto the same Image (say
-     * for glyph creation).
+     * <p>You may call this method multiple times to draw several features onto the same Image (say for glyph creation).
      *
      * @param bi Image to render on to
      * @param feature Feature to be rendered
@@ -123,26 +119,19 @@ public class Drawer {
         drawFeature(bi, feature, worldToScreenTransform, drawVertices, getSymbolizers(feature), mt);
     }
 
-    public void drawFeature(
-            BufferedImage bi, SimpleFeature feature, AffineTransform worldToScreenTransform) {
+    public void drawFeature(BufferedImage bi, SimpleFeature feature, AffineTransform worldToScreenTransform) {
         if (feature == null) return;
         drawFeature(bi, feature, worldToScreenTransform, false, getSymbolizers(feature), null);
     }
 
     public void drawFeature(
-            BufferedImage bi,
-            SimpleFeature feature,
-            AffineTransform worldToScreenTransform,
-            Style style) {
+            BufferedImage bi, SimpleFeature feature, AffineTransform worldToScreenTransform, Style style) {
         if (feature == null) return;
         drawFeature(bi, feature, worldToScreenTransform, false, getSymbolizers(style), null);
     }
 
     public void drawFeature(
-            BufferedImage bi,
-            SimpleFeature feature,
-            Style style,
-            AffineTransform worldToScreenTransform) {
+            BufferedImage bi, SimpleFeature feature, Style style, AffineTransform worldToScreenTransform) {
         if (feature == null) return;
 
         drawFeature(bi, feature, worldToScreenTransform, false, getSymbolizers(style), null);
@@ -183,9 +172,8 @@ public class Drawer {
             PointSymbolizer point = builder.createPointSymbolizer(builder.createGraphic());
             // set graphic size to 10 by default
             point.getGraphic()
-                    .setSize(
-                            CommonFactoryFinder.getFilterFactory(GeoTools.getDefaultHints())
-                                    .literal(10));
+                    .setSize(CommonFactoryFinder.getFilterFactory(GeoTools.getDefaultHints())
+                            .literal(10));
 
             // danger assumes a Mark!
             Mark mark = (Mark) point.getGraphic().graphicalSymbols().get(0);
@@ -193,10 +181,8 @@ public class Drawer {
             syms[0] = point;
         }
         if (Polygon.class.isAssignableFrom(type) || MultiPolygon.class.isAssignableFrom(type)) {
-            syms[0] =
-                    builder.createPolygonSymbolizer(
-                            builder.createStroke(baseColor, 2),
-                            builder.createFill(baseColor, useTransparency ? .6 : 1.0));
+            syms[0] = builder.createPolygonSymbolizer(
+                    builder.createStroke(baseColor, 2), builder.createFill(baseColor, useTransparency ? .6 : 1.0));
         }
         return syms;
     }
@@ -257,8 +243,7 @@ public class Drawer {
                     graphics.setColor(Color.RED);
                     for (Coordinate coord : coords) {
                         java.awt.Point p = worldToPixel(coord, worldToScreenTransform);
-                        graphics.fillRect(
-                                p.x - (pixels - 1) / 2, p.y - (pixels - 1) / 2, pixels, pixels);
+                        graphics.fillRect(p.x - (pixels - 1) / 2, p.y - (pixels - 1) / 2, pixels, pixels);
                     }
                 }
             }
@@ -271,8 +256,7 @@ public class Drawer {
         Graphics graphics = bi.getGraphics();
         Graphics2D g = (Graphics2D) graphics;
 
-        if (symb instanceof PolygonSymbolizer) {
-            PolygonSymbolizer polySymb = (PolygonSymbolizer) symb;
+        if (symb instanceof PolygonSymbolizer polySymb) {
             Color stroke = SLD.polyColor(polySymb);
             double opacity = SLD.polyFillOpacity(polySymb);
             Color fill = SLD.polyFill(polySymb);
@@ -282,12 +266,7 @@ public class Drawer {
 
             if (Double.isNaN(opacity)) opacity = 1.0;
             if (fill != null) {
-                fill =
-                        new Color(
-                                fill.getRed(),
-                                fill.getGreen(),
-                                fill.getBlue(),
-                                (int) (255 * opacity));
+                fill = new Color(fill.getRed(), fill.getGreen(), fill.getBlue(), (int) (255 * opacity));
                 g.setColor(fill);
                 g.fill(shape);
             }
@@ -300,8 +279,7 @@ public class Drawer {
                 g.draw(shape);
             }
         }
-        if (symb instanceof LineSymbolizer) {
-            LineSymbolizer lineSymbolizer = (LineSymbolizer) symb;
+        if (symb instanceof LineSymbolizer lineSymbolizer) {
             Color c = SLD.color(lineSymbolizer);
             int w = SLD.width(lineSymbolizer);
             if (c != null && w > 0) {
@@ -313,8 +291,7 @@ public class Drawer {
                 g.draw(shape);
             }
         }
-        if (symb instanceof PointSymbolizer) {
-            PointSymbolizer pointSymbolizer = (PointSymbolizer) symb;
+        if (symb instanceof PointSymbolizer pointSymbolizer) {
 
             Color c = SLD.pointColor(pointSymbolizer);
             Color fill = SLD.pointFill(pointSymbolizer);
@@ -325,14 +302,10 @@ public class Drawer {
             float[] point = new float[6];
             shape.getPathIterator(null).currentSegment(point);
             SLDStyleFactory styleFactory = new SLDStyleFactory();
-            Style2D tmp =
-                    styleFactory.createStyle(
-                            feature,
-                            pointSymbolizer,
-                            NumberRange.create(Double.MIN_VALUE, Double.MAX_VALUE));
+            Style2D tmp = styleFactory.createStyle(
+                    feature, pointSymbolizer, NumberRange.create(Double.MIN_VALUE, Double.MAX_VALUE));
 
-            if (tmp instanceof MarkStyle2D) {
-                MarkStyle2D style = (MarkStyle2D) tmp;
+            if (tmp instanceof MarkStyle2D style) {
                 Shape shape2 = style.getTransformedShape(point[0], point[1]);
 
                 if (c == null && fill == null) {
@@ -358,10 +331,9 @@ public class Drawer {
                     g.setColor(Color.DARK_GRAY);
                     g.draw(shape2);
                 }
-            } else if (tmp instanceof GraphicStyle2D) {
-                GraphicStyle2D style = (GraphicStyle2D) tmp;
+            } else if (tmp instanceof GraphicStyle2D style) {
 
-                float rotation = style.getRotation(); // in radians
+                double rotation = style.getRotation(); // in radians
 
                 g.setTransform(AffineTransform.getRotateInstance(rotation));
 
@@ -369,8 +341,8 @@ public class Drawer {
 
                 g.drawImage(
                         image,
-                        (int) (point[0] - ((double) image.getWidth()) / (double) 2),
-                        (int) (point[1] - ((double) image.getHeight()) / (double) 2),
+                        (int) ((point[0] - image.getWidth()) / 2d),
+                        (int) ((point[1] - image.getHeight()) / 2d),
                         null);
             }
         }
@@ -381,8 +353,7 @@ public class Drawer {
      *
      * @param f The victim
      * @param s The symbolizer
-     * @return The geometry requested in the symbolizer, or the default geometry if none is
-     *     specified
+     * @return The geometry requested in the symbolizer, or the default geometry if none is specified
      */
     private org.locationtech.jts.geom.Geometry findGeometry(SimpleFeature f, Symbolizer s) {
         String geomName = getGeometryPropertyName(s);
@@ -397,8 +368,7 @@ public class Drawer {
         // location to place the
         // point in order to avoid recomputing that location at each rendering
         // step
-        if ((s instanceof PointSymbolizer || s instanceof TextSymbolizer)
-                && !(geom instanceof Point)) {
+        if ((s instanceof PointSymbolizer || s instanceof TextSymbolizer) && !(geom instanceof Point)) {
             if (geom instanceof LineString && !(geom instanceof LinearRing)) {
                 // use the mid point to represent the point/text symbolizer
                 // anchor
@@ -444,7 +414,7 @@ public class Drawer {
         double scaleY = screenSize.getHeight() / mapExtent.getHeight();
 
         double tx = -mapExtent.getMinX() * scaleX;
-        double ty = (mapExtent.getMinY() * scaleY) + screenSize.getHeight();
+        double ty = mapExtent.getMinY() * scaleY + screenSize.getHeight();
 
         AffineTransform at = new AffineTransform(scaleX, 0.0d, 0.0d, -scaleY, tx, ty);
 
@@ -485,28 +455,17 @@ public class Drawer {
 
     static {
         try {
-            pointSchema =
-                    DataUtilities.createType(
-                            "generated:point", "*point:Point"); // $NON-NLS-1$ //$NON-NLS-2$
-            lineSchema =
-                    DataUtilities.createType(
-                            "generated:linestring",
-                            "*linestring:LineString"); // $NON-NLS-1$ //$NON-NLS-2$
+            pointSchema = DataUtilities.createType("generated:point", "*point:Point"); // $NON-NLS-1$ //$NON-NLS-2$
+            lineSchema = DataUtilities.createType(
+                    "generated:linestring", "*linestring:LineString"); // $NON-NLS-1$ //$NON-NLS-2$
             polygonSchema =
-                    DataUtilities.createType(
-                            "generated:polygon", "*polygon:Polygon"); // $NON-NLS-1$ //$NON-NLS-2$
-            multipointSchema =
-                    DataUtilities.createType(
-                            "generated:multipoint",
-                            "*multipoint:MultiPoint"); // $NON-NLS-1$ //$NON-NLS-2$
-            multilineSchema =
-                    DataUtilities.createType(
-                            "generated:multilinestring",
-                            "*multilinestring:MultiLineString"); // $NON-NLS-1$ //$NON-NLS-2$
-            multipolygonSchema =
-                    DataUtilities.createType(
-                            "generated:multipolygon",
-                            "*multipolygon:MultiPolygon"); // $NON-NLS-1$ //$NON-NLS-2$
+                    DataUtilities.createType("generated:polygon", "*polygon:Polygon"); // $NON-NLS-1$ //$NON-NLS-2$
+            multipointSchema = DataUtilities.createType(
+                    "generated:multipoint", "*multipoint:MultiPoint"); // $NON-NLS-1$ //$NON-NLS-2$
+            multilineSchema = DataUtilities.createType(
+                    "generated:multilinestring", "*multilinestring:MultiLineString"); // $NON-NLS-1$ //$NON-NLS-2$
+            multipolygonSchema = DataUtilities.createType(
+                    "generated:multipolygon", "*multipolygon:MultiPolygon"); // $NON-NLS-1$ //$NON-NLS-2$
         } catch (SchemaException unExpected) {
             // System.err.println(unExpected);
         }
@@ -519,21 +478,20 @@ public class Drawer {
      * @return feature instance
      */
     public SimpleFeature feature(Geometry geom) {
-        if (geom instanceof Polygon) {
-            return feature((Polygon) geom);
-        } else if (geom instanceof MultiPolygon) {
-            return feature((MultiPolygon) geom);
-        } else if (geom instanceof Point) {
-            return feature((Point) geom);
-        } else if (geom instanceof LineString) {
-            return feature((LineString) geom);
-        } else if (geom instanceof MultiPoint) {
-            return feature((MultiPoint) geom);
-        } else if (geom instanceof MultiLineString) {
-            return feature((MultiLineString) geom);
+        if (geom instanceof Polygon polygon1) {
+            return feature(polygon1);
+        } else if (geom instanceof MultiPolygon polygon) {
+            return feature(polygon);
+        } else if (geom instanceof Point point1) {
+            return feature(point1);
+        } else if (geom instanceof LineString string1) {
+            return feature(string1);
+        } else if (geom instanceof MultiPoint point) {
+            return feature(point);
+        } else if (geom instanceof MultiLineString string) {
+            return feature(string);
         } else {
-            throw new IllegalArgumentException(
-                    "Geometry is not supported to create feature"); // $NON-NLS-1$
+            throw new IllegalArgumentException("Geometry is not supported to create feature"); // $NON-NLS-1$
         }
     }
 
@@ -548,8 +506,7 @@ public class Drawer {
             return SimpleFeatureBuilder.build(pointSchema, new Object[] {point}, null);
         } catch (IllegalAttributeException e) {
             // this should not happen because we *know* the parameter matches schame
-            throw new RuntimeException(
-                    "Could not generate feature for point " + point); // $NON-NLS-1$
+            throw new RuntimeException("Could not generate feature for point " + point); // $NON-NLS-1$
         }
     }
     /**
@@ -563,8 +520,7 @@ public class Drawer {
             return SimpleFeatureBuilder.build(lineSchema, new Object[] {line}, null);
         } catch (IllegalAttributeException e) {
             // this should not happen because we *know* the parameter matches schame
-            throw new RuntimeException(
-                    "Could not generate feature for point " + line); // $NON-NLS-1$
+            throw new RuntimeException("Could not generate feature for point " + line); // $NON-NLS-1$
         }
     }
 
@@ -579,8 +535,7 @@ public class Drawer {
             return SimpleFeatureBuilder.build(polygonSchema, new Object[] {polygon}, null);
         } catch (IllegalAttributeException e) {
             // this should not happen because we *know* the parameter matches schame
-            throw new RuntimeException(
-                    "Could not generate feature for point " + polygon); // $NON-NLS-1$
+            throw new RuntimeException("Could not generate feature for point " + polygon); // $NON-NLS-1$
         }
     }
 
@@ -590,14 +545,12 @@ public class Drawer {
      * @return Feature with a default geometry and no attribtues
      */
     public SimpleFeature feature(MultiPoint multipoint) {
-        if (multipoint == null)
-            throw new NullPointerException("multipoint required"); // $NON-NLS-1$
+        if (multipoint == null) throw new NullPointerException("multipoint required"); // $NON-NLS-1$
         try {
             return SimpleFeatureBuilder.build(multipointSchema, new Object[] {multipoint}, null);
         } catch (IllegalAttributeException e) {
             // this should not happen because we *know* the parameter matches schame
-            throw new RuntimeException(
-                    "Could not generate feature for point " + multipoint); // $NON-NLS-1$
+            throw new RuntimeException("Could not generate feature for point " + multipoint); // $NON-NLS-1$
         }
     }
     /**
@@ -606,15 +559,12 @@ public class Drawer {
      * @return Feature with a default geometry and no attribtues
      */
     public SimpleFeature feature(MultiLineString multilinestring) {
-        if (multilinestring == null)
-            throw new NullPointerException("multilinestring required"); // $NON-NLS-1$
+        if (multilinestring == null) throw new NullPointerException("multilinestring required"); // $NON-NLS-1$
         try {
-            return SimpleFeatureBuilder.build(
-                    multilineSchema, new Object[] {multilinestring}, null);
+            return SimpleFeatureBuilder.build(multilineSchema, new Object[] {multilinestring}, null);
         } catch (IllegalAttributeException e) {
             // this should not happen because we *know* the parameter matches schame
-            throw new RuntimeException(
-                    "Could not generate feature for point " + multilinestring); // $NON-NLS-1$
+            throw new RuntimeException("Could not generate feature for point " + multilinestring); // $NON-NLS-1$
         }
     }
     /**
@@ -623,15 +573,12 @@ public class Drawer {
      * @return Feature with a default geometry and no attribtues
      */
     public SimpleFeature feature(MultiPolygon multipolygon) {
-        if (multipolygon == null)
-            throw new NullPointerException("multipolygon required"); // $NON-NLS-1$
+        if (multipolygon == null) throw new NullPointerException("multipolygon required"); // $NON-NLS-1$
         try {
-            return SimpleFeatureBuilder.build(
-                    multipolygonSchema, new Object[] {multipolygon}, null);
+            return SimpleFeatureBuilder.build(multipolygonSchema, new Object[] {multipolygon}, null);
         } catch (IllegalAttributeException e) {
             // this should not happen because we *know* the parameter matches schame
-            throw new RuntimeException(
-                    "Could not generate feature for point " + multipolygon); // $NON-NLS-1$
+            throw new RuntimeException("Could not generate feature for point " + multipolygon); // $NON-NLS-1$
         }
     }
 

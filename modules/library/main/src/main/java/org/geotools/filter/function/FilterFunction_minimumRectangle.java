@@ -18,10 +18,10 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.capability.FunctionName;
 
 /**
  * A FilterFunction that expects a Geometry and returns it's minimum rectangle.
@@ -32,8 +32,7 @@ public class FilterFunction_minimumRectangle extends FunctionExpressionImpl {
 
     /** The FunctionName */
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "minrectangle", Geometry.class, parameter("geometry", Geometry.class));
+            new FunctionNameImpl("minrectangle", Geometry.class, parameter("geometry", Geometry.class));
 
     /** Create a new FilterFunction_minimumRectangle instance */
     public FilterFunction_minimumRectangle() {
@@ -60,6 +59,6 @@ public class FilterFunction_minimumRectangle extends FunctionExpressionImpl {
                     "Filter Function problem for function minimum rectangle argument #0 - expected type Geometry");
         }
 
-        return (StaticGeometry.minimumRectangle(arg0));
+        return StaticGeometry.minimumRectangle(arg0);
     }
 }

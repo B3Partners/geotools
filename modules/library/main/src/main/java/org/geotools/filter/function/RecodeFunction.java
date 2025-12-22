@@ -23,25 +23,23 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.FilterAttributeExtractor;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
 
 /**
- * This is an implemenation of the Recode function as defined by the OGC Symbology Encoding (SE) 1.1
- * specification.
+ * This is an implemenation of the Recode function as defined by the OGC Symbology Encoding (SE) 1.1 specification.
  *
- * <p>The Recode function provides a lookup table facility (think HashTable) where both keys and
- * values can be any {@code Expression}. The first parameter to the function specifies the source of
- * the value to lookup, e.g. the name of a feature property as a {@code Literal}. The remaining
- * parameters define the lookup table as key:value pairs. Thus there should be an odd number of
- * parameters in total: the lookup value parameter plus the set of key value pairs.
+ * <p>The Recode function provides a lookup table facility (think HashTable) where both keys and values can be any
+ * {@code Expression}. The first parameter to the function specifies the source of the value to lookup, e.g. the name of
+ * a feature property as a {@code Literal}. The remaining parameters define the lookup table as key:value pairs. Thus
+ * there should be an odd number of parameters in total: the lookup value parameter plus the set of key value pairs.
  *
  * <p>Where the lookup involves {@code String} values, comparisons are done case-insensitively.
  *
@@ -53,7 +51,7 @@ import org.opengis.filter.expression.Literal;
  */
 public class RecodeFunction implements Function {
 
-    private static final FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    private static final FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
     private final List<Expression> parameters;
 
@@ -80,9 +78,8 @@ public class RecodeFunction implements Function {
         this.fallback = fallback;
 
         // check inputs
-        if ((parameters.size() % 2 != 1) && (!parameters.isEmpty())) {
-            throw new IllegalArgumentException(
-                    "There must be an equal number of lookup data and return values");
+        if (parameters.size() % 2 != 1 && !parameters.isEmpty()) {
+            throw new IllegalArgumentException("There must be an equal number of lookup data and return values");
         }
 
         // see if the table is full of attribute independent expressions
@@ -152,9 +149,7 @@ public class RecodeFunction implements Function {
                     }
                 }
 
-                if (fastLookup != null
-                        && lookup.getClass() == lastKeyType
-                        && context == lastContextType) {
+                if (fastLookup != null && lookup.getClass() == lastKeyType && context == lastContextType) {
                     @SuppressWarnings("unchecked")
                     T result = (T) fastLookup.get(lookup);
                     return result;
@@ -169,7 +164,7 @@ public class RecodeFunction implements Function {
             // we are going to test our propertyNameExpression against the keyExpression
             // if they are equal we will return the valueExpression
             //
-            org.opengis.filter.Filter compareFilter = ff.equal(lookupExp, keyExpr, false);
+            org.geotools.api.filter.Filter compareFilter = ff.equal(lookupExp, keyExpr, false);
 
             if (compareFilter.evaluate(object)) {
                 return valueExpr.evaluate(object, context);
@@ -184,19 +179,16 @@ public class RecodeFunction implements Function {
         return fallback;
     }
 
-    /**
-     * Creates a String representation of this Function with the function name and the arguments.
-     */
+    /** Creates a String representation of this Function with the function name and the arguments. */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(getName());
         sb.append("(");
-        List<org.opengis.filter.expression.Expression> params = getParameters();
+        List<org.geotools.api.filter.expression.Expression> params = getParameters();
         if (params != null) {
-            org.opengis.filter.expression.Expression exp;
-            for (Iterator<org.opengis.filter.expression.Expression> it = params.iterator();
-                    it.hasNext(); ) {
+            org.geotools.api.filter.expression.Expression exp;
+            for (Iterator<org.geotools.api.filter.expression.Expression> it = params.iterator(); it.hasNext(); ) {
                 exp = it.next();
                 sb.append("[");
                 sb.append(exp);
@@ -225,7 +217,6 @@ public class RecodeFunction implements Function {
 
     @Override
     public int hashCode() {
-        return Objects.hash(
-                parameters, staticTable, fastLookup, lastKeyType, lastContextType, fallback);
+        return Objects.hash(parameters, staticTable, fastLookup, lastKeyType, lastContextType, fallback);
     }
 }

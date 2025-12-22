@@ -2,14 +2,14 @@ package org.geotools.data.memory;
 
 import static org.junit.Assert.assertNotNull;
 
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataTestCase;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Concurrency test from GEOT-2515.
@@ -24,22 +24,16 @@ public class MemoryDataStoreConcurrencyTest extends DataTestCase {
         dataStore.createSchema(roadType);
 
         // start thread to write each second a feature
-        Runnable writeSomeFeatures =
-                () -> {
-                    for (int i = 0; i < 10000; i++) {
-                        if (Thread.interrupted()) break;
-                        SimpleFeature feature =
-                                SimpleFeatureBuilder.build(
-                                        roadType,
-                                        new Object[] {
-                                            Integer.valueOf(i),
-                                            line(new int[] {10, 10, 20, 10}),
-                                            "r" + i
-                                        },
-                                        "road.rd" + i);
-                        dataStore.addFeature(feature);
-                    }
-                };
+        Runnable writeSomeFeatures = () -> {
+            for (int i = 0; i < 10000; i++) {
+                if (Thread.interrupted()) break;
+                SimpleFeature feature = SimpleFeatureBuilder.build(
+                        roadType,
+                        new Object[] {Integer.valueOf(i), line(new int[] {10, 10, 20, 10}), "r" + i},
+                        "road.rd" + i);
+                dataStore.addFeature(feature);
+            }
+        };
         Thread writeThread = new Thread(writeSomeFeatures);
         writeThread.start();
         try {

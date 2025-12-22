@@ -28,7 +28,14 @@ import javax.xml.namespace.QName;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import org.geotools.data.DataSourceException;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.referencing.FactoryException;
 import org.geotools.data.wfs.internal.GetParser;
 import org.geotools.data.wfs.internal.Loggers;
 import org.geotools.data.wfs.internal.WFSConfig;
@@ -38,17 +45,9 @@ import org.geotools.gml3.GML;
 import org.geotools.util.Converters;
 import org.geotools.wfs.WFS;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.referencing.FactoryException;
 
 /**
- * A {@link GetParser<SimpleFeature>} implementation that uses plain xml pull to parse a GetFeature
- * response.
+ * A {@link GetParser<SimpleFeature>} implementation that uses plain xml pull to parse a GetFeature response.
  *
  * @author Gabriel Roldan (TOPP)
  * @version $Id$
@@ -202,10 +201,7 @@ public class XmlSimpleFeatureParser implements GetParser<SimpleFeature> {
         return feature;
     }
 
-    /**
-     * Parses the value of the current attribute, parser cursor shall be on a feature attribute
-     * START_ELEMENT event.
-     */
+    /** Parses the value of the current attribute, parser cursor shall be on a feature attribute START_ELEMENT event. */
     private Object parseAttributeValue() throws XMLStreamException, IOException {
         final String name = parser.getLocalName();
         final AttributeDescriptor attribute = expectedProperties.get(name);
@@ -242,9 +238,7 @@ public class XmlSimpleFeatureParser implements GetParser<SimpleFeature> {
                 String namespace = parser.getNamespaceURI();
                 String name = parser.getLocalName();
                 if (featureNamespace.equals(namespace) && featureName.equals(name)) {
-                    String featureId =
-                            parser.getAttributeValue(
-                                    GML.id.getNamespaceURI(), GML.id.getLocalPart());
+                    String featureId = parser.getAttributeValue(GML.id.getNamespaceURI(), GML.id.getLocalPart());
 
                     if (featureId == null) {
                         featureId = parser.getAttributeValue(null, "fid");

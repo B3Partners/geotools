@@ -20,19 +20,18 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_touches extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "touches",
-                    parameter("touches", Boolean.class),
-                    parameter("geometry", Geometry.class),
-                    parameter("geometry", Geometry.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "touches",
+            parameter("touches", Boolean.class),
+            parameter("geometry", Geometry.class),
+            parameter("geometry", Geometry.class));
 
     public FilterFunction_touches() {
         super(NAME);

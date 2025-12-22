@@ -19,46 +19,45 @@
  */
 package org.geotools.referencing.cs;
 
+import java.io.Serial;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import javax.measure.Unit;
 import javax.measure.UnitConverter;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.referencing.cs.AxisDirection;
+import org.geotools.api.referencing.cs.CoordinateSystem;
+import org.geotools.api.referencing.cs.CoordinateSystemAxis;
+import org.geotools.api.referencing.operation.Matrix;
+import org.geotools.api.util.InternationalString;
 import org.geotools.measure.Measure;
 import org.geotools.measure.Units;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.metadata.i18n.Vocabulary;
 import org.geotools.referencing.AbstractIdentifiedObject;
 import org.geotools.referencing.operation.matrix.GeneralMatrix;
 import org.geotools.referencing.wkt.Formatter;
 import org.geotools.util.Classes;
 import org.geotools.util.Utilities;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.cs.AxisDirection;
-import org.opengis.referencing.cs.CoordinateSystem;
-import org.opengis.referencing.cs.CoordinateSystemAxis;
-import org.opengis.referencing.operation.Matrix;
-import org.opengis.util.InternationalString;
 import si.uom.NonSI;
 import si.uom.SI;
 
 /**
- * The set of coordinate system axes that spans a given coordinate space. A coordinate system (CS)
- * is derived from a set of (mathematical) rules for specifying how coordinates in a given space are
- * to be assigned to points. The coordinate values in a coordinate tuple shall be recorded in the
- * order in which the coordinate system axes are recorded, whenever those coordinates use a
- * coordinate reference system that uses this coordinate system.
+ * The set of coordinate system axes that spans a given coordinate space. A coordinate system (CS) is derived from a set
+ * of (mathematical) rules for specifying how coordinates in a given space are to be assigned to points. The coordinate
+ * values in a coordinate tuple shall be recorded in the order in which the coordinate system axes are recorded,
+ * whenever those coordinates use a coordinate reference system that uses this coordinate system.
  *
- * <p>This class is conceptually <cite>abstract</cite>, even if it is technically possible to
- * instantiate it. Typical applications should create instances of the most specific subclass with
- * {@code Default} prefix instead. An exception to this rule may occurs when it is not possible to
- * identify the exact type. For example it is not possible to infer the exact coordinate system from
- * <A
- * HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html"><cite>Well
- * Known Text</cite></A> is some cases (e.g. in a {@code LOCAL_CS} element). In such exceptional
- * situation, a plain {@code AbstractCS} object may be instantiated.
+ * <p>This class is conceptually <cite>abstract</cite>, even if it is technically possible to instantiate it. Typical
+ * applications should create instances of the most specific subclass with {@code Default} prefix instead. An exception
+ * to this rule may occurs when it is not possible to identify the exact type. For example it is not possible to infer
+ * the exact coordinate system from <A
+ * HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html"><cite>Well Known
+ * Text</cite></A> is some cases (e.g. in a {@code LOCAL_CS} element). In such exceptional situation, a plain
+ * {@code AbstractCS} object may be instantiated.
  *
  * @since 2.1
  * @version $Id$
@@ -70,11 +69,12 @@ import si.uom.SI;
  */
 public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSystem {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 6757665252533744744L;
 
     /**
-     * Base axis to use for checking directions. This is used in order to trap inconsistency like an
-     * axis named "Northing" with South direction.
+     * Base axis to use for checking directions. This is used in order to trap inconsistency like an axis named
+     * "Northing" with South direction.
      */
     private static final DefaultCoordinateSystemAxis[] DIRECTION_CHECKS = {
         DefaultCoordinateSystemAxis.NORTHING,
@@ -87,24 +87,24 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
     private final CoordinateSystemAxis[] axis;
 
     /**
-     * The unit for measuring distance in this coordinate system, or {@code null} if none. Will be
-     * computed only when first needed.
+     * The unit for measuring distance in this coordinate system, or {@code null} if none. Will be computed only when
+     * first needed.
      */
     private transient Unit<?> distanceUnit;
 
     /**
-     * Constructs a new coordinate system with the same values than the specified one. This copy
-     * constructor provides a way to wrap an arbitrary implementation into a Geotools one or a
-     * user-defined one (as a subclass), usually in order to leverage some implementation-specific
-     * API. This constructor performs a shallow copy, i.e. the properties are not cloned.
+     * Constructs a new coordinate system with the same values than the specified one. This copy constructor provides a
+     * way to wrap an arbitrary implementation into a Geotools one or a user-defined one (as a subclass), usually in
+     * order to leverage some implementation-specific API. This constructor performs a shallow copy, i.e. the properties
+     * are not cloned.
      *
      * @param cs The coordinate system to copy.
      * @since 2.2
      */
     public AbstractCS(final CoordinateSystem cs) {
         super(cs);
-        if (cs instanceof AbstractCS) {
-            axis = ((AbstractCS) cs).axis;
+        if (cs instanceof AbstractCS cS) {
+            axis = cS.axis;
         } else {
             axis = new CoordinateSystemAxis[cs.getDimension()];
             for (int i = 0; i < axis.length; i++) {
@@ -124,9 +124,8 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
     }
 
     /**
-     * Constructs a coordinate system from a set of properties. The properties map is given
-     * unchanged to the {@linkplain AbstractIdentifiedObject#AbstractIdentifiedObject(Map)
-     * super-class constructor}.
+     * Constructs a coordinate system from a set of properties. The properties map is given unchanged to the
+     * {@linkplain AbstractIdentifiedObject#AbstractIdentifiedObject(Map) super-class constructor}.
      *
      * @param properties Set of properties. Should contains at least {@code "name"}.
      * @param axis The set of axis.
@@ -147,16 +146,12 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
             if (!isCompatibleDirection(direction)) {
                 // TOOD: localize name()
                 throw new IllegalArgumentException(
-                        Errors.format(
-                                ErrorKeys.ILLEGAL_AXIS_ORIENTATION_$2,
-                                direction.name(),
-                                getClass()));
+                        MessageFormat.format(ErrorKeys.ILLEGAL_AXIS_ORIENTATION_$2, direction.name(), getClass()));
             }
             final Unit<?> unit = axis[i].getUnit();
             ensureNonNull("unit", unit);
             if (!isCompatibleUnit(direction, unit)) {
-                throw new IllegalArgumentException(
-                        Errors.format(ErrorKeys.INCOMPATIBLE_UNIT_$1, unit));
+                throw new IllegalArgumentException(MessageFormat.format(ErrorKeys.INCOMPATIBLE_UNIT_$1, unit));
             }
             /*
              * Ensures there is no axis along the same direction
@@ -170,7 +165,7 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
                         final String nameI = axis[i].getDirection().name();
                         final String nameJ = axis[j].getDirection().name();
                         throw new IllegalArgumentException(
-                                Errors.format(ErrorKeys.COLINEAR_AXIS_$2, nameI, nameJ));
+                                MessageFormat.format(ErrorKeys.COLINEAR_AXIS_$2, nameI, nameJ));
                     }
                 }
             }
@@ -196,11 +191,8 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
                          * considered as a contradiction...
                          */
                         if (m == null) {
-                            throw new IllegalArgumentException(
-                                    Errors.format(
-                                            ErrorKeys.INCONSISTENT_AXIS_ORIENTATION_$2,
-                                            name,
-                                            direction.name()));
+                            throw new IllegalArgumentException(MessageFormat.format(
+                                    ErrorKeys.INCONSISTENT_AXIS_ORIENTATION_$2, name, direction.name()));
                         }
                     }
                 }
@@ -209,13 +201,12 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
     }
 
     /**
-     * Creates a name for the predefined constants in subclasses. The name is an unlocalized String
-     * object. However, since this method is used for creation of convenience objects only (not for
-     * objects created from an "official" database), the "unlocalized" name is actually choosen
-     * according the user's locale at class initialization time. The same name is also added in a
-     * localizable form as an alias. Since the {@link #nameMatches} convenience method checks the
-     * alias, it still possible to consider two objects are equivalent even if their names were
-     * formatted in different locales.
+     * Creates a name for the predefined constants in subclasses. The name is an unlocalized String object. However,
+     * since this method is used for creation of convenience objects only (not for objects created from an "official"
+     * database), the "unlocalized" name is actually choosen according the user's locale at class initialization time.
+     * The same name is also added in a localizable form as an alias. Since the {@link #nameMatches} convenience method
+     * checks the alias, it still possible to consider two objects are equivalent even if their names were formatted in
+     * different locales.
      */
     static Map<String, Object> name(final int key) {
         final Map<String, Object> properties = new HashMap<>(4);
@@ -226,10 +217,10 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
     }
 
     /**
-     * Returns {@code true} if the specified axis direction is allowed for this coordinate system.
-     * This method is invoked at construction time for checking argument validity. The default
-     * implementation returns {@code true} for all axis directions. Subclasses will overrides this
-     * method in order to put more restrictions on allowed axis directions.
+     * Returns {@code true} if the specified axis direction is allowed for this coordinate system. This method is
+     * invoked at construction time for checking argument validity. The default implementation returns {@code true} for
+     * all axis directions. Subclasses will overrides this method in order to put more restrictions on allowed axis
+     * directions.
      *
      * @param direction The direction to test for compatibility.
      * @return {@code true} if the given direction is compatible with this coordinate system.
@@ -239,11 +230,10 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
     }
 
     /**
-     * Returns {@code true} is the specified unit is legal for the specified axis direction. This
-     * method is invoked at construction time for checking units compatibility. The default
-     * implementation returns {@code true} in all cases. Subclasses can override this method and
-     * check for compatibility with {@linkplain SI#METER meter} or {@linkplain NonSI#DEGREE_ANGLE
-     * degree} units.
+     * Returns {@code true} is the specified unit is legal for the specified axis direction. This method is invoked at
+     * construction time for checking units compatibility. The default implementation returns {@code true} in all cases.
+     * Subclasses can override this method and check for compatibility with {@linkplain SI#METER meter} or
+     * {@linkplain NonSI#DEGREE_ANGLE degree} units.
      *
      * @param direction The direction of the axis having the given unit.
      * @param unit The unit to test for compatibility.
@@ -287,14 +277,13 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
     }
 
     /**
-     * Returns an affine transform between two coordinate systems. Only units and axis order (e.g.
-     * transforming from ({@linkplain AxisDirection#NORTH NORTH},{@linkplain AxisDirection#WEST
-     * WEST}) to ({@linkplain AxisDirection#EAST EAST},{@linkplain AxisDirection#NORTH NORTH} are
-     * taken in account.
+     * Returns an affine transform between two coordinate systems. Only units and axis order (e.g. transforming from
+     * ({@linkplain AxisDirection#NORTH NORTH},{@linkplain AxisDirection#WEST WEST}) to ({@linkplain AxisDirection#EAST
+     * EAST},{@linkplain AxisDirection#NORTH NORTH} are taken in account.
      *
-     * <p><b>Example:</b> If coordinates in {@code sourceCS} are (<var>x</var>,<var>y</var>) pairs
-     * in metres and coordinates in {@code targetCS} are (-<var>y</var>,<var>x</var>) pairs in
-     * centimetres, then the transformation can be performed as below:
+     * <p><b>Example:</b> If coordinates in {@code sourceCS} are (<var>x</var>,<var>y</var>) pairs in metres and
+     * coordinates in {@code targetCS} are (-<var>y</var>,<var>x</var>) pairs in centimetres, then the transformation
+     * can be performed as below:
      *
      * <pre><blockquote>
      *          [-y(cm)]   [ 0  -100    0 ] [x(m)]
@@ -304,19 +293,15 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
      *
      * @param sourceCS The source coordinate system.
      * @param targetCS The target coordinate system.
-     * @return The conversion from {@code sourceCS} to {@code targetCS} as an affine transform. Only
-     *     axis direction and units are taken in account.
-     * @throws IllegalArgumentException if axis doesn't matches, or the CS doesn't have the same
-     *     geometry.
+     * @return The conversion from {@code sourceCS} to {@code targetCS} as an affine transform. Only axis direction and
+     *     units are taken in account.
+     * @throws IllegalArgumentException if axis doesn't matches, or the CS doesn't have the same geometry.
      * @throws ConversionException if the unit conversion is non-linear.
      */
-    public static Matrix swapAndScaleAxis(
-            final CoordinateSystem sourceCS, final CoordinateSystem targetCS)
+    public static Matrix swapAndScaleAxis(final CoordinateSystem sourceCS, final CoordinateSystem targetCS)
             throws IllegalArgumentException {
-        if (!Classes.sameInterfaces(
-                sourceCS.getClass(), targetCS.getClass(), CoordinateSystem.class)) {
-            throw new IllegalArgumentException(
-                    Errors.format(ErrorKeys.INCOMPATIBLE_COORDINATE_SYSTEM_TYPE));
+        if (!Classes.sameInterfaces(sourceCS.getClass(), targetCS.getClass(), CoordinateSystem.class)) {
+            throw new IllegalArgumentException(ErrorKeys.INCOMPATIBLE_COORDINATE_SYSTEM_TYPE);
         }
         final AxisDirection[] sourceAxis = getAxisDirections(sourceCS);
         final AxisDirection[] targetAxis = getAxisDirections(targetCS);
@@ -359,10 +344,7 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
                 UnitConverter converter = Units.getConverterToAny(sourceUnit, targetUnit);
                 if (!converter.isLinear()) {
                     throw new IllegalArgumentException(
-                            Errors.format(
-                                    ErrorKeys.NON_LINEAR_UNIT_CONVERSION_$2,
-                                    sourceUnit,
-                                    targetUnit));
+                            MessageFormat.format(ErrorKeys.NON_LINEAR_UNIT_CONVERSION_$2, sourceUnit, targetUnit));
                 }
                 final double offset = converter.convert(0);
                 final double scale = converter.convert(1) - offset;
@@ -374,18 +356,17 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
     }
 
     /**
-     * Returns a coordinate system with "standard" axis order and units. Most of the time, this
-     * method returns one of the predefined constants with axis in
-     * (<var>longitude</var>,<var>latitude</var>) or (<var>X</var>,<var>Y</var>) order, and units in
-     * degrees or metres. In some particular cases like {@linkplain
-     * org.opengis.referencing.cs.CartesianCS Cartesian CS}, this method may create a new instance
-     * on the fly. In every cases this method attempts to return a <A
-     * HREF="http://en.wikipedia.org/wiki/Right_hand_rule">right-handed</A> coordinate system, but
-     * this is not garanteed.
+     * Returns a coordinate system with "standard" axis order and units. Most of the time, this method returns one of
+     * the predefined constants with axis in (<var>longitude</var>,<var>latitude</var>) or (<var>X</var>,<var>Y</var>)
+     * order, and units in degrees or metres. In some particular cases like
+     * {@linkplain org.geotools.api.referencing.cs.CartesianCS Cartesian CS}, this method may create a new instance on
+     * the fly. In every cases this method attempts to return a <A
+     * HREF="http://en.wikipedia.org/wiki/Right_hand_rule">right-handed</A> coordinate system, but this is not
+     * garanteed.
      *
-     * <p>This method is typically used together with {@link #swapAndScaleAxis swapAndScaleAxis} for
-     * the creation of a transformation step before some {@linkplain
-     * org.opengis.referencing.operation.MathTransform math transform}. Example:
+     * <p>This method is typically used together with {@link #swapAndScaleAxis swapAndScaleAxis} for the creation of a
+     * transformation step before some {@linkplain org.geotools.api.referencing.operation.MathTransform math transform}.
+     * Example:
      *
      * <blockquote>
      *
@@ -397,26 +378,23 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
      *
      * </blockquote>
      *
-     * A rational for standard axis order and units is explained in the <cite>Axis units and
-     * direction</cite> section in the {@linkplain org.geotools.referencing.operation.projection
-     * description of map projection package}.
+     * A rational for standard axis order and units is explained in the <cite>Axis units and direction</cite> section in
+     * the {@linkplain org.geotools.referencing.operation.projection description of map projection package}.
      *
      * @param cs The coordinate system.
      * @return A constant similar to the specified {@code cs} with "standard" axis.
      * @throws IllegalArgumentException if the specified coordinate system is unknow to this method.
      * @since 2.2
      */
-    public static CoordinateSystem standard(final CoordinateSystem cs)
-            throws IllegalArgumentException {
+    public static CoordinateSystem standard(final CoordinateSystem cs) throws IllegalArgumentException {
         return PredefinedCS.standard(cs);
     }
 
     /**
-     * Suggests an unit for measuring distances in this coordinate system. The default
-     * implementation scans all {@linkplain CoordinateSystemAxis#getUnit axis units}, ignoring
-     * angular ones (this also implies ignoring {@linkplain Unit#ONE dimensionless} ones). If more
-     * than one non-angular unit is found, the default implementation returns the "largest" one
-     * (e.g. kilometers instead of meters).
+     * Suggests an unit for measuring distances in this coordinate system. The default implementation scans all
+     * {@linkplain CoordinateSystemAxis#getUnit axis units}, ignoring angular ones (this also implies ignoring
+     * {@linkplain Unit#ONE dimensionless} ones). If more than one non-angular unit is found, the default implementation
+     * returns the "largest" one (e.g. kilometers instead of meters).
      *
      * @return Suggested distance unit.
      * @throws IllegalArgumentException if some non-angular units are incompatible.
@@ -457,22 +435,16 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
      * @param coordinates The coordinate array to check.
      * @throws MismatchedDimensionException if the coordinate doesn't have the expected dimension.
      */
-    final void ensureDimensionMatch(final String name, final double[] coordinates)
-            throws MismatchedDimensionException {
+    final void ensureDimensionMatch(final String name, final double[] coordinates) throws MismatchedDimensionException {
         if (coordinates.length != axis.length) {
             throw new MismatchedDimensionException(
-                    Errors.format(
-                            ErrorKeys.MISMATCHED_DIMENSION_$3,
-                            name,
-                            coordinates.length,
-                            axis.length));
+                    MessageFormat.format(ErrorKeys.MISMATCHED_DIMENSION_$3, name, coordinates.length, axis.length));
         }
     }
 
     /**
-     * Computes the distance between two points. This method is not available for all coordinate
-     * systems. For example, {@linkplain DefaultEllipsoidalCS ellipsoidal CS} doesn't have
-     * suffisient information.
+     * Computes the distance between two points. This method is not available for all coordinate systems. For example,
+     * {@linkplain DefaultEllipsoidalCS ellipsoidal CS} doesn't have suffisient information.
      *
      * @param coord1 Coordinates of the first point.
      * @param coord2 Coordinates of the second point.
@@ -487,8 +459,8 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
     }
 
     /**
-     * Returns all axis in the specified unit. This method is used for implementation of {@code
-     * usingUnit} methods in subclasses.
+     * Returns all axis in the specified unit. This method is used for implementation of {@code usingUnit} methods in
+     * subclasses.
      *
      * @param unit The unit for the new axis.
      * @return New axis using the specified unit, or {@code null} if current axis fits.
@@ -502,8 +474,8 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
             CoordinateSystemAxis a = axis[i];
             if (!unit.equals(a.getUnit())) {
                 DefaultCoordinateSystemAxis converted;
-                if (a instanceof DefaultCoordinateSystemAxis) {
-                    converted = (DefaultCoordinateSystemAxis) a;
+                if (a instanceof DefaultCoordinateSystemAxis systemAxis) {
+                    converted = systemAxis;
                 } else {
                     converted = new DefaultCoordinateSystemAxis(a);
                     a = converted; // For detecting changes.
@@ -522,19 +494,17 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
     }
 
     /**
-     * Returns every axis from the specified coordinate system as instance of {@link
-     * DefaultCoordinateSystemAxis}. This allow usage of some methods specific to that
-     * implementation.
+     * Returns every axis from the specified coordinate system as instance of {@link DefaultCoordinateSystemAxis}. This
+     * allow usage of some methods specific to that implementation.
      */
     private static DefaultCoordinateSystemAxis[] getDefaultAxis(final CoordinateSystem cs) {
-        final DefaultCoordinateSystemAxis[] axis =
-                new DefaultCoordinateSystemAxis[cs.getDimension()];
+        final DefaultCoordinateSystemAxis[] axis = new DefaultCoordinateSystemAxis[cs.getDimension()];
         for (int i = 0; i < axis.length; i++) {
             final CoordinateSystemAxis a = cs.getAxis(i);
             DefaultCoordinateSystemAxis c = DefaultCoordinateSystemAxis.getPredefined(a);
             if (c == null) {
-                if (a instanceof DefaultCoordinateSystemAxis) {
-                    c = (DefaultCoordinateSystemAxis) a;
+                if (a instanceof DefaultCoordinateSystemAxis systemAxis) {
+                    c = systemAxis;
                 } else {
                     c = new DefaultCoordinateSystemAxis(a);
                 }
@@ -545,18 +515,17 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
     }
 
     /**
-     * Returns {@code true} if every axis in the specified {@code userCS} are colinear with axis in
-     * this coordinate system. The comparaison is insensitive to axis order and units. What matter
-     * is axis names (because they are fixed by ISO 19111 specification) and directions.
+     * Returns {@code true} if every axis in the specified {@code userCS} are colinear with axis in this coordinate
+     * system. The comparaison is insensitive to axis order and units. What matter is axis names (because they are fixed
+     * by ISO 19111 specification) and directions.
      *
-     * <p>If this method returns {@code true}, then there is good chances that this CS can be used
-     * together with {@code userCS} as arguments to {@link #swapAndScaleAxis swapAndScaleAxis}.
+     * <p>If this method returns {@code true}, then there is good chances that this CS can be used together with
+     * {@code userCS} as arguments to {@link #swapAndScaleAxis swapAndScaleAxis}.
      *
-     * <p>This method should not be public because current implementation is not fully consistent
-     * for every pair of CS. It tries to check the opposite direction in addition of the usual one,
-     * but only a few pre-defined axis declare their opposite. This method should be okay when
-     * invoked on pre-defined CS declared in this package. {@link PredefinedCS} uses this method
-     * only that way.
+     * <p>This method should not be public because current implementation is not fully consistent for every pair of CS.
+     * It tries to check the opposite direction in addition of the usual one, but only a few pre-defined axis declare
+     * their opposite. This method should be okay when invoked on pre-defined CS declared in this package.
+     * {@link PredefinedCS} uses this method only that way.
      */
     final boolean axisColinearWith(final CoordinateSystem userCS) {
         if (userCS.getDimension() != getDimension()) {
@@ -571,7 +540,7 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
                 final DefaultCoordinateSystemAxis candidate = axis1[j];
                 if (candidate != null) {
                     if (candidate.equals(direct, false, false)
-                            || (opposite != null && opposite.equals(candidate, false, false))) {
+                            || opposite != null && opposite.equals(candidate, false, false)) {
                         axis1[j] = null; // Flags as already compared.
                         continue next;
                     }
@@ -611,8 +580,8 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
      * Compares the specified object with this coordinate system for equality.
      *
      * @param object The object to compare to {@code this}.
-     * @param compareMetadata {@code true} for performing a strict comparaison, or {@code false} for
-     *     comparing only properties relevant to transformations.
+     * @param compareMetadata {@code true} for performing a strict comparaison, or {@code false} for comparing only
+     *     properties relevant to transformations.
      * @return {@code true} if both objects are equal.
      */
     @Override
@@ -630,8 +599,7 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
     /**
      * Returns a hash value for this coordinate system.
      *
-     * @return The hash code value. This value doesn't need to be the same in past or future
-     *     versions of this class.
+     * @return The hash code value. This value doesn't need to be the same in past or future versions of this class.
      */
     @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
@@ -645,9 +613,9 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
 
     /**
      * Format the inner part of a <A
-     * HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html"><cite>Well
-     * Known Text</cite> (WKT)</A> element. Note that WKT is not yet defined for coordinate system.
-     * Current implementation list the axis contained in this CS.
+     * HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html"><cite>Well Known
+     * Text</cite> (WKT)</A> element. Note that WKT is not yet defined for coordinate system. Current implementation
+     * list the axis contained in this CS.
      *
      * @param formatter The formatter to use.
      * @return The WKT element name. Current implementation default to the class name.

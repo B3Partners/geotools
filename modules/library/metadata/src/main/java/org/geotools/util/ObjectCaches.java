@@ -17,12 +17,12 @@
 package org.geotools.util;
 
 import java.util.Set;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.util.GenericName;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.util.factory.FactoryRegistryException;
 import org.geotools.util.factory.GeoTools;
 import org.geotools.util.factory.Hints;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.util.GenericName;
 
 /**
  * This is facade around several constructs used by GeoTools for internal caching.
@@ -30,11 +30,9 @@ import org.opengis.util.GenericName;
  * <p>This class provides the following services:
  *
  * <ul>
- *   <li>Access to an implementation of "weak", "all" and "none" implementations of {@link
- *       ObjectCache}.
+ *   <li>Access to an implementation of "weak", "all" and "none" implementations of {@link ObjectCache}.
  *   <li>The ability to turn a "code" into a good "key" for use with an ObjectCache.
- *   <li>A Pair data object (think of C STRUCT) for use as a key when storing a value against two
- *       objects.
+ *   <li>A Pair data object (think of C STRUCT) for use as a key when storing a value against two objects.
  * </ul>
  *
  * @since 2.5
@@ -83,10 +81,8 @@ public final class ObjectCaches {
 
         @Override
         public boolean equals(final Object other) {
-            if (other instanceof Pair) {
-                final Pair that = (Pair) other;
-                return Utilities.equals(this.source, that.source)
-                        && Utilities.equals(this.target, that.target);
+            if (other instanceof Pair that) {
+                return Utilities.equals(this.source, that.source) && Utilities.equals(this.target, that.target);
             }
             return false;
         }
@@ -98,31 +94,30 @@ public final class ObjectCaches {
     }
 
     /**
-     * Create a two level cache, operates as a level1 cache that is willing to obtain values from a
-     * (usually shared) level2 cache.
+     * Create a two level cache, operates as a level1 cache that is willing to obtain values from a (usually shared)
+     * level2 cache.
      *
-     * <p>This functionality is used to tie two ObjectCache implementations together (allowing them
-     * to collaborate while focusing on different use cases). The real world example of chaining is
-     * in {@link AbstractFindableAuthorityFactory} in which:
+     * <p>This functionality is used to tie two ObjectCache implementations together (allowing them to collaborate while
+     * focusing on different use cases). The real world example of chaining is in
+     * {@link AbstractFindableAuthorityFactory} in which:
      *
      * <ul>
      *   <li>create uses: chain( cache, findCache )
      *   <li>find uses: chain( findCache, cache )
      * </ul>
      *
-     * In this manner the find operation does not upset normal cache. It will not create any objects
-     * already present in the cache.
+     * In this manner the find operation does not upset normal cache. It will not create any objects already present in
+     * the cache.
      *
      * @return ObjectCache
      */
-    public static <K, V> ObjectCache<K, V> chain(
-            final ObjectCache<K, V> level1, final ObjectCache<K, V> level2) {
+    public static <K, V> ObjectCache<K, V> chain(final ObjectCache<K, V> level1, final ObjectCache<K, V> level2) {
         if (level1 == level2) {
             return level1;
         }
         if (level1 == null) return level2;
         if (level2 == null) return level1;
-        return new ObjectCache<K, V>() {
+        return new ObjectCache<>() {
             @Override
             public void clear() {
                 level1.clear();
@@ -214,8 +209,8 @@ public final class ObjectCaches {
     }
 
     /**
-     * Produce a good key based on the privided citaiton and code. You can think of the citation as
-     * being "here" and the code being the "what".
+     * Produce a good key based on the privided citaiton and code. You can think of the citation as being "here" and the
+     * code being the "what".
      *
      * @param code Code
      * @return A good key for use with ObjectCache

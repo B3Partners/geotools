@@ -29,6 +29,10 @@ import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.style.TextSymbolizer;
 import org.geotools.geometry.jts.LiteShape2;
 import org.geotools.referencing.operation.transform.ProjectiveTransform;
 import org.geotools.renderer.label.LabelCacheImpl.LabelRenderingMode;
@@ -36,16 +40,12 @@ import org.geotools.renderer.lite.RendererBaseTest;
 import org.geotools.renderer.style.MarkStyle2D;
 import org.geotools.renderer.style.Style2D;
 import org.geotools.renderer.style.TextStyle2D;
-import org.geotools.styling.StyleFactory;
 import org.geotools.styling.StyleFactoryImpl;
-import org.geotools.styling.TextSymbolizer;
 import org.junit.Before;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.mockito.Mockito;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.operation.TransformException;
 
 public class LabelPainterTest {
 
@@ -57,24 +57,21 @@ public class LabelPainterTest {
     LiteShape2 shape;
 
     @Before
-    public void setUp()
-            throws TransformException, FactoryException, IOException, FontFormatException {
+    public void setUp() throws TransformException, FactoryException, IOException, FontFormatException {
         graphics = Mockito.mock(Graphics2D.class);
         Mockito.when(graphics.getFontRenderContext())
-                .thenReturn(
-                        new FontRenderContext(
-                                new AffineTransform(),
-                                RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT,
-                                RenderingHints.VALUE_FRACTIONALMETRICS_DEFAULT));
+                .thenReturn(new FontRenderContext(
+                        new AffineTransform(),
+                        RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT,
+                        RenderingHints.VALUE_FRACTIONALMETRICS_DEFAULT));
         Mockito.when(graphics.getTransform()).thenReturn(new AffineTransform());
         style = new TextStyle2D();
         style.setFont(new Font("Serif", Font.PLAIN, 10));
-        shape =
-                new LiteShape2(
-                        geometryFactory.createPoint(new Coordinate(10, 10)),
-                        ProjectiveTransform.create(new AffineTransform()),
-                        null,
-                        false);
+        shape = new LiteShape2(
+                geometryFactory.createPoint(new Coordinate(10, 10)),
+                ProjectiveTransform.create(new AffineTransform()),
+                null,
+                false);
         symbolizer = styleFactory.createTextSymbolizer();
 
         RendererBaseTest.setupVeraFonts();
@@ -83,8 +80,7 @@ public class LabelPainterTest {
     @Test
     public void testEmptyLinesInLabel() {
         LabelPainter painter = new LabelPainter(graphics, LabelRenderingMode.STRING);
-        LabelCacheItem labelItem =
-                new LabelCacheItem("LAYERID", style, shape, "line1\n\nline2", symbolizer);
+        LabelCacheItem labelItem = new LabelCacheItem("LAYERID", style, shape, "line1\n\nline2", symbolizer);
         labelItem.setAutoWrap(0);
         painter.setLabel(labelItem);
         assertEquals(3, painter.getLineCount());
@@ -93,8 +89,7 @@ public class LabelPainterTest {
     @Test
     public void testEmptyLinesInLabelWithAutoWrap() {
         LabelPainter painter = new LabelPainter(graphics, LabelRenderingMode.STRING);
-        LabelCacheItem labelItem =
-                new LabelCacheItem("LAYERID", style, shape, "line1\n\nline2", symbolizer);
+        LabelCacheItem labelItem = new LabelCacheItem("LAYERID", style, shape, "line1\n\nline2", symbolizer);
         labelItem.setAutoWrap(100);
         painter.setLabel(labelItem);
         assertEquals(3, painter.getLineCount());
@@ -123,8 +118,7 @@ public class LabelPainterTest {
     @Test
     public void testGetLastLineHeightLabelWithAutoWrap() {
         LabelPainter painter = new LabelPainter(graphics, LabelRenderingMode.STRING);
-        LabelCacheItem labelItem =
-                new LabelCacheItem("LAYERID", style, shape, "line1\n\nline2", symbolizer);
+        LabelCacheItem labelItem = new LabelCacheItem("LAYERID", style, shape, "line1\n\nline2", symbolizer);
         labelItem.setAutoWrap(100);
         painter.setLabel(labelItem);
         // should not default to 0
@@ -135,9 +129,7 @@ public class LabelPainterTest {
 
         // should get line height of last line
         assertEquals(
-                painter.lines.get(painter.getLineCount() - 1).getLineHeight(),
-                painter.getLineHeightForAnchorY(1),
-                0.0);
+                painter.lines.get(painter.getLineCount() - 1).getLineHeight(), painter.getLineHeightForAnchorY(1), 0.0);
     }
 
     @Test

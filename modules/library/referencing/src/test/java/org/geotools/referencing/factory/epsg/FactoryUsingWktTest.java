@@ -25,6 +25,10 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.util.Collection;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.ProjectedCRS;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.NamedIdentifier;
@@ -32,10 +36,6 @@ import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.util.factory.Hints;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.ProjectedCRS;
 
 /**
  * Tests {@link FactoryUsingWKT}.
@@ -51,11 +51,8 @@ public final class FactoryUsingWktTest {
     /** Gets the authority factory for ESRI. */
     @Before
     public void setUp() {
-        factory =
-                (FactoryUsingWKT)
-                        ReferencingFactoryFinder.getCRSAuthorityFactory(
-                                "EPSG",
-                                new Hints(Hints.CRS_AUTHORITY_FACTORY, FactoryUsingWKT.class));
+        factory = (FactoryUsingWKT) ReferencingFactoryFinder.getCRSAuthorityFactory(
+                "EPSG", new Hints(Hints.CRS_AUTHORITY_FACTORY, FactoryUsingWKT.class));
     }
 
     /**
@@ -81,12 +78,12 @@ public final class FactoryUsingWktTest {
     /** Tests the authority code. */
     @Test
     public void testAuthority() {
+        assertNotNull(factory);
         final Citation authority = factory.getAuthority();
         assertNotNull(authority);
         assertEquals("European Petroleum Survey Group", authority.getTitle().toString());
         assertTrue(Citations.identifierMatches(authority, "EPSG"));
         assertFalse(Citations.identifierMatches(authority, "ESRI"));
-        assertTrue(factory instanceof FactoryUsingWKT);
     }
 
     /** Tests the vendor. */

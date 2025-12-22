@@ -20,7 +20,7 @@ package org.geotools.gce.imagemosaic;
 import java.util.List;
 
 /**
- * This class represents the inputs for a mosaic JAI operation.
+ * This class represents the inputs for a mosaic ImageN operation.
  *
  * <p>It contains
  *
@@ -45,10 +45,7 @@ public class MosaicInputs {
     private final double[][] sourceThreshold;
 
     public MosaicInputs(
-            boolean doInputTransparency,
-            boolean hasAlpha,
-            List<MosaicElement> sources,
-            double[][] sourceThreshold) {
+            boolean doInputTransparency, boolean hasAlpha, List<MosaicElement> sources, double[][] sourceThreshold) {
         this.doInputTransparency = doInputTransparency;
         this.hasAlpha = hasAlpha;
         this.sources = sources;

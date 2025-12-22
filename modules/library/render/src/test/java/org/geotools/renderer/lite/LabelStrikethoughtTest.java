@@ -18,9 +18,9 @@ package org.geotools.renderer.lite;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.TextSymbolizer;
 import org.geotools.image.test.ImageAssert;
-import org.geotools.styling.Style;
-import org.geotools.styling.TextSymbolizer;
 import org.junit.Test;
 
 /** Tests labels underling. */
@@ -29,40 +29,36 @@ public class LabelStrikethoughtTest extends AbstractLabelLineTest {
     @Test
     public void testLabelsStrikethrough() throws Exception {
         // load the style that will strikethrough the labels
-        Style style =
-                loadParametricStyle(
-                        this,
-                        "lineStyleTemplate.sld",
-                        "VENDOR_KEY",
-                        TextSymbolizer.STRIKETHROUGH_TEXT_KEY,
-                        "VENDOR_VALUE",
-                        "true");
+        Style style = loadParametricStyle(
+                this,
+                "lineStyleTemplate.sld",
+                "VENDOR_KEY",
+                org.geotools.api.style.TextSymbolizer.STRIKETHROUGH_TEXT_KEY,
+                "VENDOR_VALUE",
+                "true");
         // set the map content
         BufferedImage image = renderNonStraightLines(featureSource, style, 1000, 1000, bounds);
         // let's see if the result image match our expectations
         File reference =
-                new File(
-                        "./src/test/resources/org/geotools/renderer/lite/test-data/strikethroughStyle.sld.png");
+                new File("./src/test/resources/org/geotools/renderer/lite/test-data/strikethroughStyle.sld.png");
         ImageAssert.assertEquals(reference, image, 4500);
     }
 
     @Test
     public void testLabelsNotStrikethrough() throws Exception {
         // load the style that will strikethrough the labels
-        Style style =
-                loadParametricStyle(
-                        this,
-                        "lineStyleTemplate.sld",
-                        "VENDOR_KEY",
-                        TextSymbolizer.STRIKETHROUGH_TEXT_KEY,
-                        "VENDOR_VALUE",
-                        "false");
+        Style style = loadParametricStyle(
+                this,
+                "lineStyleTemplate.sld",
+                "VENDOR_KEY",
+                TextSymbolizer.STRIKETHROUGH_TEXT_KEY,
+                "VENDOR_VALUE",
+                "false");
         // set the map content
         BufferedImage image = renderNonStraightLines(featureSource, style, 1000, 1000, bounds);
         // let's see if the result image match our expectations
-        File reference =
-                new File(
-                        "./src/test/resources/org/geotools/renderer/lite/test-data/strikethroughDisabledStyle.sld.png");
+        File reference = new File(
+                "./src/test/resources/org/geotools/renderer/lite/test-data/strikethroughDisabledStyle.sld.png");
         ImageAssert.assertEquals(reference, image, 4500);
     }
 }

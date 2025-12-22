@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
-import com.sun.media.jai.operator.ImageReadDescriptor;
 import it.geosolutions.imageioimpl.plugins.tiff.TIFFImageReader;
 import it.geosolutions.imageioimpl.plugins.tiff.TIFFImageReaderSpi;
 import java.awt.image.RenderedImage;
@@ -29,6 +28,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.imageio.stream.ImageInputStream;
+import org.eclipse.imagen.media.imageread.ImageReadDescriptor;
 import org.geotools.TestData;
 import org.geotools.coverage.processing.MosaicTest;
 import org.geotools.image.util.ImageUtilities;
@@ -41,14 +41,12 @@ public class DisposeStopperTest {
         final File tiff = TestData.file(MosaicTest.class, "sample0.tif");
 
         boolean readSuccess = true;
-        final TIFFImageReader reader =
-                (it.geosolutions.imageioimpl.plugins.tiff.TIFFImageReader)
-                        new TIFFImageReaderSpi().createReaderInstance();
+        final TIFFImageReader reader = (it.geosolutions.imageioimpl.plugins.tiff.TIFFImageReader)
+                new TIFFImageReaderSpi().createReaderInstance();
         try (ImageInputStream stream = ImageIO.createImageInputStream(tiff)) {
             reader.setInput(stream);
             RenderedImage image =
-                    ImageReadDescriptor.create(
-                            stream, 0, false, false, false, null, null, null, reader, null);
+                    ImageReadDescriptor.create(stream, 0, false, false, false, null, null, null, reader, null);
 
             DisposeStopper stopper = new DisposeStopper(image);
 

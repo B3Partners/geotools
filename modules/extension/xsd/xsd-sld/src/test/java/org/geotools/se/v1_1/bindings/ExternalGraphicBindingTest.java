@@ -20,9 +20,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import org.geotools.api.style.ExternalGraphic;
 import org.geotools.se.v1_1.SE;
 import org.geotools.se.v1_1.SETestSupport;
-import org.geotools.styling.ExternalGraphic;
 import org.geotools.xlink.XLINK;
 import org.junit.Test;
 import org.w3c.dom.Element;
@@ -47,9 +47,7 @@ public class ExternalGraphicBindingTest extends SETestSupport {
         ExternalGraphic externalGraphic = (ExternalGraphic) parse();
         assertNotNull(externalGraphic);
 
-        assertEquals(
-                SETestSupport.class.getResource("inlineContent-image.png"),
-                externalGraphic.getLocation());
+        assertEquals(SETestSupport.class.getResource("inlineContent-image.png"), externalGraphic.getLocation());
         assertEquals("image/png", externalGraphic.getFormat());
         assertNull(externalGraphic.getInlineContent());
     }
@@ -74,8 +72,7 @@ public class ExternalGraphicBindingTest extends SETestSupport {
         assertNotNull(externalGraphic);
 
         assertEquals("image/png", externalGraphic.getFormat());
-        assertImagesEqual(
-                getReferenceImage("inlineContent-image.png"), externalGraphic.getInlineContent());
+        assertImagesEqual(getReferenceImage("inlineContent-image.png"), externalGraphic.getInlineContent());
         assertNull(externalGraphic.getLocation());
     }
 
@@ -85,9 +82,7 @@ public class ExternalGraphicBindingTest extends SETestSupport {
 
         Element c = document.createElementNS(SE.NAMESPACE, "InlineContent");
         c.setAttributeNS(SE.NAMESPACE, "encoding", "base64");
-        c.appendChild(
-                document.createTextNode(
-                        "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4NCg=="));
+        c.appendChild(document.createTextNode("PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4NCg=="));
 
         Element f = document.createElementNS(SE.NAMESPACE, "Format");
         f.appendChild(document.createTextNode("image/png"));

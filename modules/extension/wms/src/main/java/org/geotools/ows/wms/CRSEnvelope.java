@@ -16,14 +16,14 @@
  */
 package org.geotools.ows.wms;
 
-import org.geotools.geometry.GeneralDirectPosition;
+import org.geotools.api.geometry.Bounds;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.geometry.GeneralPosition;
 import org.geotools.ows.wms.request.AbstractGetMapRequest;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultEngineeringCRS;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.geometry.Envelope;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * A pair of coordinates and a reference system that represents a section of the Earth.
@@ -31,10 +31,10 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  * <p>Represents one of the following:
  *
  * <ul>
- *   <li>EX_GeographicBoundingBox: (implicit CRS:84) limits of the enclosing rectangle in longitude
- *       and latitude decimal degrees
- *   <li>BoundingBox: The BoundingBox attributes indicate the limits of the bounding box in units of
- *       the specified coordinate reference system.
+ *   <li>EX_GeographicBoundingBox: (implicit CRS:84) limits of the enclosing rectangle in longitude and latitude decimal
+ *       degrees
+ *   <li>BoundingBox: The BoundingBox attributes indicate the limits of the bounding box in units of the specified
+ *       coordinate reference system.
  * </ul>
  *
  * The interpretation of the srsName is based on the version of WMS specification used:
@@ -46,10 +46,10 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  *
  * @author Richard Gould
  */
-public class CRSEnvelope implements Envelope {
+public class CRSEnvelope implements Bounds {
     /**
-     * Represents the Coordinate Reference System this bounding box is in. This is usually an EPSG
-     * code such as "EPSG:4326"
+     * Represents the Coordinate Reference System this bounding box is in. This is usually an EPSG code such as
+     * "EPSG:4326"
      */
     private String srsName;
 
@@ -72,8 +72,8 @@ public class CRSEnvelope implements Envelope {
     protected double resY;
 
     /**
-     * Indicate how srsName is defined. Use <code>null</code> if unknown (will default to global
-     * GeoTools setting), <code>True</code> to forceXY axis order (used prior to WMS 1.3.0), <code>
+     * Indicate how srsName is defined. Use <code>null</code> if unknown (will default to global GeoTools setting),
+     * <code>True</code> to forceXY axis order (used prior to WMS 1.3.0), <code>
      * False</code> to use provided axis order (WMS 1.3.0 and later )
      */
     private Boolean forceXY = null;
@@ -94,7 +94,7 @@ public class CRSEnvelope implements Envelope {
         this.maxY = maxY;
     }
 
-    public CRSEnvelope(Envelope envelope) {
+    public CRSEnvelope(Bounds envelope) {
         this.srsName = CRS.toSRS(envelope.getCoordinateReferenceSystem());
         // this.srsName = epsgCode;
         this.minX = envelope.getMinimum(0);
@@ -104,8 +104,8 @@ public class CRSEnvelope implements Envelope {
     }
 
     /**
-     * Returns the coordinate reference system for this envelope (if known). return
-     * CoordinateReferenceSystem if known, or {@code null}
+     * Returns the coordinate reference system for this envelope (if known). return CoordinateReferenceSystem if known,
+     * or {@code null}
      */
     @Override
     public CoordinateReferenceSystem getCoordinateReferenceSystem() {
@@ -164,8 +164,8 @@ public class CRSEnvelope implements Envelope {
      * </ul>
      *
      * @param srsName The SRSName for this envelope; usually an EPSG code
-     * @param forceXY True to forceXY axis order (used prior to WMS 1.3.0), False to use provided
-     *     axis order (WMS 1.3.0 and later )
+     * @param forceXY True to forceXY axis order (used prior to WMS 1.3.0), False to use provided axis order (WMS 1.3.0
+     *     and later )
      */
     public void setSRSName(String srsName, boolean forceXY) {
         this.srsName = srsName;
@@ -209,7 +209,7 @@ public class CRSEnvelope implements Envelope {
             min = getMinY();
             // max = getMaxY();
         }
-        return min + (getLength(dimension) / 2);
+        return min + getLength(dimension) / 2;
     }
 
     public double getLength(int dimension) {
@@ -231,13 +231,13 @@ public class CRSEnvelope implements Envelope {
     }
 
     @Override
-    public DirectPosition getUpperCorner() {
-        return new GeneralDirectPosition(getMaxX(), getMaxY());
+    public Position getUpperCorner() {
+        return new GeneralPosition(getMaxX(), getMaxY());
     }
 
     @Override
-    public DirectPosition getLowerCorner() {
-        return new GeneralDirectPosition(getMinX(), getMinY());
+    public Position getLowerCorner() {
+        return new GeneralPosition(getMinX(), getMinY());
     }
 
     /**

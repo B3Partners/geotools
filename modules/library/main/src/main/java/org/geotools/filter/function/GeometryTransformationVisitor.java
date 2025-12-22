@@ -16,14 +16,14 @@
  */
 package org.geotools.filter.function;
 
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
 import org.geotools.filter.visitor.DefaultFilterVisitor;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
 
 /**
- * Given an original rendering envelope it visits an expression, finds all {@link
- * GeometryTransformation}, collects and merges all the returned query envelopes
+ * Given an original rendering envelope it visits an expression, finds all {@link GeometryTransformation}, collects and
+ * merges all the returned query envelopes
  */
 public class GeometryTransformationVisitor extends DefaultFilterVisitor {
 
@@ -39,8 +39,8 @@ public class GeometryTransformationVisitor extends DefaultFilterVisitor {
         }
 
         // apply the current function is possible
-        if (expression instanceof GeometryTransformation) {
-            merged = ((GeometryTransformation) expression).invert(merged);
+        if (expression instanceof GeometryTransformation transformation) {
+            merged = transformation.invert(merged);
         }
 
         return merged;

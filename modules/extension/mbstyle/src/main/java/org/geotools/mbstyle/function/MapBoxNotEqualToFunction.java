@@ -16,16 +16,15 @@
  */
 package org.geotools.mbstyle.function;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 /**
- * MapBox Expression function that returns {@link java.lang.Boolean#FALSE} if two expressions are
- * equivalent, {@link java.lang.Boolean#TRUE} otherwise. It is slightly different from the GeoTools
- * "notEqualTo" function as it treats NULLs as equal (instead of not equal), and it does not compare
- * Object.toString() values, which would result in false equivalences for things like Boolean.TRUE
- * compared to the literal string "true".
+ * MapBox Expression function that returns {@link java.lang.Boolean#FALSE} if two expressions are equivalent,
+ * {@link java.lang.Boolean#TRUE} otherwise. It is slightly different from the GeoTools "notEqualTo" function as it
+ * treats NULLs as equal (instead of not equal), and it does not compare Object.toString() values, which would result in
+ * false equivalences for things like Boolean.TRUE compared to the literal string "true".
  *
  * <p>Format:
  *

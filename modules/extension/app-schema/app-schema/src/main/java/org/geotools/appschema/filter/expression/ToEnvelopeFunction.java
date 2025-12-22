@@ -19,24 +19,24 @@ package org.geotools.appschema.filter.expression;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.geotools.util.Converters;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * ToEnvelope function can take in the following set of parameters and return as either Envelope or
- * ReferencedEnvelope type:
+ * ToEnvelope function can take in the following set of parameters and return as either Envelope or ReferencedEnvelope
+ * type:
  *
  * <ol>
  *   <li>Option 1 (1D Envelope) : <OCQL>ToEnvelope(minx,maxx)</OCQL>
@@ -53,11 +53,10 @@ public class ToEnvelopeFunction implements Function {
 
     private final Literal fallback;
 
-    public static final FunctionName NAME =
-            new FunctionNameImpl(
-                    "ToEnvelope",
-                    FunctionNameImpl.parameter("return", Envelope.class),
-                    FunctionNameImpl.parameter("parameter", Object.class, 2, 5));
+    public static final FunctionName NAME = new FunctionNameImpl(
+            "ToEnvelope",
+            FunctionNameImpl.parameter("return", Envelope.class),
+            FunctionNameImpl.parameter("parameter", Object.class, 2, 5));
 
     public ToEnvelopeFunction() {
         this(new ArrayList<>(), null);
@@ -119,8 +118,7 @@ public class ToEnvelopeFunction implements Function {
                                     + ". Cause: "
                                     + e.getMessage());
                 } catch (FactoryException e) {
-                    throw new RuntimeException(
-                            "Unable to decode SRS name. Cause: " + e.getMessage());
+                    throw new RuntimeException("Unable to decode SRS name. Cause: " + e.getMessage());
                 }
             }
             Coordinate coordinate = new Coordinate(xvalue, yvalue);
@@ -152,8 +150,7 @@ public class ToEnvelopeFunction implements Function {
                                     + ". Cause: "
                                     + e.getMessage());
                 } catch (FactoryException e) {
-                    throw new RuntimeException(
-                            "Unable to decode SRS name. Cause: " + e.getMessage());
+                    throw new RuntimeException("Unable to decode SRS name. Cause: " + e.getMessage());
                 }
             }
             envelope = new Envelope(minxvalue, maxxvalue, minyvalue, maxyvalue);

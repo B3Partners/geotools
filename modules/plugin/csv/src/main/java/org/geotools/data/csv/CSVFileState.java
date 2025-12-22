@@ -29,13 +29,14 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.io.FilenameUtils;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.referencing.CRS;
 import org.geotools.util.logging.Logging;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /** Details from comma separated value file. */
 public class CSVFileState {
@@ -49,7 +50,7 @@ public class CSVFileState {
 
     private static CoordinateReferenceSystem DEFAULT_CRS() throws FactoryException {
         return CRS.decode("EPSG:4326");
-    };
+    }
 
     private final File file;
 
@@ -77,7 +78,7 @@ public class CSVFileState {
         String prjName = FilenameUtils.getBaseName(file.getName()) + ".prj";
         File prjFile = new File(parent, prjName);
         if (prjFile.exists()) {
-            try (BufferedReader reader = new BufferedReader(new FileReader(prjFile))) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(prjFile, StandardCharsets.UTF_8))) {
                 String line;
                 StringBuffer prj = new StringBuffer();
                 while ((line = reader.readLine()) != null) {
@@ -140,19 +141,19 @@ public class CSVFileState {
 
         if (file != null) {
             LOGGER.fine("opening file: " + file + " exists? " + file.exists());
-            reader = new BufferedReader(new FileReader(file));
+            reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8));
         } else {
             reader = new StringReader(dataInput);
         }
 
-        final CSVParser parser =
-                new CSVParserBuilder()
-                        .withSeparator(separator)
-                        .withEscapeChar(escapechar)
-                        .withQuoteChar(quotechar)
-                        .withIgnoreLeadingWhiteSpace(true)
-                        .build();
-        final CSVReader csvReader = new CSVReaderBuilder(reader).withCSVParser(parser).build();
+        final CSVParser parser = new CSVParserBuilder()
+                .withSeparator(separator)
+                .withEscapeChar(escapechar)
+                .withQuoteChar(quotechar)
+                .withIgnoreLeadingWhiteSpace(true)
+                .build();
+        final CSVReader csvReader =
+                new CSVReaderBuilder(reader).withCSVParser(parser).build();
 
         String[] tnames;
         if ((tnames = csvReader.readNext()) == null) {

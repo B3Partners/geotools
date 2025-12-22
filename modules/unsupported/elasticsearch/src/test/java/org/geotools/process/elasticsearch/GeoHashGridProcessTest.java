@@ -25,8 +25,16 @@ import com.github.davidmoten.geo.LatLong;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.awt.geom.Point2D;
+import org.geotools.api.data.Query;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.coverage.grid.GridCoverage2D;
-import org.geotools.data.Query;
 import org.geotools.data.elasticsearch.GeohashUtil;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
@@ -36,14 +44,6 @@ import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.junit.Before;
 import org.junit.Test;
 import org.locationtech.jts.geom.Envelope;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.TransformException;
 
 public class GeoHashGridProcessTest {
 
@@ -58,33 +58,16 @@ public class GeoHashGridProcessTest {
     @Before
     public void setup() throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
-        byte[] aggregation1 =
-                mapper.writeValueAsBytes(
-                        ImmutableMap.of(
-                                "key",
-                                GeoHash.encodeHash(new LatLong(-89.9, -179.9), 1),
-                                "doc_count",
-                                10));
-        byte[] aggregation2 =
-                mapper.writeValueAsBytes(
-                        ImmutableMap.of(
-                                "key",
-                                GeoHash.encodeHash(new LatLong(0.1, 0.1), 1),
-                                "doc_count",
-                                10));
-        byte[] aggregation3 =
-                mapper.writeValueAsBytes(
-                        ImmutableMap.of(
-                                "key",
-                                GeoHash.encodeHash(new LatLong(89.9, 179.9), 1),
-                                "doc_count",
-                                10));
-        features =
-                TestUtil.createAggregationFeatures(
-                        ImmutableList.of(
-                                ImmutableMap.of("_aggregation", aggregation1),
-                                ImmutableMap.of("_aggregation", aggregation2),
-                                ImmutableMap.of("_aggregation", aggregation3)));
+        byte[] aggregation1 = mapper.writeValueAsBytes(
+                ImmutableMap.of("key", GeoHash.encodeHash(new LatLong(-89.9, -179.9), 1), "doc_count", 10));
+        byte[] aggregation2 = mapper.writeValueAsBytes(
+                ImmutableMap.of("key", GeoHash.encodeHash(new LatLong(0.1, 0.1), 1), "doc_count", 10));
+        byte[] aggregation3 = mapper.writeValueAsBytes(
+                ImmutableMap.of("key", GeoHash.encodeHash(new LatLong(89.9, 179.9), 1), "doc_count", 10));
+        features = TestUtil.createAggregationFeatures(ImmutableList.of(
+                ImmutableMap.of("_aggregation", aggregation1),
+                ImmutableMap.of("_aggregation", aggregation2),
+                ImmutableMap.of("_aggregation", aggregation3)));
         fineDelta = 0.45;
         ff = CommonFactoryFinder.getFilterFactory(null);
         process = new GeoHashGridProcess();
@@ -92,34 +75,28 @@ public class GeoHashGridProcessTest {
 
     @Test
     public void testBasic() {
-        ReferencedEnvelope envelope =
-                new ReferencedEnvelope(-180, 180, -90, 90, DefaultGeographicCRS.WGS84);
+        ReferencedEnvelope envelope = new ReferencedEnvelope(-180, 180, -90, 90, DefaultGeographicCRS.WGS84);
         int width = 8;
         int height = 4;
         String strategy = "Basic";
         Float scaleMin = 0f;
 
-        GridCoverage2D coverage =
-                process.execute(
-                        features, strategy, null, null, scaleMin, null, false, envelope, width,
-                        height, null, "", null);
+        GridCoverage2D coverage = process.execute(
+                features, strategy, null, null, scaleMin, null, false, envelope, width, height, null, "", null);
         checkInternal(coverage, fineDelta);
         checkEdge(coverage, envelope, fineDelta);
     }
 
     @Test
     public void testScaled() {
-        ReferencedEnvelope envelope =
-                new ReferencedEnvelope(-180, 180, -90, 90, DefaultGeographicCRS.WGS84);
+        ReferencedEnvelope envelope = new ReferencedEnvelope(-180, 180, -90, 90, DefaultGeographicCRS.WGS84);
         int width = 16;
         int height = 8;
         String strategy = "Basic";
         Float scaleMin = 0f;
 
-        GridCoverage2D coverage =
-                process.execute(
-                        features, strategy, null, null, scaleMin, null, false, envelope, width,
-                        height, null, "", null);
+        GridCoverage2D coverage = process.execute(
+                features, strategy, null, null, scaleMin, null, false, envelope, width, height, null, "", null);
         checkInternal(coverage, fineDelta);
         checkEdge(coverage, envelope, fineDelta);
     }
@@ -133,10 +110,8 @@ public class GeoHashGridProcessTest {
         String strategy = "Basic";
         Float scaleMin = 0f;
 
-        GridCoverage2D coverage =
-                process.execute(
-                        features, strategy, null, null, scaleMin, null, false, envelope, width,
-                        height, null, "", null);
+        GridCoverage2D coverage = process.execute(
+                features, strategy, null, null, scaleMin, null, false, envelope, width, height, null, "", null);
         checkInternal(coverage, fineDelta);
         checkEdge(coverage, envelope, fineDelta);
     }
@@ -150,17 +125,14 @@ public class GeoHashGridProcessTest {
         String strategy = "Basic";
         Float scaleMin = 0f;
 
-        GridCoverage2D coverage =
-                process.execute(
-                        features, strategy, null, null, scaleMin, null, false, envelope, width,
-                        height, null, "", null);
+        GridCoverage2D coverage = process.execute(
+                features, strategy, null, null, scaleMin, null, false, envelope, width, height, null, "", null);
         checkInternal(coverage, fineDelta);
     }
 
     @Test
     public void testAutomaticDefinition() throws FactoryException, TransformException {
-        ReferencedEnvelope envelope =
-                new ReferencedEnvelope(-180, 180, -90, 90, DefaultGeographicCRS.WGS84);
+        ReferencedEnvelope envelope = new ReferencedEnvelope(-180, 180, -90, 90, DefaultGeographicCRS.WGS84);
 
         assertEquals(1, (int) GeohashUtil.getPrecision(process.defaultAggregation(envelope, 8)));
         assertEquals(1, (int) GeohashUtil.getPrecision(process.defaultAggregation(envelope, 16)));
@@ -185,9 +157,8 @@ public class GeoHashGridProcessTest {
     }
 
     /**
-     * StreamingRenderer does not necessarily include a BBOX filter in the query, as it uses the
-     * layer definition query. The area of interest is provided as part of the invertQuery
-     * parameters instead.
+     * StreamingRenderer does not necessarily include a BBOX filter in the query, as it uses the layer definition query.
+     * The area of interest is provided as part of the invertQuery parameters instead.
      */
     @Test
     public void testInvertQueryNoBBOX() {
@@ -222,8 +193,7 @@ public class GeoHashGridProcessTest {
     @Test
     public void testInvertQueryAcrossDateline() {
         Filter filter = ff.bbox("geom", 0, 0, 0, 0, "EPSG:4326");
-        ReferencedEnvelope env =
-                new ReferencedEnvelope(-179, 179, 2, 3, DefaultGeographicCRS.WGS84);
+        ReferencedEnvelope env = new ReferencedEnvelope(-179, 179, 2, 3, DefaultGeographicCRS.WGS84);
         Query query = new Query();
         query.setFilter(filter);
         Query queryOut = process.invertQuery(env, 320, null, query, null);
@@ -251,65 +221,37 @@ public class GeoHashGridProcessTest {
     @Test
     public void testInvertQueryWithOtherFilterElement() {
         Filter filter =
-                ff.and(
-                        ff.equals(ff.property("key"), ff.literal("value")),
-                        ff.bbox("geom", 0, 0, 0, 0, "EPSG:4326"));
+                ff.and(ff.equals(ff.property("key"), ff.literal("value")), ff.bbox("geom", 0, 0, 0, 0, "EPSG:4326"));
         ReferencedEnvelope env = new ReferencedEnvelope(0, 1, 2, 3, DefaultGeographicCRS.WGS84);
         Query query = new Query();
         query.setFilter(filter);
         Query queryOut = process.invertQuery(env, 320, null, query, null);
         assertEquals(
-                ff.and(
-                        ff.equals(ff.property("key"), ff.literal("value")),
-                        ff.bbox("geom", 0, 2, 1, 3, "EPSG:4326")),
+                ff.and(ff.equals(ff.property("key"), ff.literal("value")), ff.bbox("geom", 0, 2, 1, 3, "EPSG:4326")),
                 queryOut.getFilter());
     }
 
     private void checkInternal(GridCoverage2D coverage, double delta) {
-        assertEquals(
-                10,
-                coverage.evaluate(new Point2D.Double(-135 - delta, -45 - delta), new float[1])[0],
-                1e-10);
-        assertEquals(
-                0,
-                coverage.evaluate(new Point2D.Double(-135 + delta, -45 + delta), new float[1])[0],
-                1e-10);
+        assertEquals(10, coverage.evaluate(new Point2D.Double(-135 - delta, -45 - delta), new float[1])[0], 1e-10);
+        assertEquals(0, coverage.evaluate(new Point2D.Double(-135 + delta, -45 + delta), new float[1])[0], 1e-10);
 
-        assertEquals(
-                0, coverage.evaluate(new Point2D.Double(-delta, -delta), new float[1])[0], 1e-10);
-        assertEquals(
-                10, coverage.evaluate(new Point2D.Double(delta, delta), new float[1])[0], 1e-10);
-        assertEquals(
-                10,
-                coverage.evaluate(new Point2D.Double(45 - delta, 45 - delta), new float[1])[0],
-                1e-10);
-        assertEquals(
-                0,
-                coverage.evaluate(new Point2D.Double(45 + delta, 45 + delta), new float[1])[0],
-                1e-10);
+        assertEquals(0, coverage.evaluate(new Point2D.Double(-delta, -delta), new float[1])[0], 1e-10);
+        assertEquals(10, coverage.evaluate(new Point2D.Double(delta, delta), new float[1])[0], 1e-10);
+        assertEquals(10, coverage.evaluate(new Point2D.Double(45 - delta, 45 - delta), new float[1])[0], 1e-10);
+        assertEquals(0, coverage.evaluate(new Point2D.Double(45 + delta, 45 + delta), new float[1])[0], 1e-10);
 
-        assertEquals(
-                10,
-                coverage.evaluate(new Point2D.Double(135 + delta, 45 + delta), new float[1])[0],
-                1e-10);
-        assertEquals(
-                0,
-                coverage.evaluate(new Point2D.Double(135 - delta, 45 - delta), new float[1])[0],
-                1e-10);
+        assertEquals(10, coverage.evaluate(new Point2D.Double(135 + delta, 45 + delta), new float[1])[0], 1e-10);
+        assertEquals(0, coverage.evaluate(new Point2D.Double(135 - delta, 45 - delta), new float[1])[0], 1e-10);
     }
 
     private void checkEdge(GridCoverage2D coverage, Envelope env, double delta) {
         assertEquals(
                 10,
-                coverage.evaluate(
-                                new Point2D.Double(env.getMinX() + delta, env.getMinY() + delta),
-                                new float[1])[0],
+                coverage.evaluate(new Point2D.Double(env.getMinX() + delta, env.getMinY() + delta), new float[1])[0],
                 1e-10);
         assertEquals(
                 10,
-                coverage.evaluate(
-                                new Point2D.Double(env.getMaxX() - delta, env.getMaxY() - delta),
-                                new float[1])[0],
+                coverage.evaluate(new Point2D.Double(env.getMaxX() - delta, env.getMaxY() - delta), new float[1])[0],
                 1e-10);
     }
 }

@@ -17,16 +17,18 @@
 package org.geotools.swing.action;
 
 import java.awt.event.ActionEvent;
+import java.io.Serial;
 import javax.swing.AbstractAction;
 import org.geotools.swing.dialog.JExceptionReporter;
 
 /**
  * A safe version of AbstractAction that will log any problems encountered.
  *
- * <p>This is not generally a good practice - we are just using it as an excuse to not mess up code
- * examples with exception handling code (gasp!). TODO: provide a background Runnable...
+ * <p>This is not generally a good practice - we are just using it as an excuse to not mess up code examples with
+ * exception handling code (gasp!). TODO: provide a background Runnable...
  */
 public abstract class SafeAction extends AbstractAction {
+    @Serial
     private static final long serialVersionUID = 1118122797759176800L;
 
     /**
@@ -39,8 +41,8 @@ public abstract class SafeAction extends AbstractAction {
     }
 
     /**
-     * Sub-classes (usually anonymous) must override this method instead of the usual {@linkplain
-     * javax.swing.Action#actionPerformed}
+     * Sub-classes (usually anonymous) must override this method instead of the usual
+     * {@linkplain javax.swing.Action#actionPerformed}
      *
      * @param e the action event
      * @throws Throwable on error

@@ -16,23 +16,56 @@
  */
 package org.geotools.styling;
 
-import org.opengis.style.GraphicalSymbol;
+import org.geotools.api.style.AnchorPoint;
+import org.geotools.api.style.ChannelSelection;
+import org.geotools.api.style.ColorMap;
+import org.geotools.api.style.ColorMapEntry;
+import org.geotools.api.style.ContrastEnhancement;
+import org.geotools.api.style.Displacement;
+import org.geotools.api.style.ExternalGraphic;
+import org.geotools.api.style.FeatureTypeConstraint;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.GraphicalSymbol;
+import org.geotools.api.style.Halo;
+import org.geotools.api.style.ImageOutline;
+import org.geotools.api.style.LinePlacement;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.NamedLayer;
+import org.geotools.api.style.OverlapBehavior;
+import org.geotools.api.style.PointPlacement;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.RasterSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.SelectedChannelType;
+import org.geotools.api.style.ShadedRelief;
+import org.geotools.api.style.Stroke;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleVisitor;
+import org.geotools.api.style.StyledLayer;
+import org.geotools.api.style.StyledLayerDescriptor;
+import org.geotools.api.style.Symbol;
+import org.geotools.api.style.Symbolizer;
+import org.geotools.api.style.TextSymbolizer;
+import org.geotools.api.style.UserLayer;
 
 /**
  * A basic implementation of the StyleVisitor interface.
  *
- * <p>This class implements the full StyleVisitor interface and visits all components of a style
- * object tree.
+ * <p>This class implements the full StyleVisitor interface and visits all components of a style object tree.
  */
 public class AbstractStyleVisitor implements StyleVisitor {
 
     @Override
     public void visit(StyledLayerDescriptor sld) {
         for (StyledLayer sl : sld.getStyledLayers()) {
-            if (sl instanceof UserLayer) {
-                ((UserLayer) sl).accept(this);
-            } else if (sl instanceof NamedLayer) {
-                ((NamedLayer) sl).accept(this);
+            if (sl instanceof UserLayer layer1) {
+                layer1.accept(this);
+            } else if (sl instanceof NamedLayer layer) {
+                layer.accept(this);
             }
         }
     }
@@ -100,16 +133,16 @@ public class AbstractStyleVisitor implements StyleVisitor {
 
     @Override
     public void visit(Symbolizer sym) {
-        if (sym instanceof RasterSymbolizer) {
-            visit((RasterSymbolizer) sym);
-        } else if (sym instanceof LineSymbolizer) {
-            visit((LineSymbolizer) sym);
-        } else if (sym instanceof PolygonSymbolizer) {
-            visit((PolygonSymbolizer) sym);
-        } else if (sym instanceof PointSymbolizer) {
-            visit((PointSymbolizer) sym);
-        } else if (sym instanceof TextSymbolizer) {
-            visit((TextSymbolizer) sym);
+        if (sym instanceof RasterSymbolizer symbolizer4) {
+            visit(symbolizer4);
+        } else if (sym instanceof LineSymbolizer symbolizer3) {
+            visit(symbolizer3);
+        } else if (sym instanceof PolygonSymbolizer symbolizer2) {
+            visit(symbolizer2);
+        } else if (sym instanceof PointSymbolizer symbolizer1) {
+            visit(symbolizer1);
+        } else if (sym instanceof TextSymbolizer symbolizer) {
+            visit(symbolizer);
         } else {
             throw new RuntimeException("visit(Symbolizer) unsupported");
         }
@@ -200,7 +233,7 @@ public class AbstractStyleVisitor implements StyleVisitor {
         }
         for (GraphicalSymbol gs : gr.graphicalSymbols()) {
             if (gs instanceof Symbol) {
-                ((Symbol) gs).accept(this);
+                gs.accept(this);
             } else {
                 throw new RuntimeException("Don't know how to visit " + gs);
             }
@@ -222,7 +255,7 @@ public class AbstractStyleVisitor implements StyleVisitor {
 
     @Override
     public void visit(ExternalGraphic exgr) {
-        // for (org.opengis.style.ColorReplacement cr : exgr.getColorReplacements()) {
+        // for (org.geotools.api.style.ColorReplacement cr : exgr.getColorReplacements()) {
         // cr.accept(visitor, extraData)
         // }
     }

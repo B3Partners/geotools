@@ -23,14 +23,14 @@ import static org.junit.Assert.assertNotEquals;
 import java.math.BigInteger;
 import java.util.Calendar;
 import java.util.Date;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.factory.CommonFactoryFinder;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.PrecisionModel;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Literal;
 
 /**
  * Tests the literal expressions.
@@ -62,13 +62,9 @@ public class LiteralTest {
         Assert.assertEquals(Double.valueOf(12.0), ff.literal("12.0").evaluate(null, Double.class));
         Assert.assertEquals(Double.valueOf(12.5), ff.literal("12.5").evaluate(null, Double.class));
         Assert.assertEquals(
-                Long.valueOf(Long.MAX_VALUE),
-                ff.literal(Long.MAX_VALUE + "").evaluate(null, Long.class));
-        BigInteger doubleMaxLong =
-                BigInteger.valueOf(Long.MAX_VALUE).multiply(BigInteger.valueOf(2));
-        Assert.assertEquals(
-                doubleMaxLong,
-                ff.literal(doubleMaxLong.toString()).evaluate(null, BigInteger.class));
+                Long.valueOf(Long.MAX_VALUE), ff.literal(Long.MAX_VALUE + "").evaluate(null, Long.class));
+        BigInteger doubleMaxLong = BigInteger.valueOf(Long.MAX_VALUE).multiply(BigInteger.valueOf(2));
+        Assert.assertEquals(doubleMaxLong, ff.literal(doubleMaxLong.toString()).evaluate(null, BigInteger.class));
     }
 
     @Test

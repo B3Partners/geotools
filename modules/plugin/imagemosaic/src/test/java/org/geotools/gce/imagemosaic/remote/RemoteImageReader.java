@@ -17,15 +17,14 @@
 package org.geotools.gce.imagemosaic.remote;
 
 import java.io.IOException;
+import org.geotools.api.coverage.grid.Format;
+import org.geotools.api.parameter.GeneralParameterValue;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
 import org.geotools.gce.image.WorldImageReader;
-import org.opengis.coverage.grid.Format;
-import org.opengis.parameter.GeneralParameterValue;
 
-public class RemoteImageReader extends AbstractGridCoverage2DReader
-        implements GridCoverage2DReader {
+public class RemoteImageReader extends AbstractGridCoverage2DReader implements GridCoverage2DReader {
 
     private WorldImageReader delegate;
 
@@ -39,8 +38,7 @@ public class RemoteImageReader extends AbstractGridCoverage2DReader
     }
 
     @Override
-    public GridCoverage2D read(GeneralParameterValue[] parameters)
-            throws IllegalArgumentException, IOException {
+    public GridCoverage2D read(GeneralParameterValue... parameters) throws IllegalArgumentException, IOException {
         return delegate.read(parameters);
     }
 }

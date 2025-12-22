@@ -22,24 +22,24 @@ import java.awt.Point;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.style.Displacement;
+import org.geotools.api.style.ExternalGraphic;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.GraphicFill;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.SemanticType;
 import org.geotools.mbstyle.MBStyle;
 import org.geotools.mbstyle.parse.MBFilter;
 import org.geotools.mbstyle.parse.MBFormatException;
 import org.geotools.mbstyle.parse.MBObjectParser;
 import org.geotools.mbstyle.transform.MBStyleTransformer;
 import org.geotools.measure.Units;
-import org.geotools.styling.ExternalGraphic;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.Fill;
-import org.geotools.styling.PolygonSymbolizer;
-import org.geotools.styling.Rule;
 import org.geotools.text.Text;
 import org.json.simple.JSONObject;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.style.Displacement;
-import org.opengis.style.GraphicFill;
-import org.opengis.style.SemanticType;
 
 /**
  * MBLayer wrapper for "Fill" layers.
@@ -102,8 +102,8 @@ public class FillMBLayer extends MBLayer {
     }
 
     /**
-     * (Optional) The opacity of the entire fill layer. In contrast to the fill-color, this value
-     * will also affect the 1px stroke around the fill, if the stroke is used.
+     * (Optional) The opacity of the entire fill layer. In contrast to the fill-color, this value will also affect the
+     * 1px stroke around the fill, if the stroke is used.
      *
      * <p>Defaults to 1.
      *
@@ -125,9 +125,8 @@ public class FillMBLayer extends MBLayer {
     }
 
     /**
-     * (Optional). The color of the filled part of this layer. This color can be specified as rgba
-     * with an alpha component and the color's opacity will not affect the opacity of the 1px
-     * stroke, if it is used.
+     * (Optional). The color of the filled part of this layer. This color can be specified as rgba with an alpha
+     * component and the color's opacity will not affect the opacity of the 1px stroke, if it is used.
      *
      * <p>Colors are written as JSON strings in a variety of permitted formats.
      *
@@ -157,8 +156,7 @@ public class FillMBLayer extends MBLayer {
      */
     public Color getFillOutlineColor() {
         if (paint.get("fill-outline-color") != null) {
-            return parse.convertToColor(
-                    parse.optional(String.class, paint, "fill-outline-color", "#000000"));
+            return parse.convertToColor(parse.optional(String.class, paint, "fill-outline-color", "#000000"));
         } else {
             return getFillColor();
         }
@@ -178,8 +176,8 @@ public class FillMBLayer extends MBLayer {
     }
 
     /**
-     * (Optional) The geometry's offset. Values are [x, y] where negatives indicate left and up,
-     * respectively. Units in pixels. Defaults to 0, 0.
+     * (Optional) The geometry's offset. Values are [x, y] where negatives indicate left and up, respectively. Units in
+     * pixels. Defaults to 0, 0.
      *
      * @return The geometry's offset
      */
@@ -211,8 +209,7 @@ public class FillMBLayer extends MBLayer {
      * @return The geometry displacement
      */
     public Displacement fillTranslateDisplacement() {
-        return parse.displacement(
-                paint, "fill-translate", sf.displacement(ff.literal(0), ff.literal(0)));
+        return parse.displacement(paint, "fill-translate", sf.displacement(ff.literal(0), ff.literal(0)));
     }
 
     /**
@@ -237,8 +234,8 @@ public class FillMBLayer extends MBLayer {
     }
 
     /**
-     * (Optional) Name of image in a sprite to use for drawing image fills. For seamless patterns,
-     * image width and height must be a factor of two (2, 4, 8, ..., 512).
+     * (Optional) Name of image in a sprite to use for drawing image fills. For seamless patterns, image width and
+     * height must be a factor of two (2, 4, 8, ..., 512).
      *
      * @return name of the sprite for the fill pattern, or null if not defined.
      */
@@ -260,23 +257,16 @@ public class FillMBLayer extends MBLayer {
      *   <li>stroke-width is assumed to be 1 (not specified by MapBox style)
      * </ul>
      *
-     * @param styleContext The MBStyle to which this layer belongs, used as a context for things
-     *     like resolving sprite and glyph names to full urls.
+     * @param styleContext The MBStyle to which this layer belongs, used as a context for things like resolving sprite
+     *     and glyph names to full urls.
      * @return FeatureTypeStyle
      */
     @Override
     public List<FeatureTypeStyle> transformInternal(MBStyle styleContext) {
         MBStyleTransformer transformer = new MBStyleTransformer(parse);
         // use factory to avoid defaults values
-        org.geotools.styling.Stroke stroke =
-                sf.stroke(
-                        fillOutlineColor(),
-                        fillOpacity(),
-                        ff.literal(1),
-                        ff.literal("miter"),
-                        ff.literal("butt"),
-                        null,
-                        null);
+        org.geotools.api.style.Stroke stroke = sf.stroke(
+                fillOutlineColor(), fillOpacity(), ff.literal(1), ff.literal("miter"), ff.literal("butt"), null, null);
 
         // from fill pattern or fill color
         Fill fill;
@@ -294,55 +284,37 @@ public class FillMBLayer extends MBLayer {
                 }
             }
 
-            ExternalGraphic eg =
-                    transformer.createExternalGraphicForSprite(fillPatternExpr, styleContext);
+            ExternalGraphic eg = transformer.createExternalGraphicForSprite(fillPatternExpr, styleContext);
             GraphicFill gf =
-                    sf.graphicFill(
-                            Arrays.asList(eg),
-                            fillOpacity(),
-                            null,
-                            null,
-                            null,
-                            fillTranslateDisplacement());
+                    sf.graphicFill(Arrays.asList(eg), fillOpacity(), null, null, null, fillTranslateDisplacement());
             stroke.setOpacity(ff.literal(0));
             fill = sf.fill(gf, null, null);
         } else {
             fill = sf.fill(null, fillColor(), fillOpacity());
         }
 
-        PolygonSymbolizer symbolizer =
-                sf.polygonSymbolizer(
-                        getId(),
-                        ff.property((String) null),
-                        sf.description(Text.text("fill"), null),
-                        Units.PIXEL,
-                        stroke,
-                        fill,
-                        fillTranslateDisplacement(),
-                        ff.literal(0));
+        PolygonSymbolizer symbolizer = sf.polygonSymbolizer(
+                getId(),
+                ff.property((String) null),
+                sf.description(Text.text("fill"), null),
+                Units.PIXEL,
+                stroke,
+                fill,
+                fillTranslateDisplacement(),
+                ff.literal(0));
 
         MBFilter filter = getFilter();
 
         Rule rule =
-                sf.rule(
-                        getId(),
-                        null,
-                        null,
-                        0.0,
-                        Double.POSITIVE_INFINITY,
-                        Arrays.asList(symbolizer),
-                        filter.filter());
+                sf.rule(getId(), null, null, 0.0, Double.POSITIVE_INFINITY, Arrays.asList(symbolizer), filter.filter());
 
-        return Collections.singletonList(
-                sf.featureTypeStyle(
-                        getId(),
-                        sf.description(
-                                Text.text("MBStyle " + getId()),
-                                Text.text("Generated for " + getSourceLayer())),
-                        null, // (unused)
-                        Collections.emptySet(),
-                        filter.semanticTypeIdentifiers(),
-                        Arrays.asList(rule)));
+        return Collections.singletonList(sf.featureTypeStyle(
+                getId(),
+                sf.description(Text.text("MBStyle " + getId()), Text.text("Generated for " + getSourceLayer())),
+                null, // (unused)
+                Collections.emptySet(),
+                filter.semanticTypeIdentifiers(),
+                Arrays.asList(rule)));
     }
 
     /**

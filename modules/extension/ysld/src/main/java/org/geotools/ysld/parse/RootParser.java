@@ -20,20 +20,23 @@ package org.geotools.ysld.parse;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.NamedLayer;
-import org.geotools.styling.RemoteOWS;
-import org.geotools.styling.Rule;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyledLayerDescriptor;
-import org.geotools.styling.UserLayer;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.NamedLayer;
+import org.geotools.api.style.RemoteOWS;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyledLayerDescriptor;
+import org.geotools.api.style.UserLayer;
+import org.geotools.styling.zoom.ListZoomContext;
+import org.geotools.styling.zoom.RatioZoomContext;
+import org.geotools.styling.zoom.ZoomContext;
+import org.geotools.styling.zoom.ZoomContextFinder;
 import org.geotools.ysld.YamlMap;
 import org.geotools.ysld.YamlObject;
 
 /**
- * {@link YsldParseHandler} for the root of a {@link YamlObject}. This is the "entrypoint" {@link
- * YsldParseHandler} for parsing Ysld into GeoTools-style objects. The resulting sld is accessible
- * via the {{@link #sld()} method.
+ * {@link YsldParseHandler} for the root of a {@link YamlObject}. This is the "entrypoint" {@link YsldParseHandler} for
+ * parsing Ysld into GeoTools-style objects. The resulting sld is accessible via the {{@link #sld()} method.
  */
 public class RootParser extends YsldParseHandler {
 
@@ -85,8 +88,7 @@ public class RootParser extends YsldParseHandler {
             }
             if (root.has("user-remote")) {
                 RemoteOWS remote =
-                        factory.style.createRemoteOWS(
-                                root.strOr("user-service", "WMS"), root.str("user-remote"));
+                        factory.style.createRemoteOWS(root.strOr("user-service", "WMS"), root.str("user-remote"));
                 layer.setRemoteOWS(remote);
             }
         } else {

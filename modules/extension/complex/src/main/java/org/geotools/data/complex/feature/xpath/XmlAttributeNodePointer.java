@@ -17,14 +17,15 @@
 
 package org.geotools.data.complex.feature.xpath;
 
+import java.io.Serial;
 import java.util.Map;
 import org.apache.commons.jxpath.ri.QName;
 import org.apache.commons.jxpath.ri.model.NodePointer;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.ComplexAttribute;
-import org.opengis.feature.Property;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.identity.Identifier;
+import org.geotools.api.feature.Attribute;
+import org.geotools.api.feature.ComplexAttribute;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.identity.Identifier;
 import org.xml.sax.Attributes;
 
 /**
@@ -35,6 +36,7 @@ import org.xml.sax.Attributes;
 public class XmlAttributeNodePointer extends NodePointer {
 
     /** */
+    @Serial
     private static final long serialVersionUID = 3315524792964171784L;
 
     /** The name of hte node. */
@@ -79,8 +81,7 @@ public class XmlAttributeNodePointer extends NodePointer {
     public Object getImmediateNode() {
 
         // first try regular way
-        if (feature instanceof ComplexAttribute) {
-            ComplexAttribute ca = (ComplexAttribute) feature;
+        if (feature instanceof ComplexAttribute ca) {
             Property p = ca.getProperty("@" + name.getLocalPart());
             if (p != null) {
                 return p;

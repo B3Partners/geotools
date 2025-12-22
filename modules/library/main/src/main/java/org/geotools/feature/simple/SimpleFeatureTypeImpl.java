@@ -20,14 +20,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.util.InternationalString;
 import org.geotools.feature.type.FeatureTypeImpl;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.util.InternationalString;
 
 /**
  * Implementation fo SimpleFeatureType, subtypes must be atomic and are stored in a list.
@@ -55,19 +55,12 @@ public class SimpleFeatureTypeImpl extends FeatureTypeImpl implements SimpleFeat
             InternationalString description) {
         // Note intentional circumvention of generics type checking;
         // this is only valid if schema is not modified.
-        super(
-                name,
-                (List) schema,
-                defaultGeometry,
-                isAbstract,
-                restrictions,
-                superType,
-                description);
+        super(name, (List) schema, defaultGeometry, isAbstract, restrictions, superType, description);
         index = buildIndex(this);
         descriptors = buildDescriptorIndex(this);
     }
 
-    /** @see org.opengis.feature.simple.SimpleFeatureType#getAttributeDescriptors() */
+    /** @see org.geotools.api.feature.simple.SimpleFeatureType#getAttributeDescriptors() */
     @Override
     @SuppressWarnings("unchecked")
     public final List<AttributeDescriptor> getAttributeDescriptors() {

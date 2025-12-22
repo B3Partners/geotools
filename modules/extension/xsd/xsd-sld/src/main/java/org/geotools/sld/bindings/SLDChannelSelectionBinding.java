@@ -17,9 +17,9 @@
 package org.geotools.sld.bindings;
 
 import javax.xml.namespace.QName;
-import org.geotools.styling.ChannelSelection;
-import org.geotools.styling.SelectedChannelType;
-import org.geotools.styling.StyleFactory;
+import org.geotools.api.style.ChannelSelection;
+import org.geotools.api.style.SelectedChannelType;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
@@ -113,7 +113,7 @@ public class SLDChannelSelectionBinding extends AbstractComplexBinding {
     @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
 
-        ChannelSelection cs = styleFactory.createChannelSelection(null);
+        ChannelSelection cs = styleFactory.createChannelSelection();
 
         if (node.hasChild("GrayChannel")) {
             cs.setGrayChannel((SelectedChannelType) node.getChildValue("GrayChannel"));

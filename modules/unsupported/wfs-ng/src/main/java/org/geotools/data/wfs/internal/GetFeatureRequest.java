@@ -18,18 +18,28 @@ package org.geotools.data.wfs.internal;
 
 import static org.geotools.data.wfs.internal.WFSOperationType.GET_FEATURE;
 
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import net.opengis.wfs20.StoredQueryDescriptionType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.gml2.SrsSyntax;
+import org.geotools.gml2.bindings.GML2EncodingUtils;
+import org.geotools.http.HTTPClient;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
+import org.geotools.util.logging.Logging;
 
 /** */
 public class GetFeatureRequest extends WFSRequest {
 
+    private static Logger LOGGER = Logging.getLogger(GetFeatureRequest.class);
+
     public enum ResultType {
         RESULTS,
-        HITS;
+        HITS
     }
 
     private String[] propertyNames;
@@ -39,6 +49,8 @@ public class GetFeatureRequest extends WFSRequest {
     private Filter filter;
 
     private Integer maxFeatures;
+
+    private Integer startIndex;
 
     private ResultType resultType;
 
@@ -56,9 +68,21 @@ public class GetFeatureRequest extends WFSRequest {
 
     private Hints hints;
 
+    private final HTTPClient httpClient;
+
     GetFeatureRequest(WFSConfig config, WFSStrategy strategy) {
+        this(config, strategy, null);
+    }
+
+    /** Pass along the http client to use when parsing the response. */
+    GetFeatureRequest(WFSConfig config, WFSStrategy strategy, HTTPClient httpClient) {
         super(GET_FEATURE, config, strategy);
         resultType = ResultType.RESULTS;
+        this.httpClient = httpClient;
+    }
+
+    public HTTPClient getHTTPClient() {
+        return httpClient;
     }
 
     public String[] getPropertyNames() {
@@ -77,6 +101,10 @@ public class GetFeatureRequest extends WFSRequest {
         return maxFeatures;
     }
 
+    public Integer getStartIndex() {
+        return startIndex;
+    }
+
     public ResultType getResultType() {
         return resultType;
     }
@@ -88,6 +116,26 @@ public class GetFeatureRequest extends WFSRequest {
     /** @param propertyNames the propertyNames to set */
     public void setPropertyNames(String[] propertyNames) {
         this.propertyNames = propertyNames;
+    }
+
+    /** Looks for a srs specified in the configuration that matches the coordinate reference system */
+    public void findSupportedSrsName(CoordinateReferenceSystem crs) {
+        String identifier = GML2EncodingUtils.toURI(crs, SrsSyntax.AUTH_CODE, false);
+        if (identifier != null) {
+            int idx = identifier.lastIndexOf(':');
+            String authority = identifier.substring(0, idx);
+            String code = identifier.substring(idx + 1);
+            Set<String> supported = getStrategy().getSupportedCRSIdentifiers(getTypeName());
+            for (String supportedSrs : supported) {
+                if (supportedSrs.contains(authority) && supportedSrs.endsWith(":" + code)) {
+                    LOGGER.log(Level.FINE, "Found supportedSRS: " + supportedSrs);
+                    srsName = supportedSrs;
+                    break;
+                }
+            }
+        } else {
+            LOGGER.log(Level.FINE, "GML2EncodingUtils couldn't handle the coordinate system: " + crs);
+        }
     }
 
     /** @param srsName the srsName to set */
@@ -103,6 +151,11 @@ public class GetFeatureRequest extends WFSRequest {
     /** @param maxFeatures the maxFeatures to set */
     public void setMaxFeatures(Integer maxFeatures) {
         this.maxFeatures = maxFeatures;
+    }
+
+    /** @param startIndex the startIndex to set */
+    public void setStartIndex(Integer startIndex) {
+        this.startIndex = startIndex;
     }
 
     /** @param resultType the resultType to set */

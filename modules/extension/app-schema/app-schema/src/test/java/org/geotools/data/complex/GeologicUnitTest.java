@@ -27,9 +27,13 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.geotools.data.DataAccess;
-import org.geotools.data.DataAccessFinder;
-import org.geotools.data.FeatureSource;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataAccessFinder;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.ComplexType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.complex.config.AppSchemaDataAccessConfigurator;
 import org.geotools.data.complex.config.AppSchemaDataAccessDTO;
 import org.geotools.data.complex.config.AppSchemaFeatureTypeRegistry;
@@ -43,10 +47,6 @@ import org.geotools.xsd.SchemaIndex;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.ComplexType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
 
 /**
  * This is to ensure we have a working GeologicUnit configuration test.
@@ -88,8 +88,8 @@ public class GeologicUnitTest extends AppSchemaTestSupport {
     }
 
     /**
-     * Tests if the schema-to-FM parsing code developed for complex data store configuration loading
-     * can parse the GeoSciML types
+     * Tests if the schema-to-FM parsing code developed for complex data store configuration loading can parse the
+     * GeoSciML types
      */
     @Test
     public void testParseSchema() throws Exception {
@@ -129,8 +129,8 @@ public class GeologicUnitTest extends AppSchemaTestSupport {
     }
 
     /**
-     * Tests that a {@link FeatureSource} can be obtained for all names returned by {@link
-     * AppSchemaDataAccess#getNames()}.
+     * Tests that a {@link FeatureSource} can be obtained for all names returned by
+     * {@link AppSchemaDataAccess#getNames()}.
      */
     @Test
     public void testGetNamesAndFeatureSources() throws Exception {
@@ -182,13 +182,11 @@ public class GeologicUnitTest extends AppSchemaTestSupport {
         FeatureCollection guFeatures = guSource.getFeatures();
         assertEquals(3, size(guFeatures));
 
-        FeatureSource cpSource =
-                DataAccessRegistry.getFeatureSource(FeatureChainingTest.COMPOSITION_PART);
+        FeatureSource cpSource = DataAccessRegistry.getFeatureSource(FeatureChainingTest.COMPOSITION_PART);
         FeatureCollection cpFeatures = cpSource.getFeatures();
         assertEquals(4, size(cpFeatures));
 
-        FeatureSource cgiSource =
-                DataAccessRegistry.getFeatureSource(FeatureChainingTest.CGI_TERM_VALUE);
+        FeatureSource cgiSource = DataAccessRegistry.getFeatureSource(FeatureChainingTest.CGI_TERM_VALUE);
         FeatureCollection cgiFeatures = cgiSource.getFeatures();
         assertEquals(6, size(cgiFeatures));
     }

@@ -16,7 +16,8 @@
  */
 package org.geotools.gml3.simple;
 
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.geotools.geometry.jts.WKTReader2;
 import org.geotools.gml3.GML;
@@ -28,44 +29,29 @@ public class MultiPolygonTest extends GeometryEncoderTestSupport {
     @Test
     public void testEncodeMultiPolygon() throws Exception {
         MultiPolygonEncoder encoder = new MultiPolygonEncoder(gtEncoder, "gml", GML.NAMESPACE);
-        MultiPolygon geometry =
-                (MultiPolygon)
-                        new WKTReader2()
-                                .read(
-                                        "MULTIPOLYGON(((1 1,5 1,5 5,1 5,1 1),(2 2, 3 2, 3 3, 2 3,2 2)),((3 3,6 2,6 4,3 3)))");
+        MultiPolygon geometry = (MultiPolygon) new WKTReader2()
+                .read("MULTIPOLYGON(((1 1,5 1,5 5,1 5,1 1),(2 2, 3 2, 3 3, 2 3,2 2)),((3 3,6 2,6 4,3 3)))");
         Document doc = encode(encoder, geometry, "mpoly");
-        // print(doc);
         // quick geom test
-        assertEquals(
-                "1 1 5 1 5 5 1 5 1 1",
-                xpath.evaluate(
+        assertThat(
+                doc,
+                hasXPath(
                         "/gml:MultiSurface/gml:surfaceMember[1]/gml:Polygon/gml:exterior/gml:LinearRing/gml:posList",
-                        doc));
+                        equalTo("1 1 5 1 5 5 1 5 1 1")));
         // ids
-        assertEquals("mpoly", xpath.evaluate("/gml:MultiSurface/@gml:id", doc));
-        assertEquals(
-                "mpoly.1",
-                xpath.evaluate("/gml:MultiSurface/gml:surfaceMember[1]/gml:Polygon/@gml:id", doc));
-        assertEquals(
-                "mpoly.2",
-                xpath.evaluate("/gml:MultiSurface/gml:surfaceMember[2]/gml:Polygon/@gml:id", doc));
+        assertThat(doc, hasXPath("/gml:MultiSurface/@gml:id", equalTo("mpoly")));
+        assertThat(doc, hasXPath("/gml:MultiSurface/gml:surfaceMember[1]/gml:Polygon/@gml:id", equalTo("mpoly.1")));
+        assertThat(doc, hasXPath("/gml:MultiSurface/gml:surfaceMember[2]/gml:Polygon/@gml:id", equalTo("mpoly.2")));
     }
 
     /** No encode gml:id test */
     @Test
     public void testEncodeMultiPolygonNoGmlId() throws Exception {
-        MultiPolygonEncoder encoder =
-                new MultiPolygonEncoder(gtEncoder, "gml", GML.NAMESPACE, false);
-        MultiPolygon geometry =
-                (MultiPolygon)
-                        new WKTReader2()
-                                .read(
-                                        "MULTIPOLYGON(((1 1,5 1,5 5,1 5,1 1),(2 2, 3 2, 3 3, 2 3,2 2)),((3 3,6 2,6 4,3 3)))");
+        MultiPolygonEncoder encoder = new MultiPolygonEncoder(gtEncoder, "gml", GML.NAMESPACE, false);
+        MultiPolygon geometry = (MultiPolygon) new WKTReader2()
+                .read("MULTIPOLYGON(((1 1,5 1,5 5,1 5,1 1),(2 2, 3 2, 3 3, 2 3,2 2)),((3 3,6 2,6 4,3 3)))");
         Document doc = encode(encoder, geometry, "mpoly");
 
-        assertEquals(
-                "0",
-                xpath.evaluate(
-                        "count(/gml:MultiSurface/gml:surfaceMember/gml:Polygon/@gml:id)", doc));
+        assertThat(doc, hasXPath("count(/gml:MultiSurface/gml:surfaceMember/gml:Polygon/@gml:id)", equalTo("0")));
     }
 }

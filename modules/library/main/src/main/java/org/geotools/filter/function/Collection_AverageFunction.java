@@ -25,16 +25,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.visitor.AverageVisitor;
 import org.geotools.feature.visitor.CalcResult;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.IllegalFilterException;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Calculates the average value of an attribute for a given FeatureCollection and Expression.
@@ -45,18 +45,14 @@ import org.opengis.filter.expression.Expression;
  */
 public class Collection_AverageFunction extends FunctionExpressionImpl {
     /** The logger for the filter module. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(Collection_AverageFunction.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(Collection_AverageFunction.class);
 
     FeatureCollection<FeatureType, Feature> previousFeatureCollection = null;
     Object average = null;
     Expression expr;
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "Collection_Average",
-                    parameter("average", Number.class),
-                    parameter("expression", Number.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "Collection_Average", parameter("average", Number.class), parameter("expression", Number.class));
 
     /** Creates a new instance of Collection_AverageFunction */
     public Collection_AverageFunction() {
@@ -71,8 +67,7 @@ public class Collection_AverageFunction extends FunctionExpressionImpl {
      * @return An object containing the average value of the attributes
      */
     static CalcResult calculateAverage(
-            FeatureCollection<? extends FeatureType, ? extends Feature> collection,
-            Expression expression)
+            FeatureCollection<? extends FeatureType, ? extends Feature> collection, Expression expression)
             throws IllegalFilterException, IOException {
         AverageVisitor averageVisitor = new AverageVisitor(expression);
         collection.accepts(averageVisitor, null);
@@ -83,8 +78,8 @@ public class Collection_AverageFunction extends FunctionExpressionImpl {
     /**
      * The provided arguments are evaulated with respect to the FeatureCollection.
      *
-     * <p>For an aggregate function (like average) please use the WFS mandated XPath syntax to refer
-     * to featureMember content.
+     * <p>For an aggregate function (like average) please use the WFS mandated XPath syntax to refer to featureMember
+     * content.
      *
      * <p>To refer to all 'X': <code>featureMember/asterisk/X</code>
      *
@@ -107,8 +102,7 @@ public class Collection_AverageFunction extends FunctionExpressionImpl {
         if (feature == null) {
             return Integer.valueOf(0); // no features were visited in the making of this answer
         }
-        FeatureCollection<FeatureType, Feature> featureCollection =
-                (FeatureCollection<FeatureType, Feature>) feature;
+        FeatureCollection<FeatureType, Feature> featureCollection = (FeatureCollection<FeatureType, Feature>) feature;
         synchronized (featureCollection) {
             if (featureCollection != previousFeatureCollection) {
                 previousFeatureCollection = featureCollection;

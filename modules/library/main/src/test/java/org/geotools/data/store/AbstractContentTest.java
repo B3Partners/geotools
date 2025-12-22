@@ -17,24 +17,25 @@
 package org.geotools.data.store;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
-import org.geotools.data.simple.SimpleFeatureReader;
-import org.geotools.data.simple.SimpleFeatureWriter;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureReader;
+import org.geotools.api.data.SimpleFeatureWriter;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.LineString;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
 
 public abstract class AbstractContentTest {
 
@@ -45,15 +46,8 @@ public abstract class AbstractContentTest {
     protected static final SimpleFeatureType TYPE = buildType();
 
     /** The list of features on which paging is tested. */
-    @SuppressWarnings("serial")
-    List<SimpleFeature> FEATURES =
-            new ArrayList<SimpleFeature>() {
-                {
-                    add(buildFeature("mock.3"));
-                    add(buildFeature("mock.1"));
-                    add(buildFeature("mock.2"));
-                }
-            };
+    List<SimpleFeature> FEATURES = Stream.of(buildFeature("mock.3"), buildFeature("mock.1"), buildFeature("mock.2"))
+            .collect(Collectors.toList());
 
     /** Build the test type. */
     protected static SimpleFeatureType buildType() {
@@ -78,20 +72,12 @@ public abstract class AbstractContentTest {
         }
 
         /** @see org.geotools.data.store.ContentDataStore#createTypeNames() */
-        @SuppressWarnings("serial")
         @Override
         protected List<Name> createTypeNames() throws IOException {
-            return new ArrayList<Name>() {
-                {
-                    add(TYPENAME);
-                }
-            };
+            return List.of(TYPENAME);
         }
 
-        /**
-         * @see
-         *     org.geotools.data.store.ContentDataStore#createFeatureSource(org.geotools.data.store.ContentEntry)
-         */
+        /** @see org.geotools.data.store.ContentDataStore#createFeatureSource(org.geotools.data.store.ContentEntry) */
         @Override
         protected ContentFeatureSource createFeatureSource(ContentEntry entry) throws IOException {
             return new MockContentFeatureStore(entry, null);
@@ -116,8 +102,7 @@ public abstract class AbstractContentTest {
         protected int getCountInternal(Query query) throws IOException {
             if (query.getFilter() == Filter.INCLUDE) {
                 int count = 0;
-                try (FeatureReader<SimpleFeatureType, SimpleFeature> featureReader =
-                        getReaderInternal(query)) {
+                try (FeatureReader<SimpleFeatureType, SimpleFeature> featureReader = getReaderInternal(query)) {
                     while (featureReader.hasNext()) {
                         featureReader.next();
                         count++;
@@ -128,13 +113,9 @@ public abstract class AbstractContentTest {
             return -1;
         }
 
-        /**
-         * @see
-         *     org.geotools.data.store.ContentFeatureSource#getReaderInternal(org.geotools.data.Query)
-         */
+        /** @see org.geotools.data.store.ContentFeatureSource#getReaderInternal(Query) */
         @Override
-        protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query)
-                throws IOException {
+        protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query) throws IOException {
             return new MockSimpleFeatureReader();
         }
 
@@ -145,8 +126,8 @@ public abstract class AbstractContentTest {
         }
 
         @Override
-        protected FeatureWriter<SimpleFeatureType, SimpleFeature> getWriterInternal(
-                Query query, int flags) throws IOException {
+        protected FeatureWriter<SimpleFeatureType, SimpleFeature> getWriterInternal(Query query, int flags)
+                throws IOException {
             return new MockSimpleFeatureWriter();
         }
     }
@@ -157,26 +138,25 @@ public abstract class AbstractContentTest {
         /** Index of the next test feature to be returned. */
         private int index = 0;
 
-        /** @see org.geotools.data.FeatureReader#getFeatureType() */
+        /** @see FeatureReader#getFeatureType() */
         @Override
         public SimpleFeatureType getFeatureType() {
             return TYPE;
         }
 
-        /** @see org.geotools.data.FeatureReader#next() */
+        /** @see FeatureReader#next() */
         @Override
-        public SimpleFeature next()
-                throws IOException, IllegalArgumentException, NoSuchElementException {
+        public SimpleFeature next() throws IOException, IllegalArgumentException, NoSuchElementException {
             return FEATURES.get(index++);
         }
 
-        /** @see org.geotools.data.FeatureReader#hasNext() */
+        /** @see FeatureReader#hasNext() */
         @Override
         public boolean hasNext() throws IOException {
             return index < FEATURES.size();
         }
 
-        /** @see org.geotools.data.FeatureReader#close() */
+        /** @see FeatureReader#close() */
         @Override
         public void close() throws IOException {
             // ignored
@@ -199,7 +179,7 @@ public abstract class AbstractContentTest {
         @Override
         public SimpleFeature next() throws IOException {
             if (index >= FEATURES.size()) {
-                newFeature = buildFeature("mock." + (++index));
+                newFeature = buildFeature("mock." + ++index);
                 return newFeature;
             }
             return FEATURES.get(index++);

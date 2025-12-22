@@ -20,17 +20,16 @@ package org.geotools.filter.function.math;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.util.Converters;
 import org.geotools.util.factory.Hints;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_abs_4 extends FunctionExpressionImpl {
 
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "abs_4", parameter("double", Double.class), parameter("number", Double.class));
+            new FunctionNameImpl("abs_4", parameter("double", Double.class), parameter("number", Double.class));
 
     public FilterFunction_abs_4() {
         super("abs_4");

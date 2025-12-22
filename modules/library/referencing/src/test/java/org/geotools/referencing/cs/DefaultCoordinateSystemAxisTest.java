@@ -43,9 +43,9 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import org.geotools.api.referencing.cs.AxisDirection;
+import org.geotools.api.referencing.cs.CoordinateSystemAxis;
 import org.junit.Test;
-import org.opengis.referencing.cs.AxisDirection;
-import org.opengis.referencing.cs.CoordinateSystemAxis;
 
 /**
  * Tests the {@link DefaultCoordinateSystemAxis} class.
@@ -189,8 +189,7 @@ public final class DefaultCoordinateSystemAxisTest {
     }
 
     /** Compare the angle between the specified directions. */
-    private static void compareAngle(
-            final double expected, final String source, final String target) {
+    private static void compareAngle(final double expected, final String source, final String target) {
         final AxisDirection dir1 = getDirection(source);
         final AxisDirection dir2 = getDirection(target);
         assertNotNull(dir1);

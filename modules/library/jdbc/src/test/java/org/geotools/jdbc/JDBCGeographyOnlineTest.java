@@ -6,10 +6,17 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.DWithin;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
@@ -20,18 +27,10 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.DWithin;
 
 public abstract class JDBCGeographyOnlineTest extends JDBCTestSupport {
 
-    FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
     GeometryFactory gf = new GeometryFactory();
 
@@ -42,8 +41,7 @@ public abstract class JDBCGeographyOnlineTest extends JDBCTestSupport {
     protected boolean isGeographySupportAvailable() throws Exception {
         boolean available = ((JDBCGeographyTestSetup) setup).isGeographySupportAvailable();
         if (!available) {
-            System.out.println(
-                    "Skipping geography tests as geography column support is not available");
+            System.out.println("Skipping geography tests as geography column support is not available");
         }
         return available;
     }
@@ -58,11 +56,8 @@ public abstract class JDBCGeographyOnlineTest extends JDBCTestSupport {
         assertTrue(ft.getDescriptor(aname("geo")) instanceof GeometryDescriptor);
         assertEquals(Point.class, ft.getDescriptor("geo").getType().getBinding());
 
-        int epsg =
-                CRS.lookupEpsgCode(
-                        ((GeometryDescriptor) ft.getDescriptor(aname("geo")))
-                                .getCoordinateReferenceSystem(),
-                        false);
+        int epsg = CRS.lookupEpsgCode(
+                ((GeometryDescriptor) ft.getDescriptor(aname("geo"))).getCoordinateReferenceSystem(), false);
         assertEquals(4326, epsg);
     }
 
@@ -136,8 +131,7 @@ public abstract class JDBCGeographyOnlineTest extends JDBCTestSupport {
         assumeTrue(isGeographySupportAvailable());
 
         Point p = gf.createPoint(new Coordinate(1, 1));
-        try (FeatureWriter fw =
-                dataStore.getFeatureWriter(tname("geopoint"), Transaction.AUTO_COMMIT)) {
+        try (FeatureWriter fw = dataStore.getFeatureWriter(tname("geopoint"), Transaction.AUTO_COMMIT)) {
             assertTrue(fw.hasNext());
             while (fw.hasNext()) {
                 SimpleFeature f = (SimpleFeature) fw.next();
@@ -146,8 +140,7 @@ public abstract class JDBCGeographyOnlineTest extends JDBCTestSupport {
             }
         }
 
-        try (FeatureReader fr =
-                dataStore.getFeatureReader(new Query(tname("geopoint")), Transaction.AUTO_COMMIT)) {
+        try (FeatureReader fr = dataStore.getFeatureReader(new Query(tname("geopoint")), Transaction.AUTO_COMMIT)) {
             while (fr.hasNext()) {
                 SimpleFeature f = (SimpleFeature) fr.next();
                 assertEquals(p, f.getDefaultGeometry());
@@ -160,8 +153,7 @@ public abstract class JDBCGeographyOnlineTest extends JDBCTestSupport {
         assumeTrue(isGeographySupportAvailable());
 
         Point point = gf.createPoint(new Coordinate(10, 10));
-        try (FeatureWriter fw =
-                dataStore.getFeatureWriterAppend(tname("geopoint"), Transaction.AUTO_COMMIT)) {
+        try (FeatureWriter fw = dataStore.getFeatureWriterAppend(tname("geopoint"), Transaction.AUTO_COMMIT)) {
 
             assertFalse(fw.hasNext());
             SimpleFeature f = (SimpleFeature) fw.next();
@@ -214,12 +206,8 @@ public abstract class JDBCGeographyOnlineTest extends JDBCTestSupport {
 
         // if the proper distance is used, we get back only one point,
         // otherwise we'll get back them all
-        DWithin filter =
-                ff.dwithin(
-                        ff.property(aname("geo")),
-                        ff.literal(gf.createPoint(new Coordinate(1, 49))),
-                        74000d,
-                        "metre");
+        DWithin filter = ff.dwithin(
+                ff.property(aname("geo")), ff.literal(gf.createPoint(new Coordinate(1, 49))), 74000d, "metre");
         FeatureCollection features =
                 dataStore.getFeatureSource(tname("geopoint")).getFeatures(filter);
         assertEquals(1, features.size());
@@ -239,8 +227,7 @@ public abstract class JDBCGeographyOnlineTest extends JDBCTestSupport {
         // 64.15)':: geography);
 
         // adding Reykjavik
-        try (FeatureWriter fw =
-                dataStore.getFeatureWriterAppend(tname("geopoint"), Transaction.AUTO_COMMIT)) {
+        try (FeatureWriter fw = dataStore.getFeatureWriterAppend(tname("geopoint"), Transaction.AUTO_COMMIT)) {
             SimpleFeature f = (SimpleFeature) fw.next();
             Point point = gf.createPoint(new Coordinate(-21.96, 64.15));
             f.setAttribute("name", "Reykjavik");
@@ -250,10 +237,7 @@ public abstract class JDBCGeographyOnlineTest extends JDBCTestSupport {
 
         // testing distance filter
         LineString line =
-                gf.createLineString(
-                        new Coordinate[] {
-                            new Coordinate(-122.33, 47.606), new Coordinate(0.0, 51.5)
-                        });
+                gf.createLineString(new Coordinate[] {new Coordinate(-122.33, 47.606), new Coordinate(0.0, 51.5)});
         DWithin filter = ff.dwithin(ff.property(aname("geo")), ff.literal(line), 130000d, "metre");
         FeatureCollection features =
                 dataStore.getFeatureSource(tname("geopoint")).getFeatures(filter);

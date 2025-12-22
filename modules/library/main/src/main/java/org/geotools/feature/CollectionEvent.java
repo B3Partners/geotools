@@ -16,17 +16,16 @@
  */
 package org.geotools.feature;
 
+import java.io.Serial;
 import java.util.EventObject;
-import org.geotools.data.FeatureEvent;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.FeatureType;
+import org.geotools.api.data.FeatureEvent;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.FeatureType;
 
-/**
- * A simple event object to represent all events triggered by FeatureCollection instances (typically
- * change events).
- */
+/** A simple event object to represent all events triggered by FeatureCollection instances (typically change events). */
 public class CollectionEvent extends EventObject {
+    @Serial
     private static final long serialVersionUID = -1864190177730929948L;
 
     /*
@@ -49,9 +48,7 @@ public class CollectionEvent extends EventObject {
     /** Holds value of property features. */
     private SimpleFeature[] features;
 
-    public CollectionEvent(
-            FeatureCollection<? extends FeatureType, ? extends Feature> collection,
-            FeatureEvent event) {
+    public CollectionEvent(FeatureCollection<? extends FeatureType, ? extends Feature> collection, FeatureEvent event) {
         super(collection);
 
         switch (event.getType()) {
@@ -97,8 +94,7 @@ public class CollectionEvent extends EventObject {
     }
 
     /**
-     * Provides information on the type of change that has occured. Possible types are: add, remove,
-     * change
+     * Provides information on the type of change that has occured. Possible types are: add, remove, change
      *
      * @return an int which must be one of FEATURES_ADDED, FEATURES_REMOVED, FEATURES_CHANGED
      */

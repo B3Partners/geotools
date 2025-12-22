@@ -16,6 +16,7 @@
  */
 package org.geotools.geometry.jts;
 
+import java.io.Serial;
 import java.util.Arrays;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateFilter;
@@ -34,25 +35,19 @@ import org.locationtech.jts.geom.PrecisionModel;
 import org.locationtech.jts.geom.impl.CoordinateArraySequence;
 
 /**
- * A CircularRing is a CircularString whose start and end point coincide. The ring needs to be
- * formed of at least two arc circles, in order to be able to determine its orientation.
+ * A CircularRing is a CircularString whose start and end point coincide. The ring needs to be formed of at least two
+ * arc circles, in order to be able to determine its orientation.
  *
  * @author Andrea Aime - GeoSolutions
  */
-public class CircularRing extends LinearRing
-        implements SingleCurvedGeometry<LinearRing>, CurvedRing {
+public class CircularRing extends LinearRing implements SingleCurvedGeometry<LinearRing>, CurvedRing {
 
+    @Serial
     private static final long serialVersionUID = -5796254063449438787L;
 
     /** This sequence is used as a fake to trick the constructor */
-    static final CoordinateSequence FAKE_RING_2D =
-            new CoordinateArraySequence(
-                    new Coordinate[] {
-                        new Coordinate(0, 0),
-                        new Coordinate(0, 1),
-                        new Coordinate(1, 1),
-                        new Coordinate(0, 0)
-                    });
+    static final CoordinateSequence FAKE_RING_2D = new CoordinateArraySequence(
+            new Coordinate[] {new Coordinate(0, 0), new Coordinate(0, 1), new Coordinate(1, 1), new Coordinate(0, 0)});
 
     CircularString delegate;
 
@@ -60,8 +55,7 @@ public class CircularRing extends LinearRing
         super(FAKE_RING_2D, factory);
         delegate = new CircularString(points, factory, tolerance);
         if (!delegate.isClosed()) {
-            throw new IllegalArgumentException(
-                    "Start and end point are not matching, this is not a ring");
+            throw new IllegalArgumentException("Start and end point are not matching, this is not a ring");
         }
     }
 
@@ -69,8 +63,7 @@ public class CircularRing extends LinearRing
         super(FAKE_RING_2D, factory);
         delegate = new CircularString(controlPoints, factory, tolerance);
         if (!delegate.isClosed()) {
-            throw new IllegalArgumentException(
-                    "Start and end point are not matching, this is not a ring");
+            throw new IllegalArgumentException("Start and end point are not matching, this is not a ring");
         }
     }
 
@@ -266,8 +259,7 @@ public class CircularRing extends LinearRing
 
     @Override
     public boolean equalsExact(Geometry other, double tolerance) {
-        if (other instanceof CircularRing) {
-            CircularRing csOther = (CircularRing) other;
+        if (other instanceof CircularRing csOther) {
             if (Arrays.equals(delegate.controlPoints, csOther.delegate.controlPoints)) {
                 return true;
             }
@@ -276,9 +268,9 @@ public class CircularRing extends LinearRing
     }
 
     @Override
+    @SuppressWarnings("NonOverridingEquals") // this is part of the interface, not overriding Object.equals()
     public boolean equals(Geometry other) {
-        if (other instanceof CircularRing) {
-            CircularRing csOther = (CircularRing) other;
+        if (other instanceof CircularRing csOther) {
             if (Arrays.equals(delegate.controlPoints, csOther.delegate.controlPoints)) {
                 return true;
             }
@@ -288,8 +280,7 @@ public class CircularRing extends LinearRing
 
     @Override
     public boolean equalsTopo(Geometry other) {
-        if (other instanceof CircularRing) {
-            CircularRing csOther = (CircularRing) other;
+        if (other instanceof CircularRing csOther) {
             if (Arrays.equals(delegate.controlPoints, csOther.delegate.controlPoints)) {
                 return true;
             }
@@ -299,8 +290,8 @@ public class CircularRing extends LinearRing
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof Geometry) {
-            return equals((Geometry) o);
+        if (o instanceof Geometry geometry) {
+            return equals(geometry);
         } else {
             return false;
         }

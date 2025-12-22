@@ -2,6 +2,7 @@ package org.geotools.mbstyle.transform;
 
 import static org.junit.Assert.assertEquals;
 
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.filter.function.EnvFunction;
 import org.geotools.mbstyle.MapboxTestUtils;
 import org.geotools.mbstyle.parse.MBFunction;
@@ -9,7 +10,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.opengis.filter.expression.Expression;
 
 public class ZoomInterpolationTest {
 
@@ -17,8 +17,7 @@ public class ZoomInterpolationTest {
     @Test
     public void testZoomInterpolationExponential() throws ParseException {
         // Define an exponential zoom function
-        String functionJson =
-                "{'type':'exponential', 'base': 1, 'stops':[[0,0],[6,256],[12,1024]]}";
+        String functionJson = "{'type':'exponential', 'base': 1, 'stops':[[0,0],[6,256],[12,1024]]}";
         JSONObject json = MapboxTestUtils.object(functionJson);
         MBFunction function = new MBFunction(json);
         Expression fn = function.numeric();
@@ -30,7 +29,7 @@ public class ZoomInterpolationTest {
 
         // Assert output is interpolated
         Double d = fn.evaluate(null, Number.class).doubleValue();
-        double expectedVal = (4.25 / 6.0) * 256.0;
+        double expectedVal = 4.25 / 6.0 * 256.0;
         assertEquals("Linear interpolation", expectedVal, d, .000001);
     }
 

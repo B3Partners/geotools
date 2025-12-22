@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import javax.xml.namespace.QName;
 import org.eclipse.xsd.XSDElementDeclaration;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.gml2.FeatureTypeCache;
 import org.geotools.gml2.GML;
 import org.geotools.xsd.AbstractComplexBinding;
@@ -29,7 +30,6 @@ import org.geotools.xsd.Configuration;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 import org.geotools.xsd.SchemaIndex;
-import org.opengis.feature.simple.SimpleFeature;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -123,8 +123,7 @@ public class GMLAbstractFeatureTypeBinding extends AbstractComplexBinding {
     }
 
     @Override
-    public List<Object[]> getProperties(Object object, XSDElementDeclaration element)
-            throws Exception {
+    public List<Object[]> getProperties(Object object, XSDElementDeclaration element) throws Exception {
         return GML2EncodingUtils.AbstractFeatureType_getProperties(
                 object,
                 element,

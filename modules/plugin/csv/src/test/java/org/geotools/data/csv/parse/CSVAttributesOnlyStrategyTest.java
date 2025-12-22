@@ -16,12 +16,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
 import org.geotools.data.csv.CSVFileState;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
 
 public class CSVAttributesOnlyStrategyTest {
 
@@ -51,8 +51,7 @@ public class CSVAttributesOnlyStrategyTest {
 
     @Test
     public void testCreateFeature() throws IOException {
-        String input =
-                CSVTestStrategySupport.buildInputString("fleem,zoo,morx", "3,4,car", "8,9.9,cdr");
+        String input = CSVTestStrategySupport.buildInputString("fleem,zoo,morx", "3,4,car", "8,9.9,cdr");
         CSVFileState fileState = new CSVFileState(input, "bar");
         CSVStrategy strategy = new CSVAttributesOnlyStrategy(fileState);
 

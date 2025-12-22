@@ -16,6 +16,8 @@
  */
 package org.geotools.data.util;
 
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.geometry.jts.JTS;
 import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.CoordinateSequenceFactory;
@@ -29,23 +31,20 @@ import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 
 /**
- * The screenmap is a packed bitmap of the screen, one bit per pixels. It can be used to avoid
- * rendering a lot of very small features in the same pixel.
+ * The screenmap is a packed bitmap of the screen, one bit per pixels. It can be used to avoid rendering a lot of very
+ * small features in the same pixel.
  *
  * <p>The screenmap can be used two ways:
  *
  * <ul>
  *   <li>By working directly against the pixels using {@link #checkAndSet(int, int)}
- *   <li>By working with real world envelopes using {@link #checkAndSet(Envelope)}, in that case the
- *       full math transform from data to screen, and the generalization spans must be set
+ *   <li>By working with real world envelopes using {@link #checkAndSet(Envelope)}, in that case the full math transform
+ *       from data to screen, and the generalization spans must be set
  * </ul>
  *
- * When checkAndSet returns false the geometry sits in a pixel that has been already populated and
- * can be skipped.
+ * When checkAndSet returns false the geometry sits in a pixel that has been already populated and can be skipped.
  *
  * @author jeichar
  * @author Andrea Aime - OpenGeo
@@ -127,8 +126,8 @@ public class ScreenMap {
     }
 
     /**
-     * Checks if the geometry should be skipped. If the test returns true it means the geometry sits
-     * in a pixel that has already been used
+     * Checks if the geometry should be skipped. If the test returns true it means the geometry sits in a pixel that has
+     * already been used
      */
     public boolean checkAndSet(int x, int y) {
         return getBitField().checkAndSet(x, y);
@@ -153,8 +152,8 @@ public class ScreenMap {
     }
 
     /**
-     * Returns geometry suitable for rendering the pixel that has just been occupied. The geometry
-     * is designed to actually fill the pixel
+     * Returns geometry suitable for rendering the pixel that has just been occupied. The geometry is designed to
+     * actually fill the pixel
      */
     public Geometry getSimplifiedShape(Geometry geometry) {
         Envelope envelope = geometry.getEnvelopeInternal();
@@ -168,16 +167,11 @@ public class ScreenMap {
     }
 
     /**
-     * Returns geometry suitable for rendering the pixel that has just been occupied. The geometry
-     * is designed to actually fill the pixel
+     * Returns geometry suitable for rendering the pixel that has just been occupied. The geometry is designed to
+     * actually fill the pixel
      */
     public Geometry getSimplifiedShape(
-            double minx,
-            double miny,
-            double maxx,
-            double maxy,
-            GeometryFactory geometryFactory,
-            Class geometryType) {
+            double minx, double miny, double maxx, double maxy, GeometryFactory geometryFactory, Class geometryType) {
         CoordinateSequenceFactory csf = geometryFactory.getCoordinateSequenceFactory();
         double midx = (minx + maxx) / 2;
         double midy = (miny + maxy) / 2;
@@ -185,8 +179,7 @@ public class ScreenMap {
         double x1 = midx + spanX / 2;
         double y0 = midy - spanY / 2;
         double y1 = midy + spanY / 2;
-        if (Point.class.isAssignableFrom(geometryType)
-                || MultiPoint.class.isAssignableFrom(geometryType)) {
+        if (Point.class.isAssignableFrom(geometryType) || MultiPoint.class.isAssignableFrom(geometryType)) {
             CoordinateSequence cs = JTS.createCS(csf, 1, 2);
             cs.setOrdinate(0, 0, midx);
             cs.setOrdinate(0, 1, midy);
@@ -194,8 +187,7 @@ public class ScreenMap {
                 // people should not call this method for a point, but... whatever
                 return geometryFactory.createPoint(cs);
             } else {
-                return geometryFactory.createMultiPoint(
-                        new Point[] {geometryFactory.createPoint(cs)});
+                return geometryFactory.createMultiPoint(new Point[] {geometryFactory.createPoint(cs)});
             }
         } else if (LineString.class.isAssignableFrom(geometryType)
                 || MultiLineString.class.isAssignableFrom(geometryType)) {
@@ -205,8 +197,7 @@ public class ScreenMap {
             cs.setOrdinate(1, 0, x1);
             cs.setOrdinate(1, 1, y1);
             if (MultiLineString.class.isAssignableFrom(geometryType)) {
-                return geometryFactory.createMultiLineString(
-                        new LineString[] {geometryFactory.createLineString(cs)});
+                return geometryFactory.createMultiLineString(new LineString[] {geometryFactory.createLineString(cs)});
             } else {
                 return geometryFactory.createLineString(cs);
             }
@@ -224,8 +215,7 @@ public class ScreenMap {
             cs.setOrdinate(4, 1, y0);
             LinearRing ring = geometryFactory.createLinearRing(cs);
             if (MultiPolygon.class.isAssignableFrom(geometryType)) {
-                return geometryFactory.createMultiPolygon(
-                        new Polygon[] {geometryFactory.createPolygon(ring, null)});
+                return geometryFactory.createMultiPolygon(new Polygon[] {geometryFactory.createPolygon(ring, null)});
             } else {
                 return geometryFactory.createPolygon(ring, null);
             }
@@ -238,15 +228,14 @@ public class ScreenMap {
     }
 
     /**
-     * Incapsulates the bitfield representation and access logic, allows for lazy creation of the
-     * bitfield at the first time we actually need to use it (only fairly zoomed in requestes not
-     * pixel might ever be set)
+     * Incapsulates the bitfield representation and access logic, allows for lazy creation of the bitfield at the first
+     * time we actually need to use it (only fairly zoomed in requestes not pixel might ever be set)
      */
     final class BitFieldMatrix {
         int[] pixels;
 
         public BitFieldMatrix() {
-            int arraySize = ((width * height) / 32) + 1;
+            int arraySize = width * height / 32 + 1;
             pixels = new int[arraySize];
         }
 
@@ -254,10 +243,7 @@ public class ScreenMap {
             // if it's outside of the screenmap we cannot say whether it's busy or not, and
             // we cannot skip it because rendering or geometry transformation might put the geometry
             // right in the map
-            if ((x - minx) < 0
-                    || (x - minx) > width - 1
-                    || (y - miny) < 0
-                    || (y - miny) > height - 1) return false;
+            if (x - minx < 0 || x - minx > width - 1 || y - miny < 0 || y - miny > height - 1) return false;
             int bit = bit(x - minx, y - miny);
             int index = bit / 32;
             int offset = bit % 32;
@@ -279,17 +265,14 @@ public class ScreenMap {
             // if it's outside of the screenmap we cannot say whether it's busy or not, and
             // we cannot skip it because rendering or geometry transformation might put the geometry
             // right in the map
-            if ((x - minx) < 0
-                    || (x - minx) > width - 1
-                    || (y - miny) < 0
-                    || (y - miny) > height - 1) return false;
+            if (x - minx < 0 || x - minx > width - 1 || y - miny < 0 || y - miny > height - 1) return false;
             int bit = bit(x - minx, y - miny);
             int index = bit / 32;
             int offset = bit % 32;
             int mask = 1 << offset;
 
             try {
-                return ((pixels[index] & mask) != 0) ? true : false;
+                return (pixels[index] & mask) != 0 ? true : false;
             } catch (Exception e) {
 
                 return true;
@@ -297,10 +280,7 @@ public class ScreenMap {
         }
 
         public void set(int x, int y, boolean value) {
-            if ((x - minx) < 0
-                    || (x - minx) > width - 1
-                    || (y - miny) < 0
-                    || (y - miny) > height - 1) return;
+            if (x - minx < 0 || x - minx > width - 1 || y - miny < 0 || y - miny > height - 1) return;
             int bit = bit(x - minx, y - miny);
             int index = bit / 32;
             int offset = bit % 32;
@@ -312,14 +292,14 @@ public class ScreenMap {
             } else {
                 int tmp = pixels[index];
                 tmp = ~tmp;
-                tmp = (tmp | mask);
+                tmp = tmp | mask;
                 tmp = ~tmp;
                 pixels[index] = tmp;
             }
         }
 
         private int bit(int x, int y) {
-            return (width * y) + x;
+            return width * y + x;
         }
     }
 }

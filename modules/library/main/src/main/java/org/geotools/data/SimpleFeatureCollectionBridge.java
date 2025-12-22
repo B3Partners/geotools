@@ -19,25 +19,24 @@ package org.geotools.data;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.NoSuchElementException;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.util.ProgressListener;
 
 /**
- * This class is a bridge between a FeatureCollection<SimpleFeatureType,SimpleFeature> and the
- * SimpleFeatureCollection interface.
+ * This class is a bridge between a FeatureCollection<SimpleFeatureType,SimpleFeature> and the SimpleFeatureCollection
+ * interface.
  *
- * <p>This class is package visbile and can only be created by DataUtilities.simple(
- * featureCollection ); it is under lock and key so that we can safely do an instance of check and
- * not get multiple wrappers piling up.
+ * <p>This class is package visbile and can only be created by DataUtilities.simple( featureCollection ); it is under
+ * lock and key so that we can safely do an instance of check and not get multiple wrappers piling up.
  *
  * @author Jody
  * @since 2.7
@@ -46,8 +45,7 @@ class SimpleFeatureCollectionBridge implements SimpleFeatureCollection {
 
     private FeatureCollection<SimpleFeatureType, SimpleFeature> collection;
 
-    public SimpleFeatureCollectionBridge(
-            FeatureCollection<SimpleFeatureType, SimpleFeature> featureCollection) {
+    public SimpleFeatureCollectionBridge(FeatureCollection<SimpleFeatureType, SimpleFeature> featureCollection) {
         if (featureCollection == null) {
             throw new NullPointerException("FeatureCollection required");
         }

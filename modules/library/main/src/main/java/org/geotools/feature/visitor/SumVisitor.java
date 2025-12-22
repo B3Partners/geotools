@@ -19,17 +19,17 @@ package org.geotools.feature.visitor;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.visitor.AverageVisitor.AverageResult;
 import org.geotools.feature.visitor.CountVisitor.CountResult;
 import org.geotools.filter.IllegalFilterException;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Calculates the Sum of an attribute (of a FeatureVisitor)
@@ -42,8 +42,7 @@ public class SumVisitor implements FeatureCalc, FeatureAttributeVisitor {
 
     SumStrategy strategy;
 
-    public SumVisitor(int attributeTypeIndex, SimpleFeatureType type)
-            throws IllegalFilterException {
+    public SumVisitor(int attributeTypeIndex, SimpleFeatureType type) throws IllegalFilterException {
         FilterFactory factory = CommonFactoryFinder.getFilterFactory(null);
         AttributeDescriptor attributeType = type.getDescriptor(attributeTypeIndex);
         expr = factory.property(attributeType.getLocalName());
@@ -79,15 +78,13 @@ public class SumVisitor implements FeatureCalc, FeatureAttributeVisitor {
     @Override
     public Optional<List<Class>> getResultType(List<Class> inputTypes) {
         if (inputTypes == null || inputTypes.size() != 1)
-            throw new IllegalArgumentException(
-                    "Expecting a single type in input, not " + inputTypes);
+            throw new IllegalArgumentException("Expecting a single type in input, not " + inputTypes);
 
         Class type = inputTypes.get(0);
         if (Number.class.isAssignableFrom(type)) {
             return Optional.of(inputTypes);
         }
-        throw new IllegalArgumentException(
-                "The input type for sum must be numeric, instead this was found: " + type);
+        throw new IllegalArgumentException("The input type for sum must be numeric, instead this was found: " + type);
     }
 
     /**
@@ -254,7 +251,8 @@ public class SumVisitor implements FeatureCalc, FeatureAttributeVisitor {
                 Number[] sums = new Number[2];
                 sums[0] = (Number) sum.getResult();
                 sums[1] = (Number) resultsToAdd.getValue();
-                SumStrategy newSum = createStrategy(CalcUtil.getObject(sums).getClass());
+                SumStrategy newSum =
+                        createStrategy(CalcUtil.getObject((Object[]) sums).getClass());
                 // add the two sums
                 newSum.add(sums[0]);
                 newSum.add(sums[1]);

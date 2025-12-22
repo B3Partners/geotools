@@ -72,16 +72,14 @@ public class TimestampFileNameExtractorSPI implements PropertiesCollectorSPI {
         boolean useHighTime = false;
         boolean fullPath = false;
         Properties properties = null;
-        if (o instanceof URL) {
-            source = (URL) o;
-        } else if (o instanceof File) {
-            source = URLs.fileToUrl((File) o);
-        } else if (o instanceof String) {
+        if (o instanceof URL rL) {
+            source = rL;
+        } else if (o instanceof File file) {
+            source = URLs.fileToUrl(file);
+        } else if (o instanceof String value) {
             try {
-                source = new URL((String) o);
+                source = new URL(value);
             } catch (MalformedURLException e) {
-
-                String value = (String) o;
 
                 int minIndex = value.length();
 
@@ -92,7 +90,7 @@ public class TimestampFileNameExtractorSPI implements PropertiesCollectorSPI {
                 indexesOf[1] = value.indexOf("," + FULL_PATH_PREFIX);
                 indexesOf[2] = value.indexOf("," + USE_HIGH_TIME_PREFIX);
                 for (int indexOf : indexesOf) {
-                    minIndex = (indexOf > 0 && indexOf < minIndex) ? indexOf : minIndex;
+                    minIndex = indexOf > 0 && indexOf < minIndex ? indexOf : minIndex;
                 }
 
                 if (value.startsWith(REGEX_PREFIX)) {
@@ -109,8 +107,7 @@ public class TimestampFileNameExtractorSPI implements PropertiesCollectorSPI {
                             properties.load(new StringReader(prop));
                             properties.setProperty(REGEX, regex);
                         } catch (IOException e1) {
-                            throw new IllegalArgumentException(
-                                    "Unable to parse the specified regex: " + value, e1);
+                            throw new IllegalArgumentException("Unable to parse the specified regex: " + value, e1);
                         }
                     }
                 }
@@ -142,8 +139,7 @@ public class TimestampFileNameExtractorSPI implements PropertiesCollectorSPI {
 
         if (regex != null) {
             regex = regex.trim();
-            return new TimestampFileNameExtractor(
-                    this, propertyNames, regex, format, fullPath, useHighTime);
+            return new TimestampFileNameExtractor(this, propertyNames, regex, format, fullPath, useHighTime);
         }
 
         return null;

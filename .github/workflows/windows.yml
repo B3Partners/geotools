@@ -2,20 +2,24 @@ name: Windows GitHub CI
 
 on: [pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
 
     runs-on: [windows-latest]
 
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up JDK 11
-      uses: actions/setup-java@v2
+    - uses: actions/checkout@v6
+    - name: Set up JDK 17
+      uses: actions/setup-java@v5
       with:
-        java-version: 11
+        java-version: 17
         distribution: 'temurin'
     - name: Maven repository caching
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ~/.m2/repository
         key: gt-maven-${{ hashFiles('**/pom.xml') }}
@@ -26,7 +30,7 @@ jobs:
       run: Disable-NetAdapterChecksumOffload -Name * -TcpIPv4 -UdpIPv4 -TcpIPv6 -UdpIPv6
     - name: Build with Maven
       run: |
-        mvn --% -B clean install -Dall -T2 --file pom.xml -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 -Dorg.slf4j.simpleLogger.showDateTime=true -Dorg.slf4j.simpleLogger.dateTimeFormat=HH:mm:ss,SSS
+        mvn --% -B clean install -Dall -T1C --file pom.xml -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 -Dorg.slf4j.simpleLogger.showDateTime=true -Dorg.slf4j.simpleLogger.dateTimeFormat=HH:mm:ss,SSS
     - name: Remove SNAPSHOT jars from repository
       run: |
         cmd --% /c for /f %i in ('dir /a:d /s /b %userprofile%\*SNAPSHOT*') do rd /s /q %i

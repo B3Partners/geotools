@@ -22,11 +22,11 @@ import static org.junit.Assert.assertNotNull;
 import java.awt.Color;
 import java.net.MalformedURLException;
 import java.net.URL;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.ResourceLocator;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.filter.Filters;
 import org.geotools.sld.SLDConfiguration;
-import org.geotools.styling.Mark;
-import org.geotools.styling.ResourceLocator;
-import org.geotools.styling.StyleFactory;
 import org.geotools.styling.StyleFactoryImpl;
 import org.geotools.xsd.Configuration;
 import org.junit.Test;
@@ -86,23 +86,19 @@ public class SLDMarkBindingTest extends SLDTestSupport {
         return new SLDConfiguration() {
             @Override
             protected void configureContext(MutablePicoContainer container) {
-                container.registerComponentImplementation(
-                        StyleFactory.class, StyleFactoryImpl.class);
+                container.registerComponentImplementation(StyleFactory.class, StyleFactoryImpl.class);
 
-                container.registerComponentInstance(
-                        ResourceLocator.class,
-                        (ResourceLocator)
-                                uri -> {
-                                    if ("file://foo.svg".equals(uri)) {
-                                        try {
-                                            return new URL("file://test/foo.svg");
-                                        } catch (MalformedURLException e) {
-                                            throw new RuntimeException(e);
-                                        }
-                                    } else {
-                                        return null;
-                                    }
-                                });
+                container.registerComponentInstance(ResourceLocator.class, (ResourceLocator) uri -> {
+                    if ("file://foo.svg".equals(uri)) {
+                        try {
+                            return new URL("file://test/foo.svg");
+                        } catch (MalformedURLException e) {
+                            throw new RuntimeException(e);
+                        }
+                    } else {
+                        return null;
+                    }
+                });
             }
         };
     }

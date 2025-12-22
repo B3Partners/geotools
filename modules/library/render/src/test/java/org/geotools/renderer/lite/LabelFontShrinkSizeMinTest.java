@@ -22,8 +22,11 @@ import static java.awt.RenderingHints.VALUE_ANTIALIAS_ON;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.style.Style;
 import org.geotools.data.memory.MemoryDataStore;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -31,18 +34,14 @@ import org.geotools.image.test.ImageAssert;
 import org.geotools.map.FeatureLayer;
 import org.geotools.map.MapContent;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.geotools.styling.Style;
 import org.junit.Before;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
- * Test class for verifying behaviour of displacementMode vendor option for both single layer and
- * multi-layer map
+ * Test class for verifying behaviour of displacementMode vendor option for both single layer and multi-layer map
  *
  * @author nprigour
  */
@@ -68,36 +67,32 @@ public class LabelFontShrinkSizeMinTest {
         SimpleFeatureType type = builder.buildFeatureType();
 
         GeometryFactory gf = new GeometryFactory();
-        SimpleFeature f1 =
-                SimpleFeatureBuilder.build(
-                        type,
-                        new Object[] {
-                            gf.createPolygon(
-                                    new Coordinate[] {
-                                        new Coordinate(4, 7),
-                                        new Coordinate(4, 9),
-                                        new Coordinate(7, 9),
-                                        new Coordinate(7, 7),
-                                        new Coordinate(4, 7)
-                                    }),
-                            "labelPoly A"
-                        },
-                        null);
-        SimpleFeature f2 =
-                SimpleFeatureBuilder.build(
-                        type,
-                        new Object[] {
-                            gf.createPolygon(
-                                    new Coordinate[] {
-                                        new Coordinate(2.5, 7),
-                                        new Coordinate(2.5, 8),
-                                        new Coordinate(4, 8),
-                                        new Coordinate(4, 7),
-                                        new Coordinate(2.5, 7)
-                                    }),
-                            "labelPoly B"
-                        },
-                        null);
+        SimpleFeature f1 = SimpleFeatureBuilder.build(
+                type,
+                new Object[] {
+                    gf.createPolygon(new Coordinate[] {
+                        new Coordinate(4, 7),
+                        new Coordinate(4, 9),
+                        new Coordinate(7, 9),
+                        new Coordinate(7, 7),
+                        new Coordinate(4, 7)
+                    }),
+                    "labelPoly A"
+                },
+                null);
+        SimpleFeature f2 = SimpleFeatureBuilder.build(
+                type,
+                new Object[] {
+                    gf.createPolygon(new Coordinate[] {
+                        new Coordinate(2.5, 7),
+                        new Coordinate(2.5, 8),
+                        new Coordinate(4, 8),
+                        new Coordinate(4, 7),
+                        new Coordinate(2.5, 7)
+                    }),
+                    "labelPoly B"
+                },
+                null);
 
         MemoryDataStore data = new MemoryDataStore();
         data.addFeature(f2);
@@ -116,8 +111,7 @@ public class LabelFontShrinkSizeMinTest {
         ImageAssert.assertEquals(new File(refPath), image, 800);
     }
 
-    private BufferedImage renderLabels(SimpleFeatureSource fs, Style style, String title)
-            throws Exception {
+    private BufferedImage renderLabels(SimpleFeatureSource fs, Style style, String title) throws Exception {
         MapContent mc = new MapContent();
         mc.getViewport().setCoordinateReferenceSystem(DefaultGeographicCRS.WGS84);
         mc.addLayer(new FeatureLayer(fs, style));

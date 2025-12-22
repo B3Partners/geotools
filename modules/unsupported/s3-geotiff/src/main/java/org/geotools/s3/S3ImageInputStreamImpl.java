@@ -71,8 +71,7 @@ public class S3ImageInputStreamImpl extends ImageInputStreamImpl {
         }
 
         AmazonS3 s3Client = this.getS3Client();
-        ObjectMetadata meta =
-                s3Client.getObjectMetadata(new GetObjectMetadataRequest(this.bucket, this.key));
+        ObjectMetadata meta = s3Client.getObjectMetadata(new GetObjectMetadataRequest(this.bucket, this.key));
         this.length = meta.getContentLength();
 
         this.fileName = nameFromKey(this.key);
@@ -86,13 +85,12 @@ public class S3ImageInputStreamImpl extends ImageInputStreamImpl {
 
     private byte[] getFromCache(int block) throws IOException {
         int blockSizeForBlock = this.calculateBlockSizeForBlock(block);
-        CacheEntryKey keyForBlock =
-                new CacheEntryKey(this.bucket, this.key, block, blockSizeForBlock);
+        CacheEntryKey keyForBlock = new CacheEntryKey(this.bucket, this.key, block, blockSizeForBlock);
         return CacheManagement.DEFAULT.getChunk(keyForBlock, connector);
     }
 
     private int calculateBlockSizeForBlock(int block) {
-        long offsetInFile = this.cacheBlockSize * block;
+        long offsetInFile = (long) this.cacheBlockSize * block;
         long remainingInFile = this.length - offsetInFile;
         return (int) Math.min(this.cacheBlockSize, remainingInFile);
     }

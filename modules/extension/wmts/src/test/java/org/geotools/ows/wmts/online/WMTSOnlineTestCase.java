@@ -5,7 +5,9 @@ import java.awt.image.RenderedImage;
 import java.io.IOException;
 import java.util.Properties;
 import java.util.Set;
-import javax.media.jai.Interpolation;
+import org.eclipse.imagen.Interpolation;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
@@ -21,8 +23,6 @@ import org.geotools.ows.wmts.request.GetTileRequest;
 import org.geotools.parameter.Parameter;
 import org.geotools.test.OnlineTestCase;
 import org.geotools.tile.Tile;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public abstract class WMTSOnlineTestCase extends OnlineTestCase {
 
@@ -73,8 +73,8 @@ public abstract class WMTSOnlineTestCase extends OnlineTestCase {
         return wmtsReader.read(getGeneralParameterValues(grid)).getRenderedImage();
     }
 
-    protected RenderedImage getRenderImageResult(
-            WMTSCoverageReader wmtsReader, ReferencedEnvelope requested) throws IOException {
+    protected RenderedImage getRenderImageResult(WMTSCoverageReader wmtsReader, ReferencedEnvelope requested)
+            throws IOException {
 
         Rectangle rectangle = new Rectangle(0, 0, 768, 589);
         GridGeometry2D grid = new GridGeometry2D(new GridEnvelope2D(rectangle), requested);
@@ -83,10 +83,7 @@ public abstract class WMTSOnlineTestCase extends OnlineTestCase {
     }
 
     protected WMTSCoverageReader wmtsCoverageReader(
-            WebMapTileServer wmts,
-            WMTSCapabilities capabilities,
-            ReferencedEnvelope bboxes,
-            String layerName) {
+            WebMapTileServer wmts, WMTSCapabilities capabilities, ReferencedEnvelope bboxes, String layerName) {
         WMTSLayer layer = capabilities.getLayer(layerName);
         assertNotNull(layer);
         layer.setBoundingBoxes(new CRSEnvelope(bboxes));

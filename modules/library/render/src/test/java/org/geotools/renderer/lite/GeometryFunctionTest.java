@@ -23,13 +23,13 @@ import static java.awt.RenderingHints.VALUE_ANTIALIAS_ON;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.style.Style;
 import org.geotools.data.property.PropertyDataStore;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.image.test.ImageAssert;
 import org.geotools.map.FeatureLayer;
 import org.geotools.map.MapContent;
-import org.geotools.styling.Style;
 import org.geotools.test.TestData;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,7 +43,8 @@ public class GeometryFunctionTest {
 
     @Before
     public void setUp() throws Exception {
-        File property = new File(TestData.getResource(this, "squareUTM.properties").toURI());
+        File property =
+                new File(TestData.getResource(this, "squareUTM.properties").toURI());
         PropertyDataStore ds = new PropertyDataStore(property.getParentFile());
         fs = ds.getFeatureSource("square");
         bounds = fs.getBounds();
@@ -74,11 +75,7 @@ public class GeometryFunctionTest {
         renderer.setJava2DHints(new RenderingHints(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON));
 
         BufferedImage image = RendererBaseTest.showRender(styleName, renderer, TIME, bounds);
-        File reference =
-                new File(
-                        "./src/test/resources/org/geotools/renderer/lite/test-data/"
-                                + styleName
-                                + ".png");
+        File reference = new File("./src/test/resources/org/geotools/renderer/lite/test-data/" + styleName + ".png");
         ImageAssert.assertEquals(reference, image, threshold);
     }
 }

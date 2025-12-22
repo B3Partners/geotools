@@ -19,14 +19,15 @@
  */
 package org.geotools.metadata.iso.extent;
 
+import java.io.Serial;
 import java.util.Date;
+import org.geotools.api.metadata.extent.TemporalExtent;
+import org.geotools.api.temporal.TemporalPrimitive;
 import org.geotools.metadata.iso.MetadataEntity;
-import org.opengis.metadata.extent.TemporalExtent;
-import org.opengis.temporal.TemporalPrimitive;
 
 /**
- * Boundary enclosing the dataset, expressed as the closed set of (<var>x</var>,<var>y</var>)
- * coordinates of the polygon. The last point replicates first point.
+ * Boundary enclosing the dataset, expressed as the closed set of (<var>x</var>,<var>y</var>) coordinates of the
+ * polygon. The last point replicates first point.
  *
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
@@ -35,17 +36,18 @@ import org.opengis.temporal.TemporalPrimitive;
  */
 public class TemporalExtentImpl extends MetadataEntity implements TemporalExtent {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 3668140516657118045L;
 
     /**
-     * The start date and time for the content of the dataset, in milliseconds ellapsed since
-     * January 1st, 1970. A value of {@link Long#MIN_VALUE} means that this attribute is not set.
+     * The start date and time for the content of the dataset, in milliseconds ellapsed since January 1st, 1970. A value
+     * of {@link Long#MIN_VALUE} means that this attribute is not set.
      */
     private long startTime = Long.MIN_VALUE;
 
     /**
-     * The end date and time for the content of the dataset, in milliseconds ellapsed since January
-     * 1st, 1970. A value of {@link Long#MIN_VALUE} means that this attribute is not set.
+     * The end date and time for the content of the dataset, in milliseconds ellapsed since January 1st, 1970. A value
+     * of {@link Long#MIN_VALUE} means that this attribute is not set.
      */
     private long endTime = Long.MIN_VALUE;
 
@@ -72,24 +74,24 @@ public class TemporalExtentImpl extends MetadataEntity implements TemporalExtent
 
     /** The start date and time for the content of the dataset. */
     public Date getStartTime() {
-        return (startTime != Long.MIN_VALUE) ? new Date(startTime) : null;
+        return startTime != Long.MIN_VALUE ? new Date(startTime) : null;
     }
 
     /** Set the start date and time for the content of the dataset. */
     public void setStartTime(final Date newValue) {
         checkWritePermission();
-        startTime = (newValue != null) ? newValue.getTime() : Long.MIN_VALUE;
+        startTime = newValue != null ? newValue.getTime() : Long.MIN_VALUE;
     }
 
     /** Returns the end date and time for the content of the dataset. */
     public Date getEndTime() {
-        return (endTime != Long.MIN_VALUE) ? new Date(endTime) : null;
+        return endTime != Long.MIN_VALUE ? new Date(endTime) : null;
     }
 
     /** Set the end date and time for the content of the dataset. */
     public void setEndTime(final Date newValue) {
         checkWritePermission();
-        endTime = (newValue != null) ? newValue.getTime() : Long.MIN_VALUE;
+        endTime = newValue != null ? newValue.getTime() : Long.MIN_VALUE;
     }
 
     /**
@@ -97,7 +99,7 @@ public class TemporalExtentImpl extends MetadataEntity implements TemporalExtent
      *
      * @since 2.4
      */
-    // No implementing class for {@linkplain org.opengis.temporal.TemporalPrimitive}
+    // No implementing class for {@linkplain org.geotools.api.temporal.TemporalPrimitive}
     @Override
     public TemporalPrimitive getExtent() {
         return extent;

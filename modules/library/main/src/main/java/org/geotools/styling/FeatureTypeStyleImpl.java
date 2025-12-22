@@ -23,15 +23,18 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.metadata.citation.OnLineResource;
+import org.geotools.api.style.Description;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.SemanticType;
+import org.geotools.api.style.StyleVisitor;
+import org.geotools.api.style.TraversingStyleVisitor;
+import org.geotools.api.util.Cloneable;
 import org.geotools.util.Utilities;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Id;
-import org.opengis.filter.expression.Expression;
-import org.opengis.metadata.citation.OnLineResource;
-import org.opengis.style.FeatureTypeStyle;
-import org.opengis.style.SemanticType;
-import org.opengis.style.StyleVisitor;
-import org.opengis.util.Cloneable;
 
 /**
  * Implementation of Feature Type Style; care is taken to ensure everything is mutable.
@@ -40,7 +43,7 @@ import org.opengis.util.Cloneable;
  * @author Johann Sorel (Geomatys)
  * @version $Id$
  */
-public class FeatureTypeStyleImpl implements org.geotools.styling.FeatureTypeStyle, Cloneable {
+public class FeatureTypeStyleImpl implements FeatureTypeStyle, Cloneable {
 
     /** This option influences how multiple rules matching the same feature are evaluated */
     public static String KEY_EVALUATION_MODE = "ruleEvaluation";
@@ -78,14 +81,14 @@ public class FeatureTypeStyleImpl implements org.geotools.styling.FeatureTypeSty
         rules = new ArrayList<>();
     }
 
-    public FeatureTypeStyleImpl(org.opengis.style.FeatureTypeStyle fts) {
+    public FeatureTypeStyleImpl(org.geotools.api.style.FeatureTypeStyle fts) {
         this.description = new DescriptionImpl(fts.getDescription());
         this.featureInstances = fts.getFeatureInstanceIDs();
         this.featureTypeNames = new LinkedHashSet<>(fts.featureTypeNames());
         this.name = fts.getName();
         this.rules = new ArrayList<>();
         if (fts.rules() != null) {
-            for (org.opengis.style.Rule rule : fts.rules()) {
+            for (org.geotools.api.style.Rule rule : fts.rules()) {
                 rules.add(RuleImpl.cast(rule)); // need to deep copy?
             }
         }
@@ -130,20 +133,16 @@ public class FeatureTypeStyleImpl implements org.geotools.styling.FeatureTypeSty
     }
 
     @Override
-    public Object accept(StyleVisitor visitor, Object data) {
+    public Object accept(TraversingStyleVisitor visitor, Object data) {
         return visitor.visit(this, data);
     }
 
     @Override
-    public void accept(org.geotools.styling.StyleVisitor visitor) {
+    public void accept(StyleVisitor visitor) {
         visitor.visit(this);
     }
 
-    /**
-     * Creates a deep copy clone of the FeatureTypeStyle.
-     *
-     * @see org.geotools.styling.FeatureTypeStyle#clone()
-     */
+    /** Creates a deep copy clone of the FeatureTypeStyle. */
     @Override
     public Object clone() {
         FeatureTypeStyleImpl clone;
@@ -182,27 +181,27 @@ public class FeatureTypeStyleImpl implements org.geotools.styling.FeatureTypeSty
         int result = 0;
 
         if (rules != null) {
-            result = (PRIME * result) + rules.hashCode();
+            result = PRIME * result + rules.hashCode();
         }
 
         if (featureInstances != null) {
-            result = (PRIME * result) + featureInstances.hashCode();
+            result = PRIME * result + featureInstances.hashCode();
         }
 
         if (semantics != null) {
-            result = (PRIME * result) + semantics.hashCode();
+            result = PRIME * result + semantics.hashCode();
         }
 
         if (featureTypeNames != null) {
-            result = (PRIME * result) + featureTypeNames.hashCode();
+            result = PRIME * result + featureTypeNames.hashCode();
         }
 
         if (name != null) {
-            result = (PRIME * result) + name.hashCode();
+            result = PRIME * result + name.hashCode();
         }
 
         if (description != null) {
-            result = (PRIME * result) + description.hashCode();
+            result = PRIME * result + description.hashCode();
         }
 
         if (options != null) {
@@ -223,8 +222,7 @@ public class FeatureTypeStyleImpl implements org.geotools.styling.FeatureTypeSty
     /**
      * Compares this FeatureTypeStyleImpl with another.
      *
-     * <p>Two FeatureTypeStyles are equal if they contain equal properties and an equal list of
-     * Rules.
+     * <p>Two FeatureTypeStyles are equal if they contain equal properties and an equal list of Rules.
      *
      * @param oth The other FeatureTypeStyleImpl to compare with.
      * @return True if this and oth are equal.
@@ -236,8 +234,7 @@ public class FeatureTypeStyleImpl implements org.geotools.styling.FeatureTypeSty
             return true;
         }
 
-        if (oth instanceof FeatureTypeStyleImpl) {
-            FeatureTypeStyleImpl other = (FeatureTypeStyleImpl) oth;
+        if (oth instanceof FeatureTypeStyleImpl other) {
 
             return Utilities.equals(name, other.name)
                     && Utilities.equals(description, other.description)
@@ -296,8 +293,8 @@ public class FeatureTypeStyleImpl implements org.geotools.styling.FeatureTypeSty
     static FeatureTypeStyleImpl cast(FeatureTypeStyle featureTypeStyle) {
         if (featureTypeStyle == null) {
             return null;
-        } else if (featureTypeStyle instanceof FeatureTypeStyleImpl) {
-            return (FeatureTypeStyleImpl) featureTypeStyle;
+        } else if (featureTypeStyle instanceof FeatureTypeStyleImpl impl) {
+            return impl;
         } else {
             FeatureTypeStyleImpl copy = new FeatureTypeStyleImpl();
             // the above is a deep copy - replace with cast if we can

@@ -31,8 +31,7 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**
- * A simple mock http client, allows to set expectations on requests and provide canned responses on
- * them
+ * A simple mock http client, allows to set expectations on requests and provide canned responses on them
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -41,9 +40,9 @@ public class MockHttpClient extends AbstractHttpClient {
     Map<Request, HTTPResponse> expectedRequests = new LinkedHashMap<>();
 
     /**
-     * Binds a certain URL to a response. The order of the query string parameters is not relevant,
-     * the code will match the same set of KVP params regardless of their sequence and case of their
-     * keys (from OGC specs, keys are case insensitive, values are case sensitive)
+     * Binds a certain URL to a response. The order of the query string parameters is not relevant, the code will match
+     * the same set of KVP params regardless of their sequence and case of their keys (from OGC specs, keys are case
+     * insensitive, values are case sensitive)
      */
     public void expectGet(URL url, HTTPResponse response) {
         expectedRequests.put(new Request(url), response);
@@ -54,29 +53,24 @@ public class MockHttpClient extends AbstractHttpClient {
     }
 
     /** Binds a certain POST request to a response. */
-    public void expectPost(
-            URL url, String postContent, String postContentType, HTTPResponse response) {
+    public void expectPost(URL url, String postContent, String postContentType, HTTPResponse response) {
         expectPost(url, postContent.getBytes(StandardCharsets.UTF_8), postContentType, response);
     }
 
-    public void expectPost(
-            URL url, byte[] postContent, String postContentType, HTTPResponse response) {
+    public void expectPost(URL url, byte[] postContent, String postContentType, HTTPResponse response) {
         expectedRequests.put(new Request(url, postContent, postContentType), response);
     }
 
     @Override
-    public HTTPResponse post(URL url, InputStream postContent, String postContentType)
-            throws IOException {
+    public HTTPResponse post(URL url, InputStream postContent, String postContentType) throws IOException {
         return getResponse(new Request(url, toByteArray(postContent), postContentType));
     }
 
     private byte[] toByteArray(InputStream is) throws IOException {
         byte[] result;
-        try {
+        try (is) {
             result = new byte[is.available()];
             is.read(result);
-        } finally {
-            is.close();
         }
         return result;
     }
@@ -84,11 +78,8 @@ public class MockHttpClient extends AbstractHttpClient {
     private HTTPResponse getResponse(Request request) {
         HTTPResponse response = expectedRequests.get(request);
         if (response == null) {
-            StringBuilder sb =
-                    new StringBuilder(
-                            "Unexpected request \n"
-                                    + request
-                                    + "\nNo response is bound to it. Bound urls are: ");
+            StringBuilder sb = new StringBuilder(
+                    "Unexpected request \n" + request + "\nNo response is bound to it. Bound urls are: ");
             for (Request r : expectedRequests.keySet()) {
                 sb.append("\n").append(r);
             }
@@ -140,9 +131,7 @@ public class MockHttpClient extends AbstractHttpClient {
             }
             return Arrays.stream(url.getQuery().split("&"))
                     .map(s -> s.split("="))
-                    .collect(
-                            Collectors.toMap(
-                                    o -> decode(o[0]), o -> (o.length == 2 ? decode(o[1]) : "")));
+                    .collect(Collectors.toMap(o -> decode(o[0]), o -> o.length == 2 ? decode(o[1]) : ""));
         }
 
         private static String decode(final String encoded) {
@@ -163,10 +152,10 @@ public class MockHttpClient extends AbstractHttpClient {
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + ((contentType == null) ? 0 : contentType.hashCode());
+            result = prime * result + (contentType == null ? 0 : contentType.hashCode());
             result = prime * result + (isGetRequest ? 1231 : 1237);
-            result = prime * result + ((kvp == null) ? 0 : kvp.hashCode());
-            result = prime * result + ((path == null) ? 0 : path.hashCode());
+            result = prime * result + (kvp == null ? 0 : kvp.hashCode());
+            result = prime * result + (path == null ? 0 : path.hashCode());
             result = prime * result + Arrays.hashCode(postContent);
             return result;
         }

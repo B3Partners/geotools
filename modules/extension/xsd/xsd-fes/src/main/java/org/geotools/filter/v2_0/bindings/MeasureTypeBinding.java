@@ -17,14 +17,14 @@
 package org.geotools.filter.v2_0.bindings;
 
 import javax.xml.namespace.QName;
-import net.opengis.fes20.MeasureType;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.filter.v1_0.DistanceUnits;
 import org.geotools.filter.v2_0.FES;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.FilterFactory2;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * Binding object for the type http://www.opengis.net/fes/2.0:MeasureType.
@@ -59,7 +59,7 @@ public class MeasureTypeBinding extends AbstractComplexBinding {
 
     FilterFactory filterFactory2;
 
-    public MeasureTypeBinding(FilterFactory2 filterFactory) {
+    public MeasureTypeBinding(FilterFactory filterFactory) {
         this.filterFactory2 = filterFactory;
     }
 
@@ -77,7 +77,7 @@ public class MeasureTypeBinding extends AbstractComplexBinding {
      */
     @Override
     public Class getType() {
-        return MeasureType.class;
+        return DistanceUnits.class;
     }
 
     @Override
@@ -85,11 +85,29 @@ public class MeasureTypeBinding extends AbstractComplexBinding {
         return AFTER;
     }
 
+    /** Parse MeasureType element, allowing attribute "uom" and "units". */
     @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         Object uom = node.getAttributeValue("uom");
-        DistanceUnits distanceUnits =
-                DistanceUnits.of((Double) value, uom != null ? uom.toString() : null);
+        Object units = node.getAttributeValue("units");
+        DistanceUnits distanceUnits = DistanceUnits.of(
+                (Double) value, uom != null ? uom.toString() : units != null ? units.toString() : null);
         return distanceUnits;
+    }
+
+    @Override
+    public Element encode(Object object, Document document, Element value) throws Exception {
+        DistanceUnits measure = (DistanceUnits) object;
+        value.appendChild(document.createTextNode(Double.toString(measure.getDistance())));
+        return value;
+    }
+
+    @Override
+    public Object getProperty(Object object, QName name) throws Exception {
+        if ("uom".equals(name.getLocalPart())) {
+            DistanceUnits measure = (DistanceUnits) object;
+            return measure.getUnits();
+        }
+        return null;
     }
 }

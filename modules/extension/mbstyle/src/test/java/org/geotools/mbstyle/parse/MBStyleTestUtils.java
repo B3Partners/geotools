@@ -18,21 +18,21 @@
 package org.geotools.mbstyle.parse;
 
 import java.util.Set;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.mbstyle.parse.MBFunction.FunctionCategory;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
-import org.opengis.filter.expression.Expression;
 
 public class MBStyleTestUtils {
     public static Matcher<MBFunction> categories(Matcher<? super Set<FunctionCategory>> matcher) {
-        return new BaseMatcher<MBFunction>() {
+        return new BaseMatcher<>() {
 
             @Override
             public boolean matches(Object item) {
-                if (item instanceof MBFunction) {
-                    return matcher.matches(((MBFunction) item).category());
+                if (item instanceof MBFunction function) {
+                    return matcher.matches(function.category());
                 } else {
                     return false;
                 }
@@ -45,9 +45,9 @@ public class MBStyleTestUtils {
 
             @Override
             public void describeMismatch(Object item, Description description) {
-                if (item instanceof MBFunction) {
+                if (item instanceof MBFunction function) {
                     description.appendText("categories were ");
-                    description.appendValueList("[", ", ", "]", ((MBFunction) item).category());
+                    description.appendValueList("[", ", ", "]", function.category());
                 } else {
                     description.appendText("was a ").appendValue(item.getClass().getName());
                 }
@@ -56,12 +56,12 @@ public class MBStyleTestUtils {
     }
 
     public static Matcher<Expression> evaluatesTo(Object object, Matcher<?> resultMatcher) {
-        return new BaseMatcher<Expression>() {
+        return new BaseMatcher<>() {
 
             @Override
             public boolean matches(Object item) {
-                if (item instanceof Expression) {
-                    return resultMatcher.matches(((Expression) item).evaluate(object));
+                if (item instanceof Expression expression) {
+                    return resultMatcher.matches(expression.evaluate(object));
                 } else {
                     return false;
                 }
@@ -78,8 +78,8 @@ public class MBStyleTestUtils {
 
             @Override
             public void describeMismatch(Object item, Description description) {
-                if (item instanceof Expression) {
-                    Object result = ((Expression) item).evaluate(object);
+                if (item instanceof Expression expression) {
+                    Object result = expression.evaluate(object);
                     description.appendValue(item).appendText(" evaluates to ").appendValue(result);
                 } else {
                     description.appendText("was a ").appendValue(item.getClass().getName());
@@ -89,7 +89,7 @@ public class MBStyleTestUtils {
     }
 
     public static Matcher<Number> asInt(Matcher<Integer> matcher) {
-        return new BaseMatcher<Number>() {
+        return new BaseMatcher<>() {
 
             @Override
             public boolean matches(Object item) {
@@ -118,12 +118,12 @@ public class MBStyleTestUtils {
 
     public static <T> Matcher<Expression> evaluatesTo(
             Object object, Class<T> context, Matcher<? super T> resultMatcher) {
-        return new BaseMatcher<Expression>() {
+        return new BaseMatcher<>() {
 
             @Override
             public boolean matches(Object item) {
-                if (item instanceof Expression) {
-                    return resultMatcher.matches(((Expression) item).evaluate(object, context));
+                if (item instanceof Expression expression) {
+                    return resultMatcher.matches(expression.evaluate(object, context));
                 } else {
                     return false;
                 }
@@ -140,8 +140,8 @@ public class MBStyleTestUtils {
 
             @Override
             public void describeMismatch(Object item, Description description) {
-                if (item instanceof Expression) {
-                    Object result = ((Expression) item).evaluate(object);
+                if (item instanceof Expression expression) {
+                    Object result = expression.evaluate(object);
                     description.appendValue(item).appendText(" evaluates to ").appendValue(result);
                 } else {
                     description.appendText("was a ").appendValue(item.getClass().getName());

@@ -17,8 +17,14 @@
 package org.geotools.data.store;
 
 import java.io.IOException;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureReader;
 import org.geotools.data.collection.DelegateFeatureReader;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
@@ -27,16 +33,10 @@ import org.geotools.feature.collection.DecoratingSimpleFeatureCollection;
 import org.geotools.feature.visitor.CountVisitor;
 import org.geotools.feature.visitor.FeatureAttributeVisitor;
 import org.geotools.filter.FilterAttributeExtractor;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.PropertyName;
 
 /**
- * SimpleFeatureCollection decorator which decorates a feature collection "re-typing" its schema
- * based on attributes specified in a query.
+ * SimpleFeatureCollection decorator which decorates a feature collection "re-typing" its schema based on attributes
+ * specified in a query.
  *
  * @author Justin Deoliveira, The Open Planning Project
  */
@@ -45,13 +45,11 @@ public class ReTypingFeatureCollection extends DecoratingSimpleFeatureCollection
     SimpleFeatureType featureType;
 
     public ReTypingFeatureCollection(
-            FeatureCollection<SimpleFeatureType, SimpleFeature> delegate,
-            SimpleFeatureType featureType) {
+            FeatureCollection<SimpleFeatureType, SimpleFeature> delegate, SimpleFeatureType featureType) {
         this(DataUtilities.simple(delegate), featureType);
     }
 
-    public ReTypingFeatureCollection(
-            SimpleFeatureCollection delegate, SimpleFeatureType featureType) {
+    public ReTypingFeatureCollection(SimpleFeatureCollection delegate, SimpleFeatureType featureType) {
         super(delegate);
         this.featureType = featureType;
     }
@@ -76,14 +74,14 @@ public class ReTypingFeatureCollection extends DecoratingSimpleFeatureCollection
     }
 
     /**
-     * Checks if the visitor is accessing only properties available in the specified feature type,
-     * or as a special case, if it's a count visitor accessing no properties at all
+     * Checks if the visitor is accessing only properties available in the specified feature type, or as a special case,
+     * if it's a count visitor accessing no properties at all
      */
     public static boolean isTypeCompatible(FeatureVisitor visitor, SimpleFeatureType featureType) {
-        if (visitor instanceof FeatureAttributeVisitor) {
+        if (visitor instanceof FeatureAttributeVisitor attributeVisitor) {
             // pass through if the target schema contains all the necessary attributes
             FilterAttributeExtractor extractor = new FilterAttributeExtractor(featureType);
-            for (Expression e : ((FeatureAttributeVisitor) visitor).getExpressions()) {
+            for (Expression e : attributeVisitor.getExpressions()) {
                 e.accept(extractor, null);
             }
 

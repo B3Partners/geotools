@@ -19,6 +19,7 @@
  */
 package org.geotools.referencing.crs;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
@@ -26,12 +27,12 @@ import javax.measure.MetricPrefix;
 import javax.measure.Unit;
 import javax.measure.UnitConverter;
 import javax.measure.quantity.Time;
+import org.geotools.api.referencing.crs.TemporalCRS;
+import org.geotools.api.referencing.cs.TimeCS;
+import org.geotools.api.referencing.datum.TemporalDatum;
 import org.geotools.referencing.AbstractReferenceSystem;
 import org.geotools.referencing.cs.DefaultTimeCS;
 import org.geotools.referencing.datum.DefaultTemporalDatum;
-import org.opengis.referencing.crs.TemporalCRS;
-import org.opengis.referencing.cs.TimeCS;
-import org.opengis.referencing.datum.TemporalDatum;
 import si.uom.SI;
 
 /**
@@ -49,6 +50,7 @@ import si.uom.SI;
  */
 public class DefaultTemporalCRS extends AbstractSingleCRS implements TemporalCRS {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 3000119849197222007L;
 
     /**
@@ -62,9 +64,8 @@ public class DefaultTemporalCRS extends AbstractSingleCRS implements TemporalCRS
             new DefaultTemporalCRS(DefaultTemporalDatum.JULIAN, DefaultTimeCS.DAYS);
 
     /**
-     * Time measured in days since November 17, 1858 at 00:00 UTC. A <cite>Modified Julian
-     * day</cite> (MJD) is defined relative to <cite>Julian day</cite> (JD) as {@code MJD = JD −
-     * 2400000.5}.
+     * Time measured in days since November 17, 1858 at 00:00 UTC. A <cite>Modified Julian day</cite> (MJD) is defined
+     * relative to <cite>Julian day</cite> (JD) as {@code MJD = JD − 2400000.5}.
      *
      * @see DefaultTemporalDatum#MODIFIED_JULIAN
      * @see DefaultTimeCS#DAYS
@@ -74,9 +75,9 @@ public class DefaultTemporalCRS extends AbstractSingleCRS implements TemporalCRS
             new DefaultTemporalCRS(DefaultTemporalDatum.MODIFIED_JULIAN, DefaultTimeCS.DAYS);
 
     /**
-     * Time measured in days since May 24, 1968 at 00:00 UTC. This epoch was introduced by NASA for
-     * the space program. A <cite>Truncated Julian day</cite> (TJD) is defined relative to
-     * <cite>Julian day</cite> (JD) as {@code TJD = JD − 2440000.5}.
+     * Time measured in days since May 24, 1968 at 00:00 UTC. This epoch was introduced by NASA for the space program. A
+     * <cite>Truncated Julian day</cite> (TJD) is defined relative to <cite>Julian day</cite> (JD) as {@code TJD = JD −
+     * 2440000.5}.
      *
      * @see DefaultTemporalDatum#TRUNCATED_JULIAN
      * @see DefaultTimeCS#DAYS
@@ -86,8 +87,8 @@ public class DefaultTemporalCRS extends AbstractSingleCRS implements TemporalCRS
             new DefaultTemporalCRS(DefaultTemporalDatum.TRUNCATED_JULIAN, DefaultTimeCS.DAYS);
 
     /**
-     * Time measured in days since December 31, 1899 at 12:00 UTC. A <cite>Dublin Julian day</cite>
-     * (DJD) is defined relative to <cite>Julian day</cite> (JD) as {@code DJD = JD − 2415020}.
+     * Time measured in days since December 31, 1899 at 12:00 UTC. A <cite>Dublin Julian day</cite> (DJD) is defined
+     * relative to <cite>Julian day</cite> (JD) as {@code DJD = JD − 2415020}.
      *
      * @see DefaultTemporalDatum#DUBLIN_JULIAN
      * @see DefaultTimeCS#DAYS
@@ -123,24 +124,21 @@ public class DefaultTemporalCRS extends AbstractSingleCRS implements TemporalCRS
      */
     public static final Unit<Time> MILLISECOND = MetricPrefix.MILLI(SI.SECOND);
 
-    /**
-     * A converter from values in this CRS to values in milliseconds. Will be constructed only when
-     * first needed.
-     */
+    /** A converter from values in this CRS to values in milliseconds. Will be constructed only when first needed. */
     private transient UnitConverter toMillis;
 
     /**
-     * The {@linkplain TemporalDatum#getOrigin origin} in milliseconds since January 1st, 1970. This
-     * field could be implicit in the {@link #toMillis} converter, but we still handle it explicitly
-     * in order to use integer arithmetic.
+     * The {@linkplain TemporalDatum#getOrigin origin} in milliseconds since January 1st, 1970. This field could be
+     * implicit in the {@link #toMillis} converter, but we still handle it explicitly in order to use integer
+     * arithmetic.
      */
     private transient long origin;
 
     /**
-     * Constructs a new temporal CRS with the same values than the specified one. This copy
-     * constructor provides a way to wrap an arbitrary implementation into a Geotools one or a
-     * user-defined one (as a subclass), usually in order to leverage some implementation-specific
-     * API. This constructor performs a shallow copy, i.e. the properties are not cloned.
+     * Constructs a new temporal CRS with the same values than the specified one. This copy constructor provides a way
+     * to wrap an arbitrary implementation into a Geotools one or a user-defined one (as a subclass), usually in order
+     * to leverage some implementation-specific API. This constructor performs a shallow copy, i.e. the properties are
+     * not cloned.
      *
      * @param crs The coordinate reference system to copy.
      * @since 2.2
@@ -151,8 +149,8 @@ public class DefaultTemporalCRS extends AbstractSingleCRS implements TemporalCRS
     }
 
     /**
-     * Constructs a temporal CRS with the same properties than the given datum. The inherited
-     * properties include the {@linkplain #getName name} and aliases.
+     * Constructs a temporal CRS with the same properties than the given datum. The inherited properties include the
+     * {@linkplain #getName name} and aliases.
      *
      * @param datum The datum.
      * @param cs The coordinate system.
@@ -181,16 +179,14 @@ public class DefaultTemporalCRS extends AbstractSingleCRS implements TemporalCRS
      * @param cs The coordinate system.
      * @param datum The datum.
      */
-    public DefaultTemporalCRS(
-            final Map<String, ?> properties, final TemporalDatum datum, final TimeCS cs) {
+    public DefaultTemporalCRS(final Map<String, ?> properties, final TemporalDatum datum, final TimeCS cs) {
         super(properties, datum, cs);
     }
 
     /**
-     * Wraps an arbitrary temporal CRS into a Geotools implementation. This method is usefull if the
-     * user wants to take advantage of {@link #toDate} and {@link #toValue} methods. If the supplied
-     * CRS is already an instance of {@code DefaultTemporalCRS} or is {@code null}, then it is
-     * returned unchanged.
+     * Wraps an arbitrary temporal CRS into a Geotools implementation. This method is usefull if the user wants to take
+     * advantage of {@link #toDate} and {@link #toValue} methods. If the supplied CRS is already an instance of
+     * {@code DefaultTemporalCRS} or is {@code null}, then it is returned unchanged.
      *
      * @param crs The temporal CRS to wrap.
      * @return The given CRS as a {@code DefaultTemporalCRS}.
@@ -223,8 +219,7 @@ public class DefaultTemporalCRS extends AbstractSingleCRS implements TemporalCRS
     }
 
     /**
-     * Convert the given value into a {@link Date} object. This method is the converse of {@link
-     * #toValue}.
+     * Convert the given value into a {@link Date} object. This method is the converse of {@link #toValue}.
      *
      * @param value A value in this axis unit.
      * @return The value as a {@linkplain Date date}.
@@ -237,8 +232,8 @@ public class DefaultTemporalCRS extends AbstractSingleCRS implements TemporalCRS
     }
 
     /**
-     * Convert the given {@linkplain Date date} into a value in this axis unit. This method is the
-     * converse of {@link #toDate}.
+     * Convert the given {@linkplain Date date} into a value in this axis unit. This method is the converse of
+     * {@link #toDate}.
      *
      * @param time The value as a {@linkplain Date date}.
      * @return value A value in this axis unit.
@@ -247,18 +242,16 @@ public class DefaultTemporalCRS extends AbstractSingleCRS implements TemporalCRS
         if (toMillis == null) {
             initializeConverter();
         }
-        return toMillis.inverse().convert(time.getTime() - origin);
+        return toMillis.inverse().convert((double) (time.getTime() - origin));
     }
 
     /**
      * Returns a hash value for this geographic CRS.
      *
-     * @return The hash code value. This value doesn't need to be the same in past or future
-     *     versions of this class.
+     * @return The hash code value. This value doesn't need to be the same in past or future versions of this class.
      */
     @Override
-    @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
-    public int hashCode() {
-        return (int) serialVersionUID ^ super.hashCode();
+    public int calculateHashCode() {
+        return (int) serialVersionUID ^ super.calculateHashCode();
     }
 }

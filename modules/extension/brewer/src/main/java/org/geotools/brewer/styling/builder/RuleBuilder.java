@@ -21,10 +21,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.geotools.styling.GraphicLegend;
-import org.geotools.styling.Rule;
-import org.geotools.styling.Symbolizer;
-import org.opengis.filter.Filter;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.style.GraphicLegend;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.Symbolizer;
+import org.geotools.api.util.InternationalString;
+import org.geotools.util.SimpleInternationalString;
 
 public class RuleBuilder extends AbstractStyleBuilder<Rule> {
     List<Symbolizer> symbolizers = new ArrayList<>();
@@ -33,7 +35,7 @@ public class RuleBuilder extends AbstractStyleBuilder<Rule> {
 
     String name;
 
-    String ruleAbstract;
+    InternationalString ruleAbstract;
 
     double minScaleDenominator;
 
@@ -43,7 +45,7 @@ public class RuleBuilder extends AbstractStyleBuilder<Rule> {
 
     boolean elseFilter;
 
-    String title;
+    InternationalString title;
 
     protected Map<String, String> options = new LinkedHashMap<>();
 
@@ -64,15 +66,27 @@ public class RuleBuilder extends AbstractStyleBuilder<Rule> {
         return this;
     }
 
-    public RuleBuilder title(String title) {
+    public RuleBuilder title(InternationalString title) {
         unset = false;
         this.title = title;
         return this;
     }
 
-    public RuleBuilder ruleAbstract(String ruleAbstract) {
+    public RuleBuilder title(String title) {
+        unset = false;
+        this.title = new SimpleInternationalString(title);
+        return this;
+    }
+
+    public RuleBuilder ruleAbstract(InternationalString ruleAbstract) {
         unset = false;
         this.ruleAbstract = ruleAbstract;
+        return this;
+    }
+
+    public RuleBuilder ruleAbstract(String ruleAbstract) {
+        unset = false;
+        this.ruleAbstract = new SimpleInternationalString(ruleAbstract);
         return this;
     }
 
@@ -84,8 +98,7 @@ public class RuleBuilder extends AbstractStyleBuilder<Rule> {
     public RuleBuilder min(double minScaleDenominator) {
         unset = false;
         if (minScaleDenominator < 0)
-            throw new IllegalArgumentException(
-                    "Invalid min scale denominator, should be positive or 0");
+            throw new IllegalArgumentException("Invalid min scale denominator, should be positive or 0");
         this.minScaleDenominator = minScaleDenominator;
         return this;
     }
@@ -93,8 +106,7 @@ public class RuleBuilder extends AbstractStyleBuilder<Rule> {
     public RuleBuilder max(double maxScaleDenominator) {
         unset = false;
         if (maxScaleDenominator < 0)
-            throw new IllegalArgumentException(
-                    "Invalid max scale denominator, should be positive or 0");
+            throw new IllegalArgumentException("Invalid max scale denominator, should be positive or 0");
         this.maxScaleDenominator = maxScaleDenominator;
         return this;
     }
@@ -222,16 +234,12 @@ public class RuleBuilder extends AbstractStyleBuilder<Rule> {
             return unset();
         }
         name = rule.getName();
-        title =
-                Optional.ofNullable(rule.getDescription())
-                        .map(d -> d.getTitle())
-                        .map(t -> t.toString())
-                        .orElse(null);
-        ruleAbstract =
-                Optional.ofNullable(rule.getDescription())
-                        .map(d -> d.getAbstract())
-                        .map(t -> t.toString())
-                        .orElse(null);
+        title = Optional.ofNullable(rule.getDescription())
+                .map(d -> d.getTitle())
+                .orElse(null);
+        ruleAbstract = Optional.ofNullable(rule.getDescription())
+                .map(d -> d.getAbstract())
+                .orElse(null);
         minScaleDenominator = rule.getMinScaleDenominator();
         maxScaleDenominator = rule.getMaxScaleDenominator();
         filter = rule.getFilter();

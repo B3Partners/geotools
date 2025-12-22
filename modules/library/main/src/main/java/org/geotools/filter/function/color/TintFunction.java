@@ -19,24 +19,23 @@ package org.geotools.filter.function.color;
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
 import java.awt.Color;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 /**
- * Tint lesscss.org color function. Takes one colors and mixes it with white based on a weight (and
- * their eventual alpha)
+ * Tint lesscss.org color function. Takes one colors and mixes it with white based on a weight (and their eventual
+ * alpha)
  *
  * @author Andrea Aime - GeoSolutions
  */
 public class TintFunction extends FunctionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "tint",
-                    parameter("result", Color.class),
-                    parameter("color", Color.class),
-                    parameter("weight", Double.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "tint",
+            parameter("result", Color.class),
+            parameter("color", Color.class),
+            parameter("weight", Double.class));
     private MixFunction delegate;
 
     public TintFunction() {

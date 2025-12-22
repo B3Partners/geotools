@@ -17,13 +17,13 @@
 package org.geotools.coverage.io.netcdf.tools;
 
 import java.util.NoSuchElementException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.collection.DecoratingSimpleFeatureCollection;
 import org.geotools.feature.collection.DecoratingSimpleFeatureIterator;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /** Wraps a delegate collection and adds the "location" attribute */
 class LocationFeatureCollection extends DecoratingSimpleFeatureCollection {
@@ -31,8 +31,7 @@ class LocationFeatureCollection extends DecoratingSimpleFeatureCollection {
     private final String location;
     private final SimpleFeatureType schema;
 
-    public LocationFeatureCollection(
-            SimpleFeatureCollection delegate, String location, SimpleFeatureType schema) {
+    public LocationFeatureCollection(SimpleFeatureCollection delegate, String location, SimpleFeatureType schema) {
         super(delegate);
         this.location = location;
         this.schema = schema;

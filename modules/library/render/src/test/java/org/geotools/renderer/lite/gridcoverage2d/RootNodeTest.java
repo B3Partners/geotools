@@ -17,12 +17,12 @@
 package org.geotools.renderer.lite.gridcoverage2d;
 
 import java.awt.Color;
-import javax.media.jai.PlanarImage;
+import org.eclipse.imagen.PlanarImage;
 import org.geotools.coverage.Category;
 import org.geotools.coverage.CoverageFactoryFinder;
 import org.geotools.coverage.GridSampleDimension;
 import org.geotools.coverage.grid.GridCoverage2D;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -44,22 +44,16 @@ public class RootNodeTest {
     @Before
     public void setUp() throws Exception {
         // get a coverage
-        final GridCoverage2D gc =
-                CoverageFactoryFinder.getGridCoverageFactory(null)
-                        .create(
-                                "name",
-                                PlanarImage.wrapRenderedImage(
-                                        RasterSymbolizerTest.getSynthetic(Double.NaN)),
-                                new GeneralEnvelope(
-                                        new double[] {-90, -180}, new double[] {90, 180}),
-                                new GridSampleDimension[] {
-                                    new GridSampleDimension(
-                                            "sd",
-                                            new Category[] {new Category("", Color.BLACK, 0)},
-                                            null)
-                                },
-                                null,
-                                null);
+        final GridCoverage2D gc = CoverageFactoryFinder.getGridCoverageFactory(null)
+                .create(
+                        "name",
+                        PlanarImage.wrapRenderedImage(RasterSymbolizerTest.getSynthetic(Double.NaN)),
+                        new GeneralBounds(new double[] {-90, -180}, new double[] {90, 180}),
+                        new GridSampleDimension[] {
+                            new GridSampleDimension("sd", new Category[] {new Category("", Color.BLACK, 0)}, null)
+                        },
+                        null,
+                        null);
 
         root1 = new RootNode(gc);
         root2 = new RootNode(gc);

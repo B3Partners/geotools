@@ -16,19 +16,21 @@
  */
 package org.geotools.coverage.processing.operation;
 
+import java.io.Serial;
 import org.geotools.coverage.processing.BaseScaleOperationJAI;
 
 /**
- * This operation is simply a wrapper for the JAI FilteredSubsample operation which allows me to
- * arbitrarly scale a rendered image while smoothing it out.
+ * This operation is simply a wrapper for the ImageN FilteredSubsample operation which allows me to arbitrarly scale a
+ * rendered image while smoothing it out.
  *
  * @version $Id$
  * @author Simone Giannecchini, GeoSolutions
  * @since 2.3
- * @see javax.media.jai.operator.FilteredSubsampleDescriptor
+ * @see org.eclipse.imagen.operator.FilteredSubsampleDescriptor
  */
 public class FilteredSubsample extends BaseScaleOperationJAI {
     /** Serial number for cross-version compatibility. */
+    @Serial
     private static final long serialVersionUID = 652535074064952517L;
 
     /** Constructs a default {@code "FilteredSubsample"} operation. */

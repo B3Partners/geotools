@@ -17,18 +17,22 @@
 package org.geotools.data.geojson.store;
 
 import java.io.IOException;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.Query;
+import java.util.Collections;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.FeatureTypeFactory;
+import org.geotools.api.filter.Filter;
 import org.geotools.data.geojson.GeoJSONReader;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.feature.FeatureIterator;
+import org.geotools.feature.NameImpl;
+import org.geotools.feature.type.FeatureTypeFactoryImpl;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
 
 public class GeoJSONFeatureSource extends ContentFeatureSource {
     /** Should we read just the first feature to extract the Schema */
@@ -66,8 +70,7 @@ public class GeoJSONFeatureSource extends ContentFeatureSource {
                 try (FeatureIterator<SimpleFeature> itr = reader.getIterator()) {
                     while (itr.hasNext()) {
                         SimpleFeature f = itr.next();
-                        env.expandToInclude(
-                                ((Geometry) f.getDefaultGeometry()).getEnvelopeInternal());
+                        env.expandToInclude(((Geometry) f.getDefaultGeometry()).getEnvelopeInternal());
                     }
                 }
             }
@@ -94,8 +97,7 @@ public class GeoJSONFeatureSource extends ContentFeatureSource {
     }
 
     @Override
-    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query)
-            throws IOException {
+    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query) throws IOException {
         return new GeoJSONFeatureReader(getState(), query);
     }
 
@@ -119,10 +121,20 @@ public class GeoJSONFeatureSource extends ContentFeatureSource {
                  * been set in the datastore.
                  */
                 if (schema == null) {
-                    schema = getDataStore().getSchema();
+                    schema = getDataStore().getCurrentSchema();
+                    if (schema == null) {
+                        FeatureTypeFactory featureTypeFactory = new FeatureTypeFactoryImpl();
+                        schema = featureTypeFactory.createSimpleFeatureType(
+                                new NameImpl(super.entry.getTypeName()),
+                                Collections.emptyList(),
+                                null,
+                                false,
+                                Collections.emptyList(),
+                                null,
+                                null);
+                    }
                 }
             }
-
             return schema;
         }
     }

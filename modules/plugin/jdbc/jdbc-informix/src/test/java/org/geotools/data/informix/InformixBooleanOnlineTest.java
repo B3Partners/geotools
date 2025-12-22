@@ -18,14 +18,14 @@ package org.geotools.data.informix;
 
 import static org.junit.Assert.assertEquals;
 
-import org.geotools.data.FeatureReader;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.jdbc.JDBCBooleanTestSetup;
 import org.geotools.jdbc.JDBCTestSupport;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class InformixBooleanOnlineTest extends JDBCTestSupport {
 
@@ -42,8 +42,7 @@ public class InformixBooleanOnlineTest extends JDBCTestSupport {
 
     @Test
     public void testGetFeatures() throws Exception {
-        try (FeatureReader r =
-                dataStore.getFeatureReader(new Query(tname("b")), Transaction.AUTO_COMMIT)) {
+        try (FeatureReader r = dataStore.getFeatureReader(new Query(tname("b")), Transaction.AUTO_COMMIT)) {
             r.hasNext();
             SimpleFeature f = (SimpleFeature) r.next();
             assertEquals(Boolean.FALSE, f.getAttribute("boolproperty"));

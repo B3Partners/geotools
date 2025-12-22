@@ -13,15 +13,15 @@ package org.geotools.tutorial.quickstart;
 
 import java.io.File;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FileDataStore;
-import org.geotools.data.FileDataStoreFinder;
+import org.geotools.api.data.FileDataStore;
+import org.geotools.api.data.FileDataStoreFinder;
 import org.geotools.data.collection.SpatialIndexFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureSource;
 import org.geotools.map.FeatureLayer;
 import org.geotools.map.Layer;
 import org.geotools.map.MapContent;
 import org.geotools.styling.SLD;
-import org.geotools.styling.Style;
+import org.geotools.api.style.Style;
 import org.geotools.swing.JMapFrame;
 import org.geotools.swing.data.JFileDataStoreChooser;
 
@@ -39,6 +39,8 @@ public class QuickstartCache {
      *
      * <p>There is just one line extra compared to the main method, where we create an instance of
      * CachingFeatureStore.
+     * @param args Ignored no args required.
+     * @throws Exception If there are errors finding the shapefile.
      */
     public static void main(String[] args) throws Exception {
         // display a data store file chooser dialog for shapefiles

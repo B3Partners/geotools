@@ -18,13 +18,15 @@ package org.geotools.data;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
+import org.geotools.api.data.DelegatingFeatureReader;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
 import org.geotools.feature.FeatureTypes;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.util.Classes;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
 
 /**
  * Supports on the fly retyping of FeatureReader<SimpleFeatureType, SimpleFeature> contents.
@@ -47,13 +49,12 @@ import org.opengis.feature.type.AttributeDescriptor;
  * }
  * </code></pre>
  *
- * <p>This Reader makes a simple <b>one to one</b> between the original schema and the target schema
- * based on descriptor name.
+ * <p>This Reader makes a simple <b>one to one</b> between the original schema and the target schema based on descriptor
+ * name.
  *
  * @author Jody Garnett (Refractions Research)
  */
-public class ReTypeFeatureReader
-        implements DelegatingFeatureReader<SimpleFeatureType, SimpleFeature> {
+public class ReTypeFeatureReader implements DelegatingFeatureReader<SimpleFeatureType, SimpleFeature> {
 
     /** The original reader we are grabbing content from */
     FeatureReader<SimpleFeatureType, SimpleFeature> reader;
@@ -75,8 +76,7 @@ public class ReTypeFeatureReader
      * @param reader Original FeatureReader
      * @param featureType Target FeatureType
      */
-    public ReTypeFeatureReader(
-            FeatureReader<SimpleFeatureType, SimpleFeature> reader, SimpleFeatureType featureType) {
+    public ReTypeFeatureReader(FeatureReader<SimpleFeatureType, SimpleFeature> reader, SimpleFeatureType featureType) {
         this(reader, featureType, true);
     }
 
@@ -89,9 +89,7 @@ public class ReTypeFeatureReader
      * @since 2.3
      */
     public ReTypeFeatureReader(
-            FeatureReader<SimpleFeatureType, SimpleFeature> reader,
-            SimpleFeatureType featureType,
-            boolean clone) {
+            FeatureReader<SimpleFeatureType, SimpleFeature> reader, SimpleFeatureType featureType, boolean clone) {
         this.reader = reader;
         this.featureType = featureType;
         this.clone = clone;
@@ -107,19 +105,17 @@ public class ReTypeFeatureReader
     /**
      * Supplies mapping from original to target FeatureType.
      *
-     * <p>Will also ensure that mapping results in a valid selection of values from the original.
-     * Only the xpath expression and binding are checked.
+     * <p>Will also ensure that mapping results in a valid selection of values from the original. Only the xpath
+     * expression and binding are checked.
      *
      * @param target Desired FeatureType
      * @param origional Original FeatureType
      * @return Mapping from originoal to target FeatureType
      * @throws IllegalArgumentException if unable to provide a mapping
      */
-    protected AttributeDescriptor[] typeAttributes(
-            SimpleFeatureType target, SimpleFeatureType origional) {
+    protected AttributeDescriptor[] typeAttributes(SimpleFeatureType target, SimpleFeatureType origional) {
         if (FeatureTypes.equalsExact(origional, target)) {
-            throw new IllegalArgumentException(
-                    "FeatureReader allready produces contents with the correct schema");
+            throw new IllegalArgumentException("FeatureReader allready produces contents with the correct schema");
         }
 
         if (target.getAttributeCount() > origional.getAttributeCount()) {
@@ -140,29 +136,27 @@ public class ReTypeFeatureReader
             Class<?> targetBinding = attrib.getType().getBinding();
             Class<?> checkBinding = check.getType().getBinding();
             if (!targetBinding.isAssignableFrom(checkBinding)) {
-                throw new IllegalArgumentException(
-                        "Unable to retype FeatureReader for "
-                                + xpath
-                                + " as "
-                                + Classes.getShortName(checkBinding)
-                                + " cannot be assigned to "
-                                + Classes.getShortName(targetBinding));
+                throw new IllegalArgumentException("Unable to retype FeatureReader for "
+                        + xpath
+                        + " as "
+                        + Classes.getShortName(checkBinding)
+                        + " cannot be assigned to "
+                        + Classes.getShortName(targetBinding));
             }
         }
 
         return types;
     }
 
-    /** @see org.geotools.data.FeatureReader#getFeatureType() */
+    /** @see FeatureReader#getFeatureType() */
     @Override
     public SimpleFeatureType getFeatureType() {
         return featureType;
     }
 
-    /** @see org.geotools.data.FeatureReader#next() */
+    /** @see FeatureReader#next() */
     @Override
-    public SimpleFeature next()
-            throws IOException, IllegalAttributeException, NoSuchElementException {
+    public SimpleFeature next() throws IOException, IllegalAttributeException, NoSuchElementException {
         if (reader == null) {
             throw new IOException("FeatureReader has been closed");
         }
@@ -185,13 +179,13 @@ public class ReTypeFeatureReader
         return feature;
     }
 
-    /** @see org.geotools.data.FeatureReader#hasNext() */
+    /** @see FeatureReader#hasNext() */
     @Override
     public boolean hasNext() throws IOException {
         return reader.hasNext();
     }
 
-    /** @see org.geotools.data.FeatureReader#close() */
+    /** @see FeatureReader#close() */
     @Override
     public void close() throws IOException {
         if (reader != null) {

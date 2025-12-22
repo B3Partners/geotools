@@ -16,14 +16,22 @@
  */
 package org.geotools.renderer.lite.gridcoverage2d;
 
-import it.geosolutions.jaiext.range.Range;
 import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.util.HashMap;
 import java.util.Map;
-import javax.media.jai.ROI;
+import org.eclipse.imagen.ROI;
+import org.eclipse.imagen.media.range.Range;
+import org.geotools.api.coverage.grid.GridCoverage;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.ChannelSelection;
+import org.geotools.api.style.ColorMap;
+import org.geotools.api.style.ContrastEnhancement;
+import org.geotools.api.style.RasterSymbolizer;
+import org.geotools.api.style.ShadedRelief;
+import org.geotools.api.style.StyleVisitor;
 import org.geotools.coverage.GridSampleDimension;
 import org.geotools.coverage.TypeMap;
 import org.geotools.coverage.grid.GridCoverage2D;
@@ -31,31 +39,21 @@ import org.geotools.coverage.util.CoverageUtilities;
 import org.geotools.image.ImageWorker;
 import org.geotools.renderer.i18n.Vocabulary;
 import org.geotools.renderer.i18n.VocabularyKeys;
-import org.geotools.styling.ChannelSelection;
-import org.geotools.styling.ColorMap;
-import org.geotools.styling.ContrastEnhancement;
-import org.geotools.styling.RasterSymbolizer;
-import org.geotools.styling.ShadedRelief;
-import org.geotools.styling.StyleVisitor;
 import org.geotools.util.SimpleInternationalString;
 import org.geotools.util.factory.Hints;
-import org.opengis.coverage.grid.GridCoverage;
-import org.opengis.filter.expression.Expression;
 
 /**
- * A helper class for rendering {@link GridCoverage} objects. It supports almost all
- * RasterSymbolizer options.
+ * A helper class for rendering {@link GridCoverage} objects. It supports almost all RasterSymbolizer options.
  *
  * @author Simone Giannecchini, GeoSolutions
  */
-public class RasterSymbolizerHelper extends SubchainStyleVisitorCoverageProcessingAdapter
-        implements StyleVisitor {
+public class RasterSymbolizerHelper extends SubchainStyleVisitorCoverageProcessingAdapter implements StyleVisitor {
 
     private float opacity = 1.0F;
 
     /**
-     * We are hacking here a solutions for whenever the user either did not specify a style or did
-     * specify a bad one and the resulting image seems not be drawable.
+     * We are hacking here a solutions for whenever the user either did not specify a style or did specify a bad one and
+     * the resulting image seems not be drawable.
      *
      * @return {@link GridCoverage2D} the result of this operation
      */
@@ -78,10 +76,9 @@ public class RasterSymbolizerHelper extends SubchainStyleVisitorCoverageProcessi
         RenderedImage outputImage = output.getRenderedImage();
 
         // Getting NoData
-        Range nodata =
-                CoverageUtilities.getNoDataProperty(output) != null
-                        ? CoverageUtilities.getNoDataProperty(output).getAsRange()
-                        : null;
+        Range nodata = CoverageUtilities.getNoDataProperty(output) != null
+                ? CoverageUtilities.getNoDataProperty(output).getAsRange()
+                : null;
         ROI roiProp = CoverageUtilities.getROIProperty(output);
 
         ///////////////////////////////////////////////////////////////////////
@@ -100,11 +97,10 @@ public class RasterSymbolizerHelper extends SubchainStyleVisitorCoverageProcessi
         if (numBands > 4) {
             // get the visible band
             final int visibleBand = CoverageUtilities.getVisibleBand(outputImage);
-            outputImage =
-                    new ImageWorker(outputImage)
-                            .setRenderingHints(this.getHints())
-                            .retainBands(new int[] {visibleBand})
-                            .getRenderedImage();
+            outputImage = new ImageWorker(outputImage)
+                    .setRenderingHints(this.getHints())
+                    .retainBands(new int[] {visibleBand})
+                    .getRenderedImage();
             sd = new GridSampleDimension[] {output.getSampleDimension(visibleBand)};
         } else {
             sd = output.getSampleDimensions();
@@ -114,10 +110,10 @@ public class RasterSymbolizerHelper extends SubchainStyleVisitorCoverageProcessi
         // TODO I am not sure this will work with multipacked types (using INT for an RGB as an
         // instance)
         // TODO should we go to component color model also?
-        // TODO use JAI TOOLS statistics and ignore no data properly.
+        // TODO use ImageN TOOLS statistics and ignore no data properly.
         switch (dataType) {
-                // in case the original image has a USHORT pixel type without being associated
-                // with an index color model I would still go to 8 bits
+            // in case the original image has a USHORT pixel type without being associated
+            // with an index color model I would still go to 8 bits
             case DataBuffer.TYPE_USHORT:
                 if (outputImage.getColorModel() instanceof IndexColorModel) {
                     break;
@@ -128,12 +124,11 @@ public class RasterSymbolizerHelper extends SubchainStyleVisitorCoverageProcessi
             case DataBuffer.TYPE_SHORT:
                 // rescale to byte
                 ImageWorker w = new ImageWorker(outputImage);
-                outputImage =
-                        w.setROI(roiProp)
-                                .setNoData(nodata)
-                                .setRenderingHints(this.getHints())
-                                .rescaleToBytes()
-                                .getRenderedImage();
+                outputImage = w.setROI(roiProp)
+                        .setNoData(nodata)
+                        .setRenderingHints(this.getHints())
+                        .rescaleToBytes()
+                        .getRenderedImage();
                 roiProp = w.getROI();
                 nodata = w.getNoData();
         }
@@ -158,10 +153,8 @@ public class RasterSymbolizerHelper extends SubchainStyleVisitorCoverageProcessi
             numBands = finalImage.getSampleModel().getNumBands();
             sd = new GridSampleDimension[numBands];
             for (int i = 0; i < numBands; i++) {
-                sd[i] =
-                        new GridSampleDimension(
-                                TypeMap.getColorInterpretation(finalImage.getColorModel(), i)
-                                        .name());
+                sd[i] = new GridSampleDimension(TypeMap.getColorInterpretation(finalImage.getColorModel(), i)
+                        .name());
             }
 
             CoverageUtilities.setNoDataProperty(properties, ow.getNoData());
@@ -193,10 +186,8 @@ public class RasterSymbolizerHelper extends SubchainStyleVisitorCoverageProcessi
         super(
                 1,
                 hints,
-                SimpleInternationalString.wrap(
-                        Vocabulary.format(VocabularyKeys.RASTER_SYMBOLIZER_HELPER)),
-                SimpleInternationalString.wrap(
-                        "Simple Coverage Processing Node for RasterSymbolizerHelper"));
+                SimpleInternationalString.wrap(Vocabulary.format(VocabularyKeys.RASTER_SYMBOLIZER_HELPER)),
+                SimpleInternationalString.wrap("Simple Coverage Processing Node for RasterSymbolizerHelper"));
 
         // add a source that will just give me back my gridcoverage
         this.addSource(new RootNode(sourceCoverage, hints));
@@ -205,7 +196,7 @@ public class RasterSymbolizerHelper extends SubchainStyleVisitorCoverageProcessi
     /*
      * (non-Javadoc)
      *
-     * @see org.geotools.renderer.lite.gridcoverage2d.StyleVisitorAdapter#visit(org.geotools.styling.RasterSymbolizer)
+     * @see org.geotools.renderer.lite.gridcoverage2d.StyleVisitorAdapter#visit(org.geotools.api.style.RasterSymbolizer)
      */
     @Override
     public void visit(RasterSymbolizer rs) {

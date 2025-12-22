@@ -19,10 +19,10 @@ package org.geotools.filter.function;
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
 import java.util.regex.Pattern;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Filter function to multiply a text list of numbers with a given factor.
@@ -33,12 +33,8 @@ import org.opengis.filter.expression.Expression;
  */
 public class FilterFunction_listMultiply extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "listMultiply",
-                    String.class,
-                    parameter("factor", Number.class),
-                    parameter("list", String.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "listMultiply", String.class, parameter("factor", Number.class), parameter("list", String.class));
 
     public FilterFunction_listMultiply() {
         super(NAME);
@@ -53,8 +49,8 @@ public class FilterFunction_listMultiply extends FunctionExpressionImpl {
 
         try { // attempt to get value and perform conversion
             Object o = getExpression(0).evaluate(feature);
-            if (o instanceof String) {
-                arg0 = Double.valueOf((String) o);
+            if (o instanceof String string) {
+                arg0 = Double.valueOf(string);
             } else {
                 arg0 = (Number) o;
             }
@@ -74,8 +70,8 @@ public class FilterFunction_listMultiply extends FunctionExpressionImpl {
             }
 
             Object data = exprArg1.evaluate(feature);
-            if (data instanceof Number) {
-                return ((Number) data).doubleValue() * arg0.doubleValue();
+            if (data instanceof Number number) {
+                return number.doubleValue() * arg0.doubleValue();
             }
 
             arg1 = (String) data;

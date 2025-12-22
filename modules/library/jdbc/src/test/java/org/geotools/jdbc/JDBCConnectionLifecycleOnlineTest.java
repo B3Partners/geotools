@@ -22,9 +22,9 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.DefaultFeatureCollection;
@@ -64,8 +64,7 @@ public abstract class JDBCConnectionLifecycleOnlineTest extends JDBCTestSupport 
         // now write something within a transaction
         try (Transaction t = new DefaultTransaction()) {
             SimpleFeatureBuilder b = new SimpleFeatureBuilder(featureStore.getSchema());
-            DefaultFeatureCollection collection =
-                    new DefaultFeatureCollection(null, featureStore.getSchema());
+            DefaultFeatureCollection collection = new DefaultFeatureCollection(null, featureStore.getSchema());
             featureStore.setTransaction(t);
             for (int i = 3; i < 6; i++) {
                 b.set(aname("intProperty"), Integer.valueOf(i));

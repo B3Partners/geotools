@@ -27,9 +27,9 @@ import org.yaml.snakeyaml.DumperOptions;
 /**
  * Base class for Yaml object wrappers.
  *
- * <p>Yaml is represented as atomic types (literals, expressions) and YamlObjects (for wrapping
- * lists and maps). The factory method {@link #create(Object)} will sort out the details. These
- * YamlObjects are used to stage data when parsing a Yaml document.
+ * <p>Yaml is represented as atomic types (literals, expressions) and YamlObjects (for wrapping lists and maps). The
+ * factory method {@link #create(Object)} will sort out the details. These YamlObjects are used to stage data when
+ * parsing a Yaml document.
  */
 public class YamlObject<T> {
 
@@ -43,8 +43,7 @@ public class YamlObject<T> {
      *   <li>List wrapped as {@link YamlSeq}
      * </ul>
      *
-     * Other data (Literals, Expressions) are considered atomic and do not provide a YamlObject
-     * representation.
+     * Other data (Literals, Expressions) are considered atomic and do not provide a YamlObject representation.
      *
      * @return Yaml object wrapper, or null if the provided raw object is null.
      */
@@ -77,16 +76,16 @@ public class YamlObject<T> {
 
     /** Casts this object to a {@link YamlMap}. */
     public YamlMap map() {
-        if (this instanceof YamlMap) {
-            return (YamlMap) this;
+        if (this instanceof YamlMap map) {
+            return map;
         }
         throw new IllegalArgumentException("Object " + this + " is not a mapping");
     }
 
     /** Casts this object to a {@link YamlSeq}. */
     public YamlSeq seq() {
-        if (this instanceof YamlSeq) {
-            return (YamlSeq) this;
+        if (this instanceof YamlSeq seq) {
+            return seq;
         }
         throw new IllegalArgumentException("Object " + this + " is not a sequence");
     }
@@ -129,8 +128,7 @@ public class YamlObject<T> {
             } catch (NumberFormatException nan) {
                 index = -1;
             }
-            if (here instanceof YamlMap) {
-                YamlMap map = (YamlMap) here;
+            if (here instanceof YamlMap map) {
                 if (index != -1) {
                     String tempKey = map.key(index);
                     here = map.get(tempKey);
@@ -139,13 +137,11 @@ public class YamlObject<T> {
                 } else {
                     throw new NoSuchElementException("Key: " + key + ", Keys: " + map.raw.keySet());
                 }
-            } else if (here instanceof YamlSeq) {
-                YamlSeq list = (YamlSeq) here;
+            } else if (here instanceof YamlSeq list) {
                 if (index != -1) {
                     here = list.get(index);
                 } else {
-                    throw new IndexOutOfBoundsException(
-                            "Index: " + key + ", Size: " + list.raw.size());
+                    throw new IndexOutOfBoundsException("Index: " + key + ", Size: " + list.raw.size());
                 }
             } else {
                 throw new NoSuchElementException(
@@ -160,10 +156,7 @@ public class YamlObject<T> {
         return raw;
     }
 
-    /**
-     * See {@link #lookup}. Ensures that the result is wrapped as a YamlObject if it is a map, list,
-     * or array.
-     */
+    /** See {@link #lookup}. Ensures that the result is wrapped as a YamlObject if it is a map, list, or array. */
     public Object lookupY(String path) {
         return yamlize(lookup(path));
     }
@@ -180,8 +173,7 @@ public class YamlObject<T> {
         try {
             return clazz.cast(obj);
         } catch (ClassCastException e) {
-            throw new IllegalStateException(
-                    String.format("Unable to retrieve %s as %s", obj, clazz.getSimpleName()), e);
+            throw new IllegalStateException("Unable to retrieve %s as %s".formatted(obj, clazz.getSimpleName()), e);
         }
     }
 

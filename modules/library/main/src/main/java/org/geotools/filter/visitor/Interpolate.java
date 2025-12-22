@@ -18,23 +18,21 @@
 package org.geotools.filter.visitor;
 
 import java.util.List;
-import org.opengis.annotation.XmlElement;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
 
 /**
- * Interpolation: Transformation of continuous values by a function defined on a number of nodes.
- * This is used to adjust the value distribution of an attribute to the desired distribution of a
- * continuous symbolization control variable (like size, width, color, etc).
+ * Interpolation: Transformation of continuous values by a function defined on a number of nodes. This is used to adjust
+ * the value distribution of an attribute to the desired distribution of a continuous symbolization control variable
+ * (like size, width, color, etc).
  *
- * <p>In case the Categorize (or Interpolate) function is used inside a RasterSymbolizer as a
- * ColorMap, the LookupValue is set to the fixed value “Rasterdata”.
+ * <p>In case the Categorize (or Interpolate) function is used inside a RasterSymbolizer as a ColorMap, the LookupValue
+ * is set to the fixed value “Rasterdata”.
  *
- * @version <A HREF="http://www.opengeospatial.org/standards/symbol">Symbology Encoding
- *     Implementation Specification 1.1.0</A>
+ * @version <A HREF="http://www.opengeospatial.org/standards/symbol">Symbology Encoding Implementation Specification
+ *     1.1.0</A>
  * @author Johann Sorel (Geomatys)
  */
-@XmlElement("Interpolate")
 public interface Interpolate extends Function {
 
     /**
@@ -42,7 +40,6 @@ public interface Interpolate extends Function {
      *
      * @return Expression
      */
-    @XmlElement("LookupValue")
     Expression getLookupValue();
 
     /** See {@link InterpolationPoint} for details. */
@@ -53,7 +50,6 @@ public interface Interpolate extends Function {
      *
      * @return LINEAR, COSINE or CUBIC.
      */
-    @XmlElement("Mode")
     Mode getMode();
 
     /**
@@ -61,6 +57,5 @@ public interface Interpolate extends Function {
      *
      * @return NUMERIC or COLOR
      */
-    @XmlElement("Method")
     Method getMethod();
 }

@@ -21,6 +21,13 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.temporal.After;
+import org.geotools.api.filter.temporal.Before;
+import org.geotools.api.filter.temporal.During;
+import org.geotools.api.temporal.Period;
 import org.geotools.filter.FilterFactoryImpl;
 import org.geotools.filter.text.commons.CompilerUtil;
 import org.geotools.filter.text.commons.Language;
@@ -30,13 +37,6 @@ import org.geotools.temporal.object.DefaultInstant;
 import org.geotools.temporal.object.DefaultPosition;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.temporal.After;
-import org.opengis.filter.temporal.Before;
-import org.opengis.filter.temporal.During;
-import org.opengis.temporal.Period;
 
 /**
  * ECQL Temporal predicate
@@ -100,8 +100,7 @@ public class ECQLTemporalPredicateTest extends CQLTemporalPredicateTest {
     @Test
     public void dateTimeDuringPeriod() throws CQLException {
 
-        final String predicate =
-                "2006-11-30T01:00:00Z DURING 2006-11-30T00:30:00Z/2006-11-30T01:30:00Z ";
+        final String predicate = "2006-11-30T01:00:00Z DURING 2006-11-30T00:30:00Z/2006-11-30T01:30:00Z ";
         Filter resultFilter = CompilerUtil.parseFilter(this.language, predicate);
 
         Assert.assertTrue(resultFilter instanceof During);
@@ -118,8 +117,8 @@ public class ECQLTemporalPredicateTest extends CQLTemporalPredicateTest {
     }
 
     /**
-     * The left hand should be a property or temporal expression. An math expression in the left
-     * hand of the temporal predicate is a syntax error
+     * The left hand should be a property or temporal expression. An math expression in the left hand of the temporal
+     * predicate is a syntax error
      */
     @Test(expected = CQLException.class)
     public void beforeInvalidLeftHandExpression() throws CQLException {
@@ -132,10 +131,7 @@ public class ECQLTemporalPredicateTest extends CQLTemporalPredicateTest {
     public void filterWithOgcInstantToEcql() throws Exception {
         final Date date = new Date();
         FilterFactory ff = new FilterFactoryImpl();
-        Filter filter =
-                ff.after(
-                        ff.property("attName"),
-                        ff.literal(new DefaultInstant(new DefaultPosition(date))));
+        Filter filter = ff.after(ff.property("attName"), ff.literal(new DefaultInstant(new DefaultPosition(date))));
 
         String cql = ECQL.toCQL(filter);
         Assert.assertEquals("attName AFTER " + getEcqlCompliantDate(date), cql);
@@ -145,10 +141,7 @@ public class ECQLTemporalPredicateTest extends CQLTemporalPredicateTest {
     public void beforeFilterWithOgcInstantToEcql() throws Exception {
         final Date date = new Date();
         FilterFactory ff = new FilterFactoryImpl();
-        Filter filter =
-                ff.before(
-                        ff.property("attName"),
-                        ff.literal(new DefaultInstant(new DefaultPosition(date))));
+        Filter filter = ff.before(ff.property("attName"), ff.literal(new DefaultInstant(new DefaultPosition(date))));
 
         String cql = ECQL.toCQL(filter);
         Assert.assertEquals("attName BEFORE " + getEcqlCompliantDate(date), cql);

@@ -17,18 +17,18 @@
 
 package org.geotools.filter.text.cql2;
 
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.PropertyIsEqualTo;
 import org.geotools.filter.text.commons.CompilerUtil;
 import org.geotools.filter.text.commons.Language;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.filter.Filter;
-import org.opengis.filter.PropertyIsEqualTo;
 
 /**
  * Test Existence Predicate.
  *
- * <p>EXIST: evaluates as true for all record instances where the attribute_name is a member of the
- * record schema. DOES-NOT-EXIST: opposite to EXISTS
+ * <p>EXIST: evaluates as true for all record instances where the attribute_name is a member of the record schema.
+ * DOES-NOT-EXIST: opposite to EXISTS
  *
  * <p>
  *
@@ -96,7 +96,6 @@ public class CQLExistenceTest {
 
         Assert.assertEquals(expected, eqToResultFilter);
 
-        Assert.assertNotNull(
-                "implementation of function was expected", eqToResultFilter.getExpression1());
+        Assert.assertNotNull("implementation of function was expected", eqToResultFilter.getExpression1());
     }
 }

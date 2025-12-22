@@ -31,12 +31,16 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.EmptyFeatureReader;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.Query;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureReader;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -44,10 +48,6 @@ import org.geotools.mbtiles.CompositeSimpleFeatureReader.ReaderSupplier;
 import org.geotools.referencing.CRS;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.referencing.operation.TransformException;
 
 class MBTilesFeatureSource extends ContentFeatureSource {
 
@@ -57,10 +57,7 @@ class MBTilesFeatureSource extends ContentFeatureSource {
     private final MBtilesCache tileCache;
 
     public MBTilesFeatureSource(
-            ContentEntry entry,
-            SimpleFeatureType schema,
-            MBTilesFile mbtiles,
-            MBtilesCache tileCache) {
+            ContentEntry entry, SimpleFeatureType schema, MBTilesFile mbtiles, MBtilesCache tileCache) {
         super(entry, null);
         this.mbtiles = mbtiles;
         this.schema = schema;
@@ -108,15 +105,13 @@ class MBTilesFeatureSource extends ContentFeatureSource {
     }
 
     @Override
-    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query)
-            throws IOException {
+    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query) throws IOException {
         try {
             long z = getTargetZLevel(query);
             List<RectangleLong> tileBounds = getTileBoundsFor(query, z);
-            List<ReaderSupplier> suppliers =
-                    tileBounds.stream()
-                            .flatMap(tb -> getReaderSuppliersFor(z, tb).stream())
-                            .collect(Collectors.toList());
+            List<ReaderSupplier> suppliers = tileBounds.stream()
+                    .flatMap(tb -> getReaderSuppliersFor(z, tb).stream())
+                    .collect(Collectors.toList());
 
             SimpleFeatureReader reader;
             if (suppliers.isEmpty()) {
@@ -151,22 +146,20 @@ class MBTilesFeatureSource extends ContentFeatureSource {
     }
 
     /**
-     * Computes the minimum bounds that need to be still read in order to get the missing tiles,
-     * without allocating each one in a in-memory list: with large bounds at high zoom levels, the
-     * list could easily cause a OOM
+     * Computes the minimum bounds that need to be still read in order to get the missing tiles, without allocating each
+     * one in a in-memory list: with large bounds at high zoom levels, the list could easily cause a OOM
      */
     protected RectangleLong getUnreadLocationBounds(
             long z, RectangleLong bounds, Set<MBTilesTileLocation> readLocations) {
         RectangleLong result = new RectangleLong();
         MBTilesTileLocation location = new MBTilesTileLocation(z, 0, 0);
-        bounds.forEach(
-                (x, y) -> {
-                    location.setTileColumn(x);
-                    location.setTileRow(y);
-                    if (!readLocations.contains(location)) {
-                        result.expandToInclude(location);
-                    }
-                });
+        bounds.forEach((x, y) -> {
+            location.setTileColumn(x);
+            location.setTileRow(y);
+            if (!readLocations.contains(location)) {
+                result.expandToInclude(location);
+            }
+        });
 
         return result;
     }
@@ -175,13 +168,8 @@ class MBTilesFeatureSource extends ContentFeatureSource {
             long z, RectangleLong unreadRect, Set<MBTilesTileLocation> skipLocations) {
         return () -> {
             try {
-                MBTilesFile.TileIterator tiles =
-                        mbtiles.tiles(
-                                z,
-                                unreadRect.getMinX(),
-                                unreadRect.getMinY(),
-                                unreadRect.getMaxX(),
-                                unreadRect.getMaxY());
+                MBTilesFile.TileIterator tiles = mbtiles.tiles(
+                        z, unreadRect.getMinX(), unreadRect.getMinY(), unreadRect.getMaxX(), unreadRect.getMaxY());
                 return new MBTilesFeatureReader(tiles, getSchema(), tileCache, skipLocations);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -198,25 +186,22 @@ class MBTilesFeatureSource extends ContentFeatureSource {
     private long getTargetZLevel(Query query) throws SQLException {
         return Optional.ofNullable(query)
                 .map(Query::getHints)
-                .map(
-                        h -> {
-                            if (h.get(Hints.GEOMETRY_GENERALIZATION) != null) {
-                                return h.get(Hints.GEOMETRY_GENERALIZATION);
-                            } else if (h.get(Hints.GEOMETRY_SIMPLIFICATION) != null) {
-                                return h.get(Hints.GEOMETRY_SIMPLIFICATION);
-                            } else {
-                                return h.get(Hints.GEOMETRY_DISTANCE);
-                            }
-                        })
-                .map(
-                        d -> {
-                            try {
-                                return mbtiles.getZoomLevel((Double) d);
-                            } catch (SQLException e) {
-                                throw new RuntimeException(
-                                        "Failed to compute the best zoom level for rendering", e);
-                            }
-                        })
+                .map(h -> {
+                    if (h.get(Hints.GEOMETRY_GENERALIZATION) != null) {
+                        return h.get(Hints.GEOMETRY_GENERALIZATION);
+                    } else if (h.get(Hints.GEOMETRY_SIMPLIFICATION) != null) {
+                        return h.get(Hints.GEOMETRY_SIMPLIFICATION);
+                    } else {
+                        return h.get(Hints.GEOMETRY_DISTANCE);
+                    }
+                })
+                .map(d -> {
+                    try {
+                        return mbtiles.getZoomLevel((Double) d);
+                    } catch (SQLException e) {
+                        throw new RuntimeException("Failed to compute the best zoom level for rendering", e);
+                    }
+                })
                 .orElse(mbtiles.maxZoom());
     }
 
@@ -228,22 +213,21 @@ class MBTilesFeatureSource extends ContentFeatureSource {
 
         // Get the bounds from the query, map them to tile space, intersect with the level bounds
         // and remove the empty results. At the end, the list might be empty.
-        List<RectangleLong> rectangles =
-                Optional.ofNullable(ExtractMultiBoundsFilterVisitor.getBounds(query.getFilter()))
-                        .map(o -> o.stream())
-                        .orElse(Stream.empty())
-                        .filter(e -> !Double.isInfinite(e.getWidth()))
-                        .map(
-                                e -> {
-                                    try {
-                                        return mbtiles.toTilesRectangle(e, z);
-                                    } catch (SQLException ex) {
-                                        throw new RuntimeException(ex);
-                                    }
-                                })
-                        .map(tr -> tr.intersection(levelBounds))
-                        // don't filter empty intersections, or will return the whole world for them
-                        .collect(Collectors.toList());
+        List<RectangleLong> rectangles = Optional.ofNullable(
+                        ExtractMultiBoundsFilterVisitor.getBounds(query.getFilter()))
+                .map(o -> o.stream())
+                .orElse(Stream.empty())
+                .filter(e -> !Double.isInfinite(e.getWidth()))
+                .map(e -> {
+                    try {
+                        return mbtiles.toTilesRectangle(e, z);
+                    } catch (SQLException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                })
+                .map(tr -> tr.intersection(levelBounds))
+                // don't filter empty intersections, or will return the whole world for them
+                .collect(Collectors.toList());
         if (rectangles.isEmpty()) {
             return Collections.singletonList(levelBounds);
         }

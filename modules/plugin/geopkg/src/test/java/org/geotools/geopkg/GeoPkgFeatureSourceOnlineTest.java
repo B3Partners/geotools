@@ -18,12 +18,12 @@ package org.geotools.geopkg;
 
 import static org.junit.Assert.assertEquals;
 
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.PropertyIsLike;
 import org.geotools.jdbc.JDBCFeatureSourceOnlineTest;
 import org.geotools.jdbc.JDBCTestSetup;
 import org.junit.Test;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.PropertyIsLike;
 
 public class GeoPkgFeatureSourceOnlineTest extends JDBCFeatureSourceOnlineTest {
 
@@ -49,16 +49,15 @@ public class GeoPkgFeatureSourceOnlineTest extends JDBCFeatureSourceOnlineTest {
         // seems there are rounding issues here - consider new test
     }
     /**
-     * SQLite's LIKE is usually case insensitive - there are many possible "fixes" out there but all
-     * are hard to implement or seem not to work for all CharacterSets.
+     * SQLite's LIKE is usually case insensitive - there are many possible "fixes" out there but all are hard to
+     * implement or seem not to work for all CharacterSets.
      */
     @Override
     public void testLikeFilter() throws Exception {
-        FilterFactory2 ff = (FilterFactory2) dataStore.getFilterFactory();
+        FilterFactory ff = dataStore.getFilterFactory();
         //        PropertyIsLike caseSensitiveLike =
         //                ff.like(ff.property(aname("stringProperty")), "Z*", "*", "?", "\\", true);
-        PropertyIsLike caseInsensitiveLike =
-                ff.like(ff.property(aname("stringProperty")), "Z*", "*", "?", "\\", false);
+        PropertyIsLike caseInsensitiveLike = ff.like(ff.property(aname("stringProperty")), "Z*", "*", "?", "\\", false);
         PropertyIsLike caseInsensitiveLike2 =
                 ff.like(ff.property(aname("stringProperty")), "z*", "*", "?", "\\", false);
         // SQLLITE LIKE is always case insensitive

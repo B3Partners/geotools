@@ -19,6 +19,8 @@ package org.geotools.coverage.io.netcdf;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Date;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.gce.imagemosaic.properties.PropertiesCollector;
@@ -26,8 +28,6 @@ import org.geotools.imageio.netcdf.utilities.RuntimeExtractorSPI;
 import org.geotools.test.TestData;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /** @author Daniele Romagnoli, GeoSolutions SAS */
 public class RuntimeExtractorTest extends Assert {
@@ -40,8 +40,7 @@ public class RuntimeExtractorTest extends Assert {
         long lastModified = file.lastModified();
 
         final RuntimeExtractorSPI spi = new RuntimeExtractorSPI();
-        final PropertiesCollector collector =
-                spi.create("regex=MODIFY_TIME", Arrays.asList("updated"));
+        final PropertiesCollector collector = spi.create("regex=MODIFY_TIME", Arrays.asList("updated"));
         final SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
         featureTypeBuilder.setName("runtimeT");
         featureTypeBuilder.add("updated", Date.class);

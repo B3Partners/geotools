@@ -18,10 +18,10 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.capability.FunctionName;
 
 /**
  * A FilterFunction that expects a Geometry and returns it's octagonal envelope.
@@ -31,8 +31,7 @@ import org.opengis.filter.capability.FunctionName;
 public class FilterFunction_octagonalEnvelope extends FunctionExpressionImpl {
 
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "octagonalenvelope", Geometry.class, parameter("geometry", Geometry.class));
+            new FunctionNameImpl("octagonalenvelope", Geometry.class, parameter("geometry", Geometry.class));
 
     /** Create a new FilterFunction_octagonalEnvelope instance */
     public FilterFunction_octagonalEnvelope() {
@@ -59,6 +58,6 @@ public class FilterFunction_octagonalEnvelope extends FunctionExpressionImpl {
                     "Filter Function problem for function octagonal envelope argument #0 - expected type Geometry");
         }
 
-        return (StaticGeometry.octagonalEnvelope(arg0));
+        return StaticGeometry.octagonalEnvelope(arg0);
     }
 }

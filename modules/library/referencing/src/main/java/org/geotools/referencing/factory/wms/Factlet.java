@@ -17,14 +17,14 @@
 package org.geotools.referencing.factory.wms;
 
 import java.util.Collections;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.IdentifiedObject;
+import org.geotools.api.referencing.crs.ProjectedCRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.referencing.cs.DefaultCartesianCS;
 import org.geotools.referencing.factory.ReferencingFactoryContainer;
 import org.geotools.referencing.operation.DefiningConversion;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.IdentifiedObject;
-import org.opengis.referencing.crs.ProjectedCRS;
 
 /**
  * Mini Plug-In API for {@linkplain ProjectedCRS projected CRS} from the {@code AUTO} authority.
@@ -41,16 +41,13 @@ abstract class Factlet {
     /** Returns the name for the CRS to be created by this plugin. */
     public abstract String getName();
 
-    /**
-     * Returns the classification of projection method. For example {@code "Transverse_Mercator"}.
-     */
+    /** Returns the classification of projection method. For example {@code "Transverse_Mercator"}. */
     public abstract String getClassification();
 
     /**
-     * Creates a coordinate reference system from the specified code. The default implementation
-     * creates a {@linkplain ParameterValueGroup parameter group} for the {@linkplain
-     * #getClassification projection classification}, and then invokes {@link
-     * #setProjectionParameters} in order to fill the parameter values.
+     * Creates a coordinate reference system from the specified code. The default implementation creates a
+     * {@linkplain ParameterValueGroup parameter group} for the {@linkplain #getClassification projection
+     * classification}, and then invokes {@link #setProjectionParameters} in order to fill the parameter values.
      */
     public final ProjectedCRS create(final Code code, final ReferencingFactoryContainer factories)
             throws FactoryException {

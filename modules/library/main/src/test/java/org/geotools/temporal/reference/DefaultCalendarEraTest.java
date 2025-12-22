@@ -22,6 +22,14 @@ import static org.junit.Assert.assertNotEquals;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import org.geotools.api.temporal.CalendarDate;
+import org.geotools.api.temporal.CalendarEra;
+import org.geotools.api.temporal.IndeterminateValue;
+import org.geotools.api.temporal.Instant;
+import org.geotools.api.temporal.JulianDate;
+import org.geotools.api.temporal.Period;
+import org.geotools.api.temporal.TemporalReferenceSystem;
+import org.geotools.api.util.InternationalString;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
 import org.geotools.temporal.object.DefaultCalendarDate;
@@ -33,14 +41,6 @@ import org.geotools.util.SimpleInternationalString;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.temporal.CalendarDate;
-import org.opengis.temporal.CalendarEra;
-import org.opengis.temporal.IndeterminateValue;
-import org.opengis.temporal.Instant;
-import org.opengis.temporal.JulianDate;
-import org.opengis.temporal.Period;
-import org.opengis.temporal.TemporalReferenceSystem;
-import org.opengis.util.InternationalString;
 
 /** @author Mehdi Sidhoum (Geomatys) */
 public class DefaultCalendarEraTest {
@@ -57,20 +57,11 @@ public class DefaultCalendarEraTest {
         TemporalReferenceSystem frame2 = new DefaultTemporalReferenceSystem(name2, null);
         int[] calendarDate1 = {1900, 1, 1};
         int[] calendarDate2 = {400, 1, 1};
-        CalendarDate referenceDate1 =
-                new DefaultCalendarDate(
-                        frame1,
-                        IndeterminateValue.BEFORE,
-                        new SimpleInternationalString("Gregorian calendar"),
-                        calendarDate1);
-        CalendarDate referenceDate2 =
-                new DefaultCalendarDate(
-                        frame2,
-                        IndeterminateValue.NOW,
-                        new SimpleInternationalString("Babylonian calendar"),
-                        calendarDate2);
-        JulianDate julianReference =
-                new DefaultJulianDate(frame1, IndeterminateValue.NOW, 123456789);
+        CalendarDate referenceDate1 = new DefaultCalendarDate(
+                frame1, IndeterminateValue.BEFORE, new SimpleInternationalString("Gregorian calendar"), calendarDate1);
+        CalendarDate referenceDate2 = new DefaultCalendarDate(
+                frame2, IndeterminateValue.NOW, new SimpleInternationalString("Babylonian calendar"), calendarDate2);
+        JulianDate julianReference = new DefaultJulianDate(frame1, IndeterminateValue.NOW, 123456789);
 
         cal.set(1900, 0, 1);
         Instant begining1 = new DefaultInstant(new DefaultPosition(cal.getTime()));
@@ -84,20 +75,18 @@ public class DefaultCalendarEraTest {
         Period epochOfUse1 = new DefaultPeriod(begining1, ending1);
         Period epochOfUse2 = new DefaultPeriod(begining2, ending2);
 
-        calendarEra1 =
-                new DefaultCalendarEra(
-                        new SimpleInternationalString("Cenozoic"),
-                        new SimpleInternationalString("no description"),
-                        referenceDate1,
-                        julianReference,
-                        epochOfUse1);
-        calendarEra2 =
-                new DefaultCalendarEra(
-                        new SimpleInternationalString("Mesozoic"),
-                        new SimpleInternationalString(""),
-                        referenceDate2,
-                        julianReference,
-                        epochOfUse2);
+        calendarEra1 = new DefaultCalendarEra(
+                new SimpleInternationalString("Cenozoic"),
+                new SimpleInternationalString("no description"),
+                referenceDate1,
+                julianReference,
+                epochOfUse1);
+        calendarEra2 = new DefaultCalendarEra(
+                new SimpleInternationalString("Mesozoic"),
+                new SimpleInternationalString(""),
+                referenceDate2,
+                julianReference,
+                epochOfUse2);
     }
 
     @After
@@ -153,8 +142,7 @@ public class DefaultCalendarEraTest {
     @Test
     public void testSetReferenceEvent() {
         InternationalString result = calendarEra1.getReferenceEvent();
-        ((DefaultCalendarEra) calendarEra1)
-                .setReferenceEvent(new SimpleInternationalString("new Era description"));
+        ((DefaultCalendarEra) calendarEra1).setReferenceEvent(new SimpleInternationalString("new Era description"));
         assertNotEquals(calendarEra1.getReferenceEvent(), result);
     }
 
@@ -163,8 +151,7 @@ public class DefaultCalendarEraTest {
     public void testSetReferenceDate() {
         CalendarDate result = calendarEra1.getReferenceDate();
         int[] date = {1950, 6, 10};
-        ((DefaultCalendarEra) calendarEra1)
-                .setReferenceDate(new DefaultCalendarDate(null, null, null, date));
+        ((DefaultCalendarEra) calendarEra1).setReferenceDate(new DefaultCalendarDate(null, null, null, date));
         assertNotEquals(calendarEra1.getReferenceDate(), result);
     }
 
@@ -172,8 +159,7 @@ public class DefaultCalendarEraTest {
     @Test
     public void testSetJulianReference() {
         JulianDate result = calendarEra1.getJulianReference();
-        ((DefaultCalendarEra) calendarEra1)
-                .setJulianReference(new DefaultJulianDate(null, null, 785410));
+        ((DefaultCalendarEra) calendarEra1).setJulianReference(new DefaultJulianDate(null, null, 785410));
         assertNotEquals(calendarEra1.getJulianReference(), result);
     }
 
@@ -183,18 +169,16 @@ public class DefaultCalendarEraTest {
         Period result = calendarEra1.getEpochOfUse();
         cal.set(1900, 10, 10);
         ((DefaultCalendarEra) calendarEra1)
-                .setEpochOfUse(
-                        new DefaultPeriod(
-                                new DefaultInstant(new DefaultPosition(cal.getTime())),
-                                new DefaultInstant(new DefaultPosition(new Date()))));
+                .setEpochOfUse(new DefaultPeriod(
+                        new DefaultInstant(new DefaultPosition(cal.getTime())),
+                        new DefaultInstant(new DefaultPosition(new Date()))));
         assertNotEquals(calendarEra1.getEpochOfUse(), result);
     }
 
     /** Test of getDatingSystem method, of class DefaultCalendarEra. */
     @Test
     public void testGetDatingSystem() {
-        Collection<org.opengis.temporal.Calendar> result =
-                ((DefaultCalendarEra) calendarEra1).getDatingSystem();
+        Collection<org.geotools.api.temporal.Calendar> result = ((DefaultCalendarEra) calendarEra1).getDatingSystem();
         assertEquals(((DefaultCalendarEra) calendarEra2).getDatingSystem(), result);
     }
 

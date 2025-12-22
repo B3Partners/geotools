@@ -16,11 +16,11 @@
  */
 package org.geotools.filter.spatial;
 
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.spatial.Contains;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.spatial.Contains;
 
 public class ContainsImpl extends AbstractPreparedGeometryFilter implements Contains {
 
@@ -38,20 +38,17 @@ public class ContainsImpl extends AbstractPreparedGeometryFilter implements Cont
         switch (literals) {
             case BOTH:
                 return cacheValue;
-            case RIGHT:
-                {
-                    // since it is left contains right there is no
-                    // benefit of having a prepared geometry for the right side
-                    return basicEvaluate(left, right);
-                }
-            case LEFT:
-                {
-                    return leftPreppedGeom.contains(right);
-                }
-            default:
-                {
-                    return basicEvaluate(left, right);
-                }
+            case RIGHT: {
+                // since it is left contains right there is no
+                // benefit of having a prepared geometry for the right side
+                return basicEvaluate(left, right);
+            }
+            case LEFT: {
+                return leftPreppedGeom.contains(right);
+            }
+            default: {
+                return basicEvaluate(left, right);
+            }
         }
     }
 

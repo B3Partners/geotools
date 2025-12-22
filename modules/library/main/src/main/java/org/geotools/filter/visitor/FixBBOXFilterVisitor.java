@@ -16,21 +16,20 @@
  */
 package org.geotools.filter.visitor;
 
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Visit the BBOX filter elements and make sure they are valid.
  *
- * <p>Any BBOX filter using a literal geometry will be changed to be a literal envelope based on the
- * geometry internal envelope. If a max bounding box has been provided it will be used to clip this
- * request envelope.
+ * <p>Any BBOX filter using a literal geometry will be changed to be a literal envelope based on the geometry internal
+ * envelope. If a max bounding box has been provided it will be used to clip this request envelope.
  *
  * <p>
  *
@@ -41,8 +40,8 @@ public class FixBBOXFilterVisitor extends DuplicatingFilterVisitor {
     // private static final Logger logger = Logging.getLogger(FixBBOXFilterVisitor.class);
 
     /**
-     * Represents a hard limit; requests outside of this bound are assumed to be invalid for the WFS
-     * resulting in an exception being thrown.
+     * Represents a hard limit; requests outside of this bound are assumed to be invalid for the WFS resulting in an
+     * exception being thrown.
      */
     ReferencedEnvelope maxbbox;
 
@@ -63,19 +62,17 @@ public class FixBBOXFilterVisitor extends DuplicatingFilterVisitor {
         boolean clipped = false;
 
         Literal le = null;
-        if (leftGeometry != null && leftGeometry instanceof Literal) {
-            le = (Literal) leftGeometry;
-        } else if (rightGeometry != null && rightGeometry instanceof Literal) {
-            le = (Literal) rightGeometry;
+        if (leftGeometry != null && leftGeometry instanceof Literal literal1) {
+            le = literal1;
+        } else if (rightGeometry != null && rightGeometry instanceof Literal literal) {
+            le = literal;
         }
         CoordinateReferenceSystem crs = null;
         if (le != null && le.getValue() != null && le.getValue() instanceof Geometry) {
             Geometry geometry = (Geometry) le.getValue();
             bbox = geometry.getEnvelopeInternal();
             crs = (CoordinateReferenceSystem) geometry.getUserData();
-        } else if (le != null
-                && le.getValue() != null
-                && le.getValue() instanceof ReferencedEnvelope) {
+        } else if (le != null && le.getValue() != null && le.getValue() instanceof ReferencedEnvelope) {
             bbox = (Envelope) le.getValue();
             crs = ((ReferencedEnvelope) le.getValue()).getCoordinateReferenceSystem();
         }
@@ -108,10 +105,8 @@ public class FixBBOXFilterVisitor extends DuplicatingFilterVisitor {
         }
         if (clipped) {
             // the bbox was clipped!
-            FilterFactory2 ff = getFactory(extraData);
-            return ff.bbox(
-                    filter.getExpression1(),
-                    ff.literal(new ReferencedEnvelope(minx, maxx, miny, maxy, crs)));
+            FilterFactory ff = getFactory(extraData);
+            return ff.bbox(filter.getExpression1(), ff.literal(new ReferencedEnvelope(minx, maxx, miny, maxy, crs)));
         } else {
             return super.visit(filter, extraData); // allow super class to make a direct copy
         }

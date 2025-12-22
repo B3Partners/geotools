@@ -19,21 +19,21 @@ package org.geotools.filter.v1_0;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.BinaryComparisonOperator;
+import org.geotools.api.filter.BinaryLogicOperator;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNil;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.temporal.BinaryTemporalOperator;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.BinaryComparisonOperator;
-import org.opengis.filter.BinaryLogicOperator;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Id;
-import org.opengis.filter.Not;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNil;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.temporal.BinaryTemporalOperator;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -148,8 +148,7 @@ public class OGCBinaryLogicOpTypeBinding extends AbstractComplexBinding {
             List<Filter> comparison = new ArrayList<>();
 
             for (Filter filter : operator.getChildren()) {
-                if (!(filter instanceof BinarySpatialOperator
-                                || filter instanceof BinaryTemporalOperator)
+                if (!(filter instanceof BinarySpatialOperator || filter instanceof BinaryTemporalOperator)
                         && (filter instanceof BinaryComparisonOperator
                                 || filter instanceof PropertyIsLike
                                 || filter instanceof PropertyIsNull

@@ -19,6 +19,8 @@ package org.geotools.referencing.wkt;
 import static java.util.Collections.singletonMap;
 
 import java.io.BufferedReader;
+import java.io.Serial;
+import java.text.MessageFormat;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.util.ArrayList;
@@ -31,9 +33,42 @@ import javax.measure.Quantity;
 import javax.measure.Unit;
 import javax.measure.quantity.Angle;
 import javax.measure.quantity.Length;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.IdentifiedObject;
+import org.geotools.api.referencing.NoSuchIdentifierException;
+import org.geotools.api.referencing.crs.CRSFactory;
+import org.geotools.api.referencing.crs.CompoundCRS;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.DerivedCRS;
+import org.geotools.api.referencing.crs.EngineeringCRS;
+import org.geotools.api.referencing.crs.GeocentricCRS;
+import org.geotools.api.referencing.crs.GeographicCRS;
+import org.geotools.api.referencing.crs.ProjectedCRS;
+import org.geotools.api.referencing.crs.VerticalCRS;
+import org.geotools.api.referencing.cs.AxisDirection;
+import org.geotools.api.referencing.cs.CSFactory;
+import org.geotools.api.referencing.cs.CoordinateSystem;
+import org.geotools.api.referencing.cs.CoordinateSystemAxis;
+import org.geotools.api.referencing.cs.EllipsoidalCS;
+import org.geotools.api.referencing.datum.Datum;
+import org.geotools.api.referencing.datum.DatumFactory;
+import org.geotools.api.referencing.datum.Ellipsoid;
+import org.geotools.api.referencing.datum.EngineeringDatum;
+import org.geotools.api.referencing.datum.GeodeticDatum;
+import org.geotools.api.referencing.datum.PrimeMeridian;
+import org.geotools.api.referencing.datum.VerticalDatum;
+import org.geotools.api.referencing.datum.VerticalDatumType;
+import org.geotools.api.referencing.operation.Conversion;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.MathTransformFactory;
+import org.geotools.api.referencing.operation.NoninvertibleTransformException;
+import org.geotools.api.referencing.operation.OperationMethod;
 import org.geotools.measure.Units;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
 import org.geotools.referencing.ReferencingFactoryFinder;
@@ -48,73 +83,38 @@ import org.geotools.referencing.factory.ReferencingFactoryContainer;
 import org.geotools.referencing.factory.epsg.CartesianAuthorityFactory;
 import org.geotools.referencing.operation.DefiningConversion;
 import org.geotools.util.Arguments;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.IdentifiedObject;
-import org.opengis.referencing.NoSuchIdentifierException;
-import org.opengis.referencing.crs.CRSFactory;
-import org.opengis.referencing.crs.CompoundCRS;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.DerivedCRS;
-import org.opengis.referencing.crs.EngineeringCRS;
-import org.opengis.referencing.crs.GeocentricCRS;
-import org.opengis.referencing.crs.GeographicCRS;
-import org.opengis.referencing.crs.ProjectedCRS;
-import org.opengis.referencing.crs.VerticalCRS;
-import org.opengis.referencing.cs.AxisDirection;
-import org.opengis.referencing.cs.CSFactory;
-import org.opengis.referencing.cs.CoordinateSystem;
-import org.opengis.referencing.cs.CoordinateSystemAxis;
-import org.opengis.referencing.cs.EllipsoidalCS;
-import org.opengis.referencing.datum.Datum;
-import org.opengis.referencing.datum.DatumFactory;
-import org.opengis.referencing.datum.Ellipsoid;
-import org.opengis.referencing.datum.EngineeringDatum;
-import org.opengis.referencing.datum.GeodeticDatum;
-import org.opengis.referencing.datum.PrimeMeridian;
-import org.opengis.referencing.datum.VerticalDatum;
-import org.opengis.referencing.datum.VerticalDatumType;
-import org.opengis.referencing.operation.Conversion;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.MathTransformFactory;
-import org.opengis.referencing.operation.NoninvertibleTransformException;
-import org.opengis.referencing.operation.OperationMethod;
 import si.uom.NonSI;
 import si.uom.SI;
 import tech.units.indriya.AbstractUnit;
 
 /**
  * Parser for <A
- * HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html"><cite>Well
- * Known Text</cite> (WKT)</A>. This parser can parse {@linkplain MathTransform math transform}
- * objects as well, which is part of the WKT's {@code FITTED_CS} element.
+ * HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html"><cite>Well Known
+ * Text</cite> (WKT)</A>. This parser can parse {@linkplain MathTransform math transform} objects as well, which is part
+ * of the WKT's {@code FITTED_CS} element.
  *
  * @since 2.0
  * @version $Id$
  * @author Remi Eve
  * @author Martin Desruisseaux (IRD)
- * @see <A
- *     HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html">Well
- *     Know Text specification</A>
+ * @see <A HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html">Well Know
+ *     Text specification</A>
  * @see <A HREF="http://gdal.org/wktproblems.html">OGC WKT Coordinate System Issues</A>
  */
 public class Parser extends MathTransformParser {
     /** For cross-version compatibility. */
+    @Serial
     private static final long serialVersionUID = -144097689843465085L;
 
     /**
-     * {@code true} in order to allows the non-standard Oracle syntax. Oracle put the Bursa-Wolf
-     * parameters straight into the {@code DATUM} elements, without enclosing them in a {@code
-     * TOWGS84} element.
+     * {@code true} in order to allows the non-standard Oracle syntax. Oracle put the Bursa-Wolf parameters straight
+     * into the {@code DATUM} elements, without enclosing them in a {@code TOWGS84} element.
      */
     private static final boolean ALLOW_ORACLE_SYNTAX = true;
 
     /**
-     * The mapping between WKT element name and the object class to be created. Will be created by
-     * {@link #getTypeMap} only when first needed. Keys must be upper case.
+     * The mapping between WKT element name and the object class to be created. Will be created by {@link #getTypeMap}
+     * only when first needed. Keys must be upper case.
      */
     private static Map<String, Class<?>> TYPES;
 
@@ -124,10 +124,7 @@ public class Parser extends MathTransformParser {
     /** The factory to use for creating {@linkplain CoordinateSystem coordinate systems}. */
     protected final CSFactory csFactory;
 
-    /**
-     * The factory to use for creating {@linkplain CoordinateReferenceSystem coordinate reference
-     * systems}.
-     */
+    /** The factory to use for creating {@linkplain CoordinateReferenceSystem coordinate reference systems}. */
     protected final CRSFactory crsFactory;
 
     /** The list of {@linkplain AxisDirection axis directions} from their name. */
@@ -173,12 +170,10 @@ public class Parser extends MathTransformParser {
      *
      * @param symbols The symbols for parsing and formatting numbers.
      * @param datumFactory The factory to use for creating {@linkplain Datum datum}.
-     * @param csFactory The factory to use for creating {@linkplain CoordinateSystem coordinate
+     * @param csFactory The factory to use for creating {@linkplain CoordinateSystem coordinate systems}.
+     * @param crsFactory The factory to use for creating {@linkplain CoordinateReferenceSystem coordinate reference
      *     systems}.
-     * @param crsFactory The factory to use for creating {@linkplain CoordinateReferenceSystem
-     *     coordinate reference systems}.
-     * @param mtFactory The factory to use for creating {@linkplain MathTransform math transform}
-     *     objects.
+     * @param mtFactory The factory to use for creating {@linkplain MathTransform math transform} objects.
      */
     public Parser(
             final Symbols symbols,
@@ -204,8 +199,7 @@ public class Parser extends MathTransformParser {
      * @return The coordinate reference system.
      * @throws ParseException if the string can't be parsed.
      */
-    public CoordinateReferenceSystem parseCoordinateReferenceSystem(final String text)
-            throws ParseException {
+    public CoordinateReferenceSystem parseCoordinateReferenceSystem(final String text) throws ParseException {
         final Element element = getTree(text, new ParsePosition(0));
         final CoordinateReferenceSystem crs = parseCoordinateReferenceSystem(element);
         element.close();
@@ -218,11 +212,10 @@ public class Parser extends MathTransformParser {
      * @return element The next element as a {@link CoordinateReferenceSystem} object.
      * @throws ParseException if the next element can't be parsed.
      */
-    private CoordinateReferenceSystem parseCoordinateReferenceSystem(final Element element)
-            throws ParseException {
+    private CoordinateReferenceSystem parseCoordinateReferenceSystem(final Element element) throws ParseException {
         final Object key = element.peek();
-        if (key instanceof Element) {
-            final String keyword = ((Element) key).keyword.trim().toUpperCase(symbols.locale);
+        if (key instanceof Element element1) {
+            final String keyword = element1.keyword.trim().toUpperCase(symbols.locale);
             CoordinateReferenceSystem r = null;
             try {
                 if ("GEOGCS".equals(keyword)) return r = parseGeoGCS(element);
@@ -237,7 +230,7 @@ public class Parser extends MathTransformParser {
                 assert isValid(r, keyword) : element;
             }
         }
-        throw element.parseFailed(null, Errors.format(ErrorKeys.UNKNOW_TYPE_$1, key));
+        throw element.parseFailed(null, MessageFormat.format(ErrorKeys.UNKNOW_TYPE_$1, key));
     }
 
     /**
@@ -246,14 +239,14 @@ public class Parser extends MathTransformParser {
      * @param element The element to be parsed.
      * @return The object.
      * @throws ParseException if the element can't be parsed.
-     * @todo All sequences of <code>if ("FOO".equals(keyword))</code> in this method and other
-     *     methods of this class and subclasses, could be optimized with a {@code switch} statement.
+     * @todo All sequences of <code>if ("FOO".equals(keyword))</code> in this method and other methods of this class and
+     *     subclasses, could be optimized with a {@code switch} statement.
      */
     @Override
     protected Object parse(final Element element) throws ParseException {
         final Object key = element.peek();
-        if (key instanceof Element) {
-            final String keyword = ((Element) key).keyword.trim().toUpperCase(symbols.locale);
+        if (key instanceof Element element1) {
+            final String keyword = element1.keyword.trim().toUpperCase(symbols.locale);
             Object r = null;
             try {
                 if ("AXIS".equals(keyword)) return r = parseAxis(element, SI.METRE, true);
@@ -262,8 +255,7 @@ public class Parser extends MathTransformParser {
                 if ("SPHEROID".equals(keyword)) return r = parseSpheroid(element);
                 if ("VERT_DATUM".equals(keyword)) return r = parseVertDatum(element);
                 if ("LOCAL_DATUM".equals(keyword)) return r = parseLocalDatum(element);
-                if ("DATUM".equals(keyword))
-                    return r = parseDatum(element, DefaultPrimeMeridian.GREENWICH);
+                if ("DATUM".equals(keyword)) return r = parseDatum(element, DefaultPrimeMeridian.GREENWICH);
                 r = parseMathTransform(element, false);
                 if (r != null) {
                     return r;
@@ -277,8 +269,8 @@ public class Parser extends MathTransformParser {
     }
 
     /**
-     * Checks if the parsed object is of the expected type. This is also a way to check the
-     * consistency of the {@link #TYPES} map.
+     * Checks if the parsed object is of the expected type. This is also a way to check the consistency of the
+     * {@link #TYPES} map.
      */
     private static boolean isValid(final Object parsed, final String keyword) {
         if (parsed == null) {
@@ -290,21 +282,20 @@ public class Parser extends MathTransformParser {
     }
 
     /**
-     * Returns the properties to be given to the parsed object. This method is invoked automatically
-     * by the parser for the {@linkplain Element#isRoot root element} only. This method expect on
-     * input the properties parsed from the {@code AUTHORITY} element, and returns on output the
-     * properties to give to the object to be created. The default implementation returns the {@code
-     * properties} map unchanged. Subclasses may override this method in order to add or change
-     * properties.
+     * Returns the properties to be given to the parsed object. This method is invoked automatically by the parser for
+     * the {@linkplain Element#isRoot root element} only. This method expect on input the properties parsed from the
+     * {@code AUTHORITY} element, and returns on output the properties to give to the object to be created. The default
+     * implementation returns the {@code properties} map unchanged. Subclasses may override this method in order to add
+     * or change properties.
      *
-     * <p><strong>Example:</strong> if a subclass want to add automatically an authority code when
-     * no {@code AUTHORITY} element was explicitly set in the WKT, then it may test for the {@link
-     * IdentifiedObject#IDENTIFIERS_KEY} key and add automatically an entry if this key was missing.
+     * <p><strong>Example:</strong> if a subclass want to add automatically an authority code when no {@code AUTHORITY}
+     * element was explicitly set in the WKT, then it may test for the {@link IdentifiedObject#IDENTIFIERS_KEY} key and
+     * add automatically an entry if this key was missing.
      *
-     * @param properties The properties parsed from the WKT file. Entries can be added, removed or
-     *     modified directly in this map.
-     * @return The properties to be given to the parsed object. This is usually {@code properties}
-     *     (maybe after modifications), but could also be a new map.
+     * @param properties The properties parsed from the WKT file. Entries can be added, removed or modified directly in
+     *     this map.
+     * @return The properties to be given to the parsed object. This is usually {@code properties} (maybe after
+     *     modifications), but could also be a new map.
      * @since 2.3
      */
     protected Map<String, Object> alterProperties(final Map<String, Object> properties) {
@@ -312,8 +303,7 @@ public class Parser extends MathTransformParser {
     }
 
     /**
-     * Parses an <strong>optional</strong> "AUTHORITY" element. This element has the following
-     * pattern:
+     * Parses an <strong>optional</strong> "AUTHORITY" element. This element has the following pattern:
      *
      * <blockquote>
      *
@@ -338,8 +328,7 @@ public class Parser extends MathTransformParser {
      * @return A properties map with the parent name and the optional autority code.
      * @throws ParseException if the "AUTHORITY" can't be parsed.
      */
-    private Map<String, Object> parseAuthority(final Element parent, final String name)
-            throws ParseException {
+    private Map<String, Object> parseAuthority(final Element parent, final String name) throws ParseException {
         final boolean isRoot = parent.isRoot();
         final Element element = parent.pullOptionalElement("AUTHORITY");
         Map<String, Object> properties;
@@ -385,17 +374,16 @@ public class Parser extends MathTransformParser {
      * @param unit The contextual unit. Usually {@link SI#METRE} or {@link SI#RADIAN}.
      * @return The "UNIT" element as an {@link Unit} object.
      * @throws ParseException if the "UNIT" can't be parsed.
-     * @todo Authority code is currently ignored. We may consider to create a subclass of {@link
-     *     Unit} which implements {@link IdentifiedObject} in a future version.
+     * @todo Authority code is currently ignored. We may consider to create a subclass of {@link Unit} which implements
+     *     {@link IdentifiedObject} in a future version.
      */
-    private <T extends Quantity<T>> Unit<T> parseUnit(final Element parent, final Unit<T> unit)
-            throws ParseException {
+    private <T extends Quantity<T>> Unit<T> parseUnit(final Element parent, final Unit<T> unit) throws ParseException {
         final Element element = parent.pullElement("UNIT");
         final String name = element.pullString("name");
         final double factor = element.pullDouble("factor");
         parseAuthority(element, name);
         element.close();
-        Unit<T> finalUnit = (factor != 1) ? unit.multiply(factor) : unit;
+        Unit<T> finalUnit = factor != 1 ? unit.multiply(factor) : unit;
         return Units.autoCorrect(finalUnit);
     }
 
@@ -410,20 +398,18 @@ public class Parser extends MathTransformParser {
      *
      * </blockquote>
      *
-     * Note: there is no AUTHORITY element for AXIS element in OGC specification. However, we accept
-     * it anyway in order to make the parser more tolerant to non-100% compliant WKT. Note that AXIS
-     * is really the only element without such AUTHORITY clause and the EPSG database provides
-     * authority code for all axis.
+     * Note: there is no AUTHORITY element for AXIS element in OGC specification. However, we accept it anyway in order
+     * to make the parser more tolerant to non-100% compliant WKT. Note that AXIS is really the only element without
+     * such AUTHORITY clause and the EPSG database provides authority code for all axis.
      *
      * @param parent The parent element.
      * @param unit The contextual unit. Usually {@link NonSI#DEGREE_ANGLE} or {@link SI#METRE}.
      * @param required {@code true} if the axis is mandatory, or {@code false} if it is optional.
-     * @return The "AXIS" element as a {@link CoordinateSystemAxis} object, or {@code null} if the
-     *     axis was not required and there is no axis object.
+     * @return The "AXIS" element as a {@link CoordinateSystemAxis} object, or {@code null} if the axis was not required
+     *     and there is no axis object.
      * @throws ParseException if the "AXIS" element can't be parsed.
      */
-    private CoordinateSystemAxis parseAxis(
-            final Element parent, final Unit<?> unit, final boolean required)
+    private CoordinateSystemAxis parseAxis(final Element parent, final Unit<?> unit, final boolean required)
             throws ParseException {
         final Element element;
         if (required) {
@@ -447,7 +433,7 @@ public class Parser extends MathTransformParser {
         element.close();
 
         if (direction == null) {
-            throw element.parseFailed(null, Errors.format(ErrorKeys.UNKNOW_TYPE_$1, orientation));
+            throw element.parseFailed(null, MessageFormat.format(ErrorKeys.UNKNOW_TYPE_$1, orientation));
         }
         try {
             return createAxis(properties, name, direction, unit);
@@ -457,25 +443,21 @@ public class Parser extends MathTransformParser {
     }
 
     /**
-     * Creates an axis. If the name matches one of pre-defined axis, the pre-defined one will be
-     * returned. This replacement help to get more success when comparing a CS built from WKT
-     * against a CS built from one of Geotools's constants.
+     * Creates an axis. If the name matches one of pre-defined axis, the pre-defined one will be returned. This
+     * replacement help to get more success when comparing a CS built from WKT against a CS built from one of Geotools's
+     * constants.
      *
-     * @param properties Name and other properties to give to the new object. If {@code null}, the
-     *     abbreviation will be used as the axis name.
+     * @param properties Name and other properties to give to the new object. If {@code null}, the abbreviation will be
+     *     used as the axis name.
      * @param abbreviation The coordinate axis abbreviation.
      * @param direction The axis direction.
      * @param unit The coordinate axis unit.
      * @throws FactoryException if the axis can't be created.
      */
     private CoordinateSystemAxis createAxis(
-            Map<String, ?> properties,
-            final String abbreviation,
-            final AxisDirection direction,
-            final Unit<?> unit)
+            Map<String, ?> properties, final String abbreviation, final AxisDirection direction, final Unit<?> unit)
             throws FactoryException {
-        final CoordinateSystemAxis candidate =
-                DefaultCoordinateSystemAxis.getPredefined(abbreviation, direction);
+        final CoordinateSystemAxis candidate = DefaultCoordinateSystemAxis.getPredefined(abbreviation, direction);
         if (candidate != null && unit.equals(candidate.getUnit())) {
             return candidate;
         }
@@ -501,8 +483,7 @@ public class Parser extends MathTransformParser {
      * @return The "PRIMEM" element as a {@link PrimeMeridian} object.
      * @throws ParseException if the "PRIMEM" element can't be parsed.
      */
-    private PrimeMeridian parsePrimem(final Element parent, final Unit<Angle> angularUnit)
-            throws ParseException {
+    private PrimeMeridian parsePrimem(final Element parent, final Unit<Angle> angularUnit) throws ParseException {
         final Element element = parent.pullElement("PRIMEM");
         final String name = element.pullString("name");
         final double longitude = element.pullDouble("longitude");
@@ -516,8 +497,7 @@ public class Parser extends MathTransformParser {
     }
 
     /**
-     * Parses an <strong>optional</strong> "TOWGS84" element. This element has the following
-     * pattern:
+     * Parses an <strong>optional</strong> "TOWGS84" element. This element has the following pattern:
      *
      * <blockquote>
      *
@@ -528,8 +508,8 @@ public class Parser extends MathTransformParser {
      * </blockquote>
      *
      * @param parent The parent element.
-     * @return The "TOWGS84" element as a {@link BursaWolfParameters} object, or {@code null} if no
-     *     "TOWGS84" has been found.
+     * @return The "TOWGS84" element as a {@link BursaWolfParameters} object, or {@code null} if no "TOWGS84" has been
+     *     found.
      * @throws ParseException if the "TOWGS84" can't be parsed.
      */
     private static BursaWolfParameters parseToWGS84(final Element parent) throws ParseException {
@@ -578,8 +558,7 @@ public class Parser extends MathTransformParser {
             inverseFlattening = Double.POSITIVE_INFINITY;
         }
         try {
-            return datumFactory.createFlattenedSphere(
-                    properties, semiMajorAxis, inverseFlattening, SI.METRE);
+            return datumFactory.createFlattenedSphere(properties, semiMajorAxis, inverseFlattening, SI.METRE);
         } catch (FactoryException exception) {
             throw element.parseFailed(exception, null);
         }
@@ -654,9 +633,8 @@ public class Parser extends MathTransformParser {
                 parameter.setValue(paramValue);
             }
         } catch (ParameterNotFoundException exception) {
-            throw param.parseFailed(
-                    exception,
-                    Errors.format(ErrorKeys.UNEXPECTED_PARAMETER_$1, exception.getParameterName()));
+            final Object arg0 = exception.getParameterName();
+            throw param.parseFailed(exception, MessageFormat.format(ErrorKeys.UNEXPECTED_PARAMETER_$1, arg0));
         }
         return parameters;
     }
@@ -677,14 +655,13 @@ public class Parser extends MathTransformParser {
      * @return The "DATUM" element as a {@link GeodeticDatum} object.
      * @throws ParseException if the "DATUM" element can't be parsed.
      */
-    private GeodeticDatum parseDatum(final Element parent, final PrimeMeridian meridian)
-            throws ParseException {
+    private GeodeticDatum parseDatum(final Element parent, final PrimeMeridian meridian) throws ParseException {
         Element element = parent.pullElement("DATUM");
         String name = element.pullString("name");
         Ellipsoid ellipsoid = parseSpheroid(element);
         BursaWolfParameters toWGS84 = parseToWGS84(element); // Optional; may be null.
         Map<String, Object> properties = parseAuthority(element, name);
-        if (ALLOW_ORACLE_SYNTAX && (toWGS84 == null) && (element.peek() instanceof Number)) {
+        if (ALLOW_ORACLE_SYNTAX && toWGS84 == null && element.peek() instanceof Number) {
             toWGS84 = new BursaWolfParameters(DefaultGeodeticDatum.WGS84);
             toWGS84.dx = element.pullDouble("dx");
             toWGS84.dy = element.pullDouble("dy");
@@ -729,10 +706,9 @@ public class Parser extends MathTransformParser {
         final int datum = element.pullInteger("datum");
         final Map<String, ?> properties = parseAuthority(element, name);
         element.close();
-        final VerticalDatumType type =
-                DefaultVerticalDatum.getVerticalDatumTypeFromLegacyCode(datum);
+        final VerticalDatumType type = DefaultVerticalDatum.getVerticalDatumTypeFromLegacyCode(datum);
         if (type == null) {
-            throw element.parseFailed(null, Errors.format(ErrorKeys.UNKNOW_TYPE_$1, datum));
+            throw element.parseFailed(null, MessageFormat.format(ErrorKeys.UNKNOW_TYPE_$1, datum));
         }
         try {
             return datumFactory.createVerticalDatum(properties, type);
@@ -784,9 +760,8 @@ public class Parser extends MathTransformParser {
      * @param parent The parent element.
      * @return The "LOCAL_CS" element as an {@link EngineeringCRS} object.
      * @throws ParseException if the "LOCAL_CS" element can't be parsed.
-     * @todo The coordinate system used is always a Geotools implementation, since we don't know
-     *     which method to invokes in the {@link CSFactory} (is it a cartesian coordinate system? a
-     *     spherical one? etc.).
+     * @todo The coordinate system used is always a Geotools implementation, since we don't know which method to invokes
+     *     in the {@link CSFactory} (is it a cartesian coordinate system? a spherical one? etc.).
      */
     static final String WILDCARD_CODE = "EPSG:" + CartesianAuthorityFactory.GENERIC_2D_CODE;
 
@@ -809,10 +784,7 @@ public class Parser extends MathTransformParser {
                 && properties.get("identifiers").toString().equalsIgnoreCase(WILDCARD_CODE)) {
             return CartesianAuthorityFactory.GENERIC_2D;
         } else {
-            cs =
-                    new AbstractCS(
-                            singletonMap("name", name),
-                            list.toArray(new CoordinateSystemAxis[list.size()]));
+            cs = new AbstractCS(singletonMap("name", name), list.toArray(new CoordinateSystemAxis[list.size()]));
         }
         try {
             return crsFactory.createEngineeringCRS(properties, datum, cs);
@@ -858,17 +830,14 @@ public class Parser extends MathTransformParser {
             }
             element.close();
             return crsFactory.createGeocentricCRS(
-                    properties,
-                    datum,
-                    csFactory.createCartesianCS(properties, axis0, axis1, axis2));
+                    properties, datum, csFactory.createCartesianCS(properties, axis0, axis1, axis2));
         } catch (FactoryException exception) {
             throw element.parseFailed(exception, null);
         }
     }
 
     /**
-     * Parses an <strong>optional</strong> "VERT_CS" element. This element has the following
-     * pattern:
+     * Parses an <strong>optional</strong> "VERT_CS" element. This element has the following pattern:
      *
      * <blockquote>
      *
@@ -898,9 +867,7 @@ public class Parser extends MathTransformParser {
                 axis = createAxis(null, "Z", AxisDirection.UP, linearUnit);
             }
             return crsFactory.createVerticalCRS(
-                    properties,
-                    datum,
-                    csFactory.createVerticalCS(singletonMap("name", name), axis));
+                    properties, datum, csFactory.createVerticalCS(singletonMap("name", name), axis));
         } catch (FactoryException exception) {
             throw element.parseFailed(exception, null);
         }
@@ -980,8 +947,7 @@ public class Parser extends MathTransformParser {
         Unit<Length> linearUnit = parseUnit(element, SI.METRE);
         Unit<Angle> angularUnit =
                 geoCRS.getCoordinateSystem().getAxis(0).getUnit().asType(Angle.class);
-        ParameterValueGroup projection =
-                parseProjection(element, ellipsoid, linearUnit, angularUnit);
+        ParameterValueGroup projection = parseProjection(element, ellipsoid, linearUnit, angularUnit);
         CoordinateSystemAxis axis0 = parseAxis(element, linearUnit, false);
         CoordinateSystemAxis axis1;
         try {
@@ -992,15 +958,11 @@ public class Parser extends MathTransformParser {
                 axis0 = createAxis(null, "X", AxisDirection.EAST, linearUnit);
                 axis1 = createAxis(null, "Y", AxisDirection.NORTH, linearUnit);
             }
-            element.pullOptionalElement(
-                    "EXTENSION"); // application specific extensions can be ignored
+            element.pullOptionalElement("EXTENSION"); // application specific extensions can be ignored
             element.close();
             final Conversion conversion = new DefiningConversion(name, projection);
             return crsFactory.createProjectedCRS(
-                    properties,
-                    geoCRS,
-                    conversion,
-                    csFactory.createCartesianCS(properties, axis0, axis1));
+                    properties, geoCRS, conversion, csFactory.createCartesianCS(properties, axis0, axis1));
         } catch (FactoryException exception) {
             throw element.parseFailed(exception, null);
         }
@@ -1074,18 +1036,14 @@ public class Parser extends MathTransformParser {
                 final String number = String.valueOf(i);
                 buffer.setLength(start);
                 buffer.append(number);
-                axis[i] =
-                        csFactory.createCoordinateSystemAxis(
-                                singletonMap(IdentifiedObject.NAME_KEY, buffer.toString()),
-                                number,
-                                AxisDirection.OTHER,
-                                AbstractUnit.ONE);
+                axis[i] = csFactory.createCoordinateSystemAxis(
+                        singletonMap(IdentifiedObject.NAME_KEY, buffer.toString()),
+                        number,
+                        AxisDirection.OTHER,
+                        AbstractUnit.ONE);
             }
-            final Conversion conversion =
-                    new DefiningConversion(
-                            singletonMap(IdentifiedObject.NAME_KEY, method.getName().getCode()),
-                            method,
-                            toBase.inverse());
+            final Conversion conversion = new DefiningConversion(
+                    singletonMap(IdentifiedObject.NAME_KEY, method.getName().getCode()), method, toBase.inverse());
             final CoordinateSystem cs = new AbstractCS(properties, axis);
             return crsFactory.createDerivedCRS(properties, base, conversion, cs);
         } catch (FactoryException | NoninvertibleTransformException exception) {
@@ -1106,14 +1064,13 @@ public class Parser extends MathTransformParser {
         }
         element = element.trim().toUpperCase(Locale.US);
         final Class<?> type = getTypeMap().get(element);
-        assert type == null || type.equals(MathTransform.class) || element.equals(getNameOf(type))
-                : type;
+        assert type == null || type.equals(MathTransform.class) || element.equals(getNameOf(type)) : type;
         return type;
     }
 
     /**
-     * Returns the WKT name of the specified object type. For example this method returns "{@code
-     * PROJCS}" for type <code>{@linkplain ProjectedCRS}.class</code>.
+     * Returns the WKT name of the specified object type. For example this method returns "{@code PROJCS}" for type
+     * <code>{@linkplain ProjectedCRS}.class</code>.
      *
      * @param type The GeoAPI class of the specified element.
      * @return The WKT element name, or {@code null} if unknow.
@@ -1160,10 +1117,9 @@ public class Parser extends MathTransformParser {
     }
 
     /**
-     * Read WKT strings from the {@linkplain System#in standard input stream} and reformat them to
-     * the {@linkplain System#out standard output stream}. The input is read until it reach the
-     * end-of-file ({@code [Ctrl-Z]} if reading from the keyboard), or until an unparsable WKT has
-     * been hit. Optional arguments are:
+     * Read WKT strings from the {@linkplain System#in standard input stream} and reformat them to the
+     * {@linkplain System#out standard output stream}. The input is read until it reach the end-of-file
+     * ({@code [Ctrl-Z]} if reading from the keyboard), or until an unparsable WKT has been hit. Optional arguments are:
      *
      * <TABLE CELLPADDING='0' CELLSPACING='0'>
      *   <TR><TD NOWRAP><CODE>-authority</CODE> <VAR>&lt;name&gt;</VAR></TD>

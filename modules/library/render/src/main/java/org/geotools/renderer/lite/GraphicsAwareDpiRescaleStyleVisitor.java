@@ -16,34 +16,32 @@
  */
 package org.geotools.renderer.lite;
 
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.renderer.style.GraphicStyle2D;
 import org.geotools.renderer.style.IconStyle2D;
 import org.geotools.renderer.style.MarkStyle2D;
 import org.geotools.renderer.style.SLDStyleFactory;
 import org.geotools.renderer.style.Style2D;
-import org.geotools.styling.Graphic;
-import org.geotools.styling.PointSymbolizer;
-import org.geotools.styling.StyleFactory;
 import org.geotools.styling.visitor.DpiRescaleStyleVisitor;
 import org.geotools.util.Range;
-import org.opengis.filter.expression.Expression;
 
 /**
- * This class extends {@link DpiRescaleStyleVisitor} to add support for rescaling external graphics
- * and marks whose size has not been explicitly set.
+ * This class extends {@link DpiRescaleStyleVisitor} to add support for rescaling external graphics and marks whose size
+ * has not been explicitly set.
  *
- * <p>Works properly as long as the expression in an eventual dynamic symbolizer are not setting the
- * size of the symbol, as we don't have the feature here, and there is no way to know which bit of
- * the url will setup the size
+ * <p>Works properly as long as the expression in an eventual dynamic symbolizer are not setting the size of the symbol,
+ * as we don't have the feature here, and there is no way to know which bit of the url will setup the size
  *
  * @author Andrea Aime - GeoSolutions
  */
 public class GraphicsAwareDpiRescaleStyleVisitor extends DpiRescaleStyleVisitor {
 
     static final StyleFactory sf = CommonFactoryFinder.getStyleFactory();
-    static final Range<Double> INFINITE_RANGE =
-            new Range<>(Double.class, 0d, Double.POSITIVE_INFINITY);
+    static final Range<Double> INFINITE_RANGE = new Range<>(Double.class, 0d, Double.POSITIVE_INFINITY);
     SLDStyleFactory ssf = new SLDStyleFactory();
 
     public GraphicsAwareDpiRescaleStyleVisitor(double scale) {
@@ -56,14 +54,11 @@ public class GraphicsAwareDpiRescaleStyleVisitor extends DpiRescaleStyleVisitor 
         if (size == null || size == Expression.NIL) {
             PointSymbolizer symbolizer = sf.createPointSymbolizer(gr, null);
             Style2D style = ssf.createStyle(null, symbolizer, INFINITE_RANGE);
-            if (style instanceof IconStyle2D) {
-                IconStyle2D is = (IconStyle2D) style;
+            if (style instanceof IconStyle2D is) {
                 size = ff.literal(is.getIcon().getIconHeight());
-            } else if (style instanceof GraphicStyle2D) {
-                GraphicStyle2D gs = (GraphicStyle2D) style;
+            } else if (style instanceof GraphicStyle2D gs) {
                 size = ff.literal(gs.getImage().getHeight());
-            } else if (style instanceof MarkStyle2D) {
-                MarkStyle2D ms = (MarkStyle2D) style;
+            } else if (style instanceof MarkStyle2D ms) {
                 size = ff.literal(ms.getSize());
             }
         }

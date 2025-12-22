@@ -25,6 +25,23 @@ import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.List;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.DistanceBufferOperator;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
 import org.geotools.data.jdbc.FilterToSQL;
 import org.geotools.filter.FilterCapabilities;
 import org.geotools.filter.function.FilterFunction_strConcat;
@@ -48,27 +65,9 @@ import org.geotools.filter.function.math.FilterFunction_ceil;
 import org.geotools.filter.function.math.FilterFunction_exp;
 import org.geotools.filter.function.math.FilterFunction_floor;
 import org.geotools.jdbc.SQLDialect;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.DistanceBufferOperator;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
 
 /**
- * jdbc-h2gis is an extension to connect H2GIS a spatial library that brings spatial support to the
- * H2 Java database.
+ * jdbc-h2gis is an extension to connect H2GIS a spatial library that brings spatial support to the H2 Java database.
  *
  * <p>H2GIS filter wrapper for H2GIS database.
  *
@@ -88,8 +87,7 @@ public class H2GISFilterToSQLHelper {
      * @param encodeFunctions
      * @return
      */
-    public static FilterCapabilities createFilterCapabilities(
-            boolean encodeFunctions, FilterCapabilities superCaps) {
+    public static FilterCapabilities createFilterCapabilities(boolean encodeFunctions, FilterCapabilities superCaps) {
         FilterCapabilities caps = superCaps;
         caps.addAll(SQLDialect.BASE_DBMS_CAPABILITIES);
         // adding the spatial filters support
@@ -141,15 +139,10 @@ public class H2GISFilterToSQLHelper {
      * @return
      */
     protected Object visitBinarySpatialOperator(
-            BinarySpatialOperator filter,
-            PropertyName property,
-            Literal geometry,
-            boolean swapped,
-            Object extraData) {
+            BinarySpatialOperator filter, PropertyName property, Literal geometry, boolean swapped, Object extraData) {
         try {
-            if (filter instanceof DistanceBufferOperator) {
-                visitDistanceSpatialOperator(
-                        (DistanceBufferOperator) filter, property, geometry, swapped, extraData);
+            if (filter instanceof DistanceBufferOperator operator) {
+                visitDistanceSpatialOperator(operator, property, geometry, swapped, extraData);
             } else {
                 visitComparisonSpatialOperator(filter, property, geometry, swapped, extraData);
             }
@@ -185,13 +178,9 @@ public class H2GISFilterToSQLHelper {
      * @throws IOException
      */
     private void visitDistanceSpatialOperator(
-            DistanceBufferOperator filter,
-            PropertyName property,
-            Literal geometry,
-            boolean swapped,
-            Object extraData)
+            DistanceBufferOperator filter, PropertyName property, Literal geometry, boolean swapped, Object extraData)
             throws IOException {
-        if ((filter instanceof DWithin && !swapped) || (filter instanceof Beyond && swapped)) {
+        if (filter instanceof DWithin && !swapped || filter instanceof Beyond && swapped) {
             out.write("ST_DWithin(");
             property.accept(filterToSQL, extraData);
             out.write(",");
@@ -200,7 +189,7 @@ public class H2GISFilterToSQLHelper {
             out.write(String.valueOf(filter.getDistance()));
             out.write(")");
         }
-        if ((filter instanceof DWithin && swapped) || (filter instanceof Beyond && !swapped)) {
+        if (filter instanceof DWithin && swapped || filter instanceof Beyond && !swapped) {
             out.write("ST_Distance(");
             property.accept(filterToSQL, extraData);
             out.write(",");
@@ -219,11 +208,7 @@ public class H2GISFilterToSQLHelper {
      * @throws IOException
      */
     private void visitComparisonSpatialOperator(
-            BinarySpatialOperator filter,
-            PropertyName property,
-            Literal geometry,
-            boolean swapped,
-            Object extraData)
+            BinarySpatialOperator filter, PropertyName property, Literal geometry, boolean swapped, Object extraData)
             throws IOException {
         // add && filter if possible
         if (!(filter instanceof Disjoint)) {
@@ -236,8 +221,7 @@ public class H2GISFilterToSQLHelper {
             }
             out.write(" AND ");
         }
-        visitBinarySpatialOperator(
-                filter, (Expression) property, (Expression) geometry, swapped, extraData);
+        visitBinarySpatialOperator(filter, (Expression) property, (Expression) geometry, swapped, extraData);
     }
 
     /**
@@ -249,11 +233,7 @@ public class H2GISFilterToSQLHelper {
      * @throws IOException
      */
     private void visitBinarySpatialOperator(
-            BinarySpatialOperator filter,
-            Expression e1,
-            Expression e2,
-            boolean swapped,
-            Object extraData)
+            BinarySpatialOperator filter, Expression e1, Expression e2, boolean swapped, Object extraData)
             throws IOException {
         String closingParenthesis = ")";
         if (filter instanceof Equals) {
@@ -419,12 +399,11 @@ public class H2GISFilterToSQLHelper {
         final List<Expression> params = function.getParameters();
         if (params == null || params.size() <= idx) {
             if (mandatory) {
-                throw new IllegalArgumentException(
-                        "Missing parameter number "
-                                + (idx + 1)
-                                + "for function "
-                                + function.getName()
-                                + ", cannot encode in SQL");
+                throw new IllegalArgumentException("Missing parameter number "
+                        + (idx + 1)
+                        + "for function "
+                        + function.getName()
+                        + ", cannot encode in SQL");
             }
         }
         return params.get(idx);

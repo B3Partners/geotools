@@ -25,52 +25,48 @@ import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.text.Text;
 import org.geotools.util.Converters;
 import org.geotools.util.KVP;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
 
 /**
- * This is an implemenation of the Interpolate function as defined by OGC Symbology Encoding (SE)
- * 1.1 specification.
+ * This is an implemenation of the Interpolate function as defined by OGC Symbology Encoding (SE) 1.1 specification.
  *
- * <p>The first parameter should be either the name of a numeric feature property or, if this
- * function is being used as a raster colormap, the String "RasterData" (case-insensitive).
+ * <p>The first parameter should be either the name of a numeric feature property or, if this function is being used as
+ * a raster colormap, the String "RasterData" (case-insensitive).
  *
- * <p>Following this there should be a sequence of interpolation points, each of which is described
- * by two parameters: the first a datum and the second a return value. In the SE speicification
- * these parameters are expected to be Literals but in this implementation more general Expressions
- * are also supported.
+ * <p>Following this there should be a sequence of interpolation points, each of which is described by two parameters:
+ * the first a datum and the second a return value. In the SE speicification these parameters are expected to be
+ * Literals but in this implementation more general Expressions are also supported.
  *
- * <p>Two optional parameters can be provided following the interpolation points: A "method"
- * parameter which can take the values "numeric" or "color" and a "mode" parameter which can take
- * the values "linear", "cosine" or "cubic" (Note: it would make more sense if these terms were
- * reversed but we are adhering to their use as published in the OGC specification).
+ * <p>Two optional parameters can be provided following the interpolation points: A "method" parameter which can take
+ * the values "numeric" or "color" and a "mode" parameter which can take the values "linear", "cosine" or "cubic" (Note:
+ * it would make more sense if these terms were reversed but we are adhering to their use as published in the OGC
+ * specification).
  *
  * <p><b>Number of points and interpolation modes</b>
  *
  * <ul>
- *   <li>Linear and cosine interpolation each require at least two interpolation points to be
- *       supplied.
- *   <li>Cubic interpolation normally requires at least four points with at least two points either
- *       side of the value being interpolated. In this function, deal generously with values that
- *       lie in the first or last interpolation segment by adding a duplicate of the first or last
- *       point as an extra point. This means that it is allowed (though not necessarily sensible) to
- *       use cubic interpolation with only three points.
- *   <li>If only two points are supplied but cubic interpolation is specified, the function will
- *       fall back to linear interpolation.
- *   <li>For all interpolation modes, incoming values outside the range of the interpolation points
- *       will be mapped to the value of the closest point (min or max).
- *   <li>The function will accept a single interpolation point, but all incoming values will simply
- *       be mapped to the value of that point regardless of the type of interpolation requested.
+ *   <li>Linear and cosine interpolation each require at least two interpolation points to be supplied.
+ *   <li>Cubic interpolation normally requires at least four points with at least two points either side of the value
+ *       being interpolated. In this function, deal generously with values that lie in the first or last interpolation
+ *       segment by adding a duplicate of the first or last point as an extra point. This means that it is allowed
+ *       (though not necessarily sensible) to use cubic interpolation with only three points.
+ *   <li>If only two points are supplied but cubic interpolation is specified, the function will fall back to linear
+ *       interpolation.
+ *   <li>For all interpolation modes, incoming values outside the range of the interpolation points will be mapped to
+ *       the value of the closest point (min or max).
+ *   <li>The function will accept a single interpolation point, but all incoming values will simply be mapped to the
+ *       value of that point regardless of the type of interpolation requested.
  *   <li>If no interpolation points are supplied, an {@code Exception} is thrown.
  *
  * @author Michael Bedward
@@ -81,7 +77,7 @@ public class InterpolateFunction implements Function {
 
     private static final Logger LOGGER = Logger.getLogger(InterpolateFunction.class.getName());
 
-    private static final FilterFactory2 ff2 = CommonFactoryFinder.getFilterFactory2(null);
+    private static final FilterFactory ff2 = CommonFactoryFinder.getFilterFactory(null);
     private static final double EPS = 1.0e-8;
 
     /** Use as a literal value to indicate interpolation mode */
@@ -112,12 +108,12 @@ public class InterpolateFunction implements Function {
         LINEAR,
         COSINE,
         CUBIC
-    };
+    }
 
     private static enum Method {
         NUMERIC,
         COLOR
-    };
+    }
 
     private Mode mode;
     private boolean modeSpecified;
@@ -222,10 +218,7 @@ public class InterpolateFunction implements Function {
 
     protected volatile List<InterpPoint> interpPoints;
 
-    /**
-     * Use as a PropertyName when defining a color map. The "Raterdata" is expected to apply to only
-     * a single band;
-     */
+    /** Use as a PropertyName when defining a color map. The "Raterdata" is expected to apply to only a single band; */
     public static final String RASTER_DATA = "Rasterdata";
 
     private final List<Expression> parameters;
@@ -237,33 +230,26 @@ public class InterpolateFunction implements Function {
     static {
         Parameter<Object> lookup = new Parameter<>("lookup", Object.class, 1, 1);
         Parameter<Object> table = new Parameter<>("data value pairs", Object.class, 4, -1);
-        Parameter<String> mode =
-                new Parameter<>(
-                        "mode",
-                        String.class,
-                        Text.text("mode"),
-                        Text.text("linear, cosine or cubic"),
-                        true,
-                        1,
-                        1,
-                        MODE_LINEAR,
-                        new KVP(
-                                Parameter.OPTIONS,
-                                Arrays.asList(
-                                        new String[] {MODE_LINEAR, MODE_COSINE, MODE_CUBIC})));
-        Parameter<String> method =
-                new Parameter<>(
-                        "method",
-                        String.class,
-                        Text.text("method"),
-                        Text.text("numeric or color"),
-                        false,
-                        0,
-                        1,
-                        METHOD_NUMERIC,
-                        new KVP(
-                                Parameter.OPTIONS,
-                                Arrays.asList(new String[] {METHOD_NUMERIC, METHOD_COLOR})));
+        Parameter<String> mode = new Parameter<>(
+                "mode",
+                String.class,
+                Text.text("mode"),
+                Text.text("linear, cosine or cubic"),
+                true,
+                1,
+                1,
+                MODE_LINEAR,
+                new KVP(Parameter.OPTIONS, Arrays.asList(new String[] {MODE_LINEAR, MODE_COSINE, MODE_CUBIC})));
+        Parameter<String> method = new Parameter<>(
+                "method",
+                String.class,
+                Text.text("method"),
+                Text.text("numeric or color"),
+                false,
+                0,
+                1,
+                METHOD_NUMERIC,
+                new KVP(Parameter.OPTIONS, Arrays.asList(new String[] {METHOD_NUMERIC, METHOD_COLOR})));
         NAME = new FunctionNameImpl("Interpolate", lookup, table, mode, method);
     }
 
@@ -301,33 +287,24 @@ public class InterpolateFunction implements Function {
         return evaluate(object, Object.class);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>When {@code context} is unspecified (i.e. {@code null} or {@code Object.class}), it'll be derived from the
+     * {@code method} parameter, as {@code java.awt.Color.class} when {@code method == COLOR}, and as
+     * {@code java.lang.Double} when {@code method == NUMERIC}.
+     *
+     * @throws IllegalArgumentException if {@code context == java.awt.Color.class} and {@code method != COLOR}
+     */
     @Override
     public <T> T evaluate(Object object, Class<T> context) {
-        // initialize the lookup data structures only once and in a thread safe way please
-        if (interpPoints == null) {
-            synchronized (this) {
-                if (interpPoints == null) {
-                    initialize();
-                }
-            }
-        }
+        threadSafeInitialize();
+        context = sanitizeContext(context);
+        validateArguments(context);
 
-        if (method == Method.NUMERIC && Color.class.isAssignableFrom(context)) {
-            throw new IllegalArgumentException(
-                    "Trying to evaluate the function as Color but the method parameter is set as NUMERIC");
-        }
-
-        if (method == Method.COLOR && !Color.class.isAssignableFrom(context)) {
-            throw new IllegalArgumentException(
-                    "Trying to evaluate the function as "
-                            + context.getSimpleName()
-                            + " but the method parameter is set as COLOR");
-        }
-
-        /**
-         * Lookup value should be either the name of a feature property which can be evaluated to a
-         * Double or the string "RasterData" (case-insensitive) indicating use of this function in a
-         * raster colormap.
+        /*
+         * Lookup value should be either the name of a feature property which can be evaluated to a Double or the string
+         * "RasterData" (case-insensitive) indicating use of this function in a raster colormap.
          */
         final Expression lookup = parameters.get(0);
         Double lookupValue = null;
@@ -335,17 +312,18 @@ public class InterpolateFunction implements Function {
         /*
          * TODO: is this the correct way to handle the rasterdata option ?
          */
-        String lookupString = lookup.evaluate(object, String.class);
-        if (lookupString == null) {
-            return null;
-        }
-        if (lookupString.equalsIgnoreCase(RASTER_DATA)) {
+        // This should be safe. Rationale: raster mode assumes the lookup expression evaluates to
+        // Rasterdata, and then the input object is considered to be a number. While the lookup
+        // could dynamically evaluate to "Rasterdata" in a non-raster context (feature input),
+        // the input object would not be a number and the following cast would fail.
+        if (lookup instanceof Literal && RASTER_DATA.equalsIgnoreCase(lookup.evaluate(object, String.class))) {
             lookupValue = ((Number) object).doubleValue();
         } else {
-            lookupValue = Double.valueOf(lookupString);
+            lookupValue = lookup.evaluate(object, Double.class);
         }
+        if (lookupValue == null) return null;
 
-        /** Degenerate case: a single interpolation point. Evaluate it directly. */
+        /* Degenerate case: a single interpolation point. Evaluate it directly. */
         if (interpPoints.size() == 1) {
             return parameters.get(2).evaluate(object, context);
         }
@@ -359,9 +337,9 @@ public class InterpolateFunction implements Function {
             return interpPoints.get(interpPoints.size() - 1).getValue(object, context);
         }
 
-        /**
-         * The lookup value is within or above the range of the interpolation points - perform the
-         * requested type of interpolation
+        /*
+         * The lookup value is within or above the range of the interpolation points - perform the requested type of
+         * interpolation
          */
         switch (mode) {
             case COSINE:
@@ -376,6 +354,35 @@ public class InterpolateFunction implements Function {
         }
     }
 
+    /**
+     * Returns the default context based on method when it's not specified (e.g. null or Object.class), for the
+     * Converters to return the default object type: Color if method == COLOR, Double of method == NUMERIC. If a
+     * specific "context" is asked, returns it as-is.
+     */
+    @SuppressWarnings("unchecked")
+    private <T> Class<T> sanitizeContext(Class<T> context) {
+        final boolean specified = context != null && !Object.class.equals(context);
+        if (!specified) {
+            if (method == Method.NUMERIC) {
+                context = (Class<T>) Double.class;
+            } else if (method == Method.COLOR) {
+                context = (Class<T>) Color.class;
+            } else {
+                // should never reach here for as long as initialize() is called first
+                throw new IllegalStateException("Unknown method, expected NUMERIC or COLOR");
+            }
+        }
+        return context;
+    }
+
+    private void validateArguments(Class<?> context) {
+        if (Color.class.isAssignableFrom(context) && method != Method.COLOR) {
+            throw new IllegalArgumentException(
+                    "Unable to evaluate Color as the interpolation method is set as " + method);
+        }
+    }
+
+    @SuppressWarnings("LongDoubleConversion")
     private <T> T linearInterpolate(
             final Double lookupValue, final Object object, final int segment, Class<T> context) {
         if (segment < 1 || segment >= interpPoints.size()) {
@@ -387,44 +394,13 @@ public class InterpolateFunction implements Function {
         if (method == Method.COLOR) {
             Color color1 = interpPoints.get(segment).getColor(object);
             Color color0 = interpPoints.get(segment - 1).getColor(object);
-            int r =
-                    (int)
-                            clamp(
-                                    Math.round(
-                                            doLinear(
-                                                    lookupValue,
-                                                    data0,
-                                                    data1,
-                                                    color0.getRed(),
-                                                    color1.getRed())),
-                                    0,
-                                    255);
-            int g =
-                    (int)
-                            clamp(
-                                    Math.round(
-                                            doLinear(
-                                                    lookupValue,
-                                                    data0,
-                                                    data1,
-                                                    color0.getGreen(),
-                                                    color1.getGreen())),
-                                    0,
-                                    255);
-            int b =
-                    (int)
-                            clamp(
-                                    Math.round(
-                                            doLinear(
-                                                    lookupValue,
-                                                    data0,
-                                                    data1,
-                                                    color0.getBlue(),
-                                                    color1.getBlue())),
-                                    0,
-                                    255);
-            return context.cast(new Color(r, g, b));
-
+            int r = (int)
+                    clamp(Math.round(doLinear(lookupValue, data0, data1, color0.getRed(), color1.getRed())), 0, 255);
+            int g = (int) clamp(
+                    Math.round(doLinear(lookupValue, data0, data1, color0.getGreen(), color1.getGreen())), 0, 255);
+            int b = (int)
+                    clamp(Math.round(doLinear(lookupValue, data0, data1, color0.getBlue(), color1.getBlue())), 0, 255);
+            return Converters.convert(new Color(r, g, b), context);
         } else { // assume numeric
             Double value1 = interpPoints.get(segment).getValue(object);
             Double value0 = interpPoints.get(segment - 1).getValue(object);
@@ -434,6 +410,7 @@ public class InterpolateFunction implements Function {
         }
     }
 
+    @SuppressWarnings("LongDoubleConversion")
     private <T> T cosineInterpolate(
             final Double lookupValue, final Object object, final int segment, Class<T> context) {
         if (segment < 1 || segment >= interpPoints.size()) {
@@ -445,43 +422,13 @@ public class InterpolateFunction implements Function {
         if (method == Method.COLOR) {
             Color color1 = interpPoints.get(segment).getColor(object);
             Color color0 = interpPoints.get(segment - 1).getColor(object);
-            int r =
-                    (int)
-                            clamp(
-                                    Math.round(
-                                            doCosine(
-                                                    lookupValue,
-                                                    data0,
-                                                    data1,
-                                                    color0.getRed(),
-                                                    color1.getRed())),
-                                    0,
-                                    255);
-            int g =
-                    (int)
-                            clamp(
-                                    Math.round(
-                                            doCosine(
-                                                    lookupValue,
-                                                    data0,
-                                                    data1,
-                                                    color0.getGreen(),
-                                                    color1.getGreen())),
-                                    0,
-                                    255);
-            int b =
-                    (int)
-                            clamp(
-                                    Math.round(
-                                            doCosine(
-                                                    lookupValue,
-                                                    data0,
-                                                    data1,
-                                                    color0.getBlue(),
-                                                    color1.getBlue())),
-                                    0,
-                                    255);
-            return context.cast(new Color(r, g, b));
+            int r = (int)
+                    clamp(Math.round(doCosine(lookupValue, data0, data1, color0.getRed(), color1.getRed())), 0, 255);
+            int g = (int) clamp(
+                    Math.round(doCosine(lookupValue, data0, data1, color0.getGreen(), color1.getGreen())), 0, 255);
+            int b = (int)
+                    clamp(Math.round(doCosine(lookupValue, data0, data1, color0.getBlue(), color1.getBlue())), 0, 255);
+            return Converters.convert(new Color(r, g, b), context);
 
         } else { // assume numeric
             Double value1 = interpPoints.get(segment).getValue(object);
@@ -492,8 +439,8 @@ public class InterpolateFunction implements Function {
         }
     }
 
-    private <T> T cubicInterpolate(
-            final Double lookupValue, final Object object, int segment, Class<T> context) {
+    @SuppressWarnings("LongDoubleConversion")
+    private <T> T cubicInterpolate(final Double lookupValue, final Object object, int segment, Class<T> context) {
         if (segment < 1 || segment >= interpPoints.size()) {
             throw new IllegalArgumentException("segment index outside valid range");
         }
@@ -548,7 +495,7 @@ public class InterpolateFunction implements Function {
             }
             int b = (int) clamp(Math.round(doCubic(lookupValue, xi, yi)), 0, 255);
 
-            return context.cast(new Color(r, g, b));
+            return Converters.convert(new Color(r, g, b), context);
 
         } else { // numeric
             for (int i = segment - 2, k = 0; k < 4; i++, k++) {
@@ -564,9 +511,19 @@ public class InterpolateFunction implements Function {
         return fallback;
     }
 
+    private void threadSafeInitialize() {
+        // initialize the lookup data structures only once and in a thread safe way please
+        if (interpPoints == null) {
+            synchronized (this) {
+                if (interpPoints == null) {
+                    initialize();
+                }
+            }
+        }
+    }
+
     /**
-     * This method checks for optional parameters setting the mode and method and retrieves the
-     * interpolation points.
+     * This method checks for optional parameters setting the mode and method and retrieves the interpolation points.
      */
     private void initialize() {
         setMode();
@@ -592,9 +549,8 @@ public class InterpolateFunction implements Function {
         if (mode == Mode.CUBIC) {
             if (interpPoints.size() < 3) {
                 if (LOGGER.isLoggable(Level.INFO)) {
-                    LOGGER.info(
-                            "Cubic interpolation requested but not enough"
-                                    + "points supplied. Falling back to linear interpolation");
+                    LOGGER.info("Cubic interpolation requested but not enough"
+                            + "points supplied. Falling back to linear interpolation");
                 }
                 mode = Mode.LINEAR;
             }
@@ -606,15 +562,13 @@ public class InterpolateFunction implements Function {
             if (method == Method.COLOR) {
                 Color color = value.evaluate(null, Color.class);
                 if (color == null) {
-                    throw new IllegalArgumentException(
-                            "Could not convert value " + value + " to a color");
+                    throw new IllegalArgumentException("Could not convert value " + value + " to a color");
                 }
                 return new ConstantColorPoint(data.evaluate(null, Double.class), color);
             } else {
                 Double numeric = value.evaluate(null, Double.class);
                 if (numeric == null) {
-                    throw new IllegalArgumentException(
-                            "Could not convert value " + value + " to a number");
+                    throw new IllegalArgumentException("Could not convert value " + value + " to a number");
                 }
                 return new ConstantNumericPoint(data.evaluate(null, Double.class), numeric);
             }
@@ -622,10 +576,7 @@ public class InterpolateFunction implements Function {
         return new DynamicPoint(data, value);
     }
 
-    /**
-     * Review parameters and generate {@link Mode} linear cosine, cubbic based on optional
-     * parameter.
-     */
+    /** Review parameters and generate {@link Mode} linear cosine, cubbic based on optional parameter. */
     private void setMode() {
         boolean specified = false;
 
@@ -635,8 +586,8 @@ public class InterpolateFunction implements Function {
             int index = n - i;
             if (index > 1) {
                 Expression expr = parameters.get(index);
-                if (expr instanceof Literal && ((Literal) expr).getValue() instanceof String) {
-                    String value = (String) ((Literal) expr).getValue();
+                if (expr instanceof Literal literal && ((Literal) expr).getValue() instanceof String) {
+                    String value = (String) literal.getValue();
                     if (value.equalsIgnoreCase(MODE_LINEAR)) {
                         mode = Mode.LINEAR;
                         specified = true;
@@ -661,9 +612,7 @@ public class InterpolateFunction implements Function {
         modeSpecified = specified;
     }
 
-    /**
-     * Review parameters and generate {@link Method} numeric or color based on optional parameter.
-     */
+    /** Review parameters and generate {@link Method} numeric or color based on optional parameter. */
     private void setMethod() {
         boolean specified = false;
 
@@ -673,14 +622,13 @@ public class InterpolateFunction implements Function {
             int index = n - i;
             if (index > 1) {
                 Expression expr = parameters.get(index);
-                if (expr instanceof Literal && ((Literal) expr).getValue() instanceof String) {
-                    String value = (String) ((Literal) expr).getValue();
+                if (expr instanceof Literal literal && ((Literal) expr).getValue() instanceof String) {
+                    String value = (String) literal.getValue();
                     if (value.equalsIgnoreCase(METHOD_NUMERIC)) {
                         method = Method.NUMERIC;
                         specified = true;
 
-                    } else if (value.equalsIgnoreCase(METHOD_COLOR)
-                            || value.equalsIgnoreCase(METHOD_COLOUR)) {
+                    } else if (value.equalsIgnoreCase(METHOD_COLOR) || value.equalsIgnoreCase(METHOD_COLOUR)) {
                         method = Method.COLOR;
                         specified = true;
                     }
@@ -697,11 +645,11 @@ public class InterpolateFunction implements Function {
     }
 
     /**
-     * Find the interpolation segment containing the lookup value. The value returned is the index,
-     * in the interpPoints list, of the higher point of the segment.
+     * Find the interpolation segment containing the lookup value. The value returned is the index, in the interpPoints
+     * list, of the higher point of the segment.
      *
-     * @return segment index; or 0 if the lookup value is below the range of the interpolation
-     *     points; or {@code max segment index + 1} if it is above the range
+     * @return segment index; or 0 if the lookup value is below the range of the interpolation points; or {@code max
+     *     segment index + 1} if it is above the range
      */
     private int findSegment(Double lookupValue, Object object) {
         int segment = interpPoints.size();
@@ -752,15 +700,13 @@ public class InterpolateFunction implements Function {
 
     /**
      * Cubic hermite spline interpolation. This is adapted from the description of the algorithm at:
-     * http://en.wikipedia.org/wiki/Cubic_Hermite_spline. Tangent caculations are done with simple
-     * finite differencing in the interests of speed.
+     * http://en.wikipedia.org/wiki/Cubic_Hermite_spline. Tangent caculations are done with simple finite differencing
+     * in the interests of speed.
      *
-     * <p>The input arrays xi and yi contain the coordinates of four interpolation points defining
-     * three segments with the middle segment containing the point for which we seek an interpolated
-     * value.
+     * <p>The input arrays xi and yi contain the coordinates of four interpolation points defining three segments with
+     * the middle segment containing the point for which we seek an interpolated value.
      *
-     * @param x x ordinate of the point for which we seek an interpolated value and which lies
-     *     between xi[1] and xi[2]
+     * @param x x ordinate of the point for which we seek an interpolated value and which lies between xi[1] and xi[2]
      * @param xi x ordinates of the four interpolation points
      * @param yi y ordinates of the four interpolation points
      * @return interpolated y value
@@ -783,18 +729,17 @@ public class InterpolateFunction implements Function {
         double m1 = 0.5 * ((yi[2] - yi[1]) / span12 + (yi[1] - yi[0]) / span01);
         double m2 = 0.5 * ((yi[3] - yi[2]) / span23 + (yi[2] - yi[1]) / span12);
 
-        double y =
-                (2 * t3 - 3 * t2 + 1) * yi[1]
-                        + (t3 - 2 * t2 + t) * span12 * m1
-                        + (-2 * t3 + 3 * t2) * yi[2]
-                        + (t3 - t2) * span12 * m2;
+        double y = (2 * t3 - 3 * t2 + 1) * yi[1]
+                + (t3 - 2 * t2 + t) * span12 * m1
+                + (-2 * t3 + 3 * t2) * yi[2]
+                + (t3 - t2) * span12 * m2;
 
         return y;
     }
 
     /**
-     * Helper method for the linear, cosine and cubic interpolation methods. Checks that the span of
-     * the interval from x0 to x1 is > 0.
+     * Helper method for the linear, cosine and cubic interpolation methods. Checks that the span of the interval from
+     * x0 to x1 is > 0.
      *
      * @param x0 lower interval point
      * @param x1 upper interval point
@@ -824,19 +769,16 @@ public class InterpolateFunction implements Function {
         return Math.max(min, Math.min(max, x));
     }
 
-    /**
-     * Creates a String representation of this Function with the function name and the arguments.
-     */
+    /** Creates a String representation of this Function with the function name and the arguments. */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(getName());
         sb.append("(");
-        List<org.opengis.filter.expression.Expression> params = getParameters();
+        List<org.geotools.api.filter.expression.Expression> params = getParameters();
         if (params != null) {
-            org.opengis.filter.expression.Expression exp;
-            for (Iterator<org.opengis.filter.expression.Expression> it = params.iterator();
-                    it.hasNext(); ) {
+            org.geotools.api.filter.expression.Expression exp;
+            for (Iterator<org.geotools.api.filter.expression.Expression> it = params.iterator(); it.hasNext(); ) {
                 exp = it.next();
                 sb.append("[");
                 sb.append(exp);
@@ -866,7 +808,6 @@ public class InterpolateFunction implements Function {
 
     @Override
     public int hashCode() {
-        return Objects.hash(
-                mode, modeSpecified, method, methodSpecified, interpPoints, parameters, fallback);
+        return Objects.hash(mode, modeSpecified, method, methodSpecified, interpPoints, parameters, fallback);
     }
 }

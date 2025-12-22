@@ -16,45 +16,38 @@
  */
 package org.geotools.renderer.crs;
 
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.referencing.operation.projection.MapProjection;
 import org.geotools.referencing.operation.projection.MapProjection.AbstractProvider;
 import org.geotools.referencing.operation.projection.Mercator;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /** Returns a {@link ProjectionHandler} for the {@link Mercator} projection */
 public class MercatorHandlerFactory implements ProjectionHandlerFactory {
 
     private static final ReferencedEnvelope VALID_AREA =
-            new ReferencedEnvelope(
-                    -Integer.MAX_VALUE, Integer.MAX_VALUE, -85, 85, DefaultGeographicCRS.WGS84);
+            new ReferencedEnvelope(-Integer.MAX_VALUE, Integer.MAX_VALUE, -85, 85, DefaultGeographicCRS.WGS84);
 
     @Override
     public ProjectionHandler getHandler(
-            ReferencedEnvelope renderingEnvelope,
-            CoordinateReferenceSystem sourceCrs,
-            boolean wrap,
-            int maxWraps)
+            ReferencedEnvelope renderingEnvelope, CoordinateReferenceSystem sourceCrs, boolean wrap, int maxWraps)
             throws FactoryException {
 
         if (renderingEnvelope == null) return null;
-        MapProjection mapProjection =
-                CRS.getMapProjection(renderingEnvelope.getCoordinateReferenceSystem());
+        MapProjection mapProjection = CRS.getMapProjection(renderingEnvelope.getCoordinateReferenceSystem());
         if (!(mapProjection instanceof Mercator)) return null;
 
         ProjectionHandler handler;
-        double centralMeridian =
-                mapProjection
-                        .getParameterValues()
-                        .parameter(AbstractProvider.CENTRAL_MERIDIAN.getName().getCode())
-                        .doubleValue();
+        double centralMeridian = mapProjection
+                .getParameterValues()
+                .parameter(AbstractProvider.CENTRAL_MERIDIAN.getName().getCode())
+                .doubleValue();
         if (wrap && maxWraps > 0) {
             handler =
-                    new WrappingProjectionHandler(
-                            renderingEnvelope, VALID_AREA, sourceCrs, centralMeridian, maxWraps);
+                    new WrappingProjectionHandler(renderingEnvelope, VALID_AREA, sourceCrs, centralMeridian, maxWraps);
         } else {
             handler = new ProjectionHandler(sourceCrs, VALID_AREA, renderingEnvelope);
             handler.setCentralMeridian(centralMeridian);

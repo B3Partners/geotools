@@ -50,7 +50,7 @@ public class MBTypeTest extends AbstractMBExpressionTest {
         assertTrue(array instanceof JSONArray);
         JSONArray jarray = (JSONArray) array;
         assertEquals(4, jarray.size());
-        assertEquals("string", (jarray.get(1)));
+        assertEquals("string", jarray.get(1));
 
         // test for literal JSONObject
         Object obj = getExpressionEvaluation(j, "circle-color");
@@ -273,8 +273,7 @@ public class MBTypeTest extends AbstractMBExpressionTest {
 
         try {
             getExpressionEvaluation(j, "object");
-            fail(
-                    "expected exception function \"mbToColor\" fails if argument can't be converted to a color");
+            fail("expected exception function \"mbToColor\" fails if argument can't be converted to a color");
         } catch (IllegalArgumentException e) {
         }
     }
@@ -308,15 +307,13 @@ public class MBTypeTest extends AbstractMBExpressionTest {
 
         try {
             getExpressionEvaluation(j, "true");
-            fail(
-                    "expected exception function \"mbToColor\" fails if argument can't be converted to a color");
+            fail("expected exception function \"mbToColor\" fails if argument can't be converted to a color");
         } catch (IllegalArgumentException e) {
         }
 
         try {
             getExpressionEvaluation(j, "false");
-            fail(
-                    "expected exception function \"mbToColor\" fails if argument can't be converted to a color");
+            fail("expected exception function \"mbToColor\" fails if argument can't be converted to a color");
         } catch (IllegalArgumentException e) {
         }
     }
@@ -342,29 +339,25 @@ public class MBTypeTest extends AbstractMBExpressionTest {
 
         try {
             getExpressionEvaluation(j, "boolean");
-            fail(
-                    "expected exception function \"mbType\" fails if argument can't be converted to a color");
+            fail("expected exception function \"mbType\" fails if argument can't be converted to a color");
         } catch (IllegalArgumentException e) {
         }
 
         try {
             getExpressionEvaluation(j, "string");
-            fail(
-                    "expected exception function \"mbType\" fails if argument can't be converted to a color");
+            fail("expected exception function \"mbType\" fails if argument can't be converted to a color");
         } catch (IllegalArgumentException e) {
         }
 
         try {
             getExpressionEvaluation(j, "number");
-            fail(
-                    "expected exception function \"mbType\" fails if argument can't be converted to a color");
+            fail("expected exception function \"mbType\" fails if argument can't be converted to a color");
         } catch (IllegalArgumentException e) {
         }
 
         try {
             getExpressionEvaluation(j, "object");
-            fail(
-                    "expected exception function \"mbType\" fails if argument can't be converted to a color");
+            fail("expected exception function \"mbType\" fails if argument can't be converted to a color");
         } catch (IllegalArgumentException e) {
         }
     }

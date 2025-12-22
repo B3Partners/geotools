@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.geometry.BoundingBox;
 import org.geotools.geojson.GeoJSONUtil;
 import org.geotools.geojson.IContentHandler;
 import org.json.simple.JSONAware;
@@ -40,7 +41,6 @@ import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.geometry.BoundingBox;
 
 /**
  * Reads and writes geometry objects to and from geojson.
@@ -75,8 +75,8 @@ public class GeometryJSON {
     }
 
     /**
-     * Constructs a geometry json instance specifying the number of decimals to use when encoding
-     * floating point numbers.
+     * Constructs a geometry json instance specifying the number of decimals to use when encoding floating point
+     * numbers.
      */
     public GeometryJSON(int decimals) {
         this.decimals = decimals;
@@ -140,32 +140,32 @@ public class GeometryJSON {
     }
 
     Map<String, Object> create(Geometry geometry) {
-        if (geometry instanceof Point) {
-            return createPoint((Point) geometry);
+        if (geometry instanceof Point point) {
+            return createPoint(point);
         }
 
-        if (geometry instanceof LineString) {
-            return createLine((LineString) geometry);
+        if (geometry instanceof LineString string) {
+            return createLine(string);
         }
 
-        if (geometry instanceof Polygon) {
-            return createPolygon((Polygon) geometry);
+        if (geometry instanceof Polygon polygon) {
+            return createPolygon(polygon);
         }
 
-        if (geometry instanceof MultiPoint) {
-            return createMultiPoint((MultiPoint) geometry);
+        if (geometry instanceof MultiPoint point) {
+            return createMultiPoint(point);
         }
 
-        if (geometry instanceof MultiLineString) {
-            return createMultiLine((MultiLineString) geometry);
+        if (geometry instanceof MultiLineString string) {
+            return createMultiLine(string);
         }
 
-        if (geometry instanceof MultiPolygon) {
-            return createMultiPolygon((MultiPolygon) geometry);
+        if (geometry instanceof MultiPolygon polygon) {
+            return createMultiPolygon(polygon);
         }
 
-        if (geometry instanceof GeometryCollection) {
-            return createGeometryCollection((GeometryCollection) geometry);
+        if (geometry instanceof GeometryCollection collection) {
+            return createGeometryCollection(collection);
         }
 
         throw new IllegalArgumentException("Unable to encode object " + geometry);
@@ -537,8 +537,7 @@ public class GeometryJSON {
      * @param gcol The geometry collection.
      * @param output The output stream.
      */
-    public void writeGeometryCollection(GeometryCollection gcol, OutputStream output)
-            throws IOException {
+    public void writeGeometryCollection(GeometryCollection gcol, OutputStream output) throws IOException {
         writeGeometryCollection(gcol, (Object) output);
     }
 
@@ -629,14 +628,10 @@ public class GeometryJSON {
 
     List<CoordinateSequenceEncoder> toList(Polygon poly) {
         ArrayList<CoordinateSequenceEncoder> list = new ArrayList<>();
-        list.add(
-                new CoordinateSequenceEncoder(
-                        poly.getExteriorRing().getCoordinateSequence(), scale));
+        list.add(new CoordinateSequenceEncoder(poly.getExteriorRing().getCoordinateSequence(), scale));
 
         for (int i = 0; i < poly.getNumInteriorRing(); i++) {
-            list.add(
-                    new CoordinateSequenceEncoder(
-                            poly.getInteriorRingN(i).getCoordinateSequence(), scale));
+            list.add(new CoordinateSequenceEncoder(poly.getInteriorRingN(i).getCoordinateSequence(), scale));
         }
 
         return list;
@@ -646,14 +641,12 @@ public class GeometryJSON {
         ArrayList<Object> list = new ArrayList<>(mgeom.getNumGeometries());
         for (int i = 0; i < mgeom.getNumGeometries(); i++) {
             Geometry g = mgeom.getGeometryN(i);
-            if (g instanceof Polygon) {
-                list.add(toList((Polygon) g));
-            } else if (g instanceof LineString) {
-                list.add(
-                        new CoordinateSequenceEncoder(
-                                ((LineString) g).getCoordinateSequence(), scale));
-            } else if (g instanceof Point) {
-                list.add(new CoordinateSequenceEncoder(((Point) g).getCoordinateSequence(), scale));
+            if (g instanceof Polygon polygon) {
+                list.add(toList(polygon));
+            } else if (g instanceof LineString string) {
+                list.add(new CoordinateSequenceEncoder(string.getCoordinateSequence(), scale));
+            } else if (g instanceof Point point) {
+                list.add(new CoordinateSequenceEncoder(point.getCoordinateSequence(), scale));
             }
         }
         return list;
@@ -662,14 +655,14 @@ public class GeometryJSON {
     static class CoordinateSequenceEncoder implements JSONAware /*, JSONStreamAware*/ {
 
         /**
-         * The min value at which the decimal notation is used (below it, the computerized
-         * scientific one is used instead)
+         * The min value at which the decimal notation is used (below it, the computerized scientific one is used
+         * instead)
          */
         private static final double DECIMAL_MIN = Math.pow(10, -3);
 
         /**
-         * The max value at which the decimal notation is used (above it, the computerized
-         * scientific one is used instead)
+         * The max value at which the decimal notation is used (above it, the computerized scientific one is used
+         * instead)
          */
         private static final double DECIMAL_MAX = Math.pow(10, 7);
 

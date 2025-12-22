@@ -2,7 +2,7 @@
  *    GeoTools - The Open Source Java GIS Toolkit
  *    http://geotools.org
  *
- *    (C) 2002-2016, Open Source Geospatial Foundation (OSGeo)
+ *    (C) 2018, Open Source Geospatial Foundation (OSGeo)
  *
  *    This library is free software; you can redistribute it and/or
  *    modify it under the terms of the GNU Lesser General Public
@@ -22,9 +22,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.NoSuchElementException;
 import java.util.logging.Logger;
-import org.geotools.data.FeatureReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
 /**
  * Feature reader of the GeoJSON features
@@ -39,8 +39,7 @@ public class ArcGISRestFeatureReader implements FeatureReader<SimpleFeatureType,
 
     protected int featIndex = 0;
 
-    public ArcGISRestFeatureReader(
-            SimpleFeatureType featureTypeIn, InputStream iStream, Logger logger)
+    public ArcGISRestFeatureReader(SimpleFeatureType featureTypeIn, InputStream iStream, Logger logger)
             throws IOException {
         this.featureType = featureTypeIn;
         this.featIndex = 0;
@@ -54,8 +53,7 @@ public class ArcGISRestFeatureReader implements FeatureReader<SimpleFeatureType,
     @Override
     public SimpleFeatureType getFeatureType() {
         if (this.featureType == null) {
-            throw new IllegalStateException(
-                    "No features were retrieved, shouldn't be calling getFeatureType()");
+            throw new IllegalStateException("No features were retrieved, shouldn't be calling getFeatureType()");
         }
         return this.featureType;
     }

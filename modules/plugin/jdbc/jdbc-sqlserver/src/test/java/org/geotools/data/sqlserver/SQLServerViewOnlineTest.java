@@ -3,11 +3,11 @@ package org.geotools.data.sqlserver;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
 import org.geotools.jdbc.JDBCViewOnlineTest;
 import org.geotools.jdbc.JDBCViewTestSetup;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
 
 public class SQLServerViewOnlineTest extends JDBCViewOnlineTest {
 
@@ -16,10 +16,7 @@ public class SQLServerViewOnlineTest extends JDBCViewOnlineTest {
         return new SQLServerViewTestSetup();
     }
 
-    /**
-     * Override since sql server metadata over nullability over views works differently than in
-     * other databases
-     */
+    /** Override since sql server metadata over nullability over views works differently than in other databases */
     @Override
     protected void assertAttributesEqual(AttributeDescriptor expected, AttributeDescriptor actual) {
         assertEquals(aname(expected.getName()), actual.getName());

@@ -17,8 +17,8 @@
 package org.geotools.feature.visitor;
 
 import java.util.Set;
+import org.geotools.api.filter.Id;
 import org.geotools.filter.visitor.DefaultFilterVisitor;
-import org.opengis.filter.Id;
 
 /**
  * Gather up all FeatureId strings into a provided HashSet.
@@ -29,8 +29,7 @@ import org.opengis.filter.Id;
  */
 public class IdCollectorFilterVisitor extends DefaultFilterVisitor {
     public static final IdCollectorFilterVisitor ID_COLLECTOR = new IdCollectorFilterVisitor(true);
-    public static final IdCollectorFilterVisitor IDENTIFIER_COLLECTOR =
-            new IdCollectorFilterVisitor(false);
+    public static final IdCollectorFilterVisitor IDENTIFIER_COLLECTOR = new IdCollectorFilterVisitor(false);
     private final boolean mCollectStringIds;
 
     protected IdCollectorFilterVisitor(boolean collectStringIds) {

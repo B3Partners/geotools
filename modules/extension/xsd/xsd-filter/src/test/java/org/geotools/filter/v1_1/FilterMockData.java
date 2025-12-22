@@ -20,47 +20,47 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedHashSet;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.Multiply;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.Subtract;
+import org.geotools.api.filter.identity.GmlObjectId;
+import org.geotools.api.filter.identity.Version;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortOrder;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.identity.ResourceIdImpl;
 import org.geotools.gml3.GML;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.filter.And;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.Id;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.Multiply;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.expression.Subtract;
-import org.opengis.filter.identity.GmlObjectId;
-import org.opengis.filter.identity.Identifier;
-import org.opengis.filter.identity.Version;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.sort.SortOrder;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -71,18 +71,15 @@ import org.w3c.dom.Node;
  * @author Justin Deoliveira, The Open Planning Project
  */
 public class FilterMockData {
-    static FilterFactory2 f = (FilterFactory2) CommonFactoryFinder.getFilterFactory(null);
+    static FilterFactory f = CommonFactoryFinder.getFilterFactory(null);
 
     public static Id id() {
         return f.id(
-                new LinkedHashSet<Identifier>(
-                        Arrays.asList(
-                                f.featureId("foo.1"), f.featureId("foo.2"), f.featureId("foo.3"))));
+                new LinkedHashSet<>(Arrays.asList(f.featureId("foo.1"), f.featureId("foo.2"), f.featureId("foo.3"))));
     }
 
     public static Id resourceId() {
-        ResourceIdImpl resourceId =
-                new ResourceIdImpl("foo.4", "", new Version(Version.Action.NEXT));
+        ResourceIdImpl resourceId = new ResourceIdImpl("foo.4", "", new Version(Version.Action.NEXT));
 
         resourceId.setPreviousRid("previousRid");
         resourceId.setStartTime(new Date(1000));
@@ -90,13 +87,11 @@ public class FilterMockData {
 
         Integer testInt = Integer.valueOf(1234567890);
 
-        return f.id(
-                new LinkedHashSet<Identifier>(
-                        Arrays.asList(
-                                f.featureId("foo.1", "v1"),
-                                f.resourceId("foo.2", "", new Version(new Date(1000))), //
-                                f.resourceId("foo.3", "", new Version(testInt)), //
-                                resourceId)));
+        return f.id(new LinkedHashSet<>(Arrays.asList(
+                f.featureId("foo.1", "v1"),
+                f.resourceId("foo.2", "", new Version(new Date(1000))), //
+                f.resourceId("foo.3", "", new Version(testInt)), //
+                resourceId)));
     }
 
     public static Element propertyName(Document document, Node parent) {
@@ -205,6 +200,10 @@ public class FilterMockData {
 
     public static PropertyIsGreaterThanOrEqualTo propertyIsGreaterThanOrEqualTo() {
         return f.greaterOrEqual(propertyName(), literal());
+    }
+
+    public static PropertyIsBetween propertyIsBetween() {
+        return f.between(propertyName(), literal(10), literal(20));
     }
 
     public static Element binaryComparisonOp(Document document, Node parent, QName name) {

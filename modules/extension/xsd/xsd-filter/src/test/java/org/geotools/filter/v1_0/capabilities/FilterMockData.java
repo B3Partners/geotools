@@ -19,18 +19,18 @@ package org.geotools.filter.v1_0.capabilities;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.capability.ArithmeticOperators;
+import org.geotools.api.filter.capability.ComparisonOperators;
+import org.geotools.api.filter.capability.FilterCapabilities;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.capability.Functions;
+import org.geotools.api.filter.capability.Operator;
+import org.geotools.api.filter.capability.ScalarCapabilities;
+import org.geotools.api.filter.capability.SpatialCapabilities;
+import org.geotools.api.filter.capability.SpatialOperator;
+import org.geotools.api.filter.capability.SpatialOperators;
 import org.geotools.factory.CommonFactoryFinder;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.capability.ArithmeticOperators;
-import org.opengis.filter.capability.ComparisonOperators;
-import org.opengis.filter.capability.FilterCapabilities;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.capability.Functions;
-import org.opengis.filter.capability.Operator;
-import org.opengis.filter.capability.ScalarCapabilities;
-import org.opengis.filter.capability.SpatialCapabilities;
-import org.opengis.filter.capability.SpatialOperator;
-import org.opengis.filter.capability.SpatialOperators;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -51,8 +51,7 @@ public class FilterMockData {
     }
 
     static Element functionNames(Document document, Node parent) {
-        Element functionNames =
-                element(document, parent, new QName(OGC.NAMESPACE, "Function_Names"));
+        Element functionNames = element(document, parent, new QName(OGC.NAMESPACE, "Function_Names"));
         functionName(document, functionNames, "foo", 2);
         functionName(document, functionNames, "bar", 3);
 
@@ -83,8 +82,7 @@ public class FilterMockData {
     }
 
     static Element arithmetic(Document document, Node parent, boolean simple) {
-        Element arithmetic =
-                element(document, parent, new QName(OGC.NAMESPACE, "Arithmetic_Operators"));
+        Element arithmetic = element(document, parent, new QName(OGC.NAMESPACE, "Arithmetic_Operators"));
 
         if (simple) {
             element(document, arithmetic, OGC.Simple_Arithmetic);
@@ -112,8 +110,7 @@ public class FilterMockData {
     }
 
     static Element comparison(Document document, Node parent, boolean simple) {
-        Element comparison =
-                element(document, parent, new QName(OGC.NAMESPACE, "Comparison_Operators"));
+        Element comparison = element(document, parent, new QName(OGC.NAMESPACE, "Comparison_Operators"));
 
         if (simple) {
             element(document, comparison, OGC.Simple_Comparisons);
@@ -194,17 +191,17 @@ public class FilterMockData {
     static SpatialOperators spatial() {
         List<SpatialOperator> o = new ArrayList<>();
 
-        o.add(ff.spatialOperator("BBOX", null));
-        o.add(ff.spatialOperator("Equals", null));
-        o.add(ff.spatialOperator("Disjoint", null));
-        o.add(ff.spatialOperator("Intersect", null));
-        o.add(ff.spatialOperator("Touches", null));
-        o.add(ff.spatialOperator("Crosses", null));
-        o.add(ff.spatialOperator("Within", null));
-        o.add(ff.spatialOperator("Contains", null));
-        o.add(ff.spatialOperator("Overlaps", null));
-        o.add(ff.spatialOperator("Beyond", null));
-        o.add(ff.spatialOperator("DWithin", null));
+        o.add(ff.spatialOperator("BBOX"));
+        o.add(ff.spatialOperator("Equals"));
+        o.add(ff.spatialOperator("Disjoint"));
+        o.add(ff.spatialOperator("Intersect"));
+        o.add(ff.spatialOperator("Touches"));
+        o.add(ff.spatialOperator("Crosses"));
+        o.add(ff.spatialOperator("Within"));
+        o.add(ff.spatialOperator("Contains"));
+        o.add(ff.spatialOperator("Overlaps"));
+        o.add(ff.spatialOperator("Beyond"));
+        o.add(ff.spatialOperator("DWithin"));
 
         return ff.spatialOperators(o.toArray(new SpatialOperator[o.size()]));
     }
@@ -214,16 +211,14 @@ public class FilterMockData {
     }
 
     static Element spatialCapabilities(Document document, Node parent) {
-        Element spatial =
-                element(document, parent, new QName(OGC.NAMESPACE, "Spatial_Capabilities"));
+        Element spatial = element(document, parent, new QName(OGC.NAMESPACE, "Spatial_Capabilities"));
         spatial(document, spatial);
 
         return spatial;
     }
 
     static FilterCapabilities capabilities() {
-        return ff.capabilities(
-                FilterCapabilities.VERSION_100, scalarCapabilities(), spatialCapabilities(), null);
+        return ff.capabilities(FilterCapabilities.VERSION_100, scalarCapabilities(), spatialCapabilities(), null);
     }
 
     static Element capabilities(Document document, Node parent) {

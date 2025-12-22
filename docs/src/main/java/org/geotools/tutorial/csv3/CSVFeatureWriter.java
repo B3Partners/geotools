@@ -15,17 +15,18 @@ import com.opencsv.CSVWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.NoSuchElementException;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.tutorial.csv3.parse.CSVIterator;
 import org.geotools.tutorial.csv3.parse.CSVStrategy;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Iterator supporting writing of feature content.
@@ -61,8 +62,7 @@ public class CSVFeatureWriter implements FeatureWriter<SimpleFeatureType, Simple
         this(csvFileState, csvStrategy, Query.ALL);
     }
 
-    public CSVFeatureWriter(CSVFileState csvFileState, CSVStrategy csvStrategy, Query query)
-            throws IOException {
+    public CSVFeatureWriter(CSVFileState csvFileState, CSVStrategy csvStrategy, Query query) throws IOException {
         this.csvFileState = csvFileState;
         File file = csvFileState.getFile();
         File directory = file.getParentFile();
@@ -72,7 +72,7 @@ public class CSVFeatureWriter implements FeatureWriter<SimpleFeatureType, Simple
         this.featureType = csvStrategy.getFeatureType();
         this.iterator = csvStrategy.iterator();
         this.csvStrategy = csvStrategy;
-        this.csvWriter = new CSVWriter(new FileWriter(this.temp));
+        this.csvWriter = new CSVWriter(new FileWriter(this.temp, StandardCharsets.UTF_8));
         this.csvWriter.writeNext(this.csvFileState.getCSVHeaders(), false);
     }
     // docs end CSVFeatureWriter
@@ -99,8 +99,7 @@ public class CSVFeatureWriter implements FeatureWriter<SimpleFeatureType, Simple
 
     // next start
     @Override
-    public SimpleFeature next()
-            throws IOException, IllegalArgumentException, NoSuchElementException {
+    public SimpleFeature next() throws IOException, IllegalArgumentException, NoSuchElementException {
         if (csvWriter == null) {
             throw new IOException("Writer has been closed");
         }
@@ -128,16 +127,15 @@ public class CSVFeatureWriter implements FeatureWriter<SimpleFeatureType, Simple
     // next end
 
     // remove start
-    /**
-     * Mark our {@link #currentFeature} feature as null, it will be skipped when written effectively
-     * removing it.
-     */
+    /** Mark our {@link #currentFeature} feature as null, it will be skipped when written effectively removing it. */
+    @Override
     public void remove() throws IOException {
         this.currentFeature = null; // just mark it done which means it will not get written out.
     }
     // remove end
 
     // write start
+    @Override
     public void write() throws IOException {
         if (this.currentFeature == null) {
             return; // current feature has been deleted

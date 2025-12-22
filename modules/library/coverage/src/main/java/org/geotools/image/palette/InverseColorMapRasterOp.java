@@ -31,9 +31,7 @@ public final class InverseColorMapRasterOp implements RasterOp {
     /** Default number of quantization colors used to build the index for the inverse color map. */
     public static final int DEFAULT_QUANTIZATION_COLORS = 5;
 
-    /**
-     * Default value for the threshold to decide whether a pixel is opaque (>=) or transparent (<).
-     */
+    /** Default value for the threshold to decide whether a pixel is opaque (>=) or transparent (<). */
     public static final int DEFAULT_ALPHA_TH = 1;
 
     private final IndexColorModel icm;
@@ -53,7 +51,7 @@ public final class InverseColorMapRasterOp implements RasterOp {
         hasAlpha = icm.hasAlpha();
         transparencyIndex = icm.getTransparentPixel();
         final int mapSize = icm.getMapSize();
-        final byte[][] colorMap = new byte[3][hasAlpha ? (mapSize - 1) : mapSize];
+        final byte[][] colorMap = new byte[3][hasAlpha ? mapSize - 1 : mapSize];
 
         if (hasAlpha) {
             final byte[] r = new byte[mapSize];
@@ -77,23 +75,11 @@ public final class InverseColorMapRasterOp implements RasterOp {
                 System.arraycopy(b, 0, colorMap[2], 0, transparencyIndex);
 
                 System.arraycopy(
-                        r,
-                        transparencyIndex + 1,
-                        colorMap[0],
-                        transparencyIndex,
-                        reducedMapSize - transparencyIndex);
+                        r, transparencyIndex + 1, colorMap[0], transparencyIndex, reducedMapSize - transparencyIndex);
                 System.arraycopy(
-                        g,
-                        transparencyIndex + 1,
-                        colorMap[1],
-                        transparencyIndex,
-                        reducedMapSize - transparencyIndex);
+                        g, transparencyIndex + 1, colorMap[1], transparencyIndex, reducedMapSize - transparencyIndex);
                 System.arraycopy(
-                        b,
-                        transparencyIndex + 1,
-                        colorMap[2],
-                        transparencyIndex,
-                        reducedMapSize - transparencyIndex);
+                        b, transparencyIndex + 1, colorMap[2], transparencyIndex, reducedMapSize - transparencyIndex);
             }
         } else {
             icm.getReds(colorMap[0]);
@@ -131,7 +117,7 @@ public final class InverseColorMapRasterOp implements RasterOp {
         final int dstMinX = src.getMinX();
         final int dstMinY = src.getMinY();
         final int numBands = src.getSampleModel().getNumBands();
-        final boolean sourceHasAlpha = (numBands % 2 == 0);
+        final boolean sourceHasAlpha = numBands % 2 == 0;
         final int alphaBand = sourceHasAlpha ? numBands - 1 : -1;
         final int[] rgba = new int[numBands];
         for (int y = srcMinY, y_ = dstMinY; y < srcMaxY; y++, y_++) {
@@ -139,12 +125,9 @@ public final class InverseColorMapRasterOp implements RasterOp {
                 src.getPixel(x, y, rgba);
                 if (!sourceHasAlpha
                         || !hasAlpha
-                        || (sourceHasAlpha && hasAlpha && rgba[alphaBand] >= this.alphaThreshold)) {
-                    int val =
-                            invCM.getIndexNearest(
-                                    rgba[0] & 0xff,
-                                    rgba[numBands == 1 ? 0 : 1] & 0xff,
-                                    rgba[numBands == 1 ? 0 : 2]);
+                        || sourceHasAlpha && hasAlpha && rgba[alphaBand] >= this.alphaThreshold) {
+                    int val = invCM.getIndexNearest(
+                            rgba[0] & 0xff, rgba[numBands == 1 ? 0 : 1] & 0xff, rgba[numBands == 1 ? 0 : 2]);
                     if (hasAlpha && val >= transparencyIndex) val++;
                     dest.setSample(x_, y_, 0, (byte) (val & 0xff));
                 } else dest.setSample(x_, y_, 0, transparencyIndex);

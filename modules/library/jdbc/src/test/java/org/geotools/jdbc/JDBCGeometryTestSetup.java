@@ -28,7 +28,6 @@ import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 
-@SuppressWarnings("PMD.JUnit4TestShouldUseBeforeAnnotation")
 public abstract class JDBCGeometryTestSetup extends JDBCDelegatingTestSetup {
 
     protected JDBCGeometryTestSetup(JDBCTestSetup delegate) {
@@ -57,23 +56,22 @@ public abstract class JDBCGeometryTestSetup extends JDBCDelegatingTestSetup {
 
     /** The list of geometry classes the datastore will be tested against. */
     protected List<Class> getGeometryClasses() {
-        return Arrays.asList(
-                new Class[] {
-                    Point.class,
-                    LineString.class,
-                    LinearRing.class,
-                    Polygon.class,
-                    MultiPoint.class,
-                    MultiLineString.class,
-                    MultiPolygon.class,
-                    Geometry.class,
-                    GeometryCollection.class
-                });
+        return Arrays.asList(new Class[] {
+            Point.class,
+            LineString.class,
+            LinearRing.class,
+            Polygon.class,
+            MultiPoint.class,
+            MultiLineString.class,
+            MultiPolygon.class,
+            Geometry.class,
+            GeometryCollection.class
+        });
     }
 
     /**
-     * Must remove the spatial table and all metadata associated to it, leaving the DBMS in a state
-     * where the same table can be re-created without issues
+     * Must remove the spatial table and all metadata associated to it, leaving the DBMS in a state where the same table
+     * can be re-created without issues
      */
     protected abstract void dropSpatialTable(String tableName) throws Exception;
 }

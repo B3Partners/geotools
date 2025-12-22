@@ -7,13 +7,13 @@
                                                                                 
         Version: $Id$              
      ======================================================================= -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                                  http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                                  https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.geotools</groupId>
     <artifactId>unsupported</artifactId>
-    <version>29-SNAPSHOT</version>
+    <version>35-SNAPSHOT</version>
   </parent>
 
   <!-- =========================================================== -->
@@ -70,85 +70,53 @@
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-process</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-render</artifactId>
-      <version>${project.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>org.jaitools</groupId>
-      <artifactId>jt-zonalstats</artifactId>
-      <version>${jt.version}</version>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>contour</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.jaitools</groupId>
-      <artifactId>jt-rangelookup</artifactId>
-      <version>${jt.version}</version>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>vectorize</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.jaitools</groupId>
-      <artifactId>jt-contour</artifactId>
-      <version>${jt.version}</version>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>jiffle-op</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.jaitools</groupId>
-      <artifactId>jt-vectorize</artifactId>
-      <version>${jt.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jaitools</groupId>
-      <artifactId>jt-utils</artifactId>
-      <version>${jt.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>it.geosolutions.jaiext.jiffle</groupId>
-      <artifactId>jt-jiffle-op</artifactId>
-      <version>${jaiext.version}</version>
-      <exclusions>
-        <exclusion>
-          <artifactId>jts</artifactId>
-          <groupId>com.vividsolutions</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>it.geosolutions.jaiext.classbreaks</groupId>
-      <artifactId>jt-classbreaks</artifactId>
-      <version>${jaiext.version}</version>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>classbreaks</artifactId>
     </dependency>
 
     <!-- Test dependencies -->
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-sample-data</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-shapefile</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-property</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-geotiff</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-epsg-hsql</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -159,13 +127,11 @@
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-xml</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-image</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

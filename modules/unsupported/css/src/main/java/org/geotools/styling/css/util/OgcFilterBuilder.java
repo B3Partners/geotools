@@ -20,6 +20,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.filter.identity.Identifier;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.visitor.SimplifyingFilterVisitor;
 import org.geotools.styling.css.selector.Accept;
@@ -33,11 +38,7 @@ import org.geotools.styling.css.selector.ScaleRange;
 import org.geotools.styling.css.selector.Selector;
 import org.geotools.styling.css.selector.SelectorVisitor;
 import org.geotools.styling.css.selector.TypeName;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.filter.identity.Identifier;
+import org.geotools.styling.css.selector.ZoomRange;
 
 /**
  * Turns a Selector into an OGC filter
@@ -48,7 +49,7 @@ public class OgcFilterBuilder implements SelectorVisitor {
 
     public static OgcFilterBuilder INSTANCE = new OgcFilterBuilder();
 
-    static final FilterFactory2 FF = CommonFactoryFinder.getFilterFactory2();
+    static final FilterFactory FF = CommonFactoryFinder.getFilterFactory();
 
     @Override
     public Object visit(Accept accept) {
@@ -124,6 +125,12 @@ public class OgcFilterBuilder implements SelectorVisitor {
 
     @Override
     public Object visit(ScaleRange scaleRange) {
+        // ignore, it has been handled elsewhere
+        return Filter.INCLUDE;
+    }
+
+    @Override
+    public Object visit(ZoomRange zoomRange) {
         // ignore, it has been handled elsewhere
         return Filter.INCLUDE;
     }

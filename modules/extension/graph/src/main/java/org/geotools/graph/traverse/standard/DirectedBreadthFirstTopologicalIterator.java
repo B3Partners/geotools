@@ -36,26 +36,24 @@ public class DirectedBreadthFirstTopologicalIterator extends AbstractGraphIterat
         m_queue = buildQueue(graph);
 
         // initialize nodes
-        graph.visitNodes(
-                component -> {
-                    DirectedNode node = (DirectedNode) component;
+        graph.visitNodes(component -> {
+            DirectedNode node = (DirectedNode) component;
 
-                    node.setVisited(false);
-                    node.setCount(0);
+            node.setVisited(false);
+            node.setCount(0);
 
-                    if (node.getInDegree() == 0) m_queue.add(node);
+            if (node.getInDegree() == 0) m_queue.add(node);
 
-                    return (0);
-                });
+            return 0;
+        });
     }
 
     @Override
     public Graphable next(GraphTraversal traversal) {
-        return (!m_queue.isEmpty() ? m_queue.remove() : null);
+        return !m_queue.isEmpty() ? m_queue.remove() : null;
     }
 
     @Override
-    @SuppressWarnings("PMD.ForLoopCanBeForeach")
     public void cont(Graphable current, GraphTraversal traversal) {
         // increment the count of all adjacent nodes by one
         // if the result count equal to the degree, place it into the queue
@@ -75,6 +73,6 @@ public class DirectedBreadthFirstTopologicalIterator extends AbstractGraphIterat
     }
 
     protected Queue<Graphable> buildQueue(Graph graph) {
-        return (new ArrayDeque<>(graph.getNodes().size()));
+        return new ArrayDeque<>(graph.getNodes().size());
     }
 }

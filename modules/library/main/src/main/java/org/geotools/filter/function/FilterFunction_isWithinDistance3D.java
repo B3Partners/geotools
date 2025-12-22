@@ -20,21 +20,20 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.operation.distance3d.Distance3DOp;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_isWithinDistance3D extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "isWithinDistance3D",
-                    Double.class,
-                    parameter("geometry1", Geometry.class),
-                    parameter("geometry2", Geometry.class),
-                    parameter("distance", Double.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "isWithinDistance3D",
+            Double.class,
+            parameter("geometry1", Geometry.class),
+            parameter("geometry2", Geometry.class),
+            parameter("distance", Double.class));
 
     public FilterFunction_isWithinDistance3D() {
         super(NAME);
@@ -63,7 +62,7 @@ public class FilterFunction_isWithinDistance3D extends FunctionExpressionImpl {
         }
 
         try { // attempt to get value and perform conversion
-            arg2 = (getExpression(2).evaluate(feature, Double.class)).doubleValue();
+            arg2 = getExpression(2).evaluate(feature, Double.class).doubleValue();
         } catch (Exception e) // probably a type error
         {
             throw new IllegalArgumentException(

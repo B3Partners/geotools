@@ -23,20 +23,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.geotools.data.DataStore;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.FileDataStoreFactorySpi;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.FileDataStoreFactorySpi;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.gen.info.GeneralizationInfosProviderImpl;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.simplify.TopologyPreservingSimplifier;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Utility class
@@ -54,8 +54,7 @@ public class Toolbox {
 
     static String MissingTargetDir = "Missing target directory ";
 
-    static String MissingGeneralizations =
-            "Missing generalization distances as comma seperated list ";
+    static String MissingGeneralizations = "Missing generalization distances as comma seperated list ";
 
     public static void main(String[] args) {
         Toolbox toolBox = new Toolbox();
@@ -120,31 +119,26 @@ public class Toolbox {
         prov.getGeneralizationInfos(xmlLocation);
     }
 
-    protected void generalizeShapeFile(
-            String shapeFileName, String targetDirName, String generalizations) throws IOException {
+    protected void generalizeShapeFile(String shapeFileName, String targetDirName, String generalizations)
+            throws IOException {
         File shapeFile = new File(shapeFileName);
         if (shapeFile.exists() == false) throw new IOException("Could not find " + shapeFileName);
-        DataStore shapeDS =
-                new ShapefileDataStoreFactory().createDataStore(shapeFile.toURI().toURL());
+        DataStore shapeDS = new ShapefileDataStoreFactory()
+                .createDataStore(shapeFile.toURI().toURL());
 
         File targetDir = new File(targetDirName);
         if (targetDir.exists() == false) throw new IOException("Could not find " + targetDir);
 
         String[] distanceStrings = generalizations.split(",");
         Double[] distanceArray = new Double[distanceStrings.length];
-        for (int i = 0; i < distanceStrings.length; i++)
-            distanceArray[i] = Double.valueOf(distanceStrings[i]);
+        for (int i = 0; i < distanceStrings.length; i++) distanceArray[i] = Double.valueOf(distanceStrings[i]);
 
         generalizeShapeFile(shapeFile, shapeDS, targetDir, distanceArray);
         shapeDS.dispose();
     }
 
-    @SuppressWarnings({
-        "PMD.CloseResource",
-        "PMD.UseTryWithResources"
-    }) // writers are actually closed
-    protected void generalizeShapeFile(
-            File shapeFile, DataStore shapeDS, File targetDir, Double[] distanceArray)
+    @SuppressWarnings({"PMD.CloseResource", "PMD.UseTryWithResources"}) // writers are actually closed
+    protected void generalizeShapeFile(File shapeFile, DataStore shapeDS, File targetDir, Double[] distanceArray)
             throws IOException {
         String typeName = shapeDS.getTypeNames()[0];
         SimpleFeatureSource fs = shapeDS.getFeatureSource(typeName);
@@ -167,9 +161,8 @@ public class Toolbox {
                     FeatureWriter<SimpleFeatureType, SimpleFeature> w = writers.get(i);
                     SimpleFeature genFeature = w.next();
                     genFeature.setAttributes(feature.getAttributes());
-                    Geometry newGeom =
-                            TopologyPreservingSimplifier.simplify(
-                                    (Geometry) feature.getDefaultGeometry(), distanceArray[i]);
+                    Geometry newGeom = TopologyPreservingSimplifier.simplify(
+                            (Geometry) feature.getDefaultGeometry(), distanceArray[i]);
                     genFeature.setDefaultGeometry(newGeom);
                     w.write();
                 }
@@ -191,8 +184,7 @@ public class Toolbox {
         }
     }
 
-    DataStore[] createDataStores(
-            File shapeFile, File targetDir, SimpleFeatureType ft, Double[] distanceArray)
+    DataStore[] createDataStores(File shapeFile, File targetDir, SimpleFeatureType ft, Double[] distanceArray)
             throws IOException {
 
         FileDataStoreFactorySpi factory = new ShapefileDataStoreFactory();
@@ -208,8 +200,7 @@ public class Toolbox {
         for (int i = 0; i < distanceArray.length; i++) {
 
             String newShapeFileDirName = targetDir.getAbsolutePath();
-            if (newShapeFileDirName.endsWith(File.separator) == false)
-                newShapeFileDirName += File.separator;
+            if (newShapeFileDirName.endsWith(File.separator) == false) newShapeFileDirName += File.separator;
             newShapeFileDirName += distanceArray[i] + File.separator;
 
             File dir = new File(newShapeFileDirName);

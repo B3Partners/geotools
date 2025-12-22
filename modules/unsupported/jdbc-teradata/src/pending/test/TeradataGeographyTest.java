@@ -19,14 +19,14 @@ package org.geotools.data.teradata;
 import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.jdbc.JDBCGeographyTest;
 import org.geotools.jdbc.JDBCGeographyTestSetup;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
 /**
  * 
  *
 
  */
-@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
+@SuppressWarnings("PMD.UnitTestShouldUseTestAnnotation") // not yet a JUnit4 test
 public class TeradataGeographyTest extends JDBCGeographyTest {
 
 

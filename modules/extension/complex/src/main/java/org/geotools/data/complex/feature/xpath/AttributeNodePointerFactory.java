@@ -21,11 +21,11 @@ import java.util.Locale;
 import org.apache.commons.jxpath.ri.QName;
 import org.apache.commons.jxpath.ri.model.NodePointer;
 import org.apache.commons.jxpath.ri.model.NodePointerFactory;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.ComplexType;
+import org.geotools.api.feature.Attribute;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.ComplexType;
 
 /**
  * A node factory which creates special node pointers featurs.
@@ -54,12 +54,12 @@ public class AttributeNodePointerFactory implements NodePointerFactory {
          * Do not handle SimpleFeature, which should be handled by FeatureNodeFactory, registered by
          * XPathPropertyAccessorFactory in gt-xsd-core. See GEOS-3525.
          */
-        if (object instanceof Attribute && !(object instanceof SimpleFeature)) {
-            return new AttributeNodePointer(null, (Attribute) object, name);
+        if (object instanceof Attribute attribute && !(object instanceof SimpleFeature)) {
+            return new AttributeNodePointer(null, attribute, name);
         }
 
-        if (object instanceof ComplexType && !(object instanceof SimpleFeatureType)) {
-            return new FeatureTypePointer(null, (ComplexType) object, name);
+        if (object instanceof ComplexType type && !(object instanceof SimpleFeatureType)) {
+            return new FeatureTypePointer(null, type, name);
         }
 
         return null;
@@ -72,12 +72,12 @@ public class AttributeNodePointerFactory implements NodePointerFactory {
          * Do not handle SimpleFeature, which should be handled by FeatureNodeFactory, registered by
          * XPathPropertyAccessorFactory in gt-xsd-core. See GEOS-3525.
          */
-        if (object instanceof Attribute && !(object instanceof SimpleFeature)) {
-            return new AttributeNodePointer(parent, (Attribute) object, name);
+        if (object instanceof Attribute attribute && !(object instanceof SimpleFeature)) {
+            return new AttributeNodePointer(parent, attribute, name);
         }
 
-        if (object instanceof ComplexType && !(object instanceof SimpleFeatureType)) {
-            return new FeatureTypePointer(null, (ComplexType) object, name);
+        if (object instanceof ComplexType type && !(object instanceof SimpleFeatureType)) {
+            return new FeatureTypePointer(null, type, name);
         }
 
         return null;

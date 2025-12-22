@@ -20,32 +20,34 @@
 package org.geotools.parameter;
 
 import java.io.File;
+import java.io.Serial;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.text.MessageFormat;
+import java.util.Objects;
 import java.util.Set;
 import javax.measure.Unit;
 import javax.measure.UnitConverter;
+import org.geotools.api.parameter.InvalidParameterTypeException;
+import org.geotools.api.parameter.InvalidParameterValueException;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.util.CodeList;
 import org.geotools.measure.Units;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.util.Classes;
 import org.geotools.util.Utilities;
-import org.opengis.parameter.InvalidParameterTypeException;
-import org.opengis.parameter.InvalidParameterValueException;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.util.CodeList;
 import si.uom.NonSI;
 import si.uom.SI;
 import tech.units.indriya.AbstractUnit;
 
 /**
- * A parameter value used by an operation method. Most CRS parameter values are numeric, but other
- * types of parameter values are possible. The parameter type can be fetch with the <code>
- * {@linkplain #getValue()}.{@linkplain Object#getClass() getClass()}</code> idiom. The {@link
- * #getValue()} and {@link #setValue(Object)} methods can be invoked at any time. Others getters and
- * setters are parameter-type dependents.
+ * A parameter value used by an operation method. Most CRS parameter values are numeric, but other types of parameter
+ * values are possible. The parameter type can be fetch with the <code>
+ * {@linkplain #getValue()}.{@linkplain Object#getClass() getClass()}</code> idiom. The {@link #getValue()} and
+ * {@link #setValue(Object)} methods can be invoked at any time. Others getters and setters are parameter-type
+ * dependents.
  *
  * @param <T> The value type.
  * @since 2.1
@@ -57,6 +59,7 @@ import tech.units.indriya.AbstractUnit;
  */
 public class Parameter<T> extends AbstractParameter implements ParameterValue<T> {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -5837826787089486776L;
 
     /** The value. */
@@ -66,8 +69,8 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
     private Unit<?> unit;
 
     /**
-     * Constructs a parameter value from the specified descriptor. The value will be initialized to
-     * the default value, if any.
+     * Constructs a parameter value from the specified descriptor. The value will be initialized to the default value,
+     * if any.
      *
      * @param descriptor The abstract definition of this parameter.
      */
@@ -82,22 +85,19 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
      *
      * @param descriptor The abstract definition of this parameter.
      * @param value The parameter value.
-     * @throws InvalidParameterValueException if the type of {@code value} is inappropriate for this
-     *     parameter, or if the value is illegal for some other reason (for example the value is
-     *     numeric and out of range).
+     * @throws InvalidParameterValueException if the type of {@code value} is inappropriate for this parameter, or if
+     *     the value is illegal for some other reason (for example the value is numeric and out of range).
      */
-    public Parameter(final ParameterDescriptor<T> descriptor, final T value)
-            throws InvalidParameterValueException {
+    public Parameter(final ParameterDescriptor<T> descriptor, final T value) throws InvalidParameterValueException {
         super(descriptor);
         unit = descriptor.getUnit();
         setValue(value);
     }
 
     /**
-     * Constructs a parameter from the specified name and value. This convenience constructor
-     * creates a {@link DefaultParameterDescriptor} object. But if such an object is available, then
-     * the preferred way to get a {@code ParameterValue} is to invoke {@link
-     * ParameterDescriptor#createValue}.
+     * Constructs a parameter from the specified name and value. This convenience constructor creates a
+     * {@link DefaultParameterDescriptor} object. But if such an object is available, then the preferred way to get a
+     * {@code ParameterValue} is to invoke {@link ParameterDescriptor#createValue}.
      *
      * @param name The parameter name.
      * @param value The parameter value.
@@ -113,10 +113,9 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
     }
 
     /**
-     * Constructs a parameter from the specified name and value. This convenience constructor
-     * creates a {@link DefaultParameterDescriptor} object. But if such an object is available, then
-     * the preferred way to get a {@code ParameterValue} is to invoke {@link
-     * ParameterDescriptor#createValue}.
+     * Constructs a parameter from the specified name and value. This convenience constructor creates a
+     * {@link DefaultParameterDescriptor} object. But if such an object is available, then the preferred way to get a
+     * {@code ParameterValue} is to invoke {@link ParameterDescriptor#createValue}.
      *
      * @param name The parameter name.
      * @param value The parameter value.
@@ -131,9 +130,8 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
             else if (SI.DAY.isCompatible(unit)) unit = SI.DAY;
             else if (NonSI.DEGREE_ANGLE.isCompatible(unit)) unit = NonSI.DEGREE_ANGLE;
         }
-        final ParameterDescriptor<Double> descriptor =
-                DefaultParameterDescriptor.create(
-                        name, Double.NaN, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, unit);
+        final ParameterDescriptor<Double> descriptor = DefaultParameterDescriptor.create(
+                name, Double.NaN, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, unit);
         final Parameter<Double> parameter = new Parameter<>(descriptor);
         parameter.value = value;
         parameter.unit = unit;
@@ -142,9 +140,8 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
 
     /**
      * Constructs a parameter from the specified code list. This convenience constructor creates a
-     * {@link DefaultParameterDescriptor} object. But if such an object is available, then the
-     * preferred way to get a {@code ParameterValue} is to invoke {@link
-     * ParameterDescriptor#createValue}.
+     * {@link DefaultParameterDescriptor} object. But if such an object is available, then the preferred way to get a
+     * {@code ParameterValue} is to invoke {@link ParameterDescriptor#createValue}.
      *
      * @param  <T> The parameter type.
      * @param name The parameter name.
@@ -153,38 +150,33 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
      * @return A new parameter instance for the given name and value.
      * @since 2.5
      */
-    public static <T extends CodeList> Parameter<T> create(
-            final String name, final Class<T> type, final T value) {
-        final ParameterDescriptor<T> descriptor =
-                DefaultParameterDescriptor.create(name, null, type, null, true);
+    public static <T extends CodeList> Parameter<T> create(final String name, final Class<T> type, final T value) {
+        final ParameterDescriptor<T> descriptor = DefaultParameterDescriptor.create(name, null, type, null, true);
         final Parameter<T> parameter = new Parameter<>(descriptor);
         parameter.value = value;
         return parameter;
     }
 
     /**
-     * Ensures that the given value is valid according the specified parameter descriptor. This
-     * convenience method ensures that {@code value} is assignable to the {@linkplain
-     * ParameterDescriptor#getValueClass expected class}, is between the {@linkplain
-     * ParameterDescriptor#getMinimumValue minimum} and {@linkplain
-     * ParameterDescriptor#getMaximumValue maximum} values and is one of the {@linkplain
-     * ParameterDescriptor#getValidValues set of valid values}. If the value fails any of those
-     * tests, then an exception is thrown.
+     * Ensures that the given value is valid according the specified parameter descriptor. This convenience method
+     * ensures that {@code value} is assignable to the {@linkplain ParameterDescriptor#getValueClass expected class}, is
+     * between the {@linkplain ParameterDescriptor#getMinimumValue minimum} and
+     * {@linkplain ParameterDescriptor#getMaximumValue maximum} values and is one of the
+     * {@linkplain ParameterDescriptor#getValidValues set of valid values}. If the value fails any of those tests, then
+     * an exception is thrown.
      *
      * <p>This method is similar to <code>{@linkplain Parameters#isValid
-     * Parameters#isValid}(descriptor, value)</code> except that the exception contains an error
-     * message formatted with a description of the failure reason.
+     * Parameters#isValid}(descriptor, value)</code> except that the exception contains an error message formatted with
+     * a description of the failure reason.
      *
-     * @param  <T> The type of parameter value. The given {@code value} should typically be an
-     *     instance of this class. This is not required by this method signature but is checked by
-     *     this method implementation.
+     * @param  <T> The type of parameter value. The given {@code value} should typically be an instance of this class.
+     *     This is not required by this method signature but is checked by this method implementation.
      * @param descriptor The parameter descriptor to check against.
      * @param value The value to check, or {@code null}.
      * @return The value casted to the descriptor parameterized type.
      * @throws InvalidParameterValueException if the parameter value is invalid.
      */
-    public static <T> T ensureValidValue(
-            final ParameterDescriptor<T> descriptor, final Object value)
+    public static <T> T ensureValidValue(final ParameterDescriptor<T> descriptor, final Object value)
             throws InvalidParameterValueException {
         if (value == null) {
             return null;
@@ -192,24 +184,19 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
         final String error;
         final Class<T> type = descriptor.getValueClass();
         if (!type.isInstance(value)) {
-            error =
-                    Errors.format(
-                            ErrorKeys.ILLEGAL_OPERATION_FOR_VALUE_CLASS_$1,
-                            Classes.getClass(value));
+            error = MessageFormat.format(ErrorKeys.ILLEGAL_OPERATION_FOR_VALUE_CLASS_$1, Classes.getClass(value));
         } else {
             @SuppressWarnings("unchecked") // Type checked in the above test case.
             final Comparable<Object> minimum = (Comparable) descriptor.getMinimumValue();
             @SuppressWarnings("unchecked")
             final Comparable<Object> maximum = (Comparable) descriptor.getMaximumValue();
-            if ((minimum != null && minimum.compareTo(value) > 0)
-                    || (maximum != null && maximum.compareTo(value) < 0)) {
-                error = Errors.format(ErrorKeys.VALUE_OUT_OF_BOUNDS_$3, value, minimum, maximum);
+            if (minimum != null && minimum.compareTo(value) > 0 || maximum != null && maximum.compareTo(value) < 0) {
+                error = MessageFormat.format(ErrorKeys.VALUE_OUT_OF_BOUNDS_$3, value, minimum, maximum);
             } else {
                 final Set<?> validValues = descriptor.getValidValues();
                 if (validValues != null && !validValues.contains(value)) {
-                    error =
-                            Errors.format(
-                                    ErrorKeys.ILLEGAL_ARGUMENT_$2, getName(descriptor), value);
+                    final Object arg0 = getName(descriptor);
+                    error = MessageFormat.format(ErrorKeys.ILLEGAL_ARGUMENT_$2, arg0, value);
                 } else {
                     return type.cast(value);
                 }
@@ -220,9 +207,8 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
 
     /** Format an error message for illegal method call for the current value type. */
     private String getClassTypeError() {
-        return Errors.format(
-                ErrorKeys.ILLEGAL_OPERATION_FOR_VALUE_CLASS_$1,
-                ((ParameterDescriptor) descriptor).getValueClass());
+        final Object arg0 = ((ParameterDescriptor) descriptor).getValueClass();
+        return MessageFormat.format(ErrorKeys.ILLEGAL_OPERATION_FOR_VALUE_CLASS_$1, arg0);
     }
 
     /** Returns the abstract definition of this parameter. */
@@ -233,9 +219,9 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
     }
 
     /**
-     * Returns the unit of measure of the {@linkplain #doubleValue() parameter value}. If the
-     * parameter value has no unit (for example because it is a {@link String} type), then this
-     * method returns {@code null}. Note that "no unit" doesn't means "dimensionless".
+     * Returns the unit of measure of the {@linkplain #doubleValue() parameter value}. If the parameter value has no
+     * unit (for example because it is a {@link String} type), then this method returns {@code null}. Note that "no
+     * unit" doesn't means "dimensionless".
      *
      * @return The unit of measure, or {@code null} if none.
      * @see #doubleValue()
@@ -248,21 +234,19 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
     }
 
     /**
-     * Returns the unit type as one of error message code. Used for checking unit with a better
-     * error message formatting if needed.
+     * Returns the unit type as one of error message code. Used for checking unit with a better error message formatting
+     * if needed.
      *
-     * <p>Note: It is difficult to differentiate scale and angular units, since both of them are
-     * dimensionless. However, in EPSG database version 6.7, there is only 3 scale units and all of
-     * them maps to {@link AbstractUnit#ONE} or {@link Units#PPM}. Consequently, they are hard-coded
-     * and treated especially by this method.
+     * <p>Note: It is difficult to differentiate scale and angular units, since both of them are dimensionless. However,
+     * in EPSG database version 6.7, there is only 3 scale units and all of them maps to {@link AbstractUnit#ONE} or
+     * {@link Units#PPM}. Consequently, they are hard-coded and treated especially by this method.
      *
-     * @todo Provides a better way to differentiate scale units (currently AbstractUnit.ONE) and
-     *     angular units. Both are dimensionless...
+     * @todo Provides a better way to differentiate scale units (currently AbstractUnit.ONE) and angular units. Both are
+     *     dimensionless...
      */
-    static int getUnitMessageID(final Unit<?> unit) {
+    static String getUnitMessageID(final Unit<?> unit) {
         // Note: ONE must be tested before RADIAN.
-        if (AbstractUnit.ONE.isCompatible(unit) || Units.PPM.equals(unit))
-            return ErrorKeys.NON_SCALE_UNIT_$1;
+        if (AbstractUnit.ONE.isCompatible(unit) || Units.PPM.equals(unit)) return ErrorKeys.NON_SCALE_UNIT_$1;
         if (SI.METRE.isCompatible(unit)) return ErrorKeys.NON_LINEAR_UNIT_$1;
         if (SI.SECOND.isCompatible(unit)) return ErrorKeys.NON_TEMPORAL_UNIT_$1;
         if (SI.RADIAN.isCompatible(unit)) return ErrorKeys.NON_ANGULAR_UNIT_$1;
@@ -270,12 +254,12 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
     }
 
     /**
-     * Returns the numeric value of the coordinate operation parameter in the specified unit of
-     * measure. This convenience method apply unit conversion on the fly as needed.
+     * Returns the numeric value of the coordinate operation parameter in the specified unit of measure. This
+     * convenience method apply unit conversion on the fly as needed.
      *
      * @param unit The unit of measure for the value to be returned.
-     * @return The numeric value represented by this parameter after conversion to type {@code
-     *     double} and conversion to {@code unit}.
+     * @return The numeric value represented by this parameter after conversion to type {@code double} and conversion to
+     *     {@code unit}.
      * @throws InvalidParameterTypeException if the value is not a numeric type.
      * @throws IllegalArgumentException if the specified unit is invalid for this parameter.
      * @see #getUnit
@@ -288,19 +272,18 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
             throw unitlessParameter(descriptor);
         }
         ensureNonNull("unit", unit);
-        final int expectedID = getUnitMessageID(this.unit);
-        if (getUnitMessageID(unit) != expectedID) {
-            throw new IllegalArgumentException(Errors.format(expectedID, unit));
+        final String expectedID = getUnitMessageID(this.unit);
+        if (!Objects.equals(getUnitMessageID(unit), expectedID)) {
+            throw new IllegalArgumentException(MessageFormat.format(expectedID, unit));
         }
         return Units.getConverterToAny(this.unit, unit).convert(doubleValue());
     }
 
     /**
-     * Returns the numeric value of the coordinate operation parameter with its associated
-     * {@linkplain #getUnit unit of measure}.
+     * Returns the numeric value of the coordinate operation parameter with its associated {@linkplain #getUnit unit of
+     * measure}.
      *
-     * @return The numeric value represented by this parameter after conversion to type {@code
-     *     double}.
+     * @return The numeric value represented by this parameter after conversion to type {@code double}.
      * @throws InvalidParameterTypeException if the value is not a numeric type.
      * @see #getUnit
      * @see #setValue(double)
@@ -308,21 +291,21 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
      */
     @Override
     public double doubleValue() throws InvalidParameterTypeException {
-        if (value instanceof Number) {
-            return ((Number) value).doubleValue();
+        if (value instanceof Number number) {
+            return number.doubleValue();
         }
         final String name = getName(descriptor);
         if (value == null) {
             // This is the kind of exception expected by org.geotools.referencing.wkt.Formatter.
-            throw new IllegalStateException(Errors.format(ErrorKeys.MISSING_PARAMETER_$1, name));
+            throw new IllegalStateException(MessageFormat.format(ErrorKeys.MISSING_PARAMETER_$1, name));
         }
         // Reminder: the following is a specialization of IllegalStateException.
         throw new InvalidParameterTypeException(getClassTypeError(), name);
     }
 
     /**
-     * Returns the positive integer value of an operation parameter, usually used for a count. An
-     * integer value does not have an associated unit of measure.
+     * Returns the positive integer value of an operation parameter, usually used for a count. An integer value does not
+     * have an associated unit of measure.
      *
      * @return The numeric value represented by this parameter after conversion to type {@code int}.
      * @throws InvalidParameterTypeException if the value is not an integer type.
@@ -331,19 +314,18 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
      */
     @Override
     public int intValue() throws InvalidParameterTypeException {
-        if (value instanceof Number) {
-            return ((Number) value).intValue();
+        if (value instanceof Number number) {
+            return number.intValue();
         }
         final String name = getName(descriptor);
         if (value == null) {
-            throw new IllegalStateException(Errors.format(ErrorKeys.MISSING_PARAMETER_$1, name));
+            throw new IllegalStateException(MessageFormat.format(ErrorKeys.MISSING_PARAMETER_$1, name));
         }
         throw new InvalidParameterTypeException(getClassTypeError(), name);
     }
 
     /**
-     * Returns the boolean value of an operation parameter. A boolean value does not have an
-     * associated unit of measure.
+     * Returns the boolean value of an operation parameter. A boolean value does not have an associated unit of measure.
      *
      * @return The boolean value represented by this parameter.
      * @throws InvalidParameterTypeException if the value is not a boolean type.
@@ -351,19 +333,18 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
      */
     @Override
     public boolean booleanValue() throws InvalidParameterTypeException {
-        if (value instanceof Boolean) {
-            return ((Boolean) value).booleanValue();
+        if (value instanceof Boolean boolean1) {
+            return boolean1.booleanValue();
         }
         final String name = getName(descriptor);
         if (value == null) {
-            throw new IllegalStateException(Errors.format(ErrorKeys.MISSING_PARAMETER_$1, name));
+            throw new IllegalStateException(MessageFormat.format(ErrorKeys.MISSING_PARAMETER_$1, name));
         }
         throw new InvalidParameterTypeException(getClassTypeError(), name);
     }
 
     /**
-     * Returns the string value of an operation parameter. A string value does not have an
-     * associated unit of measure.
+     * Returns the string value of an operation parameter. A string value does not have an associated unit of measure.
      *
      * @return The string value represented by this parameter.
      * @throws InvalidParameterTypeException if the value is not a string.
@@ -377,18 +358,18 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
         }
         final String name = getName(descriptor);
         if (value == null) {
-            throw new IllegalStateException(Errors.format(ErrorKeys.MISSING_PARAMETER_$1, name));
+            throw new IllegalStateException(MessageFormat.format(ErrorKeys.MISSING_PARAMETER_$1, name));
         }
         throw new InvalidParameterTypeException(getClassTypeError(), name);
     }
 
     /**
-     * Returns an ordered sequence of numeric values in the specified unit of measure. This
-     * convenience method apply unit conversion on the fly as needed.
+     * Returns an ordered sequence of numeric values in the specified unit of measure. This convenience method apply
+     * unit conversion on the fly as needed.
      *
      * @param unit The unit of measure for the value to be returned.
-     * @return The sequence of values represented by this parameter after conversion to type {@code
-     *     double} and conversion to {@code unit}.
+     * @return The sequence of values represented by this parameter after conversion to type {@code double} and
+     *     conversion to {@code unit}.
      * @throws InvalidParameterTypeException if the value is not an array of {@code double}s.
      * @throws IllegalArgumentException if the specified unit is invalid for this parameter.
      * @see #getUnit
@@ -401,9 +382,9 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
             throw unitlessParameter(descriptor);
         }
         ensureNonNull("unit", unit);
-        final int expectedID = getUnitMessageID(this.unit);
-        if (getUnitMessageID(unit) != expectedID) {
-            throw new IllegalArgumentException(Errors.format(expectedID, unit));
+        final String expectedID = getUnitMessageID(this.unit);
+        if (!Objects.equals(getUnitMessageID(unit), expectedID)) {
+            throw new IllegalArgumentException(MessageFormat.format(expectedID, unit));
         }
         UnitConverter converter = Units.getConverterToAny(this.unit, unit);
         final double[] values = doubleValueList().clone();
@@ -414,8 +395,8 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
     }
 
     /**
-     * Returns an ordered sequence of two or more numeric values of an operation parameter list,
-     * where each value has the same associated {@linkplain Unit unit of measure}.
+     * Returns an ordered sequence of two or more numeric values of an operation parameter list, where each value has
+     * the same associated {@linkplain Unit unit of measure}.
      *
      * @return The sequence of values represented by this parameter.
      * @throws InvalidParameterTypeException if the value is not an array of {@code double}s.
@@ -425,19 +406,19 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
      */
     @Override
     public double[] doubleValueList() throws InvalidParameterTypeException {
-        if (value instanceof double[]) {
-            return (double[]) value;
+        if (value instanceof double[] doubles) {
+            return doubles;
         }
         final String name = getName(descriptor);
         if (value == null) {
-            throw new IllegalStateException(Errors.format(ErrorKeys.MISSING_PARAMETER_$1, name));
+            throw new IllegalStateException(MessageFormat.format(ErrorKeys.MISSING_PARAMETER_$1, name));
         }
         throw new InvalidParameterTypeException(getClassTypeError(), name);
     }
 
     /**
-     * Returns an ordered sequence of two or more integer values of an operation parameter list,
-     * usually used for counts. These integer values do not have an associated unit of measure.
+     * Returns an ordered sequence of two or more integer values of an operation parameter list, usually used for
+     * counts. These integer values do not have an associated unit of measure.
      *
      * @return The sequence of values represented by this parameter.
      * @throws InvalidParameterTypeException if the value is not an array of {@code int}s.
@@ -446,21 +427,21 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
      */
     @Override
     public int[] intValueList() throws InvalidParameterTypeException {
-        if (value instanceof int[]) {
-            return (int[]) value;
+        if (value instanceof int[] ints) {
+            return ints;
         }
         final String name = getName(descriptor);
         if (value == null) {
-            throw new IllegalStateException(Errors.format(ErrorKeys.MISSING_PARAMETER_$1, name));
+            throw new IllegalStateException(MessageFormat.format(ErrorKeys.MISSING_PARAMETER_$1, name));
         }
         throw new InvalidParameterTypeException(getClassTypeError(), name);
     }
 
     /**
-     * Returns a reference to a file or a part of a file containing one or more parameter values.
-     * When referencing a part of a file, that file must contain multiple identified parts, such as
-     * an XML encoded document. Furthermore, the referenced file or part of a file can reference
-     * another part of the same or different files, as allowed in XML documents.
+     * Returns a reference to a file or a part of a file containing one or more parameter values. When referencing a
+     * part of a file, that file must contain multiple identified parts, such as an XML encoded document. Furthermore,
+     * the referenced file or part of a file can reference another part of the same or different files, as allowed in
+     * XML documents.
      *
      * @return The reference to a file containing parameter values.
      * @throws InvalidParameterTypeException if the value is not a reference to a file or an URI.
@@ -469,19 +450,19 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
      */
     @Override
     public URI valueFile() throws InvalidParameterTypeException {
-        if (value instanceof URI) {
-            return (URI) value;
+        if (value instanceof URI rI) {
+            return rI;
         }
-        if (value instanceof File) {
-            return ((File) value).toURI();
+        if (value instanceof File file) {
+            return file.toURI();
         }
         Exception cause = null;
         try {
-            if (value instanceof URL) {
-                return ((URL) value).toURI();
+            if (value instanceof URL rL) {
+                return rL.toURI();
             }
-            if (value instanceof String) {
-                return new URI((String) value);
+            if (value instanceof String string) {
+                return new URI(string);
             }
         } catch (URISyntaxException exception) {
             cause = exception;
@@ -491,10 +472,9 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
          */
         final String name = getName(descriptor);
         if (value == null) {
-            throw new IllegalStateException(Errors.format(ErrorKeys.MISSING_PARAMETER_$1, name));
+            throw new IllegalStateException(MessageFormat.format(ErrorKeys.MISSING_PARAMETER_$1, name));
         }
-        final InvalidParameterTypeException exception =
-                new InvalidParameterTypeException(getClassTypeError(), name);
+        final InvalidParameterTypeException exception = new InvalidParameterTypeException(getClassTypeError(), name);
         if (cause != null) {
             exception.initCause(cause);
         }
@@ -502,9 +482,8 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
     }
 
     /**
-     * Returns the parameter value as an object. The object type is typically a {@link Double},
-     * {@link Integer}, {@link Boolean}, {@link String}, {@link URI}, {@code double[]} or {@code
-     * int[]}.
+     * Returns the parameter value as an object. The object type is typically a {@link Double}, {@link Integer},
+     * {@link Boolean}, {@link String}, {@link URI}, {@code double[]} or {@code int[]}.
      *
      * @return The parameter value as an object.
      * @see #setValue(Object)
@@ -519,9 +498,8 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
      *
      * @param value The parameter value.
      * @param unit The unit for the specified value.
-     * @throws InvalidParameterValueException if the floating point type is inappropriate for this
-     *     parameter, or if the value is illegal for some other reason (for example a value out of
-     *     range).
+     * @throws InvalidParameterValueException if the floating point type is inappropriate for this parameter, or if the
+     *     value is illegal for some other reason (for example a value out of range).
      * @see #setValue(double)
      * @see #doubleValue(Unit)
      */
@@ -534,10 +512,10 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
         if (targetUnit == null) {
             throw unitlessParameter(descriptor);
         }
-        final int expectedID = getUnitMessageID(targetUnit);
-        if (getUnitMessageID(unit) != expectedID) {
+        final String expectedID = getUnitMessageID(targetUnit);
+        if (!Objects.equals(getUnitMessageID(unit), expectedID)) {
             throw new InvalidParameterValueException(
-                    Errors.format(expectedID, unit), descriptor.getName().getCode(), value);
+                    MessageFormat.format(expectedID, unit), descriptor.getName().getCode(), value);
         }
         Double converted = Units.getConverterToAny(unit, targetUnit).convert(value);
         ensureValidValue(descriptor, converted);
@@ -551,9 +529,8 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
      * Sets the parameter value as a floating point. The unit, if any, stay unchanged.
      *
      * @param value The parameter value.
-     * @throws InvalidParameterValueException if the floating point type is inappropriate for this
-     *     parameter, or if the value is illegal for some other reason (for example a value out of
-     *     range).
+     * @throws InvalidParameterValueException if the floating point type is inappropriate for this parameter, or if the
+     *     value is illegal for some other reason (for example a value out of range).
      * @see #setValue(double,Unit)
      * @see #doubleValue()
      */
@@ -569,9 +546,8 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
      * Sets the parameter value as an integer.
      *
      * @param value The parameter value.
-     * @throws InvalidParameterValueException if the integer type is inappropriate for this
-     *     parameter, or if the value is illegal for some other reason (for example a value out of
-     *     range).
+     * @throws InvalidParameterValueException if the integer type is inappropriate for this parameter, or if the value
+     *     is illegal for some other reason (for example a value out of range).
      * @see #intValue
      */
     @Override
@@ -591,8 +567,7 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
      * Sets the parameter value as a boolean.
      *
      * @param value The parameter value.
-     * @throws InvalidParameterValueException if the boolean type is inappropriate for this
-     *     parameter.
+     * @throws InvalidParameterValueException if the boolean type is inappropriate for this parameter.
      * @see #booleanValue
      */
     @Override
@@ -604,13 +579,12 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
     }
 
     /**
-     * Set the parameter value as an object. The object type is typically a {@link Double}, {@link
-     * Integer}, {@link Boolean}, {@link String}, {@link URI}, {@code double[]} or {@code int[]}.
+     * Set the parameter value as an object. The object type is typically a {@link Double}, {@link Integer},
+     * {@link Boolean}, {@link String}, {@link URI}, {@code double[]} or {@code int[]}.
      *
      * @param value The parameter value.
-     * @throws InvalidParameterValueException if the type of {@code value} is inappropriate for this
-     *     parameter, or if the value is illegal for some other reason (for example the value is
-     *     numeric and out of range).
+     * @throws InvalidParameterValueException if the type of {@code value} is inappropriate for this parameter, or if
+     *     the value is illegal for some other reason (for example the value is numeric and out of range).
      * @see #getValue
      */
     @Override
@@ -625,13 +599,11 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
      *
      * @param values The parameter values.
      * @param unit The unit for the specified value.
-     * @throws InvalidParameterValueException if the floating point type is inappropriate for this
-     *     parameter, or if the value is illegal for some other reason (for example a value out of
-     *     range).
+     * @throws InvalidParameterValueException if the floating point type is inappropriate for this parameter, or if the
+     *     value is illegal for some other reason (for example a value out of range).
      */
     @Override
-    public void setValue(double[] values, final Unit<?> unit)
-            throws InvalidParameterValueException {
+    public void setValue(double[] values, final Unit<?> unit) throws InvalidParameterValueException {
         ensureNonNull("unit", unit);
         @SuppressWarnings("unchecked") // Checked by constructor.
         final ParameterDescriptor<T> descriptor = (ParameterDescriptor) this.descriptor;
@@ -639,9 +611,9 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
         if (targetUnit == null) {
             throw unitlessParameter(descriptor);
         }
-        final int expectedID = getUnitMessageID(targetUnit);
-        if (getUnitMessageID(unit) != expectedID) {
-            throw new IllegalArgumentException(Errors.format(expectedID, unit));
+        final String expectedID = getUnitMessageID(targetUnit);
+        if (!Objects.equals(getUnitMessageID(unit), expectedID)) {
+            throw new IllegalArgumentException(MessageFormat.format(expectedID, unit));
         }
         final double[] converted = values.clone();
         UnitConverter converter = Units.getConverterToAny(unit, targetUnit);
@@ -666,8 +638,7 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
         }
         if (super.equals(object)) {
             final Parameter that = (Parameter) object;
-            return Utilities.equals(this.value, that.value)
-                    && Utilities.equals(this.unit, that.unit);
+            return Utilities.equals(this.value, that.value) && Utilities.equals(this.unit, that.unit);
         }
         return false;
     }
@@ -675,8 +646,7 @@ public class Parameter<T> extends AbstractParameter implements ParameterValue<T>
     /**
      * Returns a hash value for this parameter.
      *
-     * @return The hash code value. This value doesn't need to be the same in past or future
-     *     versions of this class.
+     * @return The hash code value. This value doesn't need to be the same in past or future versions of this class.
      */
     @Override
     public int hashCode() {

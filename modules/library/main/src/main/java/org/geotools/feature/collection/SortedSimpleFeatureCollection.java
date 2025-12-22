@@ -17,16 +17,15 @@
 package org.geotools.feature.collection;
 
 import java.io.IOException;
+import org.geotools.api.filter.sort.SortBy;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.sort.SortedFeatureIterator;
 import org.geotools.util.factory.Hints;
-import org.opengis.filter.sort.SortBy;
 
 /**
- * A wrapper that will sort a feature collection using a size sensitive algorithm, in main memory
- * for small collections, using secondary memory otherwise. The threshold is defined by the {@link
- * Hints#MAX_MEMORY_SORT} feature count
+ * A wrapper that will sort a feature collection using a size sensitive algorithm, in main memory for small collections,
+ * using secondary memory otherwise. The threshold is defined by the {@link Hints#MAX_MEMORY_SORT} feature count
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -40,22 +39,19 @@ public class SortedSimpleFeatureCollection extends DecoratingSimpleFeatureCollec
         this.sort = sort;
     }
 
-    public SortedSimpleFeatureCollection(
-            SimpleFeatureCollection delegate, SortBy[] sort, int maxMemoryFeatures) {
+    public SortedSimpleFeatureCollection(SimpleFeatureCollection delegate, SortBy[] sort, int maxMemoryFeatures) {
         super(delegate);
         this.sort = sort;
         this.maxMemoryFeatures = maxMemoryFeatures;
     }
 
     @Override
-    @SuppressWarnings("PMD.CloseResource")
     public SimpleFeatureIterator features() {
         try {
             SimpleFeatureIterator features = delegate.features();
             // sort if necessary
             if (sort != null) {
-                features =
-                        new SortedFeatureIterator(features, getSchema(), sort, maxMemoryFeatures);
+                features = new SortedFeatureIterator(features, getSchema(), sort, maxMemoryFeatures);
             }
             return features;
         } catch (IOException e) {

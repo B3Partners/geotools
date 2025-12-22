@@ -27,7 +27,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.filter.Filter;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.gce.imagemosaic.acceptors.ColorCheckAcceptor;
 import org.geotools.gce.imagemosaic.acceptors.DefaultGranuleAcceptorFactory;
@@ -43,18 +44,18 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.opengis.filter.Filter;
 
 /** Testing that granule collectors correctly get configured and initialized */
 public class DefaultSubmosaicProducerSPITest {
 
-    @Rule public TemporaryFolder testFolder = new TemporaryFolder();
+    @Rule
+    public TemporaryFolder testFolder = new TemporaryFolder();
 
-    @Rule public TemporaryFolder crsMosaicFolder = new TemporaryFolder();
+    @Rule
+    public TemporaryFolder crsMosaicFolder = new TemporaryFolder();
 
     @Test
-    public void testCustomizedGranuleAcceptor()
-            throws IOException, URISyntaxException, CQLException {
+    public void testCustomizedGranuleAcceptor() throws IOException, URISyntaxException, CQLException {
         URL testDataURL = TestData.url(this, "diffprojections");
         File testDataFolder = new File(testDataURL.toURI());
         File testDirectory = testFolder.newFolder("diffprojectionstest");
@@ -75,8 +76,7 @@ public class DefaultSubmosaicProducerSPITest {
     @Test
     public void basicTest() {
         // get the SPIs
-        Map<String, GranuleAcceptorFactorySPI> spiMap =
-                GranuleAcceptorFactorySPIFinder.getGranuleAcceptorFactorySPI();
+        Map<String, GranuleAcceptorFactorySPI> spiMap = GranuleAcceptorFactorySPIFinder.getGranuleAcceptorFactorySPI();
 
         // make sure it is not empty
         assertNotNull(spiMap);
@@ -104,12 +104,10 @@ public class DefaultSubmosaicProducerSPITest {
         assertNotNull(acceptors);
         assertEquals(2, acceptors.size());
         granuleAcceptor = acceptors.get(0);
-        Assert.assertTrue(
-                granuleAcceptor.getClass().equals(ColorCheckAcceptor.class)
-                        || granuleAcceptor.getClass().equals(HomogeneousCRSAcceptor.class));
+        Assert.assertTrue(granuleAcceptor.getClass().equals(ColorCheckAcceptor.class)
+                || granuleAcceptor.getClass().equals(HomogeneousCRSAcceptor.class));
         granuleAcceptor = acceptors.get(1);
-        Assert.assertTrue(
-                granuleAcceptor.getClass().equals(ColorCheckAcceptor.class)
-                        || granuleAcceptor.getClass().equals(HomogeneousCRSAcceptor.class));
+        Assert.assertTrue(granuleAcceptor.getClass().equals(ColorCheckAcceptor.class)
+                || granuleAcceptor.getClass().equals(HomogeneousCRSAcceptor.class));
     }
 }

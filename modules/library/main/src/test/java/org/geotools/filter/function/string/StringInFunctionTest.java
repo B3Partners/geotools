@@ -18,11 +18,11 @@ package org.geotools.filter.function.string;
 
 import java.util.Arrays;
 import java.util.List;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.factory.CommonFactoryFinder;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 
 public class StringInFunctionTest {
 
@@ -32,24 +32,14 @@ public class StringInFunctionTest {
     public void test() throws Exception {
         StringInFunction f = new StringInFunction();
 
-        List<Expression> params =
-                Arrays.asList(
-                        ff.literal("foo"),
-                        ff.literal(true),
-                        ff.literal("foo"),
-                        ff.literal("bar"),
-                        ff.literal("baz"));
+        List<Expression> params = Arrays.asList(
+                ff.literal("foo"), ff.literal(true), ff.literal("foo"), ff.literal("bar"), ff.literal("baz"));
         f.setParameters(params);
 
         Assert.assertEquals(Boolean.TRUE, f.evaluate(null));
 
-        params =
-                Arrays.asList(
-                        ff.literal("foo"),
-                        ff.literal(true),
-                        ff.literal("FOO"),
-                        ff.literal("bar"),
-                        ff.literal("baz"));
+        params = Arrays.asList(
+                ff.literal("foo"), ff.literal(true), ff.literal("FOO"), ff.literal("bar"), ff.literal("baz"));
         f.setParameters(params);
         Assert.assertEquals(Boolean.FALSE, f.evaluate(null));
     }

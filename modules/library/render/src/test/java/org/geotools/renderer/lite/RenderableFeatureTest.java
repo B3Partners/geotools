@@ -21,20 +21,20 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 
 import java.awt.geom.AffineTransform;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.style.Symbolizer;
 import org.geotools.feature.NameImpl;
 import org.geotools.geometry.jts.LiteShape2;
-import org.geotools.styling.Symbolizer;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.mockito.Mockito;
-import org.opengis.feature.Feature;
-import org.opengis.feature.Property;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.Name;
-import org.opengis.referencing.FactoryException;
 
 public class RenderableFeatureTest {
 
@@ -59,16 +59,14 @@ public class RenderableFeatureTest {
         when(feature.getType()).thenReturn(type);
         Symbolizer symbolizer = Mockito.mock(Symbolizer.class);
         when(symbolizer.getGeometry()).thenReturn(null);
-        StreamingRenderer.RenderableFeature rf =
-                new StreamingRenderer().new RenderableFeature("layerId", false) {
-                    @Override
-                    public LiteShape2 getShape(
-                            Symbolizer symbolizer, AffineTransform at, Geometry g, boolean clone)
-                            throws FactoryException {
-                        assertEquals(point, g);
-                        return null;
-                    }
-                };
+        StreamingRenderer.RenderableFeature rf = new StreamingRenderer().new RenderableFeature("layerId", false) {
+            @Override
+            public LiteShape2 getShape(Symbolizer symbolizer, AffineTransform at, Geometry g, boolean clone)
+                    throws FactoryException {
+                assertEquals(point, g);
+                return null;
+            }
+        };
         rf.setFeature(feature);
         rf.getShape(symbolizer, null);
     }

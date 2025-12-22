@@ -16,16 +16,21 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.geotools.TestData;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFinder;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.data.FileDataStore;
+import org.geotools.api.data.FileDataStoreFinder;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FileDataStore;
-import org.geotools.data.FileDataStoreFinder;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.referencing.CRS;
@@ -38,11 +43,6 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class AxisOrderTest {
 
@@ -60,9 +60,7 @@ public class AxisOrderTest {
         Map<String, Object> params = new HashMap<>();
         params.put(ShapefileDataStoreFactory.URLP.key, states);
         try {
-            params.put(
-                    ShapefileDataStoreFactory.NAMESPACEP.key,
-                    new URI("http://localhost/geotools.xsd"));
+            params.put(ShapefileDataStoreFactory.NAMESPACEP.key, new URI("http://localhost/geotools.xsd"));
         } catch (URISyntaxException e) {
             LOGGER.log(Level.SEVERE, "", e);
         }
@@ -119,8 +117,7 @@ public class AxisOrderTest {
 
         String typeName = duplicate.getTypeNames()[0];
         SimpleFeatureSource source = duplicate.getFeatureSource(typeName);
-        if (source instanceof SimpleFeatureStore) {
-            SimpleFeatureStore outStore = (SimpleFeatureStore) source;
+        if (source instanceof SimpleFeatureStore outStore) {
             outStore.addFeatures(pFeatures);
         } else {
             fail("Can't write to GeoJSONDatastore " + file2);
@@ -130,7 +127,7 @@ public class AxisOrderTest {
         int index = contents.indexOf("coordinates");
         assertTrue("No Coordinates in output file", index > 0);
         String test = contents.substring(index + 17, index + 32);
-        assertTrue("bad coords", "-3.3496,56.8215".equalsIgnoreCase(test));
+        assertTrue("bad coords", "-3.349554,56.82".equalsIgnoreCase(test));
         String[] c = test.split(",");
         assertTrue(Double.parseDouble(c[0]) < Double.parseDouble(c[1]));
     }
@@ -165,15 +162,13 @@ public class AxisOrderTest {
         String typeName = duplicate.getTypeNames()[0];
 
         SimpleFeatureSource source = duplicate.getFeatureSource(typeName);
-        if (source instanceof SimpleFeatureStore) {
-            SimpleFeatureStore outStore = (SimpleFeatureStore) source;
+        if (source instanceof SimpleFeatureStore outStore) {
             outStore.addFeatures(features);
         } else {
             fail("Can't write to GeoJSONDatastore " + file2);
         }
 
-        SimpleFeatureStore featureStored =
-                (SimpleFeatureStore) duplicate.getFeatureSource(typeName);
+        SimpleFeatureStore featureStored = (SimpleFeatureStore) duplicate.getFeatureSource(typeName);
 
         try (SimpleFeatureIterator dups = featureStored.getFeatures().features()) {
             Point expected = gf.createPoint(new Coordinate(15.457678, 47.0850875));

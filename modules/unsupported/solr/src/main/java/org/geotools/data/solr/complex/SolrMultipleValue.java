@@ -23,14 +23,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
 import org.geotools.appschema.filter.FilterFactoryImplReportInvalidProperty;
 import org.geotools.data.complex.AttributeMapping;
 import org.geotools.data.complex.FeatureTypeMapping;
 import org.geotools.data.complex.config.MultipleValue;
-import org.opengis.feature.Feature;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
 
 /** Allows Solr multivalued fields to be used in App-Schema mappings. */
 public final class SolrMultipleValue implements MultipleValue {
@@ -43,9 +43,7 @@ public final class SolrMultipleValue implements MultipleValue {
         try {
             this.expression = parseOgcCqlExpression(expression, filterFactory);
         } catch (Exception exception) {
-            throw new RuntimeException(
-                    String.format("Error parsing target value expression '%s'.", expression),
-                    exception);
+            throw new RuntimeException("Error parsing target value expression '%s'.".formatted(expression), exception);
         }
     }
 

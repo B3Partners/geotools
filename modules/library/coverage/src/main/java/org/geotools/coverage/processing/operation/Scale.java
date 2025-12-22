@@ -19,43 +19,41 @@ package org.geotools.coverage.processing.operation;
 import java.awt.RenderingHints;
 import java.awt.image.DataBuffer;
 import java.awt.image.RenderedImage;
+import java.io.Serial;
 import java.util.HashMap;
 import java.util.Map;
-import javax.media.jai.Interpolation;
-import javax.media.jai.InterpolationNearest;
-import javax.media.jai.JAI;
-import javax.media.jai.ParameterBlockJAI;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.PropertyGenerator;
-import javax.media.jai.ROI;
-import javax.media.jai.RenderedOp;
-import javax.media.jai.registry.RenderedRegistryMode;
+import org.eclipse.imagen.ImageN;
+import org.eclipse.imagen.Interpolation;
+import org.eclipse.imagen.InterpolationNearest;
+import org.eclipse.imagen.ParameterBlockImageN;
+import org.eclipse.imagen.PlanarImage;
+import org.eclipse.imagen.PropertyGenerator;
+import org.eclipse.imagen.ROI;
+import org.eclipse.imagen.RenderedOp;
+import org.eclipse.imagen.registry.RenderedRegistryMode;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.BaseScaleOperationJAI;
 import org.geotools.coverage.processing.OperationJAI;
 import org.geotools.coverage.util.CoverageUtilities;
-import org.geotools.image.jai.Registry;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.util.InternationalString;
 
 /**
- * This operation is simply a wrapper for the JAI scale operation which allows me to arbitrarily
- * scale and translate a rendered image.
+ * This operation is simply a wrapper for the ImageN scale operation which allows me to arbitrarily scale and translate
+ * a rendered image.
  *
  * @version $Id$
  * @author Simone Giannecchini
  * @since 2.3
- * @see javax.media.jai.operator.ScaleDescriptor
+ * @see org.eclipse.imagen.media.scale.ScaleDescriptor
  */
 public class Scale extends BaseScaleOperationJAI {
 
     /** Serial number for cross-version compatibility. */
+    @Serial
     private static final long serialVersionUID = -3212656385631097713L;
-
-    /** Lock for unsetting native acceleration. */
-    private static final int[] lock = new int[1];
 
     /** Default constructor. */
     public Scale() {
@@ -63,14 +61,13 @@ public class Scale extends BaseScaleOperationJAI {
     }
 
     @Override
-    protected RenderedImage createRenderedImage(
-            ParameterBlockJAI parameters, RenderingHints hints) {
+    protected RenderedImage createRenderedImage(ParameterBlockImageN parameters, RenderingHints hints) {
         final RenderedImage source = (RenderedImage) parameters.getSource(0);
         final Interpolation interpolation;
         if (parameters.getObjectParameter("interpolation") != null)
             interpolation = (Interpolation) parameters.getObjectParameter("interpolation");
-        else if (hints.get(JAI.KEY_INTERPOLATION) != null)
-            interpolation = (Interpolation) hints.get(JAI.KEY_INTERPOLATION);
+        else if (hints.get(ImageN.KEY_INTERPOLATION) != null)
+            interpolation = (Interpolation) hints.get(ImageN.KEY_INTERPOLATION);
         else {
             // I am pretty sure this should not happen. However I am not sure we should throw an
             // error
@@ -78,30 +75,13 @@ public class Scale extends BaseScaleOperationJAI {
         }
         final int transferType = source.getSampleModel().getDataType();
 
-        final JAI processor = OperationJAI.getJAI(hints);
+        @SuppressWarnings("PMD.CloseResource")
+        final ImageN processor = OperationJAI.getJAI(hints);
         PlanarImage image;
         if (interpolation != null
                 && !(interpolation instanceof InterpolationNearest)
-                && (transferType == DataBuffer.TYPE_FLOAT
-                        || transferType == DataBuffer.TYPE_DOUBLE)) {
-
-            synchronized (lock) {
-
-                /**
-                 * Disables the native acceleration for the "Scale" operation. In JAI 1.1.2, the
-                 * "Scale" operation on TYPE_FLOAT datatype with INTERP_BILINEAR interpolation cause
-                 * an exception in the native code of medialib, which halt the Java Virtual Machine.
-                 * Using the pure Java implementation instead resolve the problem.
-                 *
-                 * @todo Remove this hack when Sun will fix the medialib bug. See
-                 *     http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4906854
-                 */
-                Registry.setNativeAccelerationAllowed(getName(), false);
-                image = processor.createNS(getName(), parameters, hints).getRendering();
-
-                /** see above */
-                Registry.setNativeAccelerationAllowed(getName(), true);
-            }
+                && (transferType == DataBuffer.TYPE_FLOAT || transferType == DataBuffer.TYPE_DOUBLE)) {
+            image = processor.createNS(getName(), parameters, hints).getRendering();
 
         } else image = processor.createNS(getName(), parameters, hints);
 
@@ -109,9 +89,9 @@ public class Scale extends BaseScaleOperationJAI {
     }
 
     @Override
-    protected void handleJAIEXTParams(
-            ParameterBlockJAI parameters, ParameterValueGroup parameters2) {
-        GridCoverage2D source = (GridCoverage2D) parameters2.parameter("source0").getValue();
+    protected void handleJAIEXTParams(ParameterBlockImageN parameters, ParameterValueGroup parameters2) {
+        GridCoverage2D source =
+                (GridCoverage2D) parameters2.parameter("source0").getValue();
         handleROINoDataInternal(parameters, source, SCALE, 5, 7);
     }
 
@@ -131,30 +111,26 @@ public class Scale extends BaseScaleOperationJAI {
             properties.putAll(props);
         }
 
-        if (parameters.parameters.getNumParameters() > 5
-                && parameters.parameters.getObjectParameter(8) != null) {
+        if (parameters.parameters.getNumParameters() > 5 && parameters.parameters.getObjectParameter(8) != null) {
             // Setting NoData property if needed
             Object bkgProp = parameters.parameters.getObjectParameter(8);
-            if (bkgProp != null && bkgProp instanceof double[]) {
-                double[] background = (double[]) bkgProp;
+            if (bkgProp != null && bkgProp instanceof double[] background) {
                 CoverageUtilities.setNoDataProperty(properties, background);
             }
         }
 
         // Setting ROI if present
-        if (data instanceof RenderedOp) {
-            String operationName = ((RenderedOp) data).getOperationName();
+        if (data instanceof RenderedOp op) {
+            String operationName = op.getOperationName();
             PropertyGenerator propertyGenerator = null;
-            if (operationName.equalsIgnoreCase(SCALE)
-                    || operationName.equalsIgnoreCase(TRANSLATE)) {
+            if (operationName.equalsIgnoreCase(SCALE) || operationName.equalsIgnoreCase(TRANSLATE)) {
                 propertyGenerator =
-                        getOperationDescriptor(operationName)
-                                .getPropertyGenerators(RenderedRegistryMode.MODE_NAME)[0];
+                        getOperationDescriptor(operationName).getPropertyGenerators(RenderedRegistryMode.MODE_NAME)[0];
             }
             if (propertyGenerator != null) {
                 Object roiProp = propertyGenerator.getProperty(ROI, data);
-                if (roiProp != null && roiProp instanceof ROI) {
-                    CoverageUtilities.setROIProperty(properties, (ROI) roiProp);
+                if (roiProp != null && roiProp instanceof ROI oI) {
+                    CoverageUtilities.setROIProperty(properties, oI);
                 }
             }
         }

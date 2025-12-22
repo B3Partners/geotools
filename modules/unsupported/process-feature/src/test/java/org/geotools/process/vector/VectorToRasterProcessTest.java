@@ -28,6 +28,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.logging.Logger;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.metadata.spatial.PixelOrientation;
+import org.geotools.api.referencing.operation.MathTransform2D;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
@@ -53,13 +60,6 @@ import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.metadata.spatial.PixelOrientation;
-import org.opengis.referencing.operation.MathTransform2D;
-import org.opengis.referencing.operation.TransformException;
-import org.opengis.util.ProgressListener;
 
 /**
  * Unit tests for rasterizing vector features.
@@ -86,8 +86,7 @@ public class VectorToRasterProcessTest {
         String covName = "Test";
         ProgressListener monitor = null;
 
-        GridCoverage2D cov =
-                VectorToRasterProcess.process(features, "value", gridDim, bounds, covName, monitor);
+        GridCoverage2D cov = VectorToRasterProcess.process(features, "value", gridDim, bounds, covName, monitor);
 
         // textPrint(cov);
 
@@ -101,8 +100,7 @@ public class VectorToRasterProcessTest {
             while (iter.hasNext()) {
                 SimpleFeature sf = iter.next();
                 rects.put(
-                        (Integer) sf.getAttribute("value"),
-                        ((Geometry) sf.getDefaultGeometry()).getEnvelopeInternal());
+                        (Integer) sf.getAttribute("value"), ((Geometry) sf.getDefaultGeometry()).getEnvelopeInternal());
             }
         }
 
@@ -129,8 +127,7 @@ public class VectorToRasterProcessTest {
 
     @Test
     public void rasterizePoints() throws Exception {
-        ReferencedEnvelope bounds =
-                new ReferencedEnvelope(-10, 10, -20, 20, DefaultEngineeringCRS.GENERIC_2D);
+        ReferencedEnvelope bounds = new ReferencedEnvelope(-10, 10, -20, 20, DefaultEngineeringCRS.GENERIC_2D);
         Dimension gridDim = new Dimension(100, 100);
 
         SimpleFeatureCollection features = createPoints(bounds, gridDim);
@@ -138,8 +135,7 @@ public class VectorToRasterProcessTest {
         String covName = "Test";
         ProgressListener monitor = null;
 
-        GridCoverage2D cov =
-                VectorToRasterProcess.process(features, "value", gridDim, bounds, covName, monitor);
+        GridCoverage2D cov = VectorToRasterProcess.process(features, "value", gridDim, bounds, covName, monitor);
 
         try (SimpleFeatureIterator iter = features.features()) {
             int[] covValues = new int[1];
@@ -202,10 +198,7 @@ public class VectorToRasterProcessTest {
         }
     }
 
-    /**
-     * Runs the Process.execute method using LineStrings with String values that evaluate to
-     * integers.
-     */
+    /** Runs the Process.execute method using LineStrings with String values that evaluate to integers. */
     @Test
     public void executeProcessWithString() throws Exception {
         Process p = Processors.createProcess(new NameImpl("vec", "VectorToRaster"));
@@ -252,8 +245,8 @@ public class VectorToRasterProcessTest {
     }
 
     /**
-     * Create a set of three features, each of which is a rectangular polygon. The features are
-     * arranged roughly like this:
+     * Create a set of three features, each of which is a rectangular polygon. The features are arranged roughly like
+     * this:
      *
      * <pre>
      *             |---------------|
@@ -282,41 +275,23 @@ public class VectorToRasterProcessTest {
         DefaultFeatureCollection fc = new DefaultFeatureCollection();
 
         SimpleFeature feature =
-                buildFeature(
-                        builder,
-                        reader,
-                        "MULTIPOLYGON(((10 10, 10 20, 30 20, 30 10, 10 10)))",
-                        "left",
-                        1);
+                buildFeature(builder, reader, "MULTIPOLYGON(((10 10, 10 20, 30 20, 30 10, 10 10)))", "left", 1);
         fc.add(feature);
 
-        feature =
-                buildFeature(
-                        builder,
-                        reader,
-                        "MULTIPOLYGON(((40 10, 40 20, 60 20, 60 10, 40 10)))",
-                        "right",
-                        3);
+        feature = buildFeature(builder, reader, "MULTIPOLYGON(((40 10, 40 20, 60 20, 60 10, 40 10)))", "right", 3);
         fc.add(feature);
 
-        feature =
-                buildFeature(
-                        builder,
-                        reader,
-                        "MULTIPOLYGON(((20 0, 20 30, 50 30, 50 0, 20 0)))",
-                        "middle",
-                        2);
+        feature = buildFeature(builder, reader, "MULTIPOLYGON(((20 0, 20 30, 50 30, 50 0, 20 0)))", "middle", 2);
         fc.add(feature);
 
         return fc;
     }
 
     /**
-     * Creates randomly located points constrained so that only one point can lie in any grid cell.
-     * The number of points will be approx number of grid cells / 4.
+     * Creates randomly located points constrained so that only one point can lie in any grid cell. The number of points
+     * will be approx number of grid cells / 4.
      */
-    private SimpleFeatureCollection createPoints(ReferencedEnvelope bounds, Dimension gridDim)
-            throws Exception {
+    private SimpleFeatureCollection createPoints(ReferencedEnvelope bounds, Dimension gridDim) throws Exception {
 
         final double PROB_POINT = 0.25;
 
@@ -343,14 +318,10 @@ public class VectorToRasterProcessTest {
             for (int x = 0; x < gridDim.width; x++) {
                 if (rand.nextDouble() < PROB_POINT) {
                     gridPos.setLocation(x, y);
-                    DirectPosition worldPos = gridGeom.gridToWorld(gridPos);
+                    Position worldPos = gridGeom.gridToWorld(gridPos);
 
-                    String wkt =
-                            String.format(
-                                    Locale.US,
-                                    "MULTIPOINT((%f %f))",
-                                    worldPos.getOrdinate(0),
-                                    worldPos.getOrdinate(1));
+                    String wkt = String.format(
+                            Locale.US, "MULTIPOINT((%f %f))", worldPos.getOrdinate(0), worldPos.getOrdinate(1));
                     fc.add(buildFeature(builder, reader, wkt, "p" + i, i));
                     i++;
                 }
@@ -373,8 +344,7 @@ public class VectorToRasterProcessTest {
 
         DefaultFeatureCollection fc = new DefaultFeatureCollection();
 
-        SimpleFeature feature =
-                buildFeature(builder, reader, "LINESTRING(10 0, 10 20)", "horizontal", "1");
+        SimpleFeature feature = buildFeature(builder, reader, "LINESTRING(10 0, 10 20)", "horizontal", "1");
         fc.add(feature);
 
         feature = buildFeature(builder, reader, "LINESTRING(0 10, 20 10)", "vertical", "2");
@@ -400,20 +370,13 @@ public class VectorToRasterProcessTest {
 
         DefaultFeatureCollection fc = new DefaultFeatureCollection();
 
-        SimpleFeature feature =
-                buildFeature(builder, reader, "LINESTRING(10 0, 10 20)", "horizontal", (float) 1.1);
+        SimpleFeature feature = buildFeature(builder, reader, "LINESTRING(10 0, 10 20)", "horizontal", (float) 1.1);
         fc.add(feature);
 
         feature = buildFeature(builder, reader, "LINESTRING(0 10, 20 10)", "vertical", (float) 2.2);
         fc.add(feature);
 
-        feature =
-                buildFeature(
-                        builder,
-                        reader,
-                        "LINESTRING(0 20,0 0,20 0,20 20,0 20)",
-                        "box",
-                        (float) 3.3);
+        feature = buildFeature(builder, reader, "LINESTRING(0 20,0 0,20 0,20 20,0 20)", "box", (float) 3.3);
         fc.add(feature);
 
         return fc;

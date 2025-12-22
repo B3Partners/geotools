@@ -19,13 +19,13 @@ package org.geotools.feature.visitor;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 @RunWith(Parameterized.class)
 public class SumAreaVisitorTest<T> extends VisitorTestCase<T, T> {
@@ -48,9 +48,7 @@ public class SumAreaVisitorTest<T> extends VisitorTestCase<T, T> {
                     18.5
                 },
                 new Object[] {
-                    Polygon.class,
-                    Arrays.asList(polygon(new int[] {12, 6, 14, 8, 16, 6, 16, 4, 12, 4, 12, 6})),
-                    12.0
+                    Polygon.class, Arrays.asList(polygon(new int[] {12, 6, 14, 8, 16, 6, 16, 4, 12, 4, 12, 6})), 12.0
                 });
     }
 

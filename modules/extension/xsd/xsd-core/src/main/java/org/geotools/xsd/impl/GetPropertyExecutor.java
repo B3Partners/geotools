@@ -58,8 +58,7 @@ public class GetPropertyExecutor implements BindingWalker.Visitor {
             return;
         }
 
-        if (binding instanceof ComplexBinding) {
-            ComplexBinding complex = (ComplexBinding) binding;
+        if (binding instanceof ComplexBinding complex) {
 
             if (binding.getType() == null) {
                 LOGGER.warning("Binding for: " + binding.getTarget() + " does not declare type");
@@ -68,15 +67,14 @@ public class GetPropertyExecutor implements BindingWalker.Visitor {
             Object parent = this.parent;
 
             if (parent != null
-                    && (binding.getType() != null)
+                    && binding.getType() != null
                     && !binding.getType().isAssignableFrom(parent.getClass())) {
-                LOGGER.fine(
-                        parent
-                                + " ("
-                                + parent.getClass().getName()
-                                + ") "
-                                + " is not of type "
-                                + binding.getType().getName());
+                LOGGER.fine(parent
+                        + " ("
+                        + parent.getClass().getName()
+                        + ") "
+                        + " is not of type "
+                        + binding.getType().getName());
 
                 // try to convert
                 Object converted = Converters.convert(parent, binding.getType());
@@ -84,8 +82,8 @@ public class GetPropertyExecutor implements BindingWalker.Visitor {
                 if (converted != null) {
                     parent = converted;
                 } else {
-                    LOGGER.fine(
-                            "Could not convert " + parent + " to " + binding.getType().getName());
+                    LOGGER.fine("Could not convert " + parent + " to "
+                            + binding.getType().getName());
                     // For complex feature, if the feature can't be converted to the binding type,
                     // exit the route to avoid ClassCastException raised in
                     // child = complex.getProperty(parent, name);

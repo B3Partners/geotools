@@ -21,15 +21,16 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 
+import org.geotools.api.temporal.ClockTime;
+import org.geotools.api.temporal.TemporalReferenceSystem;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
 import org.geotools.temporal.reference.DefaultTemporalReferenceSystem;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.temporal.ClockTime;
-import org.opengis.temporal.TemporalReferenceSystem;
 
 /** @author Mehdi Sidhoum (Geomatys) */
 public class DefaultClockTimeTest {
@@ -87,6 +88,6 @@ public class DefaultClockTimeTest {
     @Test
     public void testToString() {
         String result = clockTime1.toString();
-        assertNotEquals(clockTime2, result);
+        assertNotNull(result);
     }
 }

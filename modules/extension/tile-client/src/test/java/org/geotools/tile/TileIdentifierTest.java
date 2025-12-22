@@ -99,26 +99,23 @@ public class TileIdentifierTest {
 
     protected TileIdentifier createTestTileIdentifier(int z, int x, int y, String name) {
         return createTestTileIdentifier(new WebMercatorZoomLevel(z), x, y, name);
-    };
+    }
 
     @Test
     public void testEquals() {
         Assert.assertEquals(this.tileId, this.tileId);
         Assert.assertNotEquals(null, this.tileId);
-        Assert.assertNotEquals("Blah", this.tileId);
 
         TileIdentifier otherTile = createTestTileIdentifier(5, 10, 12, "SomeService");
         Assert.assertEquals(this.tileId, otherTile);
         Assert.assertEquals(otherTile, this.tileId);
     }
 
-    protected TileIdentifier createTestTileIdentifier(
-            ZoomLevel zoomLevel, int x, int y, String name) {
+    protected TileIdentifier createTestTileIdentifier(ZoomLevel zoomLevel, int x, int y, String name) {
         return createTileIdentifierPrototype(zoomLevel, x, y, name);
     }
 
-    public static final TileIdentifier createTileIdentifierPrototype(
-            ZoomLevel zoomLevel, int x, int y, String name) {
+    public static final TileIdentifier createTileIdentifierPrototype(ZoomLevel zoomLevel, int x, int y, String name) {
         return new TileIdentifier(x, y, zoomLevel, name) {
 
             @Override

@@ -1,15 +1,15 @@
 Filter
 ------
 
-GeoTools makes use of the ``gt-opengis`` ``Filter`` and ``Expression`` interfaces in order to express constraints. This is most often used when making a Query to retrieve specific ``Features`` from a ``DataStore``.
+GeoTools makes use of ``gt-api`` interfaces ``Filter`` and ``Expression`` in order to define constraints. This is most often used when making a Query to retrieve specific ``Features`` from a ``DataStore``.
 
 Reference:
 
-* ``gt-opengis`` data :doc:`../opengis/model` for ``Feature``, ``FeatureType`` and ``Filter``
-* ``gt-opengis`` :doc:`../opengis/filter` model
+* ``gt-api`` data :doc:`../api/model` for ``Feature``, ``FeatureType`` and ``Filter``
+* ``gt-api`` :doc:`../api/filter` model
 * ``gt-cql`` :doc:`../cql/index`
 * ``gt-xml`` :doc:`../xml/index`
-* http://docs.geoserver.org/stable/en/user/filter/function_reference.html
+* `Filter Function Reference <https://docs.geoserver.org/stable/en/user/filter/function_reference.html>`__ (GeoServer User Manual)
 
 You will find the use of ``Filter`` in an number of other locations:
 
@@ -37,19 +37,19 @@ You have a choice of which filter factory to use:
   Use this if you are making a request of an external Web Feature Server
   and do not want to accidentally step out of bounds.
 
-* ``FilterFactory2`` directly create a filter.
+* ``FilterFactory`` directly create a filter.
   
   Has some additional methods for working with JTS ``Geometry``.
 
 Here is an example::
   
-  FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2( GeoTools.getDefaultHints() );
+  FilterFactory ff = CommonFactoryFinder.getFilterFactory( GeoTools.getDefaultHints() );
   
   Filter filter = ff.contains( ff.property( "THE_GEOM"), ff.literal( geometry ) );
 
 One thing you can do with with a ``FilterFactory`` (which you cannot do in CQL) is request features by their ``FeatureId``::
   
-  FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2( GeoTools.getDefaultHints() );
+  FilterFactory ff = CommonFactoryFinder.getFilterFactory( GeoTools.getDefaultHints() );
   
   Set<FeatureId> fids = new HashSet<FeatureId>();
   fids.add( ff.featureId("ROAD.1") );
@@ -187,7 +187,7 @@ in order to make the correct query.
      // Transform to dataCRS, ignoring difference in datum, 10 samples per edge
      ReferencedEnvelope world = screen.transform( dataCRS, true, 10 );
      
-     FilterFactory2 bounds = CommonFactoryFinder.getFilterFactory2( GeoTools.getDefaultHints() );
+     FilterFactory bounds = CommonFactoryFinder.getFilterFactory( GeoTools.getDefaultHints() );
      Filter filter = ff.bbox( ff.property( "THE_GEOM" ), ff.literal( bounds ) );
 
   * Intersects
@@ -248,7 +248,7 @@ Q: What did I click on?
     Please note this is only suitable for working with ``Polygons`` as selecting a line
     using a single point is next to impossible.::
       
-      FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2( null );
+      FilterFactory ff = CommonFactoryFinder.getFilterFactory( null );
       Filter filter = ff.contains( ff.property( geometryAttributeName ), ff.literal( point ) );
   
   * Use a distance check
@@ -289,13 +289,13 @@ We can go through the same steps to create an ``Expression``.
       Use this if you are making a request of an external Web Feature Server
       and do not want to accidentally step out of bounds.
   
-  * ``FilterFactory2`` directly create a filter.
+  * ``FilterFactory`` directly create a filter.
     
     Has some additional methods for working with JTS Geometry.
   
   Here is an example::
     
-    FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2( GeoTools.getDefaultHints() );
+    FilterFactory ff = CommonFactoryFinder.getFilterFactory( GeoTools.getDefaultHints() );
     
     Expression propertyAccess = ff.property( "THE_GEOM");
     Expression literal = ff.literal( geometry );
@@ -621,7 +621,7 @@ when creating a ``FilterCapabilities`` data structure; and also in making use of
         
         Capabilities capabilities = new Capabilities( filterCapabilities );
         
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         Filter filter = ff.between( ff.literal(0), ff.property("x"), ff.literal( 2 ) );        
         
         if( capabilities.supports( filter ) ){

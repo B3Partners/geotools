@@ -23,41 +23,39 @@ package org.geotools.referencing.operation.projection;
 import static java.lang.Math.PI;
 import static java.lang.Math.abs;
 
+import java.io.Serial;
 import java.util.logging.Level;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.PlanarProjection;
 import org.geotools.metadata.i18n.Vocabulary;
 import org.geotools.metadata.i18n.VocabularyKeys;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.PlanarProjection;
 
 /**
- * Orthographic Projection. This is a perspective azimuthal (planar) projection that is neither
- * conformal nor equal-area. It resembles a globe and only one hemisphere can be seen at a time,
- * since it is a perspectiove projection from infinite distance. While not useful for accurate
- * measurements, this projection is useful for pictorial views of the world. Only the spherical form
- * is given here.
+ * Orthographic Projection. This is a perspective azimuthal (planar) projection that is neither conformal nor
+ * equal-area. It resembles a globe and only one hemisphere can be seen at a time, since it is a perspectiove projection
+ * from infinite distance. While not useful for accurate measurements, this projection is useful for pictorial views of
+ * the world. Only the spherical form is given here.
  *
- * <p><b>NOTE:</b> formulae used below are from a port, to java, of the {@code proj} package of the
- * USGS survey. USGS work is acknowledged here.
+ * <p><b>NOTE:</b> formulae used below are from a port, to java, of the {@code proj} package of the USGS survey. USGS
+ * work is acknowledged here.
  *
  * <p><b>References:</b>
  *
  * <ul>
- *   <li>Proj-4.4.7 available at <A
- *       HREF="http://www.remotesensing.org/proj">www.remotesensing.org/proj</A><br>
+ *   <li>Proj-4.4.7 available at <A HREF="http://www.remotesensing.org/proj">www.remotesensing.org/proj</A><br>
  *       Relevant files are: {@code PJ_ortho.c}, {@code pj_fwd.c} and {@code pj_inv.c}.
- *   <li>John P. Snyder (Map Projections - A Working Manual, U.S. Geological Survey Professional
- *       Paper 1395, 1987)
+ *   <li>John P. Snyder (Map Projections - A Working Manual, U.S. Geological Survey Professional Paper 1395, 1987)
  * </ul>
  *
- * @see <A HREF="http://mathworld.wolfram.com/OrthographicProjection.html">Orthographic projection
- *     on mathworld.wolfram.com</A>
+ * @see <A HREF="http://mathworld.wolfram.com/OrthographicProjection.html">Orthographic projection on
+ *     mathworld.wolfram.com</A>
  * @see <A HREF="http://www.remotesensing.org/geotiff/proj_list/orthographic.html">"Orthographic" on
  *     www.remotesensing.org</A>
  * @since 2.1
@@ -66,6 +64,7 @@ import org.opengis.referencing.operation.PlanarProjection;
  */
 public abstract class Orthographic extends MapProjection {
     /** For compatibility with different versions during deserialization. */
+    @Serial
     private static final long serialVersionUID = -6489939032996419868L;
 
     /** Maximum difference allowed when comparing real numbers. */
@@ -98,8 +97,8 @@ public abstract class Orthographic extends MapProjection {
     //////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform
-     * provider} for a {@linkplain Orthographic Orthographic} projection.
+     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform provider} for a
+     * {@linkplain Orthographic Orthographic} projection.
      *
      * @since 2.1
      * @version $Id$
@@ -108,29 +107,28 @@ public abstract class Orthographic extends MapProjection {
      */
     public static final class Provider extends AbstractProvider {
         /** For compatibility with different versions during deserialization. */
+        @Serial
         private static final long serialVersionUID = 3180410512573499562L;
 
         /** The parameters group. */
-        static final ParameterDescriptorGroup PARAMETERS =
-                createDescriptorGroup(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(Citations.OGC, "Orthographic"),
-                            new NamedIdentifier(Citations.GEOTIFF, "CT_Orthographic"),
-                            new NamedIdentifier(Citations.ESRI, "Orthographic"),
-                            new NamedIdentifier(
-                                    Citations.GEOTOOLS,
-                                    Vocabulary.formatInternational(
-                                            VocabularyKeys.ORTHOGRAPHIC_PROJECTION))
-                        },
-                        new ParameterDescriptor[] {
-                            SEMI_MAJOR,
-                            SEMI_MINOR,
-                            CENTRAL_MERIDIAN,
-                            LATITUDE_OF_ORIGIN,
-                            SCALE_FACTOR,
-                            FALSE_EASTING,
-                            FALSE_NORTHING
-                        });
+        static final ParameterDescriptorGroup PARAMETERS = createDescriptorGroup(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(Citations.OGC, "Orthographic"),
+                    new NamedIdentifier(Citations.GEOTIFF, "CT_Orthographic"),
+                    new NamedIdentifier(Citations.ESRI, "Orthographic"),
+                    new NamedIdentifier(
+                            Citations.GEOTOOLS, Vocabulary.formatInternational(VocabularyKeys.ORTHOGRAPHIC_PROJECTION)),
+                    new NamedIdentifier(Citations.PROJ, "ortho")
+                },
+                new ParameterDescriptor[] {
+                    SEMI_MAJOR,
+                    SEMI_MINOR,
+                    CENTRAL_MERIDIAN,
+                    LATITUDE_OF_ORIGIN,
+                    SCALE_FACTOR,
+                    FALSE_EASTING,
+                    FALSE_NORTHING
+                });
 
         /** Constructs a new provider. */
         public Provider() {
@@ -154,8 +152,7 @@ public abstract class Orthographic extends MapProjection {
         protected MathTransform createMathTransform(final ParameterValueGroup parameters)
                 throws ParameterNotFoundException, FactoryException {
             // Values here are in radians (the standard units for the map projection package)
-            final double latitudeOfOrigin =
-                    abs(AbstractProvider.doubleValue(LATITUDE_OF_ORIGIN, parameters));
+            final double latitudeOfOrigin = abs(AbstractProvider.doubleValue(LATITUDE_OF_ORIGIN, parameters));
             if (!isSpherical(parameters)) {
                 LOGGER.log(
                         Level.FINE,

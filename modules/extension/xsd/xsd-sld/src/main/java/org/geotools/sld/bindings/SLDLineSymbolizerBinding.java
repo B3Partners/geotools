@@ -17,15 +17,15 @@
 package org.geotools.sld.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.Stroke;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.sld.CssParameter;
-import org.geotools.styling.LineSymbolizer;
-import org.geotools.styling.Stroke;
-import org.geotools.styling.StyleFactory;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.PropertyName;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -118,8 +118,7 @@ public class SLDLineSymbolizerBinding extends AbstractComplexBinding {
         // &lt;xsd:element ref="sld:Geometry" minOccurs="0"/&gt;
         if (node.hasChild("Geometry")) {
             Expression geometry = (Expression) node.getChildValue("Geometry");
-            if (geometry instanceof PropertyName) {
-                PropertyName propertyName = (PropertyName) geometry;
+            if (geometry instanceof PropertyName propertyName) {
                 ls.setGeometryPropertyName(propertyName.getPropertyName());
             } else {
                 ls.setGeometry(geometry);
@@ -133,8 +132,7 @@ public class SLDLineSymbolizerBinding extends AbstractComplexBinding {
 
         // &lt;xsd:element ref="sld:VendorOption" minOccurs="0" maxOccurs="unbounded"/&gt;
         for (CssParameter param : node.getChildValues(CssParameter.class)) {
-            ls.getOptions()
-                    .put(param.getName(), param.getExpression().evaluate(null, String.class));
+            ls.getOptions().put(param.getName(), param.getExpression().evaluate(null, String.class));
         }
 
         return ls;

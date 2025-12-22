@@ -19,15 +19,15 @@ package org.geotools.coverage.processing;
 import java.awt.Color;
 import java.io.Writer;
 import java.util.Locale;
-import javax.media.jai.EnumeratedParameter;
-import javax.media.jai.Interpolation;
-import javax.media.jai.KernelJAI;
+import org.eclipse.imagen.EnumeratedParameter;
+import org.eclipse.imagen.Interpolation;
+import org.eclipse.imagen.KernelImageN;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.AbstractCoverage;
 import org.geotools.image.util.ImageUtilities;
 import org.geotools.metadata.i18n.Vocabulary;
 import org.geotools.metadata.i18n.VocabularyKeys;
 import org.geotools.parameter.ParameterWriter;
-import org.opengis.util.InternationalString;
 
 /**
  * Format grid coverage operation parameters in a tabular format.
@@ -45,27 +45,26 @@ final class CoverageParameterWriter extends ParameterWriter {
     /** Formats the specified value as a string. */
     @Override
     protected String formatValue(final Object value) {
-        if (KernelJAI.GRADIENT_MASK_SOBEL_HORIZONTAL.equals(value)) {
+        if (KernelImageN.GRADIENT_MASK_SOBEL_HORIZONTAL.equals(value)) {
             return "GRADIENT_MASK_SOBEL_HORIZONTAL";
         }
-        if (KernelJAI.GRADIENT_MASK_SOBEL_VERTICAL.equals(value)) {
+        if (KernelImageN.GRADIENT_MASK_SOBEL_VERTICAL.equals(value)) {
             return "GRADIENT_MASK_SOBEL_VERTICAL";
         }
-        if (value instanceof AbstractCoverage) {
-            final InternationalString name = ((AbstractCoverage) value).getName();
+        if (value instanceof AbstractCoverage coverage) {
+            final InternationalString name = coverage.getName();
             final Locale locale = getLocale();
-            return (name != null)
+            return name != null
                     ? name.toString(locale)
                     : Vocabulary.getResources(locale).getString(VocabularyKeys.UNTITLED);
         }
-        if (value instanceof Interpolation) {
-            return ImageUtilities.getInterpolationName((Interpolation) value);
+        if (value instanceof Interpolation interpolation) {
+            return ImageUtilities.getInterpolationName(interpolation);
         }
-        if (value instanceof EnumeratedParameter) {
-            return ((EnumeratedParameter) value).getName();
+        if (value instanceof EnumeratedParameter parameter) {
+            return parameter.getName();
         }
-        if (value instanceof Color) {
-            final Color c = (Color) value;
+        if (value instanceof Color c) {
             return "RGB[" + c.getRed() + ',' + c.getGreen() + ',' + c.getBlue() + ']';
         }
         return super.formatValue(value);

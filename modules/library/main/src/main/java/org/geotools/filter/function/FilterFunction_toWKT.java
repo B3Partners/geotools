@@ -20,16 +20,15 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_toWKT extends FunctionExpressionImpl {
 
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "toWKT", parameter("wkt", String.class), parameter("geometry", Geometry.class));
+            new FunctionNameImpl("toWKT", parameter("wkt", String.class), parameter("geometry", Geometry.class));
 
     public FilterFunction_toWKT() {
         super(NAME);
@@ -47,6 +46,6 @@ public class FilterFunction_toWKT extends FunctionExpressionImpl {
                     "Filter Function problem for function toWKT argument #0 - expected type Geometry");
         }
 
-        return (StaticGeometry.toWKT(arg0));
+        return StaticGeometry.toWKT(arg0);
     }
 }

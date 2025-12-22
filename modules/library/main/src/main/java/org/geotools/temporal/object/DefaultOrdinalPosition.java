@@ -16,15 +16,14 @@
  */
 package org.geotools.temporal.object;
 
+import org.geotools.api.temporal.IndeterminateValue;
+import org.geotools.api.temporal.OrdinalEra;
+import org.geotools.api.temporal.OrdinalPosition;
+import org.geotools.api.temporal.TemporalReferenceSystem;
 import org.geotools.util.Utilities;
-import org.opengis.temporal.IndeterminateValue;
-import org.opengis.temporal.OrdinalEra;
-import org.opengis.temporal.OrdinalPosition;
-import org.opengis.temporal.TemporalReferenceSystem;
 
 /**
- * A data type that shall be used for identifying temporal position within an ordinal temporal
- * reference system.
+ * A data type that shall be used for identifying temporal position within an ordinal temporal reference system.
  *
  * @author Mehdi Sidhoum (Geomatys)
  */
@@ -34,9 +33,7 @@ public class DefaultOrdinalPosition extends DefaultTemporalPosition implements O
     private OrdinalEra ordinalPosition;
 
     public DefaultOrdinalPosition(
-            TemporalReferenceSystem frame,
-            IndeterminateValue indeterminatePosition,
-            OrdinalEra ordinalPosition) {
+            TemporalReferenceSystem frame, IndeterminateValue indeterminatePosition, OrdinalEra ordinalPosition) {
         super(frame, indeterminatePosition);
         this.ordinalPosition = ordinalPosition;
     }
@@ -60,8 +57,7 @@ public class DefaultOrdinalPosition extends DefaultTemporalPosition implements O
         if (object == this) {
             return true;
         }
-        if (object instanceof DefaultOrdinalPosition && super.equals(object)) {
-            final DefaultOrdinalPosition that = (DefaultOrdinalPosition) object;
+        if (object instanceof DefaultOrdinalPosition that && super.equals(object)) {
 
             return Utilities.equals(this.ordinalPosition, that.ordinalPosition);
         }

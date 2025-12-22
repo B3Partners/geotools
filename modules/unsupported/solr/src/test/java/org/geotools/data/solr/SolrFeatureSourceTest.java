@@ -20,31 +20,31 @@ package org.geotools.data.solr;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortOrder;
+import org.geotools.api.filter.spatial.BBOX;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.And;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.Id;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.sort.SortOrder;
-import org.opengis.filter.spatial.BBOX;
 
 public class SolrFeatureSourceTest extends SolrTestSupport {
 
@@ -102,8 +102,7 @@ public class SolrFeatureSourceTest extends SolrTestSupport {
     public void testGetFeaturesWithAndLogicFilter() throws Exception {
         init();
         FilterFactory ff = dataStore.getFilterFactory();
-        PropertyIsEqualTo property =
-                ff.equals(ff.property("standard_ss"), ff.literal("IEEE 802.11b"));
+        PropertyIsEqualTo property = ff.equals(ff.property("standard_ss"), ff.literal("IEEE 802.11b"));
         BBOX bbox = ff.bbox("geo", -1, -1, 10, 10, "EPSG:" + SOURCE_SRID);
         And filter = ff.and(property, bbox);
         SimpleFeatureCollection features = featureSource.getFeatures(filter);
@@ -121,9 +120,8 @@ public class SolrFeatureSourceTest extends SolrTestSupport {
         try (SimpleFeatureIterator iterator = features.features()) {
             while (iterator.hasNext()) {
                 SimpleFeature f = iterator.next();
-                assertTrue(
-                        f.getAttribute("vendor_s").equals("D-Link")
-                                || f.getAttribute("vendor_s").equals("Linksys"));
+                assertTrue(f.getAttribute("vendor_s").equals("D-Link")
+                        || f.getAttribute("vendor_s").equals("Linksys"));
             }
         }
     }
@@ -146,12 +144,8 @@ public class SolrFeatureSourceTest extends SolrTestSupport {
     public void testGetFeaturesWithIdFilter() throws Exception {
         init();
         FilterFactory ff = dataStore.getFilterFactory();
-        Id id =
-                ff.id(
-                        new HashSet<>(
-                                Arrays.asList(
-                                        ff.featureId(this.layerName + ".1"),
-                                        ff.featureId(this.layerName + ".7"))));
+        Id id = ff.id(
+                new HashSet<>(Arrays.asList(ff.featureId(this.layerName + ".1"), ff.featureId(this.layerName + ".7"))));
         SimpleFeatureCollection features = featureSource.getFeatures(id);
         assertEquals(2, features.size());
         try (SimpleFeatureIterator iterator = features.features()) {
@@ -167,8 +161,7 @@ public class SolrFeatureSourceTest extends SolrTestSupport {
     public void testGetFeaturesWithBetweenFilter() throws Exception {
         init();
         FilterFactory ff = dataStore.getFilterFactory();
-        PropertyIsBetween between =
-                ff.between(ff.property("speed_is"), ff.literal(0), ff.literal(150));
+        PropertyIsBetween between = ff.between(ff.property("speed_is"), ff.literal(0), ff.literal(150));
         SimpleFeatureCollection features = featureSource.getFeatures(between);
         assertEquals(9, features.size());
         try (SimpleFeatureIterator iterator = features.features()) {
@@ -335,8 +328,7 @@ public class SolrFeatureSourceTest extends SolrTestSupport {
     public void testGetFeaturesWithIsGreaterThanOrEqualToFilter() throws Exception {
         init();
         FilterFactory ff = dataStore.getFilterFactory();
-        PropertyIsGreaterThanOrEqualTo f =
-                ff.greaterOrEqual(ff.property("speed_is"), ff.literal(300));
+        PropertyIsGreaterThanOrEqualTo f = ff.greaterOrEqual(ff.property("speed_is"), ff.literal(300));
         SimpleFeatureCollection features = featureSource.getFeatures(f);
         assertEquals(5, features.size());
     }

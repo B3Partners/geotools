@@ -22,8 +22,8 @@ import java.io.Reader;
 import java.util.Collections;
 import java.util.EmptyStackException;
 import java.util.List;
+import org.geotools.styling.zoom.ZoomContextFinder;
 import org.geotools.ysld.YamlUtil;
-import org.geotools.ysld.parse.ZoomContextFinder;
 import org.yaml.snakeyaml.error.MarkedYAMLException;
 import org.yaml.snakeyaml.events.AliasEvent;
 import org.yaml.snakeyaml.events.Event;
@@ -42,8 +42,7 @@ public class YsldValidator {
      * Validate the passed style
      *
      * @param input Reader for the style
-     * @return List of {@link MarkedYAMLException} representing any errors, or an empty list if the
-     *     style is valid
+     * @return List of {@link MarkedYAMLException} representing any errors, or an empty list if the style is valid
      */
     public List<MarkedYAMLException> validate(Reader input) throws IOException {
         YsldValidateContext context = new YsldValidateContext();
@@ -54,18 +53,18 @@ public class YsldValidator {
             for (Event evt : YamlUtil.getSafeYaml().parse(input)) {
                 YsldValidateHandler h = context.peek();
 
-                if (evt instanceof MappingStartEvent) {
-                    h.mapping((MappingStartEvent) evt, context);
-                } else if (evt instanceof MappingEndEvent) {
-                    h.endMapping((MappingEndEvent) evt, context);
-                } else if (evt instanceof SequenceStartEvent) {
-                    h.sequence((SequenceStartEvent) evt, context);
-                } else if (evt instanceof SequenceEndEvent) {
-                    h.endSequence((SequenceEndEvent) evt, context);
-                } else if (evt instanceof ScalarEvent) {
-                    h.scalar((ScalarEvent) evt, context);
-                } else if (evt instanceof AliasEvent) {
-                    h.alias((AliasEvent) evt, context);
+                if (evt instanceof MappingStartEvent event5) {
+                    h.mapping(event5, context);
+                } else if (evt instanceof MappingEndEvent event4) {
+                    h.endMapping(event4, context);
+                } else if (evt instanceof SequenceStartEvent event3) {
+                    h.sequence(event3, context);
+                } else if (evt instanceof SequenceEndEvent event2) {
+                    h.endSequence(event2, context);
+                } else if (evt instanceof ScalarEvent event1) {
+                    h.scalar(event1, context);
+                } else if (evt instanceof AliasEvent event) {
+                    h.alias(event, context);
                 }
             }
         } catch (MarkedYAMLException e) {

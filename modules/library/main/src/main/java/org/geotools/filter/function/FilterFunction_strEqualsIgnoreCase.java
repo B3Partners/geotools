@@ -20,18 +20,17 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_strEqualsIgnoreCase extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "strEqualsIgnoreCase",
-                    parameter("equals", Boolean.class),
-                    parameter("string", String.class),
-                    parameter("lookup", String.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "strEqualsIgnoreCase",
+            parameter("equals", Boolean.class),
+            parameter("string", String.class),
+            parameter("lookup", String.class));
 
     public FilterFunction_strEqualsIgnoreCase() {
         super(NAME);

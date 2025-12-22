@@ -17,16 +17,16 @@
 
 package org.geotools.referencing.factory;
 
-import org.opengis.referencing.AuthorityFactory;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.cs.AxisDirection;
-import org.opengis.referencing.cs.CSAuthorityFactory;
-import org.opengis.referencing.cs.RangeMeaning;
-import org.opengis.referencing.datum.DatumAuthorityFactory;
-import org.opengis.referencing.datum.PixelInCell;
-import org.opengis.referencing.datum.VerticalDatumType;
-import org.opengis.referencing.operation.CoordinateOperationAuthorityFactory;
-import org.opengis.util.CodeList;
+import org.geotools.api.referencing.AuthorityFactory;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.cs.AxisDirection;
+import org.geotools.api.referencing.cs.CSAuthorityFactory;
+import org.geotools.api.referencing.cs.RangeMeaning;
+import org.geotools.api.referencing.datum.DatumAuthorityFactory;
+import org.geotools.api.referencing.datum.PixelInCell;
+import org.geotools.api.referencing.datum.VerticalDatumType;
+import org.geotools.api.referencing.operation.CoordinateOperationAuthorityFactory;
+import org.geotools.api.util.CodeList;
 
 /**
  * An "object type" in a URI.
@@ -40,8 +40,7 @@ final class URI_Type {
      * "urn:ogc:def:<b>crs</b>:EPSG:6.8"</code>.
      *
      * <p>The canonical source for the list of type names is the <a
-     * href="http://www.opengis.net/register/ogc-na/def-type">OGC Naming Authority register of def
-     * types</a>.
+     * href="http://www.opengis.net/register/ogc-na/def-type">OGC Naming Authority register of def types</a>.
      */
     private static final URI_Type[] TYPES = {
         new URI_Type("crs", CRSAuthorityFactory.class),
@@ -50,8 +49,7 @@ final class URI_Type {
         new URI_Type("ellipsoid", DatumAuthorityFactory.class),
         new URI_Type("cs", CSAuthorityFactory.class),
         new URI_Type("axis", CSAuthorityFactory.class),
-        new URI_Type(
-                "coordinateOperation", CoordinateOperationAuthorityFactory.class), // deprecated
+        new URI_Type("coordinateOperation", CoordinateOperationAuthorityFactory.class), // deprecated
         new URI_Type("coordinate-operation", CoordinateOperationAuthorityFactory.class),
         new URI_Type("method", CoordinateOperationAuthorityFactory.class),
         new URI_Type("parameter", CoordinateOperationAuthorityFactory.class),
@@ -70,10 +68,7 @@ final class URI_Type {
     /** The object type name. */
     public final String name;
 
-    /**
-     * The factory for this type, either as a {@link AuthorityFactory} subinterface or a {@link
-     * CodeList}.
-     */
+    /** The factory for this type, either as a {@link AuthorityFactory} subinterface or a {@link CodeList}. */
     public final Class<?> type;
 
     /** Creates a new instance of {@code URN_Type}. */

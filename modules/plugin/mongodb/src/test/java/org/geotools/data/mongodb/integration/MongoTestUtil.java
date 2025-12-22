@@ -33,15 +33,15 @@ import java.net.UnknownHostException;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.geotools.TestData;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.GeometryAttribute;
+import org.geotools.api.feature.Property;
 import org.geotools.data.mongodb.MongoGeometryBuilder;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.Feature;
-import org.opengis.feature.GeometryAttribute;
-import org.opengis.feature.Property;
 
 /** @author tkunicki@boundlessgeo.com */
 @SuppressWarnings("deprecation") // DB was replaced by MongoDatabase but API is not the same
@@ -69,11 +69,10 @@ public class MongoTestUtil {
             assertThat(mc, is(notNullValue()));
             DB db = mc.getDB("db");
             DBCollection coll = db.getCollection("dbc");
-            BasicDBObject bdo =
-                    new BasicDBObject("name", "MongoDB")
-                            .append("type", "database")
-                            .append("count", 1)
-                            .append("info", new BasicDBObject("x", 203).append("y", 102));
+            BasicDBObject bdo = new BasicDBObject("name", "MongoDB")
+                    .append("type", "database")
+                    .append("count", 1)
+                    .append("info", new BasicDBObject("x", 203).append("y", 102));
 
             coll.insert(bdo);
             // System.out.println(coll.findOne());
@@ -124,8 +123,7 @@ public class MongoTestUtil {
         return store;
     }
 
-    private DBCollection grabDBCollection(
-            MongoClient client, String dbName, String dbcName, boolean init)
+    private DBCollection grabDBCollection(MongoClient client, String dbName, String dbcName, boolean init)
             throws UnknownHostException {
         DB db = client.getDB(dbName);
         DBCollection dbc = db.getCollection(dbcName);

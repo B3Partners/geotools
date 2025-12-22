@@ -73,8 +73,7 @@ public class NetCDFTimeUtilities {
     public static String checkDateDigits(String origin) {
         String digitsCheckedOrigin = "";
         if (origin.indexOf("-") > 0) {
-            String tmp =
-                    (origin.indexOf(" ") > 0 ? origin.substring(0, origin.indexOf(" ")) : origin);
+            String tmp = origin.indexOf(" ") > 0 ? origin.substring(0, origin.indexOf(" ")) : origin;
             String[] originDateParts = tmp.split("-");
             for (int l = 0; l < originDateParts.length; l++) {
                 String datePart = originDateParts[l];
@@ -83,14 +82,13 @@ public class NetCDFTimeUtilities {
                 }
 
                 digitsCheckedOrigin += datePart;
-                digitsCheckedOrigin += (l < (originDateParts.length - 1) ? "-" : "");
+                digitsCheckedOrigin += l < originDateParts.length - 1 ? "-" : "";
             }
         }
 
         if (origin.indexOf(":") > 0) {
             digitsCheckedOrigin += " ";
-            String tmp =
-                    (origin.indexOf(" ") > 0 ? origin.substring(origin.indexOf(" ") + 1) : origin);
+            String tmp = origin.indexOf(" ") > 0 ? origin.substring(origin.indexOf(" ") + 1) : origin;
             String[] originDateParts = tmp.split(":");
             for (int l = 0; l < originDateParts.length; l++) {
                 String datePart = originDateParts[l];
@@ -99,7 +97,7 @@ public class NetCDFTimeUtilities {
                 }
 
                 digitsCheckedOrigin += datePart;
-                digitsCheckedOrigin += (l < (originDateParts.length - 1) ? ":" : "");
+                digitsCheckedOrigin += l < originDateParts.length - 1 ? ":" : "";
             }
         }
 
@@ -326,8 +324,7 @@ public class NetCDFTimeUtilities {
         } else {
             int intVal = (int) val;
             if (intVal != val) {
-                throw new IllegalArgumentException(
-                        "Can't convert " + val + " to an int without losing data");
+                throw new IllegalArgumentException("Can't convert " + val + " to an int without losing data");
             }
             cal.add(unit, intVal);
         }

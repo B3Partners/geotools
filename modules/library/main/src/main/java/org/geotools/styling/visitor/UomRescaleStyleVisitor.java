@@ -21,36 +21,33 @@ import java.util.List;
 import java.util.Map;
 import javax.measure.Unit;
 import javax.measure.quantity.Length;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.style.Displacement;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Font;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.GraphicalSymbol;
+import org.geotools.api.style.LabelPlacement;
+import org.geotools.api.style.LinePlacement;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.PointPlacement;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.Stroke;
+import org.geotools.api.style.TextSymbolizer;
 import org.geotools.measure.Units;
-import org.geotools.styling.Displacement;
-import org.geotools.styling.Fill;
-import org.geotools.styling.Font;
-import org.geotools.styling.Graphic;
-import org.geotools.styling.LabelPlacement;
-import org.geotools.styling.LinePlacement;
-import org.geotools.styling.LineSymbolizer;
-import org.geotools.styling.Mark;
-import org.geotools.styling.PointPlacement;
-import org.geotools.styling.PointSymbolizer;
-import org.geotools.styling.PolygonSymbolizer;
-import org.geotools.styling.Stroke;
-import org.geotools.styling.TextSymbolizer;
-import org.geotools.styling.TextSymbolizer2;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.style.GraphicalSymbol;
 
 /**
- * Visitor used for rescaling a Style given a map scale (e.g., meters per pixel) and taking into
- * consideration the Unit of Measure (UOM, e.g., SI.METRE, USCustomary.FOOT) of each symbolizer. The
- * resulting Style's Symbolizer sizes will all be given in PIXELS, so that they can be directly used
- * by a renderer that is unaware of units of measure or the current map scale. For example, points
- * with size == 100 meters could be rescaled to 10 pixels for higher levels of zoom and 2 pixels for
- * a lower level of zoom.
+ * Visitor used for rescaling a Style given a map scale (e.g., meters per pixel) and taking into consideration the Unit
+ * of Measure (UOM, e.g., SI.METRE, USCustomary.FOOT) of each symbolizer. The resulting Style's Symbolizer sizes will
+ * all be given in PIXELS, so that they can be directly used by a renderer that is unaware of units of measure or the
+ * current map scale. For example, points with size == 100 meters could be rescaled to 10 pixels for higher levels of
+ * zoom and 2 pixels for a lower level of zoom.
  *
- * <p>This visitor extends {@link DuplicatingStyleVisitor} and as such yields a copy of the original
- * Style. Usage is simply to call the desired visit() method and then call getCopy() to retrieve the
- * result.
+ * <p>This visitor extends {@link DuplicatingStyleVisitor} and as such yields a copy of the original Style. Usage is
+ * simply to call the desired visit() method and then call getCopy() to retrieve the result.
  *
  * @author milton
  * @author Andrea Aime - GeoSolutions
@@ -60,18 +57,16 @@ public class UomRescaleStyleVisitor extends DuplicatingStyleVisitor {
     double mapScale;
 
     /**
-     * Constructor: requires the current mapScale to inform the window to viewport (world to screen)
-     * relation in order to correctly rescaleDashArray sizes according to units of measure given in
-     * world units (e.g., SI.METRE, USCustomary.FOOT, etc).
+     * Constructor: requires the current mapScale to inform the window to viewport (world to screen) relation in order
+     * to correctly rescaleDashArray sizes according to units of measure given in world units (e.g., SI.METRE,
+     * USCustomary.FOOT, etc).
      *
      * @param mapScale The specified map scale, given in pixels per meter.
      */
     public UomRescaleStyleVisitor(double mapScale) {
         if (mapScale <= 0)
             throw new IllegalArgumentException(
-                    "The mapScale is out of range. Value is "
-                            + Double.toString(mapScale)
-                            + ". It must be positive.");
+                    "The mapScale is out of range. Value is " + Double.toString(mapScale) + ". It must be positive.");
 
         this.mapScale = mapScale;
     }
@@ -168,8 +163,7 @@ public class UomRescaleStyleVisitor extends DuplicatingStyleVisitor {
 
             if (graphic.graphicalSymbols() != null) {
                 for (GraphicalSymbol gs : graphic.graphicalSymbols()) {
-                    if (gs instanceof Mark) {
-                        Mark mark = (Mark) gs;
+                    if (gs instanceof Mark mark) {
                         rescaleStroke(mark.getStroke(), unit);
                         rescaleFill(mark.getFill(), unit);
                     }
@@ -197,7 +191,7 @@ public class UomRescaleStyleVisitor extends DuplicatingStyleVisitor {
         Unit<Length> uom = copy.getUnitOfMeasure();
         rescaleStroke(copy.getStroke(), uom);
         rescaleFill(copy.getFill(), uom);
-        scaleIntArrayOption(copy.getOptions(), PolygonSymbolizer.GRAPHIC_MARGIN_KEY, uom);
+        scaleIntArrayOption(copy.getOptions(), org.geotools.api.style.PolygonSymbolizer.GRAPHIC_MARGIN_KEY, uom);
         copy.setUnitOfMeasure(Units.PIXEL);
     }
 
@@ -221,22 +215,17 @@ public class UomRescaleStyleVisitor extends DuplicatingStyleVisitor {
 
         // rescales label placement
         LabelPlacement placement = copy.getLabelPlacement();
-        if (placement instanceof PointPlacement) {
-            // rescales point label placement
-            PointPlacement pointPlacement = (PointPlacement) placement;
+        if (placement instanceof PointPlacement pointPlacement) {
             Displacement disp = pointPlacement.getDisplacement();
             if (disp != null) {
                 disp.setDisplacementX(rescale(disp.getDisplacementX(), uom));
                 disp.setDisplacementY(rescale(disp.getDisplacementY(), uom));
                 pointPlacement.setDisplacement(disp);
             }
-        } else if (placement instanceof LinePlacement) {
-            // rescales line label placement
-            LinePlacement linePlacement = (LinePlacement) placement;
+        } else if (placement instanceof LinePlacement linePlacement) {
             linePlacement.setGap(rescale(linePlacement.getGap(), uom));
             linePlacement.setInitialGap(rescale(linePlacement.getInitialGap(), uom));
-            linePlacement.setPerpendicularOffset(
-                    rescale(linePlacement.getPerpendicularOffset(), uom));
+            linePlacement.setPerpendicularOffset(rescale(linePlacement.getPerpendicularOffset(), uom));
         }
         copy.setLabelPlacement(placement);
 
@@ -245,20 +234,16 @@ public class UomRescaleStyleVisitor extends DuplicatingStyleVisitor {
             copy.getHalo().setRadius(rescale(copy.getHalo().getRadius(), uom));
         }
 
-        if (copy instanceof TextSymbolizer2) {
-            TextSymbolizer2 copy2 = (TextSymbolizer2) copy;
-
-            rescale(copy2.getGraphic(), uom);
-        }
+        rescale(copy.getGraphic(), uom);
 
         // scale various options as well
         Map<String, String> options = copy.getOptions();
-        scaleIntOption(options, TextSymbolizer.MAX_DISPLACEMENT_KEY, uom);
-        scaleIntOption(options, TextSymbolizer.SPACE_AROUND_KEY, uom);
-        scaleIntOption(options, TextSymbolizer.MIN_GROUP_DISTANCE_KEY, uom);
-        scaleIntOption(options, TextSymbolizer.LABEL_REPEAT_KEY, uom);
-        scaleIntOption(options, TextSymbolizer.AUTO_WRAP_KEY, uom);
-        scaleIntArrayOption(options, TextSymbolizer.GRAPHIC_MARGIN_KEY, uom);
+        scaleIntOption(options, org.geotools.api.style.TextSymbolizer.MAX_DISPLACEMENT_KEY, uom);
+        scaleIntOption(options, org.geotools.api.style.TextSymbolizer.SPACE_AROUND_KEY, uom);
+        scaleIntOption(options, org.geotools.api.style.TextSymbolizer.MIN_GROUP_DISTANCE_KEY, uom);
+        scaleIntOption(options, org.geotools.api.style.TextSymbolizer.LABEL_REPEAT_KEY, uom);
+        scaleIntOption(options, org.geotools.api.style.TextSymbolizer.AUTO_WRAP_KEY, uom);
+        scaleIntArrayOption(options, org.geotools.api.style.TextSymbolizer.GRAPHIC_MARGIN_KEY, uom);
 
         copy.setUnitOfMeasure(Units.PIXEL);
     }
@@ -272,8 +257,7 @@ public class UomRescaleStyleVisitor extends DuplicatingStyleVisitor {
         }
     }
 
-    private void scaleIntArrayOption(
-            Map<String, String> options, String optionName, Unit<Length> uom) {
+    private void scaleIntArrayOption(Map<String, String> options, String optionName, Unit<Length> uom) {
         if (options.containsKey(optionName)) {
             String strValue = options.get(optionName);
             if (strValue != null) {

@@ -21,19 +21,19 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
 
 /** @author Cory Horner, Refractions Research Inc. */
 public class JenksFunctionTest extends FunctionTestSupport {
@@ -53,8 +53,7 @@ public class JenksFunctionTest extends FunctionTestSupport {
     public void testSetParameters() throws Exception {
         Literal classes = ff.literal(3);
         PropertyName expr = ff.property("foo");
-        JenksNaturalBreaksFunction func =
-                (JenksNaturalBreaksFunction) ff.function("Jenks", expr, classes);
+        JenksNaturalBreaksFunction func = (JenksNaturalBreaksFunction) ff.function("Jenks", expr, classes);
         assertEquals(3, func.getClasses());
         classes = ff.literal(12);
         func = (JenksNaturalBreaksFunction) ff.function("Jenks", expr, classes);
@@ -110,29 +109,27 @@ public class JenksFunctionTest extends FunctionTestSupport {
     /**
      * Test a feature collection where each feature will be in it's own bin.
      *
-     * <p>Creates a feature collection with five features 1-5. Then uses the quantile function to
-     * put these features in 5 bins. Each bin should have a single feature.
+     * <p>Creates a feature collection with five features 1-5. Then uses the quantile function to put these features in
+     * 5 bins. Each bin should have a single feature.
      */
     @Test
     public void testSingleBin() throws Exception {
 
         // create a feature collection with five features values 1-5
-        SimpleFeatureType dataType =
-                DataUtilities.createType("classification.test1", "id:0,value:int");
+        SimpleFeatureType dataType = DataUtilities.createType("classification.test1", "id:0,value:int");
         int[] iVal = {1, 2, 3, 4, 5};
         SimpleFeature[] myfeatures = new SimpleFeature[iVal.length];
         for (int i = 0; i < iVal.length; i++) {
-            myfeatures[i] =
-                    SimpleFeatureBuilder.build(
-                            dataType,
-                            new Object[] {Integer.valueOf(i + 1), Integer.valueOf(iVal[i])},
-                            "classification.test1" + (i + 1));
+            myfeatures[i] = SimpleFeatureBuilder.build(
+                    dataType,
+                    new Object[] {Integer.valueOf(i + 1), Integer.valueOf(iVal[i])},
+                    "classification.test1" + (i + 1));
         }
         SimpleFeatureSource source = DataUtilities.source(myfeatures);
         SimpleFeatureCollection myFeatureCollection = source.getFeatures();
 
         // run the quantile function
-        org.opengis.filter.expression.Expression function =
+        org.geotools.api.filter.expression.Expression function =
                 ff.function("Jenks", ff.property("value"), ff.literal(5));
         Classifier classifier = (Classifier) function.evaluate(myFeatureCollection);
 
@@ -158,22 +155,20 @@ public class JenksFunctionTest extends FunctionTestSupport {
     @Test
     public void test2() throws Exception {
         // create a feature collection with five features values 1-5
-        SimpleFeatureType dataType =
-                DataUtilities.createType("classification.test1", "id:0,value:int");
+        SimpleFeatureType dataType = DataUtilities.createType("classification.test1", "id:0,value:int");
         int[] iVal = {1, 2, 3, 4, 5, 6};
         SimpleFeature[] myfeatures = new SimpleFeature[iVal.length];
         for (int i = 0; i < iVal.length; i++) {
-            myfeatures[i] =
-                    SimpleFeatureBuilder.build(
-                            dataType,
-                            new Object[] {Integer.valueOf(i + 1), Integer.valueOf(iVal[i])},
-                            "classification.t" + (i + 1));
+            myfeatures[i] = SimpleFeatureBuilder.build(
+                    dataType,
+                    new Object[] {Integer.valueOf(i + 1), Integer.valueOf(iVal[i])},
+                    "classification.t" + (i + 1));
         }
         SimpleFeatureSource source = DataUtilities.source(myfeatures);
         SimpleFeatureCollection myFeatureCollection = source.getFeatures();
 
         // run the quantile function
-        org.opengis.filter.expression.Expression function =
+        org.geotools.api.filter.expression.Expression function =
                 ff.function("Jenks", ff.property("value"), ff.literal(5));
         Classifier classifier = (Classifier) function.evaluate(myFeatureCollection);
         assertThat(classifier, CoreMatchers.instanceOf(RangedClassifier.class));
@@ -182,8 +177,7 @@ public class JenksFunctionTest extends FunctionTestSupport {
     @Test
     public void testNullNaNHandling() throws Exception {
         // create a feature collection
-        SimpleFeatureType ft =
-                DataUtilities.createType("classification.nullnan", "id:0,foo:int,bar:double");
+        SimpleFeatureType ft = DataUtilities.createType("classification.nullnan", "id:0,foo:int,bar:double");
         Integer[] iVal = {
             Integer.valueOf(0),
             Integer.valueOf(0),
@@ -210,21 +204,19 @@ public class JenksFunctionTest extends FunctionTestSupport {
         SimpleFeature[] testFeatures = new SimpleFeature[iVal.length];
 
         for (int i = 0; i < iVal.length; i++) {
-            testFeatures[i] =
-                    SimpleFeatureBuilder.build(
-                            ft,
-                            new Object[] {
-                                Integer.valueOf(i + 1), iVal[i], dVal[i],
-                            },
-                            "nantest.t" + (i + 1));
+            testFeatures[i] = SimpleFeatureBuilder.build(
+                    ft,
+                    new Object[] {
+                        Integer.valueOf(i + 1), iVal[i], dVal[i],
+                    },
+                    "nantest.t" + (i + 1));
         }
         SimpleFeatureSource source = DataUtilities.source(testFeatures);
         SimpleFeatureCollection thisFC = source.getFeatures();
 
         // create the expression
         Divide divide = ff.divide(ff.property("foo"), ff.property("bar"));
-        JenksNaturalBreaksFunction qf =
-                (JenksNaturalBreaksFunction) ff.function("Jenks", divide, ff.literal(3));
+        JenksNaturalBreaksFunction qf = (JenksNaturalBreaksFunction) ff.function("Jenks", divide, ff.literal(3));
 
         RangedClassifier range = (RangedClassifier) qf.evaluate(thisFC);
         assertEquals(3, range.getSize()); // 2 or 3?

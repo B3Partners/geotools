@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.coverage.grid.io.footprint.FootprintLoader;
 import org.geotools.coverage.grid.io.footprint.FootprintLoaderSpi;
 import org.geotools.data.shapefile.ShapefileDataStore;
@@ -28,7 +29,6 @@ import org.geotools.data.shapefile.files.ShpFileType;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.util.URLs;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
 
 public class ShapefileLoaderSPI implements FootprintLoaderSpi {
 
@@ -37,18 +37,16 @@ public class ShapefileLoaderSPI implements FootprintLoaderSpi {
         return new ShapefileLoader();
     }
 
-    /**
-     * Loads footprints from a sidecar shepefile with a single record, will complain if more than
-     * one is found
-     */
-    public class ShapefileLoader implements FootprintLoader {
+    /** Loads footprints from a sidecar shepefile with a single record, will complain if more than one is found */
+    public static class ShapefileLoader implements FootprintLoader {
 
         @Override
         public Geometry loadFootprint(String pathNoExtension) throws Exception {
             File file = new File(pathNoExtension + ".shp");
             if (file.exists()) {
                 ShapefileDataStore ds = new ShapefileDataStore(URLs.fileToUrl(file));
-                try (SimpleFeatureIterator fi = ds.getFeatureSource().getFeatures().features()) {
+                try (SimpleFeatureIterator fi =
+                        ds.getFeatureSource().getFeatures().features()) {
                     if (!fi.hasNext()) {
                         return null;
                     } else {
@@ -56,8 +54,7 @@ public class ShapefileLoaderSPI implements FootprintLoaderSpi {
                         Geometry result = (Geometry) sf.getDefaultGeometry();
                         if (fi.hasNext()) {
                             throw new IOException(
-                                    "Found more than one footprint record in the shapefile "
-                                            + file.getCanonicalPath());
+                                    "Found more than one footprint record in the shapefile " + file.getCanonicalPath());
                         }
                         return result;
                     }

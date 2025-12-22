@@ -22,19 +22,21 @@ package org.geotools.referencing.operation.projection;
 
 import static org.junit.Assert.assertNotNull;
 
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.operation.MathTransform;
 
 /** @author Marco Peters */
 public class MollweideProviderTest {
 
     private String SEMI_MAJOR = Mollweide.MollweideProvider.SEMI_MAJOR.getName().getCode();
     private String SEMI_MINOR = Mollweide.MollweideProvider.SEMI_MINOR.getName().getCode();
-    private String FALSE_NORTHING = Mollweide.MollweideProvider.FALSE_NORTHING.getName().getCode();
-    private String FALSE_EASTING = Mollweide.MollweideProvider.FALSE_EASTING.getName().getCode();
+    private String FALSE_NORTHING =
+            Mollweide.MollweideProvider.FALSE_NORTHING.getName().getCode();
+    private String FALSE_EASTING =
+            Mollweide.MollweideProvider.FALSE_EASTING.getName().getCode();
     private String CENTRAL_MERIDIAN =
             Mollweide.MollweideProvider.CENTRAL_MERIDIAN.getName().getCode();
 
@@ -58,7 +60,6 @@ public class MollweideProviderTest {
         String wkt = mathTransform.toWKT();
         Assert.assertTrue(wkt.contains("\"semi_major\", 6000.0"));
         Assert.assertTrue(
-                "Mollweide is only spherically defined. Axis must be equal",
-                wkt.contains("\"semi_minor\", 6000.0"));
+                "Mollweide is only spherically defined. Axis must be equal", wkt.contains("\"semi_minor\", 6000.0"));
     }
 }

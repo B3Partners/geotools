@@ -19,6 +19,9 @@
 package org.geotools.wcs.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.temporal.Instant;
+import org.geotools.api.temporal.Period;
+import org.geotools.api.temporal.Position;
 import org.geotools.gml3.GML;
 import org.geotools.temporal.object.DefaultInstant;
 import org.geotools.temporal.object.DefaultPeriod;
@@ -26,9 +29,6 @@ import org.geotools.wcs.WCS;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.temporal.Instant;
-import org.opengis.temporal.Period;
-import org.opengis.temporal.Position;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -86,8 +86,10 @@ public class TimePeriodTypeBinding extends AbstractComplexBinding {
     @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
 
-        Instant begining = new DefaultInstant((Position) node.getChild("beginPosition").getValue());
-        Instant ending = new DefaultInstant((Position) node.getChild("endPosition").getValue());
+        Instant begining =
+                new DefaultInstant((Position) node.getChild("beginPosition").getValue());
+        Instant ending =
+                new DefaultInstant((Position) node.getChild("endPosition").getValue());
 
         Period timePeriod = new DefaultPeriod(begining, ending);
 

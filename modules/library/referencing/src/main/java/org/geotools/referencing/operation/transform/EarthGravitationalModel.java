@@ -25,10 +25,19 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.StringTokenizer;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.api.referencing.operation.Transformation;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.metadata.i18n.Vocabulary;
 import org.geotools.metadata.i18n.VocabularyKeys;
 import org.geotools.metadata.iso.citation.Citations;
@@ -37,27 +46,16 @@ import org.geotools.parameter.Parameter;
 import org.geotools.parameter.ParameterGroup;
 import org.geotools.referencing.NamedIdentifier;
 import org.geotools.referencing.operation.MathTransformProvider;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
-import org.opengis.referencing.operation.Transformation;
 
 /**
  * Transforms vertical coordinates using coefficients from the <A
- * HREF="http://earth-info.nima.mil/GandG/wgs84/gravitymod/wgs84_180/wgs84_180.html">Earth
- * Gravitational Model</A>.
+ * HREF="http://earth-info.nima.mil/GandG/wgs84/gravitymod/wgs84_180/wgs84_180.html">Earth Gravitational Model</A>.
  *
  * <p><strong>Aknowledgement</strong><br>
  * This class is an adaption of Fortran code <code>
  * <a href="http://earth-info.nga.mil/GandG/wgs84/gravitymod/wgs84_180/clenqt.for">clenqt.for</a>
- * </code> from the <cite>National Geospatial-Intelligence Agency</cite> and available in public
- * domain. The <cite>normalized geopotential coefficients</cite> file bundled in this module is an
- * adaptation of <code>
+ * </code> from the <cite>National Geospatial-Intelligence Agency</cite> and available in public domain. The
+ * <cite>normalized geopotential coefficients</cite> file bundled in this module is an adaptation of <code>
  * <a href="http://earth-info.nima.mil/GandG/wgs84/gravitymod/wgs84_180/egm180.nor">egm180.nor</a>
  * </code> file, with some spaces trimmed.
  *
@@ -66,6 +64,7 @@ import org.opengis.referencing.operation.Transformation;
  * @author Pierre Cardinal
  * @author Martin Desruisseaux
  */
+@SuppressWarnings("FloatingPointLiteralPrecision")
 public final class EarthGravitationalModel extends VerticalTransform {
     /** Pre-computed values of some square roots. */
     private static final double SQRT_03 = 1.7320508075688772935274463415059,
@@ -101,21 +100,18 @@ public final class EarthGravitationalModel extends VerticalTransform {
     /** Theoretical (Normal) Gravity Formula Constant. */
     private final double star;
 
-    /**
-     * The geopotential coefficients read from the ASCII file. Those arrays are filled by the {@link
-     * #load} method.
-     */
+    /** The geopotential coefficients read from the ASCII file. Those arrays are filled by the {@link #load} method. */
     private final double[] cnmGeopCoef, snmGeopCoef;
 
     /**
-     * Cleanshaw coefficients needed for the selected gravimetric quantities that are computed.
-     * Those arrays are computed by the {@link #initialize} method.
+     * Cleanshaw coefficients needed for the selected gravimetric quantities that are computed. Those arrays are
+     * computed by the {@link #initialize} method.
      */
     private final double[] aClenshaw, bClenshaw, as;
 
     /**
-     * Temporary buffer for use by {@link #heightOffset} only. Allocated once for ever for avoiding
-     * too many objects creation / destruction.
+     * Temporary buffer for use by {@link #heightOffset} only. Allocated once for ever for avoiding too many objects
+     * creation / destruction.
      */
     private final double[] cr, sr, s11, s12;
 
@@ -172,40 +168,35 @@ public final class EarthGravitationalModel extends VerticalTransform {
     }
 
     /**
-     * Computes the index as it would be returned by the locating array {@code iv} (from the Fortran
-     * code).
+     * Computes the index as it would be returned by the locating array {@code iv} (from the Fortran code).
      *
-     * <p>Tip (used in some place in this class): {@code locatingArray(n+1)} == {@code
-     * locatingArray(n) + n + 1}.
+     * <p>Tip (used in some place in this class): {@code locatingArray(n+1)} == {@code locatingArray(n) + n + 1}.
      */
     private static int locatingArray(final int n) {
-        return ((n + 1) * n) >> 1;
+        return (n + 1) * n >> 1;
     }
 
     /**
-     * Loads the coefficients from the specified ASCII file and initialize the internal
-     * <cite>clenshaw arrays</cite>.
+     * Loads the coefficients from the specified ASCII file and initialize the internal <cite>clenshaw arrays</cite>.
      *
-     * <p><strong>Note:</strong> ASCII may looks like an unefficient format for binary distribution.
-     * A binary file with coefficient values read by {@link java.io.DataInput#readDouble} would be
-     * more compact than an <u>uncompressed</u> ASCII file. However, binary files are hard to
-     * compress by the ZIP algorithm. Our experience show that a 675 kb uncompressed ASCII file is
-     * only 222 kb after ZIP or JAR compression. The same data as a binary file is 257 kb
-     * uncompressed and 248 kb compressed. So surprisingly, the ASCII file is more compact than the
-     * binary file after compression. Since it is the primary format provided by the Earth-Info web
-     * site, we use it directly in order to avoid a multiplication of formats.
+     * <p><strong>Note:</strong> ASCII may looks like an unefficient format for binary distribution. A binary file with
+     * coefficient values read by {@link java.io.DataInput#readDouble} would be more compact than an <u>uncompressed</u>
+     * ASCII file. However, binary files are hard to compress by the ZIP algorithm. Our experience show that a 675 kb
+     * uncompressed ASCII file is only 222 kb after ZIP or JAR compression. The same data as a binary file is 257 kb
+     * uncompressed and 248 kb compressed. So surprisingly, the ASCII file is more compact than the binary file after
+     * compression. Since it is the primary format provided by the Earth-Info web site, we use it directly in order to
+     * avoid a multiplication of formats.
      *
      * @param filename The filename (e.g. {@code "WGS84.cof"}, relative to this class directory.
      * @throws IOException if the file can't be read or has an invalid content.
      */
-    protected void load(final String filename) throws IOException {
+    void load(final String filename) throws IOException {
         try (InputStream stream = EarthGravitationalModel.class.getResourceAsStream(filename)) {
             if (stream == null) {
                 throw new FileNotFoundException(filename);
             }
             try (LineNumberReader in =
-                    new LineNumberReader(
-                            new InputStreamReader(stream, StandardCharsets.ISO_8859_1))) {
+                    new LineNumberReader(new InputStreamReader(stream, StandardCharsets.ISO_8859_1))) {
                 String line;
                 while ((line = in.readLine()) != null) {
                     final StringTokenizer tokens = new StringTokenizer(line);
@@ -233,14 +224,10 @@ public final class EarthGravitationalModel extends VerticalTransform {
                          *   - NumberFormatException       if a number can't be parsed.
                          *   - IndexOutOfBoundsException   if 'n' or 'm' values are illegal.
                          */
+                        final Object arg1 = in.getLineNumber();
                         final IOException exception =
-                                new IOException(
-                                        Errors.format(
-                                                ErrorKeys.BAD_LINE_IN_FILE_$2,
-                                                filename,
-                                                in.getLineNumber()));
-                        exception.initCause(
-                                cause); // TODO: Inline when we will be allowed to target Java 6.
+                                new IOException(MessageFormat.format(ErrorKeys.BAD_LINE_IN_FILE_$2, filename, arg1));
+                        exception.initCause(cause); // TODO: Inline when we will be allowed to target Java 6.
                         throw exception;
                     }
                 }
@@ -250,9 +237,9 @@ public final class EarthGravitationalModel extends VerticalTransform {
     }
 
     /**
-     * Computes the <cite>clenshaw arrays</cite> after all coefficients have been read. We performs
-     * this step in a separated method than {@link #from} in case we wish to read the coefficient
-     * from an other source than an ASCII file in some future version.
+     * Computes the <cite>clenshaw arrays</cite> after all coefficients have been read. We performs this step in a
+     * separated method than {@link #from} in case we wish to read the coefficient from an other source than an ASCII
+     * file in some future version.
      */
     private final void initialize() {
         /*
@@ -266,11 +253,7 @@ public final class EarthGravitationalModel extends VerticalTransform {
             for (int i = 2; i < c2n.length; i++) {
                 sign *= -1;
                 esqi *= esq;
-                c2n[i] =
-                        sign
-                                * (3 * esqi)
-                                / ((2 * i + 1) * (2 * i + 3))
-                                * (1 - i + (5 * i * c2 / esq));
+                c2n[i] = sign * (3 * esqi) / ((2 * i + 1) * (2 * i + 3)) * (1 - i + 5 * i * c2 / esq);
             }
             /* all nmax */ cnmGeopCoef[3] += c2n[1] / SQRT_05;
             /* all nmax */ cnmGeopCoef[10] += c2n[2] / 3;
@@ -292,9 +275,8 @@ public final class EarthGravitationalModel extends VerticalTransform {
                 final int ll = locatingArray(j) + i;
                 final int n = 2 * j + 1;
                 final int ji = (j - i) * (j + i);
-                aClenshaw[ll] = Math.sqrt(n * (2 * j - 1) / (double) (ji));
-                bClenshaw[ll] =
-                        Math.sqrt(n * (j + i - 1) * (j - i - 1) / (double) (ji * (2 * j - 3)));
+                aClenshaw[ll] = Math.sqrt(n * (2 * j - 1) / (double) ji);
+                bClenshaw[ll] = Math.sqrt(n * (j + i - 1) * (j - i - 1) / (double) (ji * (2 * j - 3)));
             }
         }
     }
@@ -315,8 +297,8 @@ public final class EarthGravitationalModel extends VerticalTransform {
         final double rn = semiMajor / rni;
         final double t22 = (rn + height) * Math.cos(phi);
         final double x2y2 = t22 * t22;
-        final double z1 = ((rn * (1 - esq)) + height) * sin_phi;
-        final double th = (Math.PI / 2.0) - Math.atan(z1 / Math.sqrt(x2y2));
+        final double z1 = (rn * (1 - esq) + height) * sin_phi;
+        final double th = Math.PI / 2.0 - Math.atan(z1 / Math.sqrt(x2y2));
         final double y = Math.sin(th);
         final double t = Math.cos(th);
         final double f1 = semiMajor / Math.sqrt(x2y2 + z1 * z1);
@@ -333,8 +315,8 @@ public final class EarthGravitationalModel extends VerticalTransform {
         cr[0] = 1;
         cr[1] = Math.cos(rlam);
         for (int j = 2; j <= nmax; j++) {
-            sr[j] = (2.0 * cr[1] * sr[j - 1]) - sr[j - 2];
-            cr[j] = (2.0 * cr[1] * cr[j - 1]) - cr[j - 2];
+            sr[j] = 2.0 * cr[1] * sr[j - 1] - sr[j - 2];
+            cr[j] = 2.0 * cr[1] * cr[j - 1] - cr[j - 2];
         }
         double sht = 0, previousSht = 0;
         for (int i = nmax; i >= 0; i--) {
@@ -344,15 +326,15 @@ public final class EarthGravitationalModel extends VerticalTransform {
                 final int ll3 = ll2 + j + 2;
                 final double ta = aClenshaw[ll2] * f1 * t;
                 final double tb = bClenshaw[ll3] * f2;
-                s11[j] = (ta * s11[j + 1]) - (tb * s11[j + 2]) + cnmGeopCoef[ll];
-                s12[j] = (ta * s12[j + 1]) - (tb * s12[j + 2]) + snmGeopCoef[ll];
+                s11[j] = ta * s11[j + 1] - tb * s11[j + 2] + cnmGeopCoef[ll];
+                s12[j] = ta * s12[j + 1] - tb * s12[j + 2] + snmGeopCoef[ll];
             }
             previousSht = sht;
-            sht = (-as[i] * y * f1 * sht) + (s11[i] * cr[i]) + (s12[i] * sr[i]);
+            sht = -as[i] * y * f1 * sht + s11[i] * cr[i] + s12[i] * sr[i];
         }
-        return ((s11[0] + s12[0]) * f1 + (previousSht * SQRT_03 * y * f2))
+        return ((s11[0] + s12[0]) * f1 + previousSht * SQRT_03 * y * f2)
                 * rkm
-                / (semiMajor * (gravn - (height * 0.3086e-5)));
+                / (semiMajor * (gravn - height * 0.3086e-5));
     }
 
     /** Returns the parameter descriptors for this math transform. */
@@ -365,8 +347,7 @@ public final class EarthGravitationalModel extends VerticalTransform {
     @Override
     public ParameterValueGroup getParameterValues() {
         return new ParameterGroup(
-                getParameterDescriptors(),
-                new ParameterValue[] {new Parameter<>(Provider.ORDER, nmax)});
+                getParameterDescriptors(), new ParameterValue[] {new Parameter<>(Provider.ORDER, nmax)});
     }
 
     /**
@@ -376,32 +357,24 @@ public final class EarthGravitationalModel extends VerticalTransform {
      * @author Martin Desruisseaux
      */
     public static class Provider extends MathTransformProvider {
-        /**
-         * The operation parameter descriptor for the maximum degree and order. The default value is
-         * 180.
-         */
-        public static final ParameterDescriptor<Integer> ORDER =
-                DefaultParameterDescriptor.create(
-                        Collections.singletonMap(
-                                NAME_KEY,
-                                new NamedIdentifier(
-                                        Citations.GEOTOOLS,
-                                        Vocabulary.formatInternational(VocabularyKeys.ORDER))),
-                        DEFAULT_ORDER,
-                        2,
-                        180,
-                        false);
+        /** The operation parameter descriptor for the maximum degree and order. The default value is 180. */
+        public static final ParameterDescriptor<Integer> ORDER = DefaultParameterDescriptor.create(
+                Collections.singletonMap(
+                        NAME_KEY,
+                        new NamedIdentifier(Citations.GEOTOOLS, Vocabulary.formatInternational(VocabularyKeys.ORDER))),
+                DEFAULT_ORDER,
+                2,
+                180,
+                false);
 
         /** The parameters group. */
-        static final ParameterDescriptorGroup PARAMETERS =
-                createDescriptorGroup(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(
-                                    Citations.GEOTOOLS,
-                                    Vocabulary.formatInternational(
-                                            VocabularyKeys.EARTH_GRAVITATIONAL_MODEL))
-                        },
-                        new ParameterDescriptor[] {ORDER});
+        static final ParameterDescriptorGroup PARAMETERS = createDescriptorGroup(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(
+                            Citations.GEOTOOLS,
+                            Vocabulary.formatInternational(VocabularyKeys.EARTH_GRAVITATIONAL_MODEL))
+                },
+                new ParameterDescriptor[] {ORDER});
 
         /** Constructs a math transform provider. */
         public Provider() {
@@ -434,7 +407,7 @@ public final class EarthGravitationalModel extends VerticalTransform {
             try {
                 mt.load(filename);
             } catch (IOException e) {
-                throw new FactoryException(Errors.format(ErrorKeys.CANT_READ_$1, filename), e);
+                throw new FactoryException(MessageFormat.format(ErrorKeys.CANT_READ_$1, filename), e);
             }
             return mt;
         }

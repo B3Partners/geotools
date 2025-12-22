@@ -18,25 +18,25 @@
 package org.geotools.grid.ortholine;
 
 import java.util.Map;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.grid.GridElement;
 import org.geotools.grid.GridFeatureBuilder;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * A basic implementation of {@code LineFeatureBuilder} which will create a {@code
- * SimpleFeatureType} having two properties:
+ * A basic implementation of {@code LineFeatureBuilder} which will create a {@code SimpleFeatureType} having two
+ * properties:
  *
  * <ul>
  *   <li>element - TYPE LineString
  *   <li>id - TYPE Integer
  * </ul>
  *
- * The attribute names can also be referred to using {@linkplain
- * LineFeatureBuilder#DEFAULT_GEOMETRY_ATTRIBUTE_NAME} and {@linkplain #ID_ATTRIBUTE_NAME}
+ * The attribute names can also be referred to using {@linkplain LineFeatureBuilder#DEFAULT_GEOMETRY_ATTRIBUTE_NAME} and
+ * {@linkplain #ID_ATTRIBUTE_NAME}
  *
  * <p>Line elements will be assigned sequential id values starting with 1.
  *
@@ -62,8 +62,7 @@ public class OrthoLineFeatureBuilder extends GridFeatureBuilder {
     /**
      * Creates the feature TYPE
      *
-     * @param typeName name for the feature TYPE; if {@code null} or empty, {@linkplain
-     *     #DEFAULT_TYPE_NAME} will be used
+     * @param typeName name for the feature TYPE; if {@code null} or empty, {@linkplain #DEFAULT_TYPE_NAME} will be used
      * @param crs coordinate reference system (may be {@code null})
      * @return the feature TYPE
      */
@@ -86,8 +85,7 @@ public class OrthoLineFeatureBuilder extends GridFeatureBuilder {
     }
 
     /**
-     * Creates a new instance with a feature TYPE having the default name and a null coordinate
-     * reference system.
+     * Creates a new instance with a feature TYPE having the default name and a null coordinate reference system.
      *
      * @see #DEFAULT_TYPE_NAME
      */
@@ -98,16 +96,14 @@ public class OrthoLineFeatureBuilder extends GridFeatureBuilder {
     /**
      * Creates a new instance with a null coordinate reference system.
      *
-     * @param typeName name for the feature TYPE; if {@code null} or empty, {@linkplain
-     *     #DEFAULT_TYPE_NAME} will be used
+     * @param typeName name for the feature TYPE; if {@code null} or empty, {@linkplain #DEFAULT_TYPE_NAME} will be used
      */
     OrthoLineFeatureBuilder(String typeName) {
         this(typeName, null);
     }
 
     /**
-     * Creates a new instance with a feature TYPE having the default name and the supplied
-     * coordinate reference system.
+     * Creates a new instance with a feature TYPE having the default name and the supplied coordinate reference system.
      *
      * @param crs coordinate reference system (may be {@code null})
      * @see #DEFAULT_TYPE_NAME
@@ -119,8 +115,7 @@ public class OrthoLineFeatureBuilder extends GridFeatureBuilder {
     /**
      * Creates a new instance.
      *
-     * @param typeName name for the feature TYPE; if {@code null} or empty, {@linkplain
-     *     #DEFAULT_TYPE_NAME} will be used
+     * @param typeName name for the feature TYPE; if {@code null} or empty, {@linkplain #DEFAULT_TYPE_NAME} will be used
      * @param crs coordinate reference system (may be {@code null})
      */
     public OrthoLineFeatureBuilder(String typeName, CoordinateReferenceSystem crs) {
@@ -142,8 +137,7 @@ public class OrthoLineFeatureBuilder extends GridFeatureBuilder {
      */
     @Override
     public void setAttributes(GridElement el, Map<String, Object> attributes) {
-        if (el instanceof OrthoLine) {
-            OrthoLine orthoLine = (OrthoLine) el;
+        if (el instanceof OrthoLine orthoLine) {
             attributes.put(ID_ATTRIBUTE_NAME, ++id);
             attributes.put(LEVEL_ATTRIBUTE_NAME, orthoLine.getLevel());
 

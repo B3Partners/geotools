@@ -18,11 +18,11 @@ package org.geotools.data.vpf.readers;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.vpf.VPFFeatureClass;
 import org.geotools.data.vpf.VPFFeatureType;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * DOCUMENT ME!
@@ -33,8 +33,8 @@ import org.opengis.feature.simple.SimpleFeature;
 public abstract class VPFGeometryFactory {
     // private static final GeometryFactory m_GeometryFactory = new GeometryFactory();
     /**
-     * Constructs a geometry for the appropriate feature type based on values currently on the
-     * object, retrieving values as needed from the various VPFFile objects
+     * Constructs a geometry for the appropriate feature type based on values currently on the object, retrieving values
+     * as needed from the various VPFFile objects
      *
      * @param featureType the VPFFeatureType to use
      * @param values the current feature

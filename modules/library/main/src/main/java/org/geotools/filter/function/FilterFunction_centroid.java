@@ -20,19 +20,16 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_centroid extends FunctionExpressionImpl {
 
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "centroid",
-                    parameter("centroid", Point.class),
-                    parameter("geometry", Geometry.class));
+            new FunctionNameImpl("centroid", parameter("centroid", Point.class), parameter("geometry", Geometry.class));
 
     public FilterFunction_centroid() {
         super(NAME);
@@ -50,6 +47,6 @@ public class FilterFunction_centroid extends FunctionExpressionImpl {
                     "Filter Function problem for function centroid argument #0 - expected type Geometry");
         }
 
-        return (StaticGeometry.centroid(arg0));
+        return StaticGeometry.centroid(arg0);
     }
 }

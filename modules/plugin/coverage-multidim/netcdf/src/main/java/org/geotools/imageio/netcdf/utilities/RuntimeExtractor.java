@@ -25,9 +25,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.gce.imagemosaic.properties.PropertiesCollector;
 import org.geotools.gce.imagemosaic.properties.PropertiesCollectorSPI;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * {@link PropertiesCollector} that is able to collect properties from a file name.
@@ -37,8 +37,7 @@ import org.opengis.feature.simple.SimpleFeature;
 class RuntimeExtractor extends PropertiesCollector {
 
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(RuntimeExtractor.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(RuntimeExtractor.class);
 
     Date date;
 
@@ -94,15 +93,13 @@ class RuntimeExtractor extends PropertiesCollector {
                     date = new Date(lastModified);
                 } else {
                     date = new Date();
-                    warningMessage =
-                            "Unable to extract the last modified date from the provided url " + url;
+                    warningMessage = "Unable to extract the last modified date from the provided url " + url;
                 }
             } catch (IOException ioe) {
-                warningMessage =
-                        "Unable to extract the last modified date from the provided url "
-                                + url
-                                + " due to "
-                                + ioe.getLocalizedMessage();
+                warningMessage = "Unable to extract the last modified date from the provided url "
+                        + url
+                        + " due to "
+                        + ioe.getLocalizedMessage();
             }
             if (warningMessage != null && LOGGER.isLoggable(Level.FINE)) {
                 LOGGER.fine(warningMessage);

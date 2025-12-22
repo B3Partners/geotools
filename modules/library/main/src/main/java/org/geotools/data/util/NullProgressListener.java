@@ -16,14 +16,14 @@
  */
 package org.geotools.data.util;
 
-import org.opengis.util.InternationalString;
-import org.opengis.util.ProgressListener;
+import org.geotools.api.util.InternationalString;
+import org.geotools.api.util.ProgressListener;
 
 /**
  * A default progress listener implementation suitable for subclassing.
  *
- * <p>This implementation supports cancelation and getting/setting the description. The default
- * implementations of the other methods do nothing.
+ * <p>This implementation supports cancelation and getting/setting the description. The default implementations of the
+ * other methods do nothing.
  *
  * @since 2.2
  * @version $Id$

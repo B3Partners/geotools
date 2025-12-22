@@ -27,7 +27,7 @@ import java.io.FileNotFoundException;
 import java.util.logging.Logger;
 import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
 import org.geotools.coverageio.jp2k.Granule.Level;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.test.TestData;
 import org.junit.Test;
@@ -39,8 +39,7 @@ import org.junit.Test;
  */
 public final class GranuleTest extends BaseJP2K {
 
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(GranuleTest.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(GranuleTest.class);
     /** Creates a new instance of GranuleTest */
     public GranuleTest() {}
 
@@ -58,7 +57,7 @@ public final class GranuleTest extends BaseJP2K {
         }
 
         final AbstractGridCoverage2DReader reader = new JP2KReader(file);
-        final GeneralEnvelope envelope = reader.getOriginalEnvelope();
+        final GeneralBounds envelope = reader.getOriginalEnvelope();
         final Granule granule = new Granule(new ReferencedEnvelope(envelope), file);
         final Level level = granule.getLevel(0);
         if (level != null) {

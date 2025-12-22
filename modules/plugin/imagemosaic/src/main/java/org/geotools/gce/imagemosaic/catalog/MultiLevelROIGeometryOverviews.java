@@ -16,7 +16,6 @@
  */
 package org.geotools.gce.imagemosaic.catalog;
 
-import it.geosolutions.jaiext.vectorbin.ROIGeometry;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
@@ -24,8 +23,9 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageReadParam;
-import javax.media.jai.ROI;
-import javax.media.jai.ROIShape;
+import org.eclipse.imagen.ROI;
+import org.eclipse.imagen.ROIShape;
+import org.eclipse.imagen.media.vectorbin.ROIGeometry;
 import org.geotools.coverage.grid.io.footprint.MultiLevelROI;
 import org.geotools.coverage.grid.io.imageio.ReadType;
 import org.geotools.geometry.jts.GeometryClipper;
@@ -39,8 +39,8 @@ import org.locationtech.jts.geom.util.AffineTransformation;
 import org.locationtech.jts.simplify.TopologyPreservingSimplifier;
 
 /**
- * A ROIGeometry provider that handles multi-scale ROI, supporting per imageIndex overviews's
- * geometries being stored in separate sidecar file
+ * A ROIGeometry provider that handles multi-scale ROI, supporting per imageIndex overviews's geometries being stored in
+ * separate sidecar file
  *
  * @author Daniele Romagnoli - GeoSolutions
  */
@@ -49,8 +49,7 @@ public class MultiLevelROIGeometryOverviews implements MultiLevelROI {
     /** {@link Logger} used for logging exceptions */
     private static final Logger LOGGER = Logging.getLogger(MultiLevelROIGeometryOverviews.class);
 
-    private static final AffineTransformation Y_INVERSION =
-            new AffineTransformation(1, 0, 0, 0, -1, 0);
+    private static final AffineTransformation Y_INVERSION = new AffineTransformation(1, 0, 0, 0, -1, 0);
 
     /** The original footprint geometry */
     private Geometry originalFootprint;
@@ -68,16 +67,13 @@ public class MultiLevelROIGeometryOverviews implements MultiLevelROI {
     private Hints hints;
 
     /**
-     * Flag specifying whether overview's ROI are expressed in raster space coordinates (True) or
-     * model space coordinates (False)
+     * Flag specifying whether overview's ROI are expressed in raster space coordinates (True) or model space
+     * coordinates (False)
      */
     private boolean overviewsRoiInRasterSpace;
 
     public MultiLevelROIGeometryOverviews(
-            Geometry footprint,
-            List<Geometry> multilevelFootprints,
-            boolean overviewsInRasterSpace,
-            Hints hints) {
+            Geometry footprint, List<Geometry> multilevelFootprints, boolean overviewsInRasterSpace, Hints hints) {
         this.originalFootprint = footprint;
         this.multilevelFootprints = multilevelFootprints;
         this.numOverviews = multilevelFootprints != null ? multilevelFootprints.size() : 0;
@@ -88,11 +84,7 @@ public class MultiLevelROIGeometryOverviews implements MultiLevelROI {
 
     @Override
     public ROIGeometry getTransformedROI(
-            AffineTransform at,
-            int imageIndex,
-            Rectangle imgBounds,
-            ImageReadParam params,
-            ReadType readType) {
+            AffineTransform at, int imageIndex, Rectangle imgBounds, ImageReadParam params, ReadType readType) {
         if (empty) {
             return null;
         }
@@ -103,17 +95,15 @@ public class MultiLevelROIGeometryOverviews implements MultiLevelROI {
         if (roiGeometry == null) {
             boolean useOverviews = imageIndex != 0 && numOverviews > 0;
             Geometry rescaled =
-                    (useOverviews
-                            ? multilevelFootprints.get(imageIndex - 1).copy()
-                            : originalFootprint.copy());
+                    useOverviews ? multilevelFootprints.get(imageIndex - 1).copy() : originalFootprint.copy();
             if (LOGGER.isLoggable(Level.FINE)) {
                 LOGGER.fine("Using footprint's overview: " + useOverviews);
             }
             AffineTransformation geometryAT = null;
             if (useOverviews && overviewsRoiInRasterSpace) {
                 Rectangle sourceRegion = params.getSourceRegion();
-                final double xScale = (imgBounds.getWidth() / sourceRegion.getWidth() * 1.0);
-                final double yScale = (imgBounds.getHeight() / sourceRegion.getHeight() * 1.0);
+                final double xScale = imgBounds.getWidth() / sourceRegion.getWidth() * 1.0;
+                final double yScale = imgBounds.getHeight() / sourceRegion.getHeight() * 1.0;
 
                 // Need to align the Overview's geometry to the read area (sourceRegion offset)
                 geometryAT = new AffineTransformation(1, 0, -sourceRegion.x, 0, 1, -sourceRegion.y);
@@ -123,22 +113,20 @@ public class MultiLevelROIGeometryOverviews implements MultiLevelROI {
 
                 // rescale the geometry to align it with the read portion
                 if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine(
-                            "Adapting overview's geometry to current image, using transformation: "
-                                    + geometryAT.toString());
+                    LOGGER.fine("Adapting overview's geometry to current image, using transformation: "
+                            + geometryAT.toString());
                 }
 
                 rescaled.apply(geometryAT);
 
             } else {
-                geometryAT =
-                        new AffineTransformation(
-                                at.getScaleX(),
-                                at.getShearX(),
-                                at.getTranslateX(),
-                                at.getShearY(),
-                                at.getScaleY(),
-                                at.getTranslateY());
+                geometryAT = new AffineTransformation(
+                        at.getScaleX(),
+                        at.getShearX(),
+                        at.getTranslateX(),
+                        at.getShearY(),
+                        at.getScaleY(),
+                        at.getTranslateY());
                 rescaled.apply(geometryAT);
             }
 
@@ -201,12 +189,12 @@ public class MultiLevelROIGeometryOverviews implements MultiLevelROI {
          * Gets a {@link Geometry} from an input {@link ROI}.
          *
          * @param roi the ROI
-         * @return a {@link Geometry} instance from the provided input; null in case the input roi
-         *     is neither a geometry, nor a shape.
+         * @return a {@link Geometry} instance from the provided input; null in case the input roi is neither a
+         *     geometry, nor a shape.
          */
         private Geometry getGeometry(ROI roi) {
-            if (roi instanceof ROIGeometry) {
-                return ((ROIGeometry) roi).getAsGeometry();
+            if (roi instanceof ROIGeometry geometry) {
+                return geometry.getAsGeometry();
             } else if (roi instanceof ROIShape) {
                 final Shape shape = roi.getAsShape();
                 final Geometry geom = ShapeReader.read(shape, 0, new GeometryFactory());

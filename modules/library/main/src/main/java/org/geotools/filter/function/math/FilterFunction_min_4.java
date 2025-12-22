@@ -20,21 +20,20 @@ package org.geotools.filter.function.math;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.util.Converters;
 import org.geotools.util.factory.Hints;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_min_4 extends FunctionExpressionImpl {
 
     // public static FunctionName NAME = new FunctionNameImpl("min_4","int","int");
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "min_4",
-                    parameter("minium", Integer.class),
-                    parameter("int", Number.class),
-                    parameter("int", Number.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "min_4",
+            parameter("minium", Integer.class),
+            parameter("int", Number.class),
+            parameter("int", Number.class));
 
     public FilterFunction_min_4() {
         super("min_4");
@@ -63,6 +62,6 @@ public class FilterFunction_min_4 extends FunctionExpressionImpl {
                     "Filter Function problem for function min argument #1 - expected type int");
         }
 
-        return (Math.min((Integer) arg0, (Integer) arg1));
+        return Math.min((Integer) arg0, (Integer) arg1);
     }
 }

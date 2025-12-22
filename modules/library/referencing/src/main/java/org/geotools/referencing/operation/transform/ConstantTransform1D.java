@@ -16,11 +16,12 @@
  */
 package org.geotools.referencing.operation.transform;
 
+import java.io.Serial;
 import java.util.Arrays;
 
 /**
- * A one dimensional, constant transform. Output values are set to a constant value regardless of
- * input values. This class is really a special case of {@link LinearTransform1D} in which <code>
+ * A one dimensional, constant transform. Output values are set to a constant value regardless of input values. This
+ * class is really a special case of {@link LinearTransform1D} in which <code>
  * {@link #scale} = 0</code> and <code>{@link #offset} = constant</code>. However, this specialized
  * {@code ConstantTransform1D} class is faster.
  *
@@ -30,6 +31,7 @@ import java.util.Arrays;
  */
 final class ConstantTransform1D extends LinearTransform1D {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -1583675681650985947L;
 
     /**
@@ -37,7 +39,7 @@ final class ConstantTransform1D extends LinearTransform1D {
      *
      * @param offset The {@code offset} term in the linear equation.
      */
-    protected ConstantTransform1D(final double offset) {
+    ConstantTransform1D(final double offset) {
         super(0, offset);
     }
 
@@ -49,15 +51,13 @@ final class ConstantTransform1D extends LinearTransform1D {
 
     /** Transforms a list of coordinate point ordinal values. */
     @Override
-    public void transform(
-            final float[] srcPts, int srcOff, final float[] dstPts, int dstOff, int numPts) {
+    public void transform(final float[] srcPts, int srcOff, final float[] dstPts, int dstOff, int numPts) {
         Arrays.fill(dstPts, dstOff, dstOff + numPts, (float) offset);
     }
 
     /** Transforms a list of coordinate point ordinal values. */
     @Override
-    public void transform(
-            final double[] srcPts, int srcOff, final double[] dstPts, int dstOff, int numPts) {
+    public void transform(final double[] srcPts, int srcOff, final double[] dstPts, int dstOff, int numPts) {
         Arrays.fill(dstPts, dstOff, dstOff + numPts, offset);
     }
 }

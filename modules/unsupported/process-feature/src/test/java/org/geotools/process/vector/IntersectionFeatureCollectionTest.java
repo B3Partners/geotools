@@ -26,7 +26,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 import org.geotools.TestData;
-import org.geotools.data.DataStore;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.property.PropertyDataStore;
 import org.geotools.data.simple.SimpleFeatureCollection;
@@ -43,11 +46,9 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LinearRing;
+import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.impl.CoordinateArraySequence;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.FilterFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class IntersectionFeatureCollectionTest {
     private static final Logger logger =
@@ -108,11 +109,7 @@ public class IntersectionFeatureCollectionTest {
     }
 
     private Polygon createRectangularPolygonByCoords(
-            double xMin,
-            double xMax,
-            double yMin,
-            double yMax,
-            CoordinateReferenceSystem sourceCRS) {
+            double xMin, double xMax, double yMin, double yMax, CoordinateReferenceSystem sourceCRS) {
         GeometryFactory geomFactory = new GeometryFactory();
 
         // creates the  polygon
@@ -132,13 +129,7 @@ public class IntersectionFeatureCollectionTest {
     @Test(expected = IllegalArgumentException.class)
     public void testProcessArguments1() throws IllegalArgumentException {
         process.execute(
-                multipointCollection,
-                featuresCollection,
-                null,
-                null,
-                IntersectionMode.INTERSECTION,
-                null,
-                null);
+                multipointCollection, featuresCollection, null, null, IntersectionMode.INTERSECTION, null, null);
     }
 
     // this test verifies if the Illegal argument exception is thrown when a MultiPointCollection is
@@ -146,21 +137,14 @@ public class IntersectionFeatureCollectionTest {
     @Test(expected = IllegalArgumentException.class)
     public void testProcessArguments2() throws IllegalArgumentException {
         process.execute(
-                featuresCollection,
-                multipointCollection,
-                null,
-                null,
-                IntersectionMode.INTERSECTION,
-                true,
-                false);
+                featuresCollection, multipointCollection, null, null, IntersectionMode.INTERSECTION, true, false);
     }
 
     @Test
     public void testGetIntersectionAreaRate() {
 
         logger.info("Running testGetIntersectionAreaRate ...");
-        CoordinateReferenceSystem sourceCRS =
-                org.geotools.referencing.crs.DefaultGeographicCRS.WGS84;
+        CoordinateReferenceSystem sourceCRS = org.geotools.referencing.crs.DefaultGeographicCRS.WGS84;
 
         // creates the world state polygon
         Polygon worldPolygon = createRectangularPolygonByCoords(-180, 180, -90, 90, sourceCRS);
@@ -169,9 +153,8 @@ public class IntersectionFeatureCollectionTest {
         Polygon coloradoPolygon = createRectangularPolygonByCoords(-102, -109, 37, 41, sourceCRS);
 
         // calculates the estimated value
-        double calculatedRate =
-                IntersectionFeatureCollection.getIntersectionArea(
-                        worldPolygon, sourceCRS, coloradoPolygon, sourceCRS, true);
+        double calculatedRate = IntersectionFeatureCollection.getIntersectionArea(
+                worldPolygon, sourceCRS, coloradoPolygon, sourceCRS, true);
 
         // calculates the expected value
         double expectedRate = COLORADOAREA / WORLDAREA;
@@ -187,15 +170,14 @@ public class IntersectionFeatureCollectionTest {
         toRetainFst.add("str1");
         ArrayList<String> toRetainSnd = new ArrayList<>();
         toRetainSnd.add("str2");
-        SimpleFeatureCollection output2 =
-                process.execute(
-                        zonesCollection,
-                        featuresCollection,
-                        toRetainFst,
-                        toRetainSnd,
-                        IntersectionMode.INTERSECTION,
-                        true,
-                        true);
+        SimpleFeatureCollection output2 = process.execute(
+                zonesCollection,
+                featuresCollection,
+                toRetainFst,
+                toRetainSnd,
+                IntersectionMode.INTERSECTION,
+                true,
+                true);
 
         // System.out.println("count " + output2.getSchema().getAttributeCount());
         assertNotNull(output2.getSchema().getDescriptor("the_geom"));
@@ -220,15 +202,14 @@ public class IntersectionFeatureCollectionTest {
         assertEquals(8, sf.getAttributeCount());
 
         // test without area and percentageAttributes
-        SimpleFeatureCollection output3 =
-                process.execute(
-                        zonesCollection,
-                        featuresCollection,
-                        toRetainFst,
-                        toRetainSnd,
-                        IntersectionMode.INTERSECTION,
-                        false,
-                        false);
+        SimpleFeatureCollection output3 = process.execute(
+                zonesCollection,
+                featuresCollection,
+                toRetainFst,
+                toRetainSnd,
+                IntersectionMode.INTERSECTION,
+                false,
+                false);
         SimpleFeature sf2 = DataUtilities.first(output3);
         assertNotNull(sf2.getAttribute("the_geom"));
         assertNotNull(sf2.getAttribute("zones_str1"));
@@ -248,8 +229,7 @@ public class IntersectionFeatureCollectionTest {
         SimpleFeatureBuilder b = new SimpleFeatureBuilder(tb.buildFeatureType());
 
         DefaultFeatureCollection features = new DefaultFeatureCollection(null, b.getFeatureType());
-        DefaultFeatureCollection secondFeatures =
-                new DefaultFeatureCollection(null, b.getFeatureType());
+        DefaultFeatureCollection secondFeatures = new DefaultFeatureCollection(null, b.getFeatureType());
         Polygon[] firstArrayGeometry = new Polygon[1];
         Polygon[] secondArrayGeometry = new Polygon[1];
         for (int numFeatures = 0; numFeatures < 1; numFeatures++) {
@@ -267,10 +247,9 @@ public class IntersectionFeatureCollectionTest {
         }
         for (int numFeatures = 0; numFeatures < 1; numFeatures++) {
             Coordinate[] array = new Coordinate[5];
-            Coordinate centre =
-                    ((Polygon) features.features().next().getDefaultGeometry())
-                            .getCentroid()
-                            .getCoordinate();
+            Coordinate centre = ((Polygon) features.features().next().getDefaultGeometry())
+                    .getCentroid()
+                    .getCoordinate();
             array[0] = new Coordinate(centre.x, centre.y);
             array[1] = new Coordinate(centre.x + 1, centre.y);
             array[2] = new Coordinate(centre.x + 1, centre.y + 1);
@@ -283,25 +262,71 @@ public class IntersectionFeatureCollectionTest {
             secondFeatures.add(b.buildFeature(numFeatures + ""));
         }
 
-        SimpleFeatureCollection output3 =
-                process.execute(features, secondFeatures, null, null, null, false, false);
+        SimpleFeatureCollection output3 = process.execute(features, secondFeatures, null, null, null, false, false);
 
         assertEquals(1, output3.size());
 
-        GeometryCollection firstCollection =
-                new GeometryCollection(firstArrayGeometry, new GeometryFactory());
-        GeometryCollection secondCollection =
-                new GeometryCollection(secondArrayGeometry, new GeometryFactory());
+        GeometryCollection firstCollection = new GeometryCollection(firstArrayGeometry, new GeometryFactory());
+        GeometryCollection secondCollection = new GeometryCollection(secondArrayGeometry, new GeometryFactory());
         try (SimpleFeatureIterator iterator = output3.features()) {
             for (int i = 0; i < firstCollection.getNumGeometries() && iterator.hasNext(); i++) {
-                Geometry expected =
-                        firstCollection
-                                .getGeometryN(i)
-                                .intersection(secondCollection.getGeometryN(i));
+                Geometry expected = firstCollection.getGeometryN(i).intersection(secondCollection.getGeometryN(i));
                 SimpleFeature sf = iterator.next();
                 // geometry.equals(geometry) behaves differently than geometry.equals(object)
-                assertTrue(expected.equals((Geometry) sf.getDefaultGeometry())); // NOPMD
+                assertTrue(expected.equals((Geometry) sf.getDefaultGeometry()));
             }
         }
+    }
+
+    @Test
+    public void testPointInPolygonReturnsPoint() throws Exception {
+        SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
+        tb.setName("featureType");
+        tb.add("geometry", Polygon.class);
+        tb.add("integer", Integer.class);
+
+        GeometryFactory gf = new GeometryFactory();
+        SimpleFeatureBuilder b = new SimpleFeatureBuilder(tb.buildFeatureType());
+
+        DefaultFeatureCollection features = new DefaultFeatureCollection(null, b.getFeatureType());
+        Polygon[] firstArrayGeometry = new Polygon[1];
+
+        for (int numFeatures = 0; numFeatures < 1; numFeatures++) {
+            Coordinate[] array = new Coordinate[5];
+            array[0] = new Coordinate(0, 0);
+            array[1] = new Coordinate(1, 0);
+            array[2] = new Coordinate(1, 1);
+            array[3] = new Coordinate(0, 1);
+            array[4] = new Coordinate(0, 0);
+            LinearRing shell = gf.createLinearRing(new CoordinateArraySequence(array));
+            b.add(gf.createPolygon(shell, null));
+            b.add(0);
+            firstArrayGeometry[0] = gf.createPolygon(shell, null);
+            features.add(b.buildFeature(numFeatures + ""));
+        }
+
+        SimpleFeatureTypeBuilder pointFeatureTypeBuilder = new SimpleFeatureTypeBuilder();
+        pointFeatureTypeBuilder.setName("pointFeatureType");
+        pointFeatureTypeBuilder.add("geometry", Point.class);
+        pointFeatureTypeBuilder.add("integer", Integer.class);
+
+        SimpleFeatureBuilder pointFeatureBuilder = new SimpleFeatureBuilder(pointFeatureTypeBuilder.buildFeatureType());
+        DefaultFeatureCollection pointFeatureCollection =
+                new DefaultFeatureCollection(null, pointFeatureBuilder.getFeatureType());
+        Point point = gf.createPoint(new Coordinate(0.5, 0.5));
+        pointFeatureCollection.add(pointFeatureBuilder.buildFeature("1", new Object[] {point}));
+
+        SimpleFeatureCollection output3 =
+                process.execute(features, pointFeatureCollection, null, null, null, false, false);
+
+        assertEquals(1, output3.size());
+        Point pointOut = (Point) output3.features().next().getDefaultGeometry();
+        assertEquals(0.5, pointOut.getX(), 0.01);
+        assertEquals(
+                "GeometryTypeImpl the_geom<Point>",
+                ((IntersectionFeatureCollection.IntersectedFeatureCollection) output3)
+                        .geomType
+                        .getType()
+                        .toString());
     }
 }

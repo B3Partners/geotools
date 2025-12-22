@@ -23,112 +23,107 @@ import java.util.List;
 import java.util.Set;
 import java.util.Stack;
 import java.util.logging.Logger;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.BinaryComparisonOperator;
+import org.geotools.api.filter.ExcludeFilter;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.IncludeFilter;
+import org.geotools.api.filter.NativeFilter;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNil;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.capability.FilterCapabilities;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.BinaryExpression;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.Multiply;
+import org.geotools.api.filter.expression.NilExpression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.Subtract;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
+import org.geotools.api.filter.temporal.After;
+import org.geotools.api.filter.temporal.AnyInteracts;
+import org.geotools.api.filter.temporal.Before;
+import org.geotools.api.filter.temporal.Begins;
+import org.geotools.api.filter.temporal.BegunBy;
+import org.geotools.api.filter.temporal.BinaryTemporalOperator;
+import org.geotools.api.filter.temporal.During;
+import org.geotools.api.filter.temporal.EndedBy;
+import org.geotools.api.filter.temporal.Ends;
+import org.geotools.api.filter.temporal.Meets;
+import org.geotools.api.filter.temporal.MetBy;
+import org.geotools.api.filter.temporal.OverlappedBy;
+import org.geotools.api.filter.temporal.TContains;
+import org.geotools.api.filter.temporal.TEquals;
+import org.geotools.api.filter.temporal.TOverlaps;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.Capabilities;
 import org.geotools.filter.IllegalFilterException;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.And;
-import org.opengis.filter.BinaryComparisonOperator;
-import org.opengis.filter.ExcludeFilter;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.Id;
-import org.opengis.filter.IncludeFilter;
-import org.opengis.filter.NativeFilter;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNil;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.capability.FilterCapabilities;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.BinaryExpression;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.Multiply;
-import org.opengis.filter.expression.NilExpression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.expression.Subtract;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
-import org.opengis.filter.temporal.After;
-import org.opengis.filter.temporal.AnyInteracts;
-import org.opengis.filter.temporal.Before;
-import org.opengis.filter.temporal.Begins;
-import org.opengis.filter.temporal.BegunBy;
-import org.opengis.filter.temporal.BinaryTemporalOperator;
-import org.opengis.filter.temporal.During;
-import org.opengis.filter.temporal.EndedBy;
-import org.opengis.filter.temporal.Ends;
-import org.opengis.filter.temporal.Meets;
-import org.opengis.filter.temporal.MetBy;
-import org.opengis.filter.temporal.OverlappedBy;
-import org.opengis.filter.temporal.TContains;
-import org.opengis.filter.temporal.TEquals;
-import org.opengis.filter.temporal.TOverlaps;
 
 /**
  * Determines what queries can be processed server side and which can be processed client side.
  *
- * <p>IMPLEMENTATION NOTE: This class is implemented as a stack processor. If you're curious how it
- * works, compare it with the old SQLUnpacker class, which did the same thing using recursion in a
- * more straightforward way.
+ * <p>IMPLEMENTATION NOTE: This class is implemented as a stack processor. If you're curious how it works, compare it
+ * with the old SQLUnpacker class, which did the same thing using recursion in a more straightforward way.
  *
- * <p>Here's a non-implementors best-guess at the algorithm: Starting at the top of the filter,
- * split each filter into its constituent parts. If the given FilterCapabilities support the given
- * operator, then keep checking downwards.
+ * <p>Here's a non-implementors best-guess at the algorithm: Starting at the top of the filter, split each filter into
+ * its constituent parts. If the given FilterCapabilities support the given operator, then keep checking downwards.
  *
- * <p>The key is in knowing whether or not something "down the tree" from you wound up being
- * supported or not. This is where the stacks come in. Right before handing off to accept() the sub-
- * filters, we count how many things are currently on the "can be proccessed by the underlying
- * datastore" stack (the preStack) and we count how many things are currently on the "need to be
- * post- processed" stack.
+ * <p>The key is in knowing whether or not something "down the tree" from you wound up being supported or not. This is
+ * where the stacks come in. Right before handing off to accept() the sub- filters, we count how many things are
+ * currently on the "can be proccessed by the underlying datastore" stack (the preStack) and we count how many things
+ * are currently on the "need to be post- processed" stack.
  *
- * <p>After the accept() call returns, we look again at the preStack.size() and postStack.size(). If
- * the postStack has grown, that means that there was stuff down in the accept()-ed filter that
- * wasn't supportable. Usually this means that our filter isn't supportable, but not always.
+ * <p>After the accept() call returns, we look again at the preStack.size() and postStack.size(). If the postStack has
+ * grown, that means that there was stuff down in the accept()-ed filter that wasn't supportable. Usually this means
+ * that our filter isn't supportable, but not always.
  *
- * <p>In some cases a sub-filter being unsupported isn't necessarily bad, as we can 'unpack' OR
- * statements into AND statements (DeMorgans rule/modus poens) and still see if we can handle the
- * other side of the OR. Same with NOT and certain kinds of AND statements.
+ * <p>In some cases a sub-filter being unsupported isn't necessarily bad, as we can 'unpack' OR statements into AND
+ * statements (DeMorgans rule/modus poens) and still see if we can handle the other side of the OR. Same with NOT and
+ * certain kinds of AND statements.
  *
- * <p>In addition this class supports the case where we're doing an split in the middle of a
- * client-side transaction. I.e. imagine doing a <Transaction> against a WFS-T where you have to
- * filter against actions that happened previously in the transaction. That's what the
- * ClientTransactionAccessor interface does, and this class splits filters while respecting the
- * information about deletes and updates that have happened previously in the Transaction. I can't
- * say with certainty exactly how the logic for that part of this works, but the test suite does
- * seem to test it and the tests do pass.
+ * <p>In addition this class supports the case where we're doing an split in the middle of a client-side transaction.
+ * I.e. imagine doing a <Transaction> against a WFS-T where you have to filter against actions that happened previously
+ * in the transaction. That's what the ClientTransactionAccessor interface does, and this class splits filters while
+ * respecting the information about deletes and updates that have happened previously in the Transaction. I can't say
+ * with certainty exactly how the logic for that part of this works, but the test suite does seem to test it and the
+ * tests do pass.
  *
- * <p>Since GeoTools 8.0, the {@link org.geotools.filter.visitor.ClientTransactionAccessor}
- * interface can also be used to instruct the splitter that a filter referencing a given {@link
- * PropertyName} can't be encoded by the back-end, by returning {@link Filter#EXCLUDE} in {@link
- * org.geotools.filter.visitor.ClientTransactionAccessor#getUpdateFilter(String)
- * getUpdateFilter(String)}. This is so because there may be the case where some attribute names are
- * encodable to the back-end's query language, while others may not be, or may not be part of the
- * stored data model. In such case, returning {@code Filter.EXCLUDE} makes the filter referencing
- * the property name part of the post-processing filter instead of the pre-processing filter.
+ * <p>Since GeoTools 8.0, the {@link org.geotools.filter.visitor.ClientTransactionAccessor} interface can also be used
+ * to instruct the splitter that a filter referencing a given {@link PropertyName} can't be encoded by the back-end, by
+ * returning {@link Filter#EXCLUDE} in
+ * {@link org.geotools.filter.visitor.ClientTransactionAccessor#getUpdateFilter(String) getUpdateFilter(String)}. This
+ * is so because there may be the case where some attribute names are encodable to the back-end's query language, while
+ * others may not be, or may not be part of the stored data model. In such case, returning {@code Filter.EXCLUDE} makes
+ * the filter referencing the property name part of the post-processing filter instead of the pre-processing filter.
  *
  * @author dzwiers
  * @author commented and ported from gt to ogc filters by saul.farber
@@ -138,27 +133,25 @@ import org.opengis.filter.temporal.TOverlaps;
 @SuppressWarnings("unchecked")
 public class CapabilitiesFilterSplitter implements FilterVisitor, ExpressionVisitor {
 
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(CapabilitiesFilterSplitter.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(CapabilitiesFilterSplitter.class);
 
     /**
      * The stack holding the bits of the filter that are not processable by something with the given
      * {@link FilterCapabilities}
      */
-    private Stack postStack = new Stack();
+    private Stack postStack = new Stack<>();
 
     /**
-     * The stack holding the bits of the filter that <b>are</b> processable by something with the
-     * given {@link FilterCapabilities}
+     * The stack holding the bits of the filter that <b>are</b> processable by something with the given
+     * {@link FilterCapabilities}
      */
-    private Stack preStack = new Stack();
+    private Stack preStack = new Stack<>();
 
     /**
-     * Operates similar to postStack. When a update is determined to affect an attribute expression
-     * the update filter is pushed on to the stack, then ored with the filter that contains the
-     * expression.
+     * Operates similar to postStack. When a update is determined to affect an attribute expression the update filter is
+     * pushed on to the stack, then ored with the filter that contains the expression.
      */
-    private Set changedStack = new HashSet();
+    private Set changedStack = new HashSet<>();
 
     /** The given filterCapabilities that we're splitting on. */
     private Capabilities fcs = null;
@@ -168,8 +161,8 @@ public class CapabilitiesFilterSplitter implements FilterVisitor, ExpressionVisi
     private Filter original = null;
 
     /**
-     * If we're in the middle of a client-side transaction, this object will help us figure out what
-     * we need to handle from updates/deletes that we're tracking client-side.
+     * If we're in the middle of a client-side transaction, this object will help us figure out what we need to handle
+     * from updates/deletes that we're tracking client-side.
      */
     private ClientTransactionAccessor transactionAccessor;
 
@@ -178,12 +171,11 @@ public class CapabilitiesFilterSplitter implements FilterVisitor, ExpressionVisi
     /**
      * Create a new instance.
      *
-     * @param fcs The FilterCapabilties that describes what Filters/Expressions the server can
-     *     process.
+     * @param fcs The FilterCapabilties that describes what Filters/Expressions the server can process.
      * @param parent The FeatureType that this filter involves. Why is this needed?
-     * @param transactionAccessor If the transaction is handled on the client and not the server
-     *     then different filters must be sent to the server. This class provides a generic way of
-     *     obtaining the information from the transaction.
+     * @param transactionAccessor If the transaction is handled on the client and not the server then different filters
+     *     must be sent to the server. This class provides a generic way of obtaining the information from the
+     *     transaction.
      */
     public CapabilitiesFilterSplitter(
             Capabilities fcs, FeatureType parent, ClientTransactionAccessor transactionAccessor) {
@@ -194,11 +186,9 @@ public class CapabilitiesFilterSplitter implements FilterVisitor, ExpressionVisi
     }
 
     /**
-     * Gets the filter that cannot be sent to the server and must be post-processed on the client by
-     * geotools.
+     * Gets the filter that cannot be sent to the server and must be post-processed on the client by geotools.
      *
-     * @return the filter that cannot be sent to the server and must be post-processed on the client
-     *     by geotools.
+     * @return the filter that cannot be sent to the server and must be post-processed on the client by geotools.
      */
     public Filter getFilterPost() {
         if (!changedStack.isEmpty())
@@ -281,9 +271,8 @@ public class CapabilitiesFilterSplitter implements FilterVisitor, ExpressionVisi
     }
 
     /**
-     * @see FilterVisitor#visit(PropertyIsBetween, Object) NOTE: This method is extra documented as
-     *     an example of how all the other methods are implemented. If you want to know how this
-     *     class works read this method first!
+     * @see FilterVisitor#visit(PropertyIsBetween, Object) NOTE: This method is extra documented as an example of how
+     *     all the other methods are implemented. If you want to know how this class works read this method first!
      * @param filter the {@link Filter} to visit
      */
     @Override
@@ -648,9 +637,9 @@ public class CapabilitiesFilterSplitter implements FilterVisitor, ExpressionVisi
             // logical operators aren't supported
 
             // if the logical operator is AND
-            if (filter instanceof And) {
+            if (filter instanceof And and) {
                 // test if one of its children is supported
-                Iterator<Filter> it = ((And) filter).getChildren().iterator();
+                Iterator<Filter> it = and.getChildren().iterator();
                 Filter supportedChild = null;
                 List<Filter> otherChildren = new ArrayList<>();
                 while (it.hasNext()) {
@@ -688,10 +677,10 @@ public class CapabilitiesFilterSplitter implements FilterVisitor, ExpressionVisi
 
         int i = postStack.size();
         int j = preStack.size();
-        if (filter instanceof Not) {
+        if (filter instanceof Not not) {
 
-            if (((Not) filter).getFilter() != null) {
-                Filter next = ((Not) filter).getFilter();
+            if (not.getFilter() != null) {
+                Filter next = not.getFilter();
                 next.accept(this, null);
 
                 if (i < postStack.size()) {
@@ -709,11 +698,11 @@ public class CapabilitiesFilterSplitter implements FilterVisitor, ExpressionVisi
                 }
             }
         } else {
-            if (filter instanceof Or) {
+            if (filter instanceof Or or) {
                 Filter orReplacement;
 
                 try {
-                    orReplacement = translateOr((Or) filter);
+                    orReplacement = translateOr(or);
                     orReplacement.accept(this, null);
                 } catch (IllegalFilterException e) {
                     popToSize(preStack, j);
@@ -820,6 +809,7 @@ public class CapabilitiesFilterSplitter implements FilterVisitor, ExpressionVisi
         if (i < postStack.size()) {
             postStack.pop();
             postStack.push(filter);
+            return null;
         }
 
         preStack.pop(); // null
@@ -846,10 +836,7 @@ public class CapabilitiesFilterSplitter implements FilterVisitor, ExpressionVisi
         // JD: use an expression to get at the attribute type intead of accessing directly
         if (parent != null && expression.evaluate(parent) == null) {
             throw new IllegalArgumentException(
-                    "Property '"
-                            + expression.getPropertyName()
-                            + "' could not be found in "
-                            + parent.getName());
+                    "Property '" + expression.getPropertyName() + "' could not be found in " + parent.getName());
         }
         if (transactionAccessor != null) {
             Filter updateFilter = transactionAccessor.getUpdateFilter(expression.getPropertyName());
@@ -979,8 +966,8 @@ public class CapabilitiesFilterSplitter implements FilterVisitor, ExpressionVisi
     }
 
     private Filter translateOr(Or filter) throws IllegalFilterException {
-        if (!(filter instanceof Or)) {
-            return filter;
+        if (filter == null) {
+            return null;
         }
 
         // a|b == ~~(a|b) negative introduction
@@ -988,14 +975,12 @@ public class CapabilitiesFilterSplitter implements FilterVisitor, ExpressionVisi
         // ~~(a|b) == ~(~a + ~b) substitution
         // a|b == ~(~a + ~b) negative simpilification
         Iterator i = filter.getChildren().iterator();
-        List translated = new ArrayList();
+        List translated = new ArrayList<>();
 
         while (i.hasNext()) {
             Filter f = (Filter) i.next();
 
-            if (f instanceof Not) {
-                // simplify it
-                Not logic = (Not) f;
+            if (f instanceof Not logic) {
                 Filter next = logic.getFilter();
                 translated.add(next);
             } else {

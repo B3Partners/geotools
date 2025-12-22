@@ -25,9 +25,10 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 import org.apache.commons.io.FilenameUtils;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFactorySpi;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFactorySpi;
 import org.geotools.gce.imagemosaic.Utils;
+import org.geotools.gce.imagemosaic.catalog.geopkg.GeoPKGDataStoreWrapper;
 import org.geotools.gce.imagemosaic.catalog.oracle.OracleDatastoreWrapper;
 import org.geotools.gce.imagemosaic.catalog.postgis.PostgisDatastoreWrapper;
 import org.geotools.gce.imagemosaic.catalog.sqlserver.SQLServerDatastoreWrapper;
@@ -50,8 +51,7 @@ public class GTDataStoreGranuleCatalog extends AbstractGTDataStoreGranuleCatalog
     }
 
     @Override
-    protected void initTileIndexStore(
-            final Properties params, final boolean create, final DataStoreFactorySpi spi)
+    protected void initTileIndexStore(final Properties params, final boolean create, final DataStoreFactorySpi spi)
             throws IOException, MalformedURLException {
         Utilities.ensureNonNull("spi", spi);
 
@@ -64,6 +64,9 @@ public class GTDataStoreGranuleCatalog extends AbstractGTDataStoreGranuleCatalog
         if (Utils.isH2Store(spi)) {
             Utils.fixH2DatabaseLocation(dastastoreParams, parentLocation);
             Utils.fixH2MVCCParam(dastastoreParams);
+        }
+        if (Utils.isGeoPkgStore(spi)) {
+            Utils.fixGeoPkgParameters(dastastoreParams, parentLocation);
         }
         if (isPostgis) {
             Utils.fixPostgisDBCreationParams(dastastoreParams);
@@ -83,17 +86,17 @@ public class GTDataStoreGranuleCatalog extends AbstractGTDataStoreGranuleCatalog
 
         if (isPostgis && wrapstore) {
             this.tileIndexStore =
-                    new PostgisDatastoreWrapper(
-                            getTileIndexStore(), FilenameUtils.getFullPath(parentLocation));
+                    new PostgisDatastoreWrapper(getTileIndexStore(), FilenameUtils.getFullPath(parentLocation));
         } else if (Utils.isOracleStore(spi)) {
             this.tileIndexStore =
-                    new OracleDatastoreWrapper(
-                            getTileIndexStore(), FilenameUtils.getFullPath(parentLocation));
+                    new OracleDatastoreWrapper(getTileIndexStore(), FilenameUtils.getFullPath(parentLocation));
         } else if (Utils.isSQLServerStore(spi)) {
             // always wrap to ensure the geometry metadata table is there
             this.tileIndexStore =
-                    new SQLServerDatastoreWrapper(
-                            getTileIndexStore(), FilenameUtils.getFullPath(parentLocation));
+                    new SQLServerDatastoreWrapper(getTileIndexStore(), FilenameUtils.getFullPath(parentLocation));
+        } else if (Utils.isGeoPkgStore(spi)) {
+            this.tileIndexStore =
+                    new GeoPKGDataStoreWrapper(getTileIndexStore(), FilenameUtils.getFullPath(parentLocation));
         }
 
         // this init must be here as it's getting called by the parent class constructor

@@ -21,8 +21,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.capability.Functions;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.capability.Functions;
 
 /**
  * Implementation of the Functions interface.
@@ -107,7 +107,7 @@ public class FunctionsImpl implements Functions {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((functionNames == null) ? 0 : functionNames.hashCode());
+        result = prime * result + (functionNames == null ? 0 : functionNames.hashCode());
         return result;
     }
 

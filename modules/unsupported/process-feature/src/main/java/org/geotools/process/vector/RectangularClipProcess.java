@@ -17,6 +17,9 @@
  */
 package org.geotools.process.vector;
 
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -25,26 +28,20 @@ import org.geotools.process.factory.DescribeParameter;
 import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
 import org.geotools.referencing.CRS;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * A process clipping the geometries in the input feature collection to a specified rectangle
  *
  * @author Andrea Aime - OpenGeo
  */
-@DescribeProcess(
-        title = "Rectangular Clip",
-        description = "Clips (crops) features to the specified rectangular extent")
+@DescribeProcess(title = "Rectangular Clip", description = "Clips (crops) features to the specified rectangular extent")
 public class RectangularClipProcess implements VectorProcess {
 
     @DescribeResult(name = "result", description = "Clipped feature collection")
     public SimpleFeatureCollection execute(
             @DescribeParameter(name = "features", description = "Input feature collection")
                     SimpleFeatureCollection features,
-            @DescribeParameter(name = "clip", description = "Bounds of clipping rectangle")
-                    ReferencedEnvelope clip,
+            @DescribeParameter(name = "clip", description = "Bounds of clipping rectangle") ReferencedEnvelope clip,
             @DescribeParameter(
                             name = "preserveZ",
                             min = 0,

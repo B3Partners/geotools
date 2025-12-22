@@ -24,8 +24,12 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Iterator;
-import javax.media.jai.ImageLayout;
-import javax.media.jai.JAI;
+import org.eclipse.imagen.ImageLayout;
+import org.eclipse.imagen.ImageN;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
@@ -35,16 +39,12 @@ import org.geotools.coverage.grid.io.GridFormatFinder;
 import org.geotools.coverageio.gdal.BaseGDALGridCoverage2DReader;
 import org.geotools.coverageio.gdal.GDALTestCase;
 import org.geotools.coverageio.gdal.ecw.ECWReader;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.referencing.operation.matrix.XAffineTransform;
 import org.geotools.test.TestData;
 import org.geotools.util.factory.Hints;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
 
 /**
  * @author Alex Petkov, Missoula Fire Sciences Laboratory
@@ -62,12 +62,7 @@ public final class EsriHdrTest extends GDALTestCase {
     }
 
     @Test
-    @SuppressWarnings("PMD.SimplifiableTestAssertion") // envelope test with tolerance
     public void test() throws Exception {
-        if (!testingEnabled()) {
-            return;
-        }
-
         File file = null;
         try {
             file = TestData.file(this, fileName);
@@ -81,7 +76,7 @@ public final class EsriHdrTest extends GDALTestCase {
         l.setTileGridXOffset(0).setTileGridYOffset(0).setTileHeight(512).setTileWidth(512);
 
         Hints hints = new Hints();
-        hints.add(new RenderingHints(JAI.KEY_IMAGE_LAYOUT, l));
+        hints.add(new RenderingHints(ImageN.KEY_IMAGE_LAYOUT, l));
 
         // get a reader
         final URL url = file.toURI().toURL();
@@ -95,7 +90,7 @@ public final class EsriHdrTest extends GDALTestCase {
         // read once
         //
         // /////////////////////////////////////////////////////////////////////
-        GridCoverage2D gc = reader.read(null);
+        GridCoverage2D gc = reader.read();
         forceDataLoading(gc);
 
         // /////////////////////////////////////////////////////////////////////
@@ -104,43 +99,31 @@ public final class EsriHdrTest extends GDALTestCase {
         //
         // /////////////////////////////////////////////////////////////////////
         final double cropFactor = 2.0;
-        final Rectangle range = ((GridEnvelope2D) reader.getOriginalGridRange());
-        final GeneralEnvelope oldEnvelope = reader.getOriginalEnvelope();
-        final GeneralEnvelope cropEnvelope =
-                new GeneralEnvelope(
-                        new double[] {
-                            oldEnvelope.getLowerCorner().getOrdinate(0)
-                                    + (oldEnvelope.getSpan(0) / cropFactor),
-                            oldEnvelope.getLowerCorner().getOrdinate(1)
-                                    + (oldEnvelope.getSpan(1) / cropFactor)
-                        },
-                        new double[] {
-                            oldEnvelope.getUpperCorner().getOrdinate(0),
-                            oldEnvelope.getUpperCorner().getOrdinate(1)
-                        });
+        final Rectangle range = (GridEnvelope2D) reader.getOriginalGridRange();
+        final GeneralBounds oldEnvelope = reader.getOriginalEnvelope();
+        final GeneralBounds cropEnvelope = new GeneralBounds(
+                new double[] {
+                    oldEnvelope.getLowerCorner().getOrdinate(0) + oldEnvelope.getSpan(0) / cropFactor,
+                    oldEnvelope.getLowerCorner().getOrdinate(1) + oldEnvelope.getSpan(1) / cropFactor
+                },
+                new double[] {
+                    oldEnvelope.getUpperCorner().getOrdinate(0),
+                    oldEnvelope.getUpperCorner().getOrdinate(1)
+                });
         cropEnvelope.setCoordinateReferenceSystem(reader.getCoordinateReferenceSystem());
 
-        final ParameterValue gg =
-                ((AbstractGridFormat) reader.getFormat()).READ_GRIDGEOMETRY2D.createValue();
-        gg.setValue(
-                new GridGeometry2D(
-                        new GridEnvelope2D(
-                                new Rectangle(
-                                        0,
-                                        0,
-                                        (int) (range.width / 4.0 / cropFactor),
-                                        (int) (range.height / 4.0 / cropFactor))),
-                        cropEnvelope));
+        final ParameterValue gg = ((AbstractGridFormat) reader.getFormat()).READ_GRIDGEOMETRY2D.createValue();
+        gg.setValue(new GridGeometry2D(
+                new GridEnvelope2D(new Rectangle(
+                        0, 0, (int) (range.width / 4.0 / cropFactor), (int) (range.height / 4.0 / cropFactor))),
+                cropEnvelope));
         gc = reader.read(new GeneralParameterValue[] {gg});
         Assert.assertNotNull(gc);
         // NOTE: in some cases might be too restrictive
-        Assert.assertTrue(
-                cropEnvelope.equals(
-                        gc.getEnvelope(),
-                        XAffineTransform.getScale(
-                                        ((AffineTransform) gc.getGridGeometry().getGridToCRS2D()))
-                                / 2,
-                        true));
+        Assert.assertTrue(cropEnvelope.equals(
+                gc.getEnvelope(),
+                XAffineTransform.getScale((AffineTransform) gc.getGridGeometry().getGridToCRS2D()) / 2,
+                true));
 
         forceDataLoading(gc);
 
@@ -151,24 +134,20 @@ public final class EsriHdrTest extends GDALTestCase {
         // /////////////////////////////////////////////////////////////////////
         final double translate0 = oldEnvelope.getSpan(0) + 100;
         final double translate1 = oldEnvelope.getSpan(1) + 100;
-        final GeneralEnvelope wrongEnvelope =
-                new GeneralEnvelope(
-                        new double[] {
-                            oldEnvelope.getLowerCorner().getOrdinate(0) + translate0,
-                            oldEnvelope.getLowerCorner().getOrdinate(1) + translate1
-                        },
-                        new double[] {
-                            oldEnvelope.getUpperCorner().getOrdinate(0) + translate0,
-                            oldEnvelope.getUpperCorner().getOrdinate(1) + translate1
-                        });
+        final GeneralBounds wrongEnvelope = new GeneralBounds(
+                new double[] {
+                    oldEnvelope.getLowerCorner().getOrdinate(0) + translate0,
+                    oldEnvelope.getLowerCorner().getOrdinate(1) + translate1
+                },
+                new double[] {
+                    oldEnvelope.getUpperCorner().getOrdinate(0) + translate0,
+                    oldEnvelope.getUpperCorner().getOrdinate(1) + translate1
+                });
         wrongEnvelope.setCoordinateReferenceSystem(reader.getCoordinateReferenceSystem());
 
-        final ParameterValue gg2 =
-                ((AbstractGridFormat) reader.getFormat()).READ_GRIDGEOMETRY2D.createValue();
+        final ParameterValue gg2 = ((AbstractGridFormat) reader.getFormat()).READ_GRIDGEOMETRY2D.createValue();
         gg2.setValue(
-                new GridGeometry2D(
-                        new GridEnvelope2D(new Rectangle(0, 0, range.width, range.height)),
-                        wrongEnvelope));
+                new GridGeometry2D(new GridEnvelope2D(new Rectangle(0, 0, range.width, range.height)), wrongEnvelope));
 
         gc = reader.read(new GeneralParameterValue[] {gg2});
         Assert.assertNull("Wrong envelope requested", gc);
@@ -176,10 +155,6 @@ public final class EsriHdrTest extends GDALTestCase {
 
     @Test
     public void testIsAvailable() throws NoSuchAuthorityCodeException, FactoryException {
-        if (!testingEnabled()) {
-            return;
-        }
-
         GridFormatFinder.scanForPlugins();
 
         Iterator list = GridFormatFinder.getAvailableFormats().iterator();

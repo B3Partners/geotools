@@ -17,17 +17,16 @@
 package org.geotools.feature.type;
 
 import java.util.Map;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.identity.Identifier;
+import org.geotools.api.feature.Attribute;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.identity.Identifier;
 
 /**
  * Readonly wrapper around the provided Attribute.
  *
- * <p>This class is used by Types in order to protect provided attributes from modification during
- * evaluation.
+ * <p>This class is used by Types in order to protect provided attributes from modification during evaluation.
  */
 public final class ReadonlyAttributeDecorator implements Attribute {
     private final Attribute delegate;

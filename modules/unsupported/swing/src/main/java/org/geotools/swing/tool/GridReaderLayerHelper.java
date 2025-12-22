@@ -18,27 +18,26 @@ package org.geotools.swing.tool;
 
 import java.awt.Rectangle;
 import java.lang.ref.WeakReference;
+import org.geotools.api.coverage.PointOutsideCoverageException;
+import org.geotools.api.coverage.grid.GridEnvelope;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.referencing.datum.PixelInCell;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
-import org.geotools.geometry.DirectPosition2D;
+import org.geotools.geometry.Position2D;
 import org.geotools.geometry.util.XRectangle2D;
 import org.geotools.map.GridReaderLayer;
 import org.geotools.map.Layer;
 import org.geotools.parameter.Parameter;
 import org.geotools.util.SuppressFBWarnings;
-import org.opengis.coverage.PointOutsideCoverageException;
-import org.opengis.coverage.grid.GridEnvelope;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.referencing.datum.PixelInCell;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
- * Helper class used by {@linkplain InfoTool} to query values in a {@linkplain
- * org.geotools.map.GridReaderLayer}.
+ * Helper class used by {@linkplain InfoTool} to query values in a {@linkplain org.geotools.map.GridReaderLayer}.
  *
  * @author Michael Bedward
  * @since 8.0
@@ -54,7 +53,7 @@ public class GridReaderLayerHelper extends InfoToolHelper {
 
     @Override
     public boolean isSupportedLayer(Layer layer) {
-        return (layer instanceof GridReaderLayer);
+        return layer instanceof GridReaderLayer;
     }
 
     @Override
@@ -73,12 +72,11 @@ public class GridReaderLayerHelper extends InfoToolHelper {
     }
 
     @Override
-    public InfoToolResult getInfo(DirectPosition2D pos) throws Exception {
+    public InfoToolResult getInfo(Position2D pos) throws Exception {
         InfoToolResult result = new InfoToolResult();
 
         if (isValid()) {
-            DirectPosition trPos =
-                    InfoToolHelperUtils.getTransformed(pos, getContentToLayerTransform());
+            Position trPos = InfoToolHelperUtils.getTransformed(pos, getContentToLayerTransform());
 
             if (cachedCoverage == null || !cachedCoverage.getEnvelope2D().contains(trPos)) {
                 if (!renewCachedCoverage(trPos)) {
@@ -105,7 +103,7 @@ public class GridReaderLayerHelper extends InfoToolHelper {
         return result;
     }
 
-    private boolean renewCachedCoverage(DirectPosition centrePos) {
+    private boolean renewCachedCoverage(Position centrePos) {
         final Rectangle queryRect = createQueryGridEnvelope(centrePos);
         if (queryRect.isEmpty()) {
             return false;
@@ -115,13 +113,12 @@ public class GridReaderLayerHelper extends InfoToolHelper {
         if (reader == null) {
             return false;
         }
-        GeneralParameterValue parameter =
-                new Parameter<>(
-                        AbstractGridFormat.READ_GRIDGEOMETRY2D,
-                        new GridGeometry2D(
-                                new GridEnvelope2D(queryRect),
-                                reader.getOriginalGridToWorld(PixelInCell.CELL_CENTER),
-                                reader.getCoordinateReferenceSystem()));
+        GeneralParameterValue parameter = new Parameter<>(
+                AbstractGridFormat.READ_GRIDGEOMETRY2D,
+                new GridGeometry2D(
+                        new GridEnvelope2D(queryRect),
+                        reader.getOriginalGridToWorld(PixelInCell.CELL_CENTER),
+                        reader.getCoordinateReferenceSystem()));
 
         try {
             cachedCoverage = reader.read(new GeneralParameterValue[] {parameter});
@@ -133,7 +130,7 @@ public class GridReaderLayerHelper extends InfoToolHelper {
     }
 
     @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE") // I just can't figure it out...
-    private Rectangle createQueryGridEnvelope(DirectPosition pos) {
+    private Rectangle createQueryGridEnvelope(Position pos) {
         final GridCoverage2DReader reader = sourceRef.get();
         if (reader == null) {
             throw new NullPointerException("Source refererence returned a null reader");
@@ -142,20 +139,18 @@ public class GridReaderLayerHelper extends InfoToolHelper {
             MathTransform worldToGridTransform =
                     reader.getOriginalGridToWorld(PixelInCell.CELL_CORNER).inverse();
 
-            DirectPosition midPos = worldToGridTransform.transform(pos, null);
+            Position midPos = worldToGridTransform.transform(pos, null);
             int x = (int) midPos.getOrdinate(0);
             int y = (int) midPos.getOrdinate(1);
             int halfWidth = CACHED_RASTER_WIDTH / 2;
 
             final Rectangle queryRect =
-                    new Rectangle(
-                            x - halfWidth, y - halfWidth, CACHED_RASTER_WIDTH, CACHED_RASTER_WIDTH);
+                    new Rectangle(x - halfWidth, y - halfWidth, CACHED_RASTER_WIDTH, CACHED_RASTER_WIDTH);
 
             GridEnvelope gridEnv = reader.getOriginalGridRange();
-            Rectangle rect =
-                    new Rectangle(
-                            gridEnv.getLow(0), gridEnv.getLow(1),
-                            gridEnv.getSpan(0), gridEnv.getSpan(1));
+            Rectangle rect = new Rectangle(
+                    gridEnv.getLow(0), gridEnv.getLow(1),
+                    gridEnv.getSpan(0), gridEnv.getSpan(1));
 
             XRectangle2D.intersect(queryRect, rect, queryRect);
             return queryRect;

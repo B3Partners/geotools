@@ -27,9 +27,22 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.ComplexType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.FeatureTypeFactory;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.Query;
 import org.geotools.data.complex.config.AppSchemaDataAccessConfigurator;
 import org.geotools.data.complex.config.AppSchemaDataAccessDTO;
 import org.geotools.data.complex.config.XMLConfigDigester;
@@ -50,19 +63,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.ComplexType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.FeatureTypeFactory;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
 import org.xml.sax.helpers.NamespaceSupport;
 
 /**
@@ -86,8 +86,7 @@ public class AppSchemaDataAccessTest extends AppSchemaTestSupport {
         targetType = TestData.createComplexWaterSampleType();
         FeatureTypeFactory tf = new UniqueNameFeatureTypeFactoryImpl();
         AttributeDescriptor targetFeature =
-                tf.createAttributeDescriptor(
-                        targetType, targetType.getName(), 0, Integer.MAX_VALUE, true, null);
+                tf.createAttributeDescriptor(targetType, targetType.getName(), 0, Integer.MAX_VALUE, true, null);
         targetName = targetFeature.getName();
         List<AttributeMapping> mappings = TestData.createMappingsColumnsAndValues(targetFeature);
 
@@ -194,7 +193,7 @@ public class AppSchemaDataAccessTest extends AppSchemaTestSupport {
             assertEquals(targetType, complexFeature.getType());
         }
 
-        org.opengis.filter.FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
+        org.geotools.api.filter.FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
         PropertyName expr = ff.property("measurement[1]");
         Object value = expr.evaluate(complexFeature);
@@ -256,18 +255,13 @@ public class AppSchemaDataAccessTest extends AppSchemaTestSupport {
         FeatureCollection<FeatureType, Feature> features = complexSource.getFeatures(filter);
 
         try (FeatureIterator<Feature> reader = features.features()) {
-            PropertyIsEqualTo equivalentSourceFilter =
-                    ff.equals(ff.property("ph"), ff.literal(Integer.valueOf(3)));
-            FeatureCollection<?, ?> collection =
-                    mapping.getSource().getFeatures(equivalentSourceFilter);
+            PropertyIsEqualTo equivalentSourceFilter = ff.equals(ff.property("ph"), ff.literal(Integer.valueOf(3)));
+            FeatureCollection<?, ?> collection = mapping.getSource().getFeatures(equivalentSourceFilter);
 
             int count = 0;
             int expectedCount = collection.size();
 
-            Filter badFilter =
-                    ff.greater(
-                            ff.property("sample/measurement[1]/value"),
-                            ff.literal(Integer.valueOf(3)));
+            Filter badFilter = ff.greater(ff.property("sample/measurement[1]/value"), ff.literal(Integer.valueOf(3)));
 
             while (reader.hasNext()) {
                 Feature f = reader.next();
@@ -280,9 +274,7 @@ public class AppSchemaDataAccessTest extends AppSchemaTestSupport {
         }
     }
 
-    /**
-     * Loads config from an xml config file which uses a property datastore as source of features.
-     */
+    /** Loads config from an xml config file which uses a property datastore as source of features. */
     @Test
     public void testWithConfig() throws Exception {
         final String nsUri = "http://online.socialchange.net.au";
@@ -300,8 +292,7 @@ public class AppSchemaDataAccessTest extends AppSchemaTestSupport {
 
         FeatureType type = source.getSchema();
 
-        AttributeDescriptor node =
-                (AttributeDescriptor) Types.descriptor(type, Types.typeName(nsUri, "the_geom"));
+        AttributeDescriptor node = (AttributeDescriptor) Types.descriptor(type, Types.typeName(nsUri, "the_geom"));
         assertNotNull(node);
         assertEquals("LineStringPropertyType", node.getType().getName().getLocalPart());
 
@@ -318,13 +309,11 @@ public class AppSchemaDataAccessTest extends AppSchemaTestSupport {
         assertTrue(fromToNodes.isIdentified());
 
         Name fromNodeName = Types.typeName(nsUri, "fromNode");
-        AttributeDescriptor fromNode =
-                (AttributeDescriptor) Types.descriptor(fromToNodes, fromNodeName);
+        AttributeDescriptor fromNode = (AttributeDescriptor) Types.descriptor(fromToNodes, fromNodeName);
         assertNotNull(fromNode);
 
         Name toNodeName = Types.typeName(nsUri, "toNode");
-        AttributeDescriptor toNode =
-                (AttributeDescriptor) Types.descriptor(fromToNodes, toNodeName);
+        AttributeDescriptor toNode = (AttributeDescriptor) Types.descriptor(fromToNodes, toNodeName);
         assertNotNull(fromNode);
 
         assertEquals(Point.class, fromNode.getType().getBinding());
@@ -346,8 +335,8 @@ public class AppSchemaDataAccessTest extends AppSchemaTestSupport {
     }
 
     /**
-     * Creates a MemoryDataStore contaning a simple FeatureType with test data for the "Multiple
-     * columns could be mapped to a multi-value property" mapping case.
+     * Creates a MemoryDataStore contaning a simple FeatureType with test data for the "Multiple columns could be mapped
+     * to a multi-value property" mapping case.
      *
      * <p>The structure of the "WaterSample" FeatureType is as follows:
      *

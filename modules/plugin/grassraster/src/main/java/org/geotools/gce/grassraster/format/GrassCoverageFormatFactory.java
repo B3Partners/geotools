@@ -24,16 +24,15 @@ import java.util.logging.Logger;
 import org.geotools.coverage.grid.io.GridFormatFactorySpi;
 
 /**
- * The GrassCoverageFormatFactory will be discovered by the GridFormatFinder. Use the standard
- * Geotools method of discovering a factory in order to create a format.
+ * The GrassCoverageFormatFactory will be discovered by the GridFormatFinder. Use the standard Geotools method of
+ * discovering a factory in order to create a format.
  *
  * @author Andrea Antonello (www.hydrologis.com)
  */
 public class GrassCoverageFormatFactory implements GridFormatFactorySpi {
 
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(GrassCoverageFormatFactory.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(GrassCoverageFormatFactory.class);
 
     /**
      * Creates a new instance of GrassCoverageFormat
@@ -46,7 +45,7 @@ public class GrassCoverageFormatFactory implements GridFormatFactorySpi {
     }
 
     /**
-     * Checks for the JAI library which is needed by the GrassCoverage datasource
+     * Checks for the ImageN library which is needed by the GrassCoverage datasource
      *
      * @return true if all libraries are available
      */
@@ -55,11 +54,11 @@ public class GrassCoverageFormatFactory implements GridFormatFactorySpi {
         boolean available = true;
 
         // if these classes are here, then the runtine environment has
-        // access to JAI and the JAI ImageI/O toolbox.
+        // access to ImageN and the ImageN ImageI/O toolbox.
 
         try {
-            Class.forName("javax.media.jai.JAI");
-            Class.forName("com.sun.media.jai.operator.ImageReadDescriptor");
+            Class.forName("org.eclipse.imagen.ImageN");
+            Class.forName("org.eclipse.imagen.media.imageread.ImageReadDescriptor");
         } catch (ClassNotFoundException e) {
             if (LOGGER.isLoggable(Level.FINE)) LOGGER.log(Level.FINE, e.getLocalizedMessage(), e);
             available = false;

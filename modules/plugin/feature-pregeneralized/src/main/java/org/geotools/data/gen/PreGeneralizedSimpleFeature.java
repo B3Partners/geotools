@@ -23,26 +23,25 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.feature.GeometryAttribute;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.geometry.BoundingBox;
 import org.geotools.feature.AttributeImpl;
 import org.geotools.feature.GeometryAttributeImpl;
 import org.geotools.feature.NameImpl;
-import org.opengis.feature.GeometryAttribute;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.geometry.BoundingBox;
 
 /**
  * @author Christian Mueller
  *     <p>Decorator Class for Simple Feature objects having pregeneralized geometries
- *     <p>This feature object is read only, modifying calls result in a {@link
- *     UnsupportedOperationException}
+ *     <p>This feature object is read only, modifying calls result in a {@link UnsupportedOperationException}
  *     <p>The special thing is that a generalized geometry is returned.
  */
 public class PreGeneralizedSimpleFeature implements SimpleFeature {
@@ -89,14 +88,13 @@ public class PreGeneralizedSimpleFeature implements SimpleFeature {
     }
 
     private Property createProperty(String name) {
-        Object value =
-                name.equals(geomPropertyName)
-                        ? feature.getAttribute(backendGeomPropertyName)
-                        : feature.getAttribute(name);
+        Object value = name.equals(geomPropertyName)
+                ? feature.getAttribute(backendGeomPropertyName)
+                : feature.getAttribute(name);
         AttributeDescriptor attrDescr = featureTyp.getDescriptor(name);
         if (attrDescr == null) return null;
-        if (attrDescr instanceof GeometryDescriptor)
-            return new GeometryAttributeImpl(value, (GeometryDescriptor) attrDescr, null);
+        if (attrDescr instanceof GeometryDescriptor descriptor)
+            return new GeometryAttributeImpl(value, descriptor, null);
         else return new AttributeImpl(value, attrDescr, null);
     }
 
@@ -187,8 +185,7 @@ public class PreGeneralizedSimpleFeature implements SimpleFeature {
     @Override
     public GeometryAttribute getDefaultGeometryProperty() {
         Object value = feature.getAttribute(backendGeomPropertyName);
-        GeometryAttribute attr =
-                new GeometryAttributeImpl(value, featureTyp.getGeometryDescriptor(), null);
+        GeometryAttribute attr = new GeometryAttributeImpl(value, featureTyp.getGeometryDescriptor(), null);
         return attr;
     }
 
@@ -290,8 +287,7 @@ public class PreGeneralizedSimpleFeature implements SimpleFeature {
 
         PreGeneralizedSimpleFeature feat = (PreGeneralizedSimpleFeature) obj;
         if (feat.geomPropertyName.equals(this.geomPropertyName) == false) return false;
-        if (feat.backendGeomPropertyName.equals(this.backendGeomPropertyName) == false)
-            return false;
+        if (feat.backendGeomPropertyName.equals(this.backendGeomPropertyName) == false) return false;
         if (feat.featureTyp.equals(this.featureTyp) == false) return false;
         if (feat.feature.equals(this.feature) == false) return false;
         return true;

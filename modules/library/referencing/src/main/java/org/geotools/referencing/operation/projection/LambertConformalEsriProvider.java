@@ -16,16 +16,16 @@
  */
 package org.geotools.referencing.operation.projection;
 
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.operation.ConicProjection;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
 import org.geotools.util.Utilities;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.operation.ConicProjection;
-import org.opengis.referencing.operation.MathTransform;
 import si.uom.NonSI;
 
 /**
@@ -39,37 +39,33 @@ import si.uom.NonSI;
  */
 public class LambertConformalEsriProvider extends MapProjection.AbstractProvider {
 
-    /**
-     * Override of the std parallel 1 as we downgrade from 2sp to 1sp when the two std parallels are
-     * equal
-     */
-    public static final ParameterDescriptor<Double> STANDARD_PARALLEL_1 =
-            createOptionalDescriptor(
-                    new NamedIdentifier[] {
-                        new NamedIdentifier(Citations.OGC, "standard_parallel_1"),
-                        new NamedIdentifier(Citations.EPSG, "Latitude of 1st standard parallel"),
-                        new NamedIdentifier(Citations.ESRI, "Standard_Parallel_1"),
-                        new NamedIdentifier(Citations.ESRI, "standard_parallel_1"),
-                        new NamedIdentifier(Citations.GEOTIFF, "StdParallel1")
-                    },
-                    -90,
-                    90,
-                    NonSI.DEGREE_ANGLE);
+    /** Override of the std parallel 1 as we downgrade from 2sp to 1sp when the two std parallels are equal */
+    public static final ParameterDescriptor<Double> STANDARD_PARALLEL_1 = createOptionalDescriptor(
+            new NamedIdentifier[] {
+                new NamedIdentifier(Citations.OGC, "standard_parallel_1"),
+                new NamedIdentifier(Citations.EPSG, "Latitude of 1st standard parallel"),
+                new NamedIdentifier(Citations.ESRI, "Standard_Parallel_1"),
+                new NamedIdentifier(Citations.ESRI, "standard_parallel_1"),
+                new NamedIdentifier(Citations.GEOTIFF, "StdParallel1"),
+                new NamedIdentifier(Citations.PROJ, "lat_1")
+            },
+            -90,
+            90,
+            NonSI.DEGREE_ANGLE);
 
     /** The parameters group. */
-    static final ParameterDescriptorGroup PARAMETERS =
-            createDescriptorGroup(
-                    new NamedIdentifier[] {
-                        new NamedIdentifier(Citations.ESRI, "Lambert_Conformal_Conic"),
-                        new NamedIdentifier(Citations.ESRI, "Lambert_Conformal_Conic_2SP")
-                    },
-                    new ParameterDescriptor[] {
-                        SEMI_MAJOR, SEMI_MINOR,
-                        CENTRAL_MERIDIAN, LATITUDE_OF_ORIGIN,
-                        STANDARD_PARALLEL_1, STANDARD_PARALLEL_2,
-                        FALSE_EASTING, FALSE_NORTHING,
-                        SCALE_FACTOR // This last parameter is for ESRI compatibility
-                    });
+    static final ParameterDescriptorGroup PARAMETERS = createDescriptorGroup(
+            new NamedIdentifier[] {
+                new NamedIdentifier(Citations.ESRI, "Lambert_Conformal_Conic"),
+                new NamedIdentifier(Citations.ESRI, "Lambert_Conformal_Conic_2SP")
+            },
+            new ParameterDescriptor[] {
+                SEMI_MAJOR, SEMI_MINOR,
+                CENTRAL_MERIDIAN, LATITUDE_OF_ORIGIN,
+                STANDARD_PARALLEL_1, STANDARD_PARALLEL_2,
+                FALSE_EASTING, FALSE_NORTHING,
+                SCALE_FACTOR // This last parameter is for ESRI compatibility
+            });
 
     /** Constructs a new provider. */
     public LambertConformalEsriProvider() {
@@ -109,9 +105,7 @@ public class LambertConformalEsriProvider extends MapProjection.AbstractProvider
                 && Utilities.equals(stdParallel1, latitudeOfOrigin)) {
             // handle the ESRI 1SP case
             return new LambertConformal1SP(parameters);
-        } else if (!hasStdParallel2
-                && hasStdParallel1
-                && Utilities.equals(stdParallel1, latitudeOfOrigin)) {
+        } else if (!hasStdParallel2 && hasStdParallel1 && Utilities.equals(stdParallel1, latitudeOfOrigin)) {
             // handle the ESRI 1SP case
             return new LambertConformal1SP(parameters);
         } else {

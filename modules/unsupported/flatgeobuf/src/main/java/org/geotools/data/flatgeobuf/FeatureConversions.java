@@ -17,7 +17,14 @@
 package org.geotools.data.flatgeobuf;
 
 import static java.nio.charset.CodingErrorAction.REPLACE;
+import static java.time.format.DateTimeFormatter.ISO_INSTANT;
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_TIME;
+import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+import static java.time.format.DateTimeFormatter.ISO_OFFSET_TIME;
 
+import com.google.common.io.LittleEndianDataInputStream;
 import com.google.flatbuffers.FlatBufferBuilder;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -36,9 +43,9 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.util.NIOUtilities;
-import org.opengis.feature.simple.SimpleFeature;
 import org.wololo.flatgeobuf.ColumnMeta;
 import org.wololo.flatgeobuf.GeometryConversions;
 import org.wololo.flatgeobuf.HeaderMeta;
@@ -52,10 +59,7 @@ public class FeatureConversions {
     private static void writeString(ByteBuffer target, String value) {
 
         CharsetEncoder encoder =
-                StandardCharsets.UTF_8
-                        .newEncoder()
-                        .onMalformedInput(REPLACE)
-                        .onUnmappableCharacter(REPLACE);
+                StandardCharsets.UTF_8.newEncoder().onMalformedInput(REPLACE).onUnmappableCharacter(REPLACE);
 
         // save current position to write the string length later
         final int lengthPosition = target.position();
@@ -74,37 +78,26 @@ public class FeatureConversions {
     }
 
     public static void serialize(
-            SimpleFeature feature,
-            HeaderMeta headerMeta,
-            final OutputStream to,
-            FlatBufferBuilder builder)
+            SimpleFeature feature, HeaderMeta headerMeta, final OutputStream to, FlatBufferBuilder builder)
             throws IOException {
 
         final int propertiesOffset = createProperiesVector(feature, builder, headerMeta);
-        org.locationtech.jts.geom.Geometry geometry =
-                (org.locationtech.jts.geom.Geometry) feature.getDefaultGeometry();
+        org.locationtech.jts.geom.Geometry geometry = (org.locationtech.jts.geom.Geometry) feature.getDefaultGeometry();
         final int geometryOffset =
-                geometry == null
-                        ? 0
-                        : GeometryConversions.serialize(builder, geometry, headerMeta.geometryType);
+                geometry == null ? 0 : GeometryConversions.serialize(builder, geometry, headerMeta.geometryType);
         int featureOffset = Feature.createFeature(builder, geometryOffset, propertiesOffset, 0);
         builder.finishSizePrefixed(featureOffset);
 
         // Closing is caller responsibility
-        @SuppressWarnings("PMD.CloseResource")
         WritableByteChannel channel = Channels.newChannel(to);
         ByteBuffer dataBuffer = builder.dataBuffer();
-        while (dataBuffer.hasRemaining()) {
-            channel.write(dataBuffer);
-        }
+        while (dataBuffer.hasRemaining()) channel.write(dataBuffer);
     }
 
-    protected static int buildGeometry(
-            SimpleFeature feature, FlatBufferBuilder builder, byte geometryType)
+    protected static int buildGeometry(SimpleFeature feature, FlatBufferBuilder builder, byte geometryType)
             throws IOException {
 
-        org.locationtech.jts.geom.Geometry geometry =
-                (org.locationtech.jts.geom.Geometry) feature.getDefaultGeometry();
+        org.locationtech.jts.geom.Geometry geometry = (org.locationtech.jts.geom.Geometry) feature.getDefaultGeometry();
 
         int geometryOffset = GeometryConversions.serialize(builder, geometry, geometryType);
 
@@ -112,8 +105,7 @@ public class FeatureConversions {
     }
 
     /** Writes the properties vector to {@code builder} and returns its offset */
-    private static int createProperiesVector(
-            SimpleFeature feature, FlatBufferBuilder builder, HeaderMeta headerMeta) {
+    private static int createProperiesVector(SimpleFeature feature, FlatBufferBuilder builder, HeaderMeta headerMeta) {
 
         final int minPow = 16; // 2^16 = 64KiB
         final int maxPow = 20; // 2^20 = 1MiB
@@ -137,12 +129,11 @@ public class FeatureConversions {
             NIOUtilities.returnToCache(bb);
             return propertiesOffset;
         }
-        throw new IllegalStateException(
-                "Unable to write properties vector of feature "
-                        + feature.getID()
-                        + ". Buffer overflowed at maximum capacity of "
-                        + size
-                        + " bytes");
+        throw new IllegalStateException("Unable to write properties vector of feature "
+                + feature.getID()
+                + ". Buffer overflowed at maximum capacity of "
+                + size
+                + " bytes");
     }
 
     /**
@@ -154,69 +145,69 @@ public class FeatureConversions {
      * @param target the buffer where to encode the feature properties vector
      * @throws BufferOverflowException if {@code target} couldn't hold the encoded properties
      */
-    private static void buildPropertiesVector(
-            SimpleFeature feature, HeaderMeta headerMeta, ByteBuffer target) {
+    private static void buildPropertiesVector(SimpleFeature feature, HeaderMeta headerMeta, ByteBuffer target) {
 
         target.order(ByteOrder.LITTLE_ENDIAN);
         for (short i = 0; i < headerMeta.columns.size(); i++) {
             ColumnMeta column = headerMeta.columns.get(i);
             byte type = column.type;
             Object value = feature.getAttribute(column.name);
-            if (value == null) {
-                continue;
-            }
+            if (value == null) continue;
             target.putShort(i);
-            if (type == ColumnType.Bool) {
-                target.put((byte) ((boolean) value ? 1 : 0));
-            } else if (type == ColumnType.Byte) {
-                target.put((byte) value);
-            } else if (type == ColumnType.Short) {
-                target.putShort((short) value);
-            } else if (type == ColumnType.Int) {
-                target.putInt((int) value);
-            } else if (type == ColumnType.Long)
-                if (value instanceof Long) {
-                    target.putLong((long) value);
-                } else if (value instanceof BigInteger) {
-                    target.putLong(((BigInteger) value).longValue());
-                } else {
-                    target.putLong((long) value);
+            switch (type) {
+                case ColumnType.Bool -> target.put((byte) ((boolean) value ? 1 : 0));
+                case ColumnType.Byte -> target.put((byte) value);
+                case ColumnType.Short -> target.putShort((short) value);
+                case ColumnType.Int -> target.putInt((int) value);
+                case ColumnType.Long -> {
+                    if (value instanceof Long long1) {
+                        target.putLong(long1);
+                    } else if (value instanceof BigInteger integer) {
+                        target.putLong(integer.longValue());
+                    } else {
+                        target.putLong((long) value);
+                    }
                 }
-            else if (type == ColumnType.Double)
-                if (value instanceof Double) {
-                    target.putDouble((double) value);
-                } else if (value instanceof BigDecimal) {
-                    target.putDouble(((BigDecimal) value).doubleValue());
-                } else {
-                    target.putDouble((double) value);
+                case ColumnType.Double -> {
+                    if (value instanceof Double double1) {
+                        target.putDouble(double1);
+                    } else if (value instanceof BigDecimal bigDecimal) {
+                        target.putDouble(bigDecimal.doubleValue());
+                    } else {
+                        target.putDouble((double) value);
+                    }
                 }
-            else if (type == ColumnType.DateTime) {
-                String isoDateTime = "";
-                if (value instanceof LocalDateTime) {
-                    isoDateTime = ((LocalDateTime) value).toString();
-                } else if (value instanceof LocalDate) {
-                    isoDateTime = ((LocalDate) value).toString();
-                } else if (value instanceof LocalTime) {
-                    isoDateTime = ((LocalTime) value).toString();
-                } else if (value instanceof OffsetDateTime) {
-                    isoDateTime = ((OffsetDateTime) value).toString();
-                } else if (value instanceof OffsetTime) {
-                    isoDateTime = ((OffsetTime) value).toString();
-                } else if (value instanceof java.sql.Date) {
-                    isoDateTime = ((java.sql.Date) value).toString();
-                } else if (value instanceof java.sql.Time) {
-                    isoDateTime = ((java.sql.Time) value).toString();
-                } else if (value instanceof java.sql.Timestamp) {
-                    isoDateTime = ((java.sql.Timestamp) value).toString();
-                } else {
+                case ColumnType.DateTime -> {
+                    String isoDateTime = "";
+                    if (value instanceof LocalDateTime localDateTime) {
+                        isoDateTime = ISO_LOCAL_DATE_TIME.format(localDateTime);
+                    } else if (value instanceof LocalDate localDate) {
+                        isoDateTime = ISO_LOCAL_DATE.format(localDate);
+                    } else if (value instanceof LocalTime localTime) {
+                        isoDateTime = ISO_LOCAL_TIME.format(localTime);
+                    } else if (value instanceof OffsetDateTime offsetDateTime) {
+                        isoDateTime = ISO_OFFSET_DATE_TIME.format(offsetDateTime);
+                    } else if (value instanceof OffsetTime offsetTime) {
+                        isoDateTime = ISO_OFFSET_TIME.format(offsetTime);
+                    } else if (value instanceof java.sql.Date date) {
+                        isoDateTime = ISO_LOCAL_DATE.format(date.toLocalDate());
+                    } else if (value instanceof java.sql.Time time) {
+                        isoDateTime = ISO_LOCAL_TIME.format(time.toLocalTime());
+                    } else if (value instanceof java.sql.Timestamp timestamp) {
+                        isoDateTime = ISO_LOCAL_DATE_TIME.format(timestamp.toLocalDateTime());
+                    } else if (value instanceof java.util.Date date) {
+                        isoDateTime = ISO_INSTANT.format(date.toInstant());
+                    } else {
+                        throw new RuntimeException("Cannot handle datetime type "
+                                + value.getClass().getName());
+                    }
+                    writeString(target, isoDateTime);
+                }
+
+                case ColumnType.String -> writeString(target, (String) value);
+                default ->
                     throw new RuntimeException(
-                            "Cannot handle datetime type " + value.getClass().getName());
-                }
-                writeString(target, isoDateTime);
-            } else if (type == ColumnType.String) {
-                writeString(target, (String) value);
-            } else {
-                throw new RuntimeException("Cannot handle type " + value.getClass().getName());
+                            "Cannot handle type " + value.getClass().getName());
             }
         }
     }
@@ -230,15 +221,30 @@ public class FeatureConversions {
     }
 
     public static SimpleFeature deserialize(
-            Feature feature, SimpleFeatureBuilder fb, HeaderMeta headerMeta, long fid) {
+            LittleEndianDataInputStream data, SimpleFeatureBuilder fb, HeaderMeta headerMeta, long fid)
+            throws IOException {
+        int featureSize = data.readInt();
+        SimpleFeature feature = deserialize(data, fb, headerMeta, fid, featureSize);
+        return feature;
+    }
+
+    public static SimpleFeature deserialize(
+            LittleEndianDataInputStream data, SimpleFeatureBuilder fb, HeaderMeta headerMeta, long fid, int featureSize)
+            throws IOException {
+        byte[] bytes = new byte[featureSize];
+        data.readFully(bytes);
+        ByteBuffer bb = ByteBuffer.wrap(bytes);
+        Feature f = Feature.getRootAsFeature(bb);
+        SimpleFeature feature = FeatureConversions.deserialize(f, fb, headerMeta, fid);
+        return feature;
+    }
+
+    public static SimpleFeature deserialize(Feature feature, SimpleFeatureBuilder fb, HeaderMeta headerMeta, long fid) {
         Geometry geometry = feature.geometry();
         byte geometryType = headerMeta.geometryType;
         if (geometry != null) {
-            if (geometryType == GeometryType.Unknown) {
-                geometryType = (byte) geometry.type();
-            }
-            org.locationtech.jts.geom.Geometry jtsGeometry =
-                    GeometryConversions.deserialize(geometry, geometryType);
+            if (geometryType == GeometryType.Unknown) geometryType = (byte) geometry.type();
+            org.locationtech.jts.geom.Geometry jtsGeometry = GeometryConversions.deserialize(geometry, geometryType);
             fb.add(jtsGeometry);
         }
         int propertiesLength = feature.propertiesLength();
@@ -249,15 +255,17 @@ public class FeatureConversions {
                 ColumnMeta columnMeta = headerMeta.columns.get(i);
                 String name = columnMeta.name;
                 byte type = columnMeta.type;
-                if (type == ColumnType.Bool) fb.set(name, bb.get() > 0 ? true : false);
-                else if (type == ColumnType.Byte) fb.set(name, bb.get());
-                else if (type == ColumnType.Short) fb.set(name, bb.getShort());
-                else if (type == ColumnType.Int) fb.set(name, bb.getInt());
-                else if (type == ColumnType.Long) fb.set(name, bb.getLong());
-                else if (type == ColumnType.Double) fb.set(name, bb.getDouble());
-                else if (type == ColumnType.DateTime) fb.set(name, readString(bb, name));
-                else if (type == ColumnType.String) fb.set(name, readString(bb, name));
-                else throw new RuntimeException("Unknown type");
+                switch (type) {
+                    case ColumnType.Bool -> fb.set(name, (bb.get() > 0));
+                    case ColumnType.Byte -> fb.set(name, bb.get());
+                    case ColumnType.Short -> fb.set(name, bb.getShort());
+                    case ColumnType.Int -> fb.set(name, bb.getInt());
+                    case ColumnType.Long -> fb.set(name, bb.getLong());
+                    case ColumnType.Double -> fb.set(name, bb.getDouble());
+                    case ColumnType.DateTime -> fb.set(name, readString(bb, name));
+                    case ColumnType.String -> fb.set(name, readString(bb, name));
+                    default -> throw new RuntimeException("Unknown type");
+                }
             }
         }
         SimpleFeature f = fb.buildFeature(fb.getFeatureType().getTypeName() + "." + fid);

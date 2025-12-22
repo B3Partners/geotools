@@ -29,8 +29,9 @@ import org.apache.http.HttpHost;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.elasticsearch.ElasticAttribute.ElasticGeometryType;
 import org.geotools.data.elasticsearch.date.ElasticsearchDateConverter;
 import org.geotools.data.store.ContentDataStore;
@@ -40,7 +41,6 @@ import org.geotools.feature.NameImpl;
 import org.geotools.util.logging.Logging;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.type.Name;
 
 /** A data store for an Elasticsearch index containing geo_point or geo_shape types. */
 public class ElasticDataStore extends ContentDataStore {
@@ -82,20 +82,20 @@ public class ElasticDataStore extends ContentDataStore {
         CSV
     }
 
-    public ElasticDataStore(String searchHost, Integer hostPort, String indexName)
-            throws IOException {
+    public ElasticDataStore(String searchHost, Integer hostPort, String indexName) throws IOException {
         this(RestClient.builder(new HttpHost(searchHost, hostPort, "http")).build(), indexName);
     }
 
     public ElasticDataStore(RestClient restClient, String indexName) throws IOException {
-        this(restClient, null, indexName, false);
+        this(restClient, null, indexName, false, (Integer) ElasticDataStoreFactory.RESPONSE_BUFFER_LIMIT.sample);
     }
 
     public ElasticDataStore(
             RestClient restClient,
             RestClient proxyRestClient,
             String indexName,
-            boolean enableRunAs)
+            boolean enableRunAs,
+            int responseBufferLimit)
             throws IOException {
         LOGGER.fine("Initializing data store for " + indexName);
 
@@ -106,7 +106,7 @@ public class ElasticDataStore extends ContentDataStore {
             if (proxyRestClient != null) {
                 checkRestClient(proxyRestClient);
             }
-            client = new RestElasticClient(restClient, proxyRestClient, enableRunAs);
+            client = new RestElasticClient(restClient, proxyRestClient, enableRunAs, responseBufferLimit);
         } catch (Exception e) {
             throw new IOException("Unable to create REST client", e);
         }
@@ -306,12 +306,7 @@ public class ElasticDataStore extends ContentDataStore {
                 }
 
                 if (ElasticParserUtil.isGeoPointFeature((Map) value)) {
-                    add(
-                            elasticAttributes,
-                            propertyKey + ".coordinates",
-                            "geo_point",
-                            (Map) value,
-                            nested);
+                    add(elasticAttributes, propertyKey + ".coordinates", "geo_point", (Map) value, nested);
                 } else {
                     walk(elasticAttributes, (Map) value, newPropertyKey, startType, nested);
                 }
@@ -376,10 +371,7 @@ public class ElasticDataStore extends ContentDataStore {
                                 validFormats.add(availableFormat);
                             } catch (Exception e) {
                                 LOGGER.fine(
-                                        "Unable to parse date format ('"
-                                                + availableFormat
-                                                + "') for "
-                                                + propertyKey);
+                                        "Unable to parse date format ('" + availableFormat + "') for " + propertyKey);
                             }
                         } else {
                             String[] formats = availableFormat.split("\\|\\|");
@@ -388,11 +380,7 @@ public class ElasticDataStore extends ContentDataStore {
                                     ElasticsearchDateConverter.forFormat(availableFormat);
                                     validFormats.add(format);
                                 } catch (Exception e) {
-                                    LOGGER.fine(
-                                            "Unable to parse date format ('"
-                                                    + format
-                                                    + "') for "
-                                                    + propertyKey);
+                                    LOGGER.fine("Unable to parse date format ('" + format + "') for " + propertyKey);
                                 }
                             }
                         }
@@ -430,8 +418,7 @@ public class ElasticDataStore extends ContentDataStore {
         final int status = response.getStatusLine().getStatusCode();
         if (status >= 400) {
             final String reason = response.getStatusLine().getReasonPhrase();
-            throw new IOException(
-                    String.format("Unexpected response from Elasticsearch: %d %s", status, reason));
+            throw new IOException("Unexpected response from Elasticsearch: %d %s".formatted(status, reason));
         }
     }
 

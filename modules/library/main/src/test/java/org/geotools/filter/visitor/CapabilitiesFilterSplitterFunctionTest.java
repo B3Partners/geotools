@@ -16,19 +16,19 @@
  */
 package org.geotools.filter.visitor;
 
+import static org.geotools.api.filter.Filter.EXCLUDE;
+import static org.geotools.api.filter.Filter.INCLUDE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.opengis.filter.Filter.EXCLUDE;
-import static org.opengis.filter.Filter.INCLUDE;
 
 import java.util.Arrays;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.filter.Capabilities;
 import org.geotools.filter.function.math.FilterFunction_abs;
 import org.geotools.filter.function.math.FilterFunction_max;
 import org.junit.Test;
-import org.opengis.filter.Filter;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Test case where only specific functions are supported.
@@ -36,8 +36,7 @@ import org.opengis.filter.expression.Expression;
  * @author Jesse
  * @author ported from PostPreProcessFilterSplittingVisitor at 2.5.2 by Gabriel Roldan
  */
-public class CapabilitiesFilterSplitterFunctionTest
-        extends AbstractCapabilitiesFilterSplitterTests {
+public class CapabilitiesFilterSplitterFunctionTest extends AbstractCapabilitiesFilterSplitterTests {
 
     CapabilitiesFilterSplitter visitor;
 
@@ -83,7 +82,8 @@ public class CapabilitiesFilterSplitterFunctionTest
         Filter filter = ff.and(filter1, filter2);
 
         Capabilities filterCapabilitiesMask = new Capabilities();
-        filterCapabilitiesMask.addName(testFunction.getName(), testFunction.getParameters().size());
+        filterCapabilitiesMask.addName(
+                testFunction.getName(), testFunction.getParameters().size());
         filterCapabilitiesMask.addAll(Capabilities.SIMPLE_COMPARISONS_OPENGIS);
         filterCapabilitiesMask.addAll(Capabilities.LOGICAL_OPENGIS);
         visitor = newVisitor(filterCapabilitiesMask);

@@ -16,13 +16,13 @@
  */
 package org.geotools.referencing.factory;
 
+import org.geotools.api.referencing.AuthorityFactory;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.referencing.CRS;
 import org.geotools.util.Version;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.referencing.AuthorityFactory;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Tests the {@link org.geotools.referencing.factory.URN_AuthorityFactory} with EPSG codes.
@@ -66,25 +66,18 @@ public class URN_EPSG_Test {
         Assert.assertSame(expected, test.createCoordinateReferenceSystem(urn));
         Assert.assertEquals(version, test.lastVersion.toString());
         Assert.assertEquals(
-                "Primary factory should not fail.",
-                failureCount,
-                FallbackAuthorityFactory.getFailureCount());
+                "Primary factory should not fail.", failureCount, FallbackAuthorityFactory.getFailureCount());
 
         test.lastVersion = null;
         Assert.assertSame(expected, test.createCoordinateReferenceSystem(urn));
         Assert.assertNull("Should not create a new factory.", test.lastVersion);
         Assert.assertEquals(
-                "Primary factory should not fail.",
-                failureCount,
-                FallbackAuthorityFactory.getFailureCount());
+                "Primary factory should not fail.", failureCount, FallbackAuthorityFactory.getFailureCount());
 
-        Assert.assertSame(
-                expected, test.createCoordinateReferenceSystem("urn:ogc:def:crs:EPSG:6.11:4326"));
+        Assert.assertSame(expected, test.createCoordinateReferenceSystem("urn:ogc:def:crs:EPSG:6.11:4326"));
         Assert.assertEquals("6.11", test.lastVersion.toString());
         Assert.assertEquals(
-                "Should use the fallback factory.",
-                failureCount + 2,
-                FallbackAuthorityFactory.getFailureCount());
+                "Should use the fallback factory.", failureCount + 2, FallbackAuthorityFactory.getFailureCount());
     }
 
     /** A custom class for testing versioning. */
@@ -92,8 +85,7 @@ public class URN_EPSG_Test {
         static Version lastVersion;
 
         @Override
-        protected AuthorityFactory createVersionedFactory(final Version version)
-                throws FactoryException {
+        protected AuthorityFactory createVersionedFactory(final Version version) throws FactoryException {
             lastVersion = version;
             return super.createVersionedFactory(version);
         }

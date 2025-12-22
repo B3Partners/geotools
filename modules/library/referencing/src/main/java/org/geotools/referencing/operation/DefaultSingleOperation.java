@@ -19,11 +19,12 @@
  */
 package org.geotools.referencing.operation;
 
+import java.io.Serial;
 import java.util.Map;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.Conversion;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.SingleOperation;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.Conversion;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.SingleOperation;
 
 /**
  * A single (not {@linkplain DefaultConcatenatedOperation concatenated}) coordinate operation.
@@ -34,12 +35,12 @@ import org.opengis.referencing.operation.SingleOperation;
  */
 public class DefaultSingleOperation extends AbstractCoordinateOperation implements SingleOperation {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 672935231344137185L;
 
     /**
-     * Constructs a new single operation with the same values than the specified defining
-     * conversion, together with the specified source and target CRS. This constructor is used by
-     * {@link DefaultConversion} only.
+     * Constructs a new single operation with the same values than the specified defining conversion, together with the
+     * specified source and target CRS. This constructor is used by {@link DefaultConversion} only.
      */
     DefaultSingleOperation(
             final Conversion definition,
@@ -50,14 +51,14 @@ public class DefaultSingleOperation extends AbstractCoordinateOperation implemen
     }
 
     /**
-     * Constructs a single operation from a set of properties. The properties given in argument
-     * follow the same rules than for the {@link AbstractCoordinateOperation} constructor.
+     * Constructs a single operation from a set of properties. The properties given in argument follow the same rules
+     * than for the {@link AbstractCoordinateOperation} constructor.
      *
      * @param properties Set of properties. Should contains at least {@code "name"}.
      * @param sourceCRS The source CRS.
      * @param targetCRS The target CRS.
-     * @param transform Transform from positions in the {@linkplain #getSourceCRS source CRS} to
-     *     positions in the {@linkplain #getTargetCRS target CRS}.
+     * @param transform Transform from positions in the {@linkplain #getSourceCRS source CRS} to positions in the
+     *     {@linkplain #getTargetCRS target CRS}.
      */
     public DefaultSingleOperation(
             final Map<String, ?> properties,

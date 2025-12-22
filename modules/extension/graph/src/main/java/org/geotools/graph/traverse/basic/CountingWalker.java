@@ -21,8 +21,8 @@ import org.geotools.graph.traverse.GraphTraversal;
 import org.geotools.graph.traverse.GraphWalker;
 
 /**
- * An implementation of GraphWalker that counts the number of components visited. As each component
- * is visited, the walker sets the count of the component to the value of its counter.
+ * An implementation of GraphWalker that counts the number of components visited. As each component is visited, the
+ * walker sets the count of the component to the value of its counter.
  *
  * @see Graphable#setCount(int)
  * @author Justin Deoliveira, Refractions Research Inc, jdeolive@refractions.net
@@ -58,6 +58,6 @@ public class CountingWalker implements GraphWalker {
      * @return int Value of the counter.
      */
     public int getCount() {
-        return (m_counter);
+        return m_counter;
     }
 }

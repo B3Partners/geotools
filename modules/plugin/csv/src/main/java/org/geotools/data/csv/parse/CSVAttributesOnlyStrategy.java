@@ -20,17 +20,18 @@ package org.geotools.data.csv.parse;
 import com.opencsv.CSVWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
 import org.geotools.data.csv.CSVFileState;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
 
 public class CSVAttributesOnlyStrategy extends CSVStrategy {
 
@@ -55,13 +56,12 @@ public class CSVAttributesOnlyStrategy extends CSVStrategy {
 
         // Write out header, producing an empty file of the correct type
 
-        try (CSVWriter writer =
-                new CSVWriter(
-                        new FileWriter(this.csvFileState.getFile()),
-                        getSeparator(),
-                        getQuotechar(),
-                        getEscapechar(),
-                        getLineSeparator())) {
+        try (CSVWriter writer = new CSVWriter(
+                new FileWriter(this.csvFileState.getFile(), StandardCharsets.UTF_8),
+                getSeparator(),
+                getQuotechar(),
+                getEscapechar(),
+                getLineSeparator())) {
             writer.writeNext(header.toArray(new String[header.size()]), isQuoteAllFields());
         }
     }

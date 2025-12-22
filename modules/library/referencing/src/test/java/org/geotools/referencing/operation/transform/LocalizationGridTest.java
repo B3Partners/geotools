@@ -21,10 +21,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.referencing.operation.builder.LocalizationGrid;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * Test the {@link LocalizationGrid} implementation.
@@ -93,21 +93,18 @@ public final class LocalizationGridTest {
     };
 
     /**
-     * Maximal error between expected "real world" and computed "real world" coordinates when direct
-     * transformation is used.
+     * Maximal error between expected "real world" and computed "real world" coordinates when direct transformation is
+     * used.
      */
     private static final double EPS = 1E-9;
 
     /**
-     * Maximal error between expected "real world" and computed "real world" coordinates when the
-     * fitted affine transformation is used.
+     * Maximal error between expected "real world" and computed "real world" coordinates when the fitted affine
+     * transformation is used.
      */
     private static final double FIT_TOLERANCE = 0.4;
 
-    /**
-     * Set up common objects used for all tests. This implementation construct a default
-     * localization grid.
-     */
+    /** Set up common objects used for all tests. This implementation construct a default localization grid. */
     @Before
     public void setUp() {
         final int width = GRID_DATA[0].length / 2;
@@ -115,7 +112,7 @@ public final class LocalizationGridTest {
         grid = new LocalizationGrid(width, height);
         for (int j = 0; j < height; j++) {
             final double[] line = GRID_DATA[j];
-            assertEquals("Grid is not square", width * 2, line.length);
+            assertEquals("Grid is not square", width * 2L, line.length);
             int offset = 0;
             for (int i = 0; i < width; i++) {
                 grid.setLocalizationPoint(i, j, line[offset++], line[offset++]);
@@ -134,8 +131,8 @@ public final class LocalizationGridTest {
     /**
      * Returns an array with grid or "real world" coordinates.
      *
-     * @param real <code>true</code> to gets the "real world" coordinates, or <code>false</code> to
-     *     gets the grid coordinates.
+     * @param real <code>true</code> to gets the "real world" coordinates, or <code>false</code> to gets the grid
+     *     coordinates.
      */
     private double[] getGridCoordinates(final boolean real) {
         final int width = GRID_DATA[0].length / 2;
@@ -144,13 +141,13 @@ public final class LocalizationGridTest {
         int offset = 0;
         for (int j = 0; j < height; j++) {
             final double[] line = GRID_DATA[j];
-            assertEquals("Grid is not square", width * 2, line.length);
+            assertEquals("Grid is not square", width * 2L, line.length);
             for (int i = 0; i < width; i++) {
-                array[offset++] = (real) ? line[i * 2 + 0] : i;
-                array[offset++] = (real) ? line[i * 2 + 1] : j;
+                array[offset++] = real ? line[i * 2 + 0] : i;
+                array[offset++] = real ? line[i * 2 + 1] : j;
             }
         }
-        assertEquals("Grid is not square", width * height * 2, offset);
+        assertEquals("Grid is not square", width * (long) height * 2L, offset);
         return array;
     }
 
@@ -168,19 +165,16 @@ public final class LocalizationGridTest {
         int offset = 0;
         for (int j = 0; j < height; j++) {
             final double[] line = GRID_DATA[j];
-            assertEquals("Grid is not square", width * 2, line.length);
+            assertEquals("Grid is not square", width * 2L, line.length);
             for (int i = 0; i < width; i++) {
                 assertEquals(real ? line[i * 2 + 0] : i, array[offset++], eps);
                 assertEquals(real ? line[i * 2 + 1] : j, array[offset++], eps);
             }
         }
-        assertEquals("Grid is not square", width * height * 2, offset);
+        assertEquals("Grid is not square", width * (long) height * 2L, offset);
     }
 
-    /**
-     * Test direct transformation from grid coordinates to "real world" coordinates using the
-     * localization grid.
-     */
+    /** Test direct transformation from grid coordinates to "real world" coordinates using the localization grid. */
     @Test
     public void testDirectTransform() throws TransformException {
         final double[] array = getGridCoordinates(false);
@@ -189,9 +183,9 @@ public final class LocalizationGridTest {
     }
 
     /**
-     * Test affine tranformation for the whole grid by comparing the expected "real world" to the
-     * approximated coordinates. Since the affine transform is fitted using least-squares method,
-     * the transformation is approximative.
+     * Test affine tranformation for the whole grid by comparing the expected "real world" to the approximated
+     * coordinates. Since the affine transform is fitted using least-squares method, the transformation is
+     * approximative.
      */
     @Test
     public void testAffineTransform() {
@@ -201,8 +195,8 @@ public final class LocalizationGridTest {
     }
 
     /**
-     * Test inverse transformation from "real world" coordinates to grid coordinates coordinate
-     * using the localization grid.
+     * Test inverse transformation from "real world" coordinates to grid coordinates coordinate using the localization
+     * grid.
      */
     @Test
     public void testInverseTransform() throws TransformException {
@@ -232,10 +226,10 @@ public final class LocalizationGridTest {
             }
         }
         final int n = width * height;
-        assertEquals("sum_x", (n * (width - 1)) / 2, sum_x);
-        assertEquals("sum_y", (n * (height - 1)) / 2, sum_y);
-        assertEquals("sum_xy", (n * (width - 1) * (height - 1)) / 4, sum_xy);
-        assertEquals("sum_xx", (n * (width - 0.5) * (width - 1)) / 3, sum_xx, 1E-6);
-        assertEquals("sum_yy", (n * (height - 0.5) * (height - 1)) / 3, sum_yy, 1E-6);
+        assertEquals("sum_x", n * (width - 1) / 2, sum_x);
+        assertEquals("sum_y", n * (height - 1) / 2, sum_y);
+        assertEquals("sum_xy", n * (width - 1) * (height - 1) / 4, sum_xy);
+        assertEquals("sum_xx", n * (width - 0.5) * (width - 1) / 3, sum_xx, 1E-6);
+        assertEquals("sum_yy", n * (height - 0.5) * (height - 1) / 3, sum_yy, 1E-6);
     }
 }

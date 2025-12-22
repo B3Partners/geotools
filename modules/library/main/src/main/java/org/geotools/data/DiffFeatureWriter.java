@@ -19,22 +19,26 @@ package org.geotools.data;
 import java.io.IOException;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.data.FeatureEvent;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * A FeatureWriter that captures modifications against a FeatureReader.
  *
  * <p>You will eventually need to write out the differences, later.
  *
- * <p>The api has been implemented in terms of FeatureReader<SimpleFeatureType, SimpleFeature> to
- * make explicit that no Features are writen out by this Class.
+ * <p>The api has been implemented in terms of FeatureReader<SimpleFeatureType, SimpleFeature> to make explicit that no
+ * Features are writen out by this Class.
  *
  * @author Jody Garnett, Refractions Research
  * @see TransactionStateDiff
@@ -52,8 +56,7 @@ public abstract class DiffFeatureWriter implements FeatureWriter<SimpleFeatureTy
     }
 
     /** DiffFeatureWriter construction. */
-    public DiffFeatureWriter(
-            FeatureReader<SimpleFeatureType, SimpleFeature> reader, Diff diff, Filter filter) {
+    public DiffFeatureWriter(FeatureReader<SimpleFeatureType, SimpleFeature> reader, Diff diff, Filter filter) {
         this.reader = new DiffFeatureReader<>(reader, diff, filter);
         this.diff = diff;
     }
@@ -61,7 +64,7 @@ public abstract class DiffFeatureWriter implements FeatureWriter<SimpleFeatureTy
     /**
      * Supplys FeatureTypeFrom reader
      *
-     * @see org.geotools.data.FeatureWriter#getFeatureType()
+     * @see FeatureWriter#getFeatureType()
      */
     @Override
     public SimpleFeatureType getFeatureType() {
@@ -71,7 +74,7 @@ public abstract class DiffFeatureWriter implements FeatureWriter<SimpleFeatureTy
     /**
      * Next Feature from reader or new content.
      *
-     * @see org.geotools.data.FeatureWriter#next()
+     * @see FeatureWriter#next()
      */
     @Override
     public SimpleFeature next() throws IOException {
@@ -98,9 +101,7 @@ public abstract class DiffFeatureWriter implements FeatureWriter<SimpleFeatureTy
             try {
                 live = null;
                 next = null;
-                current =
-                        SimpleFeatureBuilder.build(
-                                type, new Object[type.getAttributeCount()], "new" + diff.nextFID);
+                current = SimpleFeatureBuilder.build(type, new Object[type.getAttributeCount()], "new" + diff.nextFID);
                 diff.nextFID++;
                 return current;
             } catch (IllegalAttributeException e) {
@@ -109,14 +110,13 @@ public abstract class DiffFeatureWriter implements FeatureWriter<SimpleFeatureTy
         }
     }
 
-    /** @see org.geotools.data.FeatureWriter#remove() */
+    /** @see FeatureWriter#remove() */
     @Override
     public void remove() throws IOException {
         if (live != null) {
             // mark live as removed
             diff.remove(live.getID());
-            fireNotification(
-                    FeatureEvent.Type.REMOVED.type, ReferencedEnvelope.reference(live.getBounds()));
+            fireNotification(FeatureEvent.Type.REMOVED.getType(), ReferencedEnvelope.reference(live.getBounds()));
             live = null;
             current = null;
         } else if (current != null) {
@@ -128,24 +128,24 @@ public abstract class DiffFeatureWriter implements FeatureWriter<SimpleFeatureTy
     /**
      * Writes out the current feature.
      *
-     * @see org.geotools.data.FeatureWriter#write()
+     * @see FeatureWriter#write()
      */
     @Override
     public void write() throws IOException {
         // DJB: I modified this so it doesnt throw an error if you
         //     do an update and you didnt actually change anything.
         //     (We do the work)
-        if ((live != null)) {
+        if (live != null) {
             // We have a modification to record!
             diff.modify(live.getID(), current);
 
             ReferencedEnvelope bounds = new ReferencedEnvelope((CoordinateReferenceSystem) null);
             bounds.include(live.getBounds());
             bounds.include(current.getBounds());
-            fireNotification(FeatureEvent.Type.CHANGED.type, bounds);
+            fireNotification(FeatureEvent.Type.CHANGED.getType(), bounds);
             live = null;
             current = null;
-        } else if ((live == null) && (current != null)) {
+        } else if (live == null && current != null) {
             // We have new content to record
             //
             String fid = current.getID();
@@ -153,16 +153,12 @@ public abstract class DiffFeatureWriter implements FeatureWriter<SimpleFeatureTy
                 if (current.getUserData().containsKey(Hints.PROVIDED_FID)) {
                     fid = (String) current.getUserData().get(Hints.PROVIDED_FID);
                     Map<Object, Object> userData = current.getUserData();
-                    current =
-                            SimpleFeatureBuilder.build(
-                                    current.getFeatureType(), current.getAttributes(), fid);
+                    current = SimpleFeatureBuilder.build(current.getFeatureType(), current.getAttributes(), fid);
                     current.getUserData().putAll(userData);
                 }
             }
             diff.add(fid, current);
-            fireNotification(
-                    FeatureEvent.Type.ADDED.type,
-                    ReferencedEnvelope.reference(current.getBounds()));
+            fireNotification(FeatureEvent.Type.ADDED.getType(), ReferencedEnvelope.reference(current.getBounds()));
             current = null;
         } else {
             throw new IOException("No feature available to write");
@@ -172,7 +168,7 @@ public abstract class DiffFeatureWriter implements FeatureWriter<SimpleFeatureTy
     /**
      * Query for more content.
      *
-     * @see org.geotools.data.FeatureWriter#hasNext()
+     * @see FeatureWriter#hasNext()
      */
     @Override
     public boolean hasNext() throws IOException {
@@ -204,10 +200,10 @@ public abstract class DiffFeatureWriter implements FeatureWriter<SimpleFeatureTy
     /**
      * Clean up resources associated with this writer.
      *
-     * <p>Diff is not clear()ed as it is assumed that it belongs to a Transaction.State object and
-     * may yet be written out.
+     * <p>Diff is not clear()ed as it is assumed that it belongs to a Transaction.State object and may yet be written
+     * out.
      *
-     * @see org.geotools.data.FeatureWriter#close()
+     * @see FeatureWriter#close()
      */
     @Override
     public void close() throws IOException {
@@ -225,14 +221,12 @@ public abstract class DiffFeatureWriter implements FeatureWriter<SimpleFeatureTy
     /**
      * Subclass must provide the notification.
      *
-     * <p>Notification requirements for modifications against a Transaction should only be issued to
-     * SimpleFeatureSource instances that opperate against the same typeName and Transaction.
+     * <p>Notification requirements for modifications against a Transaction should only be issued to SimpleFeatureSource
+     * instances that opperate against the same typeName and Transaction.
      *
-     * <p>Other SimpleFeatureSource instances with the same typeName will be notified when the
-     * Transaction is committed.
+     * <p>Other SimpleFeatureSource instances with the same typeName will be notified when the Transaction is committed.
      *
-     * @param eventType One of FeatureType.FEATURES_ADDED, FeatureType.CHANGED,
-     *     FeatureType.FEATURES_REMOVED
+     * @param eventType One of FeatureType.FEATURES_ADDED, FeatureType.CHANGED, FeatureType.FEATURES_REMOVED
      */
     protected abstract void fireNotification(int eventType, ReferencedEnvelope bounds);
 }

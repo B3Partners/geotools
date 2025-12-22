@@ -59,27 +59,45 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 import org.easymock.EasyMock;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.style.ColorMap;
+import org.geotools.api.style.ContrastEnhancement;
+import org.geotools.api.style.ContrastMethod;
+import org.geotools.api.style.ExternalGraphic;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.GraphicalSymbol;
+import org.geotools.api.style.LabelPlacement;
+import org.geotools.api.style.LinePlacement;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.NamedLayer;
+import org.geotools.api.style.PointPlacement;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.RasterSymbolizer;
+import org.geotools.api.style.ResourceLocator;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.SelectedChannelType;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyledLayerDescriptor;
+import org.geotools.api.style.TextSymbolizer;
+import org.geotools.api.style.UserLayer;
 import org.geotools.filter.function.EnvFunction;
 import org.geotools.filter.function.RecodeFunction;
 import org.geotools.filter.function.string.ConcatenateFunction;
 import org.geotools.process.function.ProcessFunction;
-import org.geotools.styling.ColorMap;
-import org.geotools.styling.ExternalGraphic;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.LabelPlacement;
-import org.geotools.styling.LineSymbolizer;
-import org.geotools.styling.NamedLayer;
-import org.geotools.styling.PointSymbolizer;
-import org.geotools.styling.PolygonSymbolizer;
-import org.geotools.styling.ResourceLocator;
-import org.geotools.styling.Rule;
 import org.geotools.styling.SLD;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyledLayerDescriptor;
-import org.geotools.styling.TextSymbolizer;
-import org.geotools.styling.TextSymbolizer2;
 import org.geotools.styling.UomOgcMapping;
-import org.geotools.styling.UserLayer;
+import org.geotools.styling.zoom.ScaleRange;
+import org.geotools.styling.zoom.ZoomContext;
+import org.geotools.styling.zoom.ZoomContextFinder;
 import org.geotools.util.logging.Logging;
 import org.geotools.ysld.Ysld;
 import org.geotools.ysld.YsldTests;
@@ -90,23 +108,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.opengis.filter.Filter;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.style.ContrastEnhancement;
-import org.opengis.style.ContrastMethod;
-import org.opengis.style.Graphic;
-import org.opengis.style.GraphicalSymbol;
-import org.opengis.style.LinePlacement;
-import org.opengis.style.Mark;
-import org.opengis.style.PointPlacement;
-import org.opengis.style.RasterSymbolizer;
-import org.opengis.style.SelectedChannelType;
-import org.yaml.snakeyaml.constructor.ConstructorException;
+import org.yaml.snakeyaml.composer.ComposerException;
 
 @SuppressWarnings("unchecked") // unchecked generics array creation due to Hamcrest
 public class YsldParseTest {
@@ -119,11 +121,15 @@ public class YsldParseTest {
         assertEquals("MyLayer", namedLayer.getName());
         assertEquals("MyStyle", namedLayer.styles().get(0).getName());
 
-        sld =
-                Ysld.parse(
-                        "sld-name: SLDName\nsld-title: SLD Title\nsld-abstract: Remote user layer\n"
-                                + "user-name: RemoteLayer\nuser-remote: http://localhost:8080/geoserver/wms\nuser-service: wms\n"
-                                + "name: RemoteStyle");
+        sld = Ysld.parse(
+                """
+                sld-name: SLDName
+                sld-title: SLD Title
+                sld-abstract: Remote user layer
+                user-name: RemoteLayer
+                user-remote: http://localhost:8080/geoserver/wms
+                user-service: wms
+                name: RemoteStyle""");
 
         assertEquals("SLDName", sld.getName());
         assertEquals("SLD Title", sld.getTitle());
@@ -133,8 +139,7 @@ public class YsldParseTest {
         assertEquals("RemoteLayer", userlayer.getName());
         assertEquals("wms", userlayer.getRemoteOWS().getService());
         assertEquals(
-                "http://localhost:8080/geoserver/wms",
-                userlayer.getRemoteOWS().getOnlineResource());
+                "http://localhost:8080/geoserver/wms", userlayer.getRemoteOWS().getOnlineResource());
 
         assertEquals("RemoteStyle", userlayer.userStyles().get(0).getName());
     }
@@ -142,11 +147,13 @@ public class YsldParseTest {
     @Test
     public void testAnchor() throws Exception {
         String yaml =
-                "blue: &blue rgb(0,0,255)\n"
-                        + "point: \n"
-                        + "  symbols: \n"
-                        + "  - mark: \n"
-                        + "      fill-color: *blue\n";
+                """
+                blue: &blue rgb(0,0,255)
+                point:\s
+                  symbols:\s
+                  - mark:\s
+                      fill-color: *blue
+                """;
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         PointSymbolizer p = SLD.pointSymbolizer(SLD.defaultStyle(sld));
@@ -223,14 +230,16 @@ public class YsldParseTest {
     @Test
     public void testRenderingTransformation() throws IOException {
         String yaml =
-                "feature-styles: \n"
-                        + "- transform:\n"
-                        + "    name: ras:Contour\n"
-                        + "    params:\n"
-                        + "      levels:\n"
-                        + "      - 1000\n"
-                        + "      - 1100\n"
-                        + "      - 1200\n";
+                """
+                feature-styles:\s
+                - transform:
+                    name: ras:Contour
+                    params:
+                      levels:
+                      - 1000
+                      - 1100
+                      - 1200
+                """;
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
@@ -245,8 +254,7 @@ public class YsldParseTest {
                 hasProperty(
                         "parameters",
                         containsInAnyOrder(
-                                rtParam("data"),
-                                rtParam("levels", literal(1000), literal(1100), literal(1200)))));
+                                rtParam("data"), rtParam("levels", literal(1000), literal(1100), literal(1200)))));
     }
 
     @SuppressWarnings("unchecked")
@@ -282,9 +290,7 @@ public class YsldParseTest {
                     description.appendText(" with value ");
                     description.appendDescriptionOf(values[0]);
                 } else {
-                    description
-                            .appendText(" with values ")
-                            .appendList("[", ", ", "]", Arrays.asList(values));
+                    description.appendText(" with values ").appendList("[", ", ", "]", Arrays.asList(values));
                 }
             }
         };
@@ -293,16 +299,18 @@ public class YsldParseTest {
     @Test
     public void testRenderingTransformationHeatmap() throws IOException {
         String yaml =
-                "feature-styles: \n"
-                        + "- transform:\n"
-                        + "    name: vec:Heatmap\n"
-                        + "    params:\n"
-                        + "      weightAttr: pop2000\n"
-                        + "      radius: 100\n"
-                        + "      pixelsPerCell: 10\n"
-                        + "      outputBBOX: ${env('wms_bbox')}\n"
-                        + "      outputWidth: ${env('wms_width')}\n"
-                        + "      outputHeight: ${env('wms_height')}\n";
+                """
+                feature-styles:\s
+                - transform:
+                    name: vec:Heatmap
+                    params:
+                      weightAttr: pop2000
+                      radius: 100
+                      pixelsPerCell: 10
+                      outputBBOX: ${env('wms_bbox')}
+                      outputWidth: ${env('wms_width')}
+                      outputHeight: ${env('wms_height')}
+                """;
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
@@ -329,15 +337,17 @@ public class YsldParseTest {
     @Test
     public void testRenderingTransformationAlternateInputParam() throws IOException {
         String yaml =
-                "feature-styles: \n"
-                        + "- transform:\n"
-                        + "    input: foo\n"
-                        + "    name: ras:Contour\n"
-                        + "    params:\n"
-                        + "      levels:\n"
-                        + "      - 1000\n"
-                        + "      - 1100\n"
-                        + "      - 1200\n";
+                """
+                feature-styles:\s
+                - transform:
+                    input: foo
+                    name: ras:Contour
+                    params:
+                      levels:
+                      - 1000
+                      - 1100
+                      - 1200
+                """;
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
@@ -352,20 +362,21 @@ public class YsldParseTest {
                 hasProperty(
                         "parameters",
                         containsInAnyOrder(
-                                rtParam("foo"),
-                                rtParam("levels", literal(1000), literal(1100), literal(1200)))));
+                                rtParam("foo"), rtParam("levels", literal(1000), literal(1100), literal(1200)))));
     }
 
     @Test
     public void testRenderingTransformationWMSAuto() throws IOException {
         String yaml =
-                "feature-styles: \n"
-                        + "- transform:\n"
-                        + "    name: vec:Heatmap\n"
-                        + "    params:\n"
-                        + "      weightAttr: pop2000\n"
-                        + "      radius: 100\n"
-                        + "      pixelsPerCell: 10\n";
+                """
+                feature-styles:\s
+                - transform:
+                    name: vec:Heatmap
+                    params:
+                      weightAttr: pop2000
+                      radius: 100
+                      pixelsPerCell: 10
+                """;
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
@@ -392,14 +403,16 @@ public class YsldParseTest {
     @Test
     public void testRenderingTransformationWMSAutoMixed() throws IOException {
         String yaml =
-                "feature-styles: \n"
-                        + "- transform:\n"
-                        + "    name: vec:Heatmap\n"
-                        + "    params:\n"
-                        + "      weightAttr: pop2000\n"
-                        + "      radius: 100\n"
-                        + "      pixelsPerCell: 10\n"
-                        + "      outputBBOX: ${env('test')}\n";
+                """
+                feature-styles:\s
+                - transform:
+                    name: vec:Heatmap
+                    params:
+                      weightAttr: pop2000
+                      radius: 100
+                      pixelsPerCell: 10
+                      outputBBOX: ${env('test')}
+                """;
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
@@ -426,20 +439,21 @@ public class YsldParseTest {
     @Test
     public void testNestedRenderingTransformation() throws IOException {
         String yaml =
-                "feature-styles:\n"
-                        + "- transform:\n"
-                        + "    name: ras:Contour\n"
-                        + "    params:\n"
-                        + "      data: \n"
-                        + "        name: vec:BarnesSurface\n"
-                        + "        input: data\n"
-                        + "        params:\n"
-                        + "          valuAttr: MxTmp\n"
-                        + "      levels:\n"
-                        + "      - -5\n"
-                        + "      - 0\n"
-                        + "      - 5\n"
-                        + "";
+                """
+                feature-styles:
+                - transform:
+                    name: ras:Contour
+                    params:
+                      data:\s
+                        name: vec:BarnesSurface
+                        input: data
+                        params:
+                          valuAttr: MxTmp
+                      levels:
+                      - -5
+                      - 0
+                      - 5
+                """;
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
@@ -453,8 +467,7 @@ public class YsldParseTest {
         Function param1 = (Function) pf.getParameters().get(1);
         Function param0 = (Function) pf.getParameters().get(0);
         assertThat(param1, rtParam("levels", literal(-5), literal(0), literal(5)));
-        assertThat(
-                param0, rtParam("data", allOf(hasProperty("name", equalTo("vec:BarnesSurface")))));
+        assertThat(param0, rtParam("data", allOf(hasProperty("name", equalTo("vec:BarnesSurface")))));
 
         assertThat(
                 pf,
@@ -472,61 +485,57 @@ public class YsldParseTest {
     @Test
     public void testLabelShield() throws Exception {
         String yaml =
-                "feature-styles:\n"
-                        + "- name: name\n"
-                        + " rules:\n"
-                        + " - symbolizers:\n"
-                        + "   - line:\n"
-                        + "       stroke-color: '#555555'\n"
-                        + "       stroke-width: 1.0\n"
-                        + "    - text:\n"
-                        + "       label: name\n"
-                        + "       symbols:\n"
-                        + "        - mark:\n"
-                        + "           shape: circle\n"
-                        + "           fill-color: '#995555'\n"
-                        + "       geometry: ${geom}";
+                """
+                feature-styles:
+                - name: name
+                 rules:
+                 - symbolizers:
+                   - line:
+                       stroke-color: '#555555'
+                       stroke-width: 1.0
+                    - text:
+                       label: name
+                       symbols:
+                        - mark:
+                           shape: circle
+                           fill-color: '#995555'
+                       geometry: ${geom}\
+                """;
         // the above is really invalid YAML, maybe someone will come, fix it
         // and do some assertions here. For the time being, one silly assertion to appease PMD
         assertNotNull(yaml);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testZoomSimple() throws IOException {
-        String yaml =
-                "grid:\n"
-                        + "  initial-scale: 5000000\n"
-                        + "feature-styles: \n"
-                        + "- name: name\n"
-                        + "  rules:\n"
-                        + "  - zoom: "
-                        + tuple(0, 0)
-                        + "\n";
+        String yaml = "grid:\n"
+                + "  initial-scale: 5000000\n"
+                + "feature-styles: \n"
+                + "- name: name\n"
+                + "  rules:\n"
+                + "  - zoom: "
+                + tuple(0, 0)
+                + "\n";
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
 
         assertThat(
                 (Iterable<Rule>) fs.rules(),
-                hasItems(
-                        allOf(
-                                appliesToScale(5000000),
-                                not(appliesToScale(5000000 / 2)),
-                                not(appliesToScale(5000000 * 2)))));
+                hasItems(allOf(
+                        appliesToScale(5000000), not(appliesToScale(5000000 / 2)), not(appliesToScale(5000000 * 2)))));
     }
 
     @Test
     public void testZoomSimpleRange() throws IOException {
-        String yaml =
-                "grid:\n"
-                        + "  initial-scale: 5000000\n"
-                        + "feature-styles: \n"
-                        + "- name: name\n"
-                        + "  rules:\n"
-                        + "  - zoom: "
-                        + tuple(1, 2)
-                        + "\n";
+        String yaml = "grid:\n"
+                + "  initial-scale: 5000000\n"
+                + "feature-styles: \n"
+                + "- name: name\n"
+                + "  rules:\n"
+                + "  - zoom: "
+                + tuple(1, 2)
+                + "\n";
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
@@ -539,22 +548,20 @@ public class YsldParseTest {
         assertThat(r, not(appliesToScale(5000000 / 8))); // Z=3
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testZoomSimpleWithDifferentInitial() throws IOException {
-        String yaml =
-                "grid:\n"
-                        + "  initial-scale: 5000000\n"
-                        + "  initial-level: 3\n"
-                        + "feature-styles: \n"
-                        + "- name: name\n"
-                        + "  rules:\n"
-                        + "  - zoom: "
-                        + tuple(0, 0)
-                        + "\n"
-                        + "  - zoom: "
-                        + tuple(3, 3)
-                        + "\n";
+        String yaml = "grid:\n"
+                + "  initial-scale: 5000000\n"
+                + "  initial-level: 3\n"
+                + "feature-styles: \n"
+                + "- name: name\n"
+                + "  rules:\n"
+                + "  - zoom: "
+                + tuple(0, 0)
+                + "\n"
+                + "  - zoom: "
+                + tuple(3, 3)
+                + "\n";
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
@@ -572,25 +579,23 @@ public class YsldParseTest {
                                 not(appliesToScale(5000000 * 2 * 8)))));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testZoomList() throws IOException {
-        String yaml =
-                "grid:\n"
-                        + "  scales:\n"
-                        + "  - 5000000\n"
-                        + "  - 2000000\n"
-                        + "  - 1000000\n"
-                        + "  - 500000\n"
-                        + "feature-styles: \n"
-                        + "- name: name\n"
-                        + "  rules:\n"
-                        + "  - zoom: "
-                        + tuple(0, 0)
-                        + "\n"
-                        + "  - zoom: "
-                        + tuple(2, 2)
-                        + "\n";
+        String yaml = "grid:\n"
+                + "  scales:\n"
+                + "  - 5000000\n"
+                + "  - 2000000\n"
+                + "  - 1000000\n"
+                + "  - 500000\n"
+                + "feature-styles: \n"
+                + "- name: name\n"
+                + "  rules:\n"
+                + "  - zoom: "
+                + tuple(0, 0)
+                + "\n"
+                + "  - zoom: "
+                + tuple(2, 2)
+                + "\n";
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
@@ -599,32 +604,27 @@ public class YsldParseTest {
                 (Iterable<Rule>) fs.rules(),
                 hasItems(
                         allOf(appliesToScale(5000000d), not(appliesToScale(2000000d))),
-                        allOf(
-                                appliesToScale(1000000d),
-                                not(appliesToScale(2000000d)),
-                                not(appliesToScale(500000d)))));
+                        allOf(appliesToScale(1000000d), not(appliesToScale(2000000d)), not(appliesToScale(500000d)))));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testZoomListWithInitial() throws IOException {
-        String yaml =
-                "grid:\n"
-                        + "  initial-level: 3\n"
-                        + "  scales:\n"
-                        + "  - 5000000\n"
-                        + "  - 2000000\n"
-                        + "  - 1000000\n"
-                        + "  - 500000\n"
-                        + "feature-styles: \n"
-                        + "- name: name\n"
-                        + "  rules:\n"
-                        + "  - zoom: "
-                        + tuple(3, 3)
-                        + "\n"
-                        + "  - zoom: "
-                        + tuple(5, 5)
-                        + "\n";
+        String yaml = "grid:\n"
+                + "  initial-level: 3\n"
+                + "  scales:\n"
+                + "  - 5000000\n"
+                + "  - 2000000\n"
+                + "  - 1000000\n"
+                + "  - 500000\n"
+                + "feature-styles: \n"
+                + "- name: name\n"
+                + "  rules:\n"
+                + "  - zoom: "
+                + tuple(3, 3)
+                + "\n"
+                + "  - zoom: "
+                + tuple(5, 5)
+                + "\n";
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
@@ -633,36 +633,31 @@ public class YsldParseTest {
                 (Iterable<Rule>) fs.rules(),
                 hasItems(
                         allOf(appliesToScale(5000000d), not(appliesToScale(2000000d))),
-                        allOf(
-                                appliesToScale(1000000d),
-                                not(appliesToScale(2000000d)),
-                                not(appliesToScale(500000d)))));
+                        allOf(appliesToScale(1000000d), not(appliesToScale(2000000d)), not(appliesToScale(500000d)))));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testZoomListWithRanges() throws IOException {
-        String yaml =
-                "grid:\n"
-                        + "  scales:\n"
-                        + "  - 5000000\n"
-                        + "  - 2000000\n"
-                        + "  - 1000000\n"
-                        + "  - 500000\n"
-                        + "  - 200000\n"
-                        + "  - 100000\n"
-                        + "feature-styles: \n"
-                        + "- name: name\n"
-                        + "  rules:\n"
-                        + "  - zoom: "
-                        + tuple(null, 1)
-                        + "\n"
-                        + "  - zoom: "
-                        + tuple(2, 3)
-                        + "\n"
-                        + "  - zoom: "
-                        + tuple(4, null)
-                        + "\n";
+        String yaml = "grid:\n"
+                + "  scales:\n"
+                + "  - 5000000\n"
+                + "  - 2000000\n"
+                + "  - 1000000\n"
+                + "  - 500000\n"
+                + "  - 200000\n"
+                + "  - 100000\n"
+                + "feature-styles: \n"
+                + "- name: name\n"
+                + "  rules:\n"
+                + "  - zoom: "
+                + tuple(null, 1)
+                + "\n"
+                + "  - zoom: "
+                + tuple(2, 3)
+                + "\n"
+                + "  - zoom: "
+                + tuple(4, null)
+                + "\n";
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
@@ -693,30 +688,28 @@ public class YsldParseTest {
                                 appliesToScale(100000d))));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testZoomListWithMinMaxKeywords() throws IOException {
-        String yaml =
-                "grid:\n"
-                        + "  scales:\n"
-                        + "  - 5000000\n"
-                        + "  - 2000000\n"
-                        + "  - 1000000\n"
-                        + "  - 500000\n"
-                        + "  - 200000\n"
-                        + "  - 100000\n"
-                        + "feature-styles: \n"
-                        + "- name: name\n"
-                        + "  rules:\n"
-                        + "  - zoom: "
-                        + tuple("min", 1)
-                        + "\n"
-                        + "  - zoom: "
-                        + tuple(2, 3)
-                        + "\n"
-                        + "  - zoom: "
-                        + tuple(4, "max")
-                        + "\n";
+        String yaml = "grid:\n"
+                + "  scales:\n"
+                + "  - 5000000\n"
+                + "  - 2000000\n"
+                + "  - 1000000\n"
+                + "  - 500000\n"
+                + "  - 200000\n"
+                + "  - 100000\n"
+                + "feature-styles: \n"
+                + "- name: name\n"
+                + "  rules:\n"
+                + "  - zoom: "
+                + tuple("min", 1)
+                + "\n"
+                + "  - zoom: "
+                + tuple(2, 3)
+                + "\n"
+                + "  - zoom: "
+                + tuple(4, "max")
+                + "\n";
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
@@ -747,22 +740,20 @@ public class YsldParseTest {
                                 appliesToScale(100000d))));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testScaleWithMinMaxKeywords() throws IOException {
-        String yaml =
-                "feature-styles: \n"
-                        + "- name: name\n"
-                        + "  rules:\n"
-                        + "  - scale: "
-                        + tuple(1500000, "max")
-                        + "\n"
-                        + "  - scale: "
-                        + tuple(300000, 1500000)
-                        + "\n"
-                        + "  - scale: "
-                        + tuple("min", 300000)
-                        + "\n";
+        String yaml = "feature-styles: \n"
+                + "- name: name\n"
+                + "  rules:\n"
+                + "  - scale: "
+                + tuple(1500000, "max")
+                + "\n"
+                + "  - scale: "
+                + tuple(300000, 1500000)
+                + "\n"
+                + "  - scale: "
+                + tuple("min", 300000)
+                + "\n";
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
@@ -793,22 +784,20 @@ public class YsldParseTest {
                                 appliesToScale(100000d))));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testScaleWithNull() throws IOException {
-        String yaml =
-                "feature-styles: \n"
-                        + "- name: name\n"
-                        + "  rules:\n"
-                        + "  - scale: "
-                        + tuple(1500000, null)
-                        + "\n"
-                        + "  - scale: "
-                        + tuple(300000, 1500000)
-                        + "\n"
-                        + "  - scale: "
-                        + tuple(null, 300000)
-                        + "\n";
+        String yaml = "feature-styles: \n"
+                + "- name: name\n"
+                + "  rules:\n"
+                + "  - scale: "
+                + tuple(1500000, null)
+                + "\n"
+                + "  - scale: "
+                + tuple(300000, 1500000)
+                + "\n"
+                + "  - scale: "
+                + tuple(null, 300000)
+                + "\n";
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
@@ -839,153 +828,151 @@ public class YsldParseTest {
                                 appliesToScale(100000d))));
     }
 
-    static final String GOOGLE_MERCATOR_TEST_RULES =
-            "  - zoom: "
-                    + tuple(0, 0)
-                    + "\n"
-                    + "  - zoom: "
-                    + tuple(1, 1)
-                    + "\n"
-                    + "  - zoom: "
-                    + tuple(2, 2)
-                    + "\n"
-                    + "  - zoom: "
-                    + tuple(3, 3)
-                    + "\n"
-                    + "  - zoom: "
-                    + tuple(4, 4)
-                    + "\n"
-                    + "  - zoom: "
-                    + tuple(5, 5)
-                    + "\n"
-                    + "  - zoom: "
-                    + tuple(6, 6)
-                    + "\n"
-                    + "  - zoom: "
-                    + tuple(7, 7)
-                    + "\n"
-                    + "  - zoom: "
-                    + tuple(8, 8)
-                    + "\n"
-                    + "  - zoom: "
-                    + tuple(9, 9)
-                    + "\n"
-                    + "  - zoom: "
-                    + tuple(10, 10)
-                    + "\n"
-                    + "  - zoom: "
-                    + tuple(11, 11)
-                    + "\n"
-                    + "  - zoom: "
-                    + tuple(12, 12)
-                    + "\n"
-                    + "  - zoom: "
-                    + tuple(13, 13)
-                    + "\n"
-                    + "  - zoom: "
-                    + tuple(14, 14)
-                    + "\n"
-                    + "  - zoom: "
-                    + tuple(15, 15)
-                    + "\n"
-                    + "  - zoom: "
-                    + tuple(16, 16)
-                    + "\n"
-                    + "  - zoom: "
-                    + tuple(17, 17)
-                    + "\n"
-                    + "  - zoom: "
-                    + tuple(18, 18)
-                    + "\n"
-                    + "  - zoom: "
-                    + tuple(19, 19)
-                    + "\n";
+    static final String GOOGLE_MERCATOR_TEST_RULES = "  - zoom: "
+            + tuple(0, 0)
+            + "\n"
+            + "  - zoom: "
+            + tuple(1, 1)
+            + "\n"
+            + "  - zoom: "
+            + tuple(2, 2)
+            + "\n"
+            + "  - zoom: "
+            + tuple(3, 3)
+            + "\n"
+            + "  - zoom: "
+            + tuple(4, 4)
+            + "\n"
+            + "  - zoom: "
+            + tuple(5, 5)
+            + "\n"
+            + "  - zoom: "
+            + tuple(6, 6)
+            + "\n"
+            + "  - zoom: "
+            + tuple(7, 7)
+            + "\n"
+            + "  - zoom: "
+            + tuple(8, 8)
+            + "\n"
+            + "  - zoom: "
+            + tuple(9, 9)
+            + "\n"
+            + "  - zoom: "
+            + tuple(10, 10)
+            + "\n"
+            + "  - zoom: "
+            + tuple(11, 11)
+            + "\n"
+            + "  - zoom: "
+            + tuple(12, 12)
+            + "\n"
+            + "  - zoom: "
+            + tuple(13, 13)
+            + "\n"
+            + "  - zoom: "
+            + tuple(14, 14)
+            + "\n"
+            + "  - zoom: "
+            + tuple(15, 15)
+            + "\n"
+            + "  - zoom: "
+            + tuple(16, 16)
+            + "\n"
+            + "  - zoom: "
+            + tuple(17, 17)
+            + "\n"
+            + "  - zoom: "
+            + tuple(18, 18)
+            + "\n"
+            + "  - zoom: "
+            + tuple(19, 19)
+            + "\n";
 
-    static final String WGS84_TEST_RULES =
-            "  - zoom: "
-                    + tuple(0, 0)
-                    + "\n"
-                    + "    name: WGS84:00\n"
-                    + "  - zoom: "
-                    + tuple(1, 1)
-                    + "\n"
-                    + "    name: WGS84:01\n"
-                    + "  - zoom: "
-                    + tuple(2, 2)
-                    + "\n"
-                    + "    name: WGS84:02\n"
-                    + "  - zoom: "
-                    + tuple(3, 3)
-                    + "\n"
-                    + "    name: WGS84:03\n"
-                    + "  - zoom: "
-                    + tuple(4, 4)
-                    + "\n"
-                    + "    name: WGS84:04\n"
-                    + "  - zoom: "
-                    + tuple(5, 5)
-                    + "\n"
-                    + "    name: WGS84:05\n"
-                    + "  - zoom: "
-                    + tuple(6, 6)
-                    + "\n"
-                    + "    name: WGS84:06\n"
-                    + "  - zoom: "
-                    + tuple(7, 7)
-                    + "\n"
-                    + "    name: WGS84:07\n"
-                    + "  - zoom: "
-                    + tuple(8, 8)
-                    + "\n"
-                    + "    name: WGS84:08\n"
-                    + "  - zoom: "
-                    + tuple(9, 9)
-                    + "\n"
-                    + "    name: WGS84:09\n"
-                    + "  - zoom: "
-                    + tuple(10, 10)
-                    + "\n"
-                    + "    name: WGS84:10\n"
-                    + "  - zoom: "
-                    + tuple(11, 11)
-                    + "\n"
-                    + "    name: WGS84:11\n"
-                    + "  - zoom: "
-                    + tuple(12, 12)
-                    + "\n"
-                    + "    name: WGS84:12\n"
-                    + "  - zoom: "
-                    + tuple(13, 13)
-                    + "\n"
-                    + "    name: WGS84:13\n"
-                    + "  - zoom: "
-                    + tuple(14, 14)
-                    + "\n"
-                    + "    name: WGS84:14\n"
-                    + "  - zoom: "
-                    + tuple(15, 15)
-                    + "\n"
-                    + "    name: WGS84:15\n"
-                    + "  - zoom: "
-                    + tuple(16, 16)
-                    + "\n"
-                    + "    name: WGS84:16\n"
-                    + "  - zoom: "
-                    + tuple(17, 17)
-                    + "\n"
-                    + "    name: WGS84:17\n"
-                    + "  - zoom: "
-                    + tuple(18, 18)
-                    + "\n"
-                    + "    name: WGS84:18\n"
-                    + "  - zoom: "
-                    + tuple(19, 19)
-                    + "\n"
-                    + "    name: WGS84:19\n"
-                    + "  - zoom: "
-                    + tuple(20, 20)
-                    + "\n"
-                    + "    name: WGS84:20\n";
+    static final String WGS84_TEST_RULES = "  - zoom: "
+            + tuple(0, 0)
+            + "\n"
+            + "    name: WGS84:00\n"
+            + "  - zoom: "
+            + tuple(1, 1)
+            + "\n"
+            + "    name: WGS84:01\n"
+            + "  - zoom: "
+            + tuple(2, 2)
+            + "\n"
+            + "    name: WGS84:02\n"
+            + "  - zoom: "
+            + tuple(3, 3)
+            + "\n"
+            + "    name: WGS84:03\n"
+            + "  - zoom: "
+            + tuple(4, 4)
+            + "\n"
+            + "    name: WGS84:04\n"
+            + "  - zoom: "
+            + tuple(5, 5)
+            + "\n"
+            + "    name: WGS84:05\n"
+            + "  - zoom: "
+            + tuple(6, 6)
+            + "\n"
+            + "    name: WGS84:06\n"
+            + "  - zoom: "
+            + tuple(7, 7)
+            + "\n"
+            + "    name: WGS84:07\n"
+            + "  - zoom: "
+            + tuple(8, 8)
+            + "\n"
+            + "    name: WGS84:08\n"
+            + "  - zoom: "
+            + tuple(9, 9)
+            + "\n"
+            + "    name: WGS84:09\n"
+            + "  - zoom: "
+            + tuple(10, 10)
+            + "\n"
+            + "    name: WGS84:10\n"
+            + "  - zoom: "
+            + tuple(11, 11)
+            + "\n"
+            + "    name: WGS84:11\n"
+            + "  - zoom: "
+            + tuple(12, 12)
+            + "\n"
+            + "    name: WGS84:12\n"
+            + "  - zoom: "
+            + tuple(13, 13)
+            + "\n"
+            + "    name: WGS84:13\n"
+            + "  - zoom: "
+            + tuple(14, 14)
+            + "\n"
+            + "    name: WGS84:14\n"
+            + "  - zoom: "
+            + tuple(15, 15)
+            + "\n"
+            + "    name: WGS84:15\n"
+            + "  - zoom: "
+            + tuple(16, 16)
+            + "\n"
+            + "    name: WGS84:16\n"
+            + "  - zoom: "
+            + tuple(17, 17)
+            + "\n"
+            + "    name: WGS84:17\n"
+            + "  - zoom: "
+            + tuple(18, 18)
+            + "\n"
+            + "    name: WGS84:18\n"
+            + "  - zoom: "
+            + tuple(19, 19)
+            + "\n"
+            + "    name: WGS84:19\n"
+            + "  - zoom: "
+            + tuple(20, 20)
+            + "\n"
+            + "    name: WGS84:20\n";
 
     // m/px
     double[] GOOGLE_MERCATOR_PIXEL_SIZES = {
@@ -1049,13 +1036,12 @@ public class YsldParseTest {
 
     @Test
     public void testNamed() throws IOException {
-        String yaml =
-                "grid:\n"
-                        + "  name: WebMercator\n"
-                        + "feature-styles: \n"
-                        + "- name: name\n"
-                        + "  rules:\n"
-                        + GOOGLE_MERCATOR_TEST_RULES;
+        String yaml = "grid:\n"
+                + "  name: WebMercator\n"
+                + "feature-styles: \n"
+                + "- name: name\n"
+                + "  rules:\n"
+                + GOOGLE_MERCATOR_TEST_RULES;
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         doTestForGoogleMercator(sld);
@@ -1077,14 +1063,10 @@ public class YsldParseTest {
 
         assertThat(
                 fs.rules().get(0),
-                allOf(
-                        appliesToScale(scaleDenominators[0]),
-                        not(appliesToScale(scaleDenominators[1]))));
+                allOf(appliesToScale(scaleDenominators[0]), not(appliesToScale(scaleDenominators[1]))));
         assertThat(
                 fs.rules().get(19),
-                allOf(
-                        appliesToScale(scaleDenominators[19]),
-                        not(appliesToScale(scaleDenominators[18]))));
+                allOf(appliesToScale(scaleDenominators[19]), not(appliesToScale(scaleDenominators[18]))));
         for (int i = 1; i < 19; i++) {
             assertThat(
                     fs.rules().get(i),
@@ -1099,46 +1081,13 @@ public class YsldParseTest {
         }
     }
 
-    Matcher<Double> mCloseTo(final double value, final double epsilon) {
-        return new BaseMatcher<Double>() {
-
-            @Override
-            public boolean matches(Object arg0) {
-                return Math.abs(value / (Double) arg0 - 1) <= epsilon;
-            }
-
-            @Override
-            public void describeTo(Description arg0) {
-                arg0.appendText("divided by ")
-                        .appendValue(value)
-                        .appendText(" within ")
-                        .appendValue(epsilon)
-                        .appendText(" of 1.");
-            }
-        };
-    }
-
-    @Test
-    public void testWGS84Scales() throws Exception {
-        ZoomContext context = WellKnownZoomContextFinder.getInstance().get("DEFAULT");
-
-        for (int i = 0; i < WGS84_SCALE_DENOMS.length; i++) {
-            assertThat(
-                    context.getScaleDenominator(i), mCloseTo(WGS84_SCALE_DENOMS[i], 0.00000001d));
-        }
-    }
-
     private void doTestForWGS84(StyledLayerDescriptor sld) throws IOException {
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
 
         assertThat(fs.rules().size(), is(21));
 
         Rule first = fs.rules().get(0);
-        assertThat(
-                first,
-                allOf(
-                        appliesToScale(WGS84_SCALE_DENOMS[0]),
-                        not(appliesToScale(WGS84_SCALE_DENOMS[1]))));
+        assertThat(first, allOf(appliesToScale(WGS84_SCALE_DENOMS[0]), not(appliesToScale(WGS84_SCALE_DENOMS[1]))));
 
         for (int i = 1; i < 20; i++) {
             Rule r = fs.rules().get(i);
@@ -1155,24 +1104,18 @@ public class YsldParseTest {
         }
 
         Rule last = fs.rules().get(20);
-        assertThat(
-                last,
-                allOf(
-                        appliesToScale(WGS84_SCALE_DENOMS[20]),
-                        not(appliesToScale(WGS84_SCALE_DENOMS[19]))));
+        assertThat(last, allOf(appliesToScale(WGS84_SCALE_DENOMS[20]), not(appliesToScale(WGS84_SCALE_DENOMS[19]))));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testNamedWithFinder() throws IOException {
-        String yaml =
-                "grid:\n"
-                        + "  name: test\n"
-                        + "feature-styles: \n"
-                        + "- name: name\n"
-                        + "  rules:\n"
-                        + "  - zoom: "
-                        + tuple(0, 0);
+        String yaml = "grid:\n"
+                + "  name: test\n"
+                + "feature-styles: \n"
+                + "- name: name\n"
+                + "  rules:\n"
+                + "  - zoom: "
+                + tuple(0, 0);
 
         ZoomContextFinder finder = createMock(ZoomContextFinder.class);
         ZoomContext context = createMock(ZoomContext.class);
@@ -1187,25 +1130,21 @@ public class YsldParseTest {
         fs.rules().get(0).getMaxScaleDenominator();
         assertThat(
                 (Iterable<Rule>) fs.rules(),
-                hasItems(
-                        allOf(
-                                Matchers.hasProperty(
-                                        "maxScaleDenominator", Matchers.closeTo(64, 0.0000001d)),
-                                Matchers.hasProperty(
-                                        "minScaleDenominator", Matchers.closeTo(42, 0.0000001d)))));
+                hasItems(allOf(
+                        Matchers.hasProperty("maxScaleDenominator", Matchers.closeTo(64, 0.0000001d)),
+                        Matchers.hasProperty("minScaleDenominator", Matchers.closeTo(42, 0.0000001d)))));
 
         verify(finder, context);
     }
 
     @Test
     public void testWellKnownWithCustomFinder() throws IOException {
-        String yaml =
-                "grid:\n"
-                        + "  name: WebMercator\n"
-                        + "feature-styles: \n"
-                        + "- name: name\n"
-                        + "  rules:\n"
-                        + GOOGLE_MERCATOR_TEST_RULES;
+        String yaml = "grid:\n"
+                + "  name: WebMercator\n"
+                + "feature-styles: \n"
+                + "- name: name\n"
+                + "  rules:\n"
+                + GOOGLE_MERCATOR_TEST_RULES;
 
         ZoomContextFinder finder = createMock(ZoomContextFinder.class);
 
@@ -1214,24 +1153,21 @@ public class YsldParseTest {
         replay(finder);
 
         StyledLayerDescriptor sld = Ysld.parse(yaml, Arrays.asList(finder), null);
-        doTestForGoogleMercator(
-                sld); // The additional finder doesn't have a WebMercator context and so should not
+        doTestForGoogleMercator(sld); // The additional finder doesn't have a WebMercator context and so should not
         // interfere.
 
         verify(finder);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testCustomFinderOverridesWellKnown() throws IOException {
-        String yaml =
-                "grid:\n"
-                        + "  name: WebMercator\n"
-                        + "feature-styles: \n"
-                        + "- name: name\n"
-                        + "  rules:\n"
-                        + "  - zoom: "
-                        + tuple(0, 0);
+        String yaml = "grid:\n"
+                + "  name: WebMercator\n"
+                + "feature-styles: \n"
+                + "- name: name\n"
+                + "  rules:\n"
+                + "  - zoom: "
+                + tuple(0, 0);
 
         ZoomContextFinder finder = createMock(ZoomContextFinder.class);
         ZoomContext context = createMock(ZoomContext.class);
@@ -1246,12 +1182,9 @@ public class YsldParseTest {
         fs.rules().get(0).getMaxScaleDenominator();
         assertThat(
                 (Iterable<Rule>) fs.rules(),
-                hasItems(
-                        allOf(
-                                Matchers.hasProperty(
-                                        "maxScaleDenominator", Matchers.closeTo(64, 0.0000001d)),
-                                Matchers.hasProperty(
-                                        "minScaleDenominator", Matchers.closeTo(42, 0.0000001d)))));
+                hasItems(allOf(
+                        Matchers.hasProperty("maxScaleDenominator", Matchers.closeTo(64, 0.0000001d)),
+                        Matchers.hasProperty("minScaleDenominator", Matchers.closeTo(42, 0.0000001d)))));
 
         verify(finder, context);
     }
@@ -1285,7 +1218,7 @@ public class YsldParseTest {
             } else {
                 String s = o.toString();
                 if (s.isEmpty() || s.startsWith("#") || s.equalsIgnoreCase("null")) {
-                    builder.append(String.format("'%s'", s));
+                    builder.append("'%s'".formatted(s));
                 } else {
                     builder.append(s);
                 }
@@ -1297,28 +1230,28 @@ public class YsldParseTest {
 
     @Test
     public void testColourMap() throws Exception {
-        String yaml =
-                "raster: \n"
-                        + "  color-map:\n"
-                        + "    type: values\n"
-                        + "    entries:\n"
-                        + "    - "
-                        + tuple("#ff0000", "1.0", "0", "start")
-                        + "\n"
-                        + "    - "
-                        + tuple("#00ff00", "1.0", "500", "middle")
-                        + "\n"
-                        + "    - "
-                        + tuple("#0000ff", "1.0", "1000", "end")
-                        + "\n"
-                        + "";
+        String yaml = "raster: \n"
+                + "  color-map:\n"
+                + "    type: values\n"
+                + "    entries:\n"
+                + "    - "
+                + tuple("#ff0000", "1.0", "0", "start")
+                + "\n"
+                + "    - "
+                + tuple("#00ff00", "1.0", "500", "middle")
+                + "\n"
+                + "    - "
+                + tuple("#0000ff", "1.0", "1000", "end")
+                + "\n"
+                + "";
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
-        RasterSymbolizer symb = (RasterSymbolizer) fs.rules().get(0).symbolizers().get(0);
+        RasterSymbolizer symb =
+                (RasterSymbolizer) fs.rules().get(0).symbolizers().get(0);
 
         // need to use the geotools.styling interface as it provides the accessors for the entries.
-        ColorMap map = (ColorMap) symb.getColorMap();
+        ColorMap map = symb.getColorMap();
 
         Color colour1 = (Color) map.getColorMapEntry(0).getColor().evaluate(null);
         Color colour2 = (Color) map.getColorMapEntry(1).getColor().evaluate(null);
@@ -1331,58 +1264,57 @@ public class YsldParseTest {
 
     @Test
     public void testColourMapExpression() throws Exception {
-        String yaml =
-                "raster: \n"
-                        + "  color-map:\n"
-                        + "    type: values\n"
-                        + "    entries:\n"
-                        + "    - "
-                        + tuple("#ff0000", "1.0", "0", "start")
-                        + "\n"
-                        + "    - "
-                        + tuple("#00ff00", "1.0", "500", "middle")
-                        + "\n"
-                        + "    - "
-                        + tuple("#0000ff", "'${pow(0.75, 1.2)}'", "1000", "end")
-                        + "\n"
-                        + // Expression containing comma needs to be quoted
-                        "";
+        String yaml = "raster: \n"
+                + "  color-map:\n"
+                + "    type: values\n"
+                + "    entries:\n"
+                + "    - "
+                + tuple("#ff0000", "1.0", "0", "start")
+                + "\n"
+                + "    - "
+                + tuple("#00ff00", "1.0", "500", "middle")
+                + "\n"
+                + "    - "
+                + tuple("#0000ff", "'${pow(0.75, 1.2)}'", "1000", "end")
+                + "\n"
+                + // Expression containing comma needs to be quoted
+                "";
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
-        RasterSymbolizer symb = (RasterSymbolizer) fs.rules().get(0).symbolizers().get(0);
+        RasterSymbolizer symb =
+                (RasterSymbolizer) fs.rules().get(0).symbolizers().get(0);
 
         // need to use the geotools.styling interface as it provides the accessors for the entries.
-        ColorMap map = (ColorMap) symb.getColorMap();
+        ColorMap map = symb.getColorMap();
 
-        assertThat(
-                map.getColorMapEntry(2).getOpacity(), function("pow", literal(0.75), literal(1.2)));
+        assertThat(map.getColorMapEntry(2).getOpacity(), function("pow", literal(0.75), literal(1.2)));
     }
 
     @Test
     public void testColourMapEmpty() throws Exception {
-        String yaml =
-                "raster: \n"
-                        + "  color-map:\n"
-                        + "    type: values\n"
-                        + "    entries:\n"
-                        + "    - "
-                        + tuple("#ff0000", "1.0", "0", "start")
-                        + "\n"
-                        + "    - "
-                        + tuple("#00ff00", "", "500", "middle")
-                        + "\n"
-                        + "    - "
-                        + tuple("#0000ff", null, "1000", "end")
-                        + "\n"
-                        + "";
+        String yaml = "raster: \n"
+                + "  color-map:\n"
+                + "    type: values\n"
+                + "    entries:\n"
+                + "    - "
+                + tuple("#ff0000", "1.0", "0", "start")
+                + "\n"
+                + "    - "
+                + tuple("#00ff00", "", "500", "middle")
+                + "\n"
+                + "    - "
+                + tuple("#0000ff", null, "1000", "end")
+                + "\n"
+                + "";
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
-        RasterSymbolizer symb = (RasterSymbolizer) fs.rules().get(0).symbolizers().get(0);
+        RasterSymbolizer symb =
+                (RasterSymbolizer) fs.rules().get(0).symbolizers().get(0);
 
         // need to use the geotools.styling interface as it provides the accessors for the entries.
-        ColorMap map = (ColorMap) symb.getColorMap();
+        ColorMap map = symb.getColorMap();
 
         LOG.fine(map.getColorMapEntry(0).getColor().evaluate(null).toString());
         Color colour1 = (Color) map.getColorMapEntry(0).getColor().evaluate(null);
@@ -1403,9 +1335,7 @@ public class YsldParseTest {
         TextSymbolizer symb = (TextSymbolizer) fs.rules().get(0).symbolizers().get(0);
 
         Expression label = symb.getLabel();
-        assertThat(
-                label,
-                allOf(instanceOf(Literal.class), hasProperty("value", equalTo("test literal"))));
+        assertThat(label, allOf(instanceOf(Literal.class), hasProperty("value", equalTo("test literal"))));
     }
 
     @Test
@@ -1446,9 +1376,7 @@ public class YsldParseTest {
         TextSymbolizer symb = (TextSymbolizer) fs.rules().get(0).symbolizers().get(0);
 
         Expression expr = symb.getGeometry();
-        assertThat(
-                expr,
-                allOf(instanceOf(Literal.class), hasProperty("value", equalTo("test literal"))));
+        assertThat(expr, allOf(instanceOf(Literal.class), hasProperty("value", equalTo("test literal"))));
     }
 
     @Test
@@ -1471,11 +1399,14 @@ public class YsldParseTest {
     @Test
     public void testExpressionLong() throws Exception {
         String yaml =
-                "polygon:\n"
-                        + "  fill-color: ${recode(MAPCOLOR7, 1.0, '#FFC3C3', 2.0, '#FFE3C3', 3.0, '#FFFFC3', 4.0, '#C3FFE3', 5.0, '#C3FFFF', 6.0, '#C3C3FF', 7.0, '#BFC3FF')}\n";
+                """
+                polygon:
+                  fill-color: ${recode(MAPCOLOR7, 1.0, '#FFC3C3', 2.0, '#FFE3C3', 3.0, '#FFFFC3', 4.0, '#C3FFE3', 5.0, '#C3FFFF', 6.0, '#C3C3FF', 7.0, '#BFC3FF')}
+                """;
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
-        PolygonSymbolizer symb = (PolygonSymbolizer) fs.rules().get(0).symbolizers().get(0);
+        PolygonSymbolizer symb =
+                (PolygonSymbolizer) fs.rules().get(0).symbolizers().get(0);
 
         Expression expr = symb.getFill().getColor();
         assertThat(expr, instanceOf(RecodeFunction.class));
@@ -1502,18 +1433,21 @@ public class YsldParseTest {
     @Test
     public void testExpressionLongBreak() throws Exception {
         String yaml =
-                "polygon:\n"
-                        + "  fill-color: ${recode(MAPCOLOR7, \n"
-                        + "    1.0, '#FFC3C3', \n"
-                        + "    2.0, '#FFE3C3', \n"
-                        + "    3.0, '#FFFFC3', \n"
-                        + "    4.0, '#C3FFE3', \n"
-                        + "    5.0, '#C3FFFF', \n"
-                        + "    6.0, '#C3C3FF', \n"
-                        + "    7.0, '#BFC3FF')}\n";
+                """
+                polygon:
+                  fill-color: ${recode(MAPCOLOR7,\s
+                    1.0, '#FFC3C3',\s
+                    2.0, '#FFE3C3',\s
+                    3.0, '#FFFFC3',\s
+                    4.0, '#C3FFE3',\s
+                    5.0, '#C3FFFF',\s
+                    6.0, '#C3C3FF',\s
+                    7.0, '#BFC3FF')}
+                """;
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
-        PolygonSymbolizer symb = (PolygonSymbolizer) fs.rules().get(0).symbolizers().get(0);
+        PolygonSymbolizer symb =
+                (PolygonSymbolizer) fs.rules().get(0).symbolizers().get(0);
 
         Expression expr = symb.getFill().getColor();
         assertThat(expr, instanceOf(RecodeFunction.class));
@@ -1541,19 +1475,22 @@ public class YsldParseTest {
     @Test
     public void testExpressionLongBreakFolded() throws Exception {
         String yaml =
-                "polygon:\n"
-                        + "  fill-color: >\n"
-                        + "    ${recode(MAPCOLOR7, \n"
-                        + "    1.0, '#FFC3C3', \n"
-                        + "    2.0, '#FFE3C3', \n"
-                        + "    3.0, '#FFFFC3', \n"
-                        + "    4.0, '#C3FFE3', \n"
-                        + "    5.0, '#C3FFFF', \n"
-                        + "    6.0, '#C3C3FF', \n"
-                        + "    7.0, '#BFC3FF')}\n";
+                """
+                polygon:
+                  fill-color: >
+                    ${recode(MAPCOLOR7,\s
+                    1.0, '#FFC3C3',\s
+                    2.0, '#FFE3C3',\s
+                    3.0, '#FFFFC3',\s
+                    4.0, '#C3FFE3',\s
+                    5.0, '#C3FFFF',\s
+                    6.0, '#C3C3FF',\s
+                    7.0, '#BFC3FF')}
+                """;
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
-        PolygonSymbolizer symb = (PolygonSymbolizer) fs.rules().get(0).symbolizers().get(0);
+        PolygonSymbolizer symb =
+                (PolygonSymbolizer) fs.rules().get(0).symbolizers().get(0);
 
         Expression expr = symb.getFill().getColor();
         assertThat(expr, instanceOf(RecodeFunction.class));
@@ -1581,19 +1518,22 @@ public class YsldParseTest {
     @Test
     public void testExpressionLongBreakPreserved() throws Exception {
         String yaml =
-                "polygon:\n"
-                        + "  fill-color: |\n"
-                        + "    ${recode(MAPCOLOR7, \n"
-                        + "    1.0, '#FFC3C3', \n"
-                        + "    2.0, '#FFE3C3', \n"
-                        + "    3.0, '#FFFFC3', \n"
-                        + "    4.0, '#C3FFE3', \n"
-                        + "    5.0, '#C3FFFF', \n"
-                        + "    6.0, '#C3C3FF', \n"
-                        + "    7.0, '#BFC3FF')}\n";
+                """
+                polygon:
+                  fill-color: |
+                    ${recode(MAPCOLOR7,\s
+                    1.0, '#FFC3C3',\s
+                    2.0, '#FFE3C3',\s
+                    3.0, '#FFFFC3',\s
+                    4.0, '#C3FFE3',\s
+                    5.0, '#C3FFFF',\s
+                    6.0, '#C3C3FF',\s
+                    7.0, '#BFC3FF')}
+                """;
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         FeatureTypeStyle fs = SLD.defaultStyle(sld).featureTypeStyles().get(0);
-        PolygonSymbolizer symb = (PolygonSymbolizer) fs.rules().get(0).symbolizers().get(0);
+        PolygonSymbolizer symb =
+                (PolygonSymbolizer) fs.rules().get(0).symbolizers().get(0);
 
         Expression expr = symb.getFill().getColor();
         assertThat(expr, instanceOf(RecodeFunction.class));
@@ -1642,11 +1582,7 @@ public class YsldParseTest {
 
     @Test
     public void testDynamicColor() throws Exception {
-        String yaml =
-                "point: \n"
-                        + "  symbols: \n"
-                        + "  - mark: \n"
-                        + "      fill-color: ${colourAttribute}\n";
+        String yaml = "point: \n" + "  symbols: \n" + "  - mark: \n" + "      fill-color: ${colourAttribute}\n";
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         PointSymbolizer p = SLD.pointSymbolizer(SLD.defaultStyle(sld));
@@ -1655,8 +1591,7 @@ public class YsldParseTest {
 
     @Test
     public void testEvilExpression1() throws Exception {
-        String yaml =
-                "point: \n" + "  symbols: \n" + "  - mark: \n" + "      fill-color: \\$\\}\\\\\n";
+        String yaml = "point: \n" + "  symbols: \n" + "  - mark: \n" + "      fill-color: \\$\\}\\\\\n";
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         PointSymbolizer p = SLD.pointSymbolizer(SLD.defaultStyle(sld));
@@ -1666,11 +1601,13 @@ public class YsldParseTest {
     @Test
     public void testColorHex() throws Exception {
         String yaml =
-                "point: \n"
-                        + "  symbols: \n"
-                        + "  - mark: \n"
-                        + "      fill-color: 0x001122\n"
-                        + "      stroke-color: 0x334455\n";
+                """
+                point:\s
+                  symbols:\s
+                  - mark:\s
+                      fill-color: 0x001122
+                      stroke-color: 0x334455
+                """;
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         PointSymbolizer p = SLD.pointSymbolizer(SLD.defaultStyle(sld));
@@ -1681,11 +1618,13 @@ public class YsldParseTest {
     @Test
     public void testColorQuotedHex() throws Exception {
         String yaml =
-                "point: \n"
-                        + "  symbols: \n"
-                        + "  - mark: \n"
-                        + "      fill-color: '0x001122'\n"
-                        + "      stroke-color: '0x334455'\n";
+                """
+                point:\s
+                  symbols:\s
+                  - mark:\s
+                      fill-color: '0x001122'
+                      stroke-color: '0x334455'
+                """;
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         PointSymbolizer p = SLD.pointSymbolizer(SLD.defaultStyle(sld));
@@ -1696,11 +1635,13 @@ public class YsldParseTest {
     @Test
     public void testColorQuotedHash() throws Exception {
         String yaml =
-                "point: \n"
-                        + "  symbols: \n"
-                        + "  - mark: \n"
-                        + "      fill-color: '#001122'\n"
-                        + "      stroke-color: '#334455'\n";
+                """
+                point:\s
+                  symbols:\s
+                  - mark:\s
+                      fill-color: '#001122'
+                      stroke-color: '#334455'
+                """;
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         PointSymbolizer p = SLD.pointSymbolizer(SLD.defaultStyle(sld));
@@ -1711,11 +1652,13 @@ public class YsldParseTest {
     @Test
     public void testColorQuotedBare() throws Exception {
         String yaml =
-                "point: \n"
-                        + "  symbols: \n"
-                        + "  - mark: \n"
-                        + "      fill-color: '001122'\n"
-                        + "      stroke-color: '334455'\n";
+                """
+                point:\s
+                  symbols:\s
+                  - mark:\s
+                      fill-color: '001122'
+                      stroke-color: '334455'
+                """;
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         PointSymbolizer p = SLD.pointSymbolizer(SLD.defaultStyle(sld));
@@ -1725,11 +1668,7 @@ public class YsldParseTest {
 
     @Test
     public void testColorSexegesimal() throws Exception {
-        String yaml =
-                "point: \n"
-                        + "  symbols: \n"
-                        + "  - mark: \n"
-                        + "      fill-color: 1:17:40:20:15\n";
+        String yaml = "point: \n" + "  symbols: \n" + "  - mark: \n" + "      fill-color: 1:17:40:20:15\n";
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         PointSymbolizer p = SLD.pointSymbolizer(SLD.defaultStyle(sld));
@@ -1750,51 +1689,50 @@ public class YsldParseTest {
     @Test
     public void testRasterBandSelectionGreyWithContrast() throws Exception {
         String yaml =
-                "raster:\n"
-                        + "  channels:\n"
-                        + "    gray:\n"
-                        + "      name: foo\n"
-                        + "      contrast-enhancement:\n"
-                        + "        mode: normalize\n"
-                        + "        gamma: 1.2\n";
+                """
+                raster:
+                  channels:
+                    gray:
+                      name: foo
+                      contrast-enhancement:
+                        mode: normalize
+                        gamma: 1.2
+                """;
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         RasterSymbolizer r = SLD.rasterSymbolizer(SLD.defaultStyle(sld));
         SelectedChannelType grayChannel = r.getChannelSelection().getGrayChannel();
         assertThat(grayChannel.getChannelName().evaluate(null, String.class), equalTo("foo"));
         assertThat(grayChannel.getContrastEnhancement().getGammaValue(), literal(equalTo("1.2")));
-        assertThat(
-                grayChannel.getContrastEnhancement().getMethod(),
-                equalTo(ContrastMethod.NORMALIZE));
+        assertThat(grayChannel.getContrastEnhancement().getMethod(), equalTo(ContrastMethod.NORMALIZE));
     }
 
     @SuppressWarnings("unchecked")
     static Matcher<ContrastEnhancement> nullContrast() {
-        return (Matcher)
-                describedAs(
-                        "Null Contrast Enhancement",
-                        anyOf(
-                                nullValue(),
-                                allOf(
-                                        hasProperty("gammaValue", nilExpression()),
-                                        hasProperty(
-                                                "method",
-                                                anyOf(nullValue(), is(ContrastMethod.NONE))))));
+        return (Matcher) describedAs(
+                "Null Contrast Enhancement",
+                anyOf(
+                        nullValue(),
+                        allOf(
+                                hasProperty("gammaValue", nilExpression()),
+                                hasProperty("method", anyOf(nullValue(), is(ContrastMethod.NONE))))));
     }
 
     @Test
     public void testRasterBandSelectionRGB() throws Exception {
         String yaml =
-                "raster:\n"
-                        + "  channels:\n"
-                        + "    red:\n"
-                        + "      name: foo\n"
-                        + "    green:\n"
-                        + "      name: bar\n"
-                        + "      contrast-enhancement:\n"
-                        + "        mode: normalize\n"
-                        + "    blue:\n"
-                        + "      name: baz\n";
+                """
+                raster:
+                  channels:
+                    red:
+                      name: foo
+                    green:
+                      name: bar
+                      contrast-enhancement:
+                        mode: normalize
+                    blue:
+                      name: baz
+                """;
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         RasterSymbolizer r = SLD.rasterSymbolizer(SLD.defaultStyle(sld));
@@ -1807,9 +1745,7 @@ public class YsldParseTest {
 
         assertThat(rgbChannels[0].getContrastEnhancement(), nullContrast());
         assertThat(rgbChannels[1].getContrastEnhancement().getGammaValue(), nilExpression());
-        assertThat(
-                rgbChannels[1].getContrastEnhancement().getMethod(),
-                equalTo(ContrastMethod.NORMALIZE));
+        assertThat(rgbChannels[1].getContrastEnhancement().getMethod(), equalTo(ContrastMethod.NORMALIZE));
         assertThat(rgbChannels[2].getContrastEnhancement(), nullContrast());
     }
 
@@ -1826,8 +1762,7 @@ public class YsldParseTest {
 
     @Test
     public void testRasterBandSelectionRGBTerse() throws Exception {
-        String yaml =
-                "raster:\n" + "  channels:\n" + "    red: 1\n" + "    green: 2\n" + "    blue: 3\n";
+        String yaml = "raster:\n" + "  channels:\n" + "    red: 1\n" + "    green: 2\n" + "    blue: 3\n";
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         RasterSymbolizer r = SLD.rasterSymbolizer(SLD.defaultStyle(sld));
@@ -1843,13 +1778,15 @@ public class YsldParseTest {
     @Test
     public void testBandSelectionExpression() throws Exception {
         String yaml =
-                "feature-styles:\n"
-                        + "- rules:\n"
-                        + "  - symbolizers:\n"
-                        + "    - raster:\n"
-                        + "        channels:\n"
-                        + "          gray:\n"
-                        + "            name: ${env('B1','1')}";
+                """
+                feature-styles:
+                - rules:
+                  - symbolizers:
+                    - raster:
+                        channels:
+                          gray:
+                            name: ${env('B1','1')}\
+                """;
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         RasterSymbolizer raster = SLD.rasterSymbolizer(SLD.defaultStyle(sld));
         Expression name = raster.getChannelSelection().getGrayChannel().getChannelName();
@@ -1865,26 +1802,25 @@ public class YsldParseTest {
     @Test
     public void testMarkOpacity() throws Exception {
         String yaml =
-                "point: \n"
-                        + "  symbols: \n"
-                        + "  - mark: \n"
-                        + "      fill-color: '#FF0000'\n"
-                        + "      fill-opacity: 0.5\n"; // Not just 'opacity'
+                """
+                point:\s
+                  symbols:\s
+                  - mark:\s
+                      fill-color: '#FF0000'
+                      fill-opacity: 0.5
+                """; // Not just 'opacity'
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
 
         PointSymbolizer p = SLD.pointSymbolizer(SLD.defaultStyle(sld));
 
-        assertThat(
-                ((Mark) p.getGraphic().graphicalSymbols().get(0)).getFill().getOpacity(),
-                literal(lexEqualTo(0.5d)));
+        assertThat(((Mark) p.getGraphic().graphicalSymbols().get(0)).getFill().getOpacity(), literal(lexEqualTo(0.5d)));
     }
 
     @Test
     public void testLineOffset() throws Exception {
         // See GEOT-3912
-        String yaml =
-                "line:\n" + "  stroke-color: '#555555'\n" + "  stroke-width: 1.0\n" + "  offset: 5";
+        String yaml = "line:\n" + "  stroke-color: '#555555'\n" + "  stroke-width: 1.0\n" + "  offset: 5";
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
 
@@ -1896,45 +1832,39 @@ public class YsldParseTest {
 
     @Test
     public void testPointDisplacement() throws Exception {
-        String yaml =
-                "point: \n"
-                        + "  displacement: "
-                        + tuple(10, 42)
-                        + "\n"
-                        + "  symbols: \n"
-                        + "  - mark: \n"
-                        + "      fill-color: '#FF0000'\n";
+        String yaml = "point: \n"
+                + "  displacement: "
+                + tuple(10, 42)
+                + "\n"
+                + "  symbols: \n"
+                + "  - mark: \n"
+                + "      fill-color: '#FF0000'\n";
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
 
         PointSymbolizer p = SLD.pointSymbolizer(SLD.defaultStyle(sld));
         assertThat(
                 p.getGraphic().getDisplacement(),
-                allOf(
-                        hasProperty("displacementX", literal(10)),
-                        hasProperty("displacementY", literal(42))));
+                allOf(hasProperty("displacementX", literal(10)), hasProperty("displacementY", literal(42))));
         // SLD/SE 1.1 feature that may not be supported by renderer
     }
 
     @Test
     public void testPointAnchor() throws Exception {
-        String yaml =
-                "point: \n"
-                        + "  anchor: "
-                        + tuple(0.75, 0.25)
-                        + "\n"
-                        + "  symbols: \n"
-                        + "  - mark: \n"
-                        + "      fill-color: '#FF0000'\n";
+        String yaml = "point: \n"
+                + "  anchor: "
+                + tuple(0.75, 0.25)
+                + "\n"
+                + "  symbols: \n"
+                + "  - mark: \n"
+                + "      fill-color: '#FF0000'\n";
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
 
         PointSymbolizer p = SLD.pointSymbolizer(SLD.defaultStyle(sld));
         assertThat(
                 p.getGraphic().getAnchorPoint(),
-                allOf(
-                        hasProperty("anchorPointX", literal(0.75)),
-                        hasProperty("anchorPointY", literal(0.25))));
+                allOf(hasProperty("anchorPointX", literal(0.75)), hasProperty("anchorPointY", literal(0.25))));
         // SLD/SE 1.1 feature that may not be supported by renderer
     }
 
@@ -1947,9 +1877,7 @@ public class YsldParseTest {
         TextSymbolizer p = SLD.textSymbolizer(SLD.defaultStyle(sld));
         assertThat(
                 ((PointPlacement) p.getLabelPlacement()).getDisplacement(),
-                allOf(
-                        hasProperty("displacementX", literal(10)),
-                        hasProperty("displacementY", literal(42))));
+                allOf(hasProperty("displacementX", literal(10)), hasProperty("displacementY", literal(42))));
     }
 
     @Test
@@ -1961,9 +1889,7 @@ public class YsldParseTest {
         TextSymbolizer t = SLD.textSymbolizer(SLD.defaultStyle(sld));
         assertThat(
                 ((PointPlacement) t.getLabelPlacement()).getAnchorPoint(),
-                allOf(
-                        hasProperty("anchorPointX", literal(0.75)),
-                        hasProperty("anchorPointY", literal(0.25))));
+                allOf(hasProperty("anchorPointX", literal(0.75)), hasProperty("anchorPointY", literal(0.25))));
     }
 
     @Test
@@ -1979,50 +1905,47 @@ public class YsldParseTest {
 
     @Test
     public void testTextGraphicDisplacement() throws Exception {
-        String yaml =
-                "text:\n"
-                        + "    label: ${name}\n"
-                        + "    displacement: "
-                        + tuple(42, 64)
-                        + "\n"
-                        + "    graphic:\n"
-                        + "      displacement: "
-                        + tuple(10, 15)
-                        + "\n"
-                        + "      symbols:\n"
-                        + "      - mark:\n"
-                        + "          shape: circle\n"
-                        + "          fill-color: '#995555'\n"
-                        + "";
+        String yaml = "text:\n"
+                + "    label: ${name}\n"
+                + "    displacement: "
+                + tuple(42, 64)
+                + "\n"
+                + "    graphic:\n"
+                + "      displacement: "
+                + tuple(10, 15)
+                + "\n"
+                + "      symbols:\n"
+                + "      - mark:\n"
+                + "          shape: circle\n"
+                + "          fill-color: '#995555'\n"
+                + "";
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
 
-        TextSymbolizer2 p = (TextSymbolizer2) SLD.textSymbolizer(SLD.defaultStyle(sld));
+        TextSymbolizer p = SLD.textSymbolizer(SLD.defaultStyle(sld));
         assertThat(
                 p.getGraphic().getDisplacement(),
-                allOf(
-                        hasProperty("displacementX", literal(10)),
-                        hasProperty("displacementY", literal(15))));
+                allOf(hasProperty("displacementX", literal(10)), hasProperty("displacementY", literal(15))));
         assertThat(
                 ((PointPlacement) p.getLabelPlacement()).getDisplacement(),
-                allOf(
-                        hasProperty("displacementX", literal(42)),
-                        hasProperty("displacementY", literal(64))));
+                allOf(hasProperty("displacementX", literal(42)), hasProperty("displacementY", literal(64))));
     }
 
     @Test
     public void testRelativeExternalGraphicNoResolver() throws Exception {
         String yaml =
-                "feature-styles:\n"
-                        + "- name: name\n"
-                        + "  rules:\n"
-                        + "  - symbolizers:\n"
-                        + "    - point:\n"
-                        + "        size: 32\n"
-                        + "        symbols:\n"
-                        + "        - external:\n"
-                        + "            url: smileyface.png\n"
-                        + "            format: image/png\n";
+                """
+                feature-styles:
+                - name: name
+                  rules:
+                  - symbolizers:
+                    - point:
+                        size: 32
+                        symbols:
+                        - external:
+                            url: smileyface.png
+                            format: image/png
+                """;
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
 
@@ -2039,21 +1962,22 @@ public class YsldParseTest {
     @Test
     public void testRelativeExternalGraphicWithResolver() throws Exception {
         String yaml =
-                "feature-styles:\n"
-                        + "- name: name\n"
-                        + "  rules:\n"
-                        + "  - symbolizers:\n"
-                        + "    - point:\n"
-                        + "        size: 32\n"
-                        + "        symbols:\n"
-                        + "        - external:\n"
-                        + "            url: smileyface.png\n"
-                        + "            format: image/png\n";
+                """
+                feature-styles:
+                - name: name
+                  rules:
+                  - symbolizers:
+                    - point:
+                        size: 32
+                        symbols:
+                        - external:
+                            url: smileyface.png
+                            format: image/png
+                """;
 
         ResourceLocator locator = EasyMock.createMock(ResourceLocator.class);
 
-        expect(locator.locateResource("smileyface.png"))
-                .andReturn(new URL("http://itworked/smileyface.png"));
+        expect(locator.locateResource("smileyface.png")).andReturn(new URL("http://itworked/smileyface.png"));
 
         replay(locator);
 
@@ -2064,9 +1988,7 @@ public class YsldParseTest {
         assertThat(p.getGraphic().graphicalSymbols().get(0), instanceOf(ExternalGraphic.class));
         ExternalGraphic eg = (ExternalGraphic) p.getGraphic().graphicalSymbols().get(0);
         assertThat(eg.getLocation(), equalTo(new URL("http://itworked/smileyface.png")));
-        assertThat(
-                eg.getOnlineResource().getLinkage(),
-                equalTo(new URI("http://itworked/smileyface.png")));
+        assertThat(eg.getOnlineResource().getLinkage(), equalTo(new URI("http://itworked/smileyface.png")));
 
         verify(locator);
     }
@@ -2077,7 +1999,7 @@ public class YsldParseTest {
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
 
-        TextSymbolizer2 p = (TextSymbolizer2) SLD.textSymbolizer(SLD.defaultStyle(sld));
+        TextSymbolizer p = SLD.textSymbolizer(SLD.defaultStyle(sld));
         assertNotNull(p.getPriority());
         assertTrue(p.getPriority() instanceof PropertyName);
         assertEquals("pop", ((PropertyName) p.getPriority()).getPropertyName());
@@ -2175,13 +2097,14 @@ public class YsldParseTest {
     public void testStrokeGraphic() throws Exception {
 
         String yaml =
-                "line:\n"
-                        + "  stroke-graphic:\n"
-                        + "    symbols:\n"
-                        + "    - mark:\n"
-                        + "        shape: circle\n"
-                        + "        fill-color: '#995555'\n"
-                        + "";
+                """
+                line:
+                  stroke-graphic:
+                    symbols:
+                    - mark:
+                        shape: circle
+                        fill-color: '#995555'
+                """;
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
 
@@ -2193,26 +2116,24 @@ public class YsldParseTest {
         ((Mark) symbols.get(0)).getFill().getColor();
         assertThat(
                 symbols,
-                hasItems(
-                        allOf(
-                                instanceOf(Mark.class),
-                                hasProperty("wellKnownName", literal("circle")),
-                                hasProperty(
-                                        "fill",
-                                        hasProperty("color", literal(isColor("995555")))))));
+                hasItems(allOf(
+                        instanceOf(Mark.class),
+                        hasProperty("wellKnownName", literal("circle")),
+                        hasProperty("fill", hasProperty("color", literal(isColor("995555")))))));
     }
 
     @Test
     public void testStrokeGraphicFill() throws Exception {
 
         String yaml =
-                "line:\n"
-                        + "  stroke-graphic-fill:\n"
-                        + "    symbols:\n"
-                        + "    - mark:\n"
-                        + "        shape: circle\n"
-                        + "        fill-color: '#995555'\n"
-                        + "";
+                """
+                line:
+                  stroke-graphic-fill:
+                    symbols:
+                    - mark:
+                        shape: circle
+                        fill-color: '#995555'
+                """;
 
         StyledLayerDescriptor sld = Ysld.parse(yaml);
 
@@ -2224,13 +2145,10 @@ public class YsldParseTest {
         ((Mark) symbols.get(0)).getFill().getColor();
         assertThat(
                 symbols,
-                hasItems(
-                        allOf(
-                                instanceOf(Mark.class),
-                                hasProperty("wellKnownName", literal("circle")),
-                                hasProperty(
-                                        "fill",
-                                        hasProperty("color", literal(isColor("995555")))))));
+                hasItems(allOf(
+                        instanceOf(Mark.class),
+                        hasProperty("wellKnownName", literal("circle")),
+                        hasProperty("fill", hasProperty("color", literal(isColor("995555")))))));
     }
 
     @Test
@@ -2308,23 +2226,25 @@ public class YsldParseTest {
     @Test
     public void testLegend() throws Exception {
         String yaml =
-                "feature-styles:\n"
-                        + "- rules:\n"
-                        + "  - legend:\n"
-                        + "      symbols:\n"
-                        + "      - external:\n"
-                        + "          url: smileyface.png\n"
-                        + "          format: image/png\n"
-                        + "    symbolizers:\n"
-                        + "    - point:\n"
-                        + "        symbols:\n"
-                        + "        - mark:\n"
-                        + "            shape: circle\n"
-                        + "            fill-color: '#FF0000'";
+                """
+                feature-styles:
+                - rules:
+                  - legend:
+                      symbols:
+                      - external:
+                          url: smileyface.png
+                          format: image/png
+                    symbolizers:
+                    - point:
+                        symbols:
+                        - mark:
+                            shape: circle
+                            fill-color: '#FF0000'""";
         StyledLayerDescriptor sld = Ysld.parse(yaml);
         Rule rule = SLD.rules(SLD.defaultStyle(sld))[0];
         assertThat(rule.getLegend().graphicalSymbols().get(0), instanceOf(ExternalGraphic.class));
-        ExternalGraphic legend = (ExternalGraphic) rule.getLegend().graphicalSymbols().get(0);
+        ExternalGraphic legend =
+                (ExternalGraphic) rule.getLegend().graphicalSymbols().get(0);
         assertEquals(new URL("file:smileyface.png"), legend.getLocation());
         assertEquals("image/png", legend.getFormat());
         PointSymbolizer p = SLD.pointSymbolizer(SLD.defaultStyle(sld));
@@ -2338,8 +2258,8 @@ public class YsldParseTest {
             String yaml = "!!java.util.Date\n" + "date: 25\n" + "month: 12\n" + "year: 2016";
             Ysld.parse(yaml);
             fail("Expected parsing to fail");
-        } catch (ConstructorException e) {
-            assertThat(e.getMessage(), containsString("could not determine a constructor"));
+        } catch (ComposerException e) {
+            assertThat(e.getMessage(), containsString("Global tag is not allowed"));
         }
     }
 

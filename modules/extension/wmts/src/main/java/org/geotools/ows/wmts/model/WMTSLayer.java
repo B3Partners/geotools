@@ -24,10 +24,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.ows.wms.Layer;
 import org.geotools.ows.wms.StyleImpl;
 import org.geotools.referencing.CRS;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * @author ian
@@ -35,8 +35,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  */
 public class WMTSLayer extends Layer {
 
-    public static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(WMTSLayer.class);
+    public static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(WMTSLayer.class);
 
     Map<String, TileMatrixSetLink> limits = new HashMap<>();
 

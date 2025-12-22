@@ -54,10 +54,10 @@ import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.mongodb.data.SchemaStoreDirectory;
 import org.geotools.http.HTTPClient;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
 
 /** @author tkunicki@boundlessgeo.com */
 public class MongoUtil {
@@ -72,7 +72,7 @@ public class MongoUtil {
 
     private static Object getDBOValueInternal(Iterator<String> path, Object current) {
         if (path.hasNext()) {
-            if (current instanceof DBObject) {
+            if (current instanceof DBObject object) {
                 String key = path.next();
                 // If we are in an array, key must be an int
                 if (current instanceof BasicDBList) {
@@ -82,7 +82,7 @@ public class MongoUtil {
                         return null;
                     }
                 }
-                Object value = ((DBObject) current).get(key);
+                Object value = object.get(key);
                 return getDBOValueInternal(path, value);
             }
             return null;
@@ -99,14 +99,13 @@ public class MongoUtil {
         setDBOValueInternal(dbo, path, value);
     }
 
-    private static void setDBOValueInternal(
-            DBObject currentDBO, Iterator<String> path, Object value) {
+    private static void setDBOValueInternal(DBObject currentDBO, Iterator<String> path, Object value) {
         String key = path.next();
         if (path.hasNext()) {
             Object next = currentDBO.get(key);
             DBObject nextDBO;
-            if (next instanceof DBObject) {
-                nextDBO = (DBObject) next;
+            if (next instanceof DBObject object) {
+                nextDBO = object;
             } else {
                 currentDBO.put(key, nextDBO = new BasicDBObject());
             }
@@ -133,8 +132,8 @@ public class MongoUtil {
         Set<String> fields = new LinkedHashSet<>();
         for (DBObject index : indices) {
             Object key = index.get("key");
-            if (key instanceof DBObject) {
-                for (Map.Entry<?, ?> entry : ((Map<?, ?>) ((DBObject) key).toMap()).entrySet()) {
+            if (key instanceof DBObject object) {
+                for (Map.Entry<?, ?> entry : ((Map<?, ?>) object.toMap()).entrySet()) {
                     if (type == null || type.equals(entry.getValue())) {
                         fields.add(entry.getKey().toString());
                     }
@@ -165,14 +164,13 @@ public class MongoUtil {
         Map<String, Class<?>> map = new LinkedHashMap<>();
         for (Map.Entry<?, ?> e : ((Map<?, ?>) dbo.toMap()).entrySet()) {
             Object k = e.getKey();
-            if (k instanceof String) {
-                String field = (String) k;
+            if (k instanceof String field) {
                 Object v = e.getValue();
-                if (v instanceof DBObject) {
+                if (v instanceof DBObject object) {
                     // No list support
                     if (!(v instanceof BasicDBList)) {
                         for (Map.Entry<String, Class<?>> childEntry :
-                                doFindMappableFields((DBObject) v).entrySet()) {
+                                doFindMappableFields(object).entrySet()) {
                             map.put(field + "." + childEntry.getKey(), childEntry.getValue());
                         }
                     }
@@ -226,27 +224,23 @@ public class MongoUtil {
     static void validateDirectory(File file) throws IOException {
         if (!file.exists() && !file.mkdirs()) {
             throw new IOException(
-                    "Schema store directory does not exist and could not be created: "
-                            + file.getAbsolutePath());
+                    "Schema store directory does not exist and could not be created: " + file.getAbsolutePath());
         }
         if (file.isDirectory()) {
             // File.canWrite() doesn't report as intended for directories on
             // certain platforms with certain permissions scenarios.  Will
             // instead we verify we can create a file then delete it.
             if (!File.createTempFile("test", ".tmp", file).delete()) {
-                throw new IOException(
-                        "Unable to write to schema store directory: " + file.getAbsolutePath());
+                throw new IOException("Unable to write to schema store directory: " + file.getAbsolutePath());
             }
         } else {
             throw new IOException(
-                    "Specified schema store directory exists but is not a directory: "
-                            + file.getAbsolutePath());
+                    "Specified schema store directory exists but is not a directory: " + file.getAbsolutePath());
         }
     }
 
-    static SimpleFeatureType getSimpleFeatureType(BufferedReader reader, Name name)
-            throws IOException {
-        try {
+    static SimpleFeatureType getSimpleFeatureType(BufferedReader reader, Name name) throws IOException {
+        try (reader) {
             String lineSeparator = System.getProperty("line.separator");
             StringBuilder jsonBuilder = new StringBuilder();
             String line;
@@ -256,27 +250,18 @@ public class MongoUtil {
             }
             BasicDBObject o = BasicDBObject.parse(jsonBuilder.toString());
             return FeatureTypeDBObject.convert(o, name);
-        } finally {
-            reader.close();
         }
     }
 
     static File downloadSchemaFile(
-            String storeName,
-            URL url,
-            HTTPClient httpClient,
-            SchemaStoreDirectory downloadDirectory)
+            String storeName, URL url, HTTPClient httpClient, SchemaStoreDirectory downloadDirectory)
             throws IOException {
         File downloadDir = new File(downloadDirectory.getDirectory(), storeName);
         MongoUtil.validateDirectory(downloadDir);
         httpClient.setTryGzip(true);
         try (InputStream in = httpClient.get(url).getResponseStream()) {
             Logger.getGlobal()
-                    .info(
-                            "MongoDBStore:"
-                                    + storeName
-                                    + ":Downloading Schema File from :"
-                                    + url.toExternalForm());
+                    .info("MongoDBStore:" + storeName + ":Downloading Schema File from :" + url.toExternalForm());
 
             // create file in temp with name of store
             String filesName = MongoUtil.extractFilesNameFromUrl(url.toExternalForm());
@@ -284,11 +269,10 @@ public class MongoUtil {
 
             Files.copy(in, schemaStoreFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
             Logger.getGlobal()
-                    .info(
-                            "MongoDBStore:"
-                                    + storeName
-                                    + ":Downloaded File Stored at :"
-                                    + schemaStoreFile.getAbsolutePath());
+                    .info("MongoDBStore:"
+                            + storeName
+                            + ":Downloaded File Stored at :"
+                            + schemaStoreFile.getAbsolutePath());
             return schemaStoreFile;
         }
     }
@@ -316,8 +300,7 @@ public class MongoUtil {
                 destinationParent.mkdirs();
 
                 if (!entry.isDirectory()) {
-                    try (BufferedInputStream is =
-                            new BufferedInputStream(zip.getInputStream(entry))) {
+                    try (BufferedInputStream is = new BufferedInputStream(zip.getInputStream(entry))) {
                         int currentByte;
                         // establish buffer for writing file
                         byte[] data = new byte[BUFFER];
@@ -346,8 +329,7 @@ public class MongoUtil {
         private File lastDirectory = null;
 
         @Override
-        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
-                throws IOException {
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
             return FileVisitResult.CONTINUE;
         }
 

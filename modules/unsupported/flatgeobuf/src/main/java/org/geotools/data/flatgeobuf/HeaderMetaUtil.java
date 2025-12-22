@@ -25,13 +25,13 @@ import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.referencing.CRS;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.wololo.flatgeobuf.ColumnMeta;
 import org.wololo.flatgeobuf.GeometryConversions;
 import org.wololo.flatgeobuf.HeaderMeta;
@@ -57,8 +57,7 @@ public class HeaderMetaUtil {
         }
         ftb.crs(crs);
         ftb.add("geom", GeometryConversions.getGeometryClass(headerMeta.geometryType));
-        for (ColumnMeta columnMeta : headerMeta.columns)
-            ftb.add(columnMeta.name, columnMeta.getBinding());
+        for (ColumnMeta columnMeta : headerMeta.columns) ftb.add(columnMeta.name, columnMeta.getBinding());
         SimpleFeatureType featureType = ftb.buildFeatureType();
         return featureType;
     }
@@ -88,8 +87,7 @@ public class HeaderMetaUtil {
                     || binding.isAssignableFrom(OffsetTime.class)
                     || binding.isAssignableFrom(java.sql.Date.class)
                     || binding.isAssignableFrom(java.sql.Time.class)
-                    || binding.isAssignableFrom(java.sql.Timestamp.class))
-                column.type = ColumnType.DateTime;
+                    || binding.isAssignableFrom(java.sql.Timestamp.class)) column.type = ColumnType.DateTime;
             else if (binding.isAssignableFrom(String.class)) column.type = ColumnType.String;
             else throw new RuntimeException("Cannot handle type " + binding.getName());
             columns.add(column);
@@ -100,14 +98,12 @@ public class HeaderMetaUtil {
 
         HeaderMeta headerMeta = new HeaderMeta();
         headerMeta.featuresCount = featuresCount;
-        headerMeta.geometryType = geometryType;
         headerMeta.columns = columns;
 
         if (geometryDescriptor != null) {
             CoordinateReferenceSystem crs = geometryDescriptor.getCoordinateReferenceSystem();
-            geometryType =
-                    GeometryConversions.toGeometryType(
-                            featureType.getGeometryDescriptor().getType().getBinding());
+            geometryType = GeometryConversions.toGeometryType(
+                    featureType.getGeometryDescriptor().getType().getBinding());
             if (crs != null) {
                 try {
                     Integer srid = CRS.lookupEpsgCode(crs, false);
@@ -117,6 +113,8 @@ public class HeaderMetaUtil {
                 }
             }
         }
+
+        headerMeta.geometryType = geometryType;
 
         return headerMeta;
     }

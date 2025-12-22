@@ -50,14 +50,13 @@ public class ScreenMapTest {
         setAll(map, false);
     }
 
-    private void setOne(
-            ScreenMap map, int xconst, int yconst, boolean bool, boolean expectedOldValue) {
+    private void setOne(ScreenMap map, int xconst, int yconst, boolean bool, boolean expectedOldValue) {
         Assert.assertEquals(expectedOldValue, map.get(xconst, yconst));
         map.set(xconst, yconst, bool);
 
         for (int x = xmin; x < width; x++) {
             for (int y = ymin; y < height; y++) {
-                if ((x == xconst) && (y == yconst)) {
+                if (x == xconst && y == yconst) {
                     Assert.assertEquals("x=" + x + " y=" + y, bool, map.get(x, y));
                 } else {
                     Assert.assertFalse("x=" + x + " y=" + y, map.get(x, y));

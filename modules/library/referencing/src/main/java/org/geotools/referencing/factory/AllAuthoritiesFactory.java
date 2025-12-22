@@ -20,27 +20,26 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import org.geotools.api.referencing.AuthorityFactory;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.IdentifiedObject;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.cs.CSAuthorityFactory;
+import org.geotools.api.referencing.datum.DatumAuthorityFactory;
+import org.geotools.api.referencing.operation.CoordinateOperationAuthorityFactory;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.util.factory.FactoryRegistryException;
 import org.geotools.util.factory.Hints;
-import org.opengis.referencing.AuthorityFactory;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.IdentifiedObject;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.cs.CSAuthorityFactory;
-import org.opengis.referencing.datum.DatumAuthorityFactory;
-import org.opengis.referencing.operation.CoordinateOperationAuthorityFactory;
 
 /**
- * An authority factory that delegates the object creation to an other factory determined from the
- * authority name in the code. This is similar to {@link ManyAuthoritiesFactory} except that the set
- * of factories is determined by calls to <code>
+ * An authority factory that delegates the object creation to an other factory determined from the authority name in the
+ * code. This is similar to {@link ManyAuthoritiesFactory} except that the set of factories is determined by calls to
+ * <code>
  * ReferencingFactoryFinder.{@linkplain ReferencingFactoryFinder#getCRSAuthorityFactory
  * get<var>Foo</var>AuthorityFactory}(<var>authority</var>, {@linkplain #hints hints})</code>.
  *
- * <p>This class is not registered in {@link ReferencingFactoryFinder}. If this "authority" factory
- * is wanted, then users need to refer explicitly to the {@link #DEFAULT} constant or to create
- * their own instance.
+ * <p>This class is not registered in {@link ReferencingFactoryFinder}. If this "authority" factory is wanted, then
+ * users need to refer explicitly to the {@link #DEFAULT} constant or to create their own instance.
  *
  * @since 2.2
  * @version $Id$
@@ -48,8 +47,8 @@ import org.opengis.referencing.operation.CoordinateOperationAuthorityFactory;
  */
 public class AllAuthoritiesFactory extends ManyAuthoritiesFactory {
     /**
-     * An instance of {@code AllAuthoritiesFactory} with the {@linkplain
-     * GenericName#DEFAULT_SEPARATOR default name separator} and no hints.
+     * An instance of {@code AllAuthoritiesFactory} with the {@linkplain GenericName#DEFAULT_SEPARATOR default name
+     * separator} and no hints.
      */
     public static AllAuthoritiesFactory DEFAULT = new AllAuthoritiesFactory(null);
 
@@ -78,11 +77,11 @@ public class AllAuthoritiesFactory extends ManyAuthoritiesFactory {
     }
 
     /**
-     * Returns the factories to be used by {@link ManyAuthoritiesFactory}. If the registered
-     * factories changed since the last time this method has been invoked, then this method recreate
-     * the set.
+     * Returns the factories to be used by {@link ManyAuthoritiesFactory}. If the registered factories changed since the
+     * last time this method has been invoked, then this method recreate the set.
      */
     @Override
+    @SuppressWarnings("UnsynchronizedOverridesSynchronized")
     Collection<AuthorityFactory> getFactories() {
         final Collection<String> authorities = ReferencingFactoryFinder.getAuthorityNames();
         if (authorities != authorityNames) {
@@ -92,8 +91,7 @@ public class AllAuthoritiesFactory extends ManyAuthoritiesFactory {
             factories.addAll(ReferencingFactoryFinder.getCRSAuthorityFactories(hints));
             factories.addAll(ReferencingFactoryFinder.getCSAuthorityFactories(hints));
             factories.addAll(ReferencingFactoryFinder.getDatumAuthorityFactories(hints));
-            factories.addAll(
-                    ReferencingFactoryFinder.getCoordinateOperationAuthorityFactories(hints));
+            factories.addAll(ReferencingFactoryFinder.getCoordinateOperationAuthorityFactories(hints));
             setFactories(factories);
         }
         return super.getFactories();
@@ -101,8 +99,8 @@ public class AllAuthoritiesFactory extends ManyAuthoritiesFactory {
 
     /** Returns a factory for the specified authority and type. */
     @Override
-    final <T extends AuthorityFactory> T fromFactoryRegistry(
-            final String authority, final Class<T> type) throws FactoryRegistryException {
+    final <T extends AuthorityFactory> T fromFactoryRegistry(final String authority, final Class<T> type)
+            throws FactoryRegistryException {
         final AuthorityFactory f;
         if (CRSAuthorityFactory.class.equals(type)) {
             f = ReferencingFactoryFinder.getCRSAuthorityFactory(authority, getHints());
@@ -111,9 +109,7 @@ public class AllAuthoritiesFactory extends ManyAuthoritiesFactory {
         } else if (DatumAuthorityFactory.class.equals(type)) {
             f = ReferencingFactoryFinder.getDatumAuthorityFactory(authority, getHints());
         } else if (CoordinateOperationAuthorityFactory.class.equals(type)) {
-            f =
-                    ReferencingFactoryFinder.getCoordinateOperationAuthorityFactory(
-                            authority, getHints());
+            f = ReferencingFactoryFinder.getCoordinateOperationAuthorityFactory(authority, getHints());
         } else {
             f = super.fromFactoryRegistry(authority, type);
         }
@@ -133,8 +129,8 @@ public class AllAuthoritiesFactory extends ManyAuthoritiesFactory {
     }
 
     /**
-     * Returns a finder which can be used for looking up unidentified objects. The default
-     * implementation delegates the lookups to the underlying factories.
+     * Returns a finder which can be used for looking up unidentified objects. The default implementation delegates the
+     * lookups to the underlying factories.
      *
      * @since 2.4
      */
@@ -147,9 +143,7 @@ public class AllAuthoritiesFactory extends ManyAuthoritiesFactory {
     /** A {@link IdentifiedObjectFinder} which tests every factories. */
     private static final class Finder extends ManyAuthoritiesFactory.Finder {
         /** Creates a finder for the specified type. */
-        protected Finder(
-                final ManyAuthoritiesFactory factory,
-                final Class<? extends IdentifiedObject> type) {
+        Finder(final ManyAuthoritiesFactory factory, final Class<? extends IdentifiedObject> type) {
             super(factory, type);
         }
 

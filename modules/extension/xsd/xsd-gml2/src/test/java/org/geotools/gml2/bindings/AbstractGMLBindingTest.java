@@ -25,6 +25,8 @@ import org.eclipse.xsd.XSDFactory;
 import org.eclipse.xsd.XSDSchema;
 import org.eclipse.xsd.XSDSimpleTypeDefinition;
 import org.eclipse.xsd.XSDTypeDefinition;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.gml2.GMLConfiguration;
@@ -42,8 +44,6 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.CoordinateSequenceFactory;
 import org.locationtech.jts.geom.impl.CoordinateArraySequenceFactory;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.defaults.DefaultPicoContainer;
 
@@ -86,13 +86,13 @@ public class AbstractGMLBindingTest {
             Object[] attValues) {
         NodeImpl node = new NodeImpl(instance);
 
-        if ((elements != null) && (elements.length > 0)) {
+        if (elements != null && elements.length > 0) {
             for (int i = 0; i < elements.length; i++) {
                 node.addChild(new NodeImpl(elements[i], elementValues[i]));
             }
         }
 
-        if ((attributes != null) && (attributes.length > 0)) {
+        if (attributes != null && attributes.length > 0) {
             for (int i = 0; i < attributes.length; i++) {
                 node.addAttribute(new NodeImpl(attributes[i], attValues[i]));
             }

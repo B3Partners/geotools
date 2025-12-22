@@ -18,24 +18,27 @@ package org.geotools.process.raster;
 
 import it.geosolutions.imageioimpl.plugins.tiff.TIFFImageReader;
 import it.geosolutions.imageioimpl.plugins.tiff.TIFFImageReaderSpi;
-import it.geosolutions.jaiext.stats.Statistics;
-import it.geosolutions.jaiext.stats.Statistics.StatsType;
-import it.geosolutions.jaiext.zonal.ZoneGeometry;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import javax.imageio.ImageIO;
-import javax.media.jai.PlanarImage;
+import org.eclipse.imagen.PlanarImage;
+import org.eclipse.imagen.media.stats.Statistics;
+import org.eclipse.imagen.media.stats.Statistics.StatsType;
+import org.eclipse.imagen.media.zonal.ZoneGeometry;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.FileDataStoreFinder;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.coverage.CoverageFactoryFinder;
 import org.geotools.coverage.GridSampleDimension;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
-import org.geotools.data.DataStore;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.FileDataStoreFinder;
 import org.geotools.data.WorldFileReader;
 import org.geotools.data.property.PropertyDataStore;
 import org.geotools.data.shapefile.ShapefileDataStore;
@@ -47,14 +50,10 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
- * This test-class checks the functionalities of the {@link RasterZonalStatistics2} process. The
- * test is performed by comparing the results of the process with the previously known statistics
- * for each geometry.
+ * This test-class checks the functionalities of the {@link RasterZonalStatistics2} process. The test is performed by
+ * comparing the results of the process with the previously known statistics for each geometry.
  *
  * @author geosolutions
  */
@@ -95,8 +94,7 @@ public class ZonalStatsProcess2Test extends Assert {
             assertTrue(store instanceof ShapefileDataStore);
             FeatureSource<SimpleFeatureType, SimpleFeature> featureSource =
                     store.getFeatureSource(store.getNames().get(0));
-            SimpleFeatureCollection featureCollection =
-                    (SimpleFeatureCollection) featureSource.getFeatures();
+            SimpleFeatureCollection featureCollection = (SimpleFeatureCollection) featureSource.getFeatures();
 
             List<SimpleFeature> zones = new ArrayList<>(featureCollection.size());
             try (SimpleFeatureIterator iterator = featureCollection.features()) {
@@ -110,9 +108,8 @@ public class ZonalStatsProcess2Test extends Assert {
             // build the DataFile
             final File tiff = TestData.file(this, "test.tif");
             final File tfw = TestData.file(this, "test.tfw");
-            reader =
-                    (it.geosolutions.imageioimpl.plugins.tiff.TIFFImageReader)
-                            new TIFFImageReaderSpi().createReaderInstance();
+            reader = (it.geosolutions.imageioimpl.plugins.tiff.TIFFImageReader)
+                    new TIFFImageReaderSpi().createReaderInstance();
             assertNotNull(reader);
             reader.setInput(ImageIO.createImageInputStream(tiff));
             final BufferedImage image = reader.read(0);
@@ -120,74 +117,65 @@ public class ZonalStatsProcess2Test extends Assert {
             // Transformation from the Raster space to the Model space
             final MathTransform transform = new WorldFileReader(tfw).getTransform();
             // Creation of the data coverage
-            coverage2D =
-                    CoverageFactoryFinder.getGridCoverageFactory(null)
-                            .create(
-                                    "coverage",
-                                    image,
-                                    new GridGeometry2D(
-                                            new GridEnvelope2D(
-                                                    PlanarImage.wrapRenderedImage(image)
-                                                            .getBounds()),
-                                            transform,
-                                            DefaultGeographicCRS.WGS84),
-                                    new GridSampleDimension[] {new GridSampleDimension("coverage")},
-                                    null,
-                                    null);
+            coverage2D = CoverageFactoryFinder.getGridCoverageFactory(null)
+                    .create(
+                            "coverage",
+                            image,
+                            new GridGeometry2D(
+                                    new GridEnvelope2D(
+                                            PlanarImage.wrapRenderedImage(image).getBounds()),
+                                    transform,
+                                    DefaultGeographicCRS.WGS84),
+                            new GridSampleDimension[] {new GridSampleDimension("coverage")},
+                            null,
+                            null);
             assertNotNull(coverage2D);
 
             // build the classificator
             // generate the classificator image
-            final BufferedImage imageClassificator =
-                    new BufferedImage(120, 80, BufferedImage.TYPE_BYTE_INDEXED);
+            final BufferedImage imageClassificator = new BufferedImage(120, 80, BufferedImage.TYPE_BYTE_INDEXED);
             final WritableRaster raster = imageClassificator.getRaster();
             for (int i = raster.getWidth(); --i >= 0; ) {
                 for (int j = raster.getHeight(); --j >= 0; ) {
                     // create a simple raster used for classification
-                    int sampleValue = (i % 2 == 0) ? 1 : 2;
+                    int sampleValue = i % 2 == 0 ? 1 : 2;
                     raster.setSample(i, j, 0, sampleValue);
                 }
             }
             // create the coverage for the classification layer
-            covClassificator =
-                    CoverageFactoryFinder.getGridCoverageFactory(null)
-                            .create(
-                                    "coverageClassificator",
-                                    imageClassificator,
-                                    new GridGeometry2D(
-                                            new GridEnvelope2D(
-                                                    PlanarImage.wrapRenderedImage(
-                                                                    imageClassificator)
-                                                            .getBounds()),
-                                            coverage2D.getEnvelope()),
-                                    new GridSampleDimension[] {new GridSampleDimension("coverage")},
-                                    null,
-                                    null);
+            covClassificator = CoverageFactoryFinder.getGridCoverageFactory(null)
+                    .create(
+                            "coverageClassificator",
+                            imageClassificator,
+                            new GridGeometry2D(
+                                    new GridEnvelope2D(PlanarImage.wrapRenderedImage(imageClassificator)
+                                            .getBounds()),
+                                    coverage2D.getEnvelope()),
+                            new GridSampleDimension[] {new GridSampleDimension("coverage")},
+                            null,
+                            null);
             assertNotNull(coverage2D);
 
             // Statistics definition
 
-            StatsType[] def = {
-                StatsType.MIN, StatsType.MAX, StatsType.SUM, StatsType.MEAN, StatsType.DEV_STD
-            };
+            StatsType[] def = {StatsType.MIN, StatsType.MAX, StatsType.SUM, StatsType.MEAN, StatsType.DEV_STD};
 
             // invoke the process
-            List<ZoneGeometry> zoneListStart =
-                    process.execute(
-                            coverage2D,
-                            null,
-                            zones,
-                            covClassificator,
-                            null,
-                            null,
-                            false,
-                            null,
-                            def,
-                            null,
-                            null,
-                            null,
-                            null,
-                            false);
+            List<ZoneGeometry> zoneListStart = process.execute(
+                    coverage2D,
+                    null,
+                    zones,
+                    covClassificator,
+                    null,
+                    null,
+                    false,
+                    null,
+                    def,
+                    null,
+                    null,
+                    null,
+                    null,
+                    false);
 
             // Reverse of the list due to a variation on the code
             List<ZoneGeometry> zoneList = new ArrayList<>(zoneListStart);

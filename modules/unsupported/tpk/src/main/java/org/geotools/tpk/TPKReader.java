@@ -39,26 +39,25 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+import org.geotools.api.coverage.grid.Format;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.referencing.ReferenceIdentifier;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.coverage.CoverageFactoryFinder;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.geotools.util.factory.Hints;
-import org.opengis.coverage.grid.Format;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.referencing.ReferenceIdentifier;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class TPKReader extends AbstractGridCoverage2DReader {
 
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(TPKReader.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(TPKReader.class);
 
     static final CoordinateReferenceSystem SPHERICAL_MERCATOR;
 
@@ -74,8 +73,7 @@ public class TPKReader extends AbstractGridCoverage2DReader {
     }
 
     protected static final ReferencedEnvelope WORLD_ENVELOPE =
-            new ReferencedEnvelope(
-                    -20037508.34, 20037508.34, -20037508.34, 20037508.34, SPHERICAL_MERCATOR);
+            new ReferencedEnvelope(-20037508.34, 20037508.34, -20037508.34, 20037508.34, SPHERICAL_MERCATOR);
 
     protected static final int DEFAULT_TILE_SIZE = 256;
 
@@ -97,13 +95,11 @@ public class TPKReader extends AbstractGridCoverage2DReader {
         TPKFile file = new TPKFile(sourceFile, zoomLevelMap);
 
         try {
-            bounds =
-                    ReferencedEnvelope.create(file.getBounds(), WGS_84)
-                            .transform(SPHERICAL_MERCATOR, true);
+            bounds = ReferencedEnvelope.create(file.getBounds(), WGS_84).transform(SPHERICAL_MERCATOR, true);
         } catch (Exception e) {
             bounds = null;
         }
-        originalEnvelope = new GeneralEnvelope(bounds == null ? WORLD_ENVELOPE : bounds);
+        originalEnvelope = new GeneralBounds(bounds == null ? WORLD_ENVELOPE : bounds);
 
         imageFormat = file.getImageFormat();
 
@@ -111,8 +107,7 @@ public class TPKReader extends AbstractGridCoverage2DReader {
 
         long size = Math.round(Math.pow(ZOOM_LEVEL_BASE, maxZoom)) * DEFAULT_TILE_SIZE;
 
-        highestRes =
-                new double[] {WORLD_ENVELOPE.getSpan(0) / size, WORLD_ENVELOPE.getSpan(1) / size};
+        highestRes = new double[] {WORLD_ENVELOPE.getSpan(0) / size, WORLD_ENVELOPE.getSpan(1) / size};
 
         originalGridRange = new GridEnvelope2D(new Rectangle((int) size, (int) size));
 
@@ -122,10 +117,8 @@ public class TPKReader extends AbstractGridCoverage2DReader {
 
         file.close();
 
-        String msg =
-                String.format(
-                        "TPKReader constructor finished in %d milliseconds",
-                        System.currentTimeMillis() - startConstructor);
+        String msg = "TPKReader constructor finished in %d milliseconds"
+                .formatted(System.currentTimeMillis() - startConstructor);
 
         LOGGER.fine(msg);
     }
@@ -136,7 +129,7 @@ public class TPKReader extends AbstractGridCoverage2DReader {
     }
 
     @Override
-    public GridCoverage2D read(GeneralParameterValue[] parameters) throws IllegalArgumentException {
+    public GridCoverage2D read(GeneralParameterValue... parameters) throws IllegalArgumentException {
 
         long startRead = System.currentTimeMillis();
 
@@ -151,10 +144,9 @@ public class TPKReader extends AbstractGridCoverage2DReader {
                 if (name.equals(AbstractGridFormat.READ_GRIDGEOMETRY2D.getName())) {
                     final GridGeometry2D gg = (GridGeometry2D) param.getValue();
                     try {
-                        requestedEnvelope =
-                                ReferencedEnvelope.create(
-                                                gg.getEnvelope(), gg.getCoordinateReferenceSystem())
-                                        .transform(SPHERICAL_MERCATOR, true);
+                        requestedEnvelope = ReferencedEnvelope.create(
+                                        gg.getEnvelope(), gg.getCoordinateReferenceSystem())
+                                .transform(SPHERICAL_MERCATOR, true);
                     } catch (Exception e) {
                         requestedEnvelope = null;
                     }
@@ -172,16 +164,11 @@ public class TPKReader extends AbstractGridCoverage2DReader {
 
         if (requestedEnvelope != null && dim != null) {
             // find the closest zoom based on horizontal resolution
-            double ratioWidth =
-                    requestedEnvelope.getSpan(0)
-                            / WORLD_ENVELOPE.getSpan(
-                                    0); // proportion of total width that is being requested
-            double propWidth =
-                    dim.getWidth()
-                            / ratioWidth; // this is the width in pixels that the whole world would
+            double ratioWidth = requestedEnvelope.getSpan(0)
+                    / WORLD_ENVELOPE.getSpan(0); // proportion of total width that is being requested
+            double propWidth = dim.getWidth() / ratioWidth; // this is the width in pixels that the whole world would
             // have in the requested resolution
-            zoomLevel =
-                    Math.round(Math.log(propWidth / DEFAULT_TILE_SIZE) / Math.log(ZOOM_LEVEL_BASE));
+            zoomLevel = Math.round(Math.log(propWidth / DEFAULT_TILE_SIZE) / Math.log(ZOOM_LEVEL_BASE));
             // the closest zoom level to the resolution, based on the formula width =
             // zoom_base^zoom_level * tile_size -> zoom_level = log(width /
             // tile_size)/log(zoom_base)
@@ -191,10 +178,7 @@ public class TPKReader extends AbstractGridCoverage2DReader {
         zoomLevel = file.getClosestZoom(zoomLevel);
 
         long numberOfTiles =
-                Math.round(
-                        Math.pow(
-                                ZOOM_LEVEL_BASE,
-                                zoomLevel)); // number of tile columns/rows for chosen zoom level
+                Math.round(Math.pow(ZOOM_LEVEL_BASE, zoomLevel)); // number of tile columns/rows for chosen zoom level
         double resX = WORLD_ENVELOPE.getSpan(0) / numberOfTiles; // points per tile
         double resY = WORLD_ENVELOPE.getSpan(1) / numberOfTiles; // points per tile
         double offsetX = WORLD_ENVELOPE.getMinimum(0);
@@ -208,35 +192,25 @@ public class TPKReader extends AbstractGridCoverage2DReader {
         if (requestedEnvelope != null) { // crop tiles to requested envelope
             leftTile = boundMax(leftTile, (requestedEnvelope.getMinimum(0) - offsetX) / resX);
             bottomTile = boundMax(bottomTile, (requestedEnvelope.getMinimum(1) - offsetY) / resY);
-            rightTile =
-                    boundMinMax(
-                            leftTile,
-                            rightTile,
-                            (requestedEnvelope.getMaximum(0) - offsetX) / resX);
-            topTile =
-                    boundMinMax(
-                            bottomTile,
-                            topTile,
-                            (requestedEnvelope.getMaximum(1) - offsetY) / resY);
+            rightTile = boundMinMax(leftTile, rightTile, (requestedEnvelope.getMaximum(0) - offsetX) / resX);
+            topTile = boundMinMax(bottomTile, topTile, (requestedEnvelope.getMaximum(1) - offsetY) / resY);
         }
 
         int width = (int) (rightTile - leftTile + 1) * DEFAULT_TILE_SIZE;
         int height = (int) (topTile - bottomTile + 1) * DEFAULT_TILE_SIZE;
 
         // recalculate the envelope we are actually returning
-        ReferencedEnvelope resultEnvelope =
-                new ReferencedEnvelope(
-                        offsetX + leftTile * resX,
-                        offsetX + (rightTile + 1) * resX,
-                        offsetY + bottomTile * resY,
-                        offsetY + (topTile + 1) * resY,
-                        SPHERICAL_MERCATOR);
+        ReferencedEnvelope resultEnvelope = new ReferencedEnvelope(
+                offsetX + leftTile * resX,
+                offsetX + (rightTile + 1) * resX,
+                offsetY + bottomTile * resY,
+                offsetY + (topTile + 1) * resY,
+                SPHERICAL_MERCATOR);
 
         String imageFormat = file.getImageFormat();
 
         // go get all of the raw data for each tile creating a list of Tile objects
-        List<TPKTile> tiles =
-                file.getTiles(zoomLevel, topTile, bottomTile, leftTile, rightTile, imageFormat);
+        List<TPKTile> tiles = file.getTiles(zoomLevel, topTile, bottomTile, leftTile, rightTile, imageFormat);
 
         // now construct the complete image
         BufferedImage image = getStartImage(BufferedImage.TYPE_INT_ARGB, width, height);
@@ -248,24 +222,21 @@ public class TPKReader extends AbstractGridCoverage2DReader {
         // use parallel processing to create individual tile images
         tiles.parallelStream()
                 .map(TileImage::new) // it's this conversion to image that we are parallelizing
-                .forEach(
-                        tileImage -> {
-                            if (tileImage.image != null) {
-                                // calc tile position
-                                int posx = (int) (tileImage.col - originLeft) * DEFAULT_TILE_SIZE;
-                                int posy = (int) (originTop - tileImage.row) * DEFAULT_TILE_SIZE;
+                .forEach(tileImage -> {
+                    if (tileImage.image != null) {
+                        // calc tile position
+                        int posx = (int) (tileImage.col - originLeft) * DEFAULT_TILE_SIZE;
+                        int posy = (int) (originTop - tileImage.row) * DEFAULT_TILE_SIZE;
 
-                                // use drawImage() to stitch the individual tile images together
-                                graphics.drawImage(tileImage.image, posx, posy, null);
-                            }
-                        });
+                        // use drawImage() to stitch the individual tile images together
+                        graphics.drawImage(tileImage.image, posx, posy, null);
+                    }
+                });
 
         file.close();
 
-        String msg =
-                String.format(
-                        "At zoom level %d TPK read completed in %d milliseconds",
-                        zoomLevel, System.currentTimeMillis() - startRead);
+        String msg = "At zoom level %d TPK read completed in %d milliseconds"
+                .formatted(zoomLevel, System.currentTimeMillis() - startRead);
 
         LOGGER.fine(msg);
 
@@ -318,8 +289,8 @@ public class TPKReader extends AbstractGridCoverage2DReader {
     }
 
     /**
-     * Infer file type from file data if possible -- In case TPK files allow tiles with mixed
-     * formats we don't want to be entirely dependent on the Conf.xml "CacheTileFormat" element
+     * Infer file type from file data if possible -- In case TPK files allow tiles with mixed formats we don't want to
+     * be entirely dependent on the Conf.xml "CacheTileFormat" element
      *
      * @param imageData -- reference to the raw byte data of the image
      * @param format -- format derived from metadata table
@@ -328,10 +299,9 @@ public class TPKReader extends AbstractGridCoverage2DReader {
     private static String getImageFormat(byte[] imageData, String format) {
         String inferred = ImageFormats.inferFormatFromImageData(imageData);
         if (inferred != null && !inferred.equalsIgnoreCase(format)) {
-            LOGGER.fine(
-                    String.format("Overriding tile format: was %s, set to %s", format, inferred));
+            LOGGER.fine("Overriding tile format: was %s, set to %s".formatted(format, inferred));
         }
-        return (inferred != null ? inferred : format);
+        return inferred != null ? inferred : format;
     }
 
     protected static BufferedImage readImage(byte[] data, String format) throws IOException {
@@ -361,11 +331,7 @@ public class TPKReader extends AbstractGridCoverage2DReader {
         WritableRaster raster = Raster.createWritableRaster(sm, null);
 
         BufferedImage image =
-                new BufferedImage(
-                        copyFrom.getColorModel(),
-                        raster,
-                        copyFrom.isAlphaPremultiplied(),
-                        properties);
+                new BufferedImage(copyFrom.getColorModel(), raster, copyFrom.isAlphaPremultiplied(), properties);
 
         setBackground(image, new Color(0x00000000, true)); // transparent background
 
@@ -393,10 +359,7 @@ public class TPKReader extends AbstractGridCoverage2DReader {
         g2D.setColor(save);
     }
 
-    /**
-     * Tile converted into a BufferedImage -- this conversion is done in parallel members: row,
-     * column and image
-     */
+    /** Tile converted into a BufferedImage -- this conversion is done in parallel members: row, column and image */
     static class TileImage {
         long col;
         long row;
@@ -410,7 +373,7 @@ public class TPKReader extends AbstractGridCoverage2DReader {
                     image = readImage(tile.tileData, tile.imageFormat);
                 } catch (Exception ex) {
                     String template = "Bad tile data, zl=%d, row=%d, col=%d ==> %s";
-                    LOGGER.info(String.format(template, tile.zoomLevel, row, col, ex.getMessage()));
+                    LOGGER.info(template.formatted(tile.zoomLevel, row, col, ex.getMessage()));
                     image = null;
                 }
             }

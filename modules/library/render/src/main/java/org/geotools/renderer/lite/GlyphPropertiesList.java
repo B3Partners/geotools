@@ -18,9 +18,9 @@ package org.geotools.renderer.lite;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.factory.CommonFactoryFinder;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 
 /** @author jfc173 */
 public class GlyphPropertiesList {
@@ -37,21 +37,17 @@ public class GlyphPropertiesList {
             list.add(new GlyphProperty(name, type, value));
             names.add(name);
         } else {
-            throw new RuntimeException(
-                    "Wrong class for setting variable "
-                            + name
-                            + ".  Expected a "
-                            + type
-                            + " but received a "
-                            + value.getClass()
-                            + ".");
+            throw new RuntimeException("Wrong class for setting variable "
+                    + name
+                    + ".  Expected a "
+                    + type
+                    + " but received a "
+                    + value.getClass()
+                    + ".");
         }
     }
 
-    /**
-     * the index i starts counting at 0, not 1. A list with two properties has property 0 and
-     * property 1.
-     */
+    /** the index i starts counting at 0, not 1. A list with two properties has property 0 and property 1. */
     public String getPropertyName(int i) {
         return list.get(i).getName();
     }
@@ -60,10 +56,7 @@ public class GlyphPropertiesList {
         return names.indexOf(name);
     }
 
-    /**
-     * the index i starts counting at 0, not 1. A list with two properties has property 0 and
-     * property 1.
-     */
+    /** the index i starts counting at 0, not 1. A list with two properties has property 0 and property 1. */
     public Class getPropertyType(int i) {
         return list.get(i).getType();
     }
@@ -73,8 +66,7 @@ public class GlyphPropertiesList {
         if (index != -1) {
             return getPropertyType(index);
         } else {
-            throw new RuntimeException(
-                    "Tried to get the class of a non-existent property: " + name);
+            throw new RuntimeException("Tried to get the class of a non-existent property: " + name);
         }
     }
 
@@ -82,10 +74,7 @@ public class GlyphPropertiesList {
         return names.contains(name);
     }
 
-    /**
-     * the index i starts counting at 0, not 1. A list with two properties has property 0 and
-     * property 1.
-     */
+    /** the index i starts counting at 0, not 1. A list with two properties has property 0 and property 1. */
     public Object getPropertyValue(int i) {
         return list.get(i).getValue();
     }
@@ -95,8 +84,7 @@ public class GlyphPropertiesList {
         if (index != -1) {
             return getPropertyValue(index);
         } else {
-            throw new RuntimeException(
-                    "Tried to get the class of a non-existent property: " + name);
+            throw new RuntimeException("Tried to get the class of a non-existent property: " + name);
         }
     }
 
@@ -124,30 +112,28 @@ public class GlyphPropertiesList {
         int index = names.indexOf(name);
         if (index != -1) {
             GlyphProperty prop = list.get(index);
-            if (value instanceof String) {
-                value = stringToLiteral((String) value);
+            if (value instanceof String string) {
+                value = stringToLiteral(string);
             }
-            if (value instanceof Integer) {
-                value = numberToLiteral((Integer) value);
+            if (value instanceof Integer integer) {
+                value = numberToLiteral(integer);
             }
-            if (value instanceof Double) {
-                value = numberToLiteral((Double) value);
+            if (value instanceof Double double1) {
+                value = numberToLiteral(double1);
             }
             if (prop.getType().isAssignableFrom(value.getClass())) {
                 prop.setValue(value);
             } else {
-                throw new RuntimeException(
-                        "Wrong class for setting variable "
-                                + name
-                                + ".  Expected a "
-                                + prop.getType()
-                                + " but received a "
-                                + value.getClass()
-                                + ".");
+                throw new RuntimeException("Wrong class for setting variable "
+                        + name
+                        + ".  Expected a "
+                        + prop.getType()
+                        + " but received a "
+                        + value.getClass()
+                        + ".");
             }
         } else {
-            throw new RuntimeException(
-                    "Tried to set the value of a non-existent property: " + name);
+            throw new RuntimeException("Tried to set the value of a non-existent property: " + name);
         }
     }
 }

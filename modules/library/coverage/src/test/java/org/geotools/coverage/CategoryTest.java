@@ -20,9 +20,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
+import org.geotools.api.referencing.operation.MathTransform1D;
+import org.geotools.api.referencing.operation.TransformException;
 import org.junit.Test;
-import org.opengis.referencing.operation.MathTransform1D;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * Tests the {@link Category} implementation.
@@ -41,8 +41,8 @@ public final class CategoryTest {
     }
 
     /**
-     * Make sure that linear category produce the expected result. This test check also if the
-     * default {@link MathTransform1D} for a linear relation is right.
+     * Make sure that linear category produce the expected result. This test check also if the default
+     * {@link MathTransform1D} for a linear relation is right.
      *
      * @throws TransformException If an error occured while transforming a value.
      */

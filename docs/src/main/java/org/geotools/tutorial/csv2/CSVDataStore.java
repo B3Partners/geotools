@@ -18,10 +18,15 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.store.ContentDataStore;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
@@ -29,10 +34,6 @@ import org.geotools.feature.NameImpl;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.Name;
 
 /**
  * DataStore for Comma Separated Value (CSV) files.
@@ -52,19 +53,19 @@ public class CSVDataStore extends ContentDataStore {
 
     // reader start
     /**
-     * Allow read access to file; for our package visible "friends". Please close the reader when
-     * done.
+     * Allow read access to file; for our package visible "friends". Please close the reader when done.
      *
      * @return CsvReader for file
      */
     CsvReader read() throws IOException {
-        Reader reader = new FileReader(file);
+        Reader reader = new FileReader(file, StandardCharsets.UTF_8);
         CsvReader csvReader = new CsvReader(reader);
         return csvReader;
     }
     // reader end
 
     // createTypeNames start
+    @Override
     protected List<Name> createTypeNames() throws IOException {
         String name = file.getName();
         name = name.substring(0, name.lastIndexOf('.'));
@@ -81,8 +82,7 @@ public class CSVDataStore extends ContentDataStore {
         GeometryDescriptor geometryDescrptor = featureType.getGeometryDescriptor();
         if (geometryDescrptor != null
                 && CRS.equalsIgnoreMetadata(
-                        DefaultGeographicCRS.WGS84,
-                        geometryDescrptor.getCoordinateReferenceSystem())
+                        DefaultGeographicCRS.WGS84, geometryDescrptor.getCoordinateReferenceSystem())
                 && geometryDescrptor.getType().getBinding().isAssignableFrom(Point.class)) {
             header.add("LAT");
             header.add("LON");
@@ -94,7 +94,7 @@ public class CSVDataStore extends ContentDataStore {
             header.add(descriptor.getLocalName());
         }
         // Write out header, producing an empty file of the correct type
-        CsvWriter writer = new CsvWriter(new FileWriter(file), ',');
+        CsvWriter writer = new CsvWriter(new FileWriter(file, StandardCharsets.UTF_8), ',');
         try {
             writer.writeRecord(header.toArray(new String[header.size()]));
         } finally {

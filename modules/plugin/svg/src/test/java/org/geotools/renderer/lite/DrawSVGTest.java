@@ -34,38 +34,37 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.batik.svggen.SVGGeneratorContext;
 import org.apache.batik.svggen.SVGGraphics2D;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.style.Style;
 import org.geotools.data.property.PropertyDataStore;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.FeatureLayer;
 import org.geotools.map.MapContent;
 import org.geotools.referencing.CRS;
 import org.geotools.renderer.RenderListener;
-import org.geotools.styling.Style;
 import org.geotools.test.TestData;
 import org.geotools.util.logging.Logging;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
 import org.w3c.dom.Document;
 
 public class DrawSVGTest {
     private static final Logger LOGGER = Logging.getLogger(DrawSVGTest.class);
 
-    final RenderListener listener =
-            new RenderListener() {
-                @Override
-                public void featureRenderer(SimpleFeature feature) {
-                    LOGGER.config(feature.toString());
-                }
+    final RenderListener listener = new RenderListener() {
+        @Override
+        public void featureRenderer(SimpleFeature feature) {
+            LOGGER.config(feature.toString());
+        }
 
-                @Override
-                public void errorOccurred(Exception e) {
-                    LOGGER.severe(e.toString());
-                    fail(e.getMessage());
-                }
-            };
+        @Override
+        public void errorOccurred(Exception e) {
+            LOGGER.severe(e.toString());
+            fail(e.getMessage());
+        }
+    };
 
     SimpleFeatureSource squareFS;
 
@@ -87,7 +86,8 @@ public class DrawSVGTest {
 
     @Before
     public void setUp() throws Exception {
-        File property = new File(TestData.getResource(this, "square2.properties").toURI());
+        File property =
+                new File(TestData.getResource(this, "square2.properties").toURI());
         PropertyDataStore ds = new PropertyDataStore(property.getParentFile());
         squareFS = ds.getFeatureSource("square2");
         lineFS = ds.getFeatureSource("line");
@@ -126,17 +126,16 @@ public class DrawSVGTest {
     }
 
     /**
-     * This one does not really render as I'd like, but we cannot have a shape in the group that has
-     * its own specific winding rule in Java. The test is there because this one also has a
-     * transformation on the shapes to re-position them.
+     * This one does not really render as I'd like, but we cannot have a shape in the group that has its own specific
+     * winding rule in Java. The test is there because this one also has a transformation on the shapes to re-position
+     * them.
      */
     @Test
     public void testSvgMarkTransformedShape() throws Exception {
         setupSinglePointRenderer("convenience.sld");
     }
 
-    private void setupPointRenderer(String pointStyle)
-            throws IOException, ParserConfigurationException {
+    private void setupPointRenderer(String pointStyle) throws IOException, ParserConfigurationException {
         Style pStyle = RendererBaseTest.loadStyle(this, pointStyle);
         Style lStyle = RendererBaseTest.loadStyle(this, "lineGray.sld");
 
@@ -179,8 +178,7 @@ public class DrawSVGTest {
         mc.dispose();
     }
 
-    private void setupSinglePointRenderer(String pointStyle)
-            throws IOException, ParserConfigurationException {
+    private void setupSinglePointRenderer(String pointStyle) throws IOException, ParserConfigurationException {
         Style pStyle = RendererBaseTest.loadStyle(this, pointStyle);
 
         MapContent mc = new MapContent();
@@ -224,8 +222,7 @@ public class DrawSVGTest {
         mc.dispose();
     }
 
-    private void setupLineRenderer(String lineStyle)
-            throws IOException, ParserConfigurationException {
+    private void setupLineRenderer(String lineStyle) throws IOException, ParserConfigurationException {
         Style lStyle = RendererBaseTest.loadStyle(this, lineStyle);
         Style baseStyle = RendererBaseTest.loadStyle(this, "lineGray.sld");
 

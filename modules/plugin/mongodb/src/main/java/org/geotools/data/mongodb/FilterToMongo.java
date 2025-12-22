@@ -17,13 +17,12 @@
  */
 package org.geotools.data.mongodb;
 
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.data.mongodb.complex.JsonSelectAllFunction;
 import org.geotools.data.mongodb.complex.JsonSelectFunction;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.PropertyName;
 
 /**
  * Visitor responsible for generating a BasicDBObject to use as a MongoDB query.
@@ -37,33 +36,18 @@ public class FilterToMongo extends AbstractFilterToMongo {
 
     final CollectionMapper mapper;
 
-    /** The schmema the encoder will use as reference to drive filter encoding */
-    SimpleFeatureType featureType;
-
     public FilterToMongo(CollectionMapper mapper) {
         super();
         this.mapper = mapper;
     }
 
-    /**
-     * Sets the feature type the encoder is encoding a filter for.
-     *
-     * <p>The type of the attributes may drive how the filter is translated to a mongodb query
-     * document.
-     */
-    public void setFeatureType(SimpleFeatureType featureType) {
-        this.featureType = featureType;
-    }
-
     private Class getJsonSelectType(Expression expression) {
-        if (expression instanceof JsonSelectFunction) {
-            PropertyDescriptor descriptor =
-                    featureType.getDescriptor(((JsonSelectFunction) expression).getJsonPath());
+        if (expression instanceof JsonSelectFunction function) {
+            PropertyDescriptor descriptor = featureType.getDescriptor(function.getJsonPath());
             return descriptor == null ? null : descriptor.getType().getBinding();
         }
-        if (expression instanceof JsonSelectAllFunction) {
-            PropertyDescriptor descriptor =
-                    featureType.getDescriptor(((JsonSelectAllFunction) expression).getJsonPath());
+        if (expression instanceof JsonSelectAllFunction function) {
+            PropertyDescriptor descriptor = featureType.getDescriptor(function.getJsonPath());
             return descriptor == null ? null : descriptor.getType().getBinding();
         }
         return null;

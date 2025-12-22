@@ -17,6 +17,8 @@
  */
 package org.geotools.process.vector;
 
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.spatial.BBOX;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.collection.ClippedFeatureCollection;
@@ -28,8 +30,6 @@ import org.geotools.referencing.CRS;
 import org.geotools.util.factory.GeoTools;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.spatial.BBOX;
 
 /**
  * Modified version that can preserve Z values after the clip
@@ -39,8 +39,7 @@ import org.opengis.filter.spatial.BBOX;
 @DescribeProcess(title = "Clip", description = "Clips (crops) features to a given geometry")
 public class ClipProcess implements VectorProcess {
 
-    static final FilterFactory ff =
-            CommonFactoryFinder.getFilterFactory(GeoTools.getDefaultHints());
+    static final FilterFactory ff = CommonFactoryFinder.getFilterFactory(GeoTools.getDefaultHints());
 
     @DescribeResult(name = "result", description = "Clipped feature collection")
     public SimpleFeatureCollection execute(
@@ -48,8 +47,7 @@ public class ClipProcess implements VectorProcess {
                     SimpleFeatureCollection features,
             @DescribeParameter(
                             name = "clip",
-                            description =
-                                    "Geometry to use for clipping (in same CRS as input features)")
+                            description = "Geometry to use for clipping (in same CRS as input features)")
                     Geometry clip,
             @DescribeParameter(
                             name = "preserveZ",
@@ -64,8 +62,7 @@ public class ClipProcess implements VectorProcess {
         if (features.getSchema().getCoordinateReferenceSystem() != null) {
             srs = CRS.toSRS(features.getSchema().getCoordinateReferenceSystem());
         }
-        BBOX bboxFilter =
-                ff.bbox("", box.getMinX(), box.getMinY(), box.getMaxX(), box.getMaxY(), srs);
+        BBOX bboxFilter = ff.bbox("", box.getMinX(), box.getMinY(), box.getMaxX(), box.getMaxY(), srs);
 
         // default value for preserve Z
         if (preserveZ == null) {

@@ -22,15 +22,15 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.NamedLayer;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyledLayer;
+import org.geotools.api.style.StyledLayerDescriptor;
 import org.geotools.mbstyle.layer.MBLayer;
 import org.geotools.mbstyle.parse.MBFormatException;
 import org.geotools.mbstyle.parse.MBStyleParser;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.NamedLayer;
-import org.geotools.styling.StyledLayer;
-import org.geotools.styling.StyledLayerDescriptor;
 import org.json.simple.parser.ParseException;
-import org.opengis.style.Style;
 
 /**
  * MapBox Style facade offering utility methods for quickly working with JSON and converting to
@@ -64,8 +64,7 @@ public class MapBoxStyle {
      * @throws ParseException Invalid JSON provided
      * @throws IOException Problem reading definition from stream
      */
-    public static StyledLayerDescriptor parse(InputStream stream)
-            throws IOException, ParseException {
+    public static StyledLayerDescriptor parse(InputStream stream) throws IOException, ParseException {
         MBStyleParser parser = new MBStyleParser();
         MBStyle style = parser.parse(stream);
 
@@ -110,9 +109,7 @@ public class MapBoxStyle {
                     hasVisibleLayer = true;
                 }
             } catch (Exception invalid) {
-                problems.add(
-                        new MBFormatException(
-                                "Layer " + layer.getId() + ":" + invalid.getMessage(), invalid));
+                problems.add(new MBFormatException("Layer " + layer.getId() + ":" + invalid.getMessage(), invalid));
                 return problems;
             }
         }
@@ -124,13 +121,11 @@ public class MapBoxStyle {
                 // quick sanity check on results sld files
                 // if we get any problems downstream in rendering add additional checks here
                 if (sld.getStyledLayers().length == 0) {
-                    problems.add(
-                            new MBFormatException(
-                                    "Generated sld for " + sld.getName() + " is empty."));
+                    problems.add(new MBFormatException("Generated sld for " + sld.getName() + " is empty."));
                 } else {
                     for (StyledLayer layer : sld.getStyledLayers()) {
-                        if (layer instanceof NamedLayer) {
-                            validateLayer(problems, (NamedLayer) layer);
+                        if (layer instanceof NamedLayer namedLayer) {
+                            validateLayer(problems, namedLayer);
                         }
                     }
                 }
@@ -139,9 +134,7 @@ public class MapBoxStyle {
                 problems.add(invalid);
             } catch (Exception problem) {
                 // we could not parse out sld due to an unexpected problem
-                problems.add(
-                        new MBFormatException(
-                                "Style " + style.getName() + ":" + problem.getMessage(), problem));
+                problems.add(new MBFormatException("Style " + style.getName() + ":" + problem.getMessage(), problem));
             }
         }
         return problems;
@@ -150,19 +143,13 @@ public class MapBoxStyle {
     private static void validateLayer(List<Exception> problems, NamedLayer layer) {
         NamedLayer named = layer;
         if (named.styles().isEmpty()) {
-            problems.add(
-                    new MBFormatException(
-                            "Generated named layer for " + named.getName() + " is empty."));
+            problems.add(new MBFormatException("Generated named layer for " + named.getName() + " is empty."));
         } else {
             for (Style layerStyle : named.styles()) {
-                if (layerStyle instanceof FeatureTypeStyle) {
-                    FeatureTypeStyle fts = (FeatureTypeStyle) layerStyle;
+                if (layerStyle instanceof FeatureTypeStyle fts) {
                     if (fts.rules().isEmpty()) {
                         problems.add(
-                                new MBFormatException(
-                                        "Generated feature type style "
-                                                + fts.getName()
-                                                + " is empty."));
+                                new MBFormatException("Generated feature type style " + fts.getName() + " is empty."));
                     }
                 }
             }

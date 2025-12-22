@@ -16,11 +16,11 @@
  */
 package org.geotools.filter.text.cql2;
 
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.filter.text.commons.CompilerUtil;
 import org.geotools.filter.text.commons.Language;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.filter.expression.PropertyName;
 
 /**
  * Test Attribute
@@ -74,8 +74,7 @@ public class CQLAttributeNameTest {
     public void compoundAttributeName() throws CQLException {
         testAttribute("s11:p12:p13.s21:p22.s31:p32");
 
-        testAttribute(
-                "gmd:MD_Metadata.gmd:identificationInfo.gmd:MD_DataIdentification.gmd:abstract");
+        testAttribute("gmd:MD_Metadata.gmd:identificationInfo.gmd:MD_DataIdentification.gmd:abstract");
     }
 
     /** Invalid attribute names */
@@ -122,7 +121,7 @@ public class CQLAttributeNameTest {
         testAttributeBetweenDoubleQuotes("\"環境\"");
     }
 
-    private void testAttributeBetweenDoubleQuotes(final String attSample) throws CQLException {
+    protected void testAttributeBetweenDoubleQuotes(final String attSample) throws CQLException {
 
         PropertyName attResult = parsePropertyName(attSample);
 

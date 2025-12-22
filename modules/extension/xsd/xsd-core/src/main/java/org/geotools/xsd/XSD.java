@@ -32,18 +32,19 @@ import org.eclipse.xsd.XSDSchema;
 import org.eclipse.xsd.util.XSDResourceImpl;
 import org.eclipse.xsd.util.XSDSchemaLocationResolver;
 import org.eclipse.xsd.util.XSDSchemaLocator;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.Schema;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.type.SchemaImpl;
 import org.geotools.xs.XS;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.Schema;
+import org.xml.sax.EntityResolver;
 
 /**
  * Xml Schema for a particular namespace.
  *
- * <p>This class should is subclasses for the xs, gml, filter, sld, etc... schemas. Subclasses
- * should be implemented as singletons.
+ * <p>This class should is subclasses for the xs, gml, filter, sld, etc... schemas. Subclasses should be implemented as
+ * singletons.
  *
  * @author Justin Deoliveira, The Open Planning Project
  * @since 2.5
@@ -59,6 +60,8 @@ public abstract class XSD {
     protected Schema typeSchema;
     /** type mapping profile */
     protected Schema typeMappingProfile;
+
+    protected EntityResolver entityResolver;
 
     /** dependencies */
     private volatile Set<XSD> dependencies;
@@ -96,10 +99,7 @@ public abstract class XSD {
         return typeSchema;
     }
 
-    /**
-     * Returns the subset of {@link #getTypeSchema()} which maintains a unique java class to xml
-     * type mapping.
-     */
+    /** Returns the subset of {@link #getTypeSchema()} which maintains a unique java class to xml type mapping. */
     public final Schema getTypeMappingProfile() {
         if (typeMappingProfile == null) {
             synchronized (this) {
@@ -109,10 +109,7 @@ public abstract class XSD {
         return typeMappingProfile;
     }
 
-    /**
-     * Transitively returns the type mapping profile for this schema and all schemas that this
-     * schema depends on.
-     */
+    /** Transitively returns the type mapping profile for this schema and all schemas that this schema depends on. */
     public final List<Schema> getAllTypeMappingProfiles() {
         List<Schema> profiles = new LinkedList<>();
         for (XSD xsd : getAllDependencies()) {
@@ -239,9 +236,9 @@ public abstract class XSD {
             resolvers.add(resolver);
         }
 
-        // parse the location of the xsd with all the locators for dependent
-        // schemas
-        return Schemas.parse(getSchemaLocation(), locators, resolvers);
+        // parse the location of the xsd with all the locators for dependent schemas
+        // no resolver as the code should be referencing only local schemas
+        return Schemas.parse(getSchemaLocation(), locators, resolvers, Collections.emptyList(), entityResolver);
     }
 
     public SchemaLocator createSchemaLocator() {
@@ -264,8 +261,7 @@ public abstract class XSD {
     /** Implementation of equals, equality is based soley on {@link #getNamespaceURI()}. */
     @Override
     public final boolean equals(Object obj) {
-        if (obj instanceof XSD) {
-            XSD other = (XSD) obj;
+        if (obj instanceof XSD other) {
 
             return getNamespaceURI().equals(other.getNamespaceURI());
         }
@@ -284,8 +280,8 @@ public abstract class XSD {
     }
 
     /**
-     * Optionally, a schema locator that helps locating (other) schema's used for includes/imports
-     * that might already exist but are not in dependencies
+     * Optionally, a schema locator that helps locating (other) schema's used for includes/imports that might already
+     * exist but are not in dependencies
      *
      * @return Schema Locator
      */
@@ -294,16 +290,16 @@ public abstract class XSD {
     }
 
     /**
-     * Remove all references to this schema, and all schemas built in the same resource set It is
-     * important to call this method for every dynamic schema created that is not needed anymore,
-     * because references in the static schema's will otherwise keep it alive forever
+     * Remove all references to this schema, and all schemas built in the same resource set It is important to call this
+     * method for every dynamic schema created that is not needed anymore, because references in the static schema's
+     * will otherwise keep it alive forever
      */
     public void dispose() {
         if (schema != null) {
             ResourceSet rs = schema.eResource().getResourceSet();
             for (Resource r : rs.getResources()) {
-                if (r instanceof XSDResourceImpl) {
-                    Schemas.dispose(((XSDResourceImpl) r).getSchema());
+                if (r instanceof XSDResourceImpl impl) {
+                    Schemas.dispose(impl.getSchema());
                 }
             }
 

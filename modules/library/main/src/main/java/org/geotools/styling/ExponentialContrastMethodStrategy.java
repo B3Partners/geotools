@@ -20,8 +20,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.ContrastMethod;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.ContrastMethod;
 
 /** @author iant */
 public class ExponentialContrastMethodStrategy extends AbstractContrastMethodStrategy {
@@ -46,10 +46,9 @@ public class ExponentialContrastMethodStrategy extends AbstractContrastMethodStr
     @Override
     public void addParameter(String key, Expression value) {
         if (!PARAM_NAMES.contains(key)) {
-            LOGGER.log(
-                    Level.WARNING,
-                    "Adding unexpected parameter {0} to {1} Contrast Enhancer",
-                    new Object[] {key, method.name()});
+            LOGGER.log(Level.WARNING, "Adding unexpected parameter {0} to {1} Contrast Enhancer", new Object[] {
+                key, method.name()
+            });
         }
         super.addParameter(key, value);
     }

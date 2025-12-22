@@ -17,23 +17,18 @@
 package org.geotools.feature.type;
 
 import java.util.Map;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.util.Classes;
 import org.geotools.util.Utilities;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.Name;
 
 public class AttributeDescriptorImpl extends PropertyDescriptorImpl implements AttributeDescriptor {
 
     protected final Object defaultValue;
 
     public AttributeDescriptorImpl(
-            AttributeType type,
-            Name name,
-            int min,
-            int max,
-            boolean isNillable,
-            Object defaultValue) {
+            AttributeType type, Name name, int min, int max, boolean isNillable, Object defaultValue) {
         super(type, name, min, max, isNillable);
 
         this.defaultValue = defaultValue;

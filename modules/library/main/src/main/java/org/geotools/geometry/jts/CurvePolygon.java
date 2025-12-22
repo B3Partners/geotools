@@ -15,6 +15,7 @@
  */
 package org.geotools.geometry.jts;
 
+import java.io.Serial;
 import java.util.List;
 import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -29,17 +30,17 @@ import org.locationtech.jts.geom.Polygon;
  */
 public class CurvePolygon extends Polygon implements CurvedGeometry<Polygon> {
 
+    @Serial
     private static final long serialVersionUID = -6961191502473439328L;
+
     private double tolerance;
 
-    public CurvePolygon(
-            LinearRing shell, List<LinearRing> holes, GeometryFactory factory, double tolerance) {
+    public CurvePolygon(LinearRing shell, List<LinearRing> holes, GeometryFactory factory, double tolerance) {
         super(shell, holes.toArray(new LinearRing[holes.size()]), factory);
         this.tolerance = tolerance;
     }
 
-    public CurvePolygon(
-            LinearRing shell, LinearRing[] holes, GeometryFactory factory, double tolerance) {
+    public CurvePolygon(LinearRing shell, LinearRing[] holes, GeometryFactory factory, double tolerance) {
         super(shell, holes, factory);
         this.tolerance = tolerance;
     }
@@ -65,8 +66,7 @@ public class CurvePolygon extends Polygon implements CurvedGeometry<Polygon> {
     }
 
     private LinearRing linearize(double tolerance, LinearRing hole) {
-        if (hole instanceof CurvedGeometry<?>) {
-            CurvedGeometry<?> curved = (CurvedGeometry<?>) hole;
+        if (hole instanceof CurvedGeometry<?> curved) {
             hole = (LinearRing) curved.linearize(tolerance);
         }
         return hole;
@@ -92,8 +92,7 @@ public class CurvePolygon extends Polygon implements CurvedGeometry<Polygon> {
     }
 
     private void writeRing(StringBuilder sb, LineString component) {
-        if (component instanceof SingleCurvedGeometry<?>) {
-            SingleCurvedGeometry<?> curved = (SingleCurvedGeometry<?>) component;
+        if (component instanceof SingleCurvedGeometry<?> curved) {
             sb.append(curved.toCurvedText());
         } else {
             sb.append("(");

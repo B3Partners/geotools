@@ -23,65 +23,64 @@ import java.util.List;
 import java.util.Set;
 import java.util.Stack;
 import javax.xml.crypto.Data;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.BinaryComparisonOperator;
+import org.geotools.api.filter.BinaryLogicOperator;
+import org.geotools.api.filter.ExcludeFilter;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.IncludeFilter;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNil;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.SpatialOperator;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
+import org.geotools.api.filter.temporal.After;
+import org.geotools.api.filter.temporal.AnyInteracts;
+import org.geotools.api.filter.temporal.Before;
+import org.geotools.api.filter.temporal.Begins;
+import org.geotools.api.filter.temporal.BegunBy;
+import org.geotools.api.filter.temporal.BinaryTemporalOperator;
+import org.geotools.api.filter.temporal.During;
+import org.geotools.api.filter.temporal.EndedBy;
+import org.geotools.api.filter.temporal.Ends;
+import org.geotools.api.filter.temporal.Meets;
+import org.geotools.api.filter.temporal.MetBy;
+import org.geotools.api.filter.temporal.OverlappedBy;
+import org.geotools.api.filter.temporal.TContains;
+import org.geotools.api.filter.temporal.TEquals;
+import org.geotools.api.filter.temporal.TOverlaps;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.IllegalFilterException;
 import org.geotools.xml.XMLHandlerHints;
-import org.opengis.filter.And;
-import org.opengis.filter.BinaryComparisonOperator;
-import org.opengis.filter.BinaryLogicOperator;
-import org.opengis.filter.ExcludeFilter;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.Id;
-import org.opengis.filter.IncludeFilter;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNil;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.SpatialOperator;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
-import org.opengis.filter.temporal.After;
-import org.opengis.filter.temporal.AnyInteracts;
-import org.opengis.filter.temporal.Before;
-import org.opengis.filter.temporal.Begins;
-import org.opengis.filter.temporal.BegunBy;
-import org.opengis.filter.temporal.BinaryTemporalOperator;
-import org.opengis.filter.temporal.During;
-import org.opengis.filter.temporal.EndedBy;
-import org.opengis.filter.temporal.Ends;
-import org.opengis.filter.temporal.Meets;
-import org.opengis.filter.temporal.MetBy;
-import org.opengis.filter.temporal.OverlappedBy;
-import org.opengis.filter.temporal.TContains;
-import org.opengis.filter.temporal.TEquals;
-import org.opengis.filter.temporal.TOverlaps;
 
 /**
- * Prepares a filter for XML encoded for interoperability with another system. It will behave
- * differently depending on the compliance level chosen. A new request will have to be made and the
- * features will have to be tested again on the client side if there are any FidFilters in the
- * filter. Consider the following to understand why:
+ * Prepares a filter for XML encoded for interoperability with another system. It will behave differently depending on
+ * the compliance level chosen. A new request will have to be made and the features will have to be tested again on the
+ * client side if there are any FidFilters in the filter. Consider the following to understand why:
  *
  * <pre>
  * and {
@@ -93,8 +92,7 @@ import org.opengis.filter.temporal.TOverlaps;
  * }
  * </pre>
  *
- * for strict it would throw an exception, for low it would be left alone, but for Medium it would
- * end up as:
+ * for strict it would throw an exception, for low it would be left alone, but for Medium it would end up as:
  *
  * <pre>
  * and{
@@ -105,16 +103,14 @@ import org.opengis.filter.temporal.TOverlaps;
  *
  * and getFids() would return the fids in the fidFilter.
  *
- * <p>So the final filter would (this is not standard but a common implementation) return the
- * results of the and filter as well as all the features that match the fids. Which is more than the
- * original filter would accept.
+ * <p>So the final filter would (this is not standard but a common implementation) return the results of the and filter
+ * as well as all the features that match the fids. Which is more than the original filter would accept.
  *
- * <p>The XML Document writer can operate at different levels of compliance. The geotools level is
- * extremely flexible and forgiving.
+ * <p>The XML Document writer can operate at different levels of compliance. The geotools level is extremely flexible
+ * and forgiving.
  *
- * <p>All NOT(FidFilter) are changed to Filter.INCLUDE. So make sure that the filter is processed
- * again on the client with the original filter For a description of the difference Compliance
- * levels that can be used see
+ * <p>All NOT(FidFilter) are changed to Filter.INCLUDE. So make sure that the filter is processed again on the client
+ * with the original filter For a description of the difference Compliance levels that can be used see
  *
  * <ul>
  *   <li>{@link XMLHandlerHints#VALUE_FILTER_COMPLIANCE_LOW}
@@ -124,20 +120,19 @@ import org.opengis.filter.temporal.TOverlaps;
  *
  * @author Jesse Eichar
  */
-@SuppressWarnings(
-        "unchecked") // gigantic mess, too much untyped structures and methods to work on them
+@SuppressWarnings("unchecked") // gigantic mess, too much untyped structures and methods to work on them
 public class FilterEncodingPreProcessor implements FilterVisitor {
     private static final int LOW = 0;
     private static final int MEDIUM = 1;
     private static final int HIGH = 2;
     private int complianceInt;
     private Stack<Data> current = new Stack<>();
-    FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
     private boolean requiresPostProcessing = false;
 
     public FilterEncodingPreProcessor(Integer complianceLevel) {
-        if ((complianceLevel != LOW) && (complianceLevel != MEDIUM) && (complianceLevel != HIGH)) {
+        if (complianceLevel != LOW && complianceLevel != MEDIUM && complianceLevel != HIGH) {
             throw new IllegalArgumentException(
                     "compliance level must be one of: XMLHandlerHints.VALUE_FILTER_COMPLIANCE_LOOSE "
                             + "XMLHandlerHints.VALUE_FILTER_COMPLIANCE_MEDIUM or "
@@ -178,7 +173,7 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
      *
      * @return the filter that can be encoded.
      */
-    public org.opengis.filter.Filter getFilter() {
+    public org.geotools.api.filter.Filter getFilter() {
         if (current.isEmpty()) return Filter.EXCLUDE;
         return this.current.peek().filter;
     }
@@ -244,8 +239,8 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
                     break;
             }
         } catch (Exception e) {
-            if (e instanceof UnsupportedFilterException) {
-                throw (UnsupportedFilterException) e;
+            if (e instanceof UnsupportedFilterException exception) {
+                throw exception;
             }
 
             throw new UnsupportedFilterException("Exception creating filter", e);
@@ -263,7 +258,7 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
                     break;
 
                 case MEDIUM:
-                    for (org.opengis.filter.Filter component : filter.getChildren()) {
+                    for (org.geotools.api.filter.Filter component : filter.getChildren()) {
                         component.accept(this, null);
                     }
                     current.push(createMediumLevelLogicFilter(filter, startSize));
@@ -271,7 +266,7 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
                     break;
 
                 case HIGH:
-                    for (org.opengis.filter.Filter component : filter.getChildren()) {
+                    for (org.geotools.api.filter.Filter component : filter.getChildren()) {
                         component.accept(this, null);
                     }
                     current.push(createHighLevelLogicFilter(filter, startSize));
@@ -282,16 +277,15 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
                     break;
             }
         } catch (Exception e) {
-            if (e instanceof UnsupportedFilterException) {
-                throw (UnsupportedFilterException) e;
+            if (e instanceof UnsupportedFilterException exception) {
+                throw exception;
             }
 
             throw new UnsupportedFilterException("Exception creating filter", e);
         }
     }
 
-    private Data createMediumLevelLogicFilter(Filter filter, int startOfFilterStack)
-            throws IllegalFilterException {
+    private Data createMediumLevelLogicFilter(Filter filter, int startOfFilterStack) throws IllegalFilterException {
         Data resultingFilter;
 
         if (filter instanceof And) {
@@ -299,8 +293,7 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
             resultingFilter = buildFilter(filter, startOfFilterStack);
             resultingFilter.fids.addAll(fids);
 
-            if (resultingFilter.filter != Filter.EXCLUDE && !fids.isEmpty())
-                requiresPostProcessing = true;
+            if (resultingFilter.filter != Filter.EXCLUDE && !fids.isEmpty()) requiresPostProcessing = true;
         } else if (filter instanceof Or) {
             Set fids = orFids(startOfFilterStack);
             resultingFilter = buildFilter(filter, startOfFilterStack);
@@ -315,7 +308,7 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
     }
 
     private Set orFids(int startOfFilterStack) {
-        Set set = new HashSet();
+        Set set = new HashSet<>();
 
         for (int i = startOfFilterStack; i < current.size(); i++) {
             Data data = current.get(i);
@@ -333,7 +326,7 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
             return Collections.emptySet();
         }
 
-        Set toRemove = new HashSet();
+        Set toRemove = new HashSet<>();
         List<Set> fidSet = new ArrayList<>();
         boolean doRemove = true;
 
@@ -363,7 +356,7 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
             return fidSet.get(0);
         }
 
-        HashSet set = new HashSet();
+        HashSet set = new HashSet<>();
 
         for (Set tmp : fidSet) {
             for (Object o : tmp) {
@@ -399,11 +392,11 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
             return buildNotFilter(startOfFilterStack);
         }
 
-        if (current.size() == (startOfFilterStack + 1)) {
+        if (current.size() == startOfFilterStack + 1) {
             return current.pop();
         }
 
-        List<org.opengis.filter.Filter> filterList = new ArrayList<>();
+        List<org.geotools.api.filter.Filter> filterList = new ArrayList<>();
 
         while (current.size() > startOfFilterStack) {
             Data data = current.pop();
@@ -413,7 +406,7 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
             }
         }
 
-        org.opengis.filter.Filter f;
+        org.geotools.api.filter.Filter f;
         if (filter instanceof And) {
             f = ff.and(filterList);
         } else if (filter instanceof Or) {
@@ -425,19 +418,19 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
         return new Data(compressFilter(filter, (BinaryLogicOperator) f));
     }
 
-    private org.opengis.filter.Filter compressFilter(Filter filter, BinaryLogicOperator f)
+    private org.geotools.api.filter.Filter compressFilter(Filter filter, BinaryLogicOperator f)
             throws IllegalFilterException {
         BinaryLogicOperator result;
         int added = 0;
-        List<org.opengis.filter.Filter> resultList = new ArrayList<>();
+        List<org.geotools.api.filter.Filter> resultList = new ArrayList<>();
 
         if (filter instanceof And) {
             if (contains(f, Filter.EXCLUDE)) {
                 return Filter.EXCLUDE;
             }
 
-            for (org.opengis.filter.Filter child : f.getChildren()) {
-                if (child == org.opengis.filter.Filter.INCLUDE) {
+            for (org.geotools.api.filter.Filter child : f.getChildren()) {
+                if (child == org.geotools.api.filter.Filter.INCLUDE) {
                     continue;
                 }
                 added++;
@@ -455,7 +448,7 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
             }
 
             for (Object item : f.getChildren()) {
-                org.opengis.filter.Filter child = (org.opengis.filter.Filter) item;
+                org.geotools.api.filter.Filter child = (org.geotools.api.filter.Filter) item;
                 if (child == Filter.EXCLUDE) {
                     continue;
                 }
@@ -485,8 +478,8 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
         }
     }
 
-    private boolean contains(BinaryLogicOperator f, org.opengis.filter.Filter toFind) {
-        for (org.opengis.filter.Filter filter : f.getChildren()) {
+    private boolean contains(BinaryLogicOperator f, org.geotools.api.filter.Filter toFind) {
+        for (org.geotools.api.filter.Filter filter : f.getChildren()) {
             if (toFind.equals(filter)) {
                 return true;
             }
@@ -495,7 +488,7 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
     }
 
     private Data buildNotFilter(int startOfFilterStack) {
-        if (current.size() > (startOfFilterStack + 1)) {
+        if (current.size() > startOfFilterStack + 1) {
             throw new UnsupportedFilterException("A not filter cannot have more than one filter");
         } else {
             Data tmp = current.pop();
@@ -512,8 +505,7 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
         }
     }
 
-    private Data createHighLevelLogicFilter(Filter filter, int startOfFilterStack)
-            throws IllegalFilterException {
+    private Data createHighLevelLogicFilter(Filter filter, int startOfFilterStack) throws IllegalFilterException {
         if (hasFidFilter(startOfFilterStack)) {
             Set fids;
 
@@ -600,8 +592,8 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
     private static class Data {
         public static final Data NONE = new Data(Filter.EXCLUDE);
         public static final Data ALL = new Data(Filter.INCLUDE);
-        final Set fids = new HashSet();
-        org.opengis.filter.Filter filter;
+        final Set fids = new HashSet<>();
+        org.geotools.api.filter.Filter filter;
 
         public Data() {
             this(Filter.EXCLUDE);
@@ -618,44 +610,42 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
     }
 
     /**
-     * Returns true if the filter was one where the request to the server is more general than the
-     * actual filter. See {@link XMLHandlerHints#VALUE_FILTER_COMPLIANCE_MEDIUM} and example of when
-     * this can happen.
+     * Returns true if the filter was one where the request to the server is more general than the actual filter. See
+     * {@link XMLHandlerHints#VALUE_FILTER_COMPLIANCE_MEDIUM} and example of when this can happen.
      *
-     * @return true if the filter was one where the request to the server is more general than the
-     *     actual filter.
+     * @return true if the filter was one where the request to the server is more general than the actual filter.
      */
     public boolean requiresPostProcessing() {
         return requiresPostProcessing;
     }
 
     // FilterVisitor2 methods formally from FilterVisitorFilterWrapper
-    protected void visitLogicFilter(org.opengis.filter.Filter filter) {
+    protected void visitLogicFilter(org.geotools.api.filter.Filter filter) {
         visit((BinaryLogicOperator) filter);
     }
 
-    protected void visitCompareFilter(org.opengis.filter.Filter filter) {
-        if (filter instanceof PropertyIsNull) {
-            visit((PropertyIsNull) filter);
+    protected void visitCompareFilter(org.geotools.api.filter.Filter filter) {
+        if (filter instanceof PropertyIsNull null1) {
+            visit(null1);
             return;
         }
 
-        if (filter instanceof PropertyIsLike) {
-            visit((PropertyIsLike) filter);
+        if (filter instanceof PropertyIsLike like) {
+            visit(like);
         }
 
-        if (filter instanceof BinaryComparisonOperator) {
-            visit((BinaryComparisonOperator) filter);
+        if (filter instanceof BinaryComparisonOperator operator) {
+            visit(operator);
         }
 
-        if (filter instanceof Not) {
-            visit((Not) filter);
+        if (filter instanceof Not not) {
+            visit(not);
         }
     }
 
     protected void visitGeometryFilter(SpatialOperator filter) {
-        if (filter instanceof BinarySpatialOperator) {
-            visit((BinarySpatialOperator) filter);
+        if (filter instanceof BinarySpatialOperator operator) {
+            visit(operator);
         }
     }
 

@@ -19,29 +19,29 @@ package org.geotools.data.h2;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import org.geotools.api.filter.NativeFilter;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.DistanceBufferOperator;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
 import org.geotools.data.jdbc.FilterToSQL;
 import org.geotools.filter.FilterCapabilities;
 import org.geotools.jdbc.SQLDialect;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LinearRing;
-import org.opengis.filter.NativeFilter;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.DistanceBufferOperator;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
 
 public class H2FilterToSQL extends FilterToSQL {
 
@@ -71,22 +71,17 @@ public class H2FilterToSQL extends FilterToSQL {
     @Override
     protected void visitLiteralGeometry(Literal expression) throws IOException {
         Geometry g = (Geometry) evaluateLiteral(expression, Geometry.class);
-        if (g instanceof LinearRing) {
+        if (g instanceof LinearRing ring) {
             // WKT does not support linear rings
-            g = g.getFactory().createLineString(((LinearRing) g).getCoordinateSequence());
+            g = g.getFactory().createLineString(ring.getCoordinateSequence());
         }
         out.write("ST_GeomFromText('" + g.toText() + "', " + currentSRID + ")");
     }
 
     @Override
     protected Object visitBinarySpatialOperator(
-            BinarySpatialOperator filter,
-            PropertyName property,
-            Literal geometry,
-            boolean swapped,
-            Object extraData) {
-        return visitBinarySpatialOperator(
-                filter, property, (Expression) geometry, swapped, extraData);
+            BinarySpatialOperator filter, PropertyName property, Literal geometry, boolean swapped, Object extraData) {
+        return visitBinarySpatialOperator(filter, property, (Expression) geometry, swapped, extraData);
     }
 
     @Override
@@ -96,15 +91,11 @@ public class H2FilterToSQL extends FilterToSQL {
     }
 
     protected Object visitBinarySpatialOperator(
-            BinarySpatialOperator filter,
-            Expression e1,
-            Expression e2,
-            boolean swapped,
-            Object extraData) {
+            BinarySpatialOperator filter, Expression e1, Expression e2, boolean swapped, Object extraData) {
 
         double distance = 0;
         try {
-            if (filter instanceof DistanceBufferOperator) {
+            if (filter instanceof DistanceBufferOperator operator) {
                 out.write("ST_Distance(");
                 e1.accept(this, extraData);
                 out.write(", ");
@@ -118,7 +109,7 @@ public class H2FilterToSQL extends FilterToSQL {
                 } else {
                     throw new RuntimeException("Unknown distance operator");
                 }
-                distance = getDistanceInNativeUnits((DistanceBufferOperator) filter);
+                distance = getDistanceInNativeUnits(operator);
                 out.write(Double.toString(distance));
             } else if (filter instanceof BBOX) {
                 // TODO: make a loose bounding box parameter
@@ -164,8 +155,7 @@ public class H2FilterToSQL extends FilterToSQL {
 
             Expression geometry = e1 instanceof Literal ? e1 : e2 instanceof Literal ? e2 : null;
             if (geometry != null && !(filter instanceof Disjoint) && !(filter instanceof Beyond)) {
-                String spatialIndex =
-                        (String) currentGeometry.getUserData().get(H2Dialect.H2_SPATIAL_INDEX);
+                String spatialIndex = (String) currentGeometry.getUserData().get(H2Dialect.H2_SPATIAL_INDEX);
                 if (spatialIndex != null) {
                     // property map the column type
                     if (primaryKey.getColumns().size() == 1
@@ -189,14 +179,7 @@ public class H2FilterToSQL extends FilterToSQL {
                             out.write("'PUBLIC', ");
                         }
                         out.write("'" + featureType.getTypeName() + "', ");
-                        out.write(
-                                e.getMinX()
-                                        + ", "
-                                        + e.getMaxX()
-                                        + ", "
-                                        + e.getMinY()
-                                        + ", "
-                                        + e.getMaxY());
+                        out.write(e.getMinX() + ", " + e.getMaxX() + ", " + e.getMinY() + ", " + e.getMaxY());
                         out.write(")");
                         out.write(")");
                     }

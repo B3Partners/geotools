@@ -16,14 +16,15 @@
  */
 package org.geotools.data.elasticsearch;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
- * Class describing and Elasticsearch attribute including name, type and optional information on
- * geometry and date types.
+ * Class describing and Elasticsearch attribute including name, type and optional information on geometry and date
+ * types.
  */
 public class ElasticAttribute implements Serializable, Comparable<ElasticAttribute> {
 
@@ -34,6 +35,7 @@ public class ElasticAttribute implements Serializable, Comparable<ElasticAttribu
 
     private static final Pattern beginLetters = Pattern.compile("^[A-Za-z_].*");
 
+    @Serial
     private static final long serialVersionUID = 8839579461838862328L;
 
     private final String name;
@@ -225,8 +227,8 @@ public class ElasticAttribute implements Serializable, Comparable<ElasticAttribu
             equal &= Objects.equals(validDateFormats, other.validDateFormats);
             equal &= Objects.equals(geometryType, other.geometryType);
             equal &= Objects.equals(analyzed, other.analyzed);
-            equal &= Objects.equals(stored, other.stored);
-            equal &= Objects.equals(nested, other.nested);
+            equal &= stored == other.stored;
+            equal &= nested == other.nested;
             equal &= Objects.equals(order, other.order);
             equal &= Objects.equals(customName, other.customName);
         }

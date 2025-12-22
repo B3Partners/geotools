@@ -17,13 +17,13 @@
 package org.geotools.styling;
 
 import java.util.Map;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.style.ContrastMethod;
 import org.geotools.factory.CommonFactoryFinder;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.style.ContrastMethod;
 
 /**
  * The ContrastEnhancementImpl UnitTest
@@ -41,9 +41,7 @@ public class ContrastEnhancementImplTest {
         ContrastEnhancementImpl contrastEnhancementImpl = new ContrastEnhancementImpl();
         double expected = 1.5;
         contrastEnhancementImpl.setGammaValue(filterFactory.literal(expected));
-        double actual =
-                ((Double) ((Literal) contrastEnhancementImpl.getGammaValue()).getValue())
-                        .doubleValue();
+        double actual = ((Double) ((Literal) contrastEnhancementImpl.getGammaValue()).getValue()).doubleValue();
         Assert.assertEquals(expected, actual, 0.1);
     }
 
@@ -68,13 +66,10 @@ public class ContrastEnhancementImplTest {
         params = normalize.getParameters();
         Assert.assertEquals("Wrong number of parameters returned", 1, params.size());
         normalize.addParameter(
-                "max",
-                filterFactory.function(
-                        "env", filterFactory.literal("arg1"), filterFactory.literal("arg2")));
+                "max", filterFactory.function("env", filterFactory.literal("arg1"), filterFactory.literal("arg2")));
         params = normalize.getParameters();
 
         Expression max = params.get("max");
-        Assert.assertEquals(
-                "mangled the function in normalize", "env([arg1], [arg2])", max.toString());
+        Assert.assertEquals("mangled the function in normalize", "env([arg1], [arg2])", max.toString());
     }
 }

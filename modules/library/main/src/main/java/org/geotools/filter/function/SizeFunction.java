@@ -19,9 +19,9 @@ package org.geotools.filter.function;
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
 import java.util.Collection;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 /**
  * Return the size of a list (or other collection).
@@ -30,11 +30,10 @@ import org.opengis.filter.capability.FunctionName;
  */
 public class SizeFunction extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "size",
-                    parameter("result", Integer.class, "Result", "Size of collection"),
-                    parameter("source", Collection.class, "Source", "Collection"));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "size",
+            parameter("result", Integer.class, "Result", "Size of collection"),
+            parameter("source", Collection.class, "Source", "Collection"));
 
     public SizeFunction() {
         super(NAME);

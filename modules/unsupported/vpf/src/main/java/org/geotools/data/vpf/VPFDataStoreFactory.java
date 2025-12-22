@@ -25,30 +25,28 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Level;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFactorySpi;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFactorySpi;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.vpf.file.VPFFile;
 import org.geotools.data.vpf.file.VPFFileFactory;
 import org.geotools.data.vpf.ifc.FileConstants;
 import org.geotools.feature.SchemaException;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
- * Class VPFDataSourceFactory.java is responsible for constructing appropriate VPFDataStore
- * (actually VPFLibrary) objects. VPFDataStoreFactory - factory for VPFLibrary - factory for
- * VPFCoverage - factory for VPFFeatureClass - implements FeatureType by delegation to contained
- * DefaultFeatureType - contains VPFFiles - retrieves VPFColumns from VPFFiles for use in
- * constructing DefaultFeatureType - contains joins (column pairs) - factory for VPFFeatureType -
+ * Class VPFDataSourceFactory.java is responsible for constructing appropriate VPFDataStore (actually VPFLibrary)
+ * objects. VPFDataStoreFactory - factory for VPFLibrary - factory for VPFCoverage - factory for VPFFeatureClass -
+ * implements FeatureType by delegation to contained DefaultFeatureType - contains VPFFiles - retrieves VPFColumns from
+ * VPFFiles for use in constructing DefaultFeatureType - contains joins (column pairs) - factory for VPFFeatureType -
  * implements FeatureType by delegation to contained VPFFeatureClass
  *
- * <p>VPFFile - contains VPFInputStream - factory for VPFColumn - implements AttributeType by
- * delegation to contained DefaultFeatureType
+ * <p>VPFFile - contains VPFInputStream - factory for VPFColumn - implements AttributeType by delegation to contained
+ * DefaultFeatureType
  *
  * <p>Created: Fri Mar 28 15:54:32 2003
  *
@@ -63,7 +61,7 @@ public class VPFDataStoreFactory implements DataStoreFactorySpi {
     public VPFDataStoreFactory() {}
     /*
      *  (non-Javadoc)
-     * @see org.geotools.data.DataStoreFactorySpi#getDisplayName()
+     * @see org.geotools.api.data.DataStoreFactorySpi#getDisplayName()
      */
     @Override
     public String getDisplayName() {
@@ -71,7 +69,7 @@ public class VPFDataStoreFactory implements DataStoreFactorySpi {
     }
     /*
      *  (non-Javadoc)
-     * @see org.geotools.data.DataStoreFactorySpi#getDescription()
+     * @see org.geotools.api.data.DataStoreFactorySpi#getDescription()
      */
     @Override
     public String getDescription() {
@@ -79,7 +77,7 @@ public class VPFDataStoreFactory implements DataStoreFactorySpi {
     }
     /*
      *  (non-Javadoc)
-     * @see org.geotools.data.DataStoreFactorySpi#canProcess(java.util.Map)
+     * @see org.geotools.api.data.DataStoreFactorySpi#canProcess(java.util.Map)
      */
     @Override
     public boolean canProcess(Map<String, ?> params) {
@@ -99,7 +97,7 @@ public class VPFDataStoreFactory implements DataStoreFactorySpi {
 
     /*
      *  (non-Javadoc)
-     * @see org.geotools.data.DataStoreFactorySpi#createDataStore(java.util.Map)
+     * @see org.geotools.api.data.DataStoreFactorySpi#createDataStore(java.util.Map)
      */
     @Override
     public DataStore createDataStore(Map<String, ?> params) throws IOException {
@@ -135,13 +133,12 @@ public class VPFDataStoreFactory implements DataStoreFactorySpi {
 
         boolean debug = VPFLogger.isLoggable(Level.FINEST);
 
-        Path lhtPath = Paths.get(file.getPath());
+        Path lhtPath = Path.of(file.getPath());
         Path lhtRealPath = lhtPath.toRealPath();
         Path lhtParentPath = lhtRealPath.getParent();
 
         if (lhtParentPath == null) {
-            throw new IOException(
-                    "Fileparent either doesn't exist or is unreadable : " + lhtRealPath);
+            throw new IOException("Fileparent either doesn't exist or is unreadable : " + lhtRealPath);
         }
 
         String rootDir = lhtParentPath.toString();
@@ -184,8 +181,7 @@ public class VPFDataStoreFactory implements DataStoreFactorySpi {
         try {
             result = new VPFLibrary(libraryFeature, file, namespace);
         } catch (SchemaException exc) {
-            throw new IOException(
-                    "There was a problem making one of " + "the feature classes as a FeatureType.");
+            throw new IOException("There was a problem making one of " + "the feature classes as a FeatureType.");
         }
 
         return result;
@@ -226,7 +222,7 @@ public class VPFDataStoreFactory implements DataStoreFactorySpi {
     /*
      *
      *  (non-Javadoc)
-     * @see org.geotools.data.DataStoreFactorySpi#createNewDataStore(java.util.Map)
+     * @see org.geotools.api.data.DataStoreFactorySpi#createNewDataStore(java.util.Map)
      */
     @Override
     public DataStore createNewDataStore(Map<String, ?> params) throws IOException {
@@ -234,15 +230,14 @@ public class VPFDataStoreFactory implements DataStoreFactorySpi {
         return create(params);
     }
     /** A parameter which is the directory containing the LHT file */
-    public static final Param DIR =
-            new Param("url", URL.class, "Directory containing lht file", true);
+    public static final Param DIR = new Param("url", URL.class, "Directory containing lht file", true);
 
     public static final Param NAMESPACEP =
             new Param("namespace", URI.class, "uri to a the namespace", false); // not required
 
     /*
      *  (non-Javadoc)
-     * @see org.geotools.data.DataStoreFactorySpi#getParametersInfo()
+     * @see org.geotools.api.data.DataStoreFactorySpi#getParametersInfo()
      */
     @Override
     public Param[] getParametersInfo() {
@@ -252,7 +247,7 @@ public class VPFDataStoreFactory implements DataStoreFactorySpi {
     }
     /*
      *  (non-Javadoc)
-     * @see org.geotools.data.DataStoreFactorySpi#isAvailable()
+     * @see org.geotools.api.data.DataStoreFactorySpi#isAvailable()
      */
     @Override
     public boolean isAvailable() {

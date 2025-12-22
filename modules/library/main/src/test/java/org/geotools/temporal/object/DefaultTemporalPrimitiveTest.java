@@ -20,13 +20,13 @@ import static org.junit.Assert.assertNotEquals;
 
 import java.util.Calendar;
 import java.util.Date;
+import org.geotools.api.temporal.Instant;
+import org.geotools.api.temporal.Position;
+import org.geotools.api.temporal.RelativePosition;
+import org.geotools.api.temporal.TemporalPrimitive;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.temporal.Instant;
-import org.opengis.temporal.Position;
-import org.opengis.temporal.RelativePosition;
-import org.opengis.temporal.TemporalPrimitive;
 
 /** @author Mehdi Sidhoum (Geomatys) */
 public class DefaultTemporalPrimitiveTest {
@@ -79,8 +79,7 @@ public class DefaultTemporalPrimitiveTest {
         // relative position between Period onbjects
         temporalPrimitive1 = new DefaultPeriod(new DefaultInstant(position1), instant1);
         cal.set(2200, 9, 1);
-        temporalPrimitive2 =
-                new DefaultPeriod(instant2, new DefaultInstant(new DefaultPosition(cal.getTime())));
+        temporalPrimitive2 = new DefaultPeriod(instant2, new DefaultInstant(new DefaultPosition(cal.getTime())));
         result = temporalPrimitive1.relativePosition(other);
         assertNotEquals(temporalPrimitive2.relativePosition(other), result);
     }

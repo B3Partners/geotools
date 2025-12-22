@@ -18,23 +18,24 @@ package org.geotools.data.postgis;
 
 import java.io.IOException;
 import java.util.Date;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.BinaryComparisonOperator;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.DistanceBufferOperator;
 import org.geotools.data.jdbc.FilterToSQL;
 import org.geotools.filter.FilterCapabilities;
 import org.geotools.filter.function.JsonArrayContainsFunction;
 import org.geotools.filter.function.JsonPointerFunction;
 import org.geotools.jdbc.JDBCDataStore;
+import org.geotools.util.Version;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LinearRing;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.BinaryComparisonOperator;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.DistanceBufferOperator;
 
 public class PostgisFilterToSQL extends FilterToSQL {
 
@@ -44,6 +45,11 @@ public class PostgisFilterToSQL extends FilterToSQL {
 
     public PostgisFilterToSQL(PostGISDialect dialect) {
         helper = new FilterToSqlHelper(this);
+        pgDialect = dialect;
+    }
+
+    public PostgisFilterToSQL(PostGISDialect dialect, Version pgVersion) {
+        helper = new FilterToSqlHelper(this, pgVersion);
         pgDialect = dialect;
     }
 
@@ -68,15 +74,13 @@ public class PostgisFilterToSQL extends FilterToSQL {
         // evaluate the literal and store it for later
         Geometry geom = (Geometry) evaluateLiteral(expression, Geometry.class);
 
-        if (geom instanceof LinearRing) {
+        if (geom instanceof LinearRing ring) {
             // postgis does not handle linear rings, convert to just a line string
-            geom = geom.getFactory().createLineString(((LinearRing) geom).getCoordinateSequence());
+            geom = geom.getFactory().createLineString(ring.getCoordinateSequence());
         }
 
         Object typename =
-                currentGeometry != null
-                        ? currentGeometry.getUserData().get(JDBCDataStore.JDBC_NATIVE_TYPENAME)
-                        : null;
+                currentGeometry != null ? currentGeometry.getUserData().get(JDBCDataStore.JDBC_NATIVE_TYPENAME) : null;
         if ("geography".equals(typename)) {
             out.write("ST_GeogFromText('");
             out.write(geom.toText());
@@ -102,11 +106,7 @@ public class PostgisFilterToSQL extends FilterToSQL {
 
     @Override
     protected Object visitBinarySpatialOperator(
-            BinarySpatialOperator filter,
-            PropertyName property,
-            Literal geometry,
-            boolean swapped,
-            Object extraData) {
+            BinarySpatialOperator filter, PropertyName property, Literal geometry, boolean swapped, Object extraData) {
         helper.out = out;
         return helper.visitBinarySpatialOperator(filter, property, geometry, swapped, extraData);
     }
@@ -143,10 +143,9 @@ public class PostgisFilterToSQL extends FilterToSQL {
     @Override
     public Object visit(Literal literal, Object extraData) {
         // handle BigDate udt, encode it as a long
-        if (extraData instanceof Class && BigDate.class.isAssignableFrom((Class<?>) extraData)) {
+        if (extraData instanceof Class<?> class1 && BigDate.class.isAssignableFrom(class1)) {
             if (literal.getValue() instanceof Date) {
-                return super.visit(
-                        filterFactory.literal(((Date) literal.getValue()).getTime()), Long.class);
+                return super.visit(filterFactory.literal(((Date) literal.getValue()).getTime()), Long.class);
             }
         }
         return super.visit(literal, extraData);
@@ -164,11 +163,6 @@ public class PostgisFilterToSQL extends FilterToSQL {
 
     public void setFunctionEncodingEnabled(boolean functionEncodingEnabled) {
         this.functionEncodingEnabled = functionEncodingEnabled;
-    }
-
-    @Override
-    public double getDistanceInMeters(DistanceBufferOperator operator) {
-        return super.getDistanceInMeters(operator);
     }
 
     @Override
@@ -199,8 +193,7 @@ public class PostgisFilterToSQL extends FilterToSQL {
         } else if (left instanceof JsonPointerFunction || right instanceof JsonPointerFunction) {
             rightContext = getExpressionTypeIncludingLiterals(left);
             leftContext = getExpressionTypeIncludingLiterals(right);
-            super.encodeBinaryComparisonOperator(
-                    filter, extraData, left, right, leftContext, rightContext);
+            super.encodeBinaryComparisonOperator(filter, extraData, left, right, leftContext, rightContext);
         } else {
             super.visitBinaryComparisonOperator(filter, extraData);
         }
@@ -233,8 +226,7 @@ public class PostgisFilterToSQL extends FilterToSQL {
         Expression right = filter.getExpression2();
 
         helper.out = out;
-        if (left instanceof JsonArrayContainsFunction
-                || right instanceof JsonArrayContainsFunction) {
+        if (left instanceof JsonArrayContainsFunction || right instanceof JsonArrayContainsFunction) {
             Class leftContext = super.getExpressionType(left);
             try {
                 writeBinaryExpression(left, leftContext);
@@ -265,9 +257,28 @@ public class PostgisFilterToSQL extends FilterToSQL {
 
     private Class getExpressionTypeIncludingLiterals(Expression expression) {
         Class result = super.getExpressionType(expression);
-        if (expression instanceof Literal) {
-            result = ((Literal) expression).getValue().getClass();
+        if (expression instanceof Literal literal) {
+            result = literal.getValue().getClass();
         }
         return result;
+    }
+
+    @Override
+    protected void processLikeLeftOperand(Object extraData, boolean matchCase, Expression att, Class attributeType)
+            throws IOException {
+        if (!matchCase) {
+            out.write(" UPPER(");
+        }
+
+        att.accept(this, extraData);
+
+        if (attributeType != null && Number.class.isAssignableFrom(attributeType)) {
+            out.write("::text");
+        }
+        if (!matchCase) {
+            out.write(") LIKE ");
+        } else {
+            out.write(" LIKE ");
+        }
     }
 }

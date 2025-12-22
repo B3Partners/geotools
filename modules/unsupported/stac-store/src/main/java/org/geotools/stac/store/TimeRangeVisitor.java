@@ -17,68 +17,67 @@
 package org.geotools.stac.store;
 
 import java.util.Date;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.BinaryComparisonOperator;
+import org.geotools.api.filter.ExcludeFilter;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.IncludeFilter;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNil;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
+import org.geotools.api.filter.temporal.After;
+import org.geotools.api.filter.temporal.AnyInteracts;
+import org.geotools.api.filter.temporal.Before;
+import org.geotools.api.filter.temporal.Begins;
+import org.geotools.api.filter.temporal.BegunBy;
+import org.geotools.api.filter.temporal.During;
+import org.geotools.api.filter.temporal.EndedBy;
+import org.geotools.api.filter.temporal.Ends;
+import org.geotools.api.filter.temporal.Meets;
+import org.geotools.api.filter.temporal.MetBy;
+import org.geotools.api.filter.temporal.OverlappedBy;
+import org.geotools.api.filter.temporal.TContains;
+import org.geotools.api.filter.temporal.TEquals;
+import org.geotools.api.filter.temporal.TOverlaps;
 import org.geotools.filter.visitor.NullFilterVisitor;
 import org.geotools.util.DateRange;
 import org.geotools.util.Range;
-import org.opengis.filter.And;
-import org.opengis.filter.BinaryComparisonOperator;
-import org.opengis.filter.ExcludeFilter;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Id;
-import org.opengis.filter.IncludeFilter;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNil;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
-import org.opengis.filter.temporal.After;
-import org.opengis.filter.temporal.AnyInteracts;
-import org.opengis.filter.temporal.Before;
-import org.opengis.filter.temporal.Begins;
-import org.opengis.filter.temporal.BegunBy;
-import org.opengis.filter.temporal.During;
-import org.opengis.filter.temporal.EndedBy;
-import org.opengis.filter.temporal.Ends;
-import org.opengis.filter.temporal.Meets;
-import org.opengis.filter.temporal.MetBy;
-import org.opengis.filter.temporal.OverlappedBy;
-import org.opengis.filter.temporal.TContains;
-import org.opengis.filter.temporal.TEquals;
-import org.opengis.filter.temporal.TOverlaps;
 
 /**
- * Returns a {@link DateRange} if the filter is equivalent to a date range on the "datetime"
- * property, <code>null</code> otherwise, meaning there is more filtering included. <br>
- * The visitor is not thread safe, call <code>reset</code> in case you want to re-use and need to
- * check the "exact" property.
+ * Returns a {@link DateRange} if the filter is equivalent to a date range on the "datetime" property, <code>null</code>
+ * otherwise, meaning there is more filtering included. <br>
+ * The visitor is not thread safe, call <code>reset</code> in case you want to re-use and need to check the "exact"
+ * property.
  */
 public class TimeRangeVisitor extends NullFilterVisitor {
 
     public static final Date DATE_NEGATIVE_INFINITE = new Date(Long.MIN_VALUE);
     public static final Date DATE_POSITIVE_INFINITE = new Date(Long.MAX_VALUE);
-    static final DateRange INFINITY =
-            new DateRange(DATE_NEGATIVE_INFINITE, false, DATE_POSITIVE_INFINITE, false);
+    static final DateRange INFINITY = new DateRange(DATE_NEGATIVE_INFINITE, false, DATE_POSITIVE_INFINITE, false);
 
     private static final String DATETIME = "datetime";
 
@@ -96,8 +95,7 @@ public class TimeRangeVisitor extends NullFilterVisitor {
     }
 
     /**
-     * Returns true if the date range exactly represents the filter, false if there are other
-     * components
+     * Returns true if the date range exactly represents the filter, false if there are other components
      *
      * @return
      */
@@ -114,15 +112,14 @@ public class TimeRangeVisitor extends NullFilterVisitor {
     }
 
     /**
-     * Checks if a property is a time property, users can override if they have more sophisticated
-     * logic than matching a single property name
+     * Checks if a property is a time property, users can override if they have more sophisticated logic than matching a
+     * single property name
      *
      * @param expression
      * @return
      */
     protected boolean isTimeProperty(Expression expression) {
-        return expression instanceof PropertyName
-                && timeProperty.equals(((PropertyName) expression).getPropertyName());
+        return expression instanceof PropertyName pn && timeProperty.equals(pn.getPropertyName());
     }
 
     private DateRange infinity() {
@@ -159,8 +156,7 @@ public class TimeRangeVisitor extends NullFilterVisitor {
     }
 
     private DateRange toDateRange(Range<Date> in) {
-        return new DateRange(
-                in.getMinValue(), in.isMinIncluded(), in.getMaxValue(), in.isMaxIncluded());
+        return new DateRange(in.getMinValue(), in.isMinIncluded(), in.getMaxValue(), in.isMaxIncluded());
     }
 
     @Override

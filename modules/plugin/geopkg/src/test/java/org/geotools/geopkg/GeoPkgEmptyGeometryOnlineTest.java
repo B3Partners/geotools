@@ -19,9 +19,11 @@ package org.geotools.geopkg;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.jdbc.JDBCEmptyGeometryOnlineTest;
@@ -29,8 +31,6 @@ import org.geotools.jdbc.JDBCEmptyGeometryTestSetup;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class GeoPkgEmptyGeometryOnlineTest extends JDBCEmptyGeometryOnlineTest {
 
@@ -86,7 +86,7 @@ public class GeoPkgEmptyGeometryOnlineTest extends JDBCEmptyGeometryOnlineTest {
                 SimpleFeature feature = writer.next();
                 feature.setAttribute(aname("id"), Integer.valueOf(100));
                 feature.setAttribute(aname("geom_" + type.toLowerCase()), emptyGeometry);
-                feature.setAttribute(aname("name"), new String("empty " + type));
+                feature.setAttribute(aname("name"), "empty " + type);
                 writer.write();
             }
             tx.commit();

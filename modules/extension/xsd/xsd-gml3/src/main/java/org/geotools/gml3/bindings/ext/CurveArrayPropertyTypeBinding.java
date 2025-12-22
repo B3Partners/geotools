@@ -27,8 +27,8 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.MultiLineString;
 
 @SuppressWarnings("ComparableType")
-public class CurveArrayPropertyTypeBinding
-        extends org.geotools.gml3.bindings.CurveArrayPropertyTypeBinding implements Comparable {
+public class CurveArrayPropertyTypeBinding extends org.geotools.gml3.bindings.CurveArrayPropertyTypeBinding
+        implements Comparable {
 
     public CurveArrayPropertyTypeBinding(GeometryFactory gf) {
         super(gf);
@@ -56,14 +56,12 @@ public class CurveArrayPropertyTypeBinding
         // array.
         for (Node child : node.getChildren()) {
             Object nodeValue = child.getValue();
-            if (nodeValue instanceof MultiLineString) {
-                MultiLineString curve = (MultiLineString) nodeValue;
+            if (nodeValue instanceof MultiLineString curve) {
                 for (int i = 0; i < curve.getNumGeometries(); i++) {
                     LineString lineString = (LineString) curve.getGeometryN(i);
                     lineStrings.add(lineString);
                 }
-            } else if (nodeValue instanceof LineString) {
-                LineString lineString = (LineString) nodeValue;
+            } else if (nodeValue instanceof LineString lineString) {
                 lineStrings.add(lineString);
             }
         }

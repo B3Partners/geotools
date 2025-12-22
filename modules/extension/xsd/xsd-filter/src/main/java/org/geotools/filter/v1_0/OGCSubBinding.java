@@ -17,12 +17,12 @@
 package org.geotools.filter.v1_0;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Subtract;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Subtract;
 
 /**
  * Binding object for the element http://www.opengis.net/ogc:Sub.
@@ -77,7 +77,6 @@ public class OGCSubBinding extends AbstractComplexBinding {
      */
     @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        return filterfactory.subtract(
-                (Expression) node.getChildValue(0), (Expression) node.getChildValue(1));
+        return filterfactory.subtract((Expression) node.getChildValue(0), (Expression) node.getChildValue(1));
     }
 }

@@ -18,11 +18,11 @@ package org.geotools.gml2;
 
 import java.io.InputStream;
 import javax.xml.namespace.QName;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.xsd.StreamingParser;
 import org.junit.Assert;
 import org.junit.Test;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
 
 public class GMLFeatureStreamingTest {
     @Test
@@ -40,8 +40,7 @@ public class GMLFeatureStreamingTest {
         try (InputStream in = getClass().getResourceAsStream("feature.xml")) {
 
             StreamingParser parser =
-                    new StreamingParser(
-                            new TestConfiguration(), in, new QName(GML.NAMESPACE, "featureMember"));
+                    new StreamingParser(new TestConfiguration(), in, new QName(GML.NAMESPACE, "featureMember"));
             makeAssertions(parser);
         }
     }

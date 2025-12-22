@@ -23,6 +23,8 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import java.net.URL;
 import java.util.Date;
 import java.util.Scanner;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.geojson.GeoJSONReader;
 import org.geotools.data.geojson.GeoJSONReaderTest;
 import org.geotools.filter.expression.PropertyAccessor;
@@ -31,8 +33,6 @@ import org.geotools.test.TestData;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class JSONNodePropertyAccessorTest {
 
@@ -43,7 +43,8 @@ public class JSONNodePropertyAccessorTest {
     @Before
     public void setUp() throws Exception {
         URL url = TestData.url(GeoJSONReaderTest.class, "multilevel.json");
-        String jsonString = new Scanner(url.openStream(), "UTF-8").useDelimiter("\\A").next();
+        String jsonString =
+                new Scanner(url.openStream(), "UTF-8").useDelimiter("\\A").next();
         feature = GeoJSONReader.parseFeature(jsonString);
         accessor = JSONNodePropertyAccessorFactory.JSONNODEPROPERTY;
     }
@@ -58,14 +59,13 @@ public class JSONNodePropertyAccessorTest {
     @Test
     public void testGetMultiLevel() {
         Assert.assertEquals(
-                Integer.valueOf(1),
-                accessor.get(feature, "aThreeLevelObject/secondLevel/firstLevel", null));
+                Integer.valueOf(1), accessor.get(feature, "aThreeLevelObject/secondLevel/firstLevel", null));
         Assert.assertEquals(
-                Double.valueOf(1.3),
-                accessor.get(feature, "aThreeLevelObjectWithDouble/secondLevel/firstLevel", null));
+                Double.valueOf(1.3), accessor.get(feature, "aThreeLevelObjectWithDouble/secondLevel/firstLevel", null));
         Assert.assertEquals(
                 ObjectNode.class,
-                accessor.get(feature, "aTwoLevelObjectNoChildren/firstLevel", null).getClass());
+                accessor.get(feature, "aTwoLevelObjectNoChildren/firstLevel", null)
+                        .getClass());
     }
 
     @Test
@@ -85,11 +85,8 @@ public class JSONNodePropertyAccessorTest {
         try (GeoJSONReader reader = new GeoJSONReader(url)) {
             SimpleFeature feature = reader.getFeature();
 
-            assertEquals(
-                    "1.0.0", ((TextNode) accessor.get(feature, "stac_version", null)).asText());
-            assertEquals(
-                    "simple-collection",
-                    ((TextNode) accessor.get(feature, "collection", null)).asText());
+            assertEquals("1.0.0", ((TextNode) accessor.get(feature, "stac_version", null)).asText());
+            assertEquals("simple-collection", ((TextNode) accessor.get(feature, "collection", null)).asText());
             assertEquals(
                     "https://stac-extensions.github.io/eo/v1.0.0/schema.json",
                     accessor.get(feature, "stac_extensions/0", null));

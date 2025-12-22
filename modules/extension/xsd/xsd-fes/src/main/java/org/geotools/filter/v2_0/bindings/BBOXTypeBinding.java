@@ -23,11 +23,11 @@ import javax.xml.namespace.QName;
 import org.eclipse.xsd.XSDElementDeclaration;
 import org.eclipse.xsd.XSDFactory;
 import org.eclipse.xsd.XSDParticle;
+import org.geotools.api.filter.spatial.BBOX;
 import org.geotools.filter.v1_0.OGCBBOXTypeBinding;
 import org.geotools.filter.v2_0.FES;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.gml3.v3_2.GML;
-import org.opengis.filter.spatial.BBOX;
 
 /**
  * Binding object for the type http://www.opengis.net/ogc:BBOXType.
@@ -62,9 +62,7 @@ public class BBOXTypeBinding extends OGCBBOXTypeBinding {
         ENVELOPE_PARTICLE.setMaxOccurs(-1);
         try {
             ENVELOPE_PARTICLE.setContent(
-                    GML.getInstance()
-                            .getSchema()
-                            .resolveElementDeclaration(GML.Envelope.getLocalPart()));
+                    GML.getInstance().getSchema().resolveElementDeclaration(GML.Envelope.getLocalPart()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -92,8 +90,7 @@ public class BBOXTypeBinding extends OGCBBOXTypeBinding {
     }
 
     @Override
-    public List<Object[]> getProperties(Object object, XSDElementDeclaration element)
-            throws Exception {
+    public List<Object[]> getProperties(Object object, XSDElementDeclaration element) throws Exception {
         BBOX box = (BBOX) object;
 
         List<Object[]> properties = new ArrayList<>();

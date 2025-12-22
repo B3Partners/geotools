@@ -18,13 +18,13 @@ package org.geotools.gml2.bindings;
 
 import java.util.Collection;
 import javax.xml.namespace.QName;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.gml2.GML;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * Binding object for the type http://www.opengis.net/gml:AbstractFeatureCollectionType.
@@ -101,8 +101,7 @@ public class GMLAbstractFeatureCollectionTypeBinding extends AbstractComplexBind
             Collection<SimpleFeature> collection = (Collection) fc;
             collection.addAll(node.getChildValues(SimpleFeature.class));
         } else {
-            throw new IllegalStateException(
-                    "Please provide DefaultFeatureCollection or ListFeatureCollection");
+            throw new IllegalStateException("Please provide DefaultFeatureCollection or ListFeatureCollection");
         }
 
         return fc;

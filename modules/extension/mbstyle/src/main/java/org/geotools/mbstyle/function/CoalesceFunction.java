@@ -18,15 +18,14 @@ package org.geotools.mbstyle.function;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
 
 /**
- * MapBox Expression function that will return the expression evaluation result of the first
- * expression that evaluates to a non-null value. If no expression evaluates to a non-null value,
- * this function will return null.
+ * MapBox Expression function that will return the expression evaluation result of the first expression that evaluates
+ * to a non-null value. If no expression evaluates to a non-null value, this function will return null.
  *
  * <p>Format:
  *

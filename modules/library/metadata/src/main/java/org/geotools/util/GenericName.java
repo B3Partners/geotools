@@ -19,38 +19,40 @@
  */
 package org.geotools.util;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import org.opengis.util.InternationalString;
-import org.opengis.util.LocalName;
-import org.opengis.util.NameSpace;
-import org.opengis.util.ScopedName; // For javadoc
+import org.geotools.api.util.InternationalString;
+import org.geotools.api.util.LocalName;
+import org.geotools.api.util.NameSpace;
+import org.geotools.api.util.ScopedName; // For javadoc
 
 /**
- * Base class for {@linkplain ScopedName generic scoped} and {@linkplain LocalName local name}
- * structure for type and attribute name in the context of name spaces.
+ * Base class for {@linkplain ScopedName generic scoped} and {@linkplain LocalName local name} structure for type and
+ * attribute name in the context of name spaces.
  *
- * <p><b>Note:</b> this class has a natural ordering that is inconsistent with {@link #equals
- * equals}. The natural ordering may be case-insensitive and ignores the {@linkplain
- * #DEFAULT_SEPARATOR character separator} between name elements.
+ * <p><b>Note:</b> this class has a natural ordering that is inconsistent with {@link #equals equals}. The natural
+ * ordering may be case-insensitive and ignores the {@linkplain #DEFAULT_SEPARATOR character separator} between name
+ * elements.
  *
  * @since 2.1
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
  * @see NameFactory
  */
-public abstract class GenericName implements org.opengis.util.GenericName, Serializable {
+public abstract class GenericName implements org.geotools.api.util.GenericName, Serializable {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 8685047583179337259L;
 
     /** The default separator character. */
     public static final char DEFAULT_SEPARATOR = ':';
 
     /**
-     * The name space, created on the fly when needed. This is a temporary approach until we replace
-     * this class by a better implementation.
+     * The name space, created on the fly when needed. This is a temporary approach until we replace this class by a
+     * better implementation.
      */
     private transient NameSpace namespace;
 
@@ -58,19 +60,18 @@ public abstract class GenericName implements org.opengis.util.GenericName, Seria
     protected GenericName() {}
 
     /**
-     * Ensures that the given name is a {@link String} or an {@link InternationalString}. This is
-     * used for subclass constructors.
+     * Ensures that the given name is a {@link String} or an {@link InternationalString}. This is used for subclass
+     * constructors.
      */
     static CharSequence validate(final CharSequence name) {
-        return (name == null || name instanceof InternationalString) ? name : name.toString();
+        return name == null || name instanceof InternationalString ? name : name.toString();
     }
 
     /**
-     * Returns the scope (name space) in which this name is local. The scope is set on creation and
-     * is not modifiable. The scope of a name determines where a name "starts". For instance, if a
-     * name has a {@linkplain #depth depth} of two ({@code "util.GenericName"}) and is associated
-     * with a {@linkplain NameSpace name space} having the name {@code "org.opengis"}, then the
-     * fully qualified name would be {@code "org.opengis.util.GenericName"}.
+     * Returns the scope (name space) in which this name is local. The scope is set on creation and is not modifiable.
+     * The scope of a name determines where a name "starts". For instance, if a name has a {@linkplain #depth depth} of
+     * two ({@code "util.GenericName"}) and is associated with a {@linkplain NameSpace name space} having the name
+     * {@code "org.opengis"}, then the fully qualified name would be {@code "org.geotools.api.util.GenericName"}.
      *
      * @return The name space.
      * @since 2.3
@@ -78,36 +79,34 @@ public abstract class GenericName implements org.opengis.util.GenericName, Seria
     @Override
     public NameSpace scope() {
         if (namespace == null) {
-            namespace =
-                    new NameSpace() {
-                        @Override
-                        public boolean isGlobal() {
-                            return false;
-                        }
+            namespace = new NameSpace() {
+                @Override
+                public boolean isGlobal() {
+                    return false;
+                }
 
-                        @Override
-                        public org.opengis.util.GenericName name() {
-                            return getInternalScope();
-                        }
-                    };
+                @Override
+                public org.geotools.api.util.GenericName name() {
+                    return getInternalScope();
+                }
+            };
         }
         return namespace;
     }
 
     /**
-     * Returns the scope (name space) of this generic name. If this name has no scope (e.g. is the *
-     * root), then this method returns {@code null}. Can be a no-op if the subclass overrides {@link
-     * #scope()}
+     * Returns the scope (name space) of this generic name. If this name has no scope (e.g. is the * root), then this
+     * method returns {@code null}. Can be a no-op if the subclass overrides {@link #scope()}
      */
-    protected abstract org.opengis.util.GenericName getInternalScope();
+    protected abstract org.geotools.api.util.GenericName getInternalScope();
 
     /**
-     * Returns the depth of this name within the namespace hierarchy. This indicates the number of
-     * levels specified by this name. For any {@link LocalName}, it is always one. For a {@link
-     * ScopedName} it is some number greater than or equal to 2.
+     * Returns the depth of this name within the namespace hierarchy. This indicates the number of levels specified by
+     * this name. For any {@link LocalName}, it is always one. For a {@link ScopedName} it is some number greater than
+     * or equal to 2.
      *
-     * <p>The depth is the length of the list returned by the {@link #getParsedNames} method. As
-     * such it is a derived parameter.
+     * <p>The depth is the length of the list returned by the {@link #getParsedNames} method. As such it is a derived
+     * parameter.
      *
      * @return The depth of this name.
      * @since 2.3
@@ -118,9 +117,8 @@ public abstract class GenericName implements org.opengis.util.GenericName, Seria
     }
 
     /**
-     * Returns the sequence of {@linkplain LocalName local names} making this generic name. Each
-     * element in this list is like a directory name in a file path name. The length of this
-     * sequence is the generic name depth.
+     * Returns the sequence of {@linkplain LocalName local names} making this generic name. Each element in this list is
+     * like a directory name in a file path name. The length of this sequence is the generic name depth.
      *
      * @return The sequence of local names.
      */
@@ -128,8 +126,8 @@ public abstract class GenericName implements org.opengis.util.GenericName, Seria
     public abstract List<LocalName> getParsedNames();
 
     /**
-     * Returns the first element in the sequence of {@linkplain #getParsedNames parsed names}. For
-     * any {@link LocalName}, this is always {@code this}.
+     * Returns the first element in the sequence of {@linkplain #getParsedNames parsed names}. For any
+     * {@link LocalName}, this is always {@code this}.
      *
      * @return The first element of this name.
      * @since 2.6
@@ -141,8 +139,8 @@ public abstract class GenericName implements org.opengis.util.GenericName, Seria
     }
 
     /**
-     * Returns the last element in the sequence of {@linkplain #getParsedNames parsed names}. For
-     * any {@link LocalName}, this is always {@code this}.
+     * Returns the last element in the sequence of {@linkplain #getParsedNames parsed names}. For any {@link LocalName},
+     * this is always {@code this}.
      *
      * @return The last element of this name.
      * @since 2.6
@@ -162,12 +160,11 @@ public abstract class GenericName implements org.opengis.util.GenericName, Seria
     }
 
     /**
-     * Returns a string representation of this generic name. This string representation is
-     * local-independant. It contains all elements listed by {@link #getParsedNames} separated by an
-     * arbitrary character (usually {@code :} or {@code /}). This rule implies that the {@code
-     * toString()} method for a {@linkplain ScopedName scoped name} will contains the scope, while
-     * the {@code toString()} method for the {@linkplain LocalName local version} of the same name
-     * will not contains the scope.
+     * Returns a string representation of this generic name. This string representation is local-independant. It
+     * contains all elements listed by {@link #getParsedNames} separated by an arbitrary character (usually {@code :} or
+     * {@code /}). This rule implies that the {@code toString()} method for a {@linkplain ScopedName scoped name} will
+     * contains the scope, while the {@code toString()} method for the {@linkplain LocalName local version} of the same
+     * name will not contains the scope.
      *
      * @return A string representation of this name.
      */
@@ -186,11 +183,10 @@ public abstract class GenericName implements org.opengis.util.GenericName, Seria
     }
 
     /**
-     * Returns a local-dependent string representation of this generic name. This string is similar
-     * to the one returned by {@link #toString} except that each element has been localized in the
-     * {@linkplain InternationalString#toString(Locale) specified locale}. If no international
-     * string is available, then this method should returns an implementation mapping to {@link
-     * #toString} for all locales.
+     * Returns a local-dependent string representation of this generic name. This string is similar to the one returned
+     * by {@link #toString} except that each element has been localized in the
+     * {@linkplain InternationalString#toString(Locale) specified locale}. If no international string is available, then
+     * this method should returns an implementation mapping to {@link #toString} for all locales.
      *
      * @return A localizable string representation of this name.
      */
@@ -205,20 +201,18 @@ public abstract class GenericName implements org.opengis.util.GenericName, Seria
      * @version $Id$
      * @author Martin Desruisseaux (IRD)
      */
-    private static final class International extends AbstractInternationalString
-            implements Serializable {
+    private static final class International extends AbstractInternationalString implements Serializable {
         /** Serial number for interoperability with different versions. */
+        @Serial
         private static final long serialVersionUID = -4234089612436334148L;
 
         /**
-         * The sequence of {@linkplain LocalName local names} making this generic name. This is the
-         * value returned by {@link GenericName#getParsedNames}.
+         * The sequence of {@linkplain LocalName local names} making this generic name. This is the value returned by
+         * {@link GenericName#getParsedNames}.
          */
         private final List<? extends LocalName> parsedNames;
 
-        /**
-         * The separator character. This is the value returned by {@link GenericName#getSeparator}.
-         */
+        /** The separator character. This is the value returned by {@link GenericName#getSeparator}. */
         private final char separator;
 
         /**
@@ -250,8 +244,7 @@ public abstract class GenericName implements org.opengis.util.GenericName, Seria
         public boolean equals(final Object object) {
             if (object != null && object.getClass().equals(getClass())) {
                 final International that = (International) object;
-                return Utilities.equals(this.parsedNames, that.parsedNames)
-                        && this.separator == that.separator;
+                return Utilities.equals(this.parsedNames, that.parsedNames) && this.separator == that.separator;
             }
             return false;
         }
@@ -264,17 +257,16 @@ public abstract class GenericName implements org.opengis.util.GenericName, Seria
     }
 
     /**
-     * Compares this name with the specified object for order. Returns a negative integer, zero, or
-     * a positive integer as this name lexicographically precedes, is equals to, or follows the
-     * specified object. The comparaison is performed in the following order:
+     * Compares this name with the specified object for order. Returns a negative integer, zero, or a positive integer
+     * as this name lexicographically precedes, is equals to, or follows the specified object. The comparaison is
+     * performed in the following order:
      *
      * <ul>
-     *   <li>Compares each element in the {@linkplain #getParsedNames list of parsed names}. If an
-     *       element of this name lexicographically precedes or follows the corresponding element of
+     *   <li>Compares each element in the {@linkplain #getParsedNames list of parsed names}. If an element of this name
+     *       lexicographically precedes or follows the corresponding element of the specified name, returns a negative
+     *       or a positive integer respectively.
+     *   <li>If all elements in both names are lexicographically equal, then if this name has less or more elements than
      *       the specified name, returns a negative or a positive integer respectively.
-     *   <li>If all elements in both names are lexicographically equal, then if this name has less
-     *       or more elements than the specified name, returns a negative or a positive integer
-     *       respectively.
      *   <li>Otherwise, returns 0.
      * </ul>
      *
@@ -282,7 +274,7 @@ public abstract class GenericName implements org.opengis.util.GenericName, Seria
      * @return -1 if this name precedes the given one, +1 if it follows, 0 if equals.
      */
     @Override
-    public int compareTo(final org.opengis.util.GenericName that) {
+    public int compareTo(final org.geotools.api.util.GenericName that) {
         final Iterator<? extends LocalName> thisNames = this.getParsedNames().iterator();
         final Iterator<? extends LocalName> thatNames = that.getParsedNames().iterator();
         while (thisNames.hasNext()) {

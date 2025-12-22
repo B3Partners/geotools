@@ -30,21 +30,21 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import org.geotools.api.filter.BinaryComparisonOperator;
+import org.geotools.api.filter.BinaryLogicOperator;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Intersects;
 import org.geotools.filter.FilterHandler;
 import org.geotools.filter.LogicFilterImpl;
 import org.geotools.gml.GMLFilterDocument;
 import org.geotools.gml.GMLFilterGeometry;
 import org.geotools.util.logging.Logging;
 import org.junit.Test;
-import org.opengis.filter.BinaryComparisonOperator;
-import org.opengis.filter.BinaryLogicOperator;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Intersects;
 import org.xml.sax.InputSource;
 import org.xml.sax.helpers.ParserAdapter;
 import org.xml.sax.helpers.XMLFilterImpl;
@@ -53,33 +53,32 @@ public class FilterFilterTest {
 
     @Test
     public void testWithoutFunction() throws Exception {
-        String filter =
-                "<wfs:GetFeature service=\"WFS\" version=\"1.0.0\" "
-                        + "outputFormat=\"GML2\" "
-                        + "xmlns:topp=\"http://www.openplans.org/topp\" "
-                        + "xmlns:wfs=\"http://www.opengis.net/wfs\" "
-                        + "xmlns:ogc=\"http://www.opengis.net/ogc\" "
-                        + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
-                        + "xsi:schemaLocation=\"http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd\">"
-                        + "<wfs:Query typeName=\"topp:states\">"
-                        + "<Filter xmlns=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\">"
-                        + "<And>"
-                        + "<Intersects>"
-                        + "<PropertyName>the_geom</PropertyName>"
-                        + "<gml:Polygon>"
-                        + "<gml:outerBoundaryIs>"
-                        + "<gml:LinearRing><gml:coordinates decimal=\".\" cs=\",\" ts=\" \">-99.79800943339099,30.41833858217994 -99.79800943339099,30.71813913408305 -99.49820888148788,30.71813913408305 -99.49820888148788,30.41833858217994 -99.79800943339099,30.41833858217994</gml:coordinates>"
-                        + "</gml:LinearRing>"
-                        + "</gml:outerBoundaryIs>"
-                        + "</gml:Polygon>"
-                        + "</Intersects>"
-                        + "<BBOX><PropertyName>the_geom</PropertyName>"
-                        + "<gml:Box><gml:coordinates decimal=\".\" cs=\",\" ts=\" \">-124.731422,24.955967 -66.969849,49.371735</gml:coordinates></gml:Box>"
-                        + "</BBOX>"
-                        + "</And>"
-                        + "</Filter>"
-                        + "</wfs:Query>"
-                        + "</wfs:GetFeature>";
+        String filter = "<wfs:GetFeature service=\"WFS\" version=\"1.0.0\" "
+                + "outputFormat=\"GML2\" "
+                + "xmlns:topp=\"http://www.openplans.org/topp\" "
+                + "xmlns:wfs=\"http://www.opengis.net/wfs\" "
+                + "xmlns:ogc=\"http://www.opengis.net/ogc\" "
+                + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
+                + "xsi:schemaLocation=\"http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd\">"
+                + "<wfs:Query typeName=\"topp:states\">"
+                + "<Filter xmlns=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\">"
+                + "<And>"
+                + "<Intersects>"
+                + "<PropertyName>the_geom</PropertyName>"
+                + "<gml:Polygon>"
+                + "<gml:outerBoundaryIs>"
+                + "<gml:LinearRing><gml:coordinates decimal=\".\" cs=\",\" ts=\" \">-99.79800943339099,30.41833858217994 -99.79800943339099,30.71813913408305 -99.49820888148788,30.71813913408305 -99.49820888148788,30.41833858217994 -99.79800943339099,30.41833858217994</gml:coordinates>"
+                + "</gml:LinearRing>"
+                + "</gml:outerBoundaryIs>"
+                + "</gml:Polygon>"
+                + "</Intersects>"
+                + "<BBOX><PropertyName>the_geom</PropertyName>"
+                + "<gml:Box><gml:coordinates decimal=\".\" cs=\",\" ts=\" \">-124.731422,24.955967 -66.969849,49.371735</gml:coordinates></gml:Box>"
+                + "</BBOX>"
+                + "</And>"
+                + "</Filter>"
+                + "</wfs:Query>"
+                + "</wfs:GetFeature>";
         StringReader reader = new StringReader(filter);
 
         InputSource requestSource = new InputSource(reader);
@@ -118,25 +117,24 @@ public class FilterFilterTest {
     }
 
     void testLikeMatchCase_v1_0(boolean matchCase) throws Exception {
-        String filter =
-                "<wfs:GetFeature service=\"WFS\" version=\"1.0.0\" "
-                        + "outputFormat=\"GML2\" "
-                        + "xmlns:topp=\"http://www.openplans.org/topp\" "
-                        + "xmlns:wfs=\"http://www.opengis.net/wfs\" "
-                        + "xmlns:ogc=\"http://www.opengis.net/ogc\" "
-                        + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
-                        + "xsi:schemaLocation=\"http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd\">"
-                        + "<wfs:Query typeName=\"cite:Buildings\">"
-                        + "<Filter xmlns=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\">"
-                        + "<PropertyIsLike wildCard=\"*\" singleChar=\".\" escapeChar=\"\\\" matchCase=\""
-                        + matchCase
-                        + "\">"
-                        + "<PropertyName>ADDRESS</PropertyName>"
-                        + "<Literal>* MAIN STREET</Literal>"
-                        + "</PropertyIsLike>"
-                        + "</Filter>"
-                        + "</wfs:Query>"
-                        + "</wfs:GetFeature>";
+        String filter = "<wfs:GetFeature service=\"WFS\" version=\"1.0.0\" "
+                + "outputFormat=\"GML2\" "
+                + "xmlns:topp=\"http://www.openplans.org/topp\" "
+                + "xmlns:wfs=\"http://www.opengis.net/wfs\" "
+                + "xmlns:ogc=\"http://www.opengis.net/ogc\" "
+                + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
+                + "xsi:schemaLocation=\"http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd\">"
+                + "<wfs:Query typeName=\"cite:Buildings\">"
+                + "<Filter xmlns=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\">"
+                + "<PropertyIsLike wildCard=\"*\" singleChar=\".\" escapeChar=\"\\\" matchCase=\""
+                + matchCase
+                + "\">"
+                + "<PropertyName>ADDRESS</PropertyName>"
+                + "<Literal>* MAIN STREET</Literal>"
+                + "</PropertyIsLike>"
+                + "</Filter>"
+                + "</wfs:Query>"
+                + "</wfs:GetFeature>";
 
         StringReader reader = new StringReader(filter);
 
@@ -164,39 +162,38 @@ public class FilterFilterTest {
 
     @Test
     public void testWithFunction() throws Exception {
-        String filter =
-                "<wfs:GetFeature service=\"WFS\" version=\"1.0.0\" "
-                        + "outputFormat=\"GML2\" "
-                        + "xmlns:topp=\"http://www.openplans.org/topp\" "
-                        + "xmlns:wfs=\"http://www.opengis.net/wfs\" "
-                        + "xmlns:ogc=\"http://www.opengis.net/ogc\" "
-                        + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
-                        + "xsi:schemaLocation=\"http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd\">"
-                        + "<wfs:Query typeName=\"topp:states\">"
-                        + "<Filter xmlns=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\">"
-                        + "<Or>"
-                        + "<And>"
-                        + "<Intersects>"
-                        + "<PropertyName>the_geom</PropertyName>"
-                        + "<gml:Polygon>"
-                        + "<gml:outerBoundaryIs>"
-                        + "<gml:LinearRing><gml:coordinates decimal=\".\" cs=\",\" ts=\" \">-99.79800943339099,30.41833858217994 -99.79800943339099,30.71813913408305 -99.49820888148788,30.71813913408305 -99.49820888148788,30.41833858217994 -99.79800943339099,30.41833858217994</gml:coordinates>"
-                        + "</gml:LinearRing>"
-                        + "</gml:outerBoundaryIs>"
-                        + "</gml:Polygon>"
-                        + "</Intersects>"
-                        + "<BBOX><PropertyName>the_geom</PropertyName>"
-                        + "<gml:Box><gml:coordinates decimal=\".\" cs=\",\" ts=\" \">-124.731422,24.955967 -66.969849,49.371735</gml:coordinates></gml:Box>"
-                        + "</BBOX>"
-                        + "</And>"
-                        + "<PropertyIsEqualTo>"
-                        + "<Function name=\"geometryType\"><PropertyName>the_geom</PropertyName></Function>"
-                        + "<Literal>Point</Literal>"
-                        + "</PropertyIsEqualTo>"
-                        + "</Or>"
-                        + "</Filter>"
-                        + "</wfs:Query>"
-                        + "</wfs:GetFeature>";
+        String filter = "<wfs:GetFeature service=\"WFS\" version=\"1.0.0\" "
+                + "outputFormat=\"GML2\" "
+                + "xmlns:topp=\"http://www.openplans.org/topp\" "
+                + "xmlns:wfs=\"http://www.opengis.net/wfs\" "
+                + "xmlns:ogc=\"http://www.opengis.net/ogc\" "
+                + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
+                + "xsi:schemaLocation=\"http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd\">"
+                + "<wfs:Query typeName=\"topp:states\">"
+                + "<Filter xmlns=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\">"
+                + "<Or>"
+                + "<And>"
+                + "<Intersects>"
+                + "<PropertyName>the_geom</PropertyName>"
+                + "<gml:Polygon>"
+                + "<gml:outerBoundaryIs>"
+                + "<gml:LinearRing><gml:coordinates decimal=\".\" cs=\",\" ts=\" \">-99.79800943339099,30.41833858217994 -99.79800943339099,30.71813913408305 -99.49820888148788,30.71813913408305 -99.49820888148788,30.41833858217994 -99.79800943339099,30.41833858217994</gml:coordinates>"
+                + "</gml:LinearRing>"
+                + "</gml:outerBoundaryIs>"
+                + "</gml:Polygon>"
+                + "</Intersects>"
+                + "<BBOX><PropertyName>the_geom</PropertyName>"
+                + "<gml:Box><gml:coordinates decimal=\".\" cs=\",\" ts=\" \">-124.731422,24.955967 -66.969849,49.371735</gml:coordinates></gml:Box>"
+                + "</BBOX>"
+                + "</And>"
+                + "<PropertyIsEqualTo>"
+                + "<Function name=\"geometryType\"><PropertyName>the_geom</PropertyName></Function>"
+                + "<Literal>Point</Literal>"
+                + "</PropertyIsEqualTo>"
+                + "</Or>"
+                + "</Filter>"
+                + "</wfs:Query>"
+                + "</wfs:GetFeature>";
 
         StringReader reader = new StringReader(filter);
 
@@ -221,44 +218,43 @@ public class FilterFilterTest {
 
     @Test
     public void testWithFunction2() throws Exception {
-        String filter =
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                        + "<sld:StyledLayerDescriptor xmlns:sld=\"http://www.opengis.net/sld\" xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\" version=\"1.0.0\">"
-                        + "<sld:UserLayer>"
-                        + "<sld:LayerFeatureConstraints>"
-                        + "<sld:FeatureTypeConstraint/>"
-                        + "</sld:LayerFeatureConstraints>"
-                        + "<sld:UserStyle>"
-                        + "<sld:FeatureTypeStyle>"
-                        + "<sld:FeatureTypeName>Feature</sld:FeatureTypeName>"
-                        + "<sld:Rule>"
-                        + "<ogc:Filter>"
-                        + "<ogc:PropertyIsEqualTo>"
-                        + "<ogc:Function name=\"geometryType\">"
-                        + "<ogc:PropertyName>the_geom</ogc:PropertyName>"
-                        + "</ogc:Function>"
-                        + "<ogc:Literal>Point</ogc:Literal>"
-                        + "</ogc:PropertyIsEqualTo>"
-                        + "</ogc:Filter>"
-                        + "<sld:PointSymbolizer>"
-                        + "</sld:PointSymbolizer>"
-                        + "</sld:Rule>"
-                        + "<sld:Rule>"
-                        + "<ogc:Filter>"
-                        + "<ogc:PropertyIsEqualTo>"
-                        + "<ogc:Function name=\"geometryType\">"
-                        + "<ogc:PropertyName>the_geom</ogc:PropertyName>"
-                        + "</ogc:Function>"
-                        + "<ogc:Literal>MultiPoint</ogc:Literal>"
-                        + "</ogc:PropertyIsEqualTo>"
-                        + "</ogc:Filter>"
-                        + "<sld:PointSymbolizer>"
-                        + "</sld:PointSymbolizer>"
-                        + "</sld:Rule>"
-                        + "</sld:FeatureTypeStyle>"
-                        + "</sld:UserStyle>"
-                        + "</sld:UserLayer>"
-                        + "</sld:StyledLayerDescriptor>";
+        String filter = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                + "<sld:StyledLayerDescriptor xmlns:sld=\"http://www.opengis.net/sld\" xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\" version=\"1.0.0\">"
+                + "<sld:UserLayer>"
+                + "<sld:LayerFeatureConstraints>"
+                + "<sld:FeatureTypeConstraint/>"
+                + "</sld:LayerFeatureConstraints>"
+                + "<sld:UserStyle>"
+                + "<sld:FeatureTypeStyle>"
+                + "<sld:FeatureTypeName>Feature</sld:FeatureTypeName>"
+                + "<sld:Rule>"
+                + "<ogc:Filter>"
+                + "<ogc:PropertyIsEqualTo>"
+                + "<ogc:Function name=\"geometryType\">"
+                + "<ogc:PropertyName>the_geom</ogc:PropertyName>"
+                + "</ogc:Function>"
+                + "<ogc:Literal>Point</ogc:Literal>"
+                + "</ogc:PropertyIsEqualTo>"
+                + "</ogc:Filter>"
+                + "<sld:PointSymbolizer>"
+                + "</sld:PointSymbolizer>"
+                + "</sld:Rule>"
+                + "<sld:Rule>"
+                + "<ogc:Filter>"
+                + "<ogc:PropertyIsEqualTo>"
+                + "<ogc:Function name=\"geometryType\">"
+                + "<ogc:PropertyName>the_geom</ogc:PropertyName>"
+                + "</ogc:Function>"
+                + "<ogc:Literal>MultiPoint</ogc:Literal>"
+                + "</ogc:PropertyIsEqualTo>"
+                + "</ogc:Filter>"
+                + "<sld:PointSymbolizer>"
+                + "</sld:PointSymbolizer>"
+                + "</sld:Rule>"
+                + "</sld:FeatureTypeStyle>"
+                + "</sld:UserStyle>"
+                + "</sld:UserLayer>"
+                + "</sld:StyledLayerDescriptor>";
 
         StringReader reader = new StringReader(filter);
 
@@ -286,31 +282,29 @@ public class FilterFilterTest {
     }
 
     /**
-     * As for GEOT-821, this test ensures that the filter parser makes proper use of the
-     * characters(...) method in ContentHandler to not truncate the content of attribute names
+     * As for GEOT-821, this test ensures that the filter parser makes proper use of the characters(...) method in
+     * ContentHandler to not truncate the content of attribute names
      */
     @Test
     public void testLargeFilter() throws Exception {
         final int filterCount = 100;
-        String filter =
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                        + "<GetFeature xmlns=\"http://www.opengis.net/wfs\" xmlns:gml=\"http://www.opengis.net/gml\" xmlns:ogc=\"http://www.opengis.net/ogc\" version=\"1.0.0\" service=\"WFS\" outputFormat=\"GML2\"><Query typeName=\"topp:roadevent_pnt\"><ogc:PropertyName>roadeventid</ogc:PropertyName>"
-                        + "<ogc:Filter>"
-                        + "<ogc:Or>";
+        String filter = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                + "<GetFeature xmlns=\"http://www.opengis.net/wfs\" xmlns:gml=\"http://www.opengis.net/gml\" xmlns:ogc=\"http://www.opengis.net/ogc\" version=\"1.0.0\" service=\"WFS\" outputFormat=\"GML2\"><Query typeName=\"topp:roadevent_pnt\"><ogc:PropertyName>roadeventid</ogc:PropertyName>"
+                + "<ogc:Filter>"
+                + "<ogc:Or>";
         for (int i = 0; i < filterCount; i++) {
             StringBuffer attName = new StringBuffer();
             for (int repCount = 0; repCount <= i; repCount++) {
                 attName.append("eventtype-" + repCount + "_");
             }
 
-            filter +=
-                    "<ogc:PropertyIsEqualTo><ogc:PropertyName>"
-                            + attName
-                            + "</ogc:PropertyName>"
-                            + "<ogc:Literal>literal-"
-                            + i
-                            + "</ogc:Literal>"
-                            + "</ogc:PropertyIsEqualTo>";
+            filter += "<ogc:PropertyIsEqualTo><ogc:PropertyName>"
+                    + attName
+                    + "</ogc:PropertyName>"
+                    + "<ogc:Literal>literal-"
+                    + i
+                    + "</ogc:Literal>"
+                    + "</ogc:PropertyIsEqualTo>";
         }
         filter += "</ogc:Or>" + "</ogc:Filter>" + "</Query>" + "</GetFeature>";
 
@@ -360,10 +354,10 @@ public class FilterFilterTest {
 
     static class MyHandler extends XMLFilterImpl implements FilterHandler {
 
-        public List<org.opengis.filter.Filter> filters = new ArrayList<>();
+        public List<org.geotools.api.filter.Filter> filters = new ArrayList<>();
 
         @Override
-        public void filter(org.opengis.filter.Filter filter) {
+        public void filter(org.geotools.api.filter.Filter filter) {
             filters.add(filter);
         }
     }

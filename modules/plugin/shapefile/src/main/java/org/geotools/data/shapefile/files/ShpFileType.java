@@ -35,13 +35,13 @@ public enum ShpFileType {
     /** the .prj file, it contains the projection information of the shapefile */
     PRJ("prj"),
     /**
-     * the .qix file, A quad tree spatial index of the shapefile. It is the same format the
-     * mapservers shptree tool generates
+     * the .qix file, A quad tree spatial index of the shapefile. It is the same format the mapservers shptree tool
+     * generates
      */
     QIX("qix"),
     /**
-     * the .fix file, it contains all the Feature IDs for constant time lookup by fid also so that
-     * the fids stay consistent across deletes and adds
+     * the .fix file, it contains all the Feature IDs for constant time lookup by fid also so that the fids stay
+     * consistent across deletes and adds
      */
     FIX("fix"),
     /** the .shp.xml file, it contains the metadata about the shapefile */
@@ -51,18 +51,20 @@ public enum ShpFileType {
 
     public final String extension;
     public final String extensionWithPeriod;
+    public final String gzExtensionWithPeriod;
 
     private ShpFileType(String extension) {
         this.extension = extension.toLowerCase();
         this.extensionWithPeriod = "." + this.extension;
+        this.gzExtensionWithPeriod = this.extensionWithPeriod + ".gz";
     }
 
     /**
-     * Returns the base of the file or null if the file passed in is not of the correct type (has
-     * the correct extension.)
+     * Returns the base of the file or null if the file passed in is not of the correct type (has the correct
+     * extension.)
      *
-     * <p>For example if the file is c:\shapefiles\file1.dbf. The DBF type will return
-     * c:\shapefiles\file1 but all other will return null.
+     * <p>For example if the file is c:\shapefiles\file1.dbf. The DBF type will return c:\shapefiles\file1 but all other
+     * will return null.
      */
     public String toBase(File file) {
         String path = file.getPath();
@@ -70,28 +72,31 @@ public enum ShpFileType {
     }
 
     /**
-     * Returns the base of the file or null if the file passed in is not of the correct type (has
-     * the correct extension.)
+     * Returns the base of the file or null if the file passed in is not of the correct type (has the correct
+     * extension.)
      *
-     * <p>For example if the file is c:\shapefiles\file1.dbf. The DBF type will return
-     * c:\shapefiles\file1 but all other will return null.
+     * <p>For example if the file is c:\shapefiles\file1.dbf. The DBF type will return c:\shapefiles\file1 but all other
+     * will return null.
      */
     public String toBase(String path) {
-        if (!path.toLowerCase().endsWith(extensionWithPeriod)
-                || path.equalsIgnoreCase(extensionWithPeriod)) {
-            return null;
+        final String lcPath = path.toLowerCase();
+        if (!lcPath.endsWith(extensionWithPeriod) || lcPath.equals(extensionWithPeriod)) {
+            if (!lcPath.endsWith(gzExtensionWithPeriod) || lcPath.equals(gzExtensionWithPeriod)) {
+                return null;
+            }
+            final int indexOfExtension = lcPath.lastIndexOf(gzExtensionWithPeriod);
+            return path.substring(0, indexOfExtension);
         }
-
-        int indexOfExtension = path.toLowerCase().lastIndexOf(extensionWithPeriod);
+        final int indexOfExtension = lcPath.lastIndexOf(extensionWithPeriod);
         return path.substring(0, indexOfExtension);
     }
 
     /**
-     * Returns the base of the file or null if the file passed in is not of the correct type (has
-     * the correct extension.)
+     * Returns the base of the file or null if the file passed in is not of the correct type (has the correct
+     * extension.)
      *
-     * <p>For example if the file is c:\shapefiles\file1.dbf. The DBF type will return
-     * c:\shapefiles\file1 but all other will return null.
+     * <p>For example if the file is c:\shapefiles\file1.dbf. The DBF type will return c:\shapefiles\file1 but all other
+     * will return null.
      */
     public String toBase(URL url) {
         return toBase(url.toExternalForm());

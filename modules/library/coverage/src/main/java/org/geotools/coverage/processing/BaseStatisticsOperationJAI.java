@@ -16,23 +16,26 @@
  */
 package org.geotools.coverage.processing;
 
-import it.geosolutions.jaiext.JAIExt;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Rectangle2D;
+import java.io.Serial;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
-import javax.media.jai.JAI;
-import javax.media.jai.OperationDescriptor;
-import javax.media.jai.ParameterBlockJAI;
-import javax.media.jai.ROIShape;
-import javax.media.jai.StatisticsOpImage;
-import javax.media.jai.registry.RenderedRegistryMode;
+import org.eclipse.imagen.OperationDescriptor;
+import org.eclipse.imagen.ParameterBlockImageN;
+import org.eclipse.imagen.ROIShape;
+import org.eclipse.imagen.StatisticsOpImage;
+import org.eclipse.imagen.registry.RenderedRegistryMode;
+import org.geotools.api.metadata.spatial.PixelOrientation;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.coverage.grid.GridCoverage2D;
-import org.geotools.geometry.DirectPosition2D;
-import org.geotools.geometry.Envelope2D;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.parameter.DefaultParameterDescriptor;
@@ -45,17 +48,11 @@ import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.metadata.spatial.PixelOrientation;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 
 /**
- * This class is the root class for the Statistics operations based on {@link JAI}'s {@link
- * StatisticsOpImage} like Extrema and Histogram. It provides basic capabilities for management of
- * geospatial parameters like {@link javax.media.jai.ROI}s and subsampling factors.
+ * This class is the root class for the Statistics operations based on {@link JAI}'s {@link StatisticsOpImage} like
+ * Extrema and Histogram. It provides basic capabilities for management of geospatial parameters like
+ * {@link org.eclipse.imagen.ROI}s and subsampling factors.
  *
  * @author Simone Giannecchini
  * @since 2.4.x
@@ -63,49 +60,47 @@ import org.opengis.referencing.operation.TransformException;
 public abstract class BaseStatisticsOperationJAI extends OperationJAI {
 
     /** */
+    @Serial
     private static final long serialVersionUID = 6830028735162290160L;
 
     /** {@link Logger} for this class. */
     public static final Logger LOGGER = Logging.getLogger(BaseStatisticsOperationJAI.class);
 
     /** The parameter descriptor for the SPATIAL_SUBSAMPLING_X */
-    public static final ParameterDescriptor<Double> SPATIAL_SUBSAMPLING_X =
-            new DefaultParameterDescriptor<>(
-                    Citations.JAI,
-                    "xPeriod",
-                    Double.class, // Value class (mandatory)
-                    null, // Array of valid values
-                    null, // Default value
-                    null, // Minimal value
-                    null, // Maximal value
-                    null, // Unit of measure
-                    true);
+    public static final ParameterDescriptor<Double> SPATIAL_SUBSAMPLING_X = new DefaultParameterDescriptor<>(
+            Citations.IMAGEN,
+            "xPeriod",
+            Double.class, // Value class (mandatory)
+            null, // Array of valid values
+            null, // Default value
+            null, // Minimal value
+            null, // Maximal value
+            null, // Unit of measure
+            true);
 
     /** The parameter descriptor for the SPATIAL_SUBSAMPLING_Y */
-    public static final ParameterDescriptor<Double> SPATIAL_SUBSAMPLING_Y =
-            new DefaultParameterDescriptor<>(
-                    Citations.JAI,
-                    "yPeriod",
-                    Double.class, // Value class (mandatory)
-                    null, // Array of valid values
-                    null, // Default value
-                    null, // Minimal value
-                    null, // Maximal value
-                    null, // Unit of measure
-                    true);
+    public static final ParameterDescriptor<Double> SPATIAL_SUBSAMPLING_Y = new DefaultParameterDescriptor<>(
+            Citations.IMAGEN,
+            "yPeriod",
+            Double.class, // Value class (mandatory)
+            null, // Array of valid values
+            null, // Default value
+            null, // Minimal value
+            null, // Maximal value
+            null, // Unit of measure
+            true);
 
     /** The parameter descriptor for the Region Of Interest. */
-    public static final ParameterDescriptor<Polygon> ROI =
-            new DefaultParameterDescriptor<>(
-                    Citations.JAI,
-                    "roi",
-                    Polygon.class, // Value class (mandatory)
-                    null, // Array of valid values
-                    null, // Default value
-                    null, // Minimal value
-                    null, // Maximal value
-                    null, // Unit of measure
-                    true);
+    public static final ParameterDescriptor<Polygon> ROI = new DefaultParameterDescriptor<>(
+            Citations.IMAGEN,
+            "roi",
+            Polygon.class, // Value class (mandatory)
+            null, // Array of valid values
+            null, // Default value
+            null, // Minimal value
+            null, // Maximal value
+            null, // Unit of measure
+            true);
 
     private static Set<ParameterDescriptor> REPLACED_DESCRIPTORS;
 
@@ -120,22 +115,21 @@ public abstract class BaseStatisticsOperationJAI extends OperationJAI {
     /**
      * Constructor for {@link BaseStatisticsOperationJAI}.
      *
-     * @param operationDescriptor {@link OperationDescriptor} for the underlying JAI operation.
+     * @param operationDescriptor {@link OperationDescriptor} for the underlying ImageN operation.
      */
     public BaseStatisticsOperationJAI(OperationDescriptor operationDescriptor) {
         super(
                 operationDescriptor,
                 new ImagingParameterDescriptors(
-                        getOperationDescriptor(operationDescriptor.getName()),
-                        REPLACED_DESCRIPTORS));
+                        getOperationDescriptor(operationDescriptor.getName()), REPLACED_DESCRIPTORS));
     }
 
     /**
      * Constructor for {@link BaseStatisticsOperationJAI}.
      *
-     * @param operationDescriptor {@link OperationDescriptor} for the underlying JAI operation.
+     * @param operationDescriptor {@link OperationDescriptor} for the underlying ImageN operation.
      * @param replacements {@link ImagingParameterDescriptors} that should replace the correspondent
-     *     {@link ImagingParameters} in order to change the default behavior they have inside JAI.
+     *     {@link ImagingParameters} in order to change the default behavior they have inside ImageN.
      */
     public BaseStatisticsOperationJAI(
             OperationDescriptor operationDescriptor, ImagingParameterDescriptors replacements) {
@@ -151,11 +145,11 @@ public abstract class BaseStatisticsOperationJAI extends OperationJAI {
     /**
      * Constructor for {@link BaseStatisticsOperationJAI}.
      *
-     * @param name of the underlying JAI operation.
+     * @param name of the underlying ImageN operation.
      */
     public BaseStatisticsOperationJAI(String name, OperationDescriptor operationDescriptor) {
         super(
-                getOperationDescriptor(JAIExt.getOperationName(name)),
+                operationDescriptor,
                 new ExtendedImagingParameterDescriptors(
                         name, operationDescriptor, new HashSet<>(REPLACED_DESCRIPTORS)));
     }
@@ -163,33 +157,31 @@ public abstract class BaseStatisticsOperationJAI extends OperationJAI {
     /**
      * Constructor for {@link BaseStatisticsOperationJAI}.
      *
-     * @param name of the underlying JAI operation.
+     * @param name of the underlying ImageN operation.
      */
     public BaseStatisticsOperationJAI(String name) {
         super(
                 getOperationDescriptor(name),
-                new ImagingParameterDescriptors(
-                        getOperationDescriptor(name), new HashSet<>(REPLACED_DESCRIPTORS)));
+                new ImagingParameterDescriptors(getOperationDescriptor(name), new HashSet<>(REPLACED_DESCRIPTORS)));
     }
 
     /**
-     * Copies parameter values from the specified {@link ParameterValueGroup} to the {@link
-     * ParameterBlockJAI}
+     * Copies parameter values from the specified {@link ParameterValueGroup} to the {@link ParameterBlockImageN}
      *
      * @param parameters The {@link ParameterValueGroup} to be copied.
-     * @return A copy of the provided {@link ParameterValueGroup} as a JAI block.
+     * @return A copy of the provided {@link ParameterValueGroup} as a ImageN block.
      * @see
-     *     org.geotools.coverage.processing.OperationJAI#prepareParameters(org.opengis.parameter.ParameterValueGroup)
+     *     org.geotools.coverage.processing.OperationJAI#prepareParameters(org.geotools.api.parameter.ParameterValueGroup)
      */
     @Override
-    protected ParameterBlockJAI prepareParameters(ParameterValueGroup parameters) {
+    protected ParameterBlockImageN prepareParameters(ParameterValueGroup parameters) {
         // /////////////////////////////////////////////////////////////////////
         //
         // Make a copy of the input parameters.
         //
         // ///////////////////////////////////////////////////////////////////
         final ImagingParameters copy = (ImagingParameters) descriptor.createValue();
-        final ParameterBlockJAI block = (ParameterBlockJAI) copy.parameters;
+        final ParameterBlockImageN block = (ParameterBlockImageN) copy.parameters;
         try {
 
             // /////////////////////////////////////////////////////////////////////
@@ -200,20 +192,14 @@ public abstract class BaseStatisticsOperationJAI extends OperationJAI {
             //
             // ///////////////////////////////////////////////////////////////////
             // XXX make it robust
-            final GridCoverage2D source =
-                    (GridCoverage2D)
-                            parameters
-                                    .parameter(operation.getSourceNames()[PRIMARY_SOURCE_INDEX])
-                                    .getValue();
-            final AffineTransform gridToWorldTransformCorrected =
-                    new AffineTransform(
-                            (AffineTransform)
-                                    source.getGridGeometry()
-                                            .getGridToCRS2D(PixelOrientation.UPPER_LEFT));
+            final GridCoverage2D source = (GridCoverage2D) parameters
+                    .parameter(operation.getSourceNames()[PRIMARY_SOURCE_INDEX])
+                    .getValue();
+            final AffineTransform gridToWorldTransformCorrected = new AffineTransform(
+                    (AffineTransform) source.getGridGeometry().getGridToCRS2D(PixelOrientation.UPPER_LEFT));
             final MathTransform worldToGridTransform;
             try {
-                worldToGridTransform =
-                        ProjectiveTransform.create(gridToWorldTransformCorrected.createInverse());
+                worldToGridTransform = ProjectiveTransform.create(gridToWorldTransformCorrected.createInverse());
             } catch (NoninvertibleTransformException e) {
                 // //
                 //
@@ -232,7 +218,7 @@ public abstract class BaseStatisticsOperationJAI extends OperationJAI {
             //
             // //
             final CoordinateReferenceSystem crs = source.getCoordinateReferenceSystem2D();
-            final Envelope2D envelope = source.getEnvelope2D();
+            final ReferencedEnvelope envelope = source.getEnvelope2D();
 
             // /////////////////////////////////////////////////////////////////////
             //
@@ -249,12 +235,20 @@ public abstract class BaseStatisticsOperationJAI extends OperationJAI {
 
                 // build the new one that spans over the requested area
                 // NOTE:
-                final DirectPosition2D LLC = new DirectPosition2D(crs, envelope.x, envelope.y);
-                LLC.setCoordinateReferenceSystem(crs);
-                final DirectPosition2D URC =
-                        new DirectPosition2D(crs, envelope.x + xPeriod, envelope.y + yPeriod);
-                URC.setCoordinateReferenceSystem(crs);
-                final Envelope2D shrinkedEnvelope = new Envelope2D(LLC, URC);
+                //                final Position2D LLC = new Position2D(crs, envelope.x,
+                // envelope.y);
+                //                LLC.setCoordinateReferenceSystem(crs);
+                //                final Position2D URC =
+                //                        new Position2D(crs, envelope.x + xPeriod, envelope.y +
+                // yPeriod);
+                //                URC.setCoordinateReferenceSystem(crs);
+
+                final ReferencedEnvelope shrinkedEnvelope = new ReferencedEnvelope(
+                        envelope.getMinX(),
+                        envelope.getMinX() + xPeriod,
+                        envelope.getMinY(),
+                        envelope.getMinY() + yPeriod,
+                        crs);
 
                 // transform back into raster space
                 final Rectangle2D transformedEnv =
@@ -273,14 +267,10 @@ public abstract class BaseStatisticsOperationJAI extends OperationJAI {
             //
             // /////////////////////////////////////////////////////////////////////
             final Object o = parameters.parameter("roi").getValue();
-            if (o != null && o instanceof Polygon) {
-                final Polygon roiInput = (Polygon) o;
-                if (new ReferencedEnvelope(
-                                roiInput.getEnvelopeInternal(),
-                                source.getCoordinateReferenceSystem2D())
+            if (o != null && o instanceof Polygon roiInput) {
+                if (new ReferencedEnvelope(roiInput.getEnvelopeInternal(), source.getCoordinateReferenceSystem2D())
                         .intersects((Envelope) new ReferencedEnvelope(envelope))) {
-                    final java.awt.Polygon shapePolygon =
-                            convertPolygon(roiInput, worldToGridTransform);
+                    final java.awt.Polygon shapePolygon = convertPolygon(roiInput, worldToGridTransform);
 
                     block.setParameter("roi", new ROIShape(shapePolygon));
                 }
@@ -302,16 +292,16 @@ public abstract class BaseStatisticsOperationJAI extends OperationJAI {
     }
 
     /**
-     * Converte a JTS {@link Polygon}, which represents a ROI, into an AWT {@link java.awt.Polygon}
-     * by means of the provided {@link MathTransform}.
+     * Converte a JTS {@link Polygon}, which represents a ROI, into an AWT {@link java.awt.Polygon} by means of the
+     * provided {@link MathTransform}.
      *
      * @param roiInput the input ROI as a JTS {@link Polygon}.
      * @param worldToGridTransform the {@link MathTransform} to apply to the input ROI.
      * @return an AWT {@link java.awt.Polygon}.
      * @throws TransformException in case the provided {@link MathTransform} chokes.
      */
-    protected static java.awt.Polygon convertPolygon(
-            final Polygon roiInput, MathTransform worldToGridTransform) throws TransformException {
+    protected static java.awt.Polygon convertPolygon(final Polygon roiInput, MathTransform worldToGridTransform)
+            throws TransformException {
         final boolean isIdentity = worldToGridTransform.isIdentity();
         final java.awt.Polygon retValue = new java.awt.Polygon();
         final double[] coords = new double[2];

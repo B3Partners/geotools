@@ -21,16 +21,16 @@ import static org.junit.Assert.assertTrue;
 
 import java.net.URL;
 import java.util.Collections;
+import java.util.Map;
 import javax.xml.namespace.QName;
 import net.opengis.wfs.DeleteElementType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Id;
 import org.geotools.test.TestData;
 import org.geotools.wfs.WFS;
 import org.geotools.wfs.WFSTestSupport;
 import org.geotools.xsd.Binding;
-import org.junit.Before;
 import org.junit.Test;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Id;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -41,12 +41,8 @@ public class DeleteElementTypeBindingTest extends WFSTestSupport {
     }
 
     @Override
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
-
-        // additional namespace
-        registerNamespaceMapping("topp", "http://www.openplans.org/topp");
+    protected Map<String, String> getNamespaces() {
+        return namespaces(Namespace("topp", "http://www.openplans.org/topp"));
     }
 
     @Override
@@ -65,9 +61,7 @@ public class DeleteElementTypeBindingTest extends WFSTestSupport {
         final Element root = dom.getDocumentElement();
         assertName(WFS.Delete, root);
 
-        assertEquals(
-                typeName.getPrefix() + ":" + typeName.getLocalPart(),
-                root.getAttribute("typeName"));
+        assertEquals(typeName.getPrefix() + ":" + typeName.getLocalPart(), root.getAttribute("typeName"));
     }
 
     @Override

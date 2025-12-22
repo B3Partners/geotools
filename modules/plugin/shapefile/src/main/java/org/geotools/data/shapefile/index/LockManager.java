@@ -43,8 +43,7 @@ public class LockManager {
     public synchronized Lock aquireExclusive() throws LockTimeoutException {
         int cnt = 0;
 
-        while (((this.exclusiveLock != null) || (this.leases > 0))
-                && (cnt < EXCLUSIVE_LOCK_TIMEOUT)) {
+        while ((this.exclusiveLock != null || this.leases > 0) && cnt < EXCLUSIVE_LOCK_TIMEOUT) {
             cnt++;
 
             try {
@@ -54,7 +53,7 @@ public class LockManager {
             }
         }
 
-        if ((this.exclusiveLock != null) || (this.leases > 0)) {
+        if (this.exclusiveLock != null || this.leases > 0) {
             throw new LockTimeoutException("Timeout aquiring exclusive lock");
         }
 
@@ -67,7 +66,7 @@ public class LockManager {
     public synchronized Lock aquireShared() throws LockTimeoutException {
         int cnt = 0;
 
-        while ((this.exclusiveLock != null) && (cnt < SHARED_LOCK_TIMEOUT)) {
+        while (this.exclusiveLock != null && cnt < SHARED_LOCK_TIMEOUT) {
             cnt++;
 
             try {
@@ -87,7 +86,7 @@ public class LockManager {
     }
 
     /** @author Tommaso Nolli */
-    private class LockImpl implements Lock {
+    private static class LockImpl implements Lock {
         private short type;
 
         /** @param type */

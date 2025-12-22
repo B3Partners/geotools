@@ -4,6 +4,10 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.util.logging.Logger;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.DWithin;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.FeatureCollection;
@@ -12,10 +16,6 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.DWithin;
 
 public abstract class JDBCDistanceFiltersTest extends JDBCTestSupport {
 
@@ -111,9 +111,8 @@ public abstract class JDBCDistanceFiltersTest extends JDBCTestSupport {
         return false;
     }
 
-    private void assertDWithinFilter(int expectedMatches, double distance, String unit)
-            throws IOException {
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    private void assertDWithinFilter(int expectedMatches, double distance, String unit) throws IOException {
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         final PropertyName geomProperty = ff.property(aname("geometry"));
         final ContentFeatureSource features = dataStore.getFeatureSource(tname("ft1"));
 
@@ -123,9 +122,8 @@ public abstract class JDBCDistanceFiltersTest extends JDBCTestSupport {
         assertEquals(expectedMatches, fc.size());
     }
 
-    private void assertBeyondFilter(int expectedMatches, double distance, String unit)
-            throws IOException {
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    private void assertBeyondFilter(int expectedMatches, double distance, String unit) throws IOException {
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         final PropertyName geomProperty = ff.property(aname("geometry"));
         final ContentFeatureSource features = dataStore.getFeatureSource(tname("ft1"));
 

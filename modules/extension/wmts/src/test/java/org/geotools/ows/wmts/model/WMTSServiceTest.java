@@ -20,11 +20,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import java.util.logging.Logger;
+import org.geotools.api.metadata.citation.Contact;
+import org.geotools.api.metadata.citation.ResponsibleParty;
 import org.geotools.util.SimpleInternationalString;
 import org.geotools.util.logging.Logging;
 import org.junit.Test;
-import org.opengis.metadata.citation.Contact;
-import org.opengis.metadata.citation.ResponsibleParty;
 
 public class WMTSServiceTest {
 
@@ -52,7 +52,8 @@ public class WMTSServiceTest {
             Contact contactDetails = serviceProvider.getContactInfo();
             assertEquals(1, contactDetails.getAddress().getDeliveryPoints().size());
             assertEquals(
-                    new SimpleInternationalString("Bern"), contactDetails.getAddress().getCity());
+                    new SimpleInternationalString("Bern"),
+                    contactDetails.getAddress().getCity());
             assertEquals("3084", contactDetails.getAddress().getPostalCode());
             assertEquals(
                     new SimpleInternationalString("BE"),
@@ -61,7 +62,8 @@ public class WMTSServiceTest {
                     new SimpleInternationalString("Switzerland"),
                     contactDetails.getAddress().getCountry());
 
-            assertEquals(1, contactDetails.getAddress().getElectronicMailAddresses().size());
+            assertEquals(
+                    1, contactDetails.getAddress().getElectronicMailAddresses().size());
 
             assertArrayEquals(
                     new String[] {
@@ -90,10 +92,10 @@ public class WMTSServiceTest {
 
         } catch (Exception e) {
             java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
-            if ((e.getMessage() != null) && e.getMessage().indexOf("timed out") > 0) {
+            if (e.getMessage() != null && e.getMessage().indexOf("timed out") > 0) {
                 LOGGER.warning("Unable to test - timed out: " + e);
             } else {
-                throw (e);
+                throw e;
             }
         }
     }

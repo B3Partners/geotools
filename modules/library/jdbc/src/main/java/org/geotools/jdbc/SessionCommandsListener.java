@@ -21,10 +21,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.function.EnvFunction;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
 
 /**
  * A {@link ConnectionLifecycleListener} that executes custom SQL commands on connection grab and
@@ -61,7 +61,7 @@ import org.opengis.filter.expression.Expression;
  */
 public class SessionCommandsListener implements ConnectionLifecycleListener {
 
-    FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
     private Expression sqlOnBorrow;
 
@@ -113,11 +113,10 @@ public class SessionCommandsListener implements ConnectionLifecycleListener {
     }
 
     /**
-     * Parses the original sql command and returns a Expression that has all environment variable
-     * references expanded to a {@link EnvFunction} call. This code is partially copied from
-     * gt-renderer ExpressionExtractor code, but simplified to only have environment variable
-     * references instead of CQL to avoid creating a dependency cascading issue (ExpressionExtractor
-     * would have to be moved to gt-cql and gt-jdbc made to depend on it.
+     * Parses the original sql command and returns a Expression that has all environment variable references expanded to
+     * a {@link EnvFunction} call. This code is partially copied from gt-renderer ExpressionExtractor code, but
+     * simplified to only have environment variable references instead of CQL to avoid creating a dependency cascading
+     * issue (ExpressionExtractor would have to be moved to gt-cql and gt-jdbc made to depend on it.
      */
     Expression expandEviromentVariables(String sql) {
         if (sql == null || "".equals(sql)) {
@@ -129,7 +128,7 @@ public class SessionCommandsListener implements ConnectionLifecycleListener {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < sql.length(); i++) {
             final char curr = sql.charAt(i);
-            final boolean last = (i == sql.length() - 1);
+            final boolean last = i == sql.length() - 1;
             final char next = last ? 0 : sql.charAt(i + 1);
 
             if (curr == '\\') {
@@ -143,11 +142,9 @@ public class SessionCommandsListener implements ConnectionLifecycleListener {
                 // skip the next character
                 i++;
             } else if (curr == '$') {
-                if (last || next != '{')
-                    throw new IllegalArgumentException("Unescaped $ at position " + (i + 1));
+                if (last || next != '{') throw new IllegalArgumentException("Unescaped $ at position " + (i + 1));
                 if (inEnvVariable)
-                    throw new IllegalArgumentException(
-                            "Already found a ${ sequence before the one at " + (i + 1));
+                    throw new IllegalArgumentException("Already found a ${ sequence before the one at " + (i + 1));
 
                 // if we extracted a literal in between two expressions, add it to the result
                 if (sb.length() > 0) {
@@ -168,9 +165,8 @@ public class SessionCommandsListener implements ConnectionLifecycleListener {
                 int idx = name.indexOf(',');
                 if (idx >= 0) {
                     if (idx == 0) {
-                        throw new IllegalArgumentException(
-                                "There is no variable name before "
-                                        + "the comma, the valid format is '${name,defaultValue}'");
+                        throw new IllegalArgumentException("There is no variable name before "
+                                + "the comma, the valid format is '${name,defaultValue}'");
                     } else if (idx < name.length() - 1) {
                         defaultValue = name.substring(idx + 1);
                         name = name.substring(0, idx);
@@ -194,8 +190,7 @@ public class SessionCommandsListener implements ConnectionLifecycleListener {
         // when done, if we are still in a environment variable reference it means it hasn't been
         // closed
         if (inEnvVariable) {
-            throw new IllegalArgumentException(
-                    "Unclosed environment variable reference '" + sb + "'");
+            throw new IllegalArgumentException("Unclosed environment variable reference '" + sb + "'");
         } else if (sb.length() > 0) {
             expressions.add(ff.literal(sb.toString()));
         }

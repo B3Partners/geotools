@@ -20,15 +20,15 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.logging.Logger;
 import javax.naming.OperationNotSupportedException;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.PropertyIsLike;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.IllegalFilterException;
 import org.geotools.xml.DocumentWriter;
 import org.geotools.xml.filter.FilterSchema;
 import org.junit.Test;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.Id;
-import org.opengis.filter.PropertyIsLike;
 
 /**
  * For now just writes the expression built.
@@ -37,8 +37,7 @@ import org.opengis.filter.PropertyIsLike;
  */
 public class ExpresionEncodeTest {
     /** Standard logging instance */
-    protected static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(ExpresionEncodeTest.class);
+    protected static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(ExpresionEncodeTest.class);
     /** Constructor with test name. */
     String dataFolder = "";
 
@@ -57,9 +56,8 @@ public class ExpresionEncodeTest {
     }
 
     @Test
-    public void testPropBetweenFilter()
-            throws IllegalFilterException, OperationNotSupportedException, IOException {
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    public void testPropBetweenFilter() throws IllegalFilterException, OperationNotSupportedException, IOException {
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         Filter bf = ff.between(ff.property("testDouble"), ff.literal(60000), ff.literal(200000));
 
         StringWriter output = new StringWriter();
@@ -69,9 +67,8 @@ public class ExpresionEncodeTest {
     }
 
     @Test
-    public void testLikeFilter()
-            throws IllegalFilterException, OperationNotSupportedException, IOException {
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+    public void testLikeFilter() throws IllegalFilterException, OperationNotSupportedException, IOException {
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
 
         PropertyIsLike lf = ff.like(ff.property("testString"), "test*", "*", ".", "!");
 
@@ -83,14 +80,9 @@ public class ExpresionEncodeTest {
 
     @Test
     public void testFidFilter() throws OperationNotSupportedException, IOException {
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
 
-        Id fif =
-                ff.id(
-                        ff.featureId("f1"),
-                        ff.featureId("f2"),
-                        ff.featureId("f3"),
-                        ff.featureId("f4"));
+        Id fif = ff.id(ff.featureId("f1"), ff.featureId("f2"), ff.featureId("f3"), ff.featureId("f4"));
 
         StringWriter output = new StringWriter();
         DocumentWriter.writeFragment(fif, FilterSchema.getInstance(), output, null);

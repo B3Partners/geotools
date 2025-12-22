@@ -21,11 +21,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.coverage.util.FeatureUtilities;
 import org.geotools.util.Range;
 import org.geotools.util.logging.Logging;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
 
 /** Helper class to build filters matching the provided dimension values */
 public class DomainFilterBuilder {
@@ -49,8 +49,7 @@ public class DomainFilterBuilder {
     }
 
     /**
-     * This method is responsible for creating {@link Filter} that match the provided {@link List}
-     * of values
+     * This method is responsible for creating {@link Filter} that match the provided {@link List} of values
      *
      * @param values the {@link List} of values to use for building the containment {@link Filter}.
      * @return a {@link Filter} that matches the provided value {@link List}
@@ -61,7 +60,7 @@ public class DomainFilterBuilder {
         // === create the filter
         // loop values and AND them
         final List<Filter> filters = new ArrayList<>();
-        FilterFactory2 ff = FeatureUtilities.DEFAULT_FILTER_FACTORY;
+        FilterFactory ff = FeatureUtilities.DEFAULT_FILTER_FACTORY;
         for (Object value : values) {
             // checks
             if (value == null) {
@@ -72,16 +71,10 @@ public class DomainFilterBuilder {
             }
             if (endProperty == null) {
                 // Domain made of single values
-                if (value instanceof Range) {
-                    // RANGE
-                    final Range range = (Range) value;
-                    filters.add(
-                            ff.and(
-                                    ff.lessOrEqual(
-                                            ff.property(property), ff.literal(range.getMaxValue())),
-                                    ff.greaterOrEqual(
-                                            ff.property(property),
-                                            ff.literal(range.getMinValue()))));
+                if (value instanceof Range range) {
+                    filters.add(ff.and(
+                            ff.lessOrEqual(ff.property(property), ff.literal(range.getMaxValue())),
+                            ff.greaterOrEqual(ff.property(property), ff.literal(range.getMinValue()))));
                 } else {
                     // SINGLE value
                     filters.add(ff.equal(ff.property(property), ff.literal(value), true));
@@ -89,18 +82,14 @@ public class DomainFilterBuilder {
             } else {
                 // Domain made of ranges such as (beginTime,endTime) ,
                 // (beginElevation,endElevation) , ...
-                if (value instanceof Range) {
-                    // RANGE
-                    final Range range = (Range) value;
+                if (value instanceof Range range) {
                     final Comparable maxValue = range.getMaxValue();
                     final Comparable minValue = range.getMinValue();
                     if (maxValue.compareTo(minValue) != 0) {
                         // logic comes from Range.intersectsNC(Range)
                         // in summary, requestedMax > min && requestedMin < max
-                        Filter maxCondition =
-                                ff.greaterOrEqual(ff.literal(maxValue), ff.property(property));
-                        Filter minCondition =
-                                ff.lessOrEqual(ff.literal(minValue), ff.property(endProperty));
+                        Filter maxCondition = ff.greaterOrEqual(ff.literal(maxValue), ff.property(property));
+                        Filter minCondition = ff.lessOrEqual(ff.literal(minValue), ff.property(endProperty));
 
                         filters.add(ff.and(Arrays.asList(maxCondition, minCondition)));
                         continue;
@@ -108,10 +97,9 @@ public class DomainFilterBuilder {
                         value = maxValue;
                     }
                 }
-                filters.add(
-                        ff.and(
-                                ff.lessOrEqual(ff.property(property), ff.literal(value)),
-                                ff.greaterOrEqual(ff.property(endProperty), ff.literal(value))));
+                filters.add(ff.and(
+                        ff.lessOrEqual(ff.property(property), ff.literal(value)),
+                        ff.greaterOrEqual(ff.property(endProperty), ff.literal(value))));
             }
         }
         if (filters.size() == 1) return filters.get(0);

@@ -24,18 +24,19 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import javax.xml.parsers.DocumentBuilderFactory;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.DWithin;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.xsd.Encoder;
 import org.geotools.xsd.Parser;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.DWithin;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -64,7 +65,8 @@ public class OGCFilterTest {
         Assert.assertEquals(1, doc.getElementsByTagName("ogc:PropertyName").getLength());
         Assert.assertEquals(1, doc.getElementsByTagName("ogc:Literal").getLength());
 
-        Element propertyName = (Element) doc.getElementsByTagName("ogc:PropertyName").item(0);
+        Element propertyName =
+                (Element) doc.getElementsByTagName("ogc:PropertyName").item(0);
         Element literal = (Element) doc.getElementsByTagName("ogc:Literal").item(0);
 
         Assert.assertEquals("testString", propertyName.getFirstChild().getNodeValue());
@@ -102,21 +104,20 @@ public class OGCFilterTest {
     @Test
     public void testDWithinParse() throws Exception {
 
-        String xml =
-                "<Filter>"
-                        + "<DWithin>"
-                        + "<PropertyName>the_geom</PropertyName>"
-                        + "<Point>"
-                        + "<coordinates>-74.817265,40.5296504</coordinates>"
-                        + "</Point>"
-                        + "<Distance units=\"km\">200</Distance>"
-                        + "</DWithin>"
-                        + "</Filter>";
+        String xml = "<Filter>"
+                + "<DWithin>"
+                + "<PropertyName>the_geom</PropertyName>"
+                + "<Point>"
+                + "<coordinates>-74.817265,40.5296504</coordinates>"
+                + "</Point>"
+                + "<Distance units=\"km\">200</Distance>"
+                + "</DWithin>"
+                + "</Filter>";
 
         OGCConfiguration configuration = new OGCConfiguration();
 
         Parser parser = new Parser(configuration);
-        DWithin filter = (DWithin) parser.parse(new ByteArrayInputStream(xml.getBytes()));
+        DWithin filter = (DWithin) parser.parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
         Assert.assertNotNull(filter);
 
         // Asserting the Property Name
@@ -144,21 +145,20 @@ public class OGCFilterTest {
     @Test
     public void testDWithinWithoutUnitsParse() throws Exception {
 
-        String xml =
-                "<Filter>"
-                        + "<DWithin>"
-                        + "<PropertyName>the_geom</PropertyName>"
-                        + "<Point>"
-                        + "<coordinates>-74.817265,40.5296504</coordinates>"
-                        + "</Point>"
-                        + "<Distance>200</Distance>"
-                        + "</DWithin>"
-                        + "</Filter>";
+        String xml = "<Filter>"
+                + "<DWithin>"
+                + "<PropertyName>the_geom</PropertyName>"
+                + "<Point>"
+                + "<coordinates>-74.817265,40.5296504</coordinates>"
+                + "</Point>"
+                + "<Distance>200</Distance>"
+                + "</DWithin>"
+                + "</Filter>";
 
         OGCConfiguration configuration = new OGCConfiguration();
 
         Parser parser = new Parser(configuration);
-        DWithin filter = (DWithin) parser.parse(new ByteArrayInputStream(xml.getBytes()));
+        DWithin filter = (DWithin) parser.parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
         Assert.assertNotNull(filter);
 
         // Asserting the Distance
@@ -172,15 +172,14 @@ public class OGCFilterTest {
 
     @Test
     public void testBBOXValidateWithoutPropertyName() throws Exception {
-        String xml =
-                "<ogc:Filter xmlns:ogc='http://www.opengis.net/ogc'>"
-                        + "<ogc:BBOX>"
-                        + "<gml:Envelope xmlns:gml='http://www.opengis.net/gml'>"
-                        + "<gml:lowerCorner>36.986771000000005 -91.516129</gml:lowerCorner>"
-                        + "<gml:upperCorner>42.50936100000001 -87.507889</gml:upperCorner>"
-                        + "</gml:Envelope>"
-                        + "</ogc:BBOX>"
-                        + "</ogc:Filter>";
+        String xml = "<ogc:Filter xmlns:ogc='http://www.opengis.net/ogc'>"
+                + "<ogc:BBOX>"
+                + "<gml:Envelope xmlns:gml='http://www.opengis.net/gml'>"
+                + "<gml:lowerCorner>36.986771000000005 -91.516129</gml:lowerCorner>"
+                + "<gml:upperCorner>42.50936100000001 -87.507889</gml:upperCorner>"
+                + "</gml:Envelope>"
+                + "</ogc:BBOX>"
+                + "</ogc:Filter>";
 
         Parser p = new Parser(new OGCConfiguration());
         p.validate(new StringReader(xml));

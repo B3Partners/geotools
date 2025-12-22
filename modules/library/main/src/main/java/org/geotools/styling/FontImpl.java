@@ -22,11 +22,12 @@ package org.geotools.styling;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.Font;
+import org.geotools.api.style.TraversingStyleVisitor;
+import org.geotools.api.util.Cloneable;
 import org.geotools.util.Utilities;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.StyleVisitor;
-import org.opengis.util.Cloneable;
 
 /**
  * Provides a Java representation of the Font element of an SLD.
@@ -110,27 +111,27 @@ public class FontImpl implements Font, Cloneable {
         int result = 0;
 
         if (fontFamily != null) {
-            result = (PRIME * result) + fontFamily.hashCode();
+            result = PRIME * result + fontFamily.hashCode();
         }
 
         if (fontSize != null) {
-            result = (PRIME * result) + fontSize.hashCode();
+            result = PRIME * result + fontSize.hashCode();
         }
 
         if (fontStyle != null) {
-            result = (PRIME * result) + fontStyle.hashCode();
+            result = PRIME * result + fontStyle.hashCode();
         }
 
         if (fontWeight != null) {
-            result = (PRIME * result) + fontWeight.hashCode();
+            result = PRIME * result + fontWeight.hashCode();
         }
 
         return result;
     }
 
     /**
-     * Compares this font with another for equality. Two fonts are equal if their family, style,
-     * weight and size are equal.
+     * Compares this font with another for equality. Two fonts are equal if their family, style, weight and size are
+     * equal.
      *
      * @return True if this and oth are equal.
      */
@@ -144,8 +145,7 @@ public class FontImpl implements Font, Cloneable {
             return false;
         }
 
-        if (oth instanceof FontImpl) {
-            FontImpl other = (FontImpl) oth;
+        if (oth instanceof FontImpl other) {
 
             return Utilities.equals(this.fontFamily, other.fontFamily)
                     && Utilities.equals(this.fontSize, other.fontSize)
@@ -171,15 +171,15 @@ public class FontImpl implements Font, Cloneable {
     }
 
     @Override
-    public Object accept(StyleVisitor visitor, Object data) {
+    public Object accept(TraversingStyleVisitor visitor, Object data) {
         return visitor.visit(this, data);
     }
 
-    static FontImpl cast(org.opengis.style.Font font) {
+    static FontImpl cast(org.geotools.api.style.Font font) {
         if (font == null) {
             return null;
-        } else if (font instanceof FontImpl) {
-            return (FontImpl) font;
+        } else if (font instanceof FontImpl impl) {
+            return impl;
         } else {
             FontImpl copy = new FontImpl();
             copy.getFamily().addAll(font.getFamily());

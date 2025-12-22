@@ -20,9 +20,9 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import javax.sql.DataSource;
-import org.geotools.data.DataAccessFactory.Param;
-import org.geotools.data.DataSourceException;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.DataAccessFactory.Param;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.data.Parameter;
 import org.geotools.util.factory.GeoTools;
 
 /**
@@ -32,21 +32,11 @@ import org.geotools.util.factory.GeoTools;
  */
 public class JNDIDataSourceFactory extends AbstractDataSourceFactorySpi {
 
-    public static final Param DSTYPE =
-            new Param(
-                    "dstype",
-                    String.class,
-                    "Must be JNDI",
-                    false,
-                    null,
-                    Collections.singletonMap(Parameter.LEVEL, "program"));
+    public static final Param DSTYPE = new Param(
+            "dstype", String.class, "Must be JNDI", false, null, Collections.singletonMap(Parameter.LEVEL, "program"));
 
     public static final Param JNDI_REFNAME =
-            new Param(
-                    "jdniReferenceName",
-                    String.class,
-                    "The path where the connection pool must be located",
-                    true);
+            new Param("jdniReferenceName", String.class, "The path where the connection pool must be located", true);
 
     private static final Param[] PARAMS = {DSTYPE, JNDI_REFNAME};
 

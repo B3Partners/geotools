@@ -20,9 +20,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.capability.SpatialOperators;
 import org.geotools.xsd.Binding;
 import org.junit.Test;
-import org.opengis.filter.capability.SpatialOperators;
 import org.w3c.dom.Document;
 
 public class Spatial_OperatorsTypeBindingTest extends FilterCapabilitiesTestSupport {
@@ -57,11 +57,8 @@ public class Spatial_OperatorsTypeBindingTest extends FilterCapabilitiesTestSupp
 
     @Test
     public void testEncode() throws Exception {
-        Document dom =
-                encode(
-                        FilterMockData.spatial(),
-                        new QName(OGC.NAMESPACE, "Spatial_Operators"),
-                        OGC.Spatial_OperatorsType);
+        Document dom = encode(
+                FilterMockData.spatial(), new QName(OGC.NAMESPACE, "Spatial_Operators"), OGC.Spatial_OperatorsType);
 
         assertNotNull(getElementByQName(dom, OGC.BBOX));
         assertNotNull(getElementByQName(dom, OGC.Equals));

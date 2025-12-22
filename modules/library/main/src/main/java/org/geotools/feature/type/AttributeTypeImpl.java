@@ -17,11 +17,11 @@
 package org.geotools.feature.type;
 
 import java.util.List;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.util.InternationalString;
 import org.geotools.util.Classes;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.util.InternationalString;
 
 /**
  * Base class for attribute types.
@@ -51,10 +51,9 @@ public class AttributeTypeImpl extends PropertyTypeImpl implements AttributeType
     }
 
     /**
-     * Allows this AttributeType to convert an argument to its prefered storage type. If no parsing
-     * is possible, returns the original value. If a parse is attempted, yet fails (i.e. a poor
-     * decimal format) throw the Exception. This is mostly for use internally in Features, but
-     * implementors should simply follow the rules to be safe.
+     * Allows this AttributeType to convert an argument to its prefered storage type. If no parsing is possible, returns
+     * the original value. If a parse is attempted, yet fails (i.e. a poor decimal format) throw the Exception. This is
+     * mostly for use internally in Features, but implementors should simply follow the rules to be safe.
      *
      * @param value the object to attempt parsing of.
      * @return <code>value</code> converted to the preferred storage of this <code>AttributeType

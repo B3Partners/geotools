@@ -30,8 +30,10 @@ import java.util.List;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.geotools.data.CloseableIterator;
-import org.geotools.data.DataSourceException;
+import org.geotools.api.data.CloseableIterator;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.identity.Identifier;
 import org.geotools.data.shapefile.fid.FidIndexer;
 import org.geotools.data.shapefile.fid.IndexedFidReader;
 import org.geotools.data.shapefile.files.FileWriter;
@@ -49,8 +51,6 @@ import org.geotools.data.util.NullProgressListener;
 import org.geotools.util.URLs;
 import org.geotools.util.logging.Logging;
 import org.locationtech.jts.geom.Envelope;
-import org.opengis.filter.Id;
-import org.opengis.filter.identity.Identifier;
 
 /**
  * Manages the index files on behalf of the the {@link ShapefileDataStore}
@@ -72,14 +72,13 @@ class IndexManager {
     ShapefileDataStore store;
 
     /** Used to lock the files when doing accesses to check indexes and the like */
-    FileWriter writer =
-            new FileWriter() {
+    FileWriter writer = new FileWriter() {
 
-                @Override
-                public String id() {
-                    return "ShapefileDataStore-" + store.getTypeName().getLocalPart();
-                }
-            };
+        @Override
+        public String id() {
+            return "ShapefileDataStore-" + store.getTypeName().getLocalPart();
+        }
+    };
 
     static {
         int max = -1;
@@ -104,10 +103,9 @@ class IndexManager {
      *
      * @param force Forces the index re-creation even if the spatial index seems to be up to date
      * @return true if the spatial index has been created/updated
-     * @implNote this method will avoid building spatial indexes for the same shapefile
-     *     concurrently, waiting for a running build before proceeding. If {@code force} is {@code
-     *     true}, it will proceed to build the index once the write lock on the QIX file is
-     *     acquired, otherwise, it will do so only if the index is stale.
+     * @implNote this method will avoid building spatial indexes for the same shapefile concurrently, waiting for a
+     *     running build before proceeding. If {@code force} is {@code true}, it will proceed to build the index once
+     *     the write lock on the QIX file is acquired, otherwise, it will do so only if the index is stale.
      */
     public boolean createSpatialIndex(boolean force) {
         // create index as needed
@@ -166,7 +164,8 @@ class IndexManager {
     }
 
     /** Returns true if the specified index exists, is up to date, and can be read */
-    @SuppressWarnings("PMD.UseTryWithResources") // opened as a test, should not throw on close
+    // opened as a test, should not throw on close
+    @SuppressWarnings({"PMD.UnusedLocalVariable", "PMD.EmptyControlStatement"})
     boolean isIndexUseable(ShpFileType indexType) {
         if (shpFiles.isLocal()) {
             if (isIndexStale(indexType) || !shpFiles.exists(indexType)) {
@@ -174,20 +173,9 @@ class IndexManager {
             }
         } else {
 
-            ReadableByteChannel read = null;
-            try {
-                read = shpFiles.getReadChannel(indexType, writer);
+            try (ReadableByteChannel read = shpFiles.getReadChannel(indexType, writer)) {
             } catch (IOException e) {
                 return false;
-            } finally {
-                if (read != null) {
-                    try {
-                        read.close();
-                    } catch (IOException e) {
-                        ShapefileDataStoreFactory.LOGGER.log(
-                                Level.WARNING, "could not close stream", e);
-                    }
-                }
             }
         }
 
@@ -199,10 +187,7 @@ class IndexManager {
         return shpFiles.isLocal() && shpFiles.exists(QIX);
     }
 
-    /**
-     * Returns true if the specified index file is outdated compared to the shapefile .shp and .shx
-     * files
-     */
+    /** Returns true if the specified index file is outdated compared to the shapefile .shp and .shx files */
     boolean isIndexStale(ShpFileType indexType) {
         if (!shpFiles.isLocal())
             throw new IllegalStateException(
@@ -219,9 +204,9 @@ class IndexManager {
     }
 
     /**
-     * Checks whether the index file addressed by {@code indexURL} is stale in relation to the
-     * {@code .shp/.shx} files without needing to acquire a read-lock on the index URL itself, so it
-     * can be called from a method that already acquired a write lock on it.
+     * Checks whether the index file addressed by {@code indexURL} is stale in relation to the {@code .shp/.shx} files
+     * without needing to acquire a read-lock on the index URL itself, so it can be called from a method that already
+     * acquired a write lock on it.
      */
     private boolean isIndexStale(URL indexURL) {
         final URL shpURL = shpFiles.acquireRead(SHP, writer);
@@ -249,8 +234,7 @@ class IndexManager {
     }
 
     /**
-     * Uses the Fid index to quickly lookup the shp offset and the record number for the list of
-     * fids
+     * Uses the Fid index to quickly lookup the shp offset and the record number for the list of fids
      *
      * @param fidFilter the fid filter identifying the ids
      * @return a list of Data objects
@@ -272,10 +256,7 @@ class IndexManager {
                 long recno = reader.findFid(fid);
                 if (recno == -1) {
                     if (LOGGER.isLoggable(Level.FINEST)) {
-                        LOGGER.finest(
-                                "fid "
-                                        + fid
-                                        + " not found in index, continuing with next queried fid...");
+                        LOGGER.finest("fid " + fid + " not found in index, continuing with next queried fid...");
                     }
                     continue;
                 }
@@ -284,13 +265,12 @@ class IndexManager {
                     data.addValue(Integer.valueOf((int) recno + 1));
                     data.addValue(Long.valueOf(shx.getOffsetInBytes((int) recno)));
                     if (LOGGER.isLoggable(Level.FINEST)) {
-                        LOGGER.finest(
-                                "fid "
-                                        + fid
-                                        + " found for record #"
-                                        + data.getValue(0)
-                                        + " at index file offset "
-                                        + data.getValue(1));
+                        LOGGER.finest("fid "
+                                + fid
+                                + " found for record #"
+                                + data.getValue(0)
+                                + " at index file offset "
+                                + data.getValue(1));
                     }
                     records.add(data);
                 } catch (Exception e) {
@@ -318,9 +298,7 @@ class IndexManager {
             try {
                 File treeFile = URLs.urlToFile(treeURL);
 
-                if (treeFile != null
-                        && treeFile.exists()
-                        && treeFile.length() < 1024 * maxQixCacheSize) {
+                if (treeFile != null && treeFile.exists() && treeFile.length() < 1024 * maxQixCacheSize) {
                     canCache = true;
                 }
             } finally {
@@ -330,9 +308,7 @@ class IndexManager {
             if (canCache) {
                 try (QuadTree quadTree = openQuadTree()) {
                     if (quadTree != null) {
-                        LOGGER.warning(
-                                "Experimental: loading in memory the quadtree for "
-                                        + shpFiles.get(SHP));
+                        LOGGER.warning("Experimental: loading in memory the quadtree for " + shpFiles.get(SHP));
                         cachedTree = new CachedQuadTree(quadTree);
                         quadTree.close();
                     }
@@ -349,7 +325,7 @@ class IndexManager {
             try {
                 @SuppressWarnings("PMD.CloseResource") // managed as part of the return
                 QuadTree quadTree = openQuadTree();
-                if ((quadTree != null) && !bbox.contains(quadTree.getRoot().getBounds())) {
+                if (quadTree != null && !bbox.contains(quadTree.getRoot().getBounds())) {
                     tmp = quadTree.search(bbox);
                 }
                 if (tmp == null && quadTree != null) {
@@ -377,7 +353,7 @@ class IndexManager {
         try {
             File treeFile = URLs.urlToFile(treeURL);
 
-            if (!treeFile.exists() || (treeFile.length() == 0)) {
+            if (!treeFile.exists() || treeFile.length() == 0) {
                 return null;
             }
 

@@ -24,15 +24,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
-import org.geotools.data.FeatureReader;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
 import org.geotools.data.elasticsearch.date.ElasticsearchDateConverter;
 import org.geotools.data.store.ContentState;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.util.logging.Logging;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
 
 /** FeatureReader access to the Elasticsearch index. */
 class ElasticFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFeature> {
@@ -90,9 +90,8 @@ class ElasticFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFea
                     (ElasticDataStore) contentState.getEntry().getDataStore();
             this.arrayEncoding = dataStore.getArrayEncoding();
         } else {
-            this.arrayEncoding =
-                    ElasticDataStore.ArrayEncoding.valueOf(
-                            (String) ElasticDataStoreFactory.ARRAY_ENCODING.getDefaultValue());
+            this.arrayEncoding = ElasticDataStore.ArrayEncoding.valueOf(
+                    (String) ElasticDataStoreFactory.ARRAY_ENCODING.getDefaultValue());
         }
 
         this.mapper = new ObjectMapper();
@@ -132,8 +131,7 @@ class ElasticFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFea
 
         for (final AttributeDescriptor descriptor : type.getAttributeDescriptors()) {
             final String name = descriptor.getType().getName().getLocalPart();
-            final String sourceName =
-                    (String) descriptor.getUserData().get(ElasticConstants.FULL_NAME);
+            final String sourceName = (String) descriptor.getUserData().get(ElasticConstants.FULL_NAME);
 
             List<Object> values = hit.field(sourceName);
             if (values == null && source != null) {
@@ -161,17 +159,16 @@ class ElasticFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFea
             } else if (values != null
                     && Date.class.isAssignableFrom(descriptor.getType().getBinding())) {
                 Object dataVal = values.get(0);
-                if (dataVal instanceof Double) {
-                    builder.set(name, new Date(Math.round((Double) dataVal)));
-                } else if (dataVal instanceof Integer) {
-                    builder.set(name, new Date(((Integer) dataVal).longValue()));
-                } else if (dataVal instanceof Long) {
-                    builder.set(name, new Date((long) dataVal));
+                if (dataVal instanceof Double double1) {
+                    builder.set(name, new Date(Math.round(double1)));
+                } else if (dataVal instanceof Integer integer) {
+                    builder.set(name, new Date(integer.longValue()));
+                } else if (dataVal instanceof Long long1) {
+                    builder.set(name, new Date(long1));
                 } else {
                     @SuppressWarnings("unchecked")
                     final List<String> validFormats =
-                            (List<String>)
-                                    descriptor.getUserData().get(ElasticConstants.DATE_FORMAT);
+                            (List<String>) descriptor.getUserData().get(ElasticConstants.DATE_FORMAT);
                     ElasticsearchDateConverter dateFormatter = null;
                     Date date = null;
                     if (!(validFormats == null) && !(validFormats.isEmpty())) {
@@ -181,11 +178,7 @@ class ElasticFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFea
                                 date = dateFormatter.parse((String) dataVal);
                                 break;
                             } catch (Exception e) {
-                                LOGGER.fine(
-                                        "Unable to parse date format ('"
-                                                + format
-                                                + "') for "
-                                                + descriptor);
+                                LOGGER.fine("Unable to parse date format ('" + format + "') for " + descriptor);
                             }
                         }
                     }

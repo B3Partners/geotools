@@ -45,6 +45,7 @@ An example data set looks something like::
   bluemarble.shp
   bluemarble.prj
   bluemarble.properties
+  sample_image.dat
   ... a bunch of raster files ...
 
 * Shapefile file
@@ -57,7 +58,20 @@ An example data set looks something like::
   
   The usual projection file associated with a shapefile, using the WKT format for a
   CoordinateReferenceSystem.
+
+* Sample image file
+
+  The :file:`sample_image.dat` (legacy :file:`sample_image`) is a sample image used to determine color model
+  upfront without requiring a full scan.
   
+  By default the sample image file is limited to built-in image formats and color models. The old sample image
+  file format that used the ``javax.media.jai.remote.SerializableRenderedImage`` class is also blocked by default.
+  This restriction may be relaxed using the system property ``org.geotools.gce.imagemosaic.sampleimage.allowlist``:
+  
+  .. code-block:: properties
+     
+     org.geotools.gce.imagemosaic.sampleimage.allowlist=^java\\.(net\\.InetAddress|util\\.Hashtable)$
+
 * Properties File
   
   The property file is REQUIRED and use to provide a bunch of settings:
@@ -70,7 +84,7 @@ An example data set looks something like::
     ExpandToRGB=true
     Levels=10000.0,10000.0
     LevelsNum=1
-    Envelope2D=-3637013.0,-1158091.0 1019969.0,4092819.0
+    GeneralBounds=-3637013.0,-1158091.0 1019969.0,4092819.0
     NumFiles=3
   
   Where the following are required:
@@ -91,7 +105,7 @@ An example data set looks something like::
     * You can define several levels in order to capture overview files if you have them
     
   * ``LevelsNum``: the number of levels mentioned above
-  * ``Envelope2D``: bounds in the CRS specified in the ``.prj`` file
+  * ``GeneralBounds``: bounds in the CRS specified in the ``.prj`` file
     
   * ``Format``: ``minX,minY maxX,maxY``
     
@@ -99,8 +113,8 @@ An example data set looks something like::
 
 **Reference**
 
-* `ImageMosaicFormat <http://docs.geotools.org/latest/javadocs/org/geotools/gce/imagemosaic/ImageMosaicFormat.html>`_ (javadoc)
-* `ImageMosaicJDBCReader <http://docs.geotools.org/latest/javadocs/org/geotools/gce/imagemosaic/jdbc/ImageMosaicJDBCReader.html>`_ (javadoc)
+* `ImageMosaicFormat <https://docs.geotools.org/latest/javadocs/org/geotools/gce/imagemosaic/ImageMosaicFormat.html>`_ (javadoc)
+* `ImageMosaicJDBCReader <https://docs.geotools.org/latest/javadocs/org/geotools/gce/imagemosaic/jdbc/ImageMosaicJDBCReader.html>`_ (javadoc)
 * :doc:`pyramid`
 * `ImageMosaic plugin <https://docs.geoserver.org/stable/en/user/data/raster/imagemosaic/index.html>`_
 * `Using the ImageMosaic plugin for raster time-series data <https://docs.geoserver.org/stable/en/user/tutorials/imagemosaic_timeseries/imagemosaic_timeseries.html>`_

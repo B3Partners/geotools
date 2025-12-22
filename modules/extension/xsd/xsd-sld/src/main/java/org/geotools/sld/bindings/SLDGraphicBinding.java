@@ -18,15 +18,15 @@ package org.geotools.sld.bindings;
 
 import java.util.List;
 import javax.xml.namespace.QName;
-import org.geotools.styling.Graphic;
-import org.geotools.styling.StyleFactory;
-import org.geotools.styling.Symbol;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.AnchorPoint;
+import org.geotools.api.style.Displacement;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.style.Symbol;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.AnchorPoint;
-import org.opengis.style.Displacement;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -121,18 +121,12 @@ public class SLDGraphicBinding extends AbstractComplexBinding {
 
         List<Symbol> symbols = node.getChildValues(Symbol.class);
 
-        Expression opacity = (Expression) node.getChildValue("Opacity");
-        Expression size = (Expression) node.getChildValue("Size");
-        Expression rotation = (Expression) node.getChildValue("Rotation");
+        Expression opacity = (Expression) getChildValue(node, "Opacity");
+        Expression size = (Expression) getChildValue(node, "Size");
+        Expression rotation = (Expression) getChildValue(node, "Rotation");
 
-        Graphic graphic =
-                styleFactory.createGraphic(
-                        null,
-                        null,
-                        symbols.toArray(new Symbol[symbols.size()]),
-                        opacity,
-                        size,
-                        rotation);
+        Graphic graphic = styleFactory.createGraphic(
+                null, null, symbols.toArray(new Symbol[symbols.size()]), opacity, size, rotation);
 
         if (node.getChild("Displacement") != null) {
             graphic.setDisplacement((Displacement) node.getChildValue("Displacement"));
@@ -142,5 +136,16 @@ public class SLDGraphicBinding extends AbstractComplexBinding {
         }
 
         return graphic;
+    }
+
+    /** Returns the child value of a node. If it's an empty string, <code>null</code> will be returned. */
+    private Object getChildValue(Node node, String name) {
+        Object value = node.getChildValue(name);
+        if (value instanceof String text) {
+            if (text.isEmpty()) {
+                return null;
+            }
+        }
+        return value;
     }
 }

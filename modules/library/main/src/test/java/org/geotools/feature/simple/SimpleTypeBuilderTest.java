@@ -17,20 +17,23 @@
 package org.geotools.feature.simple;
 
 import java.util.Collections;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.feature.type.Schema;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.type.FeatureTypeFactoryImpl;
 import org.geotools.feature.type.SchemaImpl;
+import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.feature.type.Schema;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class SimpleTypeBuilderTest {
 
@@ -43,27 +46,19 @@ public class SimpleTypeBuilderTest {
         Schema schema = new SchemaImpl("test");
 
         FeatureTypeFactoryImpl typeFactory = new FeatureTypeFactoryImpl();
-        AttributeType pointType =
-                typeFactory.createGeometryType(
-                        new NameImpl("test", "pointType"),
-                        Point.class,
-                        null,
-                        false,
-                        false,
-                        Collections.emptyList(),
-                        null,
-                        null);
+        AttributeType pointType = typeFactory.createGeometryType(
+                new NameImpl("test", "pointType"),
+                Point.class,
+                null,
+                false,
+                false,
+                Collections.emptyList(),
+                null,
+                null);
         schema.put(new NameImpl("test", "pointType"), pointType);
 
-        AttributeType intType =
-                typeFactory.createAttributeType(
-                        new NameImpl("test", "intType"),
-                        Integer.class,
-                        false,
-                        false,
-                        Collections.emptyList(),
-                        null,
-                        null);
+        AttributeType intType = typeFactory.createAttributeType(
+                new NameImpl("test", "intType"), Integer.class, false, false, Collections.emptyList(), null, null);
         schema.put(new NameImpl("test", "intType"), intType);
 
         builder = new SimpleFeatureTypeBuilder(new FeatureTypeFactoryImpl());
@@ -109,8 +104,7 @@ public class SimpleTypeBuilderTest {
 
         Assert.assertNull(type.getGeometryDescriptor().getType().getCoordinateReferenceSystem());
         Assert.assertEquals(
-                DefaultGeographicCRS.WGS84,
-                ((GeometryType) type.getType("point2")).getCoordinateReferenceSystem());
+                DefaultGeographicCRS.WGS84, ((GeometryType) type.getType("point2")).getCoordinateReferenceSystem());
     }
 
     @Test
@@ -138,6 +132,26 @@ public class SimpleTypeBuilderTest {
         // the default geometry, that had a special meaning in the original source
         SimpleFeatureType retyped = SimpleFeatureTypeBuilder.retype(type, "geo2", "geo1");
         Assert.assertEquals("geo1", retyped.getGeometryDescriptor().getLocalName());
+    }
+
+    @Test
+    public void testRetypeQuery() throws Exception {
+        builder.setName("Location");
+        builder.add("geom", Point.class, DefaultGeographicCRS.WGS84);
+        builder.add("name", String.class);
+        builder.add("number", Integer.class);
+        builder.setDefaultGeometry("geom");
+        SimpleFeatureType type = builder.buildFeatureType();
+
+        CoordinateReferenceSystem ballWorld = CRS.decode("EPSG:3857");
+        // Changing projection should work when reducing number of attributes
+        Query query = new Query("Location", Filter.INCLUDE, "geom", "name");
+        query.setCoordinateSystem(ballWorld);
+
+        SimpleFeatureType retyped = SimpleFeatureTypeBuilder.retype(type, query);
+        Assert.assertSame("crs", ballWorld, retyped.getCoordinateReferenceSystem());
+        Assert.assertEquals("geom", retyped.getGeometryDescriptor().getLocalName());
+        Assert.assertSame("geom crs", ballWorld, retyped.getGeometryDescriptor().getCoordinateReferenceSystem());
     }
 
     @Test

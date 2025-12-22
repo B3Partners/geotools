@@ -22,8 +22,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.coverage.grid.Format;
 import org.geotools.coverage.grid.io.GridFormatFactorySpi;
-import org.opengis.coverage.grid.Format;
 
 /**
  * Implementation of the {@link Format} service provider interface for arc grid files.
@@ -33,8 +33,7 @@ import org.opengis.coverage.grid.Format;
  */
 public final class ArcGridFormatFactory implements GridFormatFactorySpi {
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(ArcGridFormatFactory.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(ArcGridFormatFactory.class);
 
     /**
      * Tells me if the coverage plugin to access Ascii grids is available or not.
@@ -46,16 +45,15 @@ public final class ArcGridFormatFactory implements GridFormatFactorySpi {
         boolean available = true;
 
         // if these classes are here, then the runtine environment has
-        // access to JAI and the JAI ImageI/O toolbox.
+        // access to ImageN and the ImageN ImageI/O toolbox.
         try {
 
-            Class.forName("javax.media.jai.JAI");
-            Class.forName("com.sun.media.jai.operator.ImageReadDescriptor");
+            Class.forName("org.eclipse.imagen.ImageN");
+            Class.forName("org.eclipse.imagen.media.imageread.ImageReadDescriptor");
             Class.forName("it.geosolutions.imageio.plugins.arcgrid.AsciiGridsImageMetadata");
             if (LOGGER.isLoggable(Level.FINE)) LOGGER.fine("ArcGridFormatFactory is available.");
         } catch (ClassNotFoundException cnf) {
-            if (LOGGER.isLoggable(Level.FINE))
-                LOGGER.fine("ArcGridFormatFactory is not available.");
+            if (LOGGER.isLoggable(Level.FINE)) LOGGER.fine("ArcGridFormatFactory is not available.");
             available = false;
         }
 

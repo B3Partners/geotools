@@ -49,40 +49,34 @@ public class GraphFuserTest {
         final int nnodes = 100;
         GraphTestUtil.buildNoBifurcations(generator(), nnodes);
 
-        GraphFuser fuser =
-                new GraphFuser(
-                        generator().getGraph(), generator().getGraphBuilder(), createEdgeMerger());
+        GraphFuser fuser = new GraphFuser(generator().getGraph(), generator().getGraphBuilder(), createEdgeMerger());
         Assert.assertTrue(fuser.fuse());
 
         Assert.assertEquals(2, generator().getGraph().getNodes().size());
         Assert.assertEquals(1, generator().getGraph().getEdges().size());
 
-        GraphVisitor visitor =
-                component -> {
-                    String id = (String) component.getObject();
-                    Assert.assertTrue(id.equals("0") || id.equals(String.valueOf(nnodes - 1)));
-                    return (0);
-                };
+        GraphVisitor visitor = component -> {
+            String id = (String) component.getObject();
+            Assert.assertTrue(id.equals("0") || id.equals(String.valueOf(nnodes - 1)));
+            return 0;
+        };
         generator().getGraph().visitNodes(visitor);
 
-        visitor =
-                component -> {
-                    Edge e = (Edge) component;
-                    String id0 = (String) e.getNodeA().getObject();
-                    String id1 = (String) e.getNodeB().getObject();
+        visitor = component -> {
+            Edge e = (Edge) component;
+            String id0 = (String) e.getNodeA().getObject();
+            String id1 = (String) e.getNodeB().getObject();
 
-                    Assert.assertTrue(
-                            (id0.equals("0") && id1.equals(String.valueOf(nnodes - 1)))
-                                    || (id0.equals(String.valueOf(nnodes - 1)) && id1.equals("0")));
+            Assert.assertTrue(id0.equals("0") && id1.equals(String.valueOf(nnodes - 1))
+                    || id0.equals(String.valueOf(nnodes - 1)) && id1.equals("0"));
 
-                    return (0);
-                };
+            return 0;
+        };
         generator().getGraph().visitEdges(visitor);
     }
 
     /**
-     * Build a no bifurcation graph and then add a cycle containing two adjacent nodes and fuse.
-     * <br>
+     * Build a no bifurcation graph and then add a cycle containing two adjacent nodes and fuse. <br>
      * <br>
      * Expected: 1. The graph should have 4 nodes and 4 edges. <br>
      * <br>
@@ -96,51 +90,41 @@ public class GraphFuserTest {
         GraphTestUtil.buildNoBifurcations(generator(), nnodes);
         generator().add(new Object[] {String.valueOf(cyc), String.valueOf(cyc + 1)});
 
-        GraphFuser fuser =
-                new GraphFuser(
-                        generator().getGraph(), generator().getGraphBuilder(), createEdgeMerger());
+        GraphFuser fuser = new GraphFuser(generator().getGraph(), generator().getGraphBuilder(), createEdgeMerger());
         Assert.assertTrue(fuser.fuse());
 
         Assert.assertEquals(4, generator().getGraph().getNodes().size());
         Assert.assertEquals(4, generator().getGraph().getEdges().size());
 
-        GraphVisitor visitor =
-                component -> {
-                    String id = (String) component.getObject();
-                    Assert.assertTrue(
-                            (id.equals("0") || id.equals(String.valueOf(nnodes - 1)))
-                                    || (id.equals(String.valueOf(cyc))
-                                            || id.equals(String.valueOf(cyc + 1))));
-                    return (0);
-                };
+        GraphVisitor visitor = component -> {
+            String id = (String) component.getObject();
+            Assert.assertTrue(id.equals("0")
+                    || id.equals(String.valueOf(nnodes - 1))
+                    || id.equals(String.valueOf(cyc))
+                    || id.equals(String.valueOf(cyc + 1)));
+            return 0;
+        };
         generator().getGraph().visitNodes(visitor);
 
-        visitor =
-                component -> {
-                    Edge e = (Edge) component;
-                    String id0 = (String) e.getNodeA().getObject();
-                    String id1 = (String) e.getNodeB().getObject();
+        visitor = component -> {
+            Edge e = (Edge) component;
+            String id0 = (String) e.getNodeA().getObject();
+            String id1 = (String) e.getNodeB().getObject();
 
-                    Assert.assertTrue(
-                            (id0.equals("0") && id1.equals(String.valueOf(cyc)))
-                                    || (id0.equals(String.valueOf(cyc)) && id1.equals("0"))
-                                    || (id0.equals(String.valueOf(cyc))
-                                            && id1.equals(String.valueOf(cyc + 1)))
-                                    || (id0.equals(String.valueOf(cyc + 1))
-                                            && id1.equals(String.valueOf(cyc)))
-                                    || (id0.equals(String.valueOf(cyc + 1))
-                                            && id1.equals(String.valueOf(nnodes - 1)))
-                                    || (id0.equals(String.valueOf(nnodes - 1))
-                                            && id1.equals(String.valueOf(cyc + 1))));
+            Assert.assertTrue(id0.equals("0") && id1.equals(String.valueOf(cyc))
+                    || id0.equals(String.valueOf(cyc)) && id1.equals("0")
+                    || id0.equals(String.valueOf(cyc)) && id1.equals(String.valueOf(cyc + 1))
+                    || id0.equals(String.valueOf(cyc + 1)) && id1.equals(String.valueOf(cyc))
+                    || id0.equals(String.valueOf(cyc + 1)) && id1.equals(String.valueOf(nnodes - 1))
+                    || id0.equals(String.valueOf(nnodes - 1)) && id1.equals(String.valueOf(cyc + 1)));
 
-                    return (0);
-                };
+            return 0;
+        };
         generator().getGraph().visitEdges(visitor);
     }
 
     /**
-     * Create a graph with no bifurcations and a cycle between containing three nodes and fuse it.
-     * <br>
+     * Create a graph with no bifurcations and a cycle between containing three nodes and fuse it. <br>
      * <br>
      * Expected: 1. The graph should have 4 nodes and 4 edges. <br>
      * <br>
@@ -154,45 +138,36 @@ public class GraphFuserTest {
         GraphTestUtil.buildNoBifurcations(generator(), nnodes);
         generator().add(new Object[] {String.valueOf(cyc), String.valueOf(cyc + 2)});
 
-        GraphFuser fuser =
-                new GraphFuser(
-                        generator().getGraph(), generator().getGraphBuilder(), createEdgeMerger());
+        GraphFuser fuser = new GraphFuser(generator().getGraph(), generator().getGraphBuilder(), createEdgeMerger());
         Assert.assertTrue(fuser.fuse());
 
         Assert.assertEquals(4, generator().getGraph().getNodes().size());
         Assert.assertEquals(4, generator().getGraph().getEdges().size());
 
-        GraphVisitor visitor =
-                component -> {
-                    String id = (String) component.getObject();
-                    Assert.assertTrue(
-                            (id.equals("0") || id.equals(String.valueOf(nnodes - 1)))
-                                    || (id.equals(String.valueOf(cyc))
-                                            || id.equals(String.valueOf(cyc + 2))));
-                    return (0);
-                };
+        GraphVisitor visitor = component -> {
+            String id = (String) component.getObject();
+            Assert.assertTrue(id.equals("0")
+                    || id.equals(String.valueOf(nnodes - 1))
+                    || id.equals(String.valueOf(cyc))
+                    || id.equals(String.valueOf(cyc + 2)));
+            return 0;
+        };
         generator().getGraph().visitNodes(visitor);
 
-        visitor =
-                component -> {
-                    Edge e = (Edge) component;
-                    String id0 = (String) e.getNodeA().getObject();
-                    String id1 = (String) e.getNodeB().getObject();
+        visitor = component -> {
+            Edge e = (Edge) component;
+            String id0 = (String) e.getNodeA().getObject();
+            String id1 = (String) e.getNodeB().getObject();
 
-                    Assert.assertTrue(
-                            (id0.equals("0") && id1.equals(String.valueOf(cyc)))
-                                    || (id0.equals(String.valueOf(cyc)) && id1.equals("0"))
-                                    || (id0.equals(String.valueOf(cyc))
-                                            && id1.equals(String.valueOf(cyc + 2)))
-                                    || (id0.equals(String.valueOf(cyc + 2))
-                                            && id1.equals(String.valueOf(cyc)))
-                                    || (id0.equals(String.valueOf(cyc + 2))
-                                            && id1.equals(String.valueOf(nnodes - 1)))
-                                    || (id0.equals(String.valueOf(nnodes - 1))
-                                            && id1.equals(String.valueOf(cyc + 2))));
+            Assert.assertTrue(id0.equals("0") && id1.equals(String.valueOf(cyc))
+                    || id0.equals(String.valueOf(cyc)) && id1.equals("0")
+                    || id0.equals(String.valueOf(cyc)) && id1.equals(String.valueOf(cyc + 2))
+                    || id0.equals(String.valueOf(cyc + 2)) && id1.equals(String.valueOf(cyc))
+                    || id0.equals(String.valueOf(cyc + 2)) && id1.equals(String.valueOf(nnodes - 1))
+                    || id0.equals(String.valueOf(nnodes - 1)) && id1.equals(String.valueOf(cyc + 2)));
 
-                    return (0);
-                };
+            return 0;
+        };
         generator().getGraph().visitEdges(visitor);
     }
 
@@ -206,9 +181,7 @@ public class GraphFuserTest {
         int nnodes = 100;
         GraphTestUtil.buildCircular(generator(), nnodes);
 
-        GraphFuser fuser =
-                new GraphFuser(
-                        generator().getGraph(), generator().getGraphBuilder(), createEdgeMerger());
+        GraphFuser fuser = new GraphFuser(generator().getGraph(), generator().getGraphBuilder(), createEdgeMerger());
         Assert.assertTrue(fuser.fuse());
 
         Assert.assertEquals(1, generator().getGraph().getNodes().size());
@@ -216,21 +189,20 @@ public class GraphFuserTest {
     }
 
     protected GraphGenerator createGenerator() {
-        return (new BasicGraphGenerator());
+        return new BasicGraphGenerator();
     }
 
     protected GraphGenerator generator() {
-        return (m_gen);
+        return m_gen;
     }
 
     protected GraphFuser.EdgeMerger createEdgeMerger() {
-        return (new GraphFuser.EdgeMerger() {
+        return new GraphFuser.EdgeMerger() {
             @Override
             public Object merge(List<Edge> edges) {
                 List<Edge> ends = new ArrayList<>();
                 for (Edge edge : edges) {
-                    if (edge.getNodeA().getDegree() != 2 || edge.getNodeB().getDegree() != 2)
-                        ends.add(edge);
+                    if (edge.getNodeA().getDegree() != 2 || edge.getNodeB().getDegree() != 2) ends.add(edge);
                 }
 
                 Object[] obj = new Object[2];
@@ -239,20 +211,18 @@ public class GraphFuserTest {
                     Edge end0 = ends.get(0);
                     Edge end1 = ends.get(1);
 
-                    obj[0] =
-                            end0.getNodeA().getDegree() == 2
-                                    ? end0.getNodeB().getObject()
-                                    : end0.getNodeA().getObject();
-                    obj[1] =
-                            end1.getNodeA().getDegree() == 2
-                                    ? end1.getNodeB().getObject()
-                                    : end1.getNodeA().getObject();
+                    obj[0] = end0.getNodeA().getDegree() == 2
+                            ? end0.getNodeB().getObject()
+                            : end0.getNodeA().getObject();
+                    obj[1] = end1.getNodeA().getDegree() == 2
+                            ? end1.getNodeB().getObject()
+                            : end1.getNodeA().getObject();
                 } else if (ends.isEmpty()) {
                     obj[0] = edges.get(0).getNodeA().getObject();
                     obj[1] = edges.get(0).getNodeA().getObject();
                 } else throw new IllegalStateException("Found " + ends.size() + " ends.");
 
-                return (obj);
+                return obj;
             }
 
             public void setMergedObject(Edge newEdge, Object merged) {
@@ -263,6 +233,6 @@ public class GraphFuserTest {
             public void setMergedObject(Edge newEdge, Object merged, List edges) {
                 newEdge.setObject(merged);
             }
-        });
+        };
     }
 }

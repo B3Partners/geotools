@@ -18,6 +18,9 @@
 package org.geotools.process.raster;
 
 import java.util.Collection;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.CoverageProcessor;
 import org.geotools.coverage.processing.operation.BandMerge;
@@ -26,29 +29,23 @@ import org.geotools.process.factory.DescribeParameter;
 import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Process calling the {@link BandMerge} operation. This process requires:
  *
  * <ul>
- *   <li>a {@link Collection} of {@link GridCoverage2D} objects (Note that they must be in the same
- *       CRS).
+ *   <li>a {@link Collection} of {@link GridCoverage2D} objects (Note that they must be in the same CRS).
  *   <li>an optional ROI passed as {@link SimpleFeature}.
- *   <li>an optional String indicating the policy for choosing the Grid To World transformation(from
- *       those of all the Coverages) to use for the final coverage. The available values are:
- *       FIRST(default), for selecting the first coverage; LAST, for the last coverage; INDEX, for
- *       selecting the Coverage defined by the Index Parameter.
- *   <li>an optional integer parameter called Index used by the Grid To World transformation policy
- *       for choosing the coverage at the "Index" position.
+ *   <li>an optional String indicating the policy for choosing the Grid To World transformation(from those of all the
+ *       Coverages) to use for the final coverage. The available values are: FIRST(default), for selecting the first
+ *       coverage; LAST, for the last coverage; INDEX, for selecting the Coverage defined by the Index Parameter.
+ *   <li>an optional integer parameter called Index used by the Grid To World transformation policy for choosing the
+ *       coverage at the "Index" position.
  * </ul>
  *
- * The output of this process is a {@link GridCoverage2D} object which contains all the input
- * Coverages, each one stored as a Band (or multiple bands if the coverage is multibanded). This
- * process can be used also for merging coverages which are not aligned and with different
- * resolutions.
+ * The output of this process is a {@link GridCoverage2D} object which contains all the input Coverages, each one stored
+ * as a Band (or multiple bands if the coverage is multibanded). This process can be used also for merging coverages
+ * which are not aligned and with different resolutions.
  *
  * @author Nicola Lagomarsini, GeoSolutions S.A.S.
  */
@@ -69,17 +66,13 @@ public class BandMergeProcess implements RasterProcess {
                             min = 1,
                             collectionType = GridCoverage2D.class)
                     Collection<GridCoverage2D> coverages,
-            @DescribeParameter(name = "roi", description = "Geometry to use as ROI", min = 0)
-                    Geometry roi,
+            @DescribeParameter(name = "roi", description = "Geometry to use as ROI", min = 0) Geometry roi,
             @DescribeParameter(
                             name = "transformChoice",
                             description = "Choice on which Coverage G2W transform to use",
                             min = 0)
                     String transformChoice,
-            @DescribeParameter(
-                            name = "index",
-                            description = "Index used by the transformChoice parameter",
-                            min = 0)
+            @DescribeParameter(name = "index", description = "Index used by the transformChoice parameter", min = 0)
                     Integer index)
             throws ProcessException {
         // //
@@ -106,12 +99,10 @@ public class BandMergeProcess implements RasterProcess {
 
             Object crsGeo = geo.getUserData();
 
-            if (crsGeo != null && crsGeo instanceof CoordinateReferenceSystem) {
-                CoordinateReferenceSystem geoCRS = (CoordinateReferenceSystem) crsGeo;
+            if (crsGeo != null && crsGeo instanceof CoordinateReferenceSystem geoCRS) {
                 GridCoverage2D cov = coverages.iterator().next();
                 // CRS Check
-                BaseCoverageAlgebraProcess.checkCompatibleCRS(
-                        geoCRS, cov.getCoordinateReferenceSystem());
+                BaseCoverageAlgebraProcess.checkCompatibleCRS(geoCRS, cov.getCoordinateReferenceSystem());
                 // Setting of the ROI if present
                 param.parameter(BandMerge.GEOMETRY).setValue(geo);
             } else {

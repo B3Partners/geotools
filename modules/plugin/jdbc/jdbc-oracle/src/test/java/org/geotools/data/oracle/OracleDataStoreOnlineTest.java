@@ -17,12 +17,15 @@
 package org.geotools.data.oracle;
 
 import java.sql.Date;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.jdbc.JDBCDataStoreOnlineTest;
@@ -31,9 +34,6 @@ import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class OracleDataStoreOnlineTest extends JDBCDataStoreOnlineTest {
 
@@ -66,18 +66,18 @@ public class OracleDataStoreOnlineTest extends JDBCDataStoreOnlineTest {
         SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
         builder.setName(tname("ft2"));
         builder.setNamespaceURI(dataStore.getNamespaceURI());
-        CoordinateReferenceSystem crs =
-                CRS.parseWKT(
-                        "GEOGCS[\"NAD83\", \n"
-                                + "  DATUM[\"North American Datum 1983\", \n"
-                                + "    SPHEROID[\"GRS 1980\", 6378137.0, 298.257222101, AUTHORITY[\"EPSG\",\"7019\"]], \n"
-                                + "    TOWGS84[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], \n"
-                                + "    AUTHORITY[\"EPSG\",\"6269\"]], \n"
-                                + "  PRIMEM[\"Greenwich\", 0.0, AUTHORITY[\"EPSG\",\"8901\"]], \n"
-                                + "  UNIT[\"degree\", 0.017453292519943295], \n"
-                                + "  AXIS[\"Geodetic longitude\", EAST], \n"
-                                + "  AXIS[\"Geodetic latitude\", NORTH], \n"
-                                + "  AUTHORITY[\"EPSG\",\"4269\"]]");
+        CoordinateReferenceSystem crs = CRS.parseWKT(
+                """
+                GEOGCS["NAD83",\s
+                  DATUM["North American Datum 1983",\s
+                    SPHEROID["GRS 1980", 6378137.0, 298.257222101, AUTHORITY["EPSG","7019"]],\s
+                    TOWGS84[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],\s
+                    AUTHORITY["EPSG","6269"]],\s
+                  PRIMEM["Greenwich", 0.0, AUTHORITY["EPSG","8901"]],\s
+                  UNIT["degree", 0.017453292519943295],\s
+                  AXIS["Geodetic longitude", EAST],\s
+                  AXIS["Geodetic latitude", NORTH],\s
+                  AUTHORITY["EPSG","4269"]]""");
         builder.setCRS(crs);
         builder.add(aname("geometry"), Geometry.class);
         builder.add(aname("intProperty"), Integer.class);
@@ -129,7 +129,7 @@ public class OracleDataStoreOnlineTest extends JDBCDataStoreOnlineTest {
         SimpleFeature f = fBuilder.buildFeature(null);
         // used to fail here
         // need the transaction available for rollback in the catch
-        @SuppressWarnings({"PMD.CloseResource", "PMD.UseTryWithResources"})
+        @SuppressWarnings("PMD.CloseResource")
         Transaction transaction = new DefaultTransaction("create");
         SimpleFeatureSource featureSource =
                 dataStore.getFeatureSource(featureType.getName().getLocalPart());

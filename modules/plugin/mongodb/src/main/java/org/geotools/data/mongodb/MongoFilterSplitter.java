@@ -16,49 +16,55 @@
  */
 package org.geotools.data.mongodb;
 
+import org.apache.commons.lang3.Strings;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.BinaryComparisonOperator;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.DWithin;
 import org.geotools.data.mongodb.complex.JsonSelectAllFunction;
 import org.geotools.data.mongodb.complex.JsonSelectFunction;
 import org.geotools.filter.FilterCapabilities;
 import org.geotools.filter.visitor.ClientTransactionAccessor;
 import org.geotools.filter.visitor.PostPreProcessFilterSplittingVisitor;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.BinaryComparisonOperator;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Point;
 
 public class MongoFilterSplitter extends PostPreProcessFilterSplittingVisitor {
+
+    private MongoCollectionMeta mongoCollectionMeta;
     /**
      * Create a new instance.
      *
-     * @param fcs The FilterCapabilties that describes what Filters/Expressions the server can
-     *     process.
+     * @param fcs The FilterCapabilties that describes what Filters/Expressions the server can process.
      * @param parent The FeatureType that this filter involves. Why is this needed?
-     * @param transactionAccessor If the transaction is handled on the client and not the server
-     *     then different filters must be sent to the server. This class provides a generic way of
+     * @param transactionAccessor If the transaction is handled on the client and not the server then different filters
+     *     must be sent to the server. This class provides a generic way of
      */
     public MongoFilterSplitter(
             FilterCapabilities fcs,
             SimpleFeatureType parent,
-            ClientTransactionAccessor transactionAccessor) {
+            ClientTransactionAccessor transactionAccessor,
+            MongoCollectionMeta mongoCollectionMeta) {
         super(fcs, parent, transactionAccessor);
+        this.mongoCollectionMeta = mongoCollectionMeta;
     }
 
     @Override
     protected void visitBinaryComparisonOperator(BinaryComparisonOperator filter) {
         Expression expression1 = filter.getExpression1();
         Expression expression2 = filter.getExpression2();
-        if ((expression1 instanceof JsonSelectFunction
-                || expression1 instanceof JsonSelectAllFunction)) {
+        if (expression1 instanceof JsonSelectFunction || expression1 instanceof JsonSelectAllFunction) {
             if (expression2 instanceof Literal) {
                 preStack.push(filter);
             } else {
                 postStack.push(filter);
             }
-        } else if ((expression2 instanceof JsonSelectFunction
-                || expression2 instanceof JsonSelectAllFunction)) {
+        } else if (expression2 instanceof JsonSelectFunction || expression2 instanceof JsonSelectAllFunction) {
             if (expression1 instanceof Literal) {
                 preStack.push(filter);
             } else {
@@ -66,6 +72,43 @@ public class MongoFilterSplitter extends PostPreProcessFilterSplittingVisitor {
             }
         } else {
             super.visitBinaryComparisonOperator(filter);
+        }
+    }
+
+    @Override
+    protected void visitBinarySpatialOperator(BinarySpatialOperator filter) {
+        Expression expression2 = filter.getExpression2();
+        if (filter instanceof DWithin) {
+            if (expression2 != null) {
+                Geometry geometry = expression2.evaluate(null, Geometry.class);
+                if (geometry instanceof Point) {
+                    processPoint(filter);
+                } else {
+                    preStack.push(filter);
+                }
+                return;
+            }
+        }
+        super.visitBinarySpatialOperator(filter);
+    }
+
+    /**
+     * Checking for presence of spatial index, because DWithin with point will be delegated to $near operator, which
+     * requires geospatial index. Otherwise, will delegate to memory.
+     *
+     * @param filter
+     */
+    private void processPoint(BinarySpatialOperator filter) {
+        if (mongoCollectionMeta != null
+                && Strings.CS.equalsAny(
+                        mongoCollectionMeta
+                                .getIndexes()
+                                .get(filter.getExpression1().toString()),
+                        "2dsphere",
+                        "2d")) {
+            super.visitBinarySpatialOperator(filter);
+        } else {
+            postStack.push(filter);
         }
     }
 

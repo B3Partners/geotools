@@ -16,9 +16,9 @@
  */
 package org.geotools.data.postgis;
 
+import org.geotools.api.feature.type.GeometryDescriptor;
 import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.util.Version;
-import org.opengis.feature.type.GeometryDescriptor;
 
 public class GeometryColumnEncoder {
 
@@ -44,12 +44,7 @@ public class GeometryColumnEncoder {
         this.dialect = dialect;
     }
 
-    public void encode(
-            GeometryDescriptor gatt,
-            String prefix,
-            StringBuffer sql,
-            boolean force2D,
-            Double distance) {
+    public void encode(GeometryDescriptor gatt, String prefix, StringBuffer sql, boolean force2D, Double distance) {
 
         if (encodeBase64) {
             sql.append("encode(");
@@ -66,11 +61,9 @@ public class GeometryColumnEncoder {
         }
     }
 
-    private void encodeNotSimplified(
-            GeometryDescriptor gatt, String prefix, StringBuffer sql, boolean force2D) {
+    private void encodeNotSimplified(GeometryDescriptor gatt, String prefix, StringBuffer sql, boolean force2D) {
 
-        boolean geography =
-                "geography".equals(gatt.getUserData().get(JDBCDataStore.JDBC_NATIVE_TYPENAME));
+        boolean geography = "geography".equals(gatt.getUserData().get(JDBCDataStore.JDBC_NATIVE_TYPENAME));
         if (geography) {
             encodeGeography(gatt, prefix, sql);
         } else {
@@ -93,13 +86,8 @@ public class GeometryColumnEncoder {
     }
 
     private void encodeSimplified(
-            GeometryDescriptor gatt,
-            String prefix,
-            StringBuffer sql,
-            boolean force2D,
-            double distance) {
-        boolean geography =
-                "geography".equals(gatt.getUserData().get(JDBCDataStore.JDBC_NATIVE_TYPENAME));
+            GeometryDescriptor gatt, String prefix, StringBuffer sql, boolean force2D, double distance) {
+        boolean geography = "geography".equals(gatt.getUserData().get(JDBCDataStore.JDBC_NATIVE_TYPENAME));
 
         if (geography) {
             encodeGeography(gatt, prefix, sql);
@@ -129,8 +117,7 @@ public class GeometryColumnEncoder {
         }
     }
 
-    private void encode2DGeometry(
-            GeometryDescriptor gatt, String prefix, StringBuffer sql, Double distance) {
+    private void encode2DGeometry(GeometryDescriptor gatt, String prefix, StringBuffer sql, Double distance) {
         if (distance != null) {
             if (stPreserveTopologyEnabled) {
                 sql.append("ST_SimplifyPreserveTopology(");
@@ -144,16 +131,16 @@ public class GeometryColumnEncoder {
         sql.append(")");
 
         if (distance != null) {
-            String preserveCollapsed = (atLeast2_2_0 && !stPreserveTopologyEnabled) ? ", true" : "";
+            String preserveCollapsed = atLeast2_2_0 && !stPreserveTopologyEnabled ? ", true" : "";
             sql.append(", " + distance + preserveCollapsed + ")");
         }
     }
 
-    /**
-     * Computes the number of digits preserved by TWKB based on the magnitude of the simplification
-     * distance
-     */
+    /** Computes the number of digits preserved by TWKB based on the magnitude of the simplification distance */
     private int getTWKBDigits(Double distance) {
+        if (distance.doubleValue() == 0D) {
+            return 7;
+        }
         int result = -(int) Math.floor(Math.log10(distance));
         // Prevent PostGIS ERROR: lwgeom_write_to_buffer: X/Z precision cannot be greater than 7 or
         // less than -7

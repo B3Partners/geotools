@@ -23,16 +23,16 @@ import static org.junit.Assert.fail;
 
 import java.util.Collections;
 import java.util.Set;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.style.SemanticType;
 import org.geotools.filter.text.ecql.ECQL;
 import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
-import org.opengis.filter.Filter;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.style.SemanticType;
 
 public class MBFilterTest {
 
@@ -51,8 +51,7 @@ public class MBFilterTest {
     @Test
     public void mixed() throws ParseException {
         JSONArray json =
-                array(
-                        "['all',['==', 'class', 'street_limited'],['>=', 'admin_level', 3],['!in', '$type', 'Polygon']]");
+                array("['all',['==', 'class', 'street_limited'],['>=', 'admin_level', 3],['!in', '$type', 'Polygon']]");
         MBFilter mbfilter = new MBFilter(json);
         Set<SemanticType> types = mbfilter.semanticTypeIdentifiers();
         assertFalse(types.contains(SemanticType.POLYGON));
@@ -78,8 +77,7 @@ public class MBFilterTest {
         types = mbfilter.semanticTypeIdentifiers();
         assertTrue(types.contains(SemanticType.POLYGON) && types.size() == 1);
         filter = mbfilter.filter();
-        assertEquals(
-                "(dimension(geometry()) = 2 AND NOT (isCoverage() = true))", ECQL.toCQL(filter));
+        assertEquals("(dimension(geometry()) = 2 AND NOT (isCoverage() = true))", ECQL.toCQL(filter));
 
         json = array("['==', '$type','Point']");
         mbfilter = new MBFilter(json);
@@ -91,10 +89,7 @@ public class MBFilterTest {
         json = array("['in', '$type','Point', 'LineString']");
         mbfilter = new MBFilter(json, null);
         types = mbfilter.semanticTypeIdentifiers();
-        assertTrue(
-                types.contains(SemanticType.POINT)
-                        && types.contains(SemanticType.LINE)
-                        && types.size() == 2);
+        assertTrue(types.contains(SemanticType.POINT) && types.contains(SemanticType.LINE) && types.size() == 2);
         filter = mbfilter.filter();
         assertEquals("dimension(geometry()) IN (0,1)", ECQL.toCQL(filter));
         try {
@@ -286,9 +281,7 @@ public class MBFilterTest {
         filter = mbfilter.filter();
         assertEquals("coalesce('aString',false,5) = true", ECQL.toCQL(filter));
 
-        json =
-                array(
-                        "[\"match\",'bLabel','aLabel', 'firstLabel','bLabel','secondLabel','defaultLabel']");
+        json = array("[\"match\",'bLabel','aLabel', 'firstLabel','bLabel','secondLabel','defaultLabel']");
         mbfilter = new MBFilter(json);
         filter = mbfilter.filter();
         assertEquals(
@@ -298,13 +291,13 @@ public class MBFilterTest {
 
     @Test
     public void nestedAllSemanticIdentifiers() throws ParseException {
-        JSONArray json =
-                array(
-                        "[\n"
-                                + "        'all',\n"
-                                + "        ['==', '$type', 'LineString'],\n"
-                                + "        ['all', ['==', 'brunnel', 'tunnel'], ['==', 'class', 'path']]\n"
-                                + "      ]");
+        JSONArray json = array(
+                """
+                [
+                        'all',
+                        ['==', '$type', 'LineString'],
+                        ['all', ['==', 'brunnel', 'tunnel'], ['==', 'class', 'path']]
+                      ]""");
         MBFilter mbfilter = new MBFilter(json);
         // used to go in infinite recursion
         Set<SemanticType> identifiers = mbfilter.semanticTypeIdentifiers();

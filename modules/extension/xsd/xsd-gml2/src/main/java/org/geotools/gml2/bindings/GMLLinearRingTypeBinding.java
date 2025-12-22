@@ -102,7 +102,7 @@ public class GMLLinearRingTypeBinding extends AbstractComplexBinding {
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         List coordinates = node.getChildren("coord");
 
-        if (!coordinates.isEmpty() && (coordinates.size() < 4)) {
+        if (!coordinates.isEmpty() && coordinates.size() < 4) {
             throw new RuntimeException("LinearRing must have at least 4 coordinates");
         }
 
@@ -111,8 +111,7 @@ public class GMLLinearRingTypeBinding extends AbstractComplexBinding {
             CoordinateSequence seq = (CoordinateSequence) cnode.getValue();
             int dimension = GMLUtil.getDimension(seq);
 
-            CoordinateSequence lineSeq =
-                    seq = JTS.createCS(csFactory, coordinates.size(), dimension);
+            CoordinateSequence lineSeq = seq = JTS.createCS(csFactory, coordinates.size(), dimension);
 
             for (int i = 0; i < coordinates.size(); i++) {
                 cnode = (Node) coordinates.get(i);

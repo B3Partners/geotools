@@ -25,8 +25,8 @@ import org.sqlite.Function;
  *
  * @author Justin Deoliveira
  * @author Niels Charlier
- * @deprecated The implementation forces object wrapping for all primitives, causing generation of
- *     lots of short lived objects.
+ * @deprecated The implementation forces object wrapping for all primitives, causing generation of lots of short lived
+ *     objects.
  */
 @Deprecated
 public abstract class GeometryFunction extends Function {
@@ -48,18 +48,18 @@ public abstract class GeometryFunction extends Function {
 
         if (res == null) {
             result();
-        } else if (res instanceof Integer) {
-            result((Integer) res);
-        } else if (res instanceof Double) {
-            result((Double) res);
-        } else if (res instanceof String) {
-            result((String) res);
-        } else if (res instanceof Long) {
-            result((Long) res);
-        } else if (res instanceof byte[]) {
-            result((byte[]) res);
-        } else if (res instanceof Boolean) {
-            result((Boolean) res ? 1 : 0);
+        } else if (res instanceof Integer integer) {
+            result(integer);
+        } else if (res instanceof Double double1) {
+            result(double1);
+        } else if (res instanceof String string) {
+            result(string);
+        } else if (res instanceof Long long1) {
+            result(long1);
+        } else if (res instanceof byte[] bytes) {
+            result(bytes);
+        } else if (res instanceof Boolean boolean1) {
+            result(boolean1 ? 1 : 0);
         }
     }
 }

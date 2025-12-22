@@ -20,9 +20,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import it.geosolutions.jaiext.vectorbin.ROIGeometry;
 import java.util.logging.Logger;
-import javax.media.jai.ROI;
+import org.eclipse.imagen.ROI;
+import org.eclipse.imagen.media.vectorbin.ROIGeometry;
 import org.geotools.util.logging.Logging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Ignore;
@@ -63,8 +63,8 @@ public class BinarizatorTest {
     }
 
     /**
-     * This test used to work with antialias off and drawing performed with draw + fill. Its seems
-     * that antialias on and fill() only will draw a square of 44x44 px, not 45x45. TO BE CHECKED.
+     * This test used to work with antialias off and drawing performed with draw + fill. Its seems that antialias on and
+     * fill() only will draw a square of 44x44 px, not 45x45. TO BE CHECKED.
      */
     @Test
     @Ignore
@@ -95,7 +95,7 @@ public class BinarizatorTest {
 
         assertTrue("Feature not added", added);
 
-        assertEquals((4 * 4) - 1, bin.getActiveTiles().size());
+        assertEquals(4 * 4 - 1, bin.getActiveTiles().size());
     }
 
     @Test
@@ -110,7 +110,7 @@ public class BinarizatorTest {
 
         assertTrue("Feature not added", added);
 
-        assertEquals((4 * 4) - 1, bin.getActiveTiles().size());
+        assertEquals(4 * 4 - 1, bin.getActiveTiles().size());
     }
 
     @Test
@@ -126,7 +126,7 @@ public class BinarizatorTest {
 
         assertTrue("Feature not added", added);
 
-        assertEquals((4 * 4) - 1, bin.getActiveTiles().size());
+        assertEquals(4 * 4 - 1, bin.getActiveTiles().size());
     }
 
     @NotNull
@@ -143,7 +143,7 @@ public class BinarizatorTest {
         boolean added = bin.add(feature);
         assertTrue("Feature not added", added);
 
-        assertEquals("Tile not removed", (4 * 4) - 1, bin.getActiveTiles().size());
+        assertEquals("Tile not removed", 4 * 4 - 1, bin.getActiveTiles().size());
 
         Polygon hidden = createBBox(10, 10, 600, 600);
         boolean addedhidden = bin.add(hidden);
@@ -159,7 +159,7 @@ public class BinarizatorTest {
         boolean added = bin.add(toRasterROI(feature));
         assertTrue("Feature not added", added);
 
-        assertEquals("Tile not removed", (4 * 4) - 1, bin.getActiveTiles().size());
+        assertEquals("Tile not removed", 4 * 4 - 1, bin.getActiveTiles().size());
 
         Polygon hidden = createBBox(10, 10, 600, 600);
         boolean addedhidden = bin.add(toRasterROI(hidden));

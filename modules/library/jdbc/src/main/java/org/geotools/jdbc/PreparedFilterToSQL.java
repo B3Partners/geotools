@@ -22,22 +22,21 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.identity.Identifier;
 import org.geotools.data.jdbc.FilterToSQL;
 import org.geotools.geometry.jts.JTS;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.filter.Id;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.identity.Identifier;
 
 /**
  * Extension of FilterToSQL intended for use with prepared statements.
  *
- * <p>Each time a {@link Literal} is visited, a '?' is encoded, and the value and type of the
- * literal are stored, available after the fact via {@link #getLiteralValues()} and {@link
- * #getLiteralTypes()}.
+ * <p>Each time a {@link Literal} is visited, a '?' is encoded, and the value and type of the literal are stored,
+ * available after the fact via {@link #getLiteralValues()} and {@link #getLiteralTypes()}.
  *
  * @author Justin Deoliveira, OpenGEO
  * @author Andrea Aime, OpenGEO
@@ -53,17 +52,12 @@ public class PreparedFilterToSQL extends FilterToSQL {
     protected PreparedStatementSQLDialect dialect;
     boolean prepareEnabled = true;
 
-    /**
-     * Contructor taking a reference to the SQL dialect, will use it to encode geometry placeholders
-     */
+    /** Contructor taking a reference to the SQL dialect, will use it to encode geometry placeholders */
     public PreparedFilterToSQL(PreparedStatementSQLDialect dialect) {
         this.dialect = dialect;
     }
 
-    /**
-     * If true (default) a sql statement with literal placemarks is created, otherwise a normal
-     * statement is created
-     */
+    /** If true (default) a sql statement with literal placemarks is created, otherwise a normal statement is created */
     public boolean isPrepareEnabled() {
         return prepareEnabled;
     }
@@ -87,9 +81,9 @@ public class PreparedFilterToSQL extends FilterToSQL {
 
         // bbox filters have a right side expression that's a ReferencedEnvelope,
         // but SQL dialects use/want polygons instead
-        if (literalValue instanceof Envelope && convertEnvelopeToPolygon()) {
+        if (literalValue instanceof Envelope envelope && convertEnvelopeToPolygon()) {
             clazz = Polygon.class;
-            literalValue = JTS.toGeometry((Envelope) literalValue);
+            literalValue = JTS.toGeometry(envelope);
         }
 
         if (clazz == null && literalValue != null) {
@@ -99,8 +93,7 @@ public class PreparedFilterToSQL extends FilterToSQL {
         literalValues.add(literalValue);
         SRIDs.add(currentSRID);
         dimensions.add(currentDimension);
-        descriptors.add(
-                context instanceof AttributeDescriptor ? (AttributeDescriptor) context : null);
+        descriptors.add(context instanceof AttributeDescriptor ad ? ad : null);
         literalTypes.add(clazz);
 
         try {
@@ -111,8 +104,7 @@ public class PreparedFilterToSQL extends FilterToSQL {
                 if (Geometry.class.isAssignableFrom(literalValue.getClass())) {
                     int srid = currentSRID != null ? currentSRID : -1;
                     int dimension = currentDimension != null ? currentDimension : -1;
-                    dialect.prepareGeometryValue(
-                            (Geometry) literalValue, dimension, srid, Geometry.class, sb);
+                    dialect.prepareGeometryValue((Geometry) literalValue, dimension, srid, Geometry.class, sb);
                 } else if (encodingFunction) {
                     dialect.prepareFunctionArgument(clazz, sb);
                 } else {
@@ -128,19 +120,19 @@ public class PreparedFilterToSQL extends FilterToSQL {
     }
 
     /**
-     * When returning true, the {@link Literal} visit will turn {@link Envelope} objects (typically
-     * coming from {@link org.opengis.filter.spatial.BBOX} filters) into {@link Polygon}. Defaults
-     * to true, subclasses can override.
+     * When returning true, the {@link Literal} visit will turn {@link Envelope} objects (typically coming from
+     * {@link org.geotools.api.filter.spatial.BBOX} filters) into {@link Polygon}. Defaults to true, subclasses can
+     * override.
      */
     protected boolean convertEnvelopeToPolygon() {
         return true;
     }
 
     private Class getTargetClassFromContext(Object context) {
-        if (context instanceof Class) {
-            return (Class) context;
-        } else if (context instanceof AttributeDescriptor) {
-            return ((AttributeDescriptor) context).getType().getBinding();
+        if (context instanceof Class class1) {
+            return class1;
+        } else if (context instanceof AttributeDescriptor descriptor) {
+            return descriptor.getType().getBinding();
         }
         return null;
     }
@@ -170,8 +162,8 @@ public class PreparedFilterToSQL extends FilterToSQL {
 
                 for (int j = 0; j < attValues.size(); j++) {
                     // in case of join the pk columns need to be qualified with alias
-                    if (filter instanceof JoinId) {
-                        out.write(escapeName(((JoinId) filter).getAlias()));
+                    if (filter instanceof JoinId joinId) {
+                        out.write(escapeName(joinId.getAlias()));
                         out.write(".");
                     }
                     out.write(escapeName(columns.get(j).getName()));
@@ -187,7 +179,7 @@ public class PreparedFilterToSQL extends FilterToSQL {
                     literalTypes.add(attValues.get(j) != null ? attValues.get(j).getClass() : null);
                     descriptors.add(null);
 
-                    if (j < (attValues.size() - 1)) {
+                    if (j < attValues.size() - 1) {
                         out.write(" AND ");
                     }
                 }
@@ -213,25 +205,19 @@ public class PreparedFilterToSQL extends FilterToSQL {
         return literalTypes;
     }
 
-    /**
-     * Returns the list of native SRID for each literal that happens to be a geometry, or null
-     * otherwise
-     */
+    /** Returns the list of native SRID for each literal that happens to be a geometry, or null otherwise */
     public List<Integer> getSRIDs() {
         return SRIDs;
     }
 
-    /**
-     * Returns the list of dimensions for each literal tha happens to be a geometry, or null
-     * otherwise
-     */
+    /** Returns the list of dimensions for each literal tha happens to be a geometry, or null otherwise */
     public List<Integer> getDimensions() {
         return dimensions;
     }
 
     /**
-     * Returns the attribute descriptors compared to a given literal (if any, not always available,
-     * normally only needed if arrays are involved)
+     * Returns the attribute descriptors compared to a given literal (if any, not always available, normally only needed
+     * if arrays are involved)
      */
     public List<AttributeDescriptor> getDescriptors() {
         return descriptors;

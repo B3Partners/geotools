@@ -14,13 +14,13 @@ package org.geotools.tutorial.process;
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.util.InternationalString;
 import org.geotools.feature.NameImpl;
 import org.geotools.process.Process;
 import org.geotools.process.impl.SingleProcessFactory;
 import org.geotools.text.Text;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.util.InternationalString;
 
 /**
  * A Buffer process used on a geometry object.
@@ -33,24 +33,13 @@ public class BufferFactory extends SingleProcessFactory {
     // making parameters available as static constants to help java programmers
     /** Geometry for operation */
     static final Parameter<Geometry> GEOM1 =
-            new Parameter<>(
-                    "geom1",
-                    Geometry.class,
-                    Text.text("Geometry"),
-                    Text.text("Geometry to buffer"));
+            new Parameter<>("geom1", Geometry.class, Text.text("Geometry"), Text.text("Geometry to buffer"));
 
     /** Buffer amount */
-    static final Parameter<Double> BUFFER =
-            new Parameter<>(
-                    "buffer",
-                    Double.class,
-                    Text.text("Buffer Amount"),
-                    Text.text("Amount to buffer the geometry by"));
+    static final Parameter<Double> BUFFER = new Parameter<>(
+            "buffer", Double.class, Text.text("Buffer Amount"), Text.text("Amount to buffer the geometry by"));
 
-    /**
-     * Map used for getParameterInfo; used to describe operation requirements for user interface
-     * creation.
-     */
+    /** Map used for getParameterInfo; used to describe operation requirements for user interface creation. */
     static final Map<String, Parameter<?>> prameterInfo = new TreeMap<>();
 
     static {
@@ -58,12 +47,8 @@ public class BufferFactory extends SingleProcessFactory {
         prameterInfo.put(BUFFER.key, BUFFER);
     }
 
-    static final Parameter<Geometry> RESULT =
-            new Parameter<>(
-                    "result",
-                    Geometry.class,
-                    Text.text("Result"),
-                    Text.text("Result of Geometry.getBuffer( Buffer )"));
+    static final Parameter<Geometry> RESULT = new Parameter<>(
+            "result", Geometry.class, Text.text("Result"), Text.text("Result of Geometry.getBuffer( Buffer )"));
 
     /** Map used to describe operation results. */
     static final Map<String, Parameter<?>> resultInfo = new TreeMap<>();
@@ -80,33 +65,39 @@ public class BufferFactory extends SingleProcessFactory {
         return new BufferProcess(this);
     }
 
+    @Override
     public InternationalString getDescription() {
         return Text.text("Buffer a geometry");
     }
 
+    @Override
     public Map<String, Parameter<?>> getParameterInfo() {
         return Collections.unmodifiableMap(prameterInfo);
     }
 
-    public Map<String, Parameter<?>> getResultInfo(Map<String, Object> parameters)
-            throws IllegalArgumentException {
+    @Override
+    public Map<String, Parameter<?>> getResultInfo(Map<String, Object> parameters) throws IllegalArgumentException {
         return Collections.unmodifiableMap(resultInfo);
     }
 
+    @Override
     public InternationalString getTitle() {
         // please note that this is a title for display purposes only
         // finding an specific implementation by name is not possible
         return Text.text("Buffer");
     }
 
+    @Override
     public Process create() throws IllegalArgumentException {
         return new BufferProcess(this);
     }
 
+    @Override
     public boolean supportsProgress() {
         return true;
     }
 
+    @Override
     public String getVersion() {
         return "1.0.0";
     }

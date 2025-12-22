@@ -24,9 +24,15 @@ import java.io.Serializable;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.DataAccess;
-import org.geotools.data.DataAccessFinder;
-import org.geotools.data.FeatureSource;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataAccessFinder;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.data.complex.feature.type.Types;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
@@ -34,12 +40,6 @@ import org.geotools.filter.FilterFactoryImpl;
 import org.geotools.test.AppSchemaTestSupport;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opengis.feature.Feature;
-import org.opengis.feature.Property;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.filter.expression.PropertyName;
 import org.xml.sax.helpers.NamespaceSupport;
 
 public class ArithmeticFilterTest extends AppSchemaTestSupport {
@@ -79,40 +79,32 @@ public class ArithmeticFilterTest extends AppSchemaTestSupport {
         // evaluating first feature with Location accuracy value = 200
 
         // 200 x 2 = 400
-        Filter arithmeticMultiplyFilter =
-                ff.equals(
-                        ff.multiply(
-                                ff.property(
-                                        "gsml:positionalAccuracy/gsml:CGI_NumericValue/gsml:principalValue"),
-                                ff.literal(2)),
-                        ff.literal(400));
+        Filter arithmeticMultiplyFilter = ff.equals(
+                ff.multiply(
+                        ff.property("gsml:positionalAccuracy/gsml:CGI_NumericValue/gsml:principalValue"),
+                        ff.literal(2)),
+                ff.literal(400));
 
         // 200 / 2 = 100
-        Filter arithmeticDivideFilter =
-                ff.equals(
-                        ff.divide(
-                                ff.property(
-                                        "gsml:positionalAccuracy/gsml:CGI_NumericValue/gsml:principalValue"),
-                                ff.literal(2)),
-                        ff.literal(100));
+        Filter arithmeticDivideFilter = ff.equals(
+                ff.divide(
+                        ff.property("gsml:positionalAccuracy/gsml:CGI_NumericValue/gsml:principalValue"),
+                        ff.literal(2)),
+                ff.literal(100));
 
         // 200 + 100 = 300
-        Filter arithmeticAdditionFilter =
-                ff.equals(
-                        ff.add(
-                                ff.property(
-                                        "gsml:positionalAccuracy/gsml:CGI_NumericValue/gsml:principalValue"),
-                                ff.literal(100)),
-                        ff.literal(300));
+        Filter arithmeticAdditionFilter = ff.equals(
+                ff.add(
+                        ff.property("gsml:positionalAccuracy/gsml:CGI_NumericValue/gsml:principalValue"),
+                        ff.literal(100)),
+                ff.literal(300));
 
         // 200 - 100 = 100
-        Filter arithmeticSubtractionFilter =
-                ff.equals(
-                        ff.subtract(
-                                ff.property(
-                                        "gsml:positionalAccuracy/gsml:CGI_NumericValue/gsml:principalValue"),
-                                ff.literal(100)),
-                        ff.literal(100));
+        Filter arithmeticSubtractionFilter = ff.equals(
+                ff.subtract(
+                        ff.property("gsml:positionalAccuracy/gsml:CGI_NumericValue/gsml:principalValue"),
+                        ff.literal(100)),
+                ff.literal(100));
 
         FeatureCollection<FeatureType, Feature> features = fSource.getFeatures();
 

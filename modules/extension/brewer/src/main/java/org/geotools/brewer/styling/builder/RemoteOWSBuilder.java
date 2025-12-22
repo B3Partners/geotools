@@ -16,7 +16,7 @@
  */
 package org.geotools.brewer.styling.builder;
 
-import org.geotools.styling.RemoteOWS;
+import org.geotools.api.style.RemoteOWS;
 
 public class RemoteOWSBuilder extends AbstractSLDBuilder<RemoteOWS> {
     private String service;
@@ -79,7 +79,6 @@ public class RemoteOWSBuilder extends AbstractSLDBuilder<RemoteOWS> {
 
     @Override
     protected void buildSLDInternal(StyledLayerDescriptorBuilder sb) {
-        throw new UnsupportedOperationException(
-                "Cannot build a SLD out of a simple remote ows spec");
+        throw new UnsupportedOperationException("Cannot build a SLD out of a simple remote ows spec");
     }
 }

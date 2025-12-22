@@ -25,15 +25,16 @@ import static org.junit.Assert.assertTrue;
 
 import java.awt.Color;
 import java.util.Arrays;
+import java.util.List;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsLike;
 import org.geotools.factory.CommonFactoryFinder;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opengis.filter.And;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsLike;
 
 public class FiltersTest {
 
@@ -41,7 +42,7 @@ public class FiltersTest {
 
     private static Filters filters;
 
-    private static FilterFactory2 ff;
+    private static FilterFactory ff;
 
     private static Filter a;
 
@@ -53,7 +54,7 @@ public class FiltersTest {
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        ff = CommonFactoryFinder.getFilterFactory2(null);
+        ff = CommonFactoryFinder.getFilterFactory(null);
         filters = new Filters(ff);
         a = ff.greater(ff.property("zone"), ff.literal(7));
         b = ff.like(ff.property("suburb"), "N%");
@@ -209,5 +210,22 @@ public class FiltersTest {
     public void testEmptyEscape() {
         PropertyIsLike like = ff.like(ff.literal("abc def"), "*de*", "*", "_", "");
         assertTrue(like.evaluate(null));
+    }
+
+    @Test
+    public void testLogicFilterEquality() {
+        // this used to fail, as ["a, b"] returned true to containsAll(["a", "a"])
+        Filter andAB = ff.and(a, b);
+        Filter andAA = ff.and(a, a);
+        assertNotEquals(andAB, andAA);
+
+        // another test for a case where the filter is not the same, while the result woul be same
+        Filter andAAA = ff.and(List.of(a, a, a));
+        assertNotEquals(andAA, andAAA);
+
+        // but make sure order is not important
+        Filter andAAB = ff.and(List.of(a, a, b));
+        Filter andABA = ff.and(List.of(a, b, a));
+        assertEquals(andAAB, andABA);
     }
 }

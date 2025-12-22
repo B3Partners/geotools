@@ -21,10 +21,10 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
 import java.util.List;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.factory.CommonFactoryFinder;
 import org.junit.Test;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 
 /**
  * The URLEncodeFunction UnitTest
@@ -67,8 +67,7 @@ public class URLEncodeFunctionTest {
         URLEncodeFunction f = new URLEncodeFunction();
 
         List<Expression> params =
-                Arrays.asList(
-                        filterFactory.literal("Value With Spaces"), filterFactory.literal(false));
+                Arrays.asList(filterFactory.literal("Value With Spaces"), filterFactory.literal(false));
         f.setParameters(params);
 
         assertEquals("Value%20With%20Spaces", f.evaluate(null));
@@ -80,8 +79,7 @@ public class URLEncodeFunctionTest {
         URLEncodeFunction f = new URLEncodeFunction();
 
         List<Expression> params =
-                Arrays.asList(
-                        filterFactory.literal("Value With Spaces"), filterFactory.literal(true));
+                Arrays.asList(filterFactory.literal("Value With Spaces"), filterFactory.literal(true));
         f.setParameters(params);
 
         assertEquals("Value+With+Spaces", f.evaluate(null));

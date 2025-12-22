@@ -23,6 +23,12 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.data.memory.MemoryDataStore;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
@@ -35,8 +41,6 @@ import org.geotools.image.test.ImageAssert;
 import org.geotools.map.FeatureLayer;
 import org.geotools.map.MapContent;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyleFactory;
 import org.geotools.test.TestData;
 import org.geotools.xml.styling.SLDParser;
 import org.junit.After;
@@ -49,10 +53,6 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Tests the StreamingRenderer labelling algorithms
@@ -92,13 +92,12 @@ public class LabelingTest {
         renderer.setMapContent(map);
         ReferencedEnvelope env = map.getMaxBounds();
         int boundary = 10;
-        env =
-                new ReferencedEnvelope(
-                        env.getMinX() - boundary,
-                        env.getMaxX() + boundary,
-                        env.getMinY() - boundary,
-                        env.getMaxY() + boundary,
-                        null);
+        env = new ReferencedEnvelope(
+                env.getMinX() - boundary,
+                env.getMaxX() + boundary,
+                env.getMinY() - boundary,
+                env.getMaxY() + boundary,
+                null);
         RendererBaseTest.showRender("testPointLabeling", renderer, timout, env);
     }
 
@@ -159,21 +158,19 @@ public class LabelingTest {
         renderer.setMapContent(map);
         ReferencedEnvelope env = map.getMaxBounds();
         int boundary = 10;
-        env =
-                new ReferencedEnvelope(
-                        env.getMinX() - boundary,
-                        env.getMaxX() + boundary,
-                        env.getMinY() - boundary,
-                        env.getMaxY() + boundary,
-                        null);
+        env = new ReferencedEnvelope(
+                env.getMinX() - boundary,
+                env.getMaxX() + boundary,
+                env.getMinY() - boundary,
+                env.getMaxY() + boundary,
+                null);
 
         RendererBaseTest.showRender("testLineLabeling", renderer, timout, env);
     }
 
     /**
-     * This test tests for custom unit of measurement features, where the feature size translates to
-     * something 0 < size < 1. in this case, an infinite loop used to occur, see
-     * https://jira.codehaus.org/browse/GEOT-4284
+     * This test tests for custom unit of measurement features, where the feature size translates to something 0 < size
+     * < 1. in this case, an infinite loop used to occur, see https://jira.codehaus.org/browse/GEOT-4284
      */
     @Test
     public void testLineLabelingUom() throws Exception {
@@ -187,13 +184,12 @@ public class LabelingTest {
         renderer.setMapContent(map);
         ReferencedEnvelope env = map.getMaxBounds();
         int boundary = 10000;
-        env =
-                new ReferencedEnvelope(
-                        env.getMinX() - boundary,
-                        env.getMaxX() + boundary,
-                        env.getMinY() - boundary,
-                        env.getMaxY() + boundary,
-                        null);
+        env = new ReferencedEnvelope(
+                env.getMinX() - boundary,
+                env.getMaxX() + boundary,
+                env.getMinY() - boundary,
+                env.getMaxY() + boundary,
+                null);
 
         RendererBaseTest.showRender("testLineLabeling", renderer, timout, env);
     }
@@ -212,17 +208,15 @@ public class LabelingTest {
         renderer.setMapContent(map);
         int boundary = 2;
         ReferencedEnvelope env = map.getMaxBounds();
-        env =
-                new ReferencedEnvelope(
-                        env.getMinX() - boundary,
-                        env.getMaxX() + boundary,
-                        env.getMinY() - boundary,
-                        env.getMaxY() + boundary,
-                        null);
+        env = new ReferencedEnvelope(
+                env.getMinX() - boundary,
+                env.getMaxX() + boundary,
+                env.getMinY() - boundary,
+                env.getMaxY() + boundary,
+                null);
 
         BufferedImage image = RendererBaseTest.showRender("U turn label", renderer, 1000, env);
-        String refPath =
-                "./src/test/resources/org/geotools/renderer/lite/test-data/lineLabelSharpTurn.png";
+        String refPath = "./src/test/resources/org/geotools/renderer/lite/test-data/lineLabelSharpTurn.png";
         // small tolerance
         ImageAssert.assertEquals(new File(refPath), image, 100);
     }
@@ -241,17 +235,15 @@ public class LabelingTest {
         renderer.setMapContent(map);
         double boundary = 2;
         ReferencedEnvelope env = map.getMaxBounds();
-        env =
-                new ReferencedEnvelope(
-                        env.getMinX() - boundary,
-                        env.getMaxX() + boundary,
-                        env.getMinY() - boundary,
-                        env.getMaxY() + boundary,
-                        null);
+        env = new ReferencedEnvelope(
+                env.getMinX() - boundary,
+                env.getMaxX() + boundary,
+                env.getMinY() - boundary,
+                env.getMaxY() + boundary,
+                null);
 
         BufferedImage image = RendererBaseTest.showRender("U turn label", renderer, 1100, env);
-        String refPath =
-                "./src/test/resources/org/geotools/renderer/lite/test-data/lineLabelSharpTurn2.png";
+        String refPath = "./src/test/resources/org/geotools/renderer/lite/test-data/lineLabelSharpTurn2.png";
         // small tolerance
         ImageAssert.assertEquals(new File(refPath), image, 1100);
     }
@@ -270,24 +262,20 @@ public class LabelingTest {
         renderer.setMapContent(map);
         int boundary = 2;
         ReferencedEnvelope env = map.getMaxBounds();
-        env =
-                new ReferencedEnvelope(
-                        env.getMinX() - boundary,
-                        env.getMaxX() + boundary,
-                        env.getMinY() - boundary,
-                        env.getMaxY() + boundary,
-                        null);
+        env = new ReferencedEnvelope(
+                env.getMinX() - boundary,
+                env.getMaxX() + boundary,
+                env.getMinY() - boundary,
+                env.getMaxY() + boundary,
+                null);
 
         BufferedImage image = RendererBaseTest.showRender("Ell label", renderer, 1000, env);
-        String refPath =
-                "./src/test/resources/org/geotools/renderer/lite/test-data/lineLabelSharpTurnLastSegment.png";
+        String refPath = "./src/test/resources/org/geotools/renderer/lite/test-data/lineLabelSharpTurnLastSegment.png";
         // small tolerance
         ImageAssert.assertEquals(new File(refPath), image, 100);
     }
 
     private SimpleFeatureCollection createLineFeatureCollection() throws Exception {
-        AttributeDescriptor[] types = new AttributeDescriptor[2];
-
         GeometryFactory geomFac = new GeometryFactory();
         CoordinateReferenceSystem crs = DefaultGeographicCRS.WGS84;
 
@@ -306,9 +294,7 @@ public class LabelingTest {
         CoordinateReferenceSystem crs = DefaultGeographicCRS.WGS84;
 
         MemoryDataStore data = new MemoryDataStore();
-        data.addFeature(
-                createLineFeature(
-                        "TheUTurnLabel", crs, geomFac, 1, 2, 8.7, 2, 9, 2.1, 8.7, 2.2, 1, 2.2));
+        data.addFeature(createLineFeature("TheUTurnLabel", crs, geomFac, 1, 2, 8.7, 2, 9, 2.1, 8.7, 2.2, 1, 2.2));
 
         return data.getFeatureSource(Rendering2DTest.LINE).getFeatures();
     }
@@ -334,11 +320,7 @@ public class LabelingTest {
     }
 
     private SimpleFeature createLineFeature(
-            String name,
-            CoordinateReferenceSystem crs,
-            GeometryFactory geomFac,
-            double... ordinates)
-            throws Exception {
+            String name, CoordinateReferenceSystem crs, GeometryFactory geomFac, double... ordinates) throws Exception {
         LiteCoordinateSequence cs = new LiteCoordinateSequence(ordinates);
         LineString line = geomFac.createLineString(cs);
         SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
@@ -361,13 +343,12 @@ public class LabelingTest {
         renderer.setMapContent(map);
         ReferencedEnvelope env = map.getMaxBounds();
         int boundary = 10;
-        env =
-                new ReferencedEnvelope(
-                        env.getMinX() - boundary,
-                        env.getMaxX() + boundary,
-                        env.getMinY() - boundary,
-                        env.getMaxY() + boundary,
-                        null);
+        env = new ReferencedEnvelope(
+                env.getMinX() - boundary,
+                env.getMaxX() + boundary,
+                env.getMinY() - boundary,
+                env.getMaxY() + boundary,
+                null);
         RendererBaseTest.showRender("testPolyLabeling", renderer, timout, env);
     }
 
@@ -377,23 +358,9 @@ public class LabelingTest {
 
         MemoryDataStore data = new MemoryDataStore();
         data.addFeature(
-                createPolyFeature(
-                        CENTERX + 5,
-                        CENTERY + 0,
-                        CENTERX + 10,
-                        CENTERY + 10,
-                        "LongLabel1",
-                        crs,
-                        geomFac));
+                createPolyFeature(CENTERX + 5, CENTERY + 0, CENTERX + 10, CENTERY + 10, "LongLabel1", crs, geomFac));
         data.addFeature(
-                createPolyFeature(
-                        CENTERX + 0,
-                        CENTERY + 0,
-                        CENTERX + 10,
-                        CENTERY + 10,
-                        "LongLabel2",
-                        crs,
-                        geomFac));
+                createPolyFeature(CENTERX + 0, CENTERY + 0, CENTERX + 10, CENTERY + 10, "LongLabel2", crs, geomFac));
 
         return data.getFeatureSource(Rendering2DTest.POLYGON).getFeatures();
     }

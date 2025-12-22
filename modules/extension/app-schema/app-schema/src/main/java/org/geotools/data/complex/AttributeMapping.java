@@ -19,12 +19,12 @@ package org.geotools.data.complex;
 
 import java.util.Collections;
 import java.util.Map;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.data.complex.config.MultipleValue;
 import org.geotools.data.complex.util.XPathUtil.StepList;
 import org.geotools.util.Utilities;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.expression.Expression;
 
 /**
  * @author Gabriel Roldan (Axios Engineering)
@@ -48,8 +48,8 @@ public class AttributeMapping {
     private boolean isList;
 
     /**
-     * If present, represents our way to deal polymorphic attribute instances, so this node should
-     * be of a subtype of the one referenced by {@link #targetXPath}
+     * If present, represents our way to deal polymorphic attribute instances, so this node should be of a subtype of
+     * the one referenced by {@link #targetXPath}
      */
     AttributeType targetNodeInstance;
 
@@ -66,14 +66,13 @@ public class AttributeMapping {
     private final MultipleValue multipleValue;
 
     /**
-     * Field of the external type (e.g. Solr document) that will be used as an index. Will be NULL
-     * if no external index is being used.
+     * Field of the external type (e.g. Solr document) that will be used as an index. Will be NULL if no external index
+     * is being used.
      */
     private String indexField;
 
     /** Creates a new AttributeMapping object. */
-    public AttributeMapping(
-            Expression idExpression, Expression sourceExpression, StepList targetXPath) {
+    public AttributeMapping(Expression idExpression, Expression sourceExpression, StepList targetXPath) {
         this(idExpression, sourceExpression, null, targetXPath, null, false, null);
     }
 
@@ -138,8 +137,7 @@ public class AttributeMapping {
         this.sourceIndex = sourceIndex;
         this.targetXPath = targetXPath;
         this.targetNodeInstance = targetNodeInstance;
-        this.clientProperties =
-                clientProperties == null ? Collections.emptyMap() : clientProperties;
+        this.clientProperties = clientProperties == null ? Collections.emptyMap() : clientProperties;
         this.multipleValue = multipleValue;
         if (multipleValue != null) {
             this.isMultiValued = true;
@@ -186,9 +184,8 @@ public class AttributeMapping {
     }
 
     /**
-     * ******************************************************************** Label, parentLabel and
-     * instancePath are for web service backend only
-     * ********************************************************************
+     * ******************************************************************** Label, parentLabel and instancePath are for
+     * web service backend only ********************************************************************
      */
     public String getLabel() {
         return label;
@@ -248,8 +245,7 @@ public class AttributeMapping {
 
     @Override
     public int hashCode() {
-        return (37 * identifierExpression.hashCode() + 37 * sourceExpression.hashCode())
-                ^ targetXPath.hashCode();
+        return 37 * identifierExpression.hashCode() + 37 * sourceExpression.hashCode() ^ targetXPath.hashCode();
     }
 
     @Override

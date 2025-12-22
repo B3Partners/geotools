@@ -19,9 +19,9 @@ package org.geotools.filter.function.color;
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
 import java.awt.Color;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 /**
  * hsl lesscss.org color function.
@@ -30,13 +30,12 @@ import org.opengis.filter.capability.FunctionName;
  */
 public class HSLFunction extends FunctionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "hsl",
-                    parameter("result", Color.class),
-                    parameter("hue", Double.class),
-                    parameter("saturation", Double.class),
-                    parameter("lightness", Double.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "hsl",
+            parameter("result", Color.class),
+            parameter("hue", Double.class),
+            parameter("saturation", Double.class),
+            parameter("lightness", Double.class));
 
     public HSLFunction() {
         this.functionName = NAME;

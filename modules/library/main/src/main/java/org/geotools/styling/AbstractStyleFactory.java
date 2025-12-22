@@ -21,7 +21,37 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
 import javax.swing.Icon;
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.AnchorPoint;
+import org.geotools.api.style.ChannelSelection;
+import org.geotools.api.style.ColorMap;
+import org.geotools.api.style.ColorMapEntry;
+import org.geotools.api.style.ContrastEnhancement;
+import org.geotools.api.style.Displacement;
+import org.geotools.api.style.ExternalGraphic;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Font;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.Halo;
+import org.geotools.api.style.LabelPlacement;
+import org.geotools.api.style.LinePlacement;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.NamedStyle;
+import org.geotools.api.style.PointPlacement;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.RasterSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.SelectedChannelType;
+import org.geotools.api.style.ShadedRelief;
+import org.geotools.api.style.Stroke;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.style.Symbol;
+import org.geotools.api.style.Symbolizer;
+import org.geotools.api.style.TextSymbolizer;
 
 /** Abstract base class for implementing style factories. */
 public abstract class AbstractStyleFactory implements StyleFactory {
@@ -56,11 +86,7 @@ public abstract class AbstractStyleFactory implements StyleFactory {
     //    public abstract PointPlacement createPointPlacement();
     @Override
     public abstract Mark createMark(
-            Expression wellKnownName,
-            Stroke stroke,
-            Fill fill,
-            Expression size,
-            Expression rotation);
+            Expression wellKnownName, Stroke stroke, Fill fill, Expression size, Expression rotation);
 
     /**
      * Convinence method for obtaining a mark of a fixed shape
@@ -111,7 +137,7 @@ public abstract class AbstractStyleFactory implements StyleFactory {
     public abstract Mark getTriangleMark();
 
     @Override
-    public abstract FeatureTypeStyle createFeatureTypeStyle(Rule[] rules);
+    public abstract FeatureTypeStyle createFeatureTypeStyle(Rule... rules);
 
     @Override
     public abstract LinePlacement createLinePlacement(Expression offset);
@@ -130,8 +156,7 @@ public abstract class AbstractStyleFactory implements StyleFactory {
     public abstract LineSymbolizer createLineSymbolizer();
 
     @Override
-    public abstract PointSymbolizer createPointSymbolizer(
-            Graphic graphic, String geometryPropertyName);
+    public abstract PointSymbolizer createPointSymbolizer(Graphic graphic, String geometryPropertyName);
 
     @Override
     public abstract Style createStyle();
@@ -158,7 +183,7 @@ public abstract class AbstractStyleFactory implements StyleFactory {
      * @param color the color of the line
      * @param width the width of the line
      * @return the stroke object
-     * @see org.geotools.stroke
+     * @see org.geotools.api.style.Stroke
      */
     @Override
     public abstract Stroke createStroke(Expression color, Expression width);
@@ -170,7 +195,6 @@ public abstract class AbstractStyleFactory implements StyleFactory {
      * @param width The width of the line
      * @param opacity The opacity of the line
      * @return The stroke
-     * @see org.geotools.stroke
      */
     @Override
     public abstract Stroke createStroke(Expression color, Expression width, Expression opacity);
@@ -188,7 +212,6 @@ public abstract class AbstractStyleFactory implements StyleFactory {
      * @param graphicFill - a graphic object to fill the line with
      * @param graphicStroke - a graphic object to draw the line with
      * @return The completed stroke.
-     * @see org.geotools.stroke
      */
     @Override
     public abstract Stroke createStroke(
@@ -222,17 +245,13 @@ public abstract class AbstractStyleFactory implements StyleFactory {
 
     @Override
     public abstract Font createFont(
-            Expression fontFamily,
-            Expression fontStyle,
-            Expression fontWeight,
-            Expression fontSize);
+            Expression fontFamily, Expression fontStyle, Expression fontWeight, Expression fontSize);
 
     @Override
     public abstract Mark createMark();
 
     @Override
-    public abstract PolygonSymbolizer createPolygonSymbolizer(
-            Stroke stroke, Fill fill, String geometryPropertyName);
+    public abstract PolygonSymbolizer createPolygonSymbolizer(Stroke stroke, Fill fill, String geometryPropertyName);
 
     @Override
     public abstract RasterSymbolizer createRasterSymbolizer(
@@ -249,12 +268,10 @@ public abstract class AbstractStyleFactory implements StyleFactory {
     public abstract RasterSymbolizer getDefaultRasterSymbolizer();
 
     @Override
-    public abstract SelectedChannelType createSelectedChannelType(
-            Expression name, Expression enhancement);
+    public abstract SelectedChannelType createSelectedChannelType(Expression name, Expression enhancement);
 
     @Override
-    public abstract SelectedChannelType createSelectedChannelType(
-            String name, ContrastEnhancement enhancement);
+    public abstract SelectedChannelType createSelectedChannelType(String name, ContrastEnhancement enhancement);
 
     @Override
     public abstract ColorMap createColorMap();
@@ -284,9 +301,8 @@ public abstract class AbstractStyleFactory implements StyleFactory {
     public abstract LineSymbolizer getDefaultLineSymbolizer();
 
     /**
-     * Creates a default Text Symbolizer, using the defaultFill, defaultFont and
-     * defaultPointPlacement, Sets the geometry attribute name to be geometry:text. No Halo is set.
-     * <b>The label is not set</b>
+     * Creates a default Text Symbolizer, using the defaultFill, defaultFont and defaultPointPlacement, Sets the
+     * geometry attribute name to be geometry:text. No Halo is set. <b>The label is not set</b>
      *
      * @return A default TextSymbolizer
      */
@@ -302,10 +318,7 @@ public abstract class AbstractStyleFactory implements StyleFactory {
     @Override
     public abstract PointPlacement getDefaultPointPlacement();
 
-    /**
-     * Returns implementation hints for this factory. The default implementation returns an empty
-     * map.
-     */
+    /** Returns implementation hints for this factory. The default implementation returns an empty map. */
     @Override
     public Map<RenderingHints.Key, ?> getImplementationHints() {
         return Collections.emptyMap();

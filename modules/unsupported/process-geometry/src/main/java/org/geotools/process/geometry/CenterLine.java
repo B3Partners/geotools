@@ -19,6 +19,9 @@ package org.geotools.process.geometry;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
@@ -37,15 +40,11 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.MultiLineString;
 import org.locationtech.jts.simplify.TopologyPreservingSimplifier;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
 
 public class CenterLine {
     public static final GeometryFactory GF = new GeometryFactory();
 
-    public static SimpleFeatureCollection extractCenterLine(
-            SimpleFeatureCollection features, double perc) {
+    public static SimpleFeatureCollection extractCenterLine(SimpleFeatureCollection features, double perc) {
         List<SimpleFeature> ret = new ArrayList<>();
         SimpleFeatureType schema = features.getSchema();
         SimpleFeatureTypeBuilder ftb = new SimpleFeatureTypeBuilder();
@@ -92,9 +91,7 @@ public class CenterLine {
         // System.out.println(skel);
         Geometry outGeom = reduceToCenterLine(skel);
         // System.out.println(outGeom);
-        outGeom =
-                TopologyPreservingSimplifier.simplify(
-                        outGeom, outGeom.getLength() * (perc_density / 100.0));
+        outGeom = TopologyPreservingSimplifier.simplify(outGeom, outGeom.getLength() * (perc_density / 100.0));
         outGeom = JTS.smooth(outGeom, 0.1, GF);
         // System.out.println(outGeom);
         return outGeom;
@@ -102,8 +99,7 @@ public class CenterLine {
 
     /**
      * Find the "longest shortest path" between any pair of perimeter nodes. Based on an idea at
-     * https://bl.ocks.org/veltman/403f95aee728d4a043b142c52c113f82 by Noah Veltman
-     * (https://bl.ocks.org/veltman)
+     * https://bl.ocks.org/veltman/403f95aee728d4a043b142c52c113f82 by Noah Veltman (https://bl.ocks.org/veltman)
      *
      * @param geom the skeleton of the polygon
      * @return the longest path through the geometry
@@ -118,11 +114,10 @@ public class CenterLine {
             gen.add(g);
         }
         Graph graph = gen.getGraph();
-        EdgeWeighter weighter =
-                e -> {
-                    Geometry g = (Geometry) e.getObject();
-                    return g.getLength();
-                };
+        EdgeWeighter weighter = e -> {
+            Geometry g = (Geometry) e.getObject();
+            return g.getLength();
+        };
         double bestLen = Double.NEGATIVE_INFINITY;
         Path bestPath = null;
         List<Node> ends = graph.getNodesOfDegree(1);
@@ -131,8 +126,7 @@ public class CenterLine {
             // calculate the cost(distance) of each graph node to the node closest to
             // the origin
             // System.out.println("starting at " + source.getObject());
-            DijkstraShortestPathFinder dspf =
-                    new DijkstraShortestPathFinder(graph, source, weighter);
+            DijkstraShortestPathFinder dspf = new DijkstraShortestPathFinder(graph, source, weighter);
             dspf.calculate();
             for (int j = i + 1; j < ends.size(); j++) {
                 Node dest = ends.get(j);

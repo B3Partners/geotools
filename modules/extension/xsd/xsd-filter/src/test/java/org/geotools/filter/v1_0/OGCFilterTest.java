@@ -17,16 +17,17 @@
 package org.geotools.filter.v1_0;
 
 import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.DWithin;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.Parser;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.filter.Filter;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.DWithin;
 
 public class OGCFilterTest {
     Parser parser;
@@ -57,33 +58,31 @@ public class OGCFilterTest {
 
     @Test
     public void testLax() throws Exception {
-        String xml =
-                "<Filter>"
-                        + "  <PropertyIsEqualTo>"
-                        + "    <PropertyName>foo</PropertyName>"
-                        + "    <Literal>bar</Literal>"
-                        + "  </PropertyIsEqualTo>"
-                        + "</Filter>";
+        String xml = "<Filter>"
+                + "  <PropertyIsEqualTo>"
+                + "    <PropertyName>foo</PropertyName>"
+                + "    <Literal>bar</Literal>"
+                + "  </PropertyIsEqualTo>"
+                + "</Filter>";
 
         Parser parser = new Parser(new OGCConfiguration());
         parser.setStrict(false);
-        Filter filter = (Filter) parser.parse(new ByteArrayInputStream(xml.getBytes()));
+        Filter filter = (Filter) parser.parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
         Assert.assertNotNull(filter);
     }
 
     @Test
     public void testLiteralWithEntity() throws Exception {
-        String xml =
-                "<Filter>"
-                        + "  <PropertyIsEqualTo>"
-                        + "    <PropertyName>foo</PropertyName>"
-                        + "    <Literal>bar &gt; 10 and &lt; 20</Literal>"
-                        + "  </PropertyIsEqualTo>"
-                        + "</Filter>";
+        String xml = "<Filter>"
+                + "  <PropertyIsEqualTo>"
+                + "    <PropertyName>foo</PropertyName>"
+                + "    <Literal>bar &gt; 10 and &lt; 20</Literal>"
+                + "  </PropertyIsEqualTo>"
+                + "</Filter>";
 
         Parser parser = new Parser(new OGCConfiguration());
         parser.setStrict(false);
-        Filter filter = (Filter) parser.parse(new ByteArrayInputStream(xml.getBytes()));
+        Filter filter = (Filter) parser.parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
         Assert.assertNotNull(filter);
         PropertyIsEqualTo equal = (PropertyIsEqualTo) filter;
         PropertyName pn = (PropertyName) equal.getExpression1();
@@ -95,21 +94,20 @@ public class OGCFilterTest {
     @Test
     public void testDWithinParse() throws Exception {
 
-        String xml =
-                "<Filter>"
-                        + "<DWithin>"
-                        + "<PropertyName>the_geom</PropertyName>"
-                        + "<Point>"
-                        + "<coordinates>-74.817265,40.5296504</coordinates>"
-                        + "</Point>"
-                        + "<Distance units=\"km\">200</Distance>"
-                        + "</DWithin>"
-                        + "</Filter>";
+        String xml = "<Filter>"
+                + "<DWithin>"
+                + "<PropertyName>the_geom</PropertyName>"
+                + "<Point>"
+                + "<coordinates>-74.817265,40.5296504</coordinates>"
+                + "</Point>"
+                + "<Distance units=\"km\">200</Distance>"
+                + "</DWithin>"
+                + "</Filter>";
 
         OGCConfiguration configuration = new OGCConfiguration();
 
         Parser parser = new Parser(configuration);
-        DWithin filter = (DWithin) parser.parse(new ByteArrayInputStream(xml.getBytes()));
+        DWithin filter = (DWithin) parser.parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
         Assert.assertNotNull(filter);
 
         // Asserting the Property Name

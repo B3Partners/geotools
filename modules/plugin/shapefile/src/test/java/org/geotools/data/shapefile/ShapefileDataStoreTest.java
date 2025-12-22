@@ -54,19 +54,31 @@ import java.util.TreeSet;
 import java.util.UUID;
 import org.apache.commons.io.FileUtils;
 import org.geotools.TestData;
-import org.geotools.data.DataStore;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.filter.identity.Identifier;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.shapefile.files.ShpFileType;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.DefaultFeatureCollection;
@@ -94,28 +106,15 @@ import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.MultiLineString;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.Id;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.filter.identity.Identifier;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * @version $Id$
  * @author Ian Schneider
+ * @version $Id$
  */
 public class ShapefileDataStoreTest extends TestCaseSupport {
 
     // Custom class for testing
-    class CustomTypeClass {
+    static class CustomTypeClass {
 
         private int customField;
 
@@ -136,7 +135,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
     static final String RUSSIAN = "shapes/rus-windows-1251.shp";
     static final String UTF8 = "shapes/wgs1snt.shp";
     static final String SPECIAL_CHAR_NAME = "test-data/special-characters/Åéìòù.shp";
-    static final FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    static final FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
     private ShapefileDataStore store;
 
     @Override
@@ -168,8 +167,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         return fs.getFeatures();
     }
 
-    protected SimpleFeatureCollection loadFeatures(String resource, Charset charset, Query q)
-            throws Exception {
+    protected SimpleFeatureCollection loadFeatures(String resource, Charset charset, Query q) throws Exception {
         if (q == null) q = new Query();
         URL url = TestData.url(resource);
         store = new ShapefileDataStore(url);
@@ -231,13 +229,9 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
             SimpleFeatureCollection fc = loadFeatures(RUSSIAN, Charset.forName("CP1251"), null);
             try (SimpleFeatureIterator features = fc.features()) {
                 SimpleFeature f = features.next();
-                assertEquals(
-                        "\u041A\u0438\u0440\u0438\u043B\u043B\u0438\u0446\u0430",
-                        f.getAttribute("TEXT"));
+                assertEquals("\u041A\u0438\u0440\u0438\u043B\u043B\u0438\u0446\u0430", f.getAttribute("TEXT"));
                 f = features.next();
-                assertEquals(
-                        "\u0421\u043C\u0435\u0448\u0430\u043D\u044B\u0439 12345",
-                        f.getAttribute("TEXT"));
+                assertEquals("\u0421\u043C\u0435\u0448\u0430\u043D\u044B\u0439 12345", f.getAttribute("TEXT"));
             }
         } catch (UnsupportedCharsetException notInstalledInJRE) {
             // this just means you have not installed Russian support into your JRE
@@ -246,9 +240,8 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
     }
 
     /**
-     * This is just another approach to open the shapefile and pass the Charset If the Shape is
-     * opened with "ISO-8859-1", the single UTF-8 encoded is shown as two ugly chars. As expected,
-     * because it's UTF8 two-byte.
+     * This is just another approach to open the shapefile and pass the Charset If the Shape is opened with
+     * "ISO-8859-1", the single UTF-8 encoded is shown as two ugly chars. As expected, because it's UTF8 two-byte.
      */
     @Test
     public void testLoadingAndReadingUTF8Wrongly() throws Exception {
@@ -272,9 +265,8 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
     }
 
     /**
-     * This is just another approach to open the shapefile and pass the Charset Now we open the
-     * shape with UTF8 charset and expect the attribute to be correctly retuned with 4 chars and
-     * including the german special character.
+     * This is just another approach to open the shapefile and pass the Charset Now we open the shape with UTF8 charset
+     * and expect the attribute to be correctly retuned with 4 chars and including the german special character.
      */
     @Test
     public void testLoadingAndReadingUTF8Correctly() throws Exception {
@@ -344,16 +336,14 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
 
         ListFeatureCollection collection = new ListFeatureCollection(type);
         SimpleFeatureBuilder builder = new SimpleFeatureBuilder(type);
-        Object[] values = {
-            new GeometryFactory().createPoint(new Coordinate(10, 10)), new CustomTypeClass(20)
-        };
+        Object[] values = {new GeometryFactory().createPoint(new Coordinate(10, 10)), new CustomTypeClass(20)};
         builder.addAll(values);
 
         SimpleFeature feature = builder.buildFeature(type.getTypeName() + '.' + 0);
         collection.add(feature);
 
-        SimpleFeatureStore store =
-                (SimpleFeatureStore) shapeDataStore.getFeatureSource(type.getName().getLocalPart());
+        SimpleFeatureStore store = (SimpleFeatureStore)
+                shapeDataStore.getFeatureSource(type.getName().getLocalPart());
         try (DefaultTransaction transaction = new DefaultTransaction("create")) {
             store.setTransaction(transaction);
             store.addFeatures(collection);
@@ -398,8 +388,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         URL url = shpFile.toURI().toURL();
 
         String name = shpFile.getName();
-        File file =
-                new File(shpFile.getParent(), name.substring(0, name.lastIndexOf('.')) + ".qix");
+        File file = new File(shpFile.getParent(), name.substring(0, name.lastIndexOf('.')) + ".qix");
 
         if (file.exists()) {
             file.delete();
@@ -434,12 +423,8 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         Envelope newBounds = ds.getFeatureSource().getBounds(Query.ALL);
         double dx = newBounds.getWidth() / 4;
         double dy = newBounds.getHeight() / 4;
-        newBounds =
-                new Envelope(
-                        newBounds.getMinX() + dx,
-                        newBounds.getMaxX() - dx,
-                        newBounds.getMinY() + dy,
-                        newBounds.getMaxY() - dy);
+        newBounds = new Envelope(
+                newBounds.getMinX() + dx, newBounds.getMaxX() - dx, newBounds.getMinY() + dy, newBounds.getMaxY() - dy);
 
         CoordinateReferenceSystem crs = features.getSchema().getCoordinateReferenceSystem();
 
@@ -491,7 +476,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         assertFalse(selection.isEmpty());
 
         // try with filter and no attributes
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         String geomName = schema.getGeometryDescriptor().getName().getLocalPart();
 
         query.setFilter(ff.bbox(ff.property(geomName), bounds));
@@ -511,18 +496,16 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         SimpleFeatureSource fs = ds.getFeatureSource();
 
         // build a query that extracts no geom but uses a bbox filter
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         Query q = new Query();
         q.setPropertyNames("STATE_NAME", "PERSONS");
-        ReferencedEnvelope queryBounds =
-                new ReferencedEnvelope(-75.102613, -72.361859, 40.212597, 41.512517, null);
+        ReferencedEnvelope queryBounds = new ReferencedEnvelope(-75.102613, -72.361859, 40.212597, 41.512517, null);
         q.setFilter(ff.bbox(ff.property(""), queryBounds));
 
         // Read schema should contain the geometry property
         assertEquals(3, ((ShapefileFeatureStore) fs).delegate.getReadSchema(q).getAttributeCount());
         // Result schema should not contain the geometry property
-        assertEquals(
-                2, ((ShapefileFeatureStore) fs).delegate.getResultSchema(q).getAttributeCount());
+        assertEquals(2, ((ShapefileFeatureStore) fs).delegate.getResultSchema(q).getAttributeCount());
 
         // grab the features
         SimpleFeatureCollection fc = fs.getFeatures(q);
@@ -541,7 +524,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         Set<String> expectedFids = new LinkedHashSet<>();
         final Filter fidFilter;
         try (SimpleFeatureIterator indexIter = features.features()) {
-            FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+            FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
             Set<FeatureId> fids = new HashSet<>();
             while (indexIter.hasNext()) {
                 SimpleFeature newFeature = indexIter.next();
@@ -588,7 +571,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         GeometryFactory geometryFactory = new GeometryFactory();
         Coordinate coordinate = new Coordinate(-99.0, 38.0);
         Point p = geometryFactory.createPoint(coordinate);
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         final Filter testFilter = ff.intersects(ff.literal(p), ff.property("the_geom"));
         // System.out.println(testFilter);
         // = featureSource.getFeatures();
@@ -597,11 +580,9 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
     }
 
     private ArrayList<SimpleFeature> performQueryComparison(
-            ShapefileDataStore indexedDS,
-            ShapefileDataStore baselineDS,
-            ReferencedEnvelope newBounds)
+            ShapefileDataStore indexedDS, ShapefileDataStore baselineDS, ReferencedEnvelope newBounds)
             throws FactoryRegistryException, IllegalFilterException, IOException {
-        FilterFactory2 fac = CommonFactoryFinder.getFilterFactory2(null);
+        FilterFactory fac = CommonFactoryFinder.getFilterFactory(null);
         String geometryName = indexedDS.getSchema().getGeometryDescriptor().getLocalName();
 
         Filter filter = fac.bbox(fac.property(geometryName), newBounds);
@@ -647,8 +628,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         SimpleFeatureType schema = firstFeature.getFeatureType();
         assertNotNull(schema.getGeometryDescriptor());
         assertEquals("Number of Attributes", 253, schema.getAttributeCount());
-        assertEquals(
-                "Value of statename is wrong", "Illinois", firstFeature.getAttribute("STATE_NAME"));
+        assertEquals("Value of statename is wrong", "Illinois", firstFeature.getAttribute("STATE_NAME"));
         assertEquals(
                 "Value of land area is wrong",
                 143986.61,
@@ -663,9 +643,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
 
         assertTrue(FeatureTypes.isDecendedFrom(schema, BasicFeatureTypes.POLYGON));
         assertTrue(FeatureTypes.isDecendedFrom(schema, BasicFeatureTypes.POLYGON));
-        assertTrue(
-                FeatureTypes.isDecendedFrom(
-                        schema, FeatureTypes.DEFAULT_NAMESPACE, "polygonFeature"));
+        assertTrue(FeatureTypes.isDecendedFrom(schema, FeatureTypes.DEFAULT_NAMESPACE, "polygonFeature"));
     }
 
     @Test
@@ -698,18 +676,15 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         File file = new File("test.shp");
         URL toURL = file.toURI().toURL();
         ShapefileDataStore ds = new ShapefileDataStore(toURL);
-        SimpleFeatureType featureType =
-                DataUtilities.createType("test", "geom:MultiPolygon:srid=32615");
-        CoordinateReferenceSystem crs =
-                featureType.getGeometryDescriptor().getCoordinateReferenceSystem();
+        SimpleFeatureType featureType = DataUtilities.createType("test", "geom:MultiPolygon:srid=32615");
+        CoordinateReferenceSystem crs = featureType.getGeometryDescriptor().getCoordinateReferenceSystem();
         assertNotNull(crs);
 
         ds.createSchema(featureType);
 
         assertEquals("test", ds.getSchema().getTypeName());
 
-        CoordinateReferenceSystem crs2 =
-                ds.getSchema().getGeometryDescriptor().getCoordinateReferenceSystem();
+        CoordinateReferenceSystem crs2 = ds.getSchema().getGeometryDescriptor().getCoordinateReferenceSystem();
         assertNotNull(crs2);
         assertTrue(CRS.equalsIgnoreMetadata(crs, crs2));
         ds.dispose();
@@ -739,18 +714,15 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         File file = new File("test.shp");
         URL toURL = file.toURI().toURL();
         ShapefileDataStore ds = new ShapefileDataStore(toURL);
-        SimpleFeatureType featureType =
-                DataUtilities.createType("test", "geom:MultiPolygon:srid=3031");
-        CoordinateReferenceSystem crs =
-                featureType.getGeometryDescriptor().getCoordinateReferenceSystem();
+        SimpleFeatureType featureType = DataUtilities.createType("test", "geom:MultiPolygon:srid=3031");
+        CoordinateReferenceSystem crs = featureType.getGeometryDescriptor().getCoordinateReferenceSystem();
         assertNotNull(crs);
 
         ds.createSchema(featureType);
 
         assertEquals("test", ds.getSchema().getTypeName());
 
-        CoordinateReferenceSystem crs2 =
-                ds.getSchema().getGeometryDescriptor().getCoordinateReferenceSystem();
+        CoordinateReferenceSystem crs2 = ds.getSchema().getGeometryDescriptor().getCoordinateReferenceSystem();
         assertNotNull(crs2);
         assertEquals(crs.getName().getCode(), crs2.getName().getCode());
         ds.dispose();
@@ -790,7 +762,9 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
 
         assertNotSame(before, after);
         assertNull("4326", before.getCoordinateReferenceSystem());
-        assertEquals("NAD83 / BC Albers", after.getCoordinateReferenceSystem().getName().getCode());
+        assertEquals(
+                "NAD83 / BC Albers",
+                after.getCoordinateReferenceSystem().getName().getCode());
 
         file.deleteOnExit();
         file = new File("test.dbf");
@@ -818,8 +792,8 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
     }
 
     /**
-     * Create a set of features, then remove every other one, updating the remaining. Test for
-     * removal and proper update after reloading...
+     * Create a set of features, then remove every other one, updating the remaining. Test for removal and proper update
+     * after reloading...
      */
     /* Note that, when reading the DBF part of shape file set, the type of an N,0 feature will be inferred to be
      * Long; this may cause data loss when reading a file created with a BigInteger feature.
@@ -830,8 +804,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         loadFeatures(sds);
 
         try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
-                sds.getFeatureWriter(
-                        sds.getTypeNames()[0], Filter.INCLUDE, Transaction.AUTO_COMMIT)) {
+                sds.getFeatureWriter(sds.getTypeNames()[0], Filter.INCLUDE, Transaction.AUTO_COMMIT)) {
             while (writer.hasNext()) {
                 SimpleFeature feat = writer.next();
                 Integer b = (Integer) feat.getAttribute(1);
@@ -857,8 +830,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
     public void testUpdateMultipleAttributesNoAutocommit() throws Exception {
         // create feature type
         SimpleFeatureType type =
-                DataUtilities.createType(
-                        "junk", "the_geom:Point,b:java.lang.Integer,c:java.lang.Integer");
+                DataUtilities.createType("junk", "the_geom:Point,b:java.lang.Integer,c:java.lang.Integer");
         DefaultFeatureCollection features = new DefaultFeatureCollection();
 
         SimpleFeatureBuilder build = new SimpleFeatureBuilder(type);
@@ -878,15 +850,13 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
 
         try (Transaction transaction = new DefaultTransaction()) {
             SimpleFeatureStore store =
-                    (SimpleFeatureStore)
-                            s.getFeatureSource(s.getSchema().getTypeName(), transaction);
+                    (SimpleFeatureStore) s.getFeatureSource(s.getSchema().getTypeName(), transaction);
 
-            FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+            FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
             Query query = new Query(s.getSchema().getTypeName());
             for (int i = 0; i < 3; i++) {
                 query.setFilter(ff.equal(ff.property("b"), ff.literal(i), true));
-                store.modifyFeatures(
-                        new String[] {"b", "c"}, new Integer[] {-1 * i, i}, query.getFilter());
+                store.modifyFeatures(new String[] {"b", "c"}, new Integer[] {-1 * i, i}, query.getFilter());
             }
 
             transaction.commit();
@@ -909,9 +879,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         s.dispose();
     }
 
-    /**
-     * Create a test file, then continue removing the first entry until there are no features left.
-     */
+    /** Create a test file, then continue removing the first entry until there are no features left. */
     @Test
     public void testRemoveFromFrontAndClose() throws Throwable {
         ShapefileDataStore sds = createDataStore();
@@ -920,8 +888,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
 
         while (idx > 0) {
             try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
-                    sds.getFeatureWriter(
-                            sds.getTypeNames()[0], Filter.INCLUDE, Transaction.AUTO_COMMIT)) {
+                    sds.getFeatureWriter(sds.getTypeNames()[0], Filter.INCLUDE, Transaction.AUTO_COMMIT)) {
                 writer.next();
                 // System.out.println(feature);
                 writer.remove();
@@ -931,9 +898,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         sds.dispose();
     }
 
-    /**
-     * Create a test file, then continue removing the first entry until there are no features left.
-     */
+    /** Create a test file, then continue removing the first entry until there are no features left. */
     @Test
     public void testRemoveFromFrontAndCloseTransaction() throws Throwable {
         ShapefileDataStore sds = createDataStore();
@@ -953,9 +918,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         sds.dispose();
     }
 
-    /**
-     * Create a test file, then continue removing the last entry until there are no features left.
-     */
+    /** Create a test file, then continue removing the last entry until there are no features left. */
     @Test
     public void testRemoveFromBackAndClose() throws Throwable {
         ShapefileDataStore sds = createDataStore();
@@ -964,8 +927,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
 
         while (idx > 0) {
             try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
-                    sds.getFeatureWriter(
-                            sds.getTypeNames()[0], Filter.INCLUDE, Transaction.AUTO_COMMIT)) {
+                    sds.getFeatureWriter(sds.getTypeNames()[0], Filter.INCLUDE, Transaction.AUTO_COMMIT)) {
                 while (writer.hasNext()) {
                     writer.next();
                 }
@@ -977,17 +939,18 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
     }
 
     @Test
-    @SuppressWarnings("PMD.UnusedVariable") // we really mean to just open the writer and close it
+    // we really mean to just open the writer and close it
+    @SuppressWarnings({"PMD.EmptyControlStatement", "PMD.UnusedLocalVariable"})
     public void testWriteShapefileWithNoRecords() throws Exception {
         SimpleFeatureType featureType = DataUtilities.createType("whatever", "a:Polygon,b:String");
 
         File tempFile = getTempFile();
-        ShapefileDataStore shapefileDataStore = new ShapefileDataStore(tempFile.toURI().toURL());
+        ShapefileDataStore shapefileDataStore =
+                new ShapefileDataStore(tempFile.toURI().toURL());
         shapefileDataStore.createSchema(featureType);
 
         try (FeatureWriter<SimpleFeatureType, SimpleFeature> featureWriter =
-                shapefileDataStore.getFeatureWriter(
-                        shapefileDataStore.getTypeNames()[0], Transaction.AUTO_COMMIT)) {
+                shapefileDataStore.getFeatureWriter(shapefileDataStore.getTypeNames()[0], Transaction.AUTO_COMMIT)) {
 
             // don't add any features to the data store....
 
@@ -1051,8 +1014,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
     }
 
     /**
-     * Creates feature collection with all the stuff we care about from simple types, to Geometry
-     * and date.
+     * Creates feature collection with all the stuff we care about from simple types, to Geometry and date.
      *
      * <p>As we care about supporting more stuff please add on to the end of this list...
      *
@@ -1123,8 +1085,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
     @Test
     public void testWriteReadStandardNumbers() throws Exception {
         // create feature type
-        SimpleFeatureType type =
-                DataUtilities.createType("junk", "a:Point,b:java.lang.Float,c:java.lang.Double");
+        SimpleFeatureType type = DataUtilities.createType("junk", "a:Point,b:java.lang.Float,c:java.lang.Double");
         DefaultFeatureCollection features = new DefaultFeatureCollection();
 
         Double aFloat = 123456.78901234567890123456789;
@@ -1158,8 +1119,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
     public void testWriteReadBigNumbers() throws Exception {
         // create feature type
         SimpleFeatureType type =
-                DataUtilities.createType(
-                        "junk", "a:Point,b:java.math.BigDecimal,c:java.math.BigInteger");
+                DataUtilities.createType("junk", "a:Point,b:java.math.BigDecimal,c:java.math.BigInteger");
         DefaultFeatureCollection features = new DefaultFeatureCollection();
 
         BigInteger bigInteger = new BigInteger("1234567890123456789");
@@ -1184,15 +1144,8 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
             SimpleFeature f = reader.next();
 
             assertEquals(
-                    "big decimal",
-                    bigDecimal.doubleValue(),
-                    ((Number) f.getAttribute("b")).doubleValue(),
-                    0.00001);
-            assertEquals(
-                    "big integer",
-                    bigInteger.longValue(),
-                    ((Number) f.getAttribute("c")).longValue(),
-                    0.00001);
+                    "big decimal", bigDecimal.doubleValue(), ((Number) f.getAttribute("b")).doubleValue(), 0.00001);
+            assertEquals("big integer", bigInteger.longValue(), ((Number) f.getAttribute("c")).longValue(), 0.00001);
         }
         s.dispose();
     }
@@ -1203,8 +1156,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
     public void testWriteReadBiggerNumbers() throws Exception {
         // create feature type
         SimpleFeatureType type =
-                DataUtilities.createType(
-                        "junk", "a:Point,b:java.math.BigDecimal,c:java.math.BigInteger");
+                DataUtilities.createType("junk", "a:Point,b:java.math.BigDecimal,c:java.math.BigInteger");
         DefaultFeatureCollection features = new DefaultFeatureCollection();
 
         BigInteger bigInteger = new BigInteger("12345678901234567890123456789");
@@ -1230,15 +1182,8 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
             SimpleFeature f = reader.next();
 
             assertEquals(
-                    "big decimal",
-                    bigDecimal.doubleValue(),
-                    ((Number) f.getAttribute("b")).doubleValue(),
-                    0.00001);
-            assertEquals(
-                    "big integer",
-                    bigInteger.longValue(),
-                    ((Number) f.getAttribute("c")).longValue(),
-                    0.00001);
+                    "big decimal", bigDecimal.doubleValue(), ((Number) f.getAttribute("b")).doubleValue(), 0.00001);
+            assertEquals("big integer", bigInteger.longValue(), ((Number) f.getAttribute("c")).longValue(), 0.00001);
         }
         s.dispose();
     }
@@ -1247,8 +1192,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
     public void testWriteBiggerNumbersWithCheck() throws Exception {
         // create feature type
         SimpleFeatureType type =
-                DataUtilities.createType(
-                        "junk", "a:Point,b:java.math.BigDecimal,c:java.math.BigInteger");
+                DataUtilities.createType("junk", "a:Point,b:java.math.BigDecimal,c:java.math.BigInteger");
         DefaultFeatureCollection features = new DefaultFeatureCollection();
 
         BigInteger bigInteger = new BigInteger("12345678901234567890123456789");
@@ -1274,15 +1218,8 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
             SimpleFeature f = reader.next();
 
             assertEquals(
-                    "big decimal",
-                    bigDecimal.doubleValue(),
-                    ((Number) f.getAttribute("b")).doubleValue(),
-                    0.00001);
-            assertEquals(
-                    "big integer",
-                    bigInteger.longValue(),
-                    ((Number) f.getAttribute("c")).longValue(),
-                    0.00001);
+                    "big decimal", bigDecimal.doubleValue(), ((Number) f.getAttribute("b")).doubleValue(), 0.00001);
+            assertEquals("big integer", bigInteger.longValue(), ((Number) f.getAttribute("c")).longValue(), 0.00001);
         }
         s.dispose();
     }
@@ -1351,7 +1288,8 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         tmpFile.delete();
 
         // write features
-        ShapefileDataStore shapeDataStore = new ShapefileDataStore(tmpFile.toURI().toURL());
+        ShapefileDataStore shapeDataStore =
+                new ShapefileDataStore(tmpFile.toURI().toURL());
         shapeDataStore.createSchema(type);
         writeFeatures(shapeDataStore, features);
         shapeDataStore.dispose();
@@ -1382,11 +1320,10 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
                         }
                     }
                 } catch (Throwable t) {
-                    fail(
-                            "Bogus : "
-                                    + Arrays.asList(geom.getCoordinates())
-                                    + " : "
-                                    + Arrays.asList(fromShape.getCoordinates()));
+                    fail("Bogus : "
+                            + Arrays.asList(geom.getCoordinates())
+                            + " : "
+                            + Arrays.asList(fromShape.getCoordinates()));
                 }
             }
         }
@@ -1400,8 +1337,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         // seems to fail in the
         // URL point into the
         // JAR file.
-        ShapefileDataStore store =
-                new ShapefileDataStore(TestData.url(TestCaseSupport.class, STREAM));
+        ShapefileDataStore store = new ShapefileDataStore(TestData.url(TestCaseSupport.class, STREAM));
         int count = 0;
         try (FeatureReader<SimpleFeatureType, SimpleFeature> reader = store.getFeatureReader()) {
             while (reader.hasNext()) {
@@ -1418,7 +1354,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
 
             // execute Query that returns all features
 
-            FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+            FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
             SimpleFeatureType schema = featureSource.getSchema();
             String geomName = schema.getGeometryDescriptor().getName().getLocalPart();
 
@@ -1459,13 +1395,12 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
 
             // execute Query that doesn't return any feature
             query = new Query(Query.ALL);
-            bounds =
-                    new ReferencedEnvelope(
-                            bounds.getMaxX() + 1,
-                            bounds.getMaxX() + 2,
-                            bounds.getMaxY() + 1,
-                            bounds.getMaxY() + 2,
-                            bounds.getCoordinateReferenceSystem());
+            bounds = new ReferencedEnvelope(
+                    bounds.getMaxX() + 1,
+                    bounds.getMaxX() + 2,
+                    bounds.getMaxY() + 1,
+                    bounds.getMaxY() + 2,
+                    bounds.getCoordinateReferenceSystem());
             query.setFilter(ff.bbox(ff.property(geomName), bounds));
 
             features = featureSource.getFeatures(query);
@@ -1483,8 +1418,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         ShapefileDataStore s = new ShapefileDataStore(url);
 
         // attributes other than geometry can be ignored here
-        Query query =
-                new Query(s.getSchema().getTypeName(), Filter.INCLUDE, new String[] {"the_geom"});
+        Query query = new Query(s.getSchema().getTypeName(), Filter.INCLUDE, new String[] {"the_geom"});
         try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
                 s.getFeatureReader(query, Transaction.AUTO_COMMIT)) {
             assertEquals(1, reader.getFeatureType().getAttributeCount());
@@ -1492,13 +1426,11 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
 
             // here too, the filter is using the geometry only
             GeometryFactory gc = new GeometryFactory();
-            LinearRing ring =
-                    gc.createLinearRing(
-                            new Coordinate[] {
-                                new Coordinate(0, 0), new Coordinate(10, 0),
-                                new Coordinate(10, 10), new Coordinate(0, 10),
-                                new Coordinate(0, 0)
-                            });
+            LinearRing ring = gc.createLinearRing(new Coordinate[] {
+                new Coordinate(0, 0), new Coordinate(10, 0),
+                new Coordinate(10, 10), new Coordinate(0, 10),
+                new Coordinate(0, 0)
+            });
             Polygon polygon = gc.createPolygon(ring, null);
 
             ReferencedEnvelope bounds = new ReferencedEnvelope(polygon.getEnvelopeInternal(), null);
@@ -1528,8 +1460,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
     public void testWrite() throws Exception {
         // create feature type
         SimpleFeatureType type =
-                DataUtilities.createType(
-                        "junk", "a:Point,b:java.math.BigDecimal,c:java.math.BigInteger");
+                DataUtilities.createType("junk", "a:Point,b:java.math.BigDecimal,c:java.math.BigInteger");
 
         BigInteger bigInteger = new BigInteger("1234567890123456789");
         BigDecimal bigDecimal = new BigDecimal(bigInteger, 2);
@@ -1551,8 +1482,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
 
         // was failing in GEOT-2427
         try (Transaction t = new DefaultTransaction();
-                FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
-                        s.getFeatureWriter(s.getTypeNames()[0], t)) {
+                FeatureWriter<SimpleFeatureType, SimpleFeature> writer = s.getFeatureWriter(s.getTypeNames()[0], t)) {
             SimpleFeature feature1 = writer.next();
             assertNotNull(feature1);
         }
@@ -1594,8 +1524,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
             // Set timestamp2 12:00:00.001 at the same day
             timestamp2 = timestampCal.getTime();
 
-            timestampCal.add(
-                    Calendar.MILLISECOND, 11 * 60 * 60 * 1000 + 59 * 60 * 1000 + 59 * 1000 + 998);
+            timestampCal.add(Calendar.MILLISECOND, 11 * 60 * 60 * 1000 + 59 * 60 * 1000 + 59 * 1000 + 998);
             // Set timestamp3 to  23:59:59.999 at the same day
             timestamp3 = timestampCal.getTime();
 
@@ -1685,9 +1614,9 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
     }
 
     /**
-     * Issueing a request, whether its a query, update or delete, with a fid filter where feature
-     * ids match the {@code <typeName>.<number>} structure but the {@code <typeName>} part does not
-     * match the actual typeName, shoud ensure the invalid fids are ignored
+     * Issueing a request, whether its a query, update or delete, with a fid filter where feature ids match the
+     * {@code <typeName>.<number>} structure but the {@code <typeName>} part does not match the actual typeName, shoud
+     * ensure the invalid fids are ignored
      */
     @Test
     public void testWipesOutInvalidFidsFromFilters() throws Exception {
@@ -1701,7 +1630,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
             invalidFid1 = "_" + features.next().getID();
             invalidFid2 = features.next().getID() + "abc";
         }
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         Set<Identifier> ids = new HashSet<>();
         ids.add(ff.featureId(validFid1));
         ids.add(ff.featureId(validFid2));
@@ -1758,8 +1687,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         return count(ds, typeName, filter, Transaction.AUTO_COMMIT);
     }
 
-    private int count(DataStore ds, String typeName, Filter filter, Transaction t)
-            throws Exception {
+    private int count(DataStore ds, String typeName, Filter filter, Transaction t) throws Exception {
         int count = 0;
         try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
                 ds.getFeatureReader(new Query(typeName, filter), t)) {
@@ -1810,8 +1738,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
     public void testIndexCreation() throws Exception {
         File shpFile = copyShapefiles(STATE_POP);
         String name = shpFile.getName();
-        File qixFile =
-                new File(shpFile.getParentFile(), name.substring(0, name.length() - 4) + ".qix");
+        File qixFile = new File(shpFile.getParentFile(), name.substring(0, name.length() - 4) + ".qix");
         qixFile.delete();
         URL url = shpFile.toURI().toURL();
         ShapefileDataStore ds = new ShapefileDataStore(url);
@@ -1865,7 +1792,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         SimpleFeatureSource featureSource = ds.getFeatureSource();
         SimpleFeatureType schema = featureSource.getSchema();
         Query query = new Query(schema.getTypeName());
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         String geomName = schema.getGeometryDescriptor().getName().getLocalPart();
         ReferencedEnvelope bounds = featureSource.getBounds();
         // before it was working with / 2, that is, point bbox, now it does not, accuracy issue
@@ -1879,8 +1806,8 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
     }
 
     /**
-     * This is useful to dump a UTF16 character to an UT16 escape sequence, basically the only way
-     * to represent the chars we don't have on the keyboard (such as chinese ones :))
+     * This is useful to dump a UTF16 character to an UT16 escape sequence, basically the only way to represent the
+     * chars we don't have on the keyboard (such as chinese ones :))
      */
     public static String charToHex(char c) {
         // Returns hex String representation of char c
@@ -1891,16 +1818,14 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
 
     public static String byteToHex(byte b) {
         // Returns hex String representation of byte b
-        char[] hexDigit = {
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
-        };
-        char[] array = {hexDigit[(b >> 4) & 0x0f], hexDigit[b & 0x0f]};
+        char[] hexDigit = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+        char[] array = {hexDigit[b >> 4 & 0x0f], hexDigit[b & 0x0f]};
         return new String(array);
     }
 
     /**
-     * A test method testing the correct bounds of shapefiles without any data, but having [0:0,0:0]
-     * in their header. The bounds must pass the isEmpty() and isNull() tests.
+     * A test method testing the correct bounds of shapefiles without any data, but having [0:0,0:0] in their header.
+     * The bounds must pass the isEmpty() and isNull() tests.
      *
      * @throws IOException, if the shapefile can not be read
      * @author Hendrik Peilke (IBYKUS AG)
@@ -1910,9 +1835,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         File file = TestData.file(TestCaseSupport.class, "empty-shapefile/empty-shapefile.shp");
         ShapefileDataStore dataStore = new ShapefileDataStore(file.toURI().toURL());
         ReferencedEnvelope bounds = dataStore.getFeatureSource().getBounds();
-        assertTrue(
-                "bounds of a shapefile without any data must be empty",
-                bounds.isEmpty() && bounds.isNull());
+        assertTrue("bounds of a shapefile without any data must be empty", bounds.isEmpty() && bounds.isNull());
     }
 
     /** Tests measures (M) values on shp output for Point type */
@@ -1920,8 +1843,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
     public void testPointZMSupport() throws Exception {
         // create feature type
         SimpleFeatureType type =
-                DataUtilities.createType(
-                        "junk", "a:Point,b:java.math.BigDecimal,c:java.math.BigInteger");
+                DataUtilities.createType("junk", "a:Point,b:java.math.BigDecimal,c:java.math.BigInteger");
         DefaultFeatureCollection features = new DefaultFeatureCollection();
 
         BigInteger bigInteger = new BigInteger("1234567890123456789");
@@ -1940,7 +1862,8 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         tmpFile.createNewFile();
         ShapefileDataStore s = new ShapefileDataStore(tmpFile.toURI().toURL());
         writeFeatures(s, features);
-        File expected = new File(getClass().getResource("test-data/measure/pointzm.shp").toURI());
+        File expected =
+                new File(getClass().getResource("test-data/measure/pointzm.shp").toURI());
         // compare byte stream produced in shp file
         assertTrue(FileUtils.contentEquals(tmpFile, expected));
     }
@@ -1950,8 +1873,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
     public void testMultiPointZMSupport() throws Exception {
         // create feature type
         SimpleFeatureType type =
-                DataUtilities.createType(
-                        "junk", "a:MultiPoint,b:java.math.BigDecimal,c:java.math.BigInteger");
+                DataUtilities.createType("junk", "a:MultiPoint,b:java.math.BigDecimal,c:java.math.BigInteger");
         DefaultFeatureCollection features = new DefaultFeatureCollection();
 
         BigInteger bigInteger = new BigInteger("1234567890123456789");
@@ -1959,13 +1881,11 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
 
         SimpleFeatureBuilder build = new SimpleFeatureBuilder(type);
         GeometryFactory gf = new GeometryFactory();
-        build.add(
-                gf.createMultiPoint(
-                        new Point[] {
-                            gf.createPoint(new CoordinateXYZM(1, -1, 1, 2)),
-                            gf.createPoint(new CoordinateXYZM(1, 3, 1, 4)),
-                            gf.createPoint(new CoordinateXYZM(3, 4, 1, 2))
-                        }));
+        build.add(gf.createMultiPoint(new Point[] {
+            gf.createPoint(new CoordinateXYZM(1, -1, 1, 2)),
+            gf.createPoint(new CoordinateXYZM(1, 3, 1, 4)),
+            gf.createPoint(new CoordinateXYZM(3, 4, 1, 2))
+        }));
         build.add(bigDecimal);
         build.add(bigInteger);
 
@@ -1977,8 +1897,8 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         tmpFile.createNewFile();
         ShapefileDataStore s = new ShapefileDataStore(tmpFile.toURI().toURL());
         writeFeatures(s, features);
-        File expected =
-                new File(getClass().getResource("test-data/measure/multipointszm.shp").toURI());
+        File expected = new File(
+                getClass().getResource("test-data/measure/multipointszm.shp").toURI());
         // compare byte stream produced in shp file
         assertTrue(FileUtils.contentEquals(tmpFile, expected));
     }
@@ -1988,8 +1908,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
     public void testPolygonZMSupport() throws Exception {
         // create feature type
         SimpleFeatureType type =
-                DataUtilities.createType(
-                        "junk", "a:Polygon,b:java.math.BigDecimal,c:java.math.BigInteger");
+                DataUtilities.createType("junk", "a:Polygon,b:java.math.BigDecimal,c:java.math.BigInteger");
         DefaultFeatureCollection features = new DefaultFeatureCollection();
 
         BigInteger bigInteger = new BigInteger("1234567890123456789");
@@ -1997,17 +1916,14 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
 
         SimpleFeatureBuilder build = new SimpleFeatureBuilder(type);
         GeometryFactory gf = new GeometryFactory();
-        build.add(
-                gf.createMultiPolygon(
-                        new Polygon[] {
-                            gf.createPolygon(
-                                    new CoordinateXYZM[] {
-                                        new CoordinateXYZM(1, -1, 1, 1),
-                                        new CoordinateXYZM(3, 1, 1, 2),
-                                        new CoordinateXYZM(2, 0, 1, 2),
-                                        new CoordinateXYZM(1, -1, 1, 1)
-                                    })
-                        }));
+        build.add(gf.createMultiPolygon(new Polygon[] {
+            gf.createPolygon(new CoordinateXYZM[] {
+                new CoordinateXYZM(1, -1, 1, 1),
+                new CoordinateXYZM(3, 1, 1, 2),
+                new CoordinateXYZM(2, 0, 1, 2),
+                new CoordinateXYZM(1, -1, 1, 1)
+            })
+        }));
         build.add(bigDecimal);
         build.add(bigInteger);
 
@@ -2019,8 +1935,8 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         tmpFile.createNewFile();
         ShapefileDataStore s = new ShapefileDataStore(tmpFile.toURI().toURL());
         writeFeatures(s, features);
-        File expected =
-                new File(getClass().getResource("test-data/measure/multipolygonzm.shp").toURI());
+        File expected = new File(
+                getClass().getResource("test-data/measure/multipolygonzm.shp").toURI());
         // compare byte stream produced in shp file
         assertTrue(FileUtils.contentEquals(tmpFile, expected));
     }
@@ -2030,8 +1946,7 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
     public void testLineStringZMSupport() throws Exception {
         // create feature type
         SimpleFeatureType type =
-                DataUtilities.createType(
-                        "junk", "a:LineString,b:java.math.BigDecimal,c:java.math.BigInteger");
+                DataUtilities.createType("junk", "a:LineString,b:java.math.BigDecimal,c:java.math.BigInteger");
         DefaultFeatureCollection features = new DefaultFeatureCollection();
 
         BigInteger bigInteger = new BigInteger("1234567890123456789");
@@ -2039,16 +1954,11 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
 
         SimpleFeatureBuilder build = new SimpleFeatureBuilder(type);
         GeometryFactory gf = new GeometryFactory();
-        build.add(
-                gf.createMultiLineString(
-                        new LineString[] {
-                            gf.createLineString(
-                                    new CoordinateXYZM[] {
-                                        new CoordinateXYZM(1, -1, 1, 1),
-                                        new CoordinateXYZM(2, 0, 1, 2),
-                                        new CoordinateXYZM(3, 1, 1, 2)
-                                    })
-                        }));
+        build.add(gf.createMultiLineString(new LineString[] {
+            gf.createLineString(new CoordinateXYZM[] {
+                new CoordinateXYZM(1, -1, 1, 1), new CoordinateXYZM(2, 0, 1, 2), new CoordinateXYZM(3, 1, 1, 2)
+            })
+        }));
         build.add(bigDecimal);
         build.add(bigInteger);
 
@@ -2060,8 +1970,8 @@ public class ShapefileDataStoreTest extends TestCaseSupport {
         tmpFile.createNewFile();
         ShapefileDataStore s = new ShapefileDataStore(tmpFile.toURI().toURL());
         writeFeatures(s, features);
-        File expected =
-                new File(getClass().getResource("test-data/measure/multilinezm.shp").toURI());
+        File expected = new File(
+                getClass().getResource("test-data/measure/multilinezm.shp").toURI());
         // compare byte stream produced in shp file
         assertTrue(FileUtils.contentEquals(tmpFile, expected));
     }

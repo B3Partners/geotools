@@ -17,16 +17,15 @@
 package org.geotools.filter;
 
 import java.util.List;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
 
 /**
- * A placeholder class used to track a function the user requested that is not supported by our java
- * implementation.
+ * A placeholder class used to track a function the user requested that is not supported by our java implementation.
  *
- * <p>This can be used to construct expressions that are to be executed by another systems (say as
- * SQL or as a WFS request).
+ * <p>This can be used to construct expressions that are to be executed by another systems (say as SQL or as a WFS
+ * request).
  *
  * @author Jody Garnett
  */

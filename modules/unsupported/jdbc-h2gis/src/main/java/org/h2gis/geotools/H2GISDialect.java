@@ -17,6 +17,8 @@
  */
 package org.h2gis.geotools;
 
+import static java.util.Map.entry;
+
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.Date;
@@ -28,13 +30,16 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.jdbc.FilterToSQL;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.jdbc.BasicSQLDialect;
@@ -61,14 +66,9 @@ import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.WKTWriter;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * jdbc-h2gis is an extension to connect H2GIS a spatial library that brings spatial support to the
- * H2 Java database.
+ * jdbc-h2gis is an extension to connect H2GIS a spatial library that brings spatial support to the H2 Java database.
  *
  * <p>H2GISDialect for H2GIS database.
  *
@@ -82,60 +82,50 @@ public class H2GISDialect extends BasicSQLDialect {
 
     static final Version V_2_0_0 = new Version("2.0.0");
 
-    static Pattern GEOMETRY_TABLE_PATTERN =
-            Pattern.compile(
-                    "(?:(?:GEOMETRY\\s*\\(\\s*([a-zA-Z]+\\s*(?:[ZM]+)?)\\s*(?:,\\s*([\\d]+))?\\))|^\\s*([a-zA-Z]+\\s*(?:[ZM]+)?))",
-                    Pattern.CASE_INSENSITIVE);;
-
+    static Pattern GEOMETRY_TABLE_PATTERN = Pattern.compile(
+            "(?:(?:GEOMETRY\\s*\\(\\s*([a-zA-Z]+\\s*(?:[ZM]+)?)\\s*(?:,\\s*([\\d]+))?\\))|^\\s*([a-zA-Z]+\\s*(?:[ZM]+)?))",
+            Pattern.CASE_INSENSITIVE);
     // geometry type to class map
-    static final Map<String, Class> TYPE_TO_CLASS_MAP =
-            new HashMap<String, Class>() {
-                {
-                    put("GEOMETRY", Geometry.class);
-                    put("POINT", Point.class);
-                    put("POINTM", Point.class);
-                    put("POINTZ", Point.class);
-                    put("POINTZM", Point.class);
-                    put("LINESTRING", LineString.class);
-                    put("LINESTRINGM", LineString.class);
-                    put("LINESTRINGZ", LineString.class);
-                    put("LINESTRINGZM", LineString.class);
-                    put("POLYGON", Polygon.class);
-                    put("POLYGONM", Polygon.class);
-                    put("POLYGONZ", Polygon.class);
-                    put("POLYGONZM", Polygon.class);
-                    put("MULTIPOINT", MultiPoint.class);
-                    put("MULTIPOINTM", MultiPoint.class);
-                    put("MULTIPOINTZ", MultiPoint.class);
-                    put("MULTIPOINTZM", MultiPoint.class);
-                    put("MULTILINESTRING", MultiLineString.class);
-                    put("MULTILINESTRINGM", MultiLineString.class);
-                    put("MULTILINESTRINGZ", MultiLineString.class);
-                    put("MULTILINESTRINGZM", MultiLineString.class);
-                    put("MULTIPOLYGON", MultiPolygon.class);
-                    put("MULTIPOLYGONM", MultiPolygon.class);
-                    put("MULTIPOLYGONZ", MultiPolygon.class);
-                    put("MULTIPOLYGONZM", MultiPolygon.class);
-                    put("GEOMETRYCOLLECTION", GeometryCollection.class);
-                    put("BYTEA", byte[].class);
-                }
-            };
+    static final Map<String, Class> TYPE_TO_CLASS_MAP = Map.ofEntries(
+            entry("GEOMETRY", Geometry.class),
+            entry("POINT", Point.class),
+            entry("POINTM", Point.class),
+            entry("POINTZ", Point.class),
+            entry("POINTZM", Point.class),
+            entry("LINESTRING", LineString.class),
+            entry("LINESTRINGM", LineString.class),
+            entry("LINESTRINGZ", LineString.class),
+            entry("LINESTRINGZM", LineString.class),
+            entry("POLYGON", Polygon.class),
+            entry("POLYGONM", Polygon.class),
+            entry("POLYGONZ", Polygon.class),
+            entry("POLYGONZM", Polygon.class),
+            entry("MULTIPOINT", MultiPoint.class),
+            entry("MULTIPOINTM", MultiPoint.class),
+            entry("MULTIPOINTZ", MultiPoint.class),
+            entry("MULTIPOINTZM", MultiPoint.class),
+            entry("MULTILINESTRING", MultiLineString.class),
+            entry("MULTILINESTRINGM", MultiLineString.class),
+            entry("MULTILINESTRINGZ", MultiLineString.class),
+            entry("MULTILINESTRINGZM", MultiLineString.class),
+            entry("MULTIPOLYGON", MultiPolygon.class),
+            entry("MULTIPOLYGONM", MultiPolygon.class),
+            entry("MULTIPOLYGONZ", MultiPolygon.class),
+            entry("MULTIPOLYGONZM", MultiPolygon.class),
+            entry("GEOMETRYCOLLECTION", GeometryCollection.class),
+            entry("BYTEA", byte[].class));
 
     // geometry class to type map
-    static final Map<Class<?>, String> CLASS_TO_TYPE_MAP =
-            new HashMap<Class<?>, String>() {
-                {
-                    put(Geometry.class, "GEOMETRY");
-                    put(Point.class, "POINT");
-                    put(LineString.class, "LINESTRING");
-                    put(Polygon.class, "POLYGON");
-                    put(MultiPoint.class, "MULTIPOINT");
-                    put(MultiLineString.class, "MULTILINESTRING");
-                    put(MultiPolygon.class, "MULTIPOLYGON");
-                    put(GeometryCollection.class, "GEOMETRYCOLLECTION");
-                    put(LinearRing.class, "LINEARRING");
-                }
-            };
+    static final Map<Class<?>, String> CLASS_TO_TYPE_MAP = Map.of(
+            Geometry.class, "GEOMETRY",
+            Point.class, "POINT",
+            LineString.class, "LINESTRING",
+            Polygon.class, "POLYGON",
+            MultiPoint.class, "MULTIPOINT",
+            MultiLineString.class, "MULTILINESTRING",
+            MultiPolygon.class, "MULTIPOLYGON",
+            GeometryCollection.class, "GEOMETRYCOLLECTION",
+            LinearRing.class, "LINEARRING");
 
     boolean functionEncodingEnabled = true;
     // Since H2GIS 2.0
@@ -192,12 +182,10 @@ public class H2GISDialect extends BasicSQLDialect {
     }
 
     @Override
-    public void encodeGeometryColumn(
-            GeometryDescriptor gatt, String prefix, int srid, Hints hints, StringBuffer sql) {
-        boolean force2D =
-                hints != null
-                        && hints.containsKey(Hints.FEATURE_2D)
-                        && Boolean.TRUE.equals(hints.get(Hints.FEATURE_2D));
+    public void encodeGeometryColumn(GeometryDescriptor gatt, String prefix, int srid, Hints hints, StringBuffer sql) {
+        boolean force2D = hints != null
+                && hints.containsKey(Hints.FEATURE_2D)
+                && Boolean.TRUE.equals(hints.get(Hints.FEATURE_2D));
 
         if (force2D) {
             sql.append("ST_AsBinary(ST_Force2D(");
@@ -216,8 +204,7 @@ public class H2GISDialect extends BasicSQLDialect {
     }
 
     @Override
-    public Envelope decodeGeometryEnvelope(ResultSet rs, int column, Connection cx)
-            throws SQLException {
+    public Envelope decodeGeometryEnvelope(ResultSet rs, int column, Connection cx) throws SQLException {
         Geometry envelope = (Geometry) rs.getObject(column);
         if (envelope != null) {
             return envelope.getEnvelopeInternal();
@@ -239,20 +226,17 @@ public class H2GISDialect extends BasicSQLDialect {
         if (typeName.toLowerCase().startsWith("geometry")) {
             if (getH2GISVersion(cx).compareTo(V_1_5_0) <= 0) {
                 String columnName = columnMetaData.getString("COLUMN_NAME");
-                TableLocation tableLocation =
-                        new TableLocation(
-                                null,
-                                columnMetaData.getString("TABLE_SCHEM"),
-                                columnMetaData.getString("TABLE_NAME"),
-                                DBTypes.H2GIS);
-                GeometryMetaData geomMetata =
-                        GeometryTableUtilities.getMetaData(cx, tableLocation, columnName);
+                TableLocation tableLocation = new TableLocation(
+                        null,
+                        columnMetaData.getString("TABLE_SCHEM"),
+                        columnMetaData.getString("TABLE_NAME"),
+                        DBTypes.H2GIS);
+                GeometryMetaData geomMetata = GeometryTableUtilities.getMetaData(cx, tableLocation, columnName);
                 if (geomMetata != null) {
                     gType = geomMetata.getGeometryType();
                 }
             } else if (getH2GISVersion(cx).getMajor().equals(2)) {
-                GeometryMetaData geomMetata =
-                        GeometryMetaData.getMetaDataFromTablePattern(typeName);
+                GeometryMetaData geomMetata = GeometryMetaData.getMetaDataFromTablePattern(typeName);
                 if (geomMetata != null) {
                     gType = geomMetata.getGeometryType();
                 }
@@ -273,8 +257,7 @@ public class H2GISDialect extends BasicSQLDialect {
     }
 
     @Override
-    public Integer getGeometrySRID(
-            String schemaName, String tableName, String columnName, Connection cx)
+    public Integer getGeometrySRID(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
 
         int srid = 0;
@@ -304,19 +287,18 @@ public class H2GISDialect extends BasicSQLDialect {
         // an unpredictable srid makes the table un-queriable)
         if (srid == 0) {
             try (Statement statement = cx.createStatement()) {
-                String sql =
-                        "SELECT ST_SRID("
-                                + escapeName(columnName)
-                                + ") "
-                                + "FROM "
-                                + escapeName(schemaName)
-                                + "."
-                                + escapeName(tableName)
-                                + " "
-                                + "WHERE "
-                                + escapeName(columnName)
-                                + " IS NOT NULL "
-                                + "LIMIT 1";
+                String sql = "SELECT ST_SRID("
+                        + escapeName(columnName)
+                        + ") "
+                        + "FROM "
+                        + escapeName(schemaName)
+                        + "."
+                        + escapeName(tableName)
+                        + " "
+                        + "WHERE "
+                        + escapeName(columnName)
+                        + " IS NOT NULL "
+                        + "LIMIT 1";
                 try (ResultSet res = statement.executeQuery(sql)) {
                     if (res.next()) {
                         srid = res.getInt(1);
@@ -328,8 +310,7 @@ public class H2GISDialect extends BasicSQLDialect {
     }
 
     @Override
-    public int getGeometryDimension(
-            String schemaName, String tableName, String columnName, Connection cx)
+    public int getGeometryDimension(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
         // first attempt, try with the geometry metadata
         Statement statement = null;
@@ -342,17 +323,16 @@ public class H2GISDialect extends BasicSQLDialect {
 
             // try geometry_columns
             try {
-                String sqlStatement =
-                        "SELECT COORD_DIMENSION FROM GEOMETRY_COLUMNS WHERE " //
-                                + "F_TABLE_SCHEMA = '"
-                                + schemaName
-                                + "' " //
-                                + "AND F_TABLE_NAME = '"
-                                + tableName
-                                + "' " //
-                                + "AND F_GEOMETRY_COLUMN = '"
-                                + columnName
-                                + "'";
+                String sqlStatement = "SELECT COORD_DIMENSION FROM GEOMETRY_COLUMNS WHERE " //
+                        + "F_TABLE_SCHEMA = '"
+                        + schemaName
+                        + "' " //
+                        + "AND F_TABLE_NAME = '"
+                        + tableName
+                        + "' " //
+                        + "AND F_GEOMETRY_COLUMN = '"
+                        + columnName
+                        + "'";
 
                 LOGGER.log(Level.FINE, "Geometry srid check; {0} ", sqlStatement);
                 statement = cx.createStatement();
@@ -379,19 +359,18 @@ public class H2GISDialect extends BasicSQLDialect {
             // fall back on inspection of the first geometry, assuming uniform srid (fair assumption
             // an unpredictable srid makes the table un-queriable)
             if (dimension == 0 && statement != null) {
-                String sqlStatement =
-                        "SELECT ST_DIMENSION(\""
-                                + columnName
-                                + "\") "
-                                + "FROM \""
-                                + schemaName
-                                + "\".\""
-                                + tableName
-                                + "\" "
-                                + "WHERE "
-                                + columnName
-                                + " IS NOT NULL "
-                                + "LIMIT 1";
+                String sqlStatement = "SELECT ST_DIMENSION(\""
+                        + columnName
+                        + "\") "
+                        + "FROM \""
+                        + schemaName
+                        + "\".\""
+                        + tableName
+                        + "\" "
+                        + "WHERE "
+                        + columnName
+                        + " IS NOT NULL "
+                        + "LIMIT 1";
                 result = statement.executeQuery(sqlStatement);
                 if (result.next()) {
                     dimension = result.getInt(1);
@@ -406,8 +385,7 @@ public class H2GISDialect extends BasicSQLDialect {
     }
 
     @Override
-    public String getSequenceForColumn(
-            String schemaName, String tableName, String columnName, Connection cx)
+    public String getSequenceForColumn(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
 
         String sequenceName = tableName + "_" + columnName + "_SEQUENCE";
@@ -437,14 +415,10 @@ public class H2GISDialect extends BasicSQLDialect {
     }
 
     @Override
-    public Object getNextSequenceValue(String schemaName, String sequenceName, Connection cx)
-            throws SQLException {
+    public Object getNextSequenceValue(String schemaName, String sequenceName, Connection cx) throws SQLException {
         Statement st = cx.createStatement();
         try {
-            String sql =
-                    "SELECT NEXT VALUE FOR "
-                            + (schemaName != null ? schemaName + "." : "")
-                            + sequenceName;
+            String sql = "SELECT NEXT VALUE FOR " + (schemaName != null ? schemaName + "." : "") + sequenceName;
             if (getH2GISVersion(cx).compareTo(V_1_5_0) <= 0) {
                 sql = "SELECT nextval('" + sequenceName + "')";
             }
@@ -470,8 +444,7 @@ public class H2GISDialect extends BasicSQLDialect {
     }
 
     @Override
-    public Object getLastAutoGeneratedValue(
-            String schemaName, String tableName, String columnName, Connection cx)
+    public Object getLastAutoGeneratedValue(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
 
         Statement st = cx.createStatement();
@@ -562,8 +535,7 @@ public class H2GISDialect extends BasicSQLDialect {
      * @throws java.sql.SQLException
      */
     @Override
-    public void postCreateTable(String schemaName, SimpleFeatureType featureType, Connection cx)
-            throws SQLException {
+    public void postCreateTable(String schemaName, SimpleFeatureType featureType, Connection cx) throws SQLException {
         schemaName = schemaName != null ? schemaName : "PUBLIC";
         String tableName = featureType.getName().getLocalPart();
 
@@ -573,24 +545,21 @@ public class H2GISDialect extends BasicSQLDialect {
 
             // register all geometry columns in the database
             for (AttributeDescriptor att : featureType.getAttributeDescriptors()) {
-                if (att instanceof GeometryDescriptor) {
-                    GeometryDescriptor gd = (GeometryDescriptor) att;
+                if (att instanceof GeometryDescriptor gd) {
                     // lookup or reverse engineer the srid
                     int srid = 0;
                     if (gd.getUserData().get(JDBCDataStore.JDBC_NATIVE_SRID) != null) {
                         srid = (Integer) gd.getUserData().get(JDBCDataStore.JDBC_NATIVE_SRID);
                     } else if (gd.getCoordinateReferenceSystem() != null) {
                         try {
-                            Integer result =
-                                    CRS.lookupEpsgCode(gd.getCoordinateReferenceSystem(), true);
+                            Integer result = CRS.lookupEpsgCode(gd.getCoordinateReferenceSystem(), true);
                             if (result != null) {
                                 srid = result;
                             }
                         } catch (Exception e) {
                             LOGGER.log(
                                     Level.FINE,
-                                    "Error looking up the epsg code for metadata insertion, "
-                                            + "assuming -1",
+                                    "Error looking up the epsg code for metadata insertion, " + "assuming -1",
                                     e);
                         }
                     }
@@ -620,20 +589,19 @@ public class H2GISDialect extends BasicSQLDialect {
                                             + dimensions);
                         }
 
-                        sql =
-                                "ALTER TABLE "
-                                        + escapeName(schemaName)
-                                        + "."
-                                        + escapeName(tableName)
-                                        + " "
-                                        + "ALTER COLUMN "
-                                        + escapeName(gd.getLocalName())
-                                        + " "
-                                        + "TYPE geometry ("
-                                        + geomType
-                                        + ", "
-                                        + srid
-                                        + ");";
+                        sql = "ALTER TABLE "
+                                + escapeName(schemaName)
+                                + "."
+                                + escapeName(tableName)
+                                + " "
+                                + "ALTER COLUMN "
+                                + escapeName(gd.getLocalName())
+                                + " "
+                                + "TYPE geometry ("
+                                + geomType
+                                + ", "
+                                + srid
+                                + ");";
                         LOGGER.fine(sql);
                         st.execute(sql);
                     } else if (getH2GISVersion(cx).getMajor().equals(2)) {
@@ -647,20 +615,19 @@ public class H2GISDialect extends BasicSQLDialect {
                                     "H2GIS only supports geometries with 2 , 3  and 4 dimensions, current value: "
                                             + dimensions);
                         }
-                        sql =
-                                "ALTER TABLE "
-                                        + escapeName(schemaName)
-                                        + "."
-                                        + escapeName(tableName)
-                                        + " "
-                                        + "ALTER COLUMN "
-                                        + escapeName(gd.getLocalName())
-                                        + " "
-                                        + "TYPE geometry ("
-                                        + geomType
-                                        + ", "
-                                        + srid
-                                        + ");";
+                        sql = "ALTER TABLE "
+                                + escapeName(schemaName)
+                                + "."
+                                + escapeName(tableName)
+                                + " "
+                                + "ALTER COLUMN "
+                                + escapeName(gd.getLocalName())
+                                + " "
+                                + "TYPE geometry ("
+                                + geomType
+                                + ", "
+                                + srid
+                                + ");";
                         LOGGER.fine(sql);
                         st.execute(sql);
                     }
@@ -686,7 +653,11 @@ public class H2GISDialect extends BasicSQLDialect {
         } else {
             WKTWriter writer = new WKTWriter(dimension);
             String wkt = writer.write(value);
-            sql.append("ST_GeomFromText('").append(wkt).append("', ").append(srid).append(")");
+            sql.append("ST_GeomFromText('")
+                    .append(wkt)
+                    .append("', ")
+                    .append(srid)
+                    .append(")");
         }
     }
 
@@ -755,12 +726,7 @@ public class H2GISDialect extends BasicSQLDialect {
 
     @Override
     public Geometry decodeGeometryValue(
-            GeometryDescriptor gd,
-            ResultSet rs,
-            String column,
-            GeometryFactory gf,
-            Connection cnctn,
-            Hints hints)
+            GeometryDescriptor gd, ResultSet rs, String column, GeometryFactory gf, Connection cnctn, Hints hints)
             throws SQLException {
         byte[] bytes = rs.getBytes(column);
         if (bytes == null) {
@@ -774,8 +740,8 @@ public class H2GISDialect extends BasicSQLDialect {
     }
 
     @Override
-    public List<ReferencedEnvelope> getOptimizedBounds(
-            String schema, SimpleFeatureType featureType, Connection cx) throws SQLException {
+    public List<ReferencedEnvelope> getOptimizedBounds(String schema, SimpleFeatureType featureType, Connection cx)
+            throws SQLException {
         if (!estimatedExtentsEnabled) {
             return null;
         }
@@ -795,10 +761,9 @@ public class H2GISDialect extends BasicSQLDialect {
             for (AttributeDescriptor att : featureType.getAttributeDescriptors()) {
                 if (att instanceof GeometryDescriptor) {
                     // use estimated extent (optimizer statistics)
-                    Envelope env =
-                            GeometryTableUtilities.getEstimatedExtent(
-                                            cx, tableLocation, att.getName().getLocalPart())
-                                    .getEnvelopeInternal();
+                    Envelope env = GeometryTableUtilities.getEstimatedExtent(
+                                    cx, tableLocation, att.getName().getLocalPart())
+                            .getEnvelopeInternal();
                     // reproject and merge
                     if (!env.isNull()) {
                         CoordinateReferenceSystem flatCRS =
@@ -811,10 +776,7 @@ public class H2GISDialect extends BasicSQLDialect {
             if (savePoint != null) {
                 cx.rollback(savePoint);
             }
-            LOGGER.log(
-                    Level.WARNING,
-                    "Failed to use ST_EstimatedExtent , falling back on envelope aggregation",
-                    e);
+            LOGGER.log(Level.WARNING, "Failed to use ST_EstimatedExtent , falling back on envelope aggregation", e);
             return null;
         } finally {
             if (savePoint != null) {
@@ -863,13 +825,11 @@ public class H2GISDialect extends BasicSQLDialect {
      * @return
      * @throws SQLException
      */
-    public int getSRID(
-            Connection connection, String schema, String table, String geometryColumnName)
+    public int getSRID(Connection connection, String schema, String table, String geometryColumnName)
             throws SQLException {
         int srid = 0;
         try (ResultSet geomResultSet =
-                GeometryTableUtilities.getGeometryColumnsView(
-                        connection, "", schema, table, geometryColumnName)) {
+                GeometryTableUtilities.getGeometryColumnsView(connection, "", schema, table, geometryColumnName)) {
             if (geomResultSet.next()) {
                 srid = geomResultSet.getInt("srid");
             }
@@ -886,8 +846,8 @@ public class H2GISDialect extends BasicSQLDialect {
     }
 
     /**
-     * This method is used to retrieved the geometry class according the H2 metadata type formes eg
-     * : GEOMETRY, GEOMETRY(POLYGON), GEOMETRY(POLYGON, 4326), GEOMETRY(POLYGON Z, 4326)...
+     * This method is used to retrieved the geometry class according the H2 metadata type formes eg : GEOMETRY,
+     * GEOMETRY(POLYGON), GEOMETRY(POLYGON, 4326), GEOMETRY(POLYGON Z, 4326)...
      *
      * @param geometryName the input geometry type name
      * @return the corresponding JTS geometry class

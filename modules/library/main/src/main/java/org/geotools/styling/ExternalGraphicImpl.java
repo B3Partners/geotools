@@ -26,29 +26,32 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import javax.swing.Icon;
+import org.geotools.api.metadata.citation.OnLineResource;
+import org.geotools.api.style.ColorReplacement;
+import org.geotools.api.style.ExternalGraphic;
+import org.geotools.api.style.GraphicalSymbol;
+import org.geotools.api.style.StyleVisitor;
+import org.geotools.api.style.Symbol;
+import org.geotools.api.style.TraversingStyleVisitor;
+import org.geotools.api.util.Cloneable;
 import org.geotools.metadata.iso.citation.OnLineResourceImpl;
 import org.geotools.util.Utilities;
-import org.opengis.metadata.citation.OnLineResource;
-import org.opengis.style.ColorReplacement;
-import org.opengis.style.GraphicalSymbol;
-import org.opengis.style.StyleVisitor;
-import org.opengis.util.Cloneable;
 
 /**
  * @author Ian Turton, CCG
  * @version $Id$
  */
-public class ExternalGraphicImpl implements ExternalGraphic, Symbol, Cloneable {
-    /** The logger for the default core module. */
-    // private static final java.util.logging.Logger LOGGER =
-    // org.geotools.util.logging.Logging.getLogger(ExternalGraphicImpl.class);
+public class ExternalGraphicImpl implements Symbol, Cloneable, ExternalGraphic {
+
     private Icon inlineContent;
 
+    // online, location and uri should correspond
     private OnLineResource online;
-
     private URL location = null;
-    private String format = null;
     private String uri = null;
+
+    private String format = null;
+
     private Map<String, Object> customProps = null;
 
     private final Set<ColorReplacement> colorReplacements;
@@ -57,8 +60,7 @@ public class ExternalGraphicImpl implements ExternalGraphic, Symbol, Cloneable {
         this(null, null, null);
     }
 
-    public ExternalGraphicImpl(
-            Icon icon, Collection<ColorReplacement> replaces, OnLineResource source) {
+    public ExternalGraphicImpl(Icon icon, Collection<ColorReplacement> replaces, OnLineResource source) {
         this.inlineContent = icon;
         if (replaces == null) {
             colorReplacements = new TreeSet<>();
@@ -66,11 +68,16 @@ public class ExternalGraphicImpl implements ExternalGraphic, Symbol, Cloneable {
             colorReplacements = new TreeSet<>(replaces);
         }
         this.online = source;
+        if (source != null) {
+            this.uri = source.getLinkage().toString();
+        }
     }
 
     @Override
     public void setURI(String uri) {
         this.uri = uri;
+        online = null;
+        location = null;
     }
 
     @Override
@@ -95,7 +102,7 @@ public class ExternalGraphicImpl implements ExternalGraphic, Symbol, Cloneable {
      * @throws MalformedURLException If unable to represent external graphic as a URL
      */
     @Override
-    public java.net.URL getLocation() throws MalformedURLException {
+    public URL getLocation() throws MalformedURLException {
         if (uri == null) {
             return null;
         }
@@ -122,21 +129,22 @@ public class ExternalGraphicImpl implements ExternalGraphic, Symbol, Cloneable {
      * @param location New value of property location.
      */
     @Override
-    public void setLocation(java.net.URL location) {
+    public void setLocation(URL location) {
         if (location == null) {
             throw new IllegalArgumentException("ExternalGraphic location URL cannot be null");
         }
         this.uri = location.toString();
         this.location = location;
+        online = null;
     }
 
     @Override
-    public Object accept(StyleVisitor visitor, Object data) {
+    public Object accept(TraversingStyleVisitor visitor, Object data) {
         return visitor.visit(this, data);
     }
 
     @Override
-    public void accept(org.geotools.styling.StyleVisitor visitor) {
+    public void accept(StyleVisitor visitor) {
         visitor.visit(this);
     }
 
@@ -166,24 +174,12 @@ public class ExternalGraphicImpl implements ExternalGraphic, Symbol, Cloneable {
         int result = 0;
 
         if (format != null) {
-            result = (PRIME * result) + format.hashCode();
+            result = PRIME * result + format.hashCode();
         }
 
         if (uri != null) {
-            result = (PRIME * result) + uri.hashCode();
+            result = PRIME * result + uri.hashCode();
         }
-
-        //        if (inlineContent != null) {
-        //            result = (PRIME * result) + inlineContent.hashCode();
-        //        }
-        //
-        //        if (online != null) {
-        //            result = (PRIME * result) + online.hashCode();
-        //        }
-        //
-        //        if (replacements != null) {
-        //            result = (PRIME * result) + replacements.hashCode();
-        //        }
 
         return result;
     }
@@ -202,8 +198,7 @@ public class ExternalGraphicImpl implements ExternalGraphic, Symbol, Cloneable {
             return true;
         }
 
-        if (oth instanceof ExternalGraphicImpl) {
-            ExternalGraphicImpl other = (ExternalGraphicImpl) oth;
+        if (oth instanceof ExternalGraphicImpl other) {
 
             return Utilities.equals(uri, other.uri) && Utilities.equals(format, other.format);
         }
@@ -212,12 +207,12 @@ public class ExternalGraphicImpl implements ExternalGraphic, Symbol, Cloneable {
     }
 
     @Override
-    public java.util.Map<String, Object> getCustomProperties() {
+    public Map<String, Object> getCustomProperties() {
         return customProps;
     }
 
     @Override
-    public void setCustomProperties(java.util.Map<String, Object> list) {
+    public void setCustomProperties(Map<String, Object> list) {
         customProps = list;
     }
 
@@ -237,6 +232,8 @@ public class ExternalGraphicImpl implements ExternalGraphic, Symbol, Cloneable {
 
     public void setOnlineResource(OnLineResource online) {
         this.online = online;
+        this.uri = online != null ? online.getLinkage().toString() : null;
+        this.location = null;
     }
 
     @Override
@@ -262,8 +259,7 @@ public class ExternalGraphicImpl implements ExternalGraphic, Symbol, Cloneable {
             return null;
         } else if (item instanceof ExternalGraphicImpl) {
             return item;
-        } else if (item instanceof org.opengis.style.ExternalGraphic) {
-            org.opengis.style.ExternalGraphic graphic = (org.opengis.style.ExternalGraphic) item;
+        } else if (item instanceof ExternalGraphic graphic) {
             ExternalGraphicImpl copy = new ExternalGraphicImpl();
             copy.colorReplacements().addAll(graphic.getColorReplacements());
             copy.setFormat(graphic.getFormat());

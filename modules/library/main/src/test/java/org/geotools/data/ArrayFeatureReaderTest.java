@@ -19,15 +19,16 @@ package org.geotools.data;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Tests the ArrayFeatureReader class
@@ -44,23 +45,21 @@ public class ArrayFeatureReaderTest {
     @Before
     public void setUp() throws Exception {
         type = DataUtilities.createType("TestType", "geom:Geometry");
-        features =
-                new SimpleFeature[] {
-                    SimpleFeatureBuilder.build(type, new Object[] {null}, "f1"),
-                    SimpleFeatureBuilder.build(type, new Object[] {null}, "f2"),
-                    SimpleFeatureBuilder.build(type, new Object[] {null}, "f3"),
-                    SimpleFeatureBuilder.build(type, new Object[] {null}, "f4"),
-                    SimpleFeatureBuilder.build(type, new Object[] {null}, "f5"),
-                    SimpleFeatureBuilder.build(type, new Object[] {null}, "f6")
-                };
+        features = new SimpleFeature[] {
+            SimpleFeatureBuilder.build(type, new Object[] {null}, "f1"),
+            SimpleFeatureBuilder.build(type, new Object[] {null}, "f2"),
+            SimpleFeatureBuilder.build(type, new Object[] {null}, "f3"),
+            SimpleFeatureBuilder.build(type, new Object[] {null}, "f4"),
+            SimpleFeatureBuilder.build(type, new Object[] {null}, "f5"),
+            SimpleFeatureBuilder.build(type, new Object[] {null}, "f6")
+        };
 
         DefaultFeatureCollection collection = new DefaultFeatureCollection();
         List<SimpleFeature> list = Arrays.asList(features);
         collection.addAll(list);
         arrayReader = new CollectionFeatureReader(features);
         collectionReader = new CollectionFeatureReader(list, type);
-        featureCollectionReader =
-                new CollectionFeatureReader((SimpleFeatureCollection) collection, type);
+        featureCollectionReader = new CollectionFeatureReader((SimpleFeatureCollection) collection, type);
     }
 
     /** Test method for 'org.geotools.data.ArrayFeatureReader.getFeatureType()' */

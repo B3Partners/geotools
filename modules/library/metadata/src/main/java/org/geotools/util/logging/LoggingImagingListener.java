@@ -19,25 +19,23 @@ package org.geotools.util.logging;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.media.jai.OperationRegistry;
-import javax.media.jai.util.ImagingListener;
+import org.eclipse.imagen.OperationRegistry;
+import org.eclipse.imagen.util.ImagingListener;
 
 /**
- * Listens to JAI events, redirecting logging to javax.media.jai loggers.
+ * Listens to ImageN events, redirecting logging to org.eclipse.imagen loggers.
  *
- * <p>Logger is determined from {@code where} parameter allowing fine-grain control of
- * javax.media.jai logging.
+ * <p>Logger is determined from {@code where} parameter allowing fine-grain control of org.eclipse.imagen logging.
  */
 final class LoggingImagingListener implements ImagingListener {
     @Override
-    public boolean errorOccurred(
-            String message, Throwable thrown, Object where, boolean isRetryable)
+    public boolean errorOccurred(String message, Throwable thrown, Object where, boolean isRetryable)
             throws RuntimeException {
         Logger log;
         if (where == null) {
-            log = Logging.getLogger("javax.media.jai");
+            log = Logging.getLogger("org.eclipse.imagen");
         } else {
-            Class classe = where instanceof Class ? (Class) where : where.getClass();
+            Class classe = where instanceof Class c ? c : where.getClass();
             log = Logging.getLogger(classe);
         }
         if (message.contains("Continuing in pure Java mode")) {
@@ -45,8 +43,8 @@ final class LoggingImagingListener implements ImagingListener {
             return false; // we are not trying to recover
         } else {
             log.log(Level.INFO, message, thrown);
-            if (thrown instanceof RuntimeException && !(where instanceof OperationRegistry)) {
-                throw (RuntimeException) thrown;
+            if (thrown instanceof RuntimeException exception && !(where instanceof OperationRegistry)) {
+                throw exception;
             } else {
                 return false;
             }

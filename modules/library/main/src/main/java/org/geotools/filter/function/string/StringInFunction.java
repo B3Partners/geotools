@@ -18,19 +18,14 @@ package org.geotools.filter.function.string;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionImpl;
-import org.opengis.filter.capability.FunctionName;
 
 @SuppressWarnings("unchecked")
 public class StringInFunction extends FunctionImpl {
 
     static FunctionName NAME =
-            functionName(
-                    "strIn",
-                    "result:Boolean",
-                    "string:String",
-                    "matchCase:Boolean",
-                    "values:String:1,");
+            functionName("strIn", "result:Boolean", "string:String", "matchCase:Boolean", "values:String:1,");
 
     public StringInFunction() {
         setName("strIn");

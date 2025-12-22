@@ -25,6 +25,16 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import org.geotools.api.feature.Attribute;
+import org.geotools.api.feature.ComplexAttribute;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.FeatureFactory;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.FeatureTypeFactory;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.Schema;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.AttributeTypeBuilder;
 import org.geotools.feature.FeatureCollection;
@@ -33,23 +43,11 @@ import org.geotools.feature.NameImpl;
 import org.geotools.feature.type.FeatureTypeFactoryImpl;
 import org.geotools.gml3.v3_2.GML;
 import org.geotools.xs.XS;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.ComplexAttribute;
-import org.opengis.feature.Feature;
-import org.opengis.feature.FeatureFactory;
-import org.opengis.feature.Property;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.FeatureTypeFactory;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.Schema;
-import org.opengis.filter.expression.PropertyName;
 
 /**
  * Wrapping feature collection used by GetPropertyValue operation.
  *
- * <p>This feature collection pulls only the specified property out of the delegate feature
- * collection.
+ * <p>This feature collection pulls only the specified property out of the delegate feature collection.
  *
  * @author Justin Deoliveira, OpenGeo
  */
@@ -78,8 +76,7 @@ public class PropertyValueCollection extends AbstractCollection<Attribute> {
 
     PropertyName propertyName;
 
-    public PropertyValueCollection(
-            FeatureCollection delegate, AttributeDescriptor descriptor, PropertyName propName) {
+    public PropertyValueCollection(FeatureCollection delegate, AttributeDescriptor descriptor, PropertyName propName) {
         this.delegate = delegate;
         this.descriptor = descriptor;
         this.typeMappingProfiles.add(XS.getInstance().getTypeMappingProfile());
@@ -124,8 +121,7 @@ public class PropertyValueCollection extends AbstractCollection<Attribute> {
                 while (it.hasNext()) {
                     Feature f = it.next();
                     value = propertyName.evaluate(f);
-                    if (value != null
-                            && !(value instanceof Collection && ((Collection) value).isEmpty())) {
+                    if (value != null && !(value instanceof Collection collection && collection.isEmpty())) {
                         next = f;
                         break;
                     }
@@ -133,7 +129,7 @@ public class PropertyValueCollection extends AbstractCollection<Attribute> {
                 if (value != null) {
                     if (value instanceof Collection) {
                         @SuppressWarnings("unchecked")
-                        Collection<Object> values = (Collection) value;
+                        Collection<Object> values = (Collection<Object>) value;
                         this.values.addAll(values);
                     } else {
                         values.add(value);
@@ -158,8 +154,7 @@ public class PropertyValueCollection extends AbstractCollection<Attribute> {
             // create a new descriptor based on the xml type
             AttributeType xmlType = findType(descriptor.getType().getBinding());
             if (xmlType == null) {
-                throw new RuntimeException(
-                        "Unable to map attribute " + descriptor.getName() + " to xml type");
+                throw new RuntimeException("Unable to map attribute " + descriptor.getName() + " to xml type");
             }
 
             // because simple features don't carry around their namespace, create a descriptor name
@@ -168,27 +163,21 @@ public class PropertyValueCollection extends AbstractCollection<Attribute> {
             if (descriptor == ID_DESCRIPTOR) {
                 name = GML_IDENTIFIER;
             } else {
-                name =
-                        new NameImpl(
-                                next.getType().getName().getNamespaceURI(),
-                                descriptor.getLocalName());
+                name = new NameImpl(next.getType().getName().getNamespaceURI(), descriptor.getLocalName());
             }
-            AttributeDescriptor newDescriptor =
-                    typeFactory.createAttributeDescriptor(
-                            xmlType,
-                            name,
-                            descriptor.getMinOccurs(),
-                            descriptor.getMaxOccurs(),
-                            descriptor.isNillable(),
-                            descriptor.getDefaultValue());
+            AttributeDescriptor newDescriptor = typeFactory.createAttributeDescriptor(
+                    xmlType,
+                    name,
+                    descriptor.getMinOccurs(),
+                    descriptor.getMaxOccurs(),
+                    descriptor.isNillable(),
+                    descriptor.getDefaultValue());
 
             Attribute result;
-            if (value instanceof ComplexAttribute) {
-                result =
-                        factory.createComplexAttribute(
-                                Collections.singletonList((Property) value), newDescriptor, null);
+            if (value instanceof ComplexAttribute attribute) {
+                result = factory.createComplexAttribute(Collections.singletonList(attribute), newDescriptor, null);
             } else {
-                value = value instanceof Attribute ? ((Attribute) value).getValue() : value;
+                value = value instanceof Attribute a ? a.getValue() : value;
                 result = factory.createAttribute(value, newDescriptor, null);
             }
             return result;

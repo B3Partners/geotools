@@ -20,6 +20,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Logger;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -36,14 +44,6 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.PrecisionModel;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
 
 /**
  * Unit test for expressions. This is a complimentary test suite with the filter test suite.
@@ -53,8 +53,7 @@ import org.opengis.filter.expression.PropertyName;
  */
 public class ExpressionTest {
     /** Standard logging instance */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(ExpressionTest.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(ExpressionTest.class);
 
     /** Feature on which to preform tests */
     private static SimpleFeature testFeature = null;
@@ -62,7 +61,7 @@ public class ExpressionTest {
     /** Schema on which to preform tests */
     private static SimpleFeatureType testSchema = null;
 
-    static FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    static FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
     boolean set = false;
 
@@ -157,8 +156,7 @@ public class ExpressionTest {
         MockDataObject testFeature = new MockDataObject(10, "diez");
 
         // Test integer attribute
-        org.opengis.filter.expression.Expression testAttribute =
-                new AttributeExpressionImpl("intVal");
+        org.geotools.api.filter.expression.Expression testAttribute = new AttributeExpressionImpl("intVal");
 
         Assert.assertEquals(Integer.valueOf(10), testAttribute.evaluate(testFeature));
 
@@ -196,8 +194,7 @@ public class ExpressionTest {
         MockDataObject testObj = new MockDataObject(1000, "mil");
 
         // Test integer attribute
-        org.opengis.filter.expression.Expression testLiteral =
-                new LiteralExpressionImpl(Integer.valueOf(1002));
+        org.geotools.api.filter.expression.Expression testLiteral = new LiteralExpressionImpl(Integer.valueOf(1002));
 
         Assert.assertEquals(Integer.valueOf(1002), testLiteral.evaluate(testObj));
 
@@ -240,8 +237,7 @@ public class ExpressionTest {
     @Test
     public void testNonExistentFunction() {
         try {
-            Function nochance =
-                    ff.function("%$#%$%#%#$@#%@", (org.opengis.filter.expression.Expression) null);
+            Function nochance = ff.function("%$#%$%#%#$@#%@", (org.geotools.api.filter.expression.Expression) null);
             Assert.assertNull(nochance);
         } catch (RuntimeException re) {
         }
@@ -279,9 +275,8 @@ public class ExpressionTest {
     @Test
     public void testMaxFunctionObject() throws IllegalFilterException {
         MockDataObject testObj = new MockDataObject(10, "diez");
-        org.opengis.filter.expression.Expression a = new AttributeExpressionImpl("intVal");
-        org.opengis.filter.expression.Expression b =
-                new LiteralExpressionImpl(Double.valueOf(1004));
+        org.geotools.api.filter.expression.Expression a = new AttributeExpressionImpl("intVal");
+        org.geotools.api.filter.expression.Expression b = new LiteralExpressionImpl(Double.valueOf(1004));
 
         Function max = ff.function("max", a, b);
         Assert.assertEquals("max", max.getName());
@@ -332,52 +327,48 @@ public class ExpressionTest {
         MathExpressionImpl mathTest = new AddImpl(null, null);
         mathTest.setExpression1(testAttribute1);
         mathTest.setExpression2(testAttribute2);
-        LOGGER.fine(
-                "math test: "
-                        + testAttribute1.evaluate(testFeature)
-                        + " + "
-                        + testAttribute2.evaluate(testFeature)
-                        + " = "
-                        + mathTest.evaluate(testFeature));
+        LOGGER.fine("math test: "
+                + testAttribute1.evaluate(testFeature)
+                + " + "
+                + testAttribute2.evaluate(testFeature)
+                + " = "
+                + mathTest.evaluate(testFeature));
         Assert.assertEquals(Integer.valueOf(6), mathTest.evaluate(testFeature, Integer.class));
 
         // Test subtraction
         mathTest = new SubtractImpl(null, null);
         mathTest.setExpression1(testAttribute1);
         mathTest.setExpression2(testAttribute2);
-        LOGGER.fine(
-                "math test: "
-                        + testAttribute1.evaluate(testFeature)
-                        + " - "
-                        + testAttribute2.evaluate(testFeature)
-                        + " = "
-                        + mathTest.evaluate(testFeature));
+        LOGGER.fine("math test: "
+                + testAttribute1.evaluate(testFeature)
+                + " - "
+                + testAttribute2.evaluate(testFeature)
+                + " = "
+                + mathTest.evaluate(testFeature));
         Assert.assertEquals(Integer.valueOf(2), mathTest.evaluate(testFeature, Integer.class));
 
         // Test multiplication
         mathTest = new MultiplyImpl(null, null);
         mathTest.setExpression1(testAttribute1);
         mathTest.setExpression2(testAttribute2);
-        LOGGER.fine(
-                "math test: "
-                        + testAttribute1.evaluate(testFeature)
-                        + " * "
-                        + testAttribute2.evaluate(testFeature)
-                        + " = "
-                        + mathTest.evaluate(testFeature));
+        LOGGER.fine("math test: "
+                + testAttribute1.evaluate(testFeature)
+                + " * "
+                + testAttribute2.evaluate(testFeature)
+                + " = "
+                + mathTest.evaluate(testFeature));
         Assert.assertEquals(Integer.valueOf(8), mathTest.evaluate(testFeature, Integer.class));
 
         // Test division
         mathTest = new DivideImpl(null, null);
         mathTest.setExpression1(testAttribute1);
         mathTest.setExpression2(testAttribute2);
-        LOGGER.fine(
-                "math test: "
-                        + testAttribute1.evaluate(testFeature)
-                        + " / "
-                        + testAttribute2.evaluate(testFeature)
-                        + " = "
-                        + mathTest.evaluate(testFeature));
+        LOGGER.fine("math test: "
+                + testAttribute1.evaluate(testFeature)
+                + " / "
+                + testAttribute2.evaluate(testFeature)
+                + " = "
+                + mathTest.evaluate(testFeature));
         Assert.assertEquals(Double.valueOf(2), mathTest.evaluate(testFeature));
     }
 
@@ -391,10 +382,8 @@ public class ExpressionTest {
         MockDataObject testObject = new MockDataObject(10, "diez");
 
         // Test integer attribute
-        org.opengis.filter.expression.Expression testAttribute1 =
-                new LiteralExpressionImpl(Integer.valueOf(4));
-        org.opengis.filter.expression.Expression testAttribute2 =
-                new LiteralExpressionImpl(Integer.valueOf(2));
+        org.geotools.api.filter.expression.Expression testAttribute1 = new LiteralExpressionImpl(Integer.valueOf(4));
+        org.geotools.api.filter.expression.Expression testAttribute2 = new LiteralExpressionImpl(Integer.valueOf(2));
 
         // Test addition
         MathExpressionImpl mathTest = new AddImpl(null, null);
@@ -427,11 +416,10 @@ public class ExpressionTest {
 
     @Test
     public void testMathObjectwithLists() throws IllegalFilterException {
-        FilterFactory2 ff = new FilterFactoryImpl();
+        FilterFactory ff = new FilterFactoryImpl();
         // Multiply Test
         // list x 2
-        MathExpressionImpl mathExpression =
-                new MultiplyImpl(ff.property("testList"), ff.literal(Integer.valueOf(2)));
+        MathExpressionImpl mathExpression = new MultiplyImpl(ff.property("testList"), ff.literal(Integer.valueOf(2)));
         List scaledList = (List) mathExpression.evaluate(testFeature);
         // verify multiplication
         Assert.assertEquals(Double.valueOf(2), scaledList.get(0));

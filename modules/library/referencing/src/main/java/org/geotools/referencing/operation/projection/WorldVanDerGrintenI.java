@@ -25,28 +25,29 @@ import static java.lang.Math.sqrt;
 import static java.lang.Math.tan;
 
 import java.awt.geom.Point2D;
+import java.io.Serial;
 import java.util.Collection;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
-import org.opengis.parameter.GeneralParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
- * World Van der Grinten I projection. The Van der Grinten I is the most popular Van der Grinten
- * projection and often referenced as the Van der Grinten projection. It is a circular projection
- * that is neither conformal nor equal-area.
+ * World Van der Grinten I projection. The Van der Grinten I is the most popular Van der Grinten projection and often
+ * referenced as the Van der Grinten projection. It is a circular projection that is neither conformal nor equal-area.
  *
- * @see <A HREF="http://en.wikipedia.org/wiki/Van_der_Grinten_projection">Van der Grinten projection
- *     on Wikipedia</A>
+ * @see <A HREF="http://en.wikipedia.org/wiki/Van_der_Grinten_projection">Van der Grinten projection on Wikipedia</A>
  * @author Simon Nyvlt (ars navigandi)
  */
+@SuppressWarnings("FloatingPointLiteralPrecision")
 public class WorldVanDerGrintenI extends MapProjection {
 
     /** */
+    @Serial
     private static final long serialVersionUID = -4432651736803211463L;
 
     private static final double TOL = 1.e-10;
@@ -67,8 +68,7 @@ public class WorldVanDerGrintenI extends MapProjection {
         super(values);
     }
 
-    public WorldVanDerGrintenI(
-            ParameterValueGroup values, Collection<GeneralParameterDescriptor> expected)
+    public WorldVanDerGrintenI(ParameterValueGroup values, Collection<GeneralParameterDescriptor> expected)
             throws ParameterNotFoundException {
         super(values, expected);
     }
@@ -80,12 +80,11 @@ public class WorldVanDerGrintenI extends MapProjection {
     }
 
     /**
-     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in
-     * radians) and stores the result in {@code ptDst} (linear distance on a unit sphere).
+     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in radians) and stores the
+     * result in {@code ptDst} (linear distance on a unit sphere).
      */
     @Override
-    protected Point2D transformNormalized(double lambda, double phi, Point2D ptDst)
-            throws ProjectionException {
+    protected Point2D transformNormalized(double lambda, double phi, Point2D ptDst) throws ProjectionException {
 
         double al, al2, g, g2, x, y;
 
@@ -127,13 +126,9 @@ public class WorldVanDerGrintenI extends MapProjection {
         return new Point2D.Double(x, y);
     }
 
-    /**
-     * Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in
-     * {@code ptDst}.
-     */
+    /** Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in {@code ptDst}. */
     @Override
-    protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst)
-            throws ProjectionException {
+    protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst) throws ProjectionException {
 
         double t, c0, c1, c2, c3, r2, r, ay, lambda, phi;
 
@@ -153,7 +148,7 @@ public class WorldVanDerGrintenI extends MapProjection {
         r = x2 + y2;
         r2 = r * r;
         c1 = -PI * ay * (r + PISQ);
-        c3 = r2 + (PI * 2) * (ay * r + PI * (y2 + PI * (ay + (PI / 2))));
+        c3 = r2 + PI * 2 * (ay * r + PI * (y2 + PI * (ay + PI / 2)));
         c2 = c1 + PISQ * (r - 3. * y2);
         c0 = PI * ay;
         c2 /= c3;
@@ -161,8 +156,8 @@ public class WorldVanDerGrintenI extends MapProjection {
         double m = 2. * sqrt(-THIRD * al);
         double d = C2_27 * c2 * c2 * c2 + (c0 * c0 - THIRD * c2 * c1) / c3;
 
-        if (((t = abs(d = 3. * d / (al * m))) - TOL) <= 1.) {
-            d = t > 1. ? (d > 0. ? 0. : PI) : acos(d);
+        if ((t = abs(d = 3. * d / (al * m))) - TOL <= 1.) {
+            d = t > 1. ? d > 0. ? 0. : PI : acos(d);
             phi = PI * (m * cos(d * THIRD + PI4_3) - THIRD * c2);
             if (y < 0.) phi = -phi;
             t = r2 + TPISQ * (x2 - y2 + HPISQ);
@@ -178,40 +173,39 @@ public class WorldVanDerGrintenI extends MapProjection {
 
     public static class Provider extends AbstractProvider {
         /** For cross-version compatibility. */
+        @Serial
         private static final long serialVersionUID = -4432651736803211463L;
 
         /** The parameters group. */
-        static final ParameterDescriptorGroup PARAMETERS =
-                createDescriptorGroup(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(Citations.OGC, "World_Van_der_Grinten_I"),
-                            new NamedIdentifier(Citations.GEOTOOLS, "World_Van_der_Grinten_I"),
-                            new NamedIdentifier(Citations.ESRI, "World_Van_der_Grinten_I"),
-                            new NamedIdentifier(Citations.GEOTIFF, "World_Van_der_Grinten_I"),
-                            new NamedIdentifier(Citations.OGC, "Van_der_Grinten_I"),
-                            new NamedIdentifier(Citations.GEOTOOLS, "Van_der_Grinten_I"),
-                            new NamedIdentifier(Citations.GEOTIFF, "Van_der_Grinten_I"),
-                            new NamedIdentifier(Citations.ESRI, "Van_der_Grinten_I"),
-                            new NamedIdentifier(Citations.OGC, "CT_VanDerGrinten"),
-                            new NamedIdentifier(Citations.GEOTOOLS, "CT_VanDerGrinten"),
-                            new NamedIdentifier(Citations.GEOTIFF, "CT_VanDerGrinten"),
-                            new NamedIdentifier(Citations.ESRI, "CT_VanDerGrinten"),
-                            new NamedIdentifier(Citations.EPSG, "54029"),
-                            new NamedIdentifier(Citations.ESRI, "54029"),
-                            new NamedIdentifier(Citations.OGC, "Van der Grinten WGS84"),
-                            new NamedIdentifier(Citations.GEOTOOLS, "Van der Grinten WGS84"),
-                            new NamedIdentifier(Citations.GEOTIFF, "Van der Grinten WGS84"),
-                            new NamedIdentifier(Citations.ESRI, "Van der Grinten WGS84"),
-                            new NamedIdentifier(Citations.EPSG, "Van der Grinten WGS84"),
-                            new NamedIdentifier(Citations.OGC, "Van der Grinten"),
-                            new NamedIdentifier(Citations.GEOTOOLS, "Van der Grinten"),
-                            new NamedIdentifier(Citations.GEOTIFF, "Van der Grinten"),
-                            new NamedIdentifier(Citations.ESRI, "Van der Grinten"),
-                            new NamedIdentifier(Citations.EPSG, "Van der Grinten")
-                        },
-                        new ParameterDescriptor[] {
-                            SEMI_MAJOR, SEMI_MINOR, CENTRAL_MERIDIAN, FALSE_EASTING, FALSE_NORTHING
-                        });
+        static final ParameterDescriptorGroup PARAMETERS = createDescriptorGroup(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(Citations.OGC, "World_Van_der_Grinten_I"),
+                    new NamedIdentifier(Citations.GEOTOOLS, "World_Van_der_Grinten_I"),
+                    new NamedIdentifier(Citations.ESRI, "World_Van_der_Grinten_I"),
+                    new NamedIdentifier(Citations.GEOTIFF, "World_Van_der_Grinten_I"),
+                    new NamedIdentifier(Citations.OGC, "Van_der_Grinten_I"),
+                    new NamedIdentifier(Citations.GEOTOOLS, "Van_der_Grinten_I"),
+                    new NamedIdentifier(Citations.GEOTIFF, "Van_der_Grinten_I"),
+                    new NamedIdentifier(Citations.ESRI, "Van_der_Grinten_I"),
+                    new NamedIdentifier(Citations.OGC, "CT_VanDerGrinten"),
+                    new NamedIdentifier(Citations.GEOTOOLS, "CT_VanDerGrinten"),
+                    new NamedIdentifier(Citations.GEOTIFF, "CT_VanDerGrinten"),
+                    new NamedIdentifier(Citations.ESRI, "CT_VanDerGrinten"),
+                    new NamedIdentifier(Citations.EPSG, "54029"),
+                    new NamedIdentifier(Citations.ESRI, "54029"),
+                    new NamedIdentifier(Citations.OGC, "Van der Grinten WGS84"),
+                    new NamedIdentifier(Citations.GEOTOOLS, "Van der Grinten WGS84"),
+                    new NamedIdentifier(Citations.GEOTIFF, "Van der Grinten WGS84"),
+                    new NamedIdentifier(Citations.ESRI, "Van der Grinten WGS84"),
+                    new NamedIdentifier(Citations.EPSG, "Van der Grinten WGS84"),
+                    new NamedIdentifier(Citations.OGC, "Van der Grinten"),
+                    new NamedIdentifier(Citations.GEOTOOLS, "Van der Grinten"),
+                    new NamedIdentifier(Citations.GEOTIFF, "Van der Grinten"),
+                    new NamedIdentifier(Citations.ESRI, "Van der Grinten"),
+                    new NamedIdentifier(Citations.EPSG, "Van der Grinten"),
+                    new NamedIdentifier(Citations.PROJ, "vandg")
+                },
+                new ParameterDescriptor[] {SEMI_MAJOR, SEMI_MINOR, CENTRAL_MERIDIAN, FALSE_EASTING, FALSE_NORTHING});
 
         /** Constructs a new provider. */
         public Provider() {

@@ -21,6 +21,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.eclipse.xsd.XSDSchema;
 import org.eclipse.xsd.util.XSDSchemaLocator;
+import org.xml.sax.SAXException;
 
 /**
  * Helper class which ensures that the xsd schema parser uses pre-build schema objects.
@@ -41,8 +42,7 @@ import org.eclipse.xsd.util.XSDSchemaLocator;
  */
 public class SchemaLocator implements XSDSchemaLocator {
     /** logging instance */
-    protected static Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(SchemaLocator.class);
+    protected static Logger LOGGER = org.geotools.util.logging.Logging.getLogger(SchemaLocator.class);
 
     /** The xsd instance. */
     protected XSD xsd;
@@ -62,10 +62,7 @@ public class SchemaLocator implements XSDSchemaLocator {
      * @return true if it can handle, otherwise false.
      */
     public boolean canHandle(
-            XSDSchema schema,
-            String namespaceURI,
-            String rawSchemaLocationURI,
-            String resolvedSchemaLocationURI) {
+            XSDSchema schema, String namespaceURI, String rawSchemaLocationURI, String resolvedSchemaLocationURI) {
         return xsd.getNamespaceURI().equals(namespaceURI);
     }
 
@@ -73,19 +70,17 @@ public class SchemaLocator implements XSDSchemaLocator {
      * Creates the schema, returning <code>null</code> if the schema could not be created. <code>
      * namespaceURI</code> should not be <code>null</code>. All other parameters are ignored.
      *
-     * @see XSDSchemaLocator#locateSchema(org.eclipse.xsd.XSDSchema, java.lang.String,
-     *     java.lang.String, java.lang.String)
+     * @see XSDSchemaLocator#locateSchema(org.eclipse.xsd.XSDSchema, java.lang.String, java.lang.String,
+     *     java.lang.String)
      */
     @Override
     public XSDSchema locateSchema(
-            XSDSchema schema,
-            String namespaceURI,
-            String rawSchemaLocationURI,
-            String resolvedSchemaLocationURI) {
+            XSDSchema schema, String namespaceURI, String rawSchemaLocationURI, String resolvedSchemaLocationURI) {
         if (canHandle(schema, namespaceURI, rawSchemaLocationURI, resolvedSchemaLocationURI)) {
             try {
                 return xsd.getSchema();
             } catch (IOException e) {
+                if (e.getCause() instanceof SAXException) throw new SAXExceptionWrapper((SAXException) e.getCause());
                 LOGGER.log(Level.WARNING, "Error occured getting schema", e);
             }
         }

@@ -16,16 +16,15 @@
  */
 package org.geotools.renderer.crs;
 
-import org.opengis.geometry.DirectPosition;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.Matrix;
-import org.opengis.referencing.operation.NoninvertibleTransformException;
-import org.opengis.referencing.operation.TransformException;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.Matrix;
+import org.geotools.api.referencing.operation.NoninvertibleTransformException;
+import org.geotools.api.referencing.operation.TransformException;
 
 /**
- * Wraps a datum shift math transform and makes sure we are not introducing dateline jumps when
- * applying the datum shift
+ * Wraps a datum shift math transform and makes sure we are not introducing dateline jumps when applying the datum shift
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -48,8 +47,7 @@ class GeographicOffsetWrapper implements MathTransform {
     }
 
     @Override
-    public DirectPosition transform(DirectPosition ptSrc, DirectPosition ptDst)
-            throws MismatchedDimensionException, TransformException {
+    public Position transform(Position ptSrc, Position ptDst) throws MismatchedDimensionException, TransformException {
         return delegate.transform(ptSrc, ptDst);
     }
 
@@ -200,8 +198,7 @@ class GeographicOffsetWrapper implements MathTransform {
     }
 
     @Override
-    public Matrix derivative(DirectPosition point)
-            throws MismatchedDimensionException, TransformException {
+    public Matrix derivative(Position point) throws MismatchedDimensionException, TransformException {
         return delegate.derivative(point);
     }
 

@@ -17,11 +17,12 @@
  */
 package org.geotools.filter.function;
 
+import org.geotools.api.feature.Attribute;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.VolatileFunction;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.capability.FunctionName;
 
 /**
  * Allow access to the value of Feature.getID() as an expression
@@ -29,7 +30,7 @@ import org.opengis.filter.capability.FunctionName;
  * @author Jody Garnett
  * @since 2.2, 2.5
  */
-public class IDFunction extends FunctionExpressionImpl {
+public class IDFunction extends FunctionExpressionImpl implements VolatileFunction {
 
     public static FunctionName NAME = new FunctionNameImpl("id", String.class);
 
@@ -44,12 +45,10 @@ public class IDFunction extends FunctionExpressionImpl {
 
     @Override
     public Object evaluate(Object obj) {
-        if (obj instanceof SimpleFeature) {
-            SimpleFeature feature = (SimpleFeature) obj;
+        if (obj instanceof SimpleFeature feature) {
             return feature.getID();
         }
-        if (obj instanceof Attribute) {
-            Attribute attribute = (Attribute) obj;
+        if (obj instanceof Attribute attribute) {
             return attribute.getIdentifier().getID();
         }
         return ""; // no ID

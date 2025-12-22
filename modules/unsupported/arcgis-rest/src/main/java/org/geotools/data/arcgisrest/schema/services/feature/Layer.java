@@ -1,7 +1,26 @@
+/*
+ *    GeoTools - The Open Source Java GIS Toolkit
+ *    http://geotools.org
+ *
+ *    (C) 2018, Open Source Geospatial Foundation (OSGeo)
+ *
+ *    This library is free software; you can redistribute it and/or
+ *    modify it under the terms of the GNU Lesser General Public
+ *    License as published by the Free Software Foundation;
+ *    version 2.1 of the License.
+ *
+ *    This library is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    Lesser General Public License for more details.
+ *
+ */
+
 package org.geotools.data.arcgisrest.schema.services.feature;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import java.util.Objects;
 
 public class Layer {
 
@@ -153,16 +172,10 @@ public class Layer {
         result = ((result * 31) + ((this.subLayerIds == null) ? 0 : this.subLayerIds.hashCode()));
         result = ((result * 31) + ((this.maxScale == null) ? 0 : this.maxScale.hashCode()));
         result = ((result * 31) + ((this.name == null) ? 0 : this.name.hashCode()));
-        result =
-                ((result * 31)
-                        + ((this.defaultVisibility == null)
-                                ? 0
-                                : this.defaultVisibility.hashCode()));
+        result = ((result * 31) + ((this.defaultVisibility == null) ? 0 : this.defaultVisibility.hashCode()));
         result = ((result * 31) + ((this.id == null) ? 0 : this.id.hashCode()));
         result = ((result * 31) + ((this.minScale == null) ? 0 : this.minScale.hashCode()));
-        result =
-                ((result * 31)
-                        + ((this.parentLayerId == null) ? 0 : this.parentLayerId.hashCode()));
+        result = ((result * 31) + ((this.parentLayerId == null) ? 0 : this.parentLayerId.hashCode()));
         return result;
     }
 
@@ -175,27 +188,12 @@ public class Layer {
             return false;
         }
         Layer rhs = ((Layer) other);
-        return ((((((((this.subLayerIds == rhs.subLayerIds)
-                                                                || ((this.subLayerIds != null)
-                                                                        && this.subLayerIds.equals(
-                                                                                rhs.subLayerIds)))
-                                                        && ((this.maxScale == rhs.maxScale)
-                                                                || ((this.maxScale != null)
-                                                                        && this.maxScale.equals(
-                                                                                rhs.maxScale))))
-                                                && ((this.name == rhs.name)
-                                                        || ((this.name != null)
-                                                                && this.name.equals(rhs.name))))
-                                        && ((this.defaultVisibility == rhs.defaultVisibility)
-                                                || ((this.defaultVisibility != null)
-                                                        && this.defaultVisibility.equals(
-                                                                rhs.defaultVisibility))))
-                                && ((this.id == rhs.id)
-                                        || ((this.id != null) && this.id.equals(rhs.id))))
-                        && ((this.minScale == rhs.minScale)
-                                || ((this.minScale != null) && this.minScale.equals(rhs.minScale))))
-                && ((this.parentLayerId == rhs.parentLayerId)
-                        || ((this.parentLayerId != null)
-                                && this.parentLayerId.equals(rhs.parentLayerId))));
+        return Objects.equals(this.subLayerIds, rhs.subLayerIds)
+                && Objects.equals(this.maxScale, rhs.maxScale)
+                && Objects.equals(this.name, rhs.name)
+                && Objects.equals(this.defaultVisibility, rhs.defaultVisibility)
+                && Objects.equals(this.id, rhs.id)
+                && Objects.equals(this.minScale, rhs.minScale)
+                && Objects.equals(this.parentLayerId, rhs.parentLayerId);
     }
 }

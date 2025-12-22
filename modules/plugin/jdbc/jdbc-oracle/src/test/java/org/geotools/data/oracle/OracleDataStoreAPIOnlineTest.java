@@ -25,6 +25,9 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.sql.Connection;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.jdbc.JDBCDataStoreAPIOnlineTest;
 import org.geotools.jdbc.JDBCDataStoreAPITestSetup;
@@ -32,9 +35,6 @@ import org.geotools.jdbc.JDBCFeatureStore;
 import org.geotools.jdbc.PrimaryKeyColumn;
 import org.geotools.jdbc.SequencedPrimaryKeyColumn;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
 
 public class OracleDataStoreAPIOnlineTest extends JDBCDataStoreAPIOnlineTest {
 
@@ -62,7 +62,7 @@ public class OracleDataStoreAPIOnlineTest extends JDBCDataStoreAPIOnlineTest {
     @Test
     public void testGetCommentsWithOracleOptionTrue() throws Exception {
         // explicitly turning on comment retrieval
-        try (Connection conn = dataStore.getDataSource().getConnection(); ) {
+        try (Connection conn = dataStore.getDataSource().getConnection()) {
             OracleDialect dialect = (OracleDialect) dataStore.getSQLDialect();
             dialect.setGetColumnRemarksEnabled(true);
             ContentFeatureSource featureSource = dataStore.getFeatureSource(tname("lake"));

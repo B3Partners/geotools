@@ -14,11 +14,16 @@ package org.geotools.tile;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
+import org.geotools.api.data.FileDataStore;
+import org.geotools.api.data.FileDataStoreFinder;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.api.style.RasterSymbolizer;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
-import org.geotools.data.FileDataStore;
-import org.geotools.data.FileDataStoreFinder;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.FeatureLayer;
@@ -26,10 +31,7 @@ import org.geotools.map.GridCoverageLayer;
 import org.geotools.map.MapContent;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.geotools.styling.RasterSymbolizer;
 import org.geotools.styling.SLD;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyleFactory;
 import org.geotools.swing.JMapFrame;
 import org.geotools.tile.impl.WebMercatorZoomLevel;
 import org.geotools.tile.impl.bing.BingService;
@@ -39,8 +41,6 @@ import org.geotools.tile.impl.osm.OSMTileIdentifier;
 import org.geotools.tile.util.AsyncTileLayer;
 import org.geotools.tile.util.TileLayer;
 import org.geotools.util.SuppressFBWarnings;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.operation.TransformException;
 
 @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
 public class TileViewer {
@@ -68,8 +68,7 @@ public class TileViewer {
         final MapContent map = new MapContent();
 
         map.setTitle("TileLab");
-        ReferencedEnvelope env =
-                new ReferencedEnvelope(-180, 180, -80, 80, DefaultGeographicCRS.WGS84);
+        ReferencedEnvelope env = new ReferencedEnvelope(-180, 180, -80, 80, DefaultGeographicCRS.WGS84);
 
         env = new ReferencedEnvelope(5, 15, 45, 55, DefaultGeographicCRS.WGS84);
 
@@ -85,8 +84,7 @@ public class TileViewer {
         String baseURL =
                 "http://ak.dynamic.t2.tiles.virtualearth.net/comp/ch/${code}?mkt=de-de&it=G,VE,BX,L,LA&shading=hill&og=78&n=z";
         map.addLayer(new TileLayer(new BingService("Road", baseURL)));
-        map.addLayer(
-                new AsyncTileLayer(new OSMService("Mapnik", "http://tile.openstreetmap.org/")));
+        map.addLayer(new AsyncTileLayer(new OSMService("Mapnik", "http://tile.openstreetmap.org/")));
 
         /*
          * String baseURL =
@@ -127,8 +125,7 @@ public class TileViewer {
         String baseURL = "http://tile.openstreetmap.org/";
         TileService service = new OSMService("OSM", baseURL);
         TileIdentifier identifier =
-                new OSMTileIdentifier(
-                        38596, 49269, new WebMercatorZoomLevel(17), service.getName());
+                new OSMTileIdentifier(38596, 49269, new WebMercatorZoomLevel(17), service.getName());
 
         Tile t = new OSMTileFactory().create(identifier, service);
 

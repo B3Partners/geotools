@@ -20,13 +20,13 @@ import static org.geotools.processing.jai.TransparencyFillDescriptor.NODATA_ARG;
 import static org.geotools.processing.jai.TransparencyFillDescriptor.TYPE_ARG;
 import static org.geotools.processing.jai.TransparencyFillDescriptor.WIDTH_ARG;
 
-import com.sun.media.jai.opimage.RIFUtil;
 import java.awt.RenderingHints;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
 import java.awt.image.renderable.RenderedImageFactory;
-import javax.media.jai.BorderExtender;
-import javax.media.jai.ImageLayout;
+import org.eclipse.imagen.BorderExtender;
+import org.eclipse.imagen.ImageLayout;
+import org.eclipse.imagen.media.opimage.RIFUtil;
 import org.geotools.processing.jai.TransparencyFillDescriptor.FillType;
 
 /** @see TransparencyFillOpImage */
@@ -36,8 +36,8 @@ public class TransparencyFillRIF implements RenderedImageFactory {
     public TransparencyFillRIF() {}
 
     /**
-     * Create a new instance of TransparencyFillOpImage in the rendered layer. This method satisfies
-     * the implementation of RIF.
+     * Create a new instance of TransparencyFillOpImage in the rendered layer. This method satisfies the implementation
+     * of RIF.
      *
      * @param paramBlock The source image and the dilation kernel.
      */
@@ -53,19 +53,18 @@ public class TransparencyFillRIF implements RenderedImageFactory {
         }
         FillType type = TransparencyFillDescriptor.FILL_AVERAGE;
         Object param0 = paramBlock.getObjectParameter(TYPE_ARG);
-        if (param0 != null && param0 instanceof FillType) {
-            type = (FillType) param0;
+        if (param0 != null && param0 instanceof FillType fillType) {
+            type = fillType;
         }
         Object param1 = paramBlock.getObjectParameter(NODATA_ARG);
         Number noData = null;
-        if (param1 != null && param1 instanceof Number) noData = (Number) param1;
+        if (param1 != null && param1 instanceof Number number) noData = number;
 
         Integer width = null;
         Integer param2 = paramBlock.getIntParameter(WIDTH_ARG);
         if (param2 != null) width = param2;
 
         RenderedImage source = paramBlock.getRenderedSource(0);
-        return new TransparencyFillOpImage(
-                source, extender, type, renderHints, layout, noData, width);
+        return new TransparencyFillOpImage(source, extender, type, renderHints, layout, noData, width);
     }
 }

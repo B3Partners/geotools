@@ -33,21 +33,20 @@ import static java.lang.Math.tan;
 import static java.lang.Math.toDegrees;
 
 import java.awt.geom.Point2D;
+import java.io.Serial;
+import java.text.MessageFormat;
 import java.util.Collection;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
 import org.geotools.measure.Latitude;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
-import org.opengis.parameter.GeneralParameterDescriptor;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
 
 /**
- * Lambert Conical Conformal Projection. Areas and shapes are deformed as one moves away from
- * standard parallels. The angles are true in a limited area. This projection is used for the charts
- * of North America.
+ * Lambert Conical Conformal Projection. Areas and shapes are deformed as one moves away from standard parallels. The
+ * angles are true in a limited area. This projection is used for the charts of North America.
  *
- * <p>This implementation provides transforms for three cases of the lambert conic conformal
- * projection:
+ * <p>This implementation provides transforms for three cases of the lambert conic conformal projection:
  *
  * <p>
  *
@@ -55,14 +54,13 @@ import org.opengis.parameter.ParameterValueGroup;
  *   <li>{@code Lambert_Conformal_Conic_1SP} (EPSG code 9801)
  *   <li>{@code Lambert_Conformal_Conic_2SP} (EPSG code 9802)
  *   <li>{@code Lambert_Conic_Conformal_2SP_Belgium} (EPSG code 9803)
- *   <li>{@code Lambert_Conformal_Conic} - An alias for the ESRI 2SP case that includes a
- *       scale_factor parameter
+ *   <li>{@code Lambert_Conformal_Conic} - An alias for the ESRI 2SP case that includes a scale_factor parameter
  * </ul>
  *
- * <p>For the 1SP case the latitude of origin is used as the standard parallel (SP). To use 1SP with
- * a latitude of origin different from the SP, use the 2SP and set the SP1 to the single SP. The
- * {@code standard_parallel_2"} parameter is optional and will be given the same value as {@code
- * "standard_parallel_1"} if not set (creating a 1 standard parallel projection).
+ * <p>For the 1SP case the latitude of origin is used as the standard parallel (SP). To use 1SP with a latitude of
+ * origin different from the SP, use the 2SP and set the SP1 to the single SP. The {@code standard_parallel_2"}
+ * parameter is optional and will be given the same value as {@code "standard_parallel_1"} if not set (creating a 1
+ * standard parallel projection).
  *
  * <p><b>References:</b>
  *
@@ -73,8 +71,8 @@ import org.opengis.parameter.ParameterValueGroup;
  *       EPSG Guidence Note Number 7, Version 19.
  * </ul>
  *
- * @see <A HREF="http://mathworld.wolfram.com/LambertConformalConicProjection.html">Lambert
- *     conformal conic projection on MathWorld</A>
+ * @see <A HREF="http://mathworld.wolfram.com/LambertConformalConicProjection.html">Lambert conformal conic projection
+ *     on MathWorld</A>
  * @see <A
  *     HREF="http://www.remotesensing.org/geotiff/proj_list/lambert_conic_conformal_1sp.html">lambert_conic_conformal_1sp</A>
  * @see <A
@@ -89,6 +87,7 @@ import org.opengis.parameter.ParameterValueGroup;
  */
 public abstract class LambertConformal extends MapProjection {
     /** For cross-version compatibility. */
+    @Serial
     private static final long serialVersionUID = 1275881689637308614L;
 
     /** Maximum difference allowed when comparing real numbers. */
@@ -115,8 +114,7 @@ public abstract class LambertConformal extends MapProjection {
      * @param parameters The parameter values in standard units.
      * @throws ParameterNotFoundException if a mandatory parameter is missing.
      */
-    protected LambertConformal(final ParameterValueGroup parameters)
-            throws ParameterNotFoundException {
+    protected LambertConformal(final ParameterValueGroup parameters) throws ParameterNotFoundException {
         this(parameters, false);
     }
 
@@ -127,8 +125,7 @@ public abstract class LambertConformal extends MapProjection {
      * @param belgium {@code true} for the Belgium 2SP case.
      * @throws ParameterNotFoundException if a mandatory parameter is missing.
      */
-    LambertConformal(final ParameterValueGroup parameters, final boolean belgium)
-            throws ParameterNotFoundException {
+    LambertConformal(final ParameterValueGroup parameters, final boolean belgium) throws ParameterNotFoundException {
         // Fetch parameters
         super(parameters);
         final Collection<GeneralParameterDescriptor> expected =
@@ -153,20 +150,16 @@ public abstract class LambertConformal extends MapProjection {
         }
         // Compute constants
         if (abs(phi1 + phi2) < EPSILON) {
-            throw new IllegalArgumentException(
-                    Errors.format(
-                            ErrorKeys.ANTIPODE_LATITUDES_$2,
-                            new Latitude(toDegrees(phi1)),
-                            new Latitude(toDegrees(phi2))));
+            final Object arg0 = new Latitude(toDegrees(phi1));
+            final Object arg1 = new Latitude(toDegrees(phi2));
+            throw new IllegalArgumentException(MessageFormat.format(ErrorKeys.ANTIPODE_LATITUDES_$2, arg0, arg1));
         }
         final double cosphi1 = cos(phi1);
         final double sinphi1 = sin(phi1);
         final boolean secant = abs(phi1 - phi2) > EPSILON; // Should be 'true' for 2SP case.
         if (isSpherical) {
             if (secant) {
-                n =
-                        log(cosphi1 / cos(phi2))
-                                / log(tan(PI / 4 + 0.5 * phi2) / tan(PI / 4 + 0.5 * phi1));
+                n = log(cosphi1 / cos(phi2)) / log(tan(PI / 4 + 0.5 * phi2) / tan(PI / 4 + 0.5 * phi1));
             } else {
                 n = sinphi1;
             }
@@ -208,12 +201,11 @@ public abstract class LambertConformal extends MapProjection {
     }
 
     /**
-     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in
-     * radians) and stores the result in {@code ptDst} (linear distance on a unit sphere).
+     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in radians) and stores the
+     * result in {@code ptDst} (linear distance on a unit sphere).
      */
     @Override
-    protected Point2D transformNormalized(double x, double y, Point2D ptDst)
-            throws ProjectionException {
+    protected Point2D transformNormalized(double x, double y, Point2D ptDst) throws ProjectionException {
         double rho;
         // Snyder p. 108
         if (abs(abs(y) - PI / 2) < EPSILON) {
@@ -240,13 +232,9 @@ public abstract class LambertConformal extends MapProjection {
         return new Point2D.Double(x, y);
     }
 
-    /**
-     * Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in
-     * {@code ptDst}.
-     */
+    /** Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in {@code ptDst}. */
     @Override
-    protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst)
-            throws ProjectionException {
+    protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst) throws ProjectionException {
         double theta;
         y = rho0 - y;
         double rho = hypot(x, y); // Zero when the latitude is 90 degrees.
@@ -268,7 +256,7 @@ public abstract class LambertConformal extends MapProjection {
             }
         } else {
             x = 0.0;
-            y = n < 0 ? -(PI / 2) : (PI / 2);
+            y = n < 0 ? -(PI / 2) : PI / 2;
         }
         if (ptDst != null) {
             ptDst.setLocation(x, y);
@@ -298,7 +286,7 @@ public abstract class LambertConformal extends MapProjection {
         }
         if (super.equals(object)) {
             final LambertConformal that = (LambertConformal) object;
-            return (this.belgium == that.belgium)
+            return this.belgium == that.belgium
                     && equals(this.n, that.n)
                     && equals(this.F, that.F)
                     && equals(this.rho0, that.rho0)

@@ -29,27 +29,31 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import org.geotools.data.Query;
-import org.geotools.data.QueryCapabilities;
-import org.geotools.data.ResourceInfo;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.QueryCapabilities;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortOrder;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.filter.text.cql2.CQL;
+import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
+import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.util.factory.Hints;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.sort.SortOrder;
-import org.opengis.referencing.FactoryException;
 
 public class TransformFeatureSourceTest extends AbstractTransformTest {
 
@@ -114,7 +118,8 @@ public class TransformFeatureSourceTest extends AbstractTransformTest {
     @Test
     public void testFidTransformation() throws Exception {
         SimpleFeatureSource transformedSource = transformWithSelection();
-        try (SimpleFeatureIterator transformedIt = transformedSource.getFeatures().features();
+        try (SimpleFeatureIterator transformedIt =
+                        transformedSource.getFeatures().features();
                 SimpleFeatureIterator originalIt = STATES.getFeatures().features()) {
             while (transformedIt.hasNext()) {
                 SimpleFeature original = originalIt.next();
@@ -148,12 +153,37 @@ public class TransformFeatureSourceTest extends AbstractTransformTest {
         assertEquals(re, ae);
     }
 
+    /** Check transform reprojection works (for GEOS-11435) */
+    @Test
+    public void testReprojectWithSelect() throws Exception {
+        SimpleFeatureSource transformed = transformWithSelection();
+        Query query = new Query("states_mini", Filter.INCLUDE, new String[] {"the_geom", "persons"});
+        query.setHandle("web mercator");
+        query.setCoordinateSystem(DefaultGeographicCRS.WGS84);
+        CoordinateReferenceSystem sphericalMercator = CRS.decode("EPSG:3857");
+        query.setCoordinateSystemReproject(sphericalMercator);
+
+        SimpleFeatureCollection collection = transformed.getFeatures(query);
+        assertEquals(
+                "Reproject to EPSG:3857",
+                sphericalMercator,
+                collection.getSchema().getCoordinateReferenceSystem());
+
+        try (SimpleFeatureIterator iterator = collection.features()) {
+            while (iterator.hasNext()) {
+                SimpleFeature feature = iterator.next();
+                Geometry geom = (Geometry) feature.getDefaultGeometry();
+                assertEquals(JTS.getCRS(geom), sphericalMercator);
+            }
+        }
+        assertEquals("everything", transformed.getCount(Query.ALL), collection.size());
+    }
+
     @Test
     public void testBoundsWithSelectNoGeom() throws Exception {
         SimpleFeatureSource transformed = transformWithSelection();
         ReferencedEnvelope re =
-                transformed.getBounds(
-                        new Query("states_mini", Filter.INCLUDE, new String[] {"state_name"}));
+                transformed.getBounds(new Query("states_mini", Filter.INCLUDE, new String[] {"state_name"}));
         assertNull(re);
     }
 
@@ -165,9 +195,7 @@ public class TransformFeatureSourceTest extends AbstractTransformTest {
         assertEquals(expected, actual);
 
         actual = STATES.getCount(new Query("states", CQL.toFilter("state_name = 'Illinois'")));
-        expected =
-                transformed.getCount(
-                        new Query("states_mini", CQL.toFilter("state_name = 'Illinois'")));
+        expected = transformed.getCount(new Query("states_mini", CQL.toFilter("state_name = 'Illinois'")));
 
         assertEquals(expected, actual);
     }
@@ -267,6 +295,14 @@ public class TransformFeatureSourceTest extends AbstractTransformTest {
     }
 
     @Test
+    public void testFidFilterRename() throws Exception {
+        SimpleFeatureSource transformed = transformWithRename();
+        SimpleFeatureCollection fc = transformed.getFeatures(FF.id(FF.featureId("usa.1")));
+        assertEquals(1, fc.size());
+        assertEquals("Illinois", DataUtilities.first(fc).getAttribute("name"));
+    }
+
+    @Test
     public void testFeaturesWithRename() throws Exception {
         SimpleFeatureSource transformed = transformWithRename();
 
@@ -338,8 +374,7 @@ public class TransformFeatureSourceTest extends AbstractTransformTest {
         checkTransfomedSchemaWithExpressions(transformed);
     }
 
-    private void checkTransfomedSchemaWithExpressions(SimpleFeatureSource transformed)
-            throws FactoryException {
+    private void checkTransfomedSchemaWithExpressions(SimpleFeatureSource transformed) throws FactoryException {
         SimpleFeatureType schema = transformed.getSchema();
         SimpleFeatureType original = STATES.getSchema();
         assertEquals("bstates", schema.getTypeName());
@@ -384,13 +419,8 @@ public class TransformFeatureSourceTest extends AbstractTransformTest {
         SimpleFeatureCollection fc = transformed.getFeatures();
         assertEquals(transformed.getSchema(), fc.getSchema());
         assertEquals(transformed.getCount(Query.ALL), fc.size());
-        ReferencedEnvelope bufferedStateBounds =
-                new ReferencedEnvelope(
-                        -110.04782099895442,
-                        -74.04752638847438,
-                        34.98970859966714,
-                        43.50933565139621,
-                        WGS84);
+        ReferencedEnvelope bufferedStateBounds = new ReferencedEnvelope(
+                -110.04782099895442, -74.04752638847438, 34.98970859966714, 43.50933565139621, WGS84);
         assertEquals(bufferedStateBounds, fc.getBounds());
 
         // and now with a specific one, here the property feature source will return null values
@@ -398,13 +428,8 @@ public class TransformFeatureSourceTest extends AbstractTransformTest {
         fc = transformed.getFeatures(q);
         assertEquals(transformed.getSchema(), fc.getSchema());
         assertEquals(1, fc.size());
-        ReferencedEnvelope bufferedDelawareBounds =
-                new ReferencedEnvelope(
-                        -76.78885040499915,
-                        -74.05085782368926,
-                        37.450389376543036,
-                        40.82235239392104,
-                        WGS84);
+        ReferencedEnvelope bufferedDelawareBounds = new ReferencedEnvelope(
+                -76.78885040499915, -74.05085782368926, 37.450389376543036, 40.82235239392104, WGS84);
         assertEquals(bufferedDelawareBounds, fc.getBounds());
 
         // and now read for good

@@ -25,8 +25,8 @@ import org.geotools.graph.traverse.basic.BasicGraphTraversal;
 import org.geotools.graph.traverse.standard.BreadthFirstTopologicalIterator;
 
 /**
- * Detects cycles in a graph. A topological iteration of the nodes of the graph is performed. If the
- * iteration includes all nodes in the graph then the graph is cycle free, otherwise a cycle exists.
+ * Detects cycles in a graph. A topological iteration of the nodes of the graph is performed. If the iteration includes
+ * all nodes in the graph then the graph is cycle free, otherwise a cycle exists.
  *
  * @see org.geotools.graph.traverse.standard.BreadthFirstTopologicalIterator
  * @author Justin Deoliveira, Refractions Research Inc, jdeolive@refractions.net
@@ -68,8 +68,8 @@ public class CycleDetector implements GraphWalker {
         traversal.traverse();
 
         // if all nodes visited then no cycle
-        if (m_graph.getNodes().size() == m_nvisited) return (false);
-        return (true);
+        if (m_graph.getNodes().size() == m_nvisited) return false;
+        return true;
     }
 
     /**
@@ -80,7 +80,7 @@ public class CycleDetector implements GraphWalker {
     @Override
     public int visit(Graphable element, GraphTraversal traversal) {
         m_nvisited++;
-        return (GraphTraversal.CONTINUE);
+        return GraphTraversal.CONTINUE;
     }
 
     /**
@@ -97,6 +97,6 @@ public class CycleDetector implements GraphWalker {
      * @return a BreathFirstToplogicalIterator.
      */
     protected GraphIterator createIterator() {
-        return (new BreadthFirstTopologicalIterator());
+        return new BreadthFirstTopologicalIterator();
     }
 }

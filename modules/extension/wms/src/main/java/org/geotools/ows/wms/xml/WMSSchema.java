@@ -112,8 +112,8 @@ import org.xml.sax.SAXException;
 
 /**
  * @author Richard Gould
- *     <p>TODO To change the template for this generated type comment go to Window - Preferences -
- *     Java - Code Style - Code Templates
+ *     <p>TODO To change the template for this generated type comment go to Window - Preferences - Java - Code Style -
+ *     Code Templates
  */
 public class WMSSchema implements Schema {
 
@@ -240,9 +240,7 @@ public class WMSSchema implements Schema {
                 NAMESPACE,
                 SimpleType.RESTRICTION,
                 new SimpleType[] {XSISimpleTypes.String.getInstance()},
-                new Facet[] {
-                    new FacetGT(Facet.MININCLUSIVE, "-180"), new FacetGT(Facet.MAXINCLUSIVE, "180")
-                },
+                new Facet[] {new FacetGT(Facet.MININCLUSIVE, "-180"), new FacetGT(Facet.MAXINCLUSIVE, "180")},
                 SimpleType.NONE),
         new SimpleTypeGT(
                 null,
@@ -250,9 +248,7 @@ public class WMSSchema implements Schema {
                 NAMESPACE,
                 SimpleType.RESTRICTION,
                 new SimpleType[] {XSISimpleTypes.String.getInstance()},
-                new Facet[] {
-                    new FacetGT(Facet.MININCLUSIVE, "-90"), new FacetGT(Facet.MAXINCLUSIVE, "90")
-                },
+                new Facet[] {new FacetGT(Facet.MININCLUSIVE, "-90"), new FacetGT(Facet.MAXINCLUSIVE, "90")},
                 SimpleType.NONE),
     };
 
@@ -493,14 +489,14 @@ public class WMSSchema implements Schema {
          */
         @Override
         public Element findChildElement(String name) {
-            return (this.name != null && this.name.equals(name)) ? this : null;
+            return this.name != null && this.name.equals(name) ? this : null;
         }
 
         @Override
         public Element findChildElement(String localName, URI namespaceURI) {
-            return (this.name != null
+            return this.name != null
                             && this.name.equals(localName)
-                            && getNamespace().equals(namespaceURI))
+                            && getNamespace().equals(namespaceURI)
                     ? this
                     : null;
         }
@@ -560,7 +556,7 @@ public class WMSSchema implements Schema {
 
         @Override
         public Element findChildElement(String name) {
-            return (getChild() == null) ? null : getChild().findChildElement(name);
+            return getChild() == null ? null : getChild().findChildElement(name);
         }
 
         protected boolean sameName(Element element, ElementValue value) {

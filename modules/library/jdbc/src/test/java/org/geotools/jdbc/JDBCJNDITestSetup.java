@@ -28,7 +28,6 @@ import org.apache.commons.dbcp.BasicDataSource;
 import org.geotools.util.factory.GeoTools;
 import org.mockito.Mockito;
 
-@SuppressWarnings("PMD.JUnit4TestShouldUseAfterAnnotation")
 public class JDBCJNDITestSetup extends JDBCDelegatingTestSetup {
 
     private BasicDataSource dataSource;
@@ -37,8 +36,7 @@ public class JDBCJNDITestSetup extends JDBCDelegatingTestSetup {
         super(delegate);
     }
 
-    protected void setupJNDIEnvironment(JDBCDataStoreFactory jdbcDataStoreFactory)
-            throws IOException {
+    protected void setupJNDIEnvironment(JDBCDataStoreFactory jdbcDataStoreFactory) throws IOException {
 
         @SuppressWarnings("unchecked") // Properties is a Map<Object, Object>
         Map<String, Object> params = new HashMap(fixture);
@@ -46,8 +44,7 @@ public class JDBCJNDITestSetup extends JDBCDelegatingTestSetup {
         dataSource = jdbcDataStoreFactory.createDataSource(params);
         MockInitialDirContextFactory.setDataSource(dataSource);
 
-        System.setProperty(
-                Context.INITIAL_CONTEXT_FACTORY, MockInitialDirContextFactory.class.getName());
+        System.setProperty(Context.INITIAL_CONTEXT_FACTORY, MockInitialDirContextFactory.class.getName());
         try {
             GeoTools.clearInitialContext();
         } catch (NamingException e) {
@@ -57,8 +54,7 @@ public class JDBCJNDITestSetup extends JDBCDelegatingTestSetup {
 
     @Override
     public DataSource getDataSource() throws IOException {
-        System.setProperty(
-                Context.INITIAL_CONTEXT_FACTORY, MockInitialDirContextFactory.class.getName());
+        System.setProperty(Context.INITIAL_CONTEXT_FACTORY, MockInitialDirContextFactory.class.getName());
         return super.getDataSource();
     }
 
@@ -85,7 +81,7 @@ public class JDBCJNDITestSetup extends JDBCDelegatingTestSetup {
         }
 
         @Override
-        @SuppressWarnings("PMD.ReplaceHashtableWithMap") // JDK API, we cannot do anything about it
+        @SuppressWarnings({"BanJNDI", "PMD.ReplaceHashtableWithMap"}) // JDK API, we cannot do anything about it
         public Context getInitialContext(Hashtable environment) throws NamingException {
             mockContext = Mockito.mock(Context.class);
             Mockito.when(mockContext.lookup("ds")).thenReturn(dataSource);

@@ -17,11 +17,11 @@
 
 package org.geotools.data.mongodb;
 
-import org.geotools.data.QueryCapabilities;
+import org.geotools.api.data.QueryCapabilities;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.sort.SortBy;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.sort.SortBy;
 
 /** A QueryCapabilities implementation for a MongoSource. */
 class MongoQueryCapabilities extends QueryCapabilities {
@@ -33,7 +33,7 @@ class MongoQueryCapabilities extends QueryCapabilities {
     }
 
     @Override
-    public boolean supportsSorting(SortBy[] sortAttributes) {
+    public boolean supportsSorting(SortBy... sortAttributes) {
         for (SortBy sort : sortAttributes) {
             if (!supportsPropertySorting(sort.getPropertyName())) return false;
         }
@@ -47,9 +47,8 @@ class MongoQueryCapabilities extends QueryCapabilities {
      * @return true if a correspondence is found, false if not or the attribute is a Geometry.
      */
     private boolean supportsPropertySorting(PropertyName propertyName) {
-        AttributeDescriptor descriptor =
-                (AttributeDescriptor) propertyName.evaluate(source.getSchema());
+        AttributeDescriptor descriptor = (AttributeDescriptor) propertyName.evaluate(source.getSchema());
         return descriptor != null
-                && !(Geometry.class.isAssignableFrom(descriptor.getType().getBinding()));
+                && !Geometry.class.isAssignableFrom(descriptor.getType().getBinding());
     }
 }

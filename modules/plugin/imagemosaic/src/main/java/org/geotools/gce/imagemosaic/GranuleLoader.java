@@ -20,18 +20,18 @@ import java.awt.Dimension;
 import java.awt.RenderingHints;
 import java.util.concurrent.Callable;
 import javax.imageio.ImageReadParam;
-import javax.media.jai.ImageLayout;
-import javax.media.jai.JAI;
+import org.eclipse.imagen.ImageLayout;
+import org.eclipse.imagen.ImageN;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.referencing.operation.MathTransform2D;
 import org.geotools.gce.imagemosaic.GranuleDescriptor.GranuleLoadingResult;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.image.util.ImageUtilities;
 import org.geotools.util.factory.Hints;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.referencing.operation.MathTransform2D;
 
 /**
- * Specific {@link Callable} implementation that can be used to load the result of a request on a
- * single {@link GranuleDescriptor} via {@link GranuleLoadingResult}.
+ * Specific {@link Callable} implementation that can be used to load the result of a request on a single
+ * {@link GranuleDescriptor} via {@link GranuleLoadingResult}.
  *
  * @author Simone Giannecchini, GeoSolutions SAS
  */
@@ -68,17 +68,16 @@ public class GranuleLoader implements Callable<GranuleLoadingResult> {
         this.hints = new Hints(hints);
         if (request.getTileDimensions() != null) {
             final Dimension tileDimension = request.getTileDimensions();
-            if (hints != null && hints.containsKey(JAI.KEY_IMAGE_LAYOUT)) {
-                final Object layout = this.hints.get(JAI.KEY_IMAGE_LAYOUT);
-                if (layout != null && layout instanceof ImageLayout) {
-                    final ImageLayout imageLayout = (ImageLayout) layout;
+            if (hints != null && hints.containsKey(ImageN.KEY_IMAGE_LAYOUT)) {
+                final Object layout = this.hints.get(ImageN.KEY_IMAGE_LAYOUT);
+                if (layout != null && layout instanceof ImageLayout imageLayout) {
                     imageLayout.setTileHeight(tileDimension.height);
                     imageLayout.setTileWidth(tileDimension.width);
                 }
             } else {
                 final ImageLayout layout = new ImageLayout();
                 layout.setTileWidth(tileDimension.width).setTileHeight(tileDimension.height);
-                this.hints.add(new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout));
+                this.hints.add(new RenderingHints(ImageN.KEY_IMAGE_LAYOUT, layout));
             }
         }
     }
@@ -109,8 +108,7 @@ public class GranuleLoader implements Callable<GranuleLoadingResult> {
             return granuleDescriptor.loadRaster(
                     readParameters, imageIndex, cropBBox, mosaicWorldToGrid, request, hints);
         } catch (Exception e) {
-            throw new GranuleLoadingException(
-                    "Failed to load granule " + granuleDescriptor.getGranuleUrl(), e);
+            throw new GranuleLoadingException("Failed to load granule " + granuleDescriptor.getGranuleUrl(), e);
         }
     }
 }

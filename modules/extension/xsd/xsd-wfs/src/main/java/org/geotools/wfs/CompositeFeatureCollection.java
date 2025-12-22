@@ -21,20 +21,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.identity.FeatureId;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.store.DataFeatureCollection;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.identity.FeatureId;
 
 /**
  * Wraps multiple feature collections into a single.
  *
- * <p>This feature collection is used for wfs feature collections which can be made up of features
- * from different schemas.
+ * <p>This feature collection is used for wfs feature collections which can be made up of features from different
+ * schemas.
  *
  * @author Justin Deoliveira, The Open Planning Project
  */
@@ -92,7 +92,7 @@ public class CompositeFeatureCollection extends DataFeatureCollection {
         @Override
         public boolean hasNext() {
             // is there a current iterator that has another element
-            if ((iterator != null) && iterator.hasNext()) {
+            if (iterator != null && iterator.hasNext()) {
                 return true;
             }
 

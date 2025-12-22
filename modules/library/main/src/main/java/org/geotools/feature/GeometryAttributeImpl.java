@@ -16,6 +16,12 @@
  */
 package org.geotools.feature;
 
+import org.geotools.api.feature.GeometryAttribute;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.filter.identity.Identifier;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.util.Utilities;
 import org.locationtech.jts.geom.Geometry;
@@ -23,12 +29,6 @@ import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.MultiLineString;
 import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
-import org.opengis.feature.GeometryAttribute;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.filter.identity.Identifier;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * TODO: rename to GeometricAttribute Provides ...TODO summary sentence
@@ -92,8 +92,7 @@ public class GeometryAttributeImpl extends AttributeImpl implements GeometryAttr
     @Override
     public synchronized BoundingBox getBounds() {
         if (bounds == null) {
-            ReferencedEnvelope bbox =
-                    new ReferencedEnvelope(getType().getCoordinateReferenceSystem());
+            ReferencedEnvelope bbox = new ReferencedEnvelope(getType().getCoordinateReferenceSystem());
             Geometry geom = getValue();
             if (geom != null) {
                 bbox.expandToInclude(geom.getEnvelopeInternal());
@@ -130,9 +129,7 @@ public class GeometryAttributeImpl extends AttributeImpl implements GeometryAttr
                     && !(att.value instanceof MultiLineString)
                     && !(att.value instanceof MultiPolygon)) {
 
-                if (value instanceof GeometryCollection) {
-                    // compare the two collections
-                    GeometryCollection c1 = (GeometryCollection) value;
+                if (value instanceof GeometryCollection c1) {
                     GeometryCollection c2 = (GeometryCollection) att.value;
 
                     if (c1.getNumGeometries() != c2.getNumGeometries()) {

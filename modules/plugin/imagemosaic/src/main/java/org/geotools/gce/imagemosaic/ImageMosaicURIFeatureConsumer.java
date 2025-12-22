@@ -25,17 +25,17 @@ import java.util.logging.Logger;
 import javax.imageio.spi.ImageInputStreamSpi;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
 import org.geotools.coverage.grid.io.GridFormatFinder;
 import org.geotools.coverage.grid.io.UnknownFormat;
 import org.geotools.gce.imagemosaic.catalogbuilder.CatalogBuilderConfiguration;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
- * An {@link ImageMosaicElementConsumer} which handles a provided {@link SimpleFeature} by
- * leveraging on the {@link java.net.URI} associated to the feature.
+ * An {@link ImageMosaicElementConsumer} which handles a provided {@link SimpleFeature} by leveraging on the
+ * {@link java.net.URI} associated to the feature.
  */
 public class ImageMosaicURIFeatureConsumer implements ImageMosaicElementConsumer<SimpleFeature> {
 
@@ -46,8 +46,7 @@ public class ImageMosaicURIFeatureConsumer implements ImageMosaicElementConsumer
         this.imageMosaicURIConsumer = imageMosaicURIConsumer;
     }
 
-    static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(ImageMosaicURIFeatureConsumer.class);
+    static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(ImageMosaicURIFeatureConsumer.class);
 
     @Override
     public boolean checkElement(SimpleFeature feature, ImageMosaicWalker walker) {
@@ -62,8 +61,7 @@ public class ImageMosaicURIFeatureConsumer implements ImageMosaicElementConsumer
         String locationAttrName = runConfiguration.getParameter(Utils.Prop.LOCATION_ATTRIBUTE);
         String location = (String) Utils.getAttribute(feature, locationAttrName);
         if (location == null) {
-            throw new IllegalArgumentException(
-                    "Could not find the location using attribute name: " + locationAttrName);
+            throw new IllegalArgumentException("Could not find the location using attribute name: " + locationAttrName);
         }
         try {
             imageMosaicURIConsumer.handleElement(new URI(location), walker);
@@ -97,8 +95,7 @@ public class ImageMosaicURIFeatureConsumer implements ImageMosaicElementConsumer
             ImageMosaicEventHandlers eventHandler = walker.getEventHandler();
             ImageMosaicConfigHandler configHandler = walker.getConfigHandler();
 
-            eventHandler.fireEvent(
-                    Level.INFO, "Now indexing uri " + uri, ((elementIndex * 100.0) / numElements));
+            eventHandler.fireEvent(Level.INFO, "Now indexing uri " + uri, elementIndex * 100.0 / numElements);
             GridCoverage2DReader coverageReader = null;
             try {
                 // STEP 1
@@ -111,31 +108,28 @@ public class ImageMosaicURIFeatureConsumer implements ImageMosaicElementConsumer
                 if (cachedFormat == null) {
                     // When looking for formats which may parse this file, make sure to exclude the
                     // ImageMosaicFormat as return
-                    format =
-                            GridFormatFinder.findFormat(
-                                    readerInputObject, Utils.EXCLUDE_MOSAIC_HINTS);
+                    format = GridFormatFinder.findFormat(readerInputObject, Utils.EXCLUDE_MOSAIC_HINTS);
                 } else {
                     if (cachedFormat.accepts(readerInputObject)) {
                         format = cachedFormat;
                     } else {
-                        format =
-                                GridFormatFinder.findFormat(
-                                        readerInputObject, Utils.EXCLUDE_MOSAIC_HINTS);
+                        format = GridFormatFinder.findFormat(readerInputObject, Utils.EXCLUDE_MOSAIC_HINTS);
                     }
                 }
-                if ((format instanceof UnknownFormat) || format == null) {
+                if (format instanceof UnknownFormat || format == null) {
 
                     eventHandler.fireURIEvent(
                             Level.INFO,
                             uri,
                             false,
                             "Skipped granule " + uri + ": format is not supported.",
-                            ((elementIndex * 99.0) / numElements));
+                            elementIndex * 99.0 / numElements);
 
                     return;
                 }
 
-                final Hints configurationHints = configHandler.getRunConfiguration().getHints();
+                final Hints configurationHints =
+                        configHandler.getRunConfiguration().getHints();
                 coverageReader = format.getReader(readerInputObject, configurationHints);
 
                 // Setting of the ReaderSPI to use
@@ -154,8 +148,7 @@ public class ImageMosaicURIFeatureConsumer implements ImageMosaicElementConsumer
                                 LOGGER.log(Level.WARNING, "Unable to open a stream on " + uri);
                             }
                             throw new IllegalArgumentException(
-                                    "Unable to get an input stream for the provided file granule"
-                                            + uri);
+                                    "Unable to get an input stream for the provided file granule" + uri);
                         }
                         // Selection of the ImageReaderSpi from the Stream
                         ImageReaderSpi spi = readerInputObject.getReaderSpi();
@@ -175,10 +168,7 @@ public class ImageMosaicURIFeatureConsumer implements ImageMosaicElementConsumer
                         //  Assume that all the granules already put on the datastore are valid
                         configHandler.setCachedFormat(format);
                     } catch (Exception e) {
-                        LOGGER.log(
-                                Level.FINE,
-                                "Failure during potential granule evaluation, skipping it: " + uri,
-                                e);
+                        LOGGER.log(Level.FINE, "Failure during potential granule evaluation, skipping it: " + uri, e);
                     }
 
                     ImageMosaicSourceElement element = new ImageMosaicSourceElement.URIElement(uri);
@@ -191,14 +181,12 @@ public class ImageMosaicURIFeatureConsumer implements ImageMosaicElementConsumer
                             walker.getTransaction());
 
                     // fire event
-                    element.fireHarvestingEvent(
-                            eventHandler, elementIndex, numElements, "Done with granule " + uri);
+                    element.fireHarvestingEvent(eventHandler, elementIndex, numElements, "Done with granule " + uri);
                 }
             } catch (Exception e) {
                 // we got an exception, we should stop the walk
                 eventHandler.fireException(e);
                 walker.stop();
-                return;
             } finally {
 
                 try {
@@ -207,8 +195,7 @@ public class ImageMosaicURIFeatureConsumer implements ImageMosaicElementConsumer
                         coverageReader.dispose();
                 } catch (Throwable e) {
                     // ignore exception
-                    if (LOGGER.isLoggable(Level.FINEST))
-                        LOGGER.log(Level.FINEST, e.getLocalizedMessage(), e);
+                    if (LOGGER.isLoggable(Level.FINEST)) LOGGER.log(Level.FINEST, e.getLocalizedMessage(), e);
                 }
             }
         }

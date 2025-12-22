@@ -18,6 +18,8 @@ package org.geotools.renderer.style.svg;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 
 import java.awt.RenderingHints.Key;
 import java.io.IOException;
@@ -33,15 +35,19 @@ import javax.swing.Icon;
 import org.apache.batik.bridge.TextNode;
 import org.apache.batik.gvt.CompositeGraphicsNode;
 import org.apache.batik.gvt.GraphicsNode;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.data.ows.MockURLChecker;
+import org.geotools.data.ows.URLCheckerException;
+import org.geotools.data.ows.URLCheckers;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.renderer.style.GraphicCache;
 import org.geotools.util.PreventLocalEntityResolver;
 import org.geotools.util.factory.Hints;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Literal;
 import org.xml.sax.SAXException;
 
 public class SVGGraphicFactoryTest {
@@ -54,6 +60,11 @@ public class SVGGraphicFactoryTest {
         ff = CommonFactoryFinder.getFilterFactory(null);
     }
 
+    @After
+    public void cleanupCheckers() {
+        URLCheckers.reset();
+    }
+
     @Test
     public void testNull() throws Exception {
         SVGGraphicFactory svg = new SVGGraphicFactory();
@@ -63,8 +74,7 @@ public class SVGGraphicFactoryTest {
     @Test
     public void testInvalidPaths() throws Exception {
         SVGGraphicFactory svg = new SVGGraphicFactory();
-        Assert.assertNull(
-                svg.getIcon(null, ff.literal("http://www.nowhere.com"), "image/svg+not!", 20));
+        Assert.assertNull(svg.getIcon(null, ff.literal("http://www.nowhere.com"), "image/svg+not!", 20));
         try {
             svg.getIcon(null, ff.literal("ThisIsNotAUrl"), "image/svg", 20);
             Assert.fail("Should have throw an exception, invalid url");
@@ -113,13 +123,13 @@ public class SVGGraphicFactoryTest {
     }
 
     private TextNode getTextNode(GraphicsNode node) {
-        if (node instanceof TextNode) {
-            return (TextNode) node;
-        } else if (node instanceof CompositeGraphicsNode) {
-            List children = ((CompositeGraphicsNode) node).getChildren();
+        if (node instanceof TextNode textNode) {
+            return textNode;
+        } else if (node instanceof CompositeGraphicsNode graphicsNode1) {
+            List children = graphicsNode1.getChildren();
             for (Object child : children) {
-                if (child instanceof GraphicsNode) {
-                    TextNode result = getTextNode((GraphicsNode) child);
+                if (child instanceof GraphicsNode graphicsNode) {
+                    TextNode result = getTextNode(graphicsNode);
                     if (result != null) {
                         return result;
                     }
@@ -152,8 +162,8 @@ public class SVGGraphicFactoryTest {
     }
 
     /**
-     * Tests that a fetched graphic is added to the cache, and that the {@link
-     * GraphicCache#clearCache()} method correctly clears the cache.
+     * Tests that a fetched graphic is added to the cache, and that the {@link GraphicCache#clearCache()} method
+     * correctly clears the cache.
      */
     @Test
     public void testClearCache() throws Exception {
@@ -168,7 +178,7 @@ public class SVGGraphicFactoryTest {
         Assert.assertTrue(RenderableSVGCache.glyphCache.containsKey(evaluatedUrl));
         Assert.assertNotNull(RenderableSVGCache.glyphCache.get(evaluatedUrl));
 
-        ((GraphicCache) svg).clearCache();
+        svg.clearCache();
         Assert.assertTrue(RenderableSVGCache.glyphCache.isEmpty());
     }
 
@@ -186,29 +196,25 @@ public class SVGGraphicFactoryTest {
         for (int i = 0; i < 50; i++) {
             // check that we are going to load the same path just once
             AtomicInteger counter = new AtomicInteger();
-            SVGGraphicFactory svg =
-                    new SVGGraphicFactory() {
-                        @Override
-                        protected RenderableSVG toRenderableSVG(String svgfile, URL svgUrl)
-                                throws SAXException, IOException {
-                            int value = counter.incrementAndGet();
-                            Assert.assertEquals(1, value);
-                            return super.toRenderableSVG(svgfile, svgUrl);
-                        }
-                    };
+            SVGGraphicFactory svg = new SVGGraphicFactory() {
+                @Override
+                protected RenderableSVG toRenderableSVG(String svgfile, URL svgUrl) throws SAXException, IOException {
+                    int value = counter.incrementAndGet();
+                    Assert.assertEquals(1, value);
+                    return super.toRenderableSVG(svgfile, svgUrl);
+                }
+            };
 
             // if all goes well, only one thread will actually load the SVG
             List<Future<Void>> futures = new ArrayList<>();
             for (int j = 0; j < THREADS * 4; j++) {
-                executorService.submit(
-                        () -> {
-                            Icon icon = svg.getIcon(null, expression, "image/svg", 20);
-                            Assert.assertNotNull(icon);
-                            Assert.assertEquals(20, icon.getIconHeight());
-                            Assert.assertTrue(
-                                    RenderableSVGCache.glyphCache.containsKey(url.toString()));
-                            return null;
-                        });
+                executorService.submit(() -> {
+                    Icon icon = svg.getIcon(null, expression, "image/svg", 20);
+                    Assert.assertNotNull(icon);
+                    Assert.assertEquals(20, icon.getIconHeight());
+                    Assert.assertTrue(RenderableSVGCache.glyphCache.containsKey(url.toString()));
+                    return null;
+                });
             }
             // get all
             for (Future<Void> future : futures) {
@@ -217,5 +223,23 @@ public class SVGGraphicFactoryTest {
             // clear the cache
             RenderableSVGCache.glyphCache.clear();
         }
+    }
+
+    @Test
+    public void testURLCheckerAllowed() throws Exception {
+        URLCheckers.register(new MockURLChecker(u -> u.contains("gradient-pixels")));
+
+        SVGGraphicFactory svg = new SVGGraphicFactory();
+        URL url = SVGGraphicFactory.class.getResource("gradient-pixels.svg");
+        assertNotNull(svg.getIcon(null, ff.literal(url), "image/svg", -1));
+    }
+
+    @Test
+    public void testURLCheckerDisallowed() throws Exception {
+        URLCheckers.register(new MockURLChecker("nope", u -> false));
+
+        SVGGraphicFactory svg = new SVGGraphicFactory();
+        URL url = SVGGraphicFactory.class.getResource("gradient-pixels.svg");
+        assertThrows(URLCheckerException.class, () -> svg.getIcon(null, ff.literal(url), "image/svg", -1));
     }
 }

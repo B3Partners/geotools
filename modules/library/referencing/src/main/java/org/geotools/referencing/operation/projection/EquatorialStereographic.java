@@ -30,15 +30,15 @@ import static java.lang.Math.hypot;
 import static java.lang.Math.sin;
 
 import java.awt.geom.Point2D;
+import java.io.Serial;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
 
 /**
- * The USGS equatorial case of the {@linkplain Stereographic stereographic} projection. This is a
- * special case of oblique stereographic projection for {@linkplain #latitudeOfOrigin latitude of
- * origin} == 0.0.
+ * The USGS equatorial case of the {@linkplain Stereographic stereographic} projection. This is a special case of
+ * oblique stereographic projection for {@linkplain #latitudeOfOrigin latitude of origin} == 0.0.
  *
  * @since 2.4
  * @version $Id$
@@ -48,15 +48,13 @@ import org.opengis.parameter.ParameterValueGroup;
  */
 public class EquatorialStereographic extends StereographicUSGS {
     /** For cross-version compatibility. */
+    @Serial
     private static final long serialVersionUID = -5098015759558831875L;
 
     /** Maximum difference allowed when comparing real numbers. */
     private static final double EPSILON = 1E-6;
 
-    /**
-     * A constant used in the transformations. This is <strong>not</strong> equal to the {@link
-     * #scaleFactor}.
-     */
+    /** A constant used in the transformations. This is <strong>not</strong> equal to the {@link #scaleFactor}. */
     static final double k0 = 2;
 
     /**
@@ -65,8 +63,7 @@ public class EquatorialStereographic extends StereographicUSGS {
      * @param parameters The group of parameter values.
      * @throws ParameterNotFoundException if a required parameter was not found.
      */
-    protected EquatorialStereographic(final ParameterValueGroup parameters)
-            throws ParameterNotFoundException {
+    protected EquatorialStereographic(final ParameterValueGroup parameters) throws ParameterNotFoundException {
         this(parameters, Stereographic.Provider.PARAMETERS);
     }
 
@@ -77,8 +74,7 @@ public class EquatorialStereographic extends StereographicUSGS {
      * @param descriptor The expected parameter descriptor.
      * @throws ParameterNotFoundException if a required parameter was not found.
      */
-    EquatorialStereographic(
-            final ParameterValueGroup parameters, final ParameterDescriptorGroup descriptor)
+    EquatorialStereographic(final ParameterValueGroup parameters, final ParameterDescriptorGroup descriptor)
             throws ParameterNotFoundException {
         super(parameters, descriptor);
         assert super.k0 == k0 : super.k0;
@@ -86,12 +82,11 @@ public class EquatorialStereographic extends StereographicUSGS {
     }
 
     /**
-     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in
-     * radians) and stores the result in {@code ptDst} (linear distance on a unit sphere).
+     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in radians) and stores the
+     * result in {@code ptDst} (linear distance on a unit sphere).
      */
     @Override
-    protected Point2D transformNormalized(double x, double y, Point2D ptDst)
-            throws ProjectionException {
+    protected Point2D transformNormalized(double x, double y, Point2D ptDst) throws ProjectionException {
         // Compute using oblique formulas, for comparaison later.
         assert (ptDst = super.transformNormalized(x, y, ptDst)) != null;
 
@@ -110,8 +105,7 @@ public class EquatorialStereographic extends StereographicUSGS {
     }
 
     /**
-     * Provides the transform equations for the spherical case of the equatorial stereographic
-     * projection.
+     * Provides the transform equations for the spherical case of the equatorial stereographic projection.
      *
      * @version $Id$
      * @author Martin Desruisseaux (PMO, IRD)
@@ -119,6 +113,7 @@ public class EquatorialStereographic extends StereographicUSGS {
      */
     static final class Spherical extends EquatorialStereographic {
         /** For cross-version compatibility. */
+        @Serial
         private static final long serialVersionUID = -4790138052004333003L;
 
         /**
@@ -135,12 +130,11 @@ public class EquatorialStereographic extends StereographicUSGS {
         }
 
         /**
-         * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in
-         * radians) and stores the result in {@code ptDst} (linear distance on a unit sphere).
+         * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in radians) and stores the
+         * result in {@code ptDst} (linear distance on a unit sphere).
          */
         @Override
-        protected Point2D transformNormalized(double x, double y, Point2D ptDst)
-                throws ProjectionException {
+        protected Point2D transformNormalized(double x, double y, Point2D ptDst) throws ProjectionException {
             // Compute using ellipsoidal formulas, for comparaison later.
             assert (ptDst = super.transformNormalized(x, y, ptDst)) != null;
 
@@ -161,13 +155,9 @@ public class EquatorialStereographic extends StereographicUSGS {
             return new Point2D.Double(x, y);
         }
 
-        /**
-         * Transforms the specified (<var>x</var>,<var>y</var>) coordinate and stores the result in
-         * {@code ptDst}.
-         */
+        /** Transforms the specified (<var>x</var>,<var>y</var>) coordinate and stores the result in {@code ptDst}. */
         @Override
-        protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst)
-                throws ProjectionException {
+        protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst) throws ProjectionException {
             // Compute using ellipsoidal formulas, for comparaison later.
             assert (ptDst = super.inverseTransformNormalized(x, y, ptDst)) != null;
 
@@ -182,7 +172,7 @@ public class EquatorialStereographic extends StereographicUSGS {
                 y = asin(y * sinc / rho); // (20-14)  with phi1=0
                 final double t = x * sinc;
                 final double ct = rho * cosc;
-                x = (abs(t) < EPSILON && abs(ct) < EPSILON) ? 0.0 : atan2(t, ct);
+                x = abs(t) < EPSILON && abs(ct) < EPSILON ? 0.0 : atan2(t, ct);
             }
             assert checkInverseTransform(x, y, ptDst);
             if (ptDst != null) {

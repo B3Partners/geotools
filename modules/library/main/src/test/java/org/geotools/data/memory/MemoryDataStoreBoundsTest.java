@@ -20,10 +20,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.DataTestCase;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.Query;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -31,9 +34,6 @@ import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultEngineeringCRS;
 import org.junit.After;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * @author Frank Gasdorf, fgdrf@users.sourceforge.net
@@ -52,8 +52,7 @@ public class MemoryDataStoreBoundsTest extends DataTestCase {
         data = new MemoryDataStore();
         data.addFeatures(roadFeatures);
 
-        SimpleFeatureType riverTypeWithCrs =
-                SimpleFeatureTypeBuilder.retype(riverType, CRS.decode("EPSG:4326"));
+        SimpleFeatureType riverTypeWithCrs = SimpleFeatureTypeBuilder.retype(riverType, CRS.decode("EPSG:4326"));
         data.addFeature(SimpleFeatureBuilder.retype(riverFeatures[0], riverTypeWithCrs));
         riverBounds = new ReferencedEnvelope(riverFeatures[0].getBounds());
     }
@@ -96,8 +95,7 @@ public class MemoryDataStoreBoundsTest extends DataTestCase {
         query.setCoordinateSystem(DefaultEngineeringCRS.CARTESIAN_2D);
         ReferencedEnvelope envelope = data.getFeatureSource("river").getBounds(query);
         assertEquals(DefaultEngineeringCRS.CARTESIAN_2D, envelope.getCoordinateReferenceSystem());
-        assertEquals(
-                new ReferencedEnvelope(riverBounds, DefaultEngineeringCRS.CARTESIAN_2D), envelope);
+        assertEquals(new ReferencedEnvelope(riverBounds, DefaultEngineeringCRS.CARTESIAN_2D), envelope);
     }
 
     @Test
@@ -108,9 +106,7 @@ public class MemoryDataStoreBoundsTest extends DataTestCase {
         query.setCoordinateSystemReproject(targetCRS);
         ReferencedEnvelope envelope = data.getFeatureSource("river").getBounds(query);
         assertEquals(targetCRS, envelope.getCoordinateReferenceSystem());
-        assertEquals(
-                new ReferencedEnvelope(riverBounds, sourceCRS).transform(targetCRS, true),
-                envelope);
+        assertEquals(new ReferencedEnvelope(riverBounds, sourceCRS).transform(targetCRS, true), envelope);
     }
 
     @Test
@@ -148,8 +144,7 @@ public class MemoryDataStoreBoundsTest extends DataTestCase {
 
     @Test
     public void testGetBoundsSupportsEmptyBounds() throws Exception {
-        SimpleFeatureType type =
-                DataUtilities.createType("test", "id:0,geom:LineString,name:String");
+        SimpleFeatureType type = DataUtilities.createType("test", "id:0,geom:LineString,name:String");
         SimpleFeature[] features = new SimpleFeature[3];
         features[0] = SimpleFeatureBuilder.build(type, new Object[] {1, null, "r1"}, "test.f1");
         features[1] = SimpleFeatureBuilder.build(type, new Object[] {2, null, "r2"}, "test.f2");

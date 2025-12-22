@@ -24,24 +24,24 @@ import net.opengis.wfs.FeatureTypeListType;
 import net.opengis.wfs.GMLObjectTypeListType;
 import net.opengis.wfs.GMLObjectTypeType;
 import net.opengis.wfs.WFSCapabilitiesType;
+import org.geotools.api.filter.capability.ArithmeticOperators;
+import org.geotools.api.filter.capability.ComparisonOperators;
+import org.geotools.api.filter.capability.FilterCapabilities;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.capability.Functions;
+import org.geotools.api.filter.capability.GeometryOperand;
+import org.geotools.api.filter.capability.IdCapabilities;
+import org.geotools.api.filter.capability.Operator;
+import org.geotools.api.filter.capability.ScalarCapabilities;
+import org.geotools.api.filter.capability.SpatialCapabilities;
+import org.geotools.api.filter.capability.SpatialOperator;
+import org.geotools.api.filter.capability.SpatialOperators;
 import org.geotools.filter.v1_1.OGC;
 import org.geotools.gml3.GML;
 import org.geotools.wfs.WFS;
 import org.geotools.wfs.WFSTestSupport;
 import org.geotools.xsd.Binding;
 import org.junit.Test;
-import org.opengis.filter.capability.ArithmeticOperators;
-import org.opengis.filter.capability.ComparisonOperators;
-import org.opengis.filter.capability.FilterCapabilities;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.capability.Functions;
-import org.opengis.filter.capability.GeometryOperand;
-import org.opengis.filter.capability.IdCapabilities;
-import org.opengis.filter.capability.Operator;
-import org.opengis.filter.capability.ScalarCapabilities;
-import org.opengis.filter.capability.SpatialCapabilities;
-import org.opengis.filter.capability.SpatialOperator;
-import org.opengis.filter.capability.SpatialOperators;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -53,10 +53,7 @@ public class WFS_CapabilitiesTypeBindingTest extends WFSTestSupport {
     @Override
     @Test
     public void testParse() throws Exception {
-        String xml =
-                "<WFS_Capabilities version=\"1.1.0\">"
-                        + "<FeatureTypeList/>"
-                        + "</WFS_Capabilities>";
+        String xml = "<WFS_Capabilities version=\"1.1.0\">" + "<FeatureTypeList/>" + "</WFS_Capabilities>";
         buildDocument(xml);
 
         WFSCapabilitiesType caps = (WFSCapabilitiesType) parse();
@@ -114,8 +111,7 @@ public class WFS_CapabilitiesTypeBindingTest extends WFSTestSupport {
         Element servesGmlTypeList = getElementByQName(root, WFS.ServesGMLObjectTypeList);
         assertNotNull(servesGmlTypeList);
 
-        Element type =
-                getElementByQName(servesGmlTypeList, new QName(WFS.NAMESPACE, "GMLObjectType"));
+        Element type = getElementByQName(servesGmlTypeList, new QName(WFS.NAMESPACE, "GMLObjectType"));
         assertNotNull(type);
         Element name = getElementByQName(type, new QName(WFS.NAMESPACE, "Name"));
         assertEquals("gml:_Feature", name.getFirstChild().getNodeValue());
@@ -125,8 +121,7 @@ public class WFS_CapabilitiesTypeBindingTest extends WFSTestSupport {
         Element supportsGmlTypeList = getElementByQName(root, WFS.SupportsGMLObjectTypeList);
         assertNotNull(supportsGmlTypeList);
 
-        Element type =
-                getElementByQName(supportsGmlTypeList, new QName(WFS.NAMESPACE, "GMLObjectType"));
+        Element type = getElementByQName(supportsGmlTypeList, new QName(WFS.NAMESPACE, "GMLObjectType"));
         assertNotNull(type);
         Element name = getElementByQName(type, new QName(WFS.NAMESPACE, "Name"));
         assertEquals("gml:_Feature", name.getFirstChild().getNodeValue());
@@ -143,19 +138,14 @@ public class WFS_CapabilitiesTypeBindingTest extends WFSTestSupport {
         final SpatialCapabilities spatialCaps;
         final IdCapabilities idCaps;
         {
-            Operator[] operators = {
-                filterFac.operator("LessThan"), filterFac.operator("GreaterThan")
-            };
+            Operator[] operators = {filterFac.operator("LessThan"), filterFac.operator("GreaterThan")};
             ComparisonOperators comparisonOps = filterFac.comparisonOperators(operators);
 
             boolean simple = true;
-            FunctionName[] functionNames = {
-                filterFac.functionName("MIN", 2), filterFac.functionName("ABS", 1)
-            };
+            FunctionName[] functionNames = {filterFac.functionName("MIN", 2), filterFac.functionName("ABS", 1)};
 
             Functions functions = filterFac.functions(functionNames);
-            final ArithmeticOperators aritmeticOps =
-                    filterFac.arithmeticOperators(simple, functions);
+            final ArithmeticOperators aritmeticOps = filterFac.arithmeticOperators(simple, functions);
 
             final boolean logicalOps = true;
             scalarCaps = filterFac.scalarCapabilities(comparisonOps, aritmeticOps, logicalOps);
@@ -174,8 +164,7 @@ public class WFS_CapabilitiesTypeBindingTest extends WFSTestSupport {
             idCaps = filterFac.idCapabilities(eid, fid);
         }
 
-        FilterCapabilities filterCaps =
-                filterFac.capabilities(version, scalarCaps, spatialCaps, idCaps);
+        FilterCapabilities filterCaps = filterFac.capabilities(version, scalarCaps, spatialCaps, idCaps);
         return filterCaps;
     }
 }

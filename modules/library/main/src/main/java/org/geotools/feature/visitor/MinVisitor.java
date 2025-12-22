@@ -19,13 +19,13 @@ package org.geotools.feature.visitor;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.IllegalFilterException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Calculates the minimum value of an attribute.
@@ -43,8 +43,7 @@ public class MinVisitor implements FeatureCalc, FeatureAttributeVisitor {
         expr = factory.property(attributeTypeName);
     }
 
-    public MinVisitor(int attributeTypeIndex, SimpleFeatureType type)
-            throws IllegalFilterException {
+    public MinVisitor(int attributeTypeIndex, SimpleFeatureType type) throws IllegalFilterException {
         FilterFactory factory = CommonFactoryFinder.getFilterFactory(null);
         expr = factory.property(type.getDescriptor(attributeTypeIndex).getLocalName());
     }
@@ -78,11 +77,11 @@ public class MinVisitor implements FeatureCalc, FeatureAttributeVisitor {
      * @param feature the feature to be visited
      */
     public void visit(SimpleFeature feature) {
-        visit((org.opengis.feature.Feature) feature);
+        visit((org.geotools.api.feature.Feature) feature);
     }
 
     @Override
-    public void visit(org.opengis.feature.Feature feature) {
+    public void visit(org.geotools.api.feature.Feature feature) {
         Object attribValue = expr.evaluate(feature);
 
         if (attribValue == null) {
@@ -110,7 +109,7 @@ public class MinVisitor implements FeatureCalc, FeatureAttributeVisitor {
      * @return Minimum value
      */
     public Comparable getMin() {
-        /** Return the minimum value derived from the collection */
+        /* Return the minimum value derived from the collection */
         if (!visited) {
             throw new IllegalStateException("Must visit before min value is ready!");
         }
@@ -119,7 +118,7 @@ public class MinVisitor implements FeatureCalc, FeatureAttributeVisitor {
     }
 
     public void reset() {
-        /** Reset the count and current minimum */
+        /* Reset the count and current minimum */
         this.visited = false;
         this.minvalue = null;
     }
@@ -138,8 +137,8 @@ public class MinVisitor implements FeatureCalc, FeatureAttributeVisitor {
     }
 
     /**
-     * Overwrites the result stored by the visitor. This should only be used by optimizations which
-     * will tell the visitor the answer rather than visiting all features.
+     * Overwrites the result stored by the visitor. This should only be used by optimizations which will tell the
+     * visitor the answer rather than visiting all features.
      *
      * <p>For 'min', the value stored is of type 'Comparable'.
      */
@@ -188,13 +187,10 @@ public class MinVisitor implements FeatureCalc, FeatureAttributeVisitor {
                 Comparable toAdd = (Comparable) resultsToAdd.getValue();
                 Comparable newMin = minValue;
 
-                if (newMin.getClass()
-                        != toAdd.getClass()) { // 2 different data types, therefore convert
+                if (newMin.getClass() != toAdd.getClass()) { // 2 different data types, therefore convert
                     Class bestClass = CalcUtil.bestClass(toAdd, newMin);
-                    if (bestClass != toAdd.getClass())
-                        toAdd = (Comparable) CalcUtil.convert(toAdd, bestClass);
-                    if (bestClass != newMin.getClass())
-                        newMin = (Comparable) CalcUtil.convert(newMin, bestClass);
+                    if (bestClass != toAdd.getClass()) toAdd = (Comparable) CalcUtil.convert(toAdd, bestClass);
+                    if (bestClass != newMin.getClass()) newMin = (Comparable) CalcUtil.convert(newMin, bestClass);
                 }
                 if (newMin.compareTo(toAdd) > 0) {
                     newMin = toAdd;

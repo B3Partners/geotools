@@ -21,6 +21,7 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.StringTokenizer;
 import org.geotools.graph.build.GraphGenerator;
 import org.geotools.graph.structure.Edge;
@@ -28,31 +29,28 @@ import org.geotools.graph.structure.Graph;
 import org.geotools.graph.structure.Node;
 
 /**
- * An implementation of GraphReaderWriter that reads/writes graphs from/to text files. Each line of
- * the text file represents an object to be modelled by the graph. <br>
- * When performing a read, the text file is read line by line. As each line is read it is tokenized
- * based on the delimiter property, and passed to the template method readInternal(StringTokenizer),
- * which must be implemented by a subclass. The method returns the object that is to be represented
- * in the graph. The returned object is then passed to an underlying GraphGenerator which creates
- * the necessary graph components to modell the object.<br>
+ * An implementation of GraphReaderWriter that reads/writes graphs from/to text files. Each line of the text file
+ * represents an object to be modelled by the graph. <br>
+ * When performing a read, the text file is read line by line. As each line is read it is tokenized based on the
+ * delimiter property, and passed to the template method readInternal(StringTokenizer), which must be implemented by a
+ * subclass. The method returns the object that is to be represented in the graph. The returned object is then passed to
+ * an underlying GraphGenerator which creates the necessary graph components to modell the object.<br>
  * <br>
- * When performing a write, the graph is read component by component based on set properties. If the
- * NODES property is set, nodes will be written. If the EDGES property is set, edges will be written
- * as well. As each component is processed, it is passed to the repspective template methods
- * writeNode(Writer,Node) and writeEdge(Writer,Edge). The methods then write out the text
- * representation of the component.
+ * When performing a write, the graph is read component by component based on set properties. If the NODES property is
+ * set, nodes will be written. If the EDGES property is set, edges will be written as well. As each component is
+ * processed, it is passed to the repspective template methods writeNode(Writer,Node) and writeEdge(Writer,Edge). The
+ * methods then write out the text representation of the component.
  *
  * @author Justin Deoliveira, Refractions Research Inc, jdeolive@refractions.net
  */
-public abstract class TextfileReaderWriter extends AbstractReaderWriter
-        implements FileReaderWriter {
+public abstract class TextfileReaderWriter extends AbstractReaderWriter implements FileReaderWriter {
 
     /** line delimiter key * */
     public static final String DELIMITER = "DELIMITER";
 
     /**
-     * Performs a read of the text file line by line. As each line is read the corresponding graph
-     * components represented by the line of text are created by an underlying GraphGenerator.
+     * Performs a read of the text file line by line. As each line is read the corresponding graph components
+     * represented by the line of text are created by an underlying GraphGenerator.
      *
      * @see GraphGenerator#read()
      */
@@ -63,7 +61,7 @@ public abstract class TextfileReaderWriter extends AbstractReaderWriter
 
         // create in the file reader
         try (BufferedReader in =
-                new BufferedReader(new FileReader((String) getProperty(FILENAME)))) {
+                new BufferedReader(new FileReader((String) getProperty(FILENAME), StandardCharsets.UTF_8))) {
 
             // read the delimiter property
             String delim = (String) getProperty(DELIMITER);
@@ -77,13 +75,12 @@ public abstract class TextfileReaderWriter extends AbstractReaderWriter
             }
         }
 
-        return (generator.getGraph());
+        return generator.getGraph();
     }
 
     /**
-     * Performs a write on the graph out to a text file. If the NODES property is set, the nodes of
-     * the graph will be written, and if the EDGES property is set, the edges of the graph will be
-     * written.
+     * Performs a write on the graph out to a text file. If the NODES property is set, the nodes of the graph will be
+     * written, and if the EDGES property is set, the edges of the graph will be written.
      *
      * <p>* @see GraphGenerator#write()
      */
@@ -91,7 +88,7 @@ public abstract class TextfileReaderWriter extends AbstractReaderWriter
     public void write(Graph g) throws Exception {
         // create the file writer
         try (BufferedWriter out =
-                new BufferedWriter(new FileWriter((String) getProperty(FILENAME)))) {
+                new BufferedWriter(new FileWriter((String) getProperty(FILENAME), StandardCharsets.UTF_8))) {
 
             // check NODES property
             if (getProperty(NODES) != null) {

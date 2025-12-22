@@ -13,13 +13,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import org.apache.commons.dbcp.BasicDataSource;
+import org.geotools.api.parameter.GeneralParameterValue;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.parameter.Parameter;
 import org.geotools.test.OnlineTestCase;
 import org.geotools.test.TestData;
 import org.junit.Test;
-import org.opengis.parameter.GeneralParameterValue;
 
 public class PGRasterTest extends OnlineTestCase {
 
@@ -46,11 +46,8 @@ public class PGRasterTest extends OnlineTestCase {
     @Override
     protected boolean isOnline() throws Exception {
         Class.forName(fixture.getProperty("driver"));
-        try (Connection cx =
-                DriverManager.getConnection(
-                        url(fixture),
-                        fixture.getProperty("username"),
-                        fixture.getProperty("password"))) {
+        try (Connection cx = DriverManager.getConnection(
+                url(fixture), fixture.getProperty("username"), fixture.getProperty("password"))) {
 
             String schema = fixture.getProperty("schema");
             String table = "gray";
@@ -106,7 +103,7 @@ public class PGRasterTest extends OnlineTestCase {
         config.table = "gray";
 
         PGRasterReader reader = new PGRasterReader(config, null, null);
-        GridCoverage2D rast = reader.read(null);
+        GridCoverage2D rast = reader.read();
         assertNotNull(rast);
 
         show(rast);
@@ -117,7 +114,7 @@ public class PGRasterTest extends OnlineTestCase {
         config.table = "world";
 
         PGRasterReader reader = new PGRasterReader(config, null, null);
-        GridCoverage2D rast = reader.read(null);
+        GridCoverage2D rast = reader.read();
         assertNotNull(rast);
 
         show(rast);
@@ -140,16 +137,10 @@ public class PGRasterTest extends OnlineTestCase {
         assertNotNull(min);
         assertNotEquals(min, max);
 
-        GridCoverage2D r1 =
-                reader.read(
-                        new GeneralParameterValue[] {
-                            new Parameter<>(AbstractGridFormat.TIME, Collections.singletonList(min))
-                        });
-        GridCoverage2D r2 =
-                reader.read(
-                        new GeneralParameterValue[] {
-                            new Parameter<>(AbstractGridFormat.TIME, Collections.singletonList(max))
-                        });
+        GridCoverage2D r1 = reader.read(
+                new GeneralParameterValue[] {new Parameter<>(AbstractGridFormat.TIME, Collections.singletonList(min))});
+        GridCoverage2D r2 = reader.read(
+                new GeneralParameterValue[] {new Parameter<>(AbstractGridFormat.TIME, Collections.singletonList(max))});
 
         show(r1);
         show(r2);

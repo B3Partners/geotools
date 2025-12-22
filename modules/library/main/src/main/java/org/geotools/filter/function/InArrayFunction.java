@@ -19,21 +19,16 @@ package org.geotools.filter.function;
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
 import java.util.Arrays;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 public class InArrayFunction extends FunctionExpressionImpl {
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "inArray",
-                    parameter(
-                            "inArray",
-                            Boolean.class,
-                            "InArray",
-                            "Returns true if any array value matches candidate."),
-                    parameter("candidate", Object.class, "Candidate", "value to match with array"),
-                    parameter("array", Object[].class, "Array", "array of values"));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "inArray",
+            parameter("inArray", Boolean.class, "InArray", "Returns true if any array value matches candidate."),
+            parameter("candidate", Object.class, "Candidate", "value to match with array"),
+            parameter("array", Object[].class, "Array", "array of values"));
 
     public InArrayFunction() {
         super(NAME);

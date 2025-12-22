@@ -19,22 +19,21 @@
  */
 package org.geotools.metadata.iso.extent;
 
+import java.io.Serial;
 import java.util.Collection;
+import org.geotools.api.metadata.extent.Extent;
+import org.geotools.api.metadata.extent.GeographicBoundingBox;
+import org.geotools.api.metadata.extent.GeographicExtent;
+import org.geotools.api.metadata.extent.TemporalExtent;
+import org.geotools.api.metadata.extent.VerticalExtent;
+import org.geotools.api.util.InternationalString;
 import org.geotools.metadata.iso.MetadataEntity;
-import org.opengis.metadata.extent.BoundingPolygon;
-import org.opengis.metadata.extent.Extent;
-import org.opengis.metadata.extent.GeographicBoundingBox;
-import org.opengis.metadata.extent.GeographicExtent;
-import org.opengis.metadata.extent.TemporalExtent;
-import org.opengis.metadata.extent.VerticalExtent;
-import org.opengis.util.InternationalString;
 
 /**
- * Information about spatial, vertical, and temporal extent. This interface has four optional
- * attributes ({@linkplain #getGeographicElements geographic elements}, {@linkplain
- * #getTemporalElements temporal elements}, and {@linkplain #getVerticalElements vertical elements})
- * and an element called {@linkplain #getDescription description}. At least one of the four shall be
- * used.
+ * Information about spatial, vertical, and temporal extent. This interface has four optional attributes
+ * ({@linkplain #getGeographicElements geographic elements}, {@linkplain #getTemporalElements temporal elements}, and
+ * {@linkplain #getVerticalElements vertical elements}) and an element called {@linkplain #getDescription description}.
+ * At least one of the four shall be used.
  *
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
@@ -43,6 +42,7 @@ import org.opengis.util.InternationalString;
  */
 public class ExtentImpl extends MetadataEntity implements Extent {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 7812213837337326257L;
 
     /**
@@ -98,7 +98,7 @@ public class ExtentImpl extends MetadataEntity implements Extent {
     /** Provides geographic component of the extent of the referring object */
     @Override
     public Collection<GeographicExtent> getGeographicElements() {
-        return (geographicElements = nonNullCollection(geographicElements, GeographicExtent.class));
+        return geographicElements = nonNullCollection(geographicElements, GeographicExtent.class);
     }
 
     /** Set geographic component of the extent of the referring object */
@@ -109,7 +109,7 @@ public class ExtentImpl extends MetadataEntity implements Extent {
     /** Provides temporal component of the extent of the referring object */
     @Override
     public Collection<TemporalExtent> getTemporalElements() {
-        return (temporalElements = nonNullCollection(temporalElements, TemporalExtent.class));
+        return temporalElements = nonNullCollection(temporalElements, TemporalExtent.class);
     }
 
     /** Set temporal component of the extent of the referring object */
@@ -120,7 +120,7 @@ public class ExtentImpl extends MetadataEntity implements Extent {
     /** Provides vertical component of the extent of the referring object */
     @Override
     public Collection<VerticalExtent> getVerticalElements() {
-        return (verticalElements = nonNullCollection(verticalElements, VerticalExtent.class));
+        return verticalElements = nonNullCollection(verticalElements, VerticalExtent.class);
     }
 
     /** Set vertical component of the extent of the referring object */
@@ -129,9 +129,9 @@ public class ExtentImpl extends MetadataEntity implements Extent {
     }
 
     /**
-     * Convenience method returning a single geographic bounding box from the specified extent. If
-     * no bounding box was found, then this method returns {@code null}. If more than one box is
-     * found, then boxes are {@linkplain GeographicBoundingBoxImpl#add added} together.
+     * Convenience method returning a single geographic bounding box from the specified extent. If no bounding box was
+     * found, then this method returns {@code null}. If more than one box is found, then boxes are
+     * {@linkplain GeographicBoundingBoxImpl#add added} together.
      *
      * @since 2.2
      */
@@ -141,11 +141,8 @@ public class ExtentImpl extends MetadataEntity implements Extent {
             GeographicBoundingBoxImpl modifiable = null;
             for (final GeographicExtent element : extent.getGeographicElements()) {
                 final GeographicBoundingBox bounds;
-                if (element instanceof GeographicBoundingBox) {
-                    bounds = (GeographicBoundingBox) element;
-                } else if (element instanceof BoundingPolygon) {
-                    // TODO: iterates through all polygons and invoke Polygon.getEnvelope();
-                    continue;
+                if (element instanceof GeographicBoundingBox box) {
+                    bounds = box;
                 } else {
                     continue;
                 }

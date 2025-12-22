@@ -4,6 +4,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Map;
 import java.util.logging.Logger;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.jdbc.JDBCDataStoreFactory;
@@ -13,8 +15,6 @@ import org.geotools.jdbc.JDBCPrimaryKeyFinderTestSetup;
 import org.geotools.util.logging.Logging;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class OraclePrimaryKeyFinderOnlineTest extends JDBCPrimaryKeyFinderOnlineTest {
 
@@ -34,8 +34,7 @@ public class OraclePrimaryKeyFinderOnlineTest extends JDBCPrimaryKeyFinderOnline
 
     /** override to add failure diagnostic message. */
     @Override
-    protected void addFeature(SimpleFeatureType featureType, JDBCFeatureStore features)
-            throws Exception {
+    protected void addFeature(SimpleFeatureType featureType, JDBCFeatureStore features) throws Exception {
         SimpleFeatureBuilder b = new SimpleFeatureBuilder(featureType);
         b.add("four");
         b.add(new GeometryFactory().createPoint(new Coordinate(4, 4)));
@@ -52,7 +51,6 @@ public class OraclePrimaryKeyFinderOnlineTest extends JDBCPrimaryKeyFinderOnline
                         + " does not match expected "
                         + tname(featureType.getTypeName())
                         + ".4(\\..*)?",
-                ((String) f.getUserData().get("fid"))
-                        .matches(tname(featureType.getTypeName()) + ".4(\\..*)?"));
+                ((String) f.getUserData().get("fid")).matches(tname(featureType.getTypeName()) + ".4(\\..*)?"));
     }
 }

@@ -34,16 +34,19 @@ public final class PO extends XSD {
     /** private constructor */
     private PO() {}
 
+    @Override
     protected void addDependencies(Set dependencies) {
         // TODO: add dependencies here
     }
 
     /** Returns 'http://www.geotools.org/po'. */
+    @Override
     public String getNamespaceURI() {
         return NAMESPACE;
     }
 
     /** Returns the location of 'po.xsd.'. */
+    @Override
     public String getSchemaLocation() {
         return getClass().getResource("po.xsd").toString();
     }
@@ -55,8 +58,7 @@ public final class PO extends XSD {
     /** @generated */
     public static final QName Items = new QName("http://www.geotools.org/po", "Items");
     /** @generated */
-    public static final QName PurchaseOrderType =
-            new QName("http://www.geotools.org/po", "PurchaseOrderType");
+    public static final QName PurchaseOrderType = new QName("http://www.geotools.org/po", "PurchaseOrderType");
     /** @generated */
     public static final QName SKU = new QName("http://www.geotools.org/po", "SKU");
     /** @generated */
@@ -68,8 +70,7 @@ public final class PO extends XSD {
     /** @generated */
     public static final QName comment = new QName("http://www.geotools.org/po", "comment");
     /** @generated */
-    public static final QName purchaseOrder =
-            new QName("http://www.geotools.org/po", "purchaseOrder");
+    public static final QName purchaseOrder = new QName("http://www.geotools.org/po", "purchaseOrder");
 
     /* Attributes */
 

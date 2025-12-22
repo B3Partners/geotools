@@ -19,35 +19,37 @@
  */
 package org.geotools.referencing.crs;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import javax.measure.Unit;
 import javax.measure.quantity.Angle;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.referencing.crs.GeographicCRS;
+import org.geotools.api.referencing.cs.AxisDirection;
+import org.geotools.api.referencing.cs.CoordinateSystem;
+import org.geotools.api.referencing.cs.CoordinateSystemAxis;
+import org.geotools.api.referencing.cs.EllipsoidalCS;
+import org.geotools.api.referencing.datum.Ellipsoid;
+import org.geotools.api.referencing.datum.GeodeticDatum;
 import org.geotools.measure.Measure;
-import org.geotools.metadata.iso.citation.CitationImpl;
+import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.metadata.iso.extent.ExtentImpl;
 import org.geotools.referencing.AbstractReferenceSystem; // For javadoc
 import org.geotools.referencing.NamedIdentifier;
 import org.geotools.referencing.cs.DefaultEllipsoidalCS;
 import org.geotools.referencing.datum.DefaultEllipsoid;
 import org.geotools.referencing.datum.DefaultGeodeticDatum;
+import org.geotools.referencing.proj.PROJFormattable;
+import org.geotools.referencing.proj.PROJFormatter;
 import org.geotools.referencing.wkt.Formatter;
 import org.geotools.util.UnsupportedImplementationException;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.crs.GeographicCRS;
-import org.opengis.referencing.cs.AxisDirection;
-import org.opengis.referencing.cs.CoordinateSystem;
-import org.opengis.referencing.cs.CoordinateSystemAxis;
-import org.opengis.referencing.cs.EllipsoidalCS;
-import org.opengis.referencing.datum.Ellipsoid;
-import org.opengis.referencing.datum.GeodeticDatum;
 import si.uom.NonSI;
 
 /**
- * A coordinate reference system based on an ellipsoidal approximation of the geoid; this provides
- * an accurate representation of the geometry of geographic features for a large portion of the
- * earth's surface.
+ * A coordinate reference system based on an ellipsoidal approximation of the geoid; this provides an accurate
+ * representation of the geometry of geographic features for a large portion of the earth's surface.
  *
  * <TABLE CELLPADDING='6' BORDER='1'>
  * <TR BGCOLOR="#EEEEFF"><TH NOWRAP>Used with CS type(s)</TH></TR>
@@ -59,50 +61,45 @@ import si.uom.NonSI;
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
  */
-public class DefaultGeographicCRS extends AbstractSingleCRS implements GeographicCRS {
+public class DefaultGeographicCRS extends AbstractSingleCRS implements GeographicCRS, PROJFormattable {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 861224913438092335L;
 
     /**
      * A two-dimensional geographic coordinate reference system using WGS84 datum. This CRS uses
-     * (<var>longitude</var>,<var>latitude</var>) ordinates with longitude values increasing East
-     * and latitude values increasing North. Angular units are decimal degrees and prime meridian is
-     * Greenwich.
+     * (<var>longitude</var>,<var>latitude</var>) ordinates with longitude values increasing East and latitude values
+     * increasing North. Angular units are decimal degrees and prime meridian is Greenwich.
      */
     public static final DefaultGeographicCRS WGS84;
 
     /**
      * A three-dimensional geographic coordinate reference system using WGS84 datum. This CRS uses
-     * (<var>longitude</var>,<var>latitude</var>,<var>height</var>) ordinates with longitude values
-     * increasing East, latitude values increasing North and height above the ellipsoid in metres.
-     * Angular units are decimal degrees and prime meridian is Greenwich.
+     * (<var>longitude</var>,<var>latitude</var>,<var>height</var>) ordinates with longitude values increasing East,
+     * latitude values increasing North and height above the ellipsoid in metres. Angular units are decimal degrees and
+     * prime meridian is Greenwich.
      */
     public static final DefaultGeographicCRS WGS84_3D;
 
     static {
         final Map<String, Object> properties = new HashMap<>(4);
         properties.put(NAME_KEY, "WGS84(DD)"); // Name used in WCS 1.0.
-        final String[] alias = {
-            "WGS84", "WGS 84" // EPSG name.
+        final String[] alias = {"WGS84", "WGS 84" // EPSG name.
         };
         properties.put(ALIAS_KEY, alias);
         properties.put(DOMAIN_OF_VALIDITY_KEY, ExtentImpl.WORLD);
-        properties.put(IDENTIFIERS_KEY, new NamedIdentifier(new CitationImpl("EPSG"), "4326"));
-        WGS84 =
-                new DefaultGeographicCRS(
-                        properties, DefaultGeodeticDatum.WGS84, DefaultEllipsoidalCS.GEODETIC_2D);
+        properties.put(IDENTIFIERS_KEY, new NamedIdentifier(Citations.EPSG, "4326"));
+        WGS84 = new DefaultGeographicCRS(properties, DefaultGeodeticDatum.WGS84, DefaultEllipsoidalCS.GEODETIC_2D);
         alias[1] = "WGS 84 (geographic 3D)"; // Replaces the EPSG name.
-        properties.put(IDENTIFIERS_KEY, new NamedIdentifier(new CitationImpl("EPSG"), "4327"));
-        WGS84_3D =
-                new DefaultGeographicCRS(
-                        properties, DefaultGeodeticDatum.WGS84, DefaultEllipsoidalCS.GEODETIC_3D);
+        properties.put(IDENTIFIERS_KEY, new NamedIdentifier(Citations.EPSG, "4327"));
+        WGS84_3D = new DefaultGeographicCRS(properties, DefaultGeodeticDatum.WGS84, DefaultEllipsoidalCS.GEODETIC_3D);
     }
 
     /**
-     * Constructs a new geographic CRS with the same values than the specified one. This copy
-     * constructor provides a way to wrap an arbitrary implementation into a Geotools one or a
-     * user-defined one (as a subclass), usually in order to leverage some implementation-specific
-     * API. This constructor performs a shallow copy, i.e. the properties are not cloned.
+     * Constructs a new geographic CRS with the same values than the specified one. This copy constructor provides a way
+     * to wrap an arbitrary implementation into a Geotools one or a user-defined one (as a subclass), usually in order
+     * to leverage some implementation-specific API. This constructor performs a shallow copy, i.e. the properties are
+     * not cloned.
      *
      * @param crs The coordinate reference system to copy.
      * @since 2.2
@@ -112,8 +109,8 @@ public class DefaultGeographicCRS extends AbstractSingleCRS implements Geographi
     }
 
     /**
-     * Constructs a geographic CRS with the same properties than the given datum. The inherited
-     * properties include the {@linkplain #getName name} and aliases.
+     * Constructs a geographic CRS with the same properties than the given datum. The inherited properties include the
+     * {@linkplain #getName name} and aliases.
      *
      * @param datum The datum.
      * @param cs The coordinate system.
@@ -130,22 +127,19 @@ public class DefaultGeographicCRS extends AbstractSingleCRS implements Geographi
      * @param datum The datum.
      * @param cs The coordinate system.
      */
-    public DefaultGeographicCRS(
-            final String name, final GeodeticDatum datum, final EllipsoidalCS cs) {
+    public DefaultGeographicCRS(final String name, final GeodeticDatum datum, final EllipsoidalCS cs) {
         this(Collections.singletonMap(NAME_KEY, name), datum, cs);
     }
 
     /**
-     * Constructs a geographic CRS from a set of properties. The properties are given unchanged to
-     * the {@linkplain AbstractReferenceSystem#AbstractReferenceSystem(Map) super-class
-     * constructor}.
+     * Constructs a geographic CRS from a set of properties. The properties are given unchanged to the
+     * {@linkplain AbstractReferenceSystem#AbstractReferenceSystem(Map) super-class constructor}.
      *
      * @param properties Set of properties. Should contains at least {@code "name"}.
      * @param datum The datum.
      * @param cs The coordinate system.
      */
-    public DefaultGeographicCRS(
-            final Map<String, ?> properties, final GeodeticDatum datum, final EllipsoidalCS cs) {
+    public DefaultGeographicCRS(final Map<String, ?> properties, final GeodeticDatum datum, final EllipsoidalCS cs) {
         super(properties, datum, cs);
     }
 
@@ -162,14 +156,13 @@ public class DefaultGeographicCRS extends AbstractSingleCRS implements Geographi
     }
 
     /**
-     * Computes the orthodromic distance between two points. This convenience method delegates the
-     * work to the underlyling {@linkplain DefaultEllipsoid ellipsoid}, if possible.
+     * Computes the orthodromic distance between two points. This convenience method delegates the work to the
+     * underlyling {@linkplain DefaultEllipsoid ellipsoid}, if possible.
      *
      * @param coord1 Coordinates of the first point.
      * @param coord2 Coordinates of the second point.
      * @return The distance between {@code coord1} and {@code coord2}.
-     * @throws UnsupportedOperationException if this coordinate reference system can't compute
-     *     distances.
+     * @throws UnsupportedOperationException if this coordinate reference system can't compute distances.
      * @throws MismatchedDimensionException if a coordinate doesn't have the expected dimension.
      */
     @Override
@@ -203,18 +196,16 @@ public class DefaultGeographicCRS extends AbstractSingleCRS implements Geographi
     /**
      * Returns a hash value for this geographic CRS.
      *
-     * @return The hash code value. This value doesn't need to be the same in past or future
-     *     versions of this class.
+     * @return The hash code value. This value doesn't need to be the same in past or future versions of this class.
      */
     @Override
-    @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
-    public int hashCode() {
-        return (int) serialVersionUID ^ super.hashCode();
+    public int calculateHashCode() {
+        return (int) serialVersionUID ^ super.calculateHashCode();
     }
 
     /**
-     * Returns the angular unit of the specified coordinate system. The preference will be given to
-     * the longitude axis, if found.
+     * Returns the angular unit of the specified coordinate system. The preference will be given to the longitude axis,
+     * if found.
      */
     static Unit<Angle> getAngularUnit(final CoordinateSystem coordinateSystem) {
         Unit<Angle> unit = NonSI.DEGREE_ANGLE;
@@ -233,8 +224,8 @@ public class DefaultGeographicCRS extends AbstractSingleCRS implements Geographi
 
     /**
      * Format the inner part of a <A
-     * HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html"><cite>Well
-     * Known Text</cite> (WKT)</A> element.
+     * HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html"><cite>Well Known
+     * Text</cite> (WKT)</A> element.
      *
      * @param formatter The formatter to use.
      * @return The name of the WKT element type, which is {@code "GEOGCS"}.
@@ -256,5 +247,21 @@ public class DefaultGeographicCRS extends AbstractSingleCRS implements Geographi
         }
         formatter.setAngularUnit(oldUnit);
         return "GEOGCS";
+    }
+
+    @Override
+    public String formatPROJ(PROJFormatter formatter) {
+        if (!formatter.isProjectedCRS()) {
+            formatter.append("proj", "longlat");
+        }
+
+        if (datum instanceof PROJFormattable formattable) {
+            formatter.append(formattable);
+        }
+
+        formatter.append((PROJFormattable) ((GeodeticDatum) datum).getPrimeMeridian());
+        // Geographic CRS will already set the longlat proj string so the
+        // formatting won't return any keyword
+        return PROJFormatter.NO_KEYWORD;
     }
 }

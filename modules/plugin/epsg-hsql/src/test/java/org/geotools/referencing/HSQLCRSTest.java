@@ -16,16 +16,21 @@
  */
 package org.geotools.referencing;
 
+import static org.geotools.referencing.factory.epsg.DirectEpsgFactory.OperationOrder.AccuracyFirst;
+import static org.geotools.referencing.factory.epsg.DirectEpsgFactory.OperationOrder.AreaFirst;
+import static org.junit.Assert.assertArrayEquals;
+
 import java.util.Properties;
-import org.geotools.geometry.DirectPosition2D;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.geometry.Position2D;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
+import org.geotools.referencing.factory.epsg.DirectEpsgFactory;
 import org.junit.Test;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 
 /** Tests if the CRS utility class is functioning correctly when using HSQL datastore. */
 public class HSQLCRSTest extends AbstractCRSTest {
@@ -47,14 +52,12 @@ public class HSQLCRSTest extends AbstractCRSTest {
 
     @Test
     public void testMercatorProjectionTolerance()
-            throws NoSuchAuthorityCodeException, FactoryException, MismatchedDimensionException,
-                    TransformException {
+            throws NoSuchAuthorityCodeException, FactoryException, MismatchedDimensionException, TransformException {
         CoordinateReferenceSystem targetCrs = CRS.decode("EPSG:25831");
         // System.out.println(targetCrs.getDomainOfValidity());
-        MathTransform mathTransform =
-                CRS.findMathTransform(DefaultGeographicCRS.WGS84, targetCrs, true);
-        DirectPosition2D position2D = new DirectPosition2D(DefaultGeographicCRS.WGS84, 0.1, 39);
-        DirectPosition2D position2Dres = new DirectPosition2D();
+        MathTransform mathTransform = CRS.findMathTransform(DefaultGeographicCRS.WGS84, targetCrs, true);
+        Position2D position2D = new Position2D(DefaultGeographicCRS.WGS84, 0.1, 39);
+        Position2D position2Dres = new Position2D();
         mathTransform.transform(position2D, position2Dres);
     }
 
@@ -70,5 +73,45 @@ public class HSQLCRSTest extends AbstractCRSTest {
         // leave native axis order, it should be recognized as north/east
         CoordinateReferenceSystem crsNE = CRS.decode("EPSG:32761", false);
         assertEquals(CRS.AxisOrder.NORTH_EAST, CRS.getAxisOrder(crsNE));
+    }
+
+    @Test
+    public void testETRSPivot() throws Exception {
+        CoordinateReferenceSystem source = CRS.decode("EPSG:31467");
+        CoordinateReferenceSystem target = CRS.decode("EPSG:5683");
+        MathTransform mtAccuracy = CRS.findMathTransform(source, target, true);
+
+        double[] src = {3099840.7430828, 4949957.671010};
+        double[] dst = new double[2];
+        double[] projResult = {4949953.06, 3099840.28};
+
+        // without pivoting the result is 150 meters away form the proj one,
+        // with pivoting it's within 15 meters (proj favours large area operations over accurate ones)
+        mtAccuracy.transform(src, 0, dst, 0, 1);
+        assertArrayEquals(projResult, dst, 15);
+    }
+
+    @Test
+    public void testETRSPivotAreaSort() throws Exception {
+        // without pivoting the result is 150 meters away form the proj one,
+        // with pivoting and area preference it's within 0.5 meters
+        DirectEpsgFactory.setOperationOrder(AreaFirst);
+        CRS.reset("all");
+
+        try {
+            CoordinateReferenceSystem source = CRS.decode("EPSG:31467");
+            CoordinateReferenceSystem target = CRS.decode("EPSG:5683");
+            MathTransform mtAccuracy = CRS.findMathTransform(source, target, true);
+
+            double[] src = {3099840.7430828, 4949957.671010};
+            double[] dst = new double[2];
+            double[] projResult = {4949953.06, 3099840.28};
+
+            mtAccuracy.transform(src, 0, dst, 0, 1);
+            assertArrayEquals(projResult, dst, 0.5);
+        } finally {
+            DirectEpsgFactory.setOperationOrder(AccuracyFirst);
+            CRS.reset("all");
+        }
     }
 }

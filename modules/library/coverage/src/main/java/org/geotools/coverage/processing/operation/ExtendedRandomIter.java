@@ -16,12 +16,12 @@
  */
 package org.geotools.coverage.processing.operation;
 
-import it.geosolutions.jaiext.iterators.RandomIterFactory;
-import it.geosolutions.jaiext.range.NoDataContainer;
-import javax.media.jai.BorderExtender;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.RenderedOp;
-import javax.media.jai.iterator.RandomIter;
+import org.eclipse.imagen.BorderExtender;
+import org.eclipse.imagen.PlanarImage;
+import org.eclipse.imagen.RenderedOp;
+import org.eclipse.imagen.iterator.RandomIter;
+import org.eclipse.imagen.media.iterators.RandomIterFactory;
+import org.eclipse.imagen.media.range.NoDataContainer;
 import org.geotools.image.ImageWorker;
 import org.geotools.util.factory.GeoTools;
 
@@ -36,12 +36,7 @@ class ExtendedRandomIter implements RandomIter {
     RenderedOp op;
 
     public static RandomIter getRandomIterator(
-            final PlanarImage src,
-            int leftPad,
-            int rightPad,
-            int topPad,
-            int bottomPad,
-            BorderExtender extender) {
+            final PlanarImage src, int leftPad, int rightPad, int topPad, int bottomPad, BorderExtender extender) {
         RandomIter iterSource;
         if (extender != null) {
             ImageWorker w = new ImageWorker(src).setRenderingHints(GeoTools.getDefaultHints());

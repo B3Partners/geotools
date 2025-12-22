@@ -17,7 +17,6 @@
 package org.geotools.data.shapefile.shp;
 
 import java.io.IOException;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
@@ -32,18 +31,16 @@ import org.geotools.util.NIOUtilities;
 
 /**
  * IndexFile parser for .shx files.<br>
- * For now, the creation of index files is done in the ShapefileWriter. But this can be used to
- * access the index.<br>
+ * For now, the creation of index files is done in the ShapefileWriter. But this can be used to access the index.<br>
  * For details on the index file, see <br>
- * <a href="http://www.esri.com/library/whitepapers/pdfs/shapefile.pdf"><b>"ESRI(r) Shapefile - A
- * Technical Description"</b><br>
+ * <a href="http://www.esri.com/library/whitepapers/pdfs/shapefile.pdf"><b>"ESRI(r) Shapefile - A Technical
+ * Description"</b><br>
  * * <i>'An ESRI White Paper . May 1997'</i></a>
  *
  * @author Ian Schneider
  */
 public class IndexFile implements FileReader, AutoCloseable {
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(IndexFile.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(IndexFile.class);
 
     private static final int RECS_IN_BUFFER = 2000;
 
@@ -72,19 +69,18 @@ public class IndexFile implements FileReader, AutoCloseable {
         streamLogger.open();
         ReadableByteChannel byteChannel = shpFiles.getReadChannel(ShpFileType.SHX, this);
         try {
-            if (byteChannel instanceof FileChannel) {
-                this.channel = (FileChannel) byteChannel;
+            if (byteChannel instanceof FileChannel fileChannel) {
+                this.channel = fileChannel;
                 if (useMemoryMappedBuffer) {
                     LOGGER.finest("Memory mapping file...");
-                    this.buf =
-                            this.channel.map(FileChannel.MapMode.READ_ONLY, 0, this.channel.size());
+                    this.buf = this.channel.map(FileChannel.MapMode.READ_ONLY, 0, this.channel.size());
 
                     this.channelOffset = 0;
                 } else {
                     LOGGER.finest("Reading from file...");
                     this.buf = NIOUtilities.allocate(8 * RECS_IN_BUFFER);
                     channel.read(buf);
-                    ((Buffer) buf).flip();
+                    buf.flip();
                     this.channelOffset = 0;
                 }
 
@@ -135,7 +131,7 @@ public class IndexFile implements FileReader, AutoCloseable {
 
     private void readRecords(ReadableByteChannel channel) throws IOException {
         check();
-        int remaining = (header.getFileLength() * 2) - 100;
+        int remaining = header.getFileLength() * 2 - 100;
         ByteBuffer buffer = NIOUtilities.allocate(remaining);
         try {
             buffer.order(ByteOrder.BIG_ENDIAN);
@@ -156,19 +152,17 @@ public class IndexFile implements FileReader, AutoCloseable {
         check();
         int pos = 100 + index * 8;
         if (!this.useMemoryMappedBuffer) {
-            if (pos - this.channelOffset < 0
-                    || this.channelOffset + buf.limit() <= pos
-                    || this.lastIndex == -1) {
+            if (pos - this.channelOffset < 0 || this.channelOffset + buf.limit() <= pos || this.lastIndex == -1) {
                 LOGGER.finest("Filling buffer...");
                 this.channelOffset = pos;
                 this.channel.position(pos);
-                ((Buffer) buf).clear();
+                buf.clear();
                 this.channel.read(buf);
-                ((Buffer) buf).flip();
+                buf.flip();
             }
         }
 
-        ((Buffer) buf).position(pos - this.channelOffset);
+        buf.position(pos - this.channelOffset);
         this.recOffset = buf.getInt();
         this.recLen = buf.getInt();
         this.lastIndex = index;

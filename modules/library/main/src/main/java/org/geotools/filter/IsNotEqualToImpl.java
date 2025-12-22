@@ -16,9 +16,9 @@
  */
 package org.geotools.filter;
 
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.expression.Expression;
 
 public class IsNotEqualToImpl extends MultiCompareFilterImpl implements PropertyIsNotEqualTo {
 
@@ -41,10 +41,7 @@ public class IsNotEqualToImpl extends MultiCompareFilterImpl implements Property
     }
 
     protected IsNotEqualToImpl(
-            Expression expression1,
-            Expression expression2,
-            boolean matchCase,
-            MatchAction matchAction) {
+            Expression expression1, Expression expression2, boolean matchCase, MatchAction matchAction) {
         super(expression1, expression2, matchCase, matchAction);
         delegate = new IsEqualsToImpl(expression1, expression2, matchCase);
     }

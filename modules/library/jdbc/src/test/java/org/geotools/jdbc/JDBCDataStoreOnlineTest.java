@@ -36,13 +36,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.referencing.CRS;
@@ -52,16 +60,22 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public abstract class JDBCDataStoreOnlineTest extends JDBCTestSupport {
+
+    public JDBCDataStoreOnlineTest() {
+        super();
+    }
+
+    /**
+     * Constructs the test with a target coordinate precision for geometry comparisons
+     *
+     * @param coordinateEps
+     */
+    protected JDBCDataStoreOnlineTest(double coordinateEps) {
+        super(coordinateEps);
+    }
+
     @Test
     public void testGetNames() throws IOException {
         String[] typeNames = dataStore.getTypeNames();
@@ -78,19 +92,20 @@ public abstract class JDBCDataStoreOnlineTest extends JDBCTestSupport {
         assertNotNull(ft1.getDescriptor(aname("doubleProperty")));
         assertNotNull(ft1.getDescriptor(aname("stringProperty")));
 
-        assertTrue(
-                Geometry.class.isAssignableFrom(
-                        ft1.getDescriptor(aname("geometry")).getType().getBinding()));
-        assertTrue(
-                Number.class.isAssignableFrom(
-                        ft1.getDescriptor(aname("intProperty")).getType().getBinding()));
+        assertTrue(Geometry.class.isAssignableFrom(
+                ft1.getDescriptor(aname("geometry")).getType().getBinding()));
+        assertTrue(Number.class.isAssignableFrom(
+                ft1.getDescriptor(aname("intProperty")).getType().getBinding()));
         assertEquals(
-                Double.class, ft1.getDescriptor(aname("doubleProperty")).getType().getBinding());
+                Double.class,
+                ft1.getDescriptor(aname("doubleProperty")).getType().getBinding());
         assertEquals(
-                String.class, ft1.getDescriptor(aname("stringProperty")).getType().getBinding());
+                String.class,
+                ft1.getDescriptor(aname("stringProperty")).getType().getBinding());
     }
 
     @Test
+    @SuppressWarnings({"PMD.UnusedLocalVariable"})
     public void testCreateSchema() throws Exception {
         SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
         builder.setName(tname("ft2"));
@@ -184,10 +199,7 @@ public abstract class JDBCDataStoreOnlineTest extends JDBCTestSupport {
         assertLargeText(b -> b.userData(JDBCDataStore.JDBC_NATIVE_TYPENAME, getCLOBTypeName()));
     }
 
-    /**
-     * Used by testCreateSchemaWithNativeTypename. Allows database specific overrides, defaults to
-     * <code>CLOB</code>
-     */
+    /** Used by testCreateSchemaWithNativeTypename. Allows database specific overrides, defaults to <code>CLOB</code> */
     protected String getCLOBTypeName() {
         return "CLOB";
     }
@@ -217,7 +229,7 @@ public abstract class JDBCDataStoreOnlineTest extends JDBCTestSupport {
 
         // cannot get a consistent type response from different databases, but it should be able
         // to hold a very large string without cutting it
-        String largeString = RandomStringUtils.random(Short.MAX_VALUE + 1, true, false);
+        String largeString = RandomStringUtils.secure().next(Short.MAX_VALUE + 1, true, false);
         try (FeatureWriter<SimpleFeatureType, SimpleFeature> w =
                 dataStore.getFeatureWriter(typeName, Transaction.AUTO_COMMIT)) {
             w.hasNext();
@@ -301,13 +313,7 @@ public abstract class JDBCDataStoreOnlineTest extends JDBCTestSupport {
 
         // create index
         String indexName = "ft1_str_index";
-        Index stringIndex =
-                new Index(
-                        ft1TypeName,
-                        indexName,
-                        false,
-                        aname("stringProperty"),
-                        aname("intProperty"));
+        Index stringIndex = new Index(ft1TypeName, indexName, false, aname("stringProperty"), aname("intProperty"));
         dataStore.createIndex(stringIndex);
 
         // check the index has been created
@@ -369,14 +375,16 @@ public abstract class JDBCDataStoreOnlineTest extends JDBCTestSupport {
         }
 
         // clear out the feature type cache
-        dataStore.getEntry(new NameImpl(dataStore.getNamespaceURI(), tname("ft2"))).dispose();
+        dataStore
+                .getEntry(new NameImpl(dataStore.getNamespaceURI(), tname("ft2")))
+                .dispose();
         ft2 = dataStore.getSchema(tname("ft2"));
         assertTrue(CRS.equalsIgnoreMetadata(getUTMCRS(), ft2.getCoordinateReferenceSystem()));
     }
 
     /**
-     * Allows subclasses to use a axis order specific version of it (the outer is always east/north,
-     * but the wrapped geographic CRS is order dependent)
+     * Allows subclasses to use a axis order specific version of it (the outer is always east/north, but the wrapped
+     * geographic CRS is order dependent)
      */
     protected CoordinateReferenceSystem getUTMCRS() throws FactoryException {
         return decodeEPSG(26713);
@@ -451,28 +459,23 @@ public abstract class JDBCDataStoreOnlineTest extends JDBCTestSupport {
         try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
                 dataStore.getFeatureReader(query, Transaction.AUTO_COMMIT)) {
 
-            assertFeatureReader(
-                    0,
-                    3,
-                    reader,
-                    new SimpleFeatureAssertion() {
-                        @Override
-                        public int toIndex(SimpleFeature feature) {
-                            return ((Number) feature.getAttribute(aname("intProperty"))).intValue();
-                        }
+            assertFeatureReader(0, 3, reader, new SimpleFeatureAssertion() {
+                @Override
+                public int toIndex(SimpleFeature feature) {
+                    return ((Number) feature.getAttribute(aname("intProperty"))).intValue();
+                }
 
-                        @Override
-                        public void check(int index, SimpleFeature feature) {
-                            assertEquals(4, feature.getAttributeCount());
-                            Point p = gf.createPoint(new Coordinate(index, index));
-                            assertTrue(
-                                    p.equalsExact(
-                                            (Geometry) feature.getAttribute(aname("geometry"))));
+                @Override
+                public void check(int index, SimpleFeature feature) {
+                    assertEquals(4, feature.getAttributeCount());
+                    Point p = gf.createPoint(new Coordinate(index, index));
+                    Geometry geometry = (Geometry) feature.getAttribute(aname("geometry"));
+                    assertTrue(p.equalsExact(geometry, COORDINATE_EPS));
 
-                            Number ip = (Number) feature.getAttribute(aname("intProperty"));
-                            assertEquals(index, ip.intValue());
-                        }
-                    });
+                    Number ip = (Number) feature.getAttribute(aname("intProperty"));
+                    assertEquals(index, ip.intValue());
+                }
+            });
         }
 
         query.setPropertyNames(aname("intProperty"));
@@ -531,7 +534,8 @@ public abstract class JDBCDataStoreOnlineTest extends JDBCTestSupport {
         FilterFactory ff = dataStore.getFilterFactory();
 
         Filter f = ff.equals(ff.property(aname("intProperty")), ff.literal(100));
-        SimpleFeatureCollection features = dataStore.getFeatureSource(tname("ft1")).getFeatures(f);
+        SimpleFeatureCollection features =
+                dataStore.getFeatureSource(tname("ft1")).getFeatures(f);
         assertEquals(0, features.size());
 
         f = ff.equals(ff.property(aname("intProperty")), ff.literal(1));
@@ -561,7 +565,8 @@ public abstract class JDBCDataStoreOnlineTest extends JDBCTestSupport {
             }
         }
 
-        SimpleFeatureCollection features = dataStore.getFeatureSource(tname("ft1")).getFeatures();
+        SimpleFeatureCollection features =
+                dataStore.getFeatureSource(tname("ft1")).getFeatures();
         assertEquals(6, features.size());
     }
 

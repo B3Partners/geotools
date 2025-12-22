@@ -30,8 +30,7 @@ import org.geotools.xml.schema.Type;
 public class XMLTypeHelper {
 
     public static Element findChildElement(Type type, String localName, URI namespaceURI) {
-        if (type instanceof ComplexType) {
-            ComplexType complexType = (ComplexType) type;
+        if (type instanceof ComplexType complexType) {
             ElementGrouping child = complexType.getChild();
             if (child != null) {
                 Element found = child.findChildElement(localName, namespaceURI);
@@ -40,8 +39,7 @@ public class XMLTypeHelper {
             Element[] children = complexType.getChildElements();
             if (children == null || children.length == 0) return null;
             for (Element element : children) {
-                if (localName.equals(element.getName())
-                        && namespaceURI.equals(element.getNamespace())) return element;
+                if (localName.equals(element.getName()) && namespaceURI.equals(element.getNamespace())) return element;
             }
             if (complexType.getParent() != null) {
                 Type parent = complexType.getParent();

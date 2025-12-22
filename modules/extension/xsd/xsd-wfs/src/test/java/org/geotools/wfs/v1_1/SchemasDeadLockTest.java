@@ -32,13 +32,12 @@ import org.geotools.xsd.ows.OWS;
 import org.junit.Test;
 
 /**
- * Tests showing deadlock in loading XSD schemas. Done here because it needs a number of
- * inter-dependent XSD objects in order to manifest. This 4 are enough to make it happen most of the
- * time on a Ryzen 1700x (8 phsycal cores, the loads actually run in parallel)
+ * Tests showing deadlock in loading XSD schemas. Done here because it needs a number of inter-dependent XSD objects in
+ * order to manifest. This 4 are enough to make it happen most of the time on a Ryzen 1700x (8 phsycal cores, the loads
+ * actually run in parallel)
  */
 public class SchemasDeadLockTest {
-    protected static Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(SchemasDeadLockTest.class);
+    protected static Logger LOGGER = org.geotools.util.logging.Logging.getLogger(SchemasDeadLockTest.class);
 
     @Test
     public void testParse() throws Exception {
@@ -61,7 +60,7 @@ public class SchemasDeadLockTest {
                 executorService.awaitTermination(20, TimeUnit.SECONDS));
     }
 
-    public class XSDSchemaFetcher implements Callable<XSDSchema> {
+    public static class XSDSchemaFetcher implements Callable<XSDSchema> {
 
         private XSD xsd;
         private CountDownLatch threadCreationLatch;

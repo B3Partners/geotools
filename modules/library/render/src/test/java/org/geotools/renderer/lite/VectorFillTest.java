@@ -28,24 +28,23 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.Style;
 import org.geotools.data.property.PropertyDataStore;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.image.test.ImageAssert;
 import org.geotools.map.FeatureLayer;
 import org.geotools.map.MapContent;
 import org.geotools.renderer.style.FontCache;
-import org.geotools.styling.Mark;
-import org.geotools.styling.Style;
 import org.geotools.styling.visitor.DuplicatingStyleVisitor;
 import org.geotools.test.TestData;
 import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Similar to {@link FillTest}, but uses the vector rendering hint, and only tests stuff that can
- * work with such hint. Also accounts for the fact the texture paint and the full vector rendering
- * do not provide the same output
+ * Similar to {@link FillTest}, but uses the vector rendering hint, and only tests stuff that can work with such hint.
+ * Also accounts for the fact the texture paint and the full vector rendering do not provide the same output
  */
 public class VectorFillTest {
     private static final long TIME = 40000;
@@ -66,10 +65,8 @@ public class VectorFillTest {
         bounds.expandBy(0.2, 0.2);
 
         // load font
-        Font f =
-                Font.createFont(
-                        Font.TRUETYPE_FONT,
-                        TestData.getResource(this, "recreate.ttf").openStream());
+        Font f = Font.createFont(
+                Font.TRUETYPE_FONT, TestData.getResource(this, "recreate.ttf").openStream());
         FontCache.getDefaultInstance().registerFont(f);
 
         // System.setProperty("org.geotools.test.interactive", "true");
@@ -86,8 +83,7 @@ public class VectorFillTest {
         runSingleLayerTest(styleName, threshold, style);
     }
 
-    private void runSingleLayerTest(String fileName, int threshold, Style style)
-            throws Exception, IOException {
+    private void runSingleLayerTest(String fileName, int threshold, Style style) throws Exception, IOException {
         MapContent mc = new MapContent();
         mc.addLayer(new FeatureLayer(fs, style));
 
@@ -100,10 +96,7 @@ public class VectorFillTest {
 
         BufferedImage image = RendererBaseTest.showRender(fileName, renderer, TIME, bounds);
         File reference =
-                new File(
-                        "./src/test/resources/org/geotools/renderer/lite/test-data/vector"
-                                + fileName
-                                + ".png");
+                new File("./src/test/resources/org/geotools/renderer/lite/test-data/vector" + fileName + ".png");
         ImageAssert.assertEquals(reference, image, threshold);
     }
 
@@ -184,6 +177,11 @@ public class VectorFillTest {
     }
 
     @Test
+    public void testDot() throws Exception {
+        testParametricMark("dot", "shape://dot");
+    }
+
+    @Test
     public void testTimes() throws Exception {
         testParametricMark("times", "shape://times");
     }
@@ -200,21 +198,19 @@ public class VectorFillTest {
 
     @Test
     public void testWktComposite() throws Exception {
-        testParametricMark(
-                "wktcomposite", "wkt://MULTILINESTRING((-0.5 -0.5, 0.5 0.5), (0 -0.5, 0 0.5))");
+        testParametricMark("wktcomposite", "wkt://MULTILINESTRING((-0.5 -0.5, 0.5 0.5), (0 -0.5, 0 0.5))");
     }
 
     protected void testParametricMark(String fileName, final String markName) throws Exception {
         Style slashStyle = RendererBaseTest.loadStyle(this, "fillSlash.sld");
-        final DuplicatingStyleVisitor markReplacer =
-                new DuplicatingStyleVisitor() {
-                    @Override
-                    public void visit(Mark mark) {
-                        super.visit(mark);
-                        Mark copy = (Mark) pages.peek();
-                        copy.setWellKnownName(ff.literal(markName));
-                    }
-                };
+        final DuplicatingStyleVisitor markReplacer = new DuplicatingStyleVisitor() {
+            @Override
+            public void visit(Mark mark) {
+                super.visit(mark);
+                Mark copy = (Mark) pages.peek();
+                copy.setWellKnownName(ff.literal(markName));
+            }
+        };
         slashStyle.accept(markReplacer);
         Style style = (Style) markReplacer.getCopy();
         runSingleLayerTest(fileName, 100, style);

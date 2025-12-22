@@ -24,14 +24,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Literal;
 
 /**
  * Calculate the Jenks' Natural Breaks classification for a featurecollection
@@ -39,17 +39,16 @@ import org.opengis.filter.expression.Literal;
  * @author Ian Turton
  */
 public class JenksNaturalBreaksFunction extends ClassificationFunction {
-    org.opengis.util.ProgressListener progress;
+    org.geotools.api.util.ProgressListener progress;
 
     private static final Logger logger = Logging.getLogger(JenksNaturalBreaksFunction.class);
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "Jenks",
-                    RangedClassifier.class,
-                    parameter("value", Double.class),
-                    parameter("classes", Integer.class),
-                    parameter("percentages", Boolean.class, 0, 1));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "Jenks",
+            RangedClassifier.class,
+            parameter("value", Double.class),
+            parameter("classes", Integer.class),
+            parameter("percentages", Boolean.class, 0, 1));
 
     public JenksNaturalBreaksFunction() {
         super(NAME);
@@ -94,20 +93,18 @@ public class JenksNaturalBreaksFunction extends ClassificationFunction {
         Collections.sort(data);
 
         if (data.size() == 1 || data.get(0).equals(data.get(data.size() - 1))) {
-            return new RangedClassifier(
-                    new Comparable[] {data.get(0)}, new Comparable[] {data.get(0)});
+            return new RangedClassifier(new Comparable[] {data.get(0)}, new Comparable[] {data.get(0)});
         }
 
         final int k = getClasses();
         final int m = data.size();
         if (k == m) {
-            logger.info(
-                    "Number of classes ("
-                            + k
-                            + ") is equal to number of data points ("
-                            + m
-                            + ") "
-                            + "unique classification returned");
+            logger.info("Number of classes ("
+                    + k
+                    + ") is equal to number of data points ("
+                    + m
+                    + ") "
+                    + "unique classification returned");
             Comparable[] localMin = new Comparable[k];
             Comparable[] localMax = new Comparable[k];
 
@@ -149,12 +146,12 @@ public class JenksNaturalBreaksFunction extends ClassificationFunction {
                 // remember to allow for 0 index
                 double val = data.get(i3 - 1);
                 // update running totals
-                s2 = s2 + (val * val);
+                s2 = s2 + val * val;
                 s1 += val;
                 double s0 = ii;
                 // calculate (square of) the variance
                 // (http://secure.wikimedia.org/wikipedia/en/wiki/Standard_deviation#Rapid_calculation_methods)
-                var = s2 - ((s1 * s1) / s0);
+                var = s2 - s1 * s1 / s0;
                 // System.out.println(s0+" "+s1+" "+s2);
                 // System.out.println(i+","+ii+" var "+var);
                 int ik = i3 - 1;
@@ -163,7 +160,7 @@ public class JenksNaturalBreaksFunction extends ClassificationFunction {
                     for (int j = 2; j <= k; j++) {
                         // for each class compare current value to var + previous value
                         // System.out.println("\tis "+work[i][j]+" >= "+(var + work[ik][j - 1]));
-                        if (work[i][j] >= (var + work[ik][j - 1])) {
+                        if (work[i][j] >= var + work[ik][j - 1]) {
                             // if it is greater or equal update classification
                             iwork[i][j] = i3 - 1;
                             // System.out.println("\t\tiwork["+i+"]["+j+"] = "+i3);
@@ -178,9 +175,9 @@ public class JenksNaturalBreaksFunction extends ClassificationFunction {
         }
         if (logger.getLevel() == Level.FINER) {
             for (int i = 0; i < m; i++) {
-                String tmp = (i + ": " + data.get(i));
+                String tmp = i + ": " + data.get(i);
                 for (int j = 2; j <= k; j++) {
-                    tmp += ("\t" + iwork[i][j]);
+                    tmp += "\t" + iwork[i][j];
                 }
                 logger.finer(tmp);
             }
@@ -221,7 +218,7 @@ public class JenksNaturalBreaksFunction extends ClassificationFunction {
         double[] percentages = new double[classN];
         for (int i = 0; i < classN; i++) {
             double classMembers = getClassMembers(data, classifier, i);
-            percentages[i] = (classMembers / total) * 100;
+            percentages[i] = classMembers / total * 100;
         }
         classifier.setPercentages(percentages);
     }
@@ -233,7 +230,8 @@ public class JenksNaturalBreaksFunction extends ClassificationFunction {
         if (max == min) {
             result = data.stream().filter(d -> d == max).count();
         } else {
-            if (currentIdx == 0) result = data.stream().filter(d -> d >= min && d <= max).count();
+            if (currentIdx == 0)
+                result = data.stream().filter(d -> d >= min && d <= max).count();
             else result = data.stream().filter(d -> d > min && d <= max).count();
         }
         return result;

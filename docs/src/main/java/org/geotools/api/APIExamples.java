@@ -11,56 +11,65 @@
  */
 package org.geotools.api;
 
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.geometry.Bounds;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.geometry.GeneralBounds;
+import org.geotools.geometry.GeneralPosition;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.geometry.jts.ReferencedEnvelope3D;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.locationtech.jts.geom.Envelope;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 
 public class APIExamples {
 
-    /** OpenGIS Envelope Exampels (using ReferencedEnvelope) */
-    private void exampleISOEnvelope() throws Exception {
-        // exampleISOEnvelope start
+    /** OpenGIS Envelope Examples (using ReferencedEnvelope) */
+    private void exampleGeneralBounds() throws Exception {
+        // exampleGeneralBounds start
         CoordinateReferenceSystem wsg84 = CRS.decode("EPSG:4326");
-        org.opengis.geometry.Envelope envelope = new ReferencedEnvelope(0, 10, 0, 20, wsg84);
 
-        double xMin = envelope.getMinimum(0);
-        double yMin = envelope.getMinimum(1);
+        GeneralPosition lowerPosition = new GeneralPosition(0.0, 0.0);
+        lowerPosition.setCoordinateReferenceSystem(wsg84);
 
-        double xMax = envelope.getMaximum(0);
-        double yMax = envelope.getMaximum(1);
+        GeneralPosition upperPosition = new GeneralPosition(10.0, 20.0);
+        upperPosition.setCoordinateReferenceSystem(wsg84);
 
-        double width = envelope.getSpan(0);
-        double height = envelope.getSpan(1);
+        Bounds bounds = new GeneralBounds(lowerPosition, upperPosition);
 
-        double xCenter = envelope.getMedian(0);
-        double yCenter = envelope.getMedian(1);
+        double xMin = bounds.getMinimum(0);
+        double yMin = bounds.getMinimum(1);
 
-        CoordinateReferenceSystem crs = envelope.getCoordinateReferenceSystem();
+        double xMax = bounds.getMaximum(0);
+        double yMax = bounds.getMaximum(1);
+
+        double width = bounds.getSpan(0);
+        double height = bounds.getSpan(1);
+
+        double xCenter = bounds.getMedian(0);
+        double yCenter = bounds.getMedian(1);
+
+        CoordinateReferenceSystem crs = bounds.getCoordinateReferenceSystem();
 
         // Direct access to internal upper and lower positions
-        DirectPosition lower = envelope.getLowerCorner();
-        DirectPosition upper = envelope.getUpperCorner();
+        Position lower = bounds.getLowerCorner();
+        Position upper = bounds.getUpperCorner();
 
         // expand to include 15, 30
-        upper.setOrdinate(0, Math.max(upper.getOrdinate(0), 15));
-        upper.setOrdinate(1, Math.max(upper.getOrdinate(1), 30));
         lower.setOrdinate(0, Math.min(lower.getOrdinate(0), 15));
         lower.setOrdinate(1, Math.min(lower.getOrdinate(1), 30));
-
-        // exampleISOEnvelope end
+        upper.setOrdinate(0, Math.max(upper.getOrdinate(0), 15));
+        upper.setOrdinate(1, Math.max(upper.getOrdinate(1), 30));
+        // exampleGeneralBounds end
     }
 
     private void exampleBoundingBox() throws Exception {
         // exampleBoundingBox start
         CoordinateReferenceSystem wsg84 = CRS.decode("EPSG:4326");
-        org.opengis.geometry.BoundingBox bbox = new ReferencedEnvelope(0, 10, 0, 20, wsg84);
+        org.geotools.api.geometry.BoundingBox bbox = new ReferencedEnvelope(0, 10, 0, 20, wsg84);
 
         double xMin = bbox.getMinX();
         double yMin = bbox.getMinY();
@@ -77,8 +86,8 @@ public class APIExamples {
         CoordinateReferenceSystem crs = bbox.getCoordinateReferenceSystem();
 
         // Direct access to internal upper and lower positions
-        DirectPosition lower = bbox.getLowerCorner();
-        DirectPosition upper = bbox.getUpperCorner();
+        Position lower = bbox.getLowerCorner();
+        Position upper = bbox.getUpperCorner();
 
         // expand to include 15, 30
         bbox.include(15, 30);
@@ -133,12 +142,11 @@ public class APIExamples {
     }
 
     //
-    // Referenced Envelope Examples
+    // Referenced Envelope Recommended Examples
     //
-    private void exampleReferencedEnvelope() throws Exception {
-        // exampleReferencedEnvelope start
-        ReferencedEnvelope envelope =
-                new ReferencedEnvelope(0, 10, 0, 20, DefaultGeographicCRS.WGS84);
+    private void recommendedReferencedEnvelope() throws Exception {
+        // recommendedReferencedEnvelope start
+        ReferencedEnvelope envelope = new ReferencedEnvelope(0, 10, 0, 20, DefaultGeographicCRS.WGS84);
 
         double xMin = envelope.getMinX();
         double yMin = envelope.getMinY();
@@ -156,8 +164,45 @@ public class APIExamples {
         int dimension = envelope.getDimension();
 
         // Direct access to internal upper and lower positions
-        DirectPosition lower = envelope.getLowerCorner();
-        DirectPosition upper = envelope.getUpperCorner();
+        Position lower = envelope.getLowerCorner();
+        Position upper = envelope.getUpperCorner();
+
+        // expand to include 15, 30
+        envelope.include(15, 30);
+
+        envelope.isEmpty(); // check if storing width and height are 0
+
+        envelope.isNull(); // check if "null" (not storing anything)
+        envelope.setToNull();
+
+        // recommendedReferencedEnvelope end
+    }
+
+    //
+    // Referenced Envelope Examples
+    //
+    private void exampleReferencedEnvelope() throws Exception {
+        // exampleReferencedEnvelope start
+        ReferencedEnvelope envelope = new ReferencedEnvelope(0, 10, 0, 20, DefaultGeographicCRS.WGS84);
+
+        double xMin = envelope.getMinX();
+        double yMin = envelope.getMinY();
+
+        double xMax = envelope.getMaxX();
+        double yMax = envelope.getMaxY();
+
+        double width = envelope.getWidth();
+        double height = envelope.getHeight();
+
+        double xCenter = envelope.getMedian(0);
+        double yCenter = envelope.getMedian(1);
+
+        CoordinateReferenceSystem crs = envelope.getCoordinateReferenceSystem();
+        int dimension = envelope.getDimension();
+
+        // Direct access to internal upper and lower positions
+        Position lower = envelope.getLowerCorner();
+        Position upper = envelope.getUpperCorner();
 
         // expand to include 15, 30
         envelope.include(15, 30);
@@ -175,8 +220,7 @@ public class APIExamples {
     //
     private void exampleReferencedEnvelope3D() throws Exception {
         // exampleReferencedEnvelope3D start
-        ReferencedEnvelope3D envelope =
-                new ReferencedEnvelope3D(0, 10, 0, 20, 0, 30, DefaultGeographicCRS.WGS84_3D);
+        ReferencedEnvelope3D envelope = new ReferencedEnvelope3D(0, 10, 0, 20, 0, 30, DefaultGeographicCRS.WGS84_3D);
 
         double xMin = envelope.getMinX();
         double yMin = envelope.getMinY();
@@ -198,8 +242,8 @@ public class APIExamples {
         int dimension = envelope.getDimension();
 
         // Direct access to internal upper and lower positions
-        DirectPosition lower = envelope.getLowerCorner();
-        DirectPosition upper = envelope.getUpperCorner();
+        Position lower = envelope.getLowerCorner();
+        Position upper = envelope.getUpperCorner();
 
         // expand to include 15, 30, 40
         envelope.include(15, 30, 40);
@@ -217,15 +261,19 @@ public class APIExamples {
     //
     private void exampleReferencedEnvelopeStaticMethods() throws Exception {
         // exampleReferencedEnvelopeStaticMethods start
-        ReferencedEnvelope
-                env; // can hold both regular ReferencedEnvelope as well as ReferencedEnvelope3D
-        ReferencedEnvelope original = null; // can be instance of ReferencedEnvelope3D;
-        CoordinateReferenceSystem crs = null; // can be 2D or 3D
-        org.opengis.geometry.Envelope opengis_env =
-                null; // can be instance of ReferencedEnvelope(3D)
-        org.locationtech.jts.geom.Envelope jts_env =
-                null; // can be instance of ReferencedEnvelope(3D)
-        BoundingBox bbox = null; // can be instance of ReferencedEnvelope(3D)
+
+        // can hold both regular ReferencedEnvelope as well as ReferencedEnvelope3D
+        ReferencedEnvelope env;
+        // can be instance of ReferencedEnvelope3D;
+        ReferencedEnvelope original = null;
+        // can be 2D or 3D
+        CoordinateReferenceSystem crs = null;
+        // can be instance of ReferencedEnvelope(3D)
+        Bounds opengis_env = null;
+        // can be instance of ReferencedEnvelope(3D)
+        org.locationtech.jts.geom.Envelope jts_env = null;
+        // can be instance of ReferencedEnvelope or ReferencedEnvelope3D
+        BoundingBox bbox = null;
 
         // safely copy ReferencedEnvelope, uses type of original to determine type
         env = ReferencedEnvelope.create(original);
@@ -233,15 +281,15 @@ public class APIExamples {
         // safely create ReferencedEnvelope from CRS, uses dimension to determine type
         env = ReferencedEnvelope.create(crs);
 
-        // safely create ReferencedEnvelope from org.opengis.geometry.Envelope, uses dimension in
-        // Envelope to determine type
+        // safely create ReferencedEnvelope from org.geotools.api.geometry.Envelope,
+        // uses dimension in Envelope to determine type
         env = ReferencedEnvelope.create(opengis_env, crs);
 
-        // safely create ReferencedEnvelope from org.locationtech.jts.geom.Envelope, uses
-        // dimension in Envelope to determine type
-        env = ReferencedEnvelope.create(jts_env, crs);
+        // safely create ReferencedEnvelope from org.locationtech.jts.geom.Envelope,
+        // uses dimension in Envelope to determine type
+        env = ReferencedEnvelope.envelope(jts_env, crs);
 
-        // safely reference org.opengis.geometry.Envelope as ReferencedEnvelope
+        // safely reference org.geotools.api.geometry.Envelope as ReferencedEnvelope
         // --> if it is a ReferencedEnvelope(3D), simply cast it; if not, create a conversion
         env = ReferencedEnvelope.reference(opengis_env);
 

@@ -16,41 +16,47 @@
  */
 package org.geotools.gml3;
 
-import static org.custommonkey.xmlunit.XMLAssert.assertXpathEvaluatesTo;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import org.custommonkey.xmlunit.SimpleNamespaceContext;
-import org.custommonkey.xmlunit.XMLUnit;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.DataUtilities;
+import org.geotools.feature.NameImpl;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.gml2.SrsSyntax;
 import org.geotools.gml3.bindings.GML3MockData;
 import org.geotools.gml3.bindings.TEST;
 import org.geotools.gml3.bindings.TestConfiguration;
+import org.geotools.referencing.CRS;
+import org.geotools.test.xml.XmlTestSupport;
 import org.geotools.xsd.Encoder;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.Attributes;
 
-public class GML3EncodingTest {
+public class GML3EncodingTest extends XmlTestSupport {
 
-    @Before
-    public void setUp() throws Exception {
-
-        Map<String, String> namespaces = new HashMap<>();
-        namespaces.put("test", TEST.TestFeature.getNamespaceURI());
-        XMLUnit.setXpathNamespaceContext(new SimpleNamespaceContext(namespaces));
+    @Override
+    protected Map<String, String> getNamespaces() {
+        return namespaces(Namespace("test", TEST.TestFeature.getNamespaceURI()));
     }
 
     @Test
@@ -93,24 +99,36 @@ public class GML3EncodingTest {
     public void testEncodeSrsSyntax() throws Exception {
         GMLConfiguration gml = new GMLConfiguration();
         Document dom = new Encoder(gml).encodeAsDOM(GML3MockData.point(), GML.Point);
-        Assert.assertTrue(
-                dom.getDocumentElement()
-                        .getAttribute("srsName")
-                        .startsWith("urn:x-ogc:def:crs:EPSG:"));
+        Assert.assertTrue(dom.getDocumentElement().getAttribute("srsName").startsWith("urn:x-ogc:def:crs:EPSG:"));
 
         gml.setSrsSyntax(SrsSyntax.OGC_URN);
         dom = new Encoder(gml).encodeAsDOM(GML3MockData.point(), GML.Point);
-        Assert.assertTrue(
-                dom.getDocumentElement()
-                        .getAttribute("srsName")
-                        .startsWith("urn:ogc:def:crs:EPSG::"));
+        Assert.assertTrue(dom.getDocumentElement().getAttribute("srsName").startsWith("urn:ogc:def:crs:EPSG::"));
 
         gml.setSrsSyntax(SrsSyntax.OGC_HTTP_URI);
         dom = new Encoder(gml).encodeAsDOM(GML3MockData.point(), GML.Point);
         Assert.assertTrue(
-                dom.getDocumentElement()
-                        .getAttribute("srsName")
-                        .startsWith("http://www.opengis.net/def/crs/EPSG/0/"));
+                dom.getDocumentElement().getAttribute("srsName").startsWith("http://www.opengis.net/def/crs/EPSG/0/"));
+    }
+
+    @Test
+    public void testEncodeSrsSyntaxIAU() throws Exception {
+        Point p = new GeometryFactory().createPoint(new Coordinate(1, 2));
+        p.setUserData(CRS.decode("urn:x-ogc:def:crs:IAU::1000"));
+
+        GMLConfiguration gml = new GMLConfiguration();
+        Document dom = new Encoder(gml).encodeAsDOM(p, GML.Point);
+        assertEquals("urn:x-ogc:def:crs:IAU:1000", dom.getDocumentElement().getAttribute("srsName"));
+
+        gml.setSrsSyntax(SrsSyntax.OGC_URN);
+        dom = new Encoder(gml).encodeAsDOM(p, GML.Point);
+        assertEquals("urn:ogc:def:crs:IAU::1000", dom.getDocumentElement().getAttribute("srsName"));
+
+        gml.setSrsSyntax(SrsSyntax.OGC_HTTP_URI);
+        dom = new Encoder(gml).encodeAsDOM(p, GML.Point);
+        assertEquals(
+                "http://www.opengis.net/def/crs/IAU/0/1000",
+                dom.getDocumentElement().getAttribute("srsName"));
     }
 
     @Test
@@ -142,7 +160,8 @@ public class GML3EncodingTest {
         dom = encoder.encodeAsDOM(feature, TEST.TestFeature);
         countList = dom.getElementsByTagName("test:count");
         count = countList.item(0);
-        Assert.assertEquals("true", count.getAttributes().getNamedItem("xsd:nil").getTextContent());
+        Assert.assertEquals(
+                "true", count.getAttributes().getNamedItem("xsd:nil").getTextContent());
         dateList = dom.getElementsByTagName("test:date");
         date = dateList.item(0);
         Assert.assertEquals("true", date.getAttributes().getNamedItem("xsd:nil").getTextContent());
@@ -187,33 +206,37 @@ public class GML3EncodingTest {
         encoder.setIndentSize(2);
         String xml = encoder.encodeAsString(feature, TEST.TestFeature);
 
-        // System.out.println(xml);
-        Document dom = XMLUnit.buildControlDocument(xml);
-        assertXpathEvaluatesTo("0.000000015", "//test:decimal", dom);
+        assertThat(xml, hasXPath("//test:decimal", equalTo("0.000000015")));
     }
 
     @Test
     public void testRemoveInvalidXMLChars() throws Exception {
-        SimpleFeatureType ft =
-                DataUtilities.createType(
-                        TEST.TestFeature.getNamespaceURI(),
-                        TEST.TestFeature.getLocalPart(),
-                        "the_geom:Point,data:String");
-        SimpleFeature feature =
-                SimpleFeatureBuilder.build(
-                        ft,
-                        new Object[] {
-                            new WKTReader().read("POINT(0 0)"), "One " + ((char) 0x7) + " test"
-                        },
-                        "123");
+        SimpleFeatureType ft = DataUtilities.createType(
+                TEST.TestFeature.getNamespaceURI(), TEST.TestFeature.getLocalPart(), "the_geom:Point,data:String");
+        SimpleFeature feature = SimpleFeatureBuilder.build(
+                ft, new Object[] {new WKTReader().read("POINT(0 0)"), "One " + (char) 0x7 + " test"}, "123");
 
         TestConfiguration configuration = new TestConfiguration();
         Encoder encoder = new Encoder(configuration);
         String result = encoder.encodeAsString(feature, TEST.TestFeature);
 
-        // System.out.println(result);
+        assertThat(result, hasXPath("//test:data", equalTo("One  test")));
+    }
 
-        Document dom = XMLUnit.buildControlDocument(result);
-        assertXpathEvaluatesTo("One  test", "//test:data", dom);
+    @Test
+    public void testEncodeFeatureMemberAttributes() throws Exception {
+        SimpleFeature feature = GML3MockData.feature();
+        Map<Name, Object> attributesMap = new HashMap<>();
+        attributesMap.put(new NameImpl("example"), "123");
+        feature.getUserData().put(Attributes.class, attributesMap);
+        GMLConfiguration configuration = new GMLConfiguration();
+
+        Encoder encoder = new Encoder(configuration);
+        Document dom = encoder.encodeAsDOM(feature, GML.featureMember);
+        Node featureNode = dom.getDocumentElement().getFirstChild();
+        assertTrue(featureNode instanceof Element);
+        Element featureElement = (Element) featureNode;
+        assertTrue(featureElement.hasAttribute("example"));
+        assertFalse(dom.getDocumentElement().hasAttribute("example"));
     }
 }

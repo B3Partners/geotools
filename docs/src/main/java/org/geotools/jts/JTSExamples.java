@@ -11,9 +11,9 @@
  */
 package org.geotools.jts;
 
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.JTS;
 import org.locationtech.jts.geom.Coordinate;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class JTSExamples {
 
@@ -27,7 +27,7 @@ public class JTSExamples {
         double distance = JTS.orthodromicDistance(start, end, crs);
         int totalmeters = (int) distance;
         int km = totalmeters / 1000;
-        int meters = totalmeters - (km * 1000);
+        int meters = totalmeters - km * 1000;
         float remaining_cm = (float) (distance - totalmeters) * 10000;
         remaining_cm = Math.round(remaining_cm);
         float cm = remaining_cm / 100;

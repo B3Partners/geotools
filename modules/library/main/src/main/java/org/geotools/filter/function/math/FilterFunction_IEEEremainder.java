@@ -20,21 +20,20 @@ package org.geotools.filter.function.math;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.util.Converters;
 import org.geotools.util.factory.Hints;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_IEEEremainder extends FunctionExpressionImpl {
 
     // public static FunctionName NAME = new FunctionNameImpl("IEEEremainder","dividend","divisor");
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "IEEEremainder",
-                    parameter("remainder", Double.class),
-                    parameter("dividend", Number.class),
-                    parameter("divisor", Number.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "IEEEremainder",
+            parameter("remainder", Double.class),
+            parameter("dividend", Number.class),
+            parameter("divisor", Number.class));
 
     public FilterFunction_IEEEremainder() {
         super("IEEEremainder");
@@ -50,11 +49,7 @@ public class FilterFunction_IEEEremainder extends FunctionExpressionImpl {
             return null;
         }
 
-        arg0 =
-                Converters.convert(
-                        arg0,
-                        Double.class,
-                        new Hints()); // attempt to get value and perform conversion
+        arg0 = Converters.convert(arg0, Double.class, new Hints()); // attempt to get value and perform conversion
         arg1 = Converters.convert(arg1, Double.class, new Hints());
 
         if (arg0 == null) {
@@ -68,6 +63,6 @@ public class FilterFunction_IEEEremainder extends FunctionExpressionImpl {
                     "Filter Function problem for function IEEEremainder argument #1 - expected type double");
         }
 
-        return (Math.IEEEremainder((Double) arg0, (Double) arg1));
+        return Math.IEEEremainder((Double) arg0, (Double) arg1);
     }
 }

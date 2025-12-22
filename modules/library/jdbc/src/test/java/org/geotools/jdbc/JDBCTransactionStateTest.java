@@ -28,7 +28,7 @@ import java.sql.SQLException;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.Transaction;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -56,19 +56,15 @@ public class JDBCTransactionStateTest {
     @Before
     public void setUp() {
         // when(mockLogHandler.publish(any(LogRecord.class)));
-        doAnswer(
-                        (Answer<Object>)
-                                invocation -> {
-                                    Object[] arguments = invocation.getArguments();
-                                    LogRecord logRecord = (LogRecord) arguments[0];
-                                    if (logRecord.getLevel() == Level.WARNING
-                                            && !logRecord
-                                                    .getSourceMethodName()
-                                                    .equals("finalize")) {
-                                        warningsCount++;
-                                    }
-                                    return null;
-                                })
+        doAnswer((Answer<Object>) invocation -> {
+                    Object[] arguments = invocation.getArguments();
+                    LogRecord logRecord = (LogRecord) arguments[0];
+                    if (logRecord.getLevel() == Level.WARNING
+                            && !logRecord.getSourceMethodName().equals("finalize")) {
+                        warningsCount++;
+                    }
+                    return null;
+                })
                 .when(mockLogHandler)
                 .publish(any(LogRecord.class));
         dataStore = new JDBCDataStore();
@@ -81,10 +77,7 @@ public class JDBCTransactionStateTest {
         dataStore.dispose();
     }
 
-    /**
-     * Tests if connection gets closed on internally managed connections and creation of log
-     * statements.
-     */
+    /** Tests if connection gets closed on internally managed connections and creation of log statements. */
     @Test
     public void testSetTransactionNullWithInternalConnection() throws IOException, SQLException {
         JDBCTransactionState state = new JDBCTransactionState(mockConnection, dataStore);

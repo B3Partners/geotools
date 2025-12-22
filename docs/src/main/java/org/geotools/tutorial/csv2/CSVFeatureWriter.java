@@ -15,20 +15,21 @@ import com.csvreader.CsvWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.NoSuchElementException;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.cs.AxisDirection;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
 import org.geotools.data.store.ContentState;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.cs.AxisDirection;
 
 /**
  * Iterator supporting writing of feature content.
@@ -56,12 +57,11 @@ public class CSVFeatureWriter implements FeatureWriter<SimpleFeatureType, Simple
     private boolean appending = false;
 
     /** flag to keep track of lat/lon order */
-    private boolean latlon =
-            DefaultGeographicCRS.WGS84
-                    .getCoordinateSystem()
-                    .getAxis(0)
-                    .getDirection()
-                    .equals(AxisDirection.NORTH);
+    private boolean latlon = DefaultGeographicCRS.WGS84
+            .getCoordinateSystem()
+            .getAxis(0)
+            .getDirection()
+            .equals(AxisDirection.NORTH);
 
     int latIndex = 0;
     int lngIndex = 0;
@@ -75,7 +75,7 @@ public class CSVFeatureWriter implements FeatureWriter<SimpleFeatureType, Simple
         File file = ((CSVDataStore) state.getEntry().getDataStore()).file;
         File directory = file.getParentFile();
         this.temp = File.createTempFile(typeName + System.currentTimeMillis(), "csv", directory);
-        this.csvWriter = new CsvWriter(new FileWriter(this.temp), ',');
+        this.csvWriter = new CsvWriter(new FileWriter(this.temp, StandardCharsets.UTF_8), ',');
         this.delegate = new CSVFeatureReader(state, query);
         this.csvWriter.writeRecord(delegate.reader.getHeaders());
         String latField = "lat";
@@ -114,8 +114,7 @@ public class CSVFeatureWriter implements FeatureWriter<SimpleFeatureType, Simple
 
     // next start
     @Override
-    public SimpleFeature next()
-            throws IOException, IllegalArgumentException, NoSuchElementException {
+    public SimpleFeature next() throws IOException, IllegalArgumentException, NoSuchElementException {
         if (csvWriter == null) {
             throw new IOException("FeatureWriter has been closed");
         }
@@ -144,16 +143,15 @@ public class CSVFeatureWriter implements FeatureWriter<SimpleFeatureType, Simple
     // next end
 
     // remove start
-    /**
-     * Mark our {@link #currentFeature} feature as null, it will be skipped when written effectively
-     * removing it.
-     */
+    /** Mark our {@link #currentFeature} feature as null, it will be skipped when written effectively removing it. */
+    @Override
     public void remove() throws IOException {
         this.currentFeature = null; // just mark it done which means it will not get written out.
     }
     // remove end
 
     // write start
+    @Override
     public void write() throws IOException {
         if (this.currentFeature == null) {
             return; // current feature has been deleted
@@ -162,8 +160,7 @@ public class CSVFeatureWriter implements FeatureWriter<SimpleFeatureType, Simple
             Object value = property.getValue();
             if (value == null) {
                 this.csvWriter.write("");
-            } else if (value instanceof Point) {
-                Point point = (Point) value;
+            } else if (value instanceof Point point) {
                 if (latlon && latIndex <= lngIndex) {
                     this.csvWriter.write(Double.toString(point.getX()));
                     this.csvWriter.write(Double.toString(point.getY()));

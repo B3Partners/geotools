@@ -16,7 +16,6 @@
  */
 package org.geotools.data.shapefile.shp;
 
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
 import java.util.ArrayList;
@@ -33,8 +32,8 @@ import org.locationtech.jts.geom.MultiLineString;
  * aaime @author Ian Schneider
  */
 /**
- * The default JTS handler for shapefile. Currently uses the default JTS GeometryFactory, since it
- * doesn't seem to matter.
+ * The default JTS handler for shapefile. Currently uses the default JTS GeometryFactory, since it doesn't seem to
+ * matter.
  */
 public class MultiLineHandler implements ShapeHandler {
     final ShapeType shapeType;
@@ -60,8 +59,7 @@ public class MultiLineHandler implements ShapeHandler {
      */
     public MultiLineHandler(ShapeType type, GeometryFactory gf) throws ShapefileException {
         if (!type.isLineType()) {
-            throw new ShapefileException(
-                    "MultiLineHandler constructor - expected type to be 3,13 or 23");
+            throw new ShapefileException("MultiLineHandler constructor - expected type to be 3,13 or 23");
         }
 
         shapeType = type;
@@ -85,20 +83,11 @@ public class MultiLineHandler implements ShapeHandler {
         int numpoints = multi.getNumPoints();
 
         if (shapeType == ShapeType.ARC) {
-            length = 44 + (4 * numlines) + (numpoints * 16);
+            length = 44 + 4 * numlines + numpoints * 16;
         } else if (shapeType == ShapeType.ARCM) {
-            length = 44 + (4 * numlines) + (numpoints * 16) + 8 + 8 + (8 * numpoints);
+            length = 44 + 4 * numlines + numpoints * 16 + 8 + 8 + 8 * numpoints;
         } else if (shapeType == ShapeType.ARCZ) {
-            length =
-                    44
-                            + (4 * numlines)
-                            + (numpoints * 16)
-                            + 8
-                            + 8
-                            + (8 * numpoints)
-                            + 8
-                            + 8
-                            + (8 * numpoints);
+            length = 44 + 4 * numlines + numpoints * 16 + 8 + 8 + 8 * numpoints + 8 + 8 + 8 * numpoints;
         } else {
             throw new IllegalStateException("Expected ShapeType of Arc, got " + shapeType);
         }
@@ -115,12 +104,9 @@ public class MultiLineHandler implements ShapeHandler {
         if (type == ShapeType.NULL) {
             return createNull();
         }
-        int dimensions =
-                ((shapeType == ShapeType.ARCZ || shapeType == ShapeType.ARCM) && !flatGeometry)
-                        ? 3
-                        : 2;
+        int dimensions = (shapeType == ShapeType.ARCZ || shapeType == ShapeType.ARCM) && !flatGeometry ? 3 : 2;
         // read bounding box (not needed)
-        ((Buffer) buffer).position(buffer.position() + 4 * 8);
+        buffer.position(buffer.position() + 4 * 8);
 
         int numParts = buffer.getInt();
         int numPoints = buffer.getInt(); // total number of points
@@ -141,7 +127,7 @@ public class MultiLineHandler implements ShapeHandler {
         for (int part = 0; part < numParts; part++) {
             start = partOffsets[part];
 
-            if (part == (numParts - 1)) {
+            if (part == numParts - 1) {
                 finish = numPoints;
             } else {
                 finish = partOffsets[part + 1];
@@ -159,23 +145,13 @@ public class MultiLineHandler implements ShapeHandler {
             CoordinateSequence cs;
             int measure = flatGeometry ? 0 : 1;
             if (shapeType == ShapeType.ARCM) {
-                cs =
-                        JTS.createCS(
-                                geometryFactory.getCoordinateSequenceFactory(),
-                                length,
-                                dimensions + measure,
-                                measure);
+                cs = JTS.createCS(
+                        geometryFactory.getCoordinateSequenceFactory(), length, dimensions + measure, measure);
             } else if (shapeType == ShapeType.ARCZ) {
-                cs =
-                        JTS.createCS(
-                                geometryFactory.getCoordinateSequenceFactory(),
-                                length,
-                                dimensions + measure,
-                                measure);
+                cs = JTS.createCS(
+                        geometryFactory.getCoordinateSequenceFactory(), length, dimensions + measure, measure);
             } else {
-                cs =
-                        JTS.createCS(
-                                geometryFactory.getCoordinateSequenceFactory(), length, dimensions);
+                cs = JTS.createCS(geometryFactory.getCoordinateSequenceFactory(), length, dimensions);
             }
             double[] xy = new double[xyLength * 2];
             doubleBuffer.get(xy);
@@ -203,7 +179,7 @@ public class MultiLineHandler implements ShapeHandler {
             for (int part = 0; part < numParts; part++) {
                 start = partOffsets[part];
 
-                if (part == (numParts - 1)) {
+                if (part == numParts - 1) {
                     finish = numPoints;
                 } else {
                     finish = partOffsets[part + 1];
@@ -224,8 +200,7 @@ public class MultiLineHandler implements ShapeHandler {
                 }
             }
         }
-        boolean isArcZWithM =
-                (doubleBuffer.remaining() >= numPoints + 2) && shapeType == ShapeType.ARCZ;
+        boolean isArcZWithM = doubleBuffer.remaining() >= numPoints + 2 && shapeType == ShapeType.ARCZ;
         if ((isArcZWithM || shapeType == ShapeType.ARCM) && !flatGeometry) {
             // M min, max
             // buffer.position(buffer.position() + 2 * 8);
@@ -236,7 +211,7 @@ public class MultiLineHandler implements ShapeHandler {
             for (int part = 0; part < numParts; part++) {
                 start = partOffsets[part];
 
-                if (part == (numParts - 1)) {
+                if (part == numParts - 1) {
                     finish = numPoints;
                 } else {
                     finish = partOffsets[part + 1];
@@ -350,10 +325,9 @@ public class MultiLineHandler implements ShapeHandler {
             buffer.putDouble(mvalues.stream().min(Double::compare).get());
             buffer.putDouble(mvalues.stream().max(Double::compare).get());
             // encode all M values
-            mvalues.forEach(
-                    x -> {
-                        buffer.putDouble(x);
-                    });
+            mvalues.forEach(x -> {
+                buffer.putDouble(x);
+            });
         }
     }
 }

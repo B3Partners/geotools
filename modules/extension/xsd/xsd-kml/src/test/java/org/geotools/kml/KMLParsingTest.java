@@ -23,11 +23,12 @@ import java.util.Collection;
 import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.style.FeatureTypeStyle;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.kml.bindings.DocumentTypeBinding;
-import org.geotools.styling.FeatureTypeStyle;
 import org.geotools.xsd.Encoder;
 import org.geotools.xsd.Parser;
 import org.geotools.xsd.StreamingParser;
@@ -37,7 +38,6 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.simple.SimpleFeature;
 import org.w3c.dom.Document;
 
 public class KMLParsingTest {
@@ -45,8 +45,7 @@ public class KMLParsingTest {
     @Test
     public void testParse() throws Exception {
         Parser parser = new Parser(new KMLConfiguration());
-        SimpleFeature f =
-                (SimpleFeature) parser.parse(getClass().getResourceAsStream("states.kml"));
+        SimpleFeature f = (SimpleFeature) parser.parse(getClass().getResourceAsStream("states.kml"));
         Assert.assertNotNull(f);
 
         Assert.assertEquals("topp:states", f.getAttribute("name"));
@@ -57,11 +56,8 @@ public class KMLParsingTest {
 
     @Test
     public void testStream() throws Exception {
-        StreamingParser parser =
-                new StreamingParser(
-                        new KMLConfiguration(),
-                        getClass().getResourceAsStream("states.kml"),
-                        KML.Placemark);
+        StreamingParser parser = new StreamingParser(
+                new KMLConfiguration(), getClass().getResourceAsStream("states.kml"), KML.Placemark);
         int count = 0;
         SimpleFeature f = null;
 

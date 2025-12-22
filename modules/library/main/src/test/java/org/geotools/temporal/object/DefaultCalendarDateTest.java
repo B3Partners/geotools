@@ -22,6 +22,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
+import org.geotools.api.temporal.CalendarDate;
+import org.geotools.api.temporal.TemporalReferenceSystem;
+import org.geotools.api.util.InternationalString;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
 import org.geotools.temporal.reference.DefaultTemporalReferenceSystem;
@@ -29,9 +32,6 @@ import org.geotools.util.SimpleInternationalString;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.temporal.CalendarDate;
-import org.opengis.temporal.TemporalReferenceSystem;
-import org.opengis.util.InternationalString;
 
 /** @author Mehdi Sidhoum (Geomatys) */
 public class DefaultCalendarDateTest {
@@ -74,8 +74,7 @@ public class DefaultCalendarDateTest {
     @Test
     public void testSetCalendarEraName() {
         InternationalString result = calendarDate1.getCalendarEraName();
-        ((DefaultCalendarDate) calendarDate1)
-                .setCalendarEraName(new SimpleInternationalString("new Era"));
+        ((DefaultCalendarDate) calendarDate1).setCalendarEraName(new SimpleInternationalString("new Era"));
         assertNotEquals(calendarDate1.getCalendarEraName(), result);
     }
 
@@ -85,7 +84,7 @@ public class DefaultCalendarDateTest {
         int[] result = calendarDate1.getCalendarDate();
         int[] caldate = {1995, 5, 5};
         ((DefaultCalendarDate) calendarDate1).setCalendarDate(caldate);
-        assertThat(calendarDate1.getCalendarDate(), not(equalTo((result))));
+        assertThat(calendarDate1.getCalendarDate(), not(equalTo(result)));
     }
 
     /** Test of equals method, of class DefaultCalendarDate. */

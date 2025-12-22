@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.graph.structure.Edge;
@@ -28,7 +29,6 @@ import org.geotools.graph.structure.Node;
 import org.geotools.graph.structure.basic.BasicGraph;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
 
 /** @author jfc173 */
 public class AutoClustUtils {
@@ -36,15 +36,14 @@ public class AutoClustUtils {
     /** Creates a new instance of AutoClustUtils */
     public AutoClustUtils() {}
 
-    public static List<Graph> findConnectedComponents(
-            final Collection<Node> nodes, final Collection<Edge> edges) {
+    public static List<Graph> findConnectedComponents(final Collection<Node> nodes, final Collection<Edge> edges) {
         List<Graph> components = new ArrayList<>();
         List<Node> nodesVisited = new ArrayList<>();
 
         Iterator<Node> nodesIt = nodes.iterator();
         while (nodesIt.hasNext()) {
             Node next = nodesIt.next();
-            if (!(nodesVisited.contains(next))) {
+            if (!nodesVisited.contains(next)) {
                 List<Node> componentNodes = new ArrayList<>();
                 List<Edge> componentEdges = new ArrayList<>();
                 expandComponent(next, edges, componentNodes, componentEdges);
@@ -66,9 +65,7 @@ public class AutoClustUtils {
             componentNodes.add(node);
             //            LOGGER.finer("Adding " + node + " to component");
             List<Edge> adjacentEdges =
-                    findAdjacentEdges(
-                            node,
-                            edges); // yes, I know node.getEdges() should do this, but this method
+                    findAdjacentEdges(node, edges); // yes, I know node.getEdges() should do this, but this method
             // could be out of data by the time I use this in AutoClust
             componentEdges.addAll(adjacentEdges);
             //            LOGGER.finer("Adding " + adjacentEdges + " to component");
@@ -81,10 +78,7 @@ public class AutoClustUtils {
                 //                LOGGER.finer("its other node is " + additionalNode);
                 if (additionalNode == null) {
                     throw new RuntimeException(
-                            "I tried to get the other node of this edge "
-                                    + next
-                                    + " but it doesn't have "
-                                    + node);
+                            "I tried to get the other node of this edge " + next + " but it doesn't have " + node);
                 }
                 expandComponent(additionalNode, edges, componentNodes, componentEdges);
             }
@@ -97,7 +91,7 @@ public class AutoClustUtils {
         Iterator<Edge> it = edges.iterator();
         while (it.hasNext()) {
             Edge next = it.next();
-            if ((next.getNodeA().equals(node)) || (next.getNodeB().equals(node))) {
+            if (next.getNodeA().equals(node) || next.getNodeB().equals(node)) {
                 ret.add(next);
             }
         }
@@ -113,15 +107,15 @@ public class AutoClustUtils {
                 SimpleFeature next = iter.next();
                 Geometry geom = (Geometry) next.getDefaultGeometry();
                 Point centroid;
-                if (geom instanceof Point) {
-                    centroid = (Point) geom;
+                if (geom instanceof Point point) {
+                    centroid = point;
                 } else {
                     centroid = geom.getCentroid();
                 }
                 DelaunayNode node = new DelaunayNode();
                 node.setCoordinate(centroid.getCoordinate());
                 node.setFeature(next);
-                if (!(arrayContains(node, nodes, index))) {
+                if (!arrayContains(node, nodes, index)) {
                     nodes[index] = node;
                     index++;
                 }
@@ -139,9 +133,9 @@ public class AutoClustUtils {
         boolean ret = false;
         boolean done = false;
         int i = 0;
-        while (!(done)) {
+        while (!done) {
             if (i < index) {
-                done = ret = (nodes[i].equals(node));
+                done = ret = nodes[i].equals(node);
                 i++;
             } else {
                 done = true;

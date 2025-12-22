@@ -16,22 +16,22 @@
  */
 package org.geotools.util;
 
+import java.io.Serial;
+import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import org.geotools.api.util.Cloneable;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
-import org.opengis.util.Cloneable;
 
 /**
- * A {@linkplain Collections#checkedSet checked} and {@linkplain Collections#synchronizedSet
- * synchronized} {@link java.util.Set}. Type checks are performed at run-time in addition of
- * compile-time checks. The synchronization lock can be modified at runtime by overriding the {@link
- * #getLock} method.
+ * A {@linkplain Collections#checkedSet checked} and {@linkplain Collections#synchronizedSet synchronized}
+ * {@link java.util.Set}. Type checks are performed at run-time in addition of compile-time checks. The synchronization
+ * lock can be modified at runtime by overriding the {@link #getLock} method.
  *
- * <p>This class is similar to using the wrappers provided in {@link Collections}, minus the cost of
- * indirection levels and with the addition of overrideable methods.
+ * <p>This class is similar to using the wrappers provided in {@link Collections}, minus the cost of indirection levels
+ * and with the addition of overrideable methods.
  *
  * @param <E> The type of elements in the set.
  * @since 2.1
@@ -43,6 +43,7 @@ import org.opengis.util.Cloneable;
  */
 public class CheckedHashSet<E> extends LinkedHashSet<E> implements CheckedCollection<E>, Cloneable {
     /** Serial version UID for compatibility with different versions. */
+    @Serial
     private static final long serialVersionUID = -9014541457174735097L;
 
     /** The element type. */
@@ -75,7 +76,7 @@ public class CheckedHashSet<E> extends LinkedHashSet<E> implements CheckedCollec
     /** Make sure that {@link #type} is non-null. */
     private void ensureNonNull() {
         if (type == null) {
-            throw new IllegalArgumentException(Errors.format(ErrorKeys.NULL_ARGUMENT_$1, "type"));
+            throw new IllegalArgumentException(MessageFormat.format(ErrorKeys.NULL_ARGUMENT_$1, "type"));
         }
     }
 
@@ -90,8 +91,8 @@ public class CheckedHashSet<E> extends LinkedHashSet<E> implements CheckedCollec
     }
 
     /**
-     * Checks the type of the specified object. The default implementation ensure that the object is
-     * assignable to the type specified at construction time.
+     * Checks the type of the specified object. The default implementation ensure that the object is assignable to the
+     * type specified at construction time.
      *
      * @param element the object to check, or {@code null}.
      * @throws IllegalArgumentException if the specified element is not of the expected type.
@@ -99,7 +100,7 @@ public class CheckedHashSet<E> extends LinkedHashSet<E> implements CheckedCollec
     protected void ensureValidType(final E element) throws IllegalArgumentException {
         if (element != null && !type.isInstance(element)) {
             throw new IllegalArgumentException(
-                    Errors.format(ErrorKeys.ILLEGAL_CLASS_$2, element.getClass(), type));
+                    MessageFormat.format(ErrorKeys.ILLEGAL_CLASS_$2, element.getClass(), type));
         }
     }
 
@@ -109,8 +110,7 @@ public class CheckedHashSet<E> extends LinkedHashSet<E> implements CheckedCollec
      * @param collection the collection to check, or {@code null}.
      * @throws IllegalArgumentException if at least one element is not of the expected type.
      */
-    private void ensureValid(final Collection<? extends E> collection)
-            throws IllegalArgumentException {
+    private void ensureValid(final Collection<? extends E> collection) throws IllegalArgumentException {
         if (collection != null) {
             for (final E element : collection) {
                 ensureValidType(element);
@@ -119,10 +119,10 @@ public class CheckedHashSet<E> extends LinkedHashSet<E> implements CheckedCollec
     }
 
     /**
-     * Checks if changes in this collection are allowed. This method is automatically invoked after
-     * this collection got the {@linkplain #getLock lock} and before any operation that may change
-     * the content. The default implementation does nothing (i.e. this collection is modifiable).
-     * Subclasses should override this method if they want to control write access.
+     * Checks if changes in this collection are allowed. This method is automatically invoked after this collection got
+     * the {@linkplain #getLock lock} and before any operation that may change the content. The default implementation
+     * does nothing (i.e. this collection is modifiable). Subclasses should override this method if they want to control
+     * write access.
      *
      * @throws UnsupportedOperationException if this collection is unmodifiable.
      * @since 2.5
@@ -130,9 +130,8 @@ public class CheckedHashSet<E> extends LinkedHashSet<E> implements CheckedCollec
     protected void checkWritePermission() throws UnsupportedOperationException {}
 
     /**
-     * Returns the synchronization lock. The default implementation returns {@code this}. Subclasses
-     * that override this method should be careful to update the lock reference when this set is
-     * {@linkplain #clone cloned}.
+     * Returns the synchronization lock. The default implementation returns {@code this}. Subclasses that override this
+     * method should be careful to update the lock reference when this set is {@linkplain #clone cloned}.
      *
      * @return The synchronization lock.
      * @since 2.5
@@ -183,8 +182,7 @@ public class CheckedHashSet<E> extends LinkedHashSet<E> implements CheckedCollec
      * @throws UnsupportedOperationException if this collection is unmodifiable.
      */
     @Override
-    public boolean add(final E element)
-            throws IllegalArgumentException, UnsupportedOperationException {
+    public boolean add(final E element) throws IllegalArgumentException, UnsupportedOperationException {
         ensureValidType(element);
         synchronized (getLock()) {
             checkWritePermission();

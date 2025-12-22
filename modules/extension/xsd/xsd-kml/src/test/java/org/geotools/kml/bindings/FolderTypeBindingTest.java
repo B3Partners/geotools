@@ -19,11 +19,11 @@ package org.geotools.kml.bindings;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Collection;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.kml.KML;
 import org.geotools.kml.KMLTestSupport;
 import org.geotools.xsd.Binding;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
 
 public class FolderTypeBindingTest extends KMLTestSupport {
     @Test
@@ -38,15 +38,14 @@ public class FolderTypeBindingTest extends KMLTestSupport {
 
     @Test
     public void testParse() throws Exception {
-        String xml =
-                "<Folder>"
-                        + "<name>folder</name>"
-                        + "<Placemark>"
-                        + "<Point>"
-                        + "<coordinates>0,0</coordinates>"
-                        + "</Point>"
-                        + "</Placemark>"
-                        + "</Folder>";
+        String xml = "<Folder>"
+                + "<name>folder</name>"
+                + "<Placemark>"
+                + "<Point>"
+                + "<coordinates>0,0</coordinates>"
+                + "</Point>"
+                + "</Placemark>"
+                + "</Folder>";
         buildDocument(xml);
 
         SimpleFeature document = (SimpleFeature) parse();

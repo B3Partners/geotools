@@ -43,15 +43,14 @@ import org.locationtech.jts.geom.impl.PackedCoordinateSequence;
  */
 public class LiteCoordinateSequence extends PackedCoordinateSequence implements Cloneable {
 
-    private static final GeometryFactory geomFac =
-            new GeometryFactory(new LiteCoordinateSequenceFactory());
+    private static final GeometryFactory geomFac = new GeometryFactory(new LiteCoordinateSequenceFactory());
 
     /** The packed coordinate array */
     private double[] coords;
 
     /**
-     * Cached size, getSize() gets called an incredible number of times during rendering (a profile
-     * shows 2 million calls when rendering 90.000 linear features)
+     * Cached size, getSize() gets called an incredible number of times during rendering (a profile shows 2 million
+     * calls when rendering 90.000 linear features)
      */
     private int size;
 
@@ -69,11 +68,9 @@ public class LiteCoordinateSequence extends PackedCoordinateSequence implements 
     /** Private initializer, allows sharing code between constructors */
     void init(double[] coords, int dimensions) {
         this.dimension = dimensions;
-        if (dimensions < 2)
-            throw new IllegalArgumentException("Invalid dimensions, must be at least 2");
+        if (dimensions < 2) throw new IllegalArgumentException("Invalid dimensions, must be at least 2");
         if (coords.length % dimension != 0) {
-            throw new IllegalArgumentException(
-                    "Packed array does not contain an integral number of coordinates");
+            throw new IllegalArgumentException("Packed array does not contain an integral number of coordinates");
         }
         this.coords = coords;
         this.size = coords.length / dimensions;
@@ -160,8 +157,8 @@ public class LiteCoordinateSequence extends PackedCoordinateSequence implements 
         this.size = cs.size();
         this.dimension = dimension;
 
-        if (cs instanceof LiteCoordinateSequence && cs.getMeasures() == measures) {
-            double[] orig = ((LiteCoordinateSequence) cs).getOrdinateArray(dimension, measures);
+        if (cs instanceof LiteCoordinateSequence sequence && cs.getMeasures() == measures) {
+            double[] orig = sequence.getOrdinateArray(dimension, measures);
             this.coords = new double[orig.length];
             System.arraycopy(orig, 0, coords, 0, coords.length);
         } else {
@@ -216,9 +213,8 @@ public class LiteCoordinateSequence extends PackedCoordinateSequence implements 
     }
 
     /**
-     * @see org.locationtech.jts.geom.CoordinateSequence#getOrdinate(int, int) Beware, for
-     *     performace reasons the ordinate index is not checked, if it's over dimensions you may not
-     *     get an exception but a meaningless value.
+     * @see org.locationtech.jts.geom.CoordinateSequence#getOrdinate(int, int) Beware, for performace reasons the
+     *     ordinate index is not checked, if it's over dimensions you may not get an exception but a meaningless value.
      */
     @Override
     public double getOrdinate(int index, int ordinate) {
@@ -280,8 +276,8 @@ public class LiteCoordinateSequence extends PackedCoordinateSequence implements 
     }
 
     /**
-     * if this is a dimension=2 seq, then this is the same as getArray(). If its >2 dims this will
-     * make a new array with dim=2
+     * if this is a dimension=2 seq, then this is the same as getArray(). If its >2 dims this will make a new array with
+     * dim=2
      */
     public double[] getXYArray() {
         if (dimension == 2) {
@@ -334,8 +330,8 @@ public class LiteCoordinateSequence extends PackedCoordinateSequence implements 
     }
 
     /**
-     * Clones the specified geometry using {@link LiteCoordinateSequence} in the result, with the
-     * specified number of dimensions
+     * Clones the specified geometry using {@link LiteCoordinateSequence} in the result, with the specified number of
+     * dimensions
      */
     public static Geometry cloneGeometry(Geometry geom, int dimension) {
         if (dimension < 2) {
@@ -344,12 +340,12 @@ public class LiteCoordinateSequence extends PackedCoordinateSequence implements 
 
         if (geom == null) return null;
 
-        if (geom instanceof LineString) {
-            return cloneGeometry((LineString) geom, dimension);
-        } else if (geom instanceof Polygon) {
-            return cloneGeometry((Polygon) geom, dimension);
-        } else if (geom instanceof Point) {
-            return cloneGeometry((Point) geom, dimension);
+        if (geom instanceof LineString string) {
+            return cloneGeometry(string, dimension);
+        } else if (geom instanceof Polygon polygon) {
+            return cloneGeometry(polygon, dimension);
+        } else if (geom instanceof Point point) {
+            return cloneGeometry(point, dimension);
         } else {
             return cloneGeometry((GeometryCollection) geom, dimension);
         }
@@ -371,20 +367,17 @@ public class LiteCoordinateSequence extends PackedCoordinateSequence implements 
     }
 
     private static final Geometry cloneGeometry(Point geom, int dimension) {
-        return geomFac.createPoint(
-                new LiteCoordinateSequence(geom.getCoordinateSequence(), dimension));
+        return geomFac.createPoint(new LiteCoordinateSequence(geom.getCoordinateSequence(), dimension));
     }
 
     private static final Geometry cloneGeometry(LineString geom, int dimension) {
-        if (geom instanceof SingleCurvedGeometry<?>) {
-            SingleCurvedGeometry<?> curved = (SingleCurvedGeometry<?>) geom;
+        if (geom instanceof SingleCurvedGeometry<?> curved) {
             double[] controlPoints = curved.getControlPoints();
             double[] clonedPoints = new double[controlPoints.length];
             System.arraycopy(controlPoints, 0, clonedPoints, 0, controlPoints.length);
 
             return new CircularString(clonedPoints, geomFac, curved.getTolerance());
-        } else if (geom instanceof CompoundCurvedGeometry<?>) {
-            CompoundCurvedGeometry<?> curved = (CompoundCurvedGeometry<?>) geom;
+        } else if (geom instanceof CompoundCurvedGeometry<?> curved) {
             List<LineString> components = curved.getComponents();
             List<LineString> clonedComponents = new ArrayList<>(components.size());
             for (LineString ls : components) {
@@ -393,21 +386,18 @@ public class LiteCoordinateSequence extends PackedCoordinateSequence implements 
             }
             return new CompoundCurve(clonedComponents, geomFac, dimension);
         } else {
-            return geomFac.createLineString(
-                    new LiteCoordinateSequence(geom.getCoordinateSequence(), dimension));
+            return geomFac.createLineString(new LiteCoordinateSequence(geom.getCoordinateSequence(), dimension));
         }
     }
 
     private static final Geometry cloneGeometry(LinearRing geom, int dimension) {
-        if (geom instanceof SingleCurvedGeometry<?>) {
-            SingleCurvedGeometry<?> curved = (SingleCurvedGeometry<?>) geom;
+        if (geom instanceof SingleCurvedGeometry<?> curved) {
             double[] controlPoints = curved.getControlPoints();
             double[] clonedPoints = new double[controlPoints.length];
             System.arraycopy(controlPoints, 0, clonedPoints, 0, controlPoints.length);
 
             return new CircularRing(clonedPoints, geomFac, curved.getTolerance());
-        } else if (geom instanceof CompoundCurvedGeometry<?>) {
-            CompoundCurvedGeometry<?> curved = (CompoundCurvedGeometry<?>) geom;
+        } else if (geom instanceof CompoundCurvedGeometry<?> curved) {
             List<LineString> components = curved.getComponents();
             List<LineString> clonedComponents = new ArrayList<>(components.size());
             for (LineString ls : components) {
@@ -416,8 +406,7 @@ public class LiteCoordinateSequence extends PackedCoordinateSequence implements 
             }
             return new CompoundRing(clonedComponents, geomFac, dimension);
         } else {
-            return geomFac.createLinearRing(
-                    new LiteCoordinateSequence(geom.getCoordinateSequence(), dimension));
+            return geomFac.createLinearRing(new LiteCoordinateSequence(geom.getCoordinateSequence(), dimension));
         }
     }
 
@@ -438,7 +427,7 @@ public class LiteCoordinateSequence extends PackedCoordinateSequence implements 
     @Override
     public String toString() {
         if (size > 0) {
-            StringBuffer strBuf = new StringBuffer((9 * dimension) * size);
+            StringBuffer strBuf = new StringBuffer(9 * dimension * size);
             strBuf.append('(');
             for (int i = 0; i < size; i++) {
                 for (int j = 0; j < dimension; j++) {

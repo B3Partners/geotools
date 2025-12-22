@@ -26,11 +26,16 @@ import java.awt.image.RenderedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.style.Style;
 import org.geotools.data.memory.MemoryDataStore;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
@@ -40,7 +45,6 @@ import org.geotools.image.test.ImageAssert;
 import org.geotools.map.FeatureLayer;
 import org.geotools.map.MapContent;
 import org.geotools.referencing.CRS;
-import org.geotools.styling.Style;
 import org.geotools.xml.styling.SLDParser;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -49,9 +53,6 @@ import org.locationtech.jts.geom.MultiLineString;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
 
 public class LabelObstacleTest {
 
@@ -99,11 +100,9 @@ public class LabelObstacleTest {
         WKTReader wkt = new WKTReader();
 
         try (FeatureWriter w = mem.getFeatureWriter(name, Transaction.AUTO_COMMIT);
-                BufferedReader r =
-                        new BufferedReader(
-                                new InputStreamReader(
-                                        LabelObstacleTest.class.getResourceAsStream(
-                                                "test-data/obstacles/" + name + ".txt")))) {
+                BufferedReader r = new BufferedReader(new InputStreamReader(
+                        LabelObstacleTest.class.getResourceAsStream("test-data/obstacles/" + name + ".txt"),
+                        StandardCharsets.UTF_8))) {
             String line = null;
             while ((line = r.readLine()) != null) {
                 String[] values = line.split(";");
@@ -124,10 +123,9 @@ public class LabelObstacleTest {
 
     Style style(String name) throws Exception {
         // return RendererBaseTest.loadStyle(this, "test-data/obstacles/" + name + ".sld");
-        SLDParser p =
-                new SLDParser(
-                        CommonFactoryFinder.getStyleFactory(null),
-                        getClass().getResourceAsStream("test-data/obstacles/" + name + ".sld"));
+        SLDParser p = new SLDParser(
+                CommonFactoryFinder.getStyleFactory(null),
+                getClass().getResourceAsStream("test-data/obstacles/" + name + ".sld"));
         return p.readXML()[0];
     }
 
@@ -173,16 +171,12 @@ public class LabelObstacleTest {
     }
 
     File file(String name) {
-        return new File(
-                "src/test/resources/org/geotools/renderer/lite/test-data/obstacles/"
-                        + name
-                        + ".png");
+        return new File("src/test/resources/org/geotools/renderer/lite/test-data/obstacles/" + name + ".png");
     }
 
     @Test
     public void testExternalGraphicNoObstacle() throws Exception {
-        BufferedImage labels =
-                render(sources("roads", "points"), styles("label", "grinNoObstacle"));
+        BufferedImage labels = render(sources("roads", "points"), styles("label", "grinNoObstacle"));
         BufferedImage points = render(sources("roads", "points"), styles(null, "grinNoObstacle"));
 
         ImageWorker extrema = intersectionExtrema(labels, points);
@@ -239,10 +233,7 @@ public class LabelObstacleTest {
         assertEquals(1.0, minimum[0], 0.0);
     }
 
-    /**
-     * Computes the overlap between labels and obstacles, returning the extrema of the binary
-     * overlap
-     */
+    /** Computes the overlap between labels and obstacles, returning the extrema of the binary overlap */
     ImageWorker intersectionExtrema(BufferedImage labels, BufferedImage obstacles) {
         // from 4 bands to 1 band averaging the pixel values
         ImageWorker w = new ImageWorker(labels);
@@ -263,8 +254,7 @@ public class LabelObstacleTest {
         // w.binarize(1).getRenderedImage();//BinarizeDescriptor.create(labelsCombine, 1.0, null);
         // get anything that is not fully white
         RenderedImage binaryObstacles =
-                w1.binarize(250)
-                        .getRenderedImage(); // BinarizeDescriptor.create(pointsCombine, 250.0,
+                w1.binarize(250).getRenderedImage(); // BinarizeDescriptor.create(pointsCombine, 250.0,
         // null);
 
         // combine the two, only pixels that are both black in both images will be black (0)

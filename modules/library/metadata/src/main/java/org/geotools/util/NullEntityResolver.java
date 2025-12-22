@@ -17,6 +17,7 @@
 package org.geotools.util;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.io.Serializable;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -25,14 +26,15 @@ import org.xml.sax.ext.EntityResolver2;
 /**
  * NullObject implementation for {@link EntityResolver2} (used as an alternative to null checks).
  *
- * <p>This implementation returns {@code null} to request that the parser open a regular URI
- * connection to the system identifier.
+ * <p>This implementation returns {@code null} to request that the parser open a regular URI connection to the system
+ * identifier.
  *
  * @author Jody Garnett (Boundless)
  */
 public class NullEntityResolver implements EntityResolver2, Serializable {
 
     /** serialVersionUID */
+    @Serial
     private static final long serialVersionUID = 1440071882791317708L;
 
     /** Singleton instance of PreventLocalEntityResolver */
@@ -42,13 +44,9 @@ public class NullEntityResolver implements EntityResolver2, Serializable {
         // singleton
     }
 
-    /**
-     * @return {@code null} to request that the parser open a regular URI connection to the system
-     *     identifier.
-     */
+    /** @return {@code null} to request that the parser open a regular URI connection to the system identifier. */
     @Override
-    public InputSource resolveEntity(String publicId, String systemId)
-            throws SAXException, IOException {
+    public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
         return null;
     }
 
@@ -56,8 +54,7 @@ public class NullEntityResolver implements EntityResolver2, Serializable {
      * @return {@code null} to indicate that no external subset is provided.
      */
     @Override
-    public InputSource getExternalSubset(String name, String baseURI)
-            throws SAXException, IOException {
+    public InputSource getExternalSubset(String name, String baseURI) throws SAXException, IOException {
         return null;
     }
 

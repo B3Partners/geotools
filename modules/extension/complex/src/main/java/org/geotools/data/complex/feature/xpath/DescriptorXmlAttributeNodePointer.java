@@ -17,16 +17,17 @@
 
 package org.geotools.data.complex.feature.xpath;
 
+import java.io.Serial;
 import java.util.Iterator;
 import org.apache.commons.jxpath.ri.QName;
 import org.apache.commons.jxpath.ri.model.NodePointer;
 import org.eclipse.xsd.XSDAttributeDeclaration;
 import org.eclipse.xsd.XSDElementDeclaration;
+import org.geotools.api.feature.type.ComplexType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.feature.type.PropertyType;
 import org.geotools.xsd.Schemas;
-import org.opengis.feature.type.ComplexType;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.feature.type.PropertyType;
 
 /**
  * Special node pointer for an XML-attribute inside an attribute.
@@ -36,6 +37,7 @@ import org.opengis.feature.type.PropertyType;
 public class DescriptorXmlAttributeNodePointer extends NodePointer {
 
     /** */
+    @Serial
     private static final long serialVersionUID = 8096170689141331692L;
 
     /** The name of the node. */
@@ -44,8 +46,7 @@ public class DescriptorXmlAttributeNodePointer extends NodePointer {
     /** The underlying descriptor */
     PropertyDescriptor descriptor;
 
-    protected DescriptorXmlAttributeNodePointer(
-            NodePointer parent, PropertyDescriptor descriptor, Name name) {
+    protected DescriptorXmlAttributeNodePointer(NodePointer parent, PropertyDescriptor descriptor, Name name) {
         super(parent);
         this.name = name;
         this.descriptor = descriptor;
@@ -81,8 +82,7 @@ public class DescriptorXmlAttributeNodePointer extends NodePointer {
 
         // first try regular way
         PropertyType pt = descriptor.getType();
-        if (pt instanceof ComplexType) {
-            ComplexType ct = (ComplexType) pt;
+        if (pt instanceof ComplexType ct) {
             PropertyDescriptor ad = ct.getDescriptor("@" + name.getLocalPart());
             if (ad != null) {
                 return ad;
@@ -94,12 +94,11 @@ public class DescriptorXmlAttributeNodePointer extends NodePointer {
 
         Iterator it = Schemas.getAttributeDeclarations(decl).iterator();
         while (it.hasNext()) {
-            XSDAttributeDeclaration attDecl = ((XSDAttributeDeclaration) it.next());
+            XSDAttributeDeclaration attDecl = (XSDAttributeDeclaration) it.next();
             if (attDecl.getURI()
-                    .equals(
-                            (name.getNamespaceURI() == null ? "" : name.getNamespaceURI())
-                                    + "#"
-                                    + name.getLocalPart())) {
+                    .equals((name.getNamespaceURI() == null ? "" : name.getNamespaceURI())
+                            + "#"
+                            + name.getLocalPart())) {
                 return name;
             }
         }

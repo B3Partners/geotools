@@ -18,11 +18,11 @@ package org.geotools.data.postgis.ps;
 
 import static org.junit.Assert.assertEquals;
 
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.postgis.PostgisGeographyTestSetup;
 import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.jdbc.JDBCGeographyOnlineTest;
 import org.geotools.jdbc.JDBCGeographyTestSetup;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class PostgisGeographyOnlineTest extends JDBCGeographyOnlineTest {
 
@@ -45,8 +45,6 @@ public class PostgisGeographyOnlineTest extends JDBCGeographyOnlineTest {
 
         // extra check, pg specific: the native typename is actually geography
         SimpleFeatureType ft = dataStore.getFeatureSource(tname("geopoint")).getSchema();
-        assertEquals(
-                "geography",
-                ft.getGeometryDescriptor().getUserData().get(JDBCDataStore.JDBC_NATIVE_TYPENAME));
+        assertEquals("geography", ft.getGeometryDescriptor().getUserData().get(JDBCDataStore.JDBC_NATIVE_TYPENAME));
     }
 }

@@ -18,12 +18,6 @@ package org.geotools.coverage.processing;
 
 import it.geosolutions.imageioimpl.plugins.tiff.TIFFImageReader;
 import it.geosolutions.imageioimpl.plugins.tiff.TIFFImageReaderSpi;
-import it.geosolutions.jaiext.range.Range;
-import it.geosolutions.jaiext.range.RangeFactory;
-import it.geosolutions.jaiext.stats.Statistics;
-import it.geosolutions.jaiext.stats.Statistics.StatsType;
-import it.geosolutions.jaiext.zonal.ZonalStatsDescriptor;
-import it.geosolutions.jaiext.zonal.ZoneGeometry;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
@@ -34,30 +28,44 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
-import javax.media.jai.PlanarImage;
+import org.eclipse.imagen.PlanarImage;
+import org.eclipse.imagen.media.range.Range;
+import org.eclipse.imagen.media.range.RangeFactory;
+import org.eclipse.imagen.media.stats.Statistics;
+import org.eclipse.imagen.media.stats.Statistics.StatsType;
+import org.eclipse.imagen.media.zonal.ZonalStatsDescriptor;
+import org.eclipse.imagen.media.zonal.ZoneGeometry;
 import org.geotools.TestData;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.coverage.CoverageFactoryFinder;
 import org.geotools.coverage.GridSampleDimension;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.processing.operation.ZonalStatistics;
+import org.geotools.data.DataUtilities;
 import org.geotools.data.WorldFileReader;
+import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.feature.FeatureIterator;
+import org.geotools.feature.SchemaException;
+import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.util.logging.Logging;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
 
 /**
- * This test-class evaluates the functionalities of the "ZonalStatistics" {@link OperationJAI}. The
- * test is executed with and without the calculations of the statistics for each range. The utility
- * class {@link StatisticsTool} is used for storing the statistic results.
+ * This test-class evaluates the functionalities of the "ZonalStatistics" {@link OperationJAI}. The test is executed
+ * with and without the calculations of the statistics for each range. The utility class {@link StatisticsTool} is used
+ * for storing the statistic results.
  *
  * @author Nicola Lagomarsini, GeoSolutions
  */
@@ -69,8 +77,33 @@ public class ZonalStatisticsTest {
     /** CoverageProcessor */
     private static final CoverageProcessor PROCESSOR = CoverageProcessor.getInstance();
 
+    static ListFeatureCollection testPolygons;
+
+    static {
+        try {
+            WKTReader reader = new WKTReader();
+            Geometry g1 = reader.read(
+                    "POLYGON ((11.895130178020111 46.207934814601089,11.895809089115916 "
+                            + "46.207927430715209,11.895112009452415 46.207050983935503,11.895130178020111 46.207934814601089))");
+            Geometry g2 = reader.read(
+                    "POLYGON ((11.896630238926786 46.207395686643665,11.897000925691524 "
+                            + "46.207985638846736,11.897753464657697 46.20749492858355,11.896630238926786 46.207395686643665))");
+            Geometry g3 = reader.read(
+                    "POLYGON ((11.897871315022112 46.20812076814061,11.898581076580497 "
+                            + "46.208161712380381,11.898470449632523 46.207673246668122,11.897871315022112 46.20812076814061))");
+
+            SimpleFeatureType schema = DataUtilities.createType("testPolygons", "the_geom:Polygon");
+            testPolygons = new ListFeatureCollection(schema);
+            testPolygons.add(SimpleFeatureBuilder.build(schema, new Object[] {g1}, "testpolygon.1"));
+            testPolygons.add(SimpleFeatureBuilder.build(schema, new Object[] {g2}, "testpolygon.2"));
+            testPolygons.add(SimpleFeatureBuilder.build(schema, new Object[] {g3}, "testpolygon.3"));
+        } catch (SchemaException | ParseException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /** Utility class used for calculating and preparing the results */
-    private class StatisticsTool {
+    private static class StatisticsTool {
 
         /*
          * external user params
@@ -90,8 +123,7 @@ public class ZonalStatisticsTest {
         /*
          * results
          */
-        private Map<String, Map<Integer, Map<StatsType, Object>>> feature2StatisticsMap =
-                new HashMap<>();
+        private Map<String, Map<Integer, Map<StatsType, Object>>> feature2StatisticsMap = new HashMap<>();
 
         private StatisticsTool(
                 Set<StatsType> statisticsSet,
@@ -111,8 +143,8 @@ public class ZonalStatisticsTest {
         /**
          * Run the requested analysis.
          *
-         * <p>This is the moment in which the analysis takes place. This method is intended to give
-         * the user the possibility to choose the moment in which the workload is done.
+         * <p>This is the moment in which the analysis takes place. This method is intended to give the user the
+         * possibility to choose the moment in which the workload is done.
          */
         public void run() throws Exception {
             processPolygonMode();
@@ -120,8 +152,7 @@ public class ZonalStatisticsTest {
 
         private void processPolygonMode() throws TransformException {
 
-            final StatsType[] statistis =
-                    statisticsSet.toArray(new StatsType[statisticsSet.size()]);
+            final StatsType[] statistis = statisticsSet.toArray(new StatsType[statisticsSet.size()]);
 
             // final OperationJAI op = new ZonalStatistics();
             ParameterValueGroup params = PROCESSOR.getOperation("Zonal").getParameters();
@@ -133,9 +164,7 @@ public class ZonalStatisticsTest {
             params.parameter("localStats").setValue(localStats);
             // Execution of the operation
             final GridCoverage2D coverage =
-                    (GridCoverage2D)
-                            ((ZonalStatistics) PROCESSOR.getOperation("Zonal"))
-                                    .doOperation(params, null);
+                    (GridCoverage2D) ((ZonalStatistics) PROCESSOR.getOperation("Zonal")).doOperation(params, null);
             // Results for each geometry
             @SuppressWarnings("unchecked")
             final List<ZoneGeometry> zoneList =
@@ -210,8 +239,8 @@ public class ZonalStatisticsTest {
          * Gets the performed statistics.
          *
          * @param fId the id of the feature used as region for the analysis.
-         * @return the {@link Map} of results of the analysis for all the requested {@link Range}
-         *     index, and for each index, the statistics are mapped.
+         * @return the {@link Map} of results of the analysis for all the requested {@link Range} index, and for each
+         *     index, the statistics are mapped.
          */
         public Map<Integer, Map<StatsType, Object>> getStatistics(String fId) {
             return feature2StatisticsMap.get(fId);
@@ -230,9 +259,8 @@ public class ZonalStatisticsTest {
         final File tfw = TestData.file(this, "test.tfw");
 
         // Reading of the input image
-        final TIFFImageReader reader =
-                (it.geosolutions.imageioimpl.plugins.tiff.TIFFImageReader)
-                        new TIFFImageReaderSpi().createReaderInstance();
+        final TIFFImageReader reader = (it.geosolutions.imageioimpl.plugins.tiff.TIFFImageReader)
+                new TIFFImageReaderSpi().createReaderInstance();
         reader.setInput(ImageIO.createImageInputStream(tiff));
         final BufferedImage image = reader.read(0);
         reader.dispose();
@@ -240,24 +268,22 @@ public class ZonalStatisticsTest {
         // Transformation from the Raster space to the Model space
         final MathTransform transform = new WorldFileReader(tfw).getTransform();
         // Creation of the input coverage
-        final GridCoverage2D coverage2D =
-                CoverageFactoryFinder.getGridCoverageFactory(null)
-                        .create(
-                                "coverage",
-                                image,
-                                new GridGeometry2D(
-                                        new GridEnvelope2D(
-                                                PlanarImage.wrapRenderedImage(image).getBounds()),
-                                        transform,
-                                        DefaultGeographicCRS.WGS84),
-                                new GridSampleDimension[] {new GridSampleDimension("coverage")},
-                                null,
-                                null);
+        final GridCoverage2D coverage2D = CoverageFactoryFinder.getGridCoverageFactory(null)
+                .create(
+                        "coverage",
+                        image,
+                        new GridGeometry2D(
+                                new GridEnvelope2D(
+                                        PlanarImage.wrapRenderedImage(image).getBounds()),
+                                transform,
+                                DefaultGeographicCRS.WGS84),
+                        new GridSampleDimension[] {new GridSampleDimension("coverage")},
+                        null,
+                        null);
 
         // Selection of the input geometries and creation of the related list.
         List<SimpleFeature> polygonList = new ArrayList<>();
-        try (FeatureIterator<SimpleFeature> featureIterator =
-                ZonalStatsTest.testPolygons.features()) {
+        try (FeatureIterator<SimpleFeature> featureIterator = testPolygons.features()) {
             while (featureIterator.hasNext()) {
                 SimpleFeature feature = featureIterator.next();
                 polygonList.add(feature);
@@ -348,9 +374,8 @@ public class ZonalStatisticsTest {
         final File tfw = TestData.file(this, "test.tfw");
 
         // Reading of the input image
-        final TIFFImageReader reader =
-                (it.geosolutions.imageioimpl.plugins.tiff.TIFFImageReader)
-                        new TIFFImageReaderSpi().createReaderInstance();
+        final TIFFImageReader reader = (it.geosolutions.imageioimpl.plugins.tiff.TIFFImageReader)
+                new TIFFImageReaderSpi().createReaderInstance();
         reader.setInput(ImageIO.createImageInputStream(tiff));
         final BufferedImage image = reader.read(0);
         reader.dispose();
@@ -358,24 +383,22 @@ public class ZonalStatisticsTest {
         // Transformation from the Raster space to the Model space
         final MathTransform transform = new WorldFileReader(tfw).getTransform();
         // Creation of the input coverage
-        final GridCoverage2D coverage2D =
-                CoverageFactoryFinder.getGridCoverageFactory(null)
-                        .create(
-                                "coverage",
-                                image,
-                                new GridGeometry2D(
-                                        new GridEnvelope2D(
-                                                PlanarImage.wrapRenderedImage(image).getBounds()),
-                                        transform,
-                                        DefaultGeographicCRS.WGS84),
-                                new GridSampleDimension[] {new GridSampleDimension("coverage")},
-                                null,
-                                null);
+        final GridCoverage2D coverage2D = CoverageFactoryFinder.getGridCoverageFactory(null)
+                .create(
+                        "coverage",
+                        image,
+                        new GridGeometry2D(
+                                new GridEnvelope2D(
+                                        PlanarImage.wrapRenderedImage(image).getBounds()),
+                                transform,
+                                DefaultGeographicCRS.WGS84),
+                        new GridSampleDimension[] {new GridSampleDimension("coverage")},
+                        null,
+                        null);
 
         // Selection of the input geometries and creation of the related list.
         List<SimpleFeature> polygonList = new ArrayList<>();
-        try (FeatureIterator<SimpleFeature> featureIterator =
-                ZonalStatsTest.testPolygons.features()) {
+        try (FeatureIterator<SimpleFeature> featureIterator = testPolygons.features()) {
             while (featureIterator.hasNext()) {
                 SimpleFeature feature = featureIterator.next();
                 polygonList.add(feature);

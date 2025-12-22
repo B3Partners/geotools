@@ -19,10 +19,11 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.FilenameUtils;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.referencing.CRS;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 // docs start CSVFileState
 /** Details from comma separated value file. */
@@ -30,7 +31,8 @@ public class CSVFileState {
 
     private static CoordinateReferenceSystem DEFAULT_CRS() throws FactoryException {
         return CRS.decode("EPSG:4326");
-    };
+    }
+    ;
 
     private final File file;
 
@@ -102,7 +104,7 @@ public class CSVFileState {
     public CsvReader openCSVReader() throws IOException {
         Reader reader;
         if (file != null) {
-            reader = new BufferedReader(new FileReader(file));
+            reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8));
         } else {
             reader = new StringReader(dataInput);
         }

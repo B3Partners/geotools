@@ -26,8 +26,8 @@ import org.junit.Test;
 
 public class XSNegativeIntegerStrategyTest extends TestSchema {
     /**
-     * negativeInteger has a lexical representation consisting of a negative sign ("-") followed by
-     * a finite-length sequence of decimal digits (#x30-#x39).
+     * negativeInteger has a lexical representation consisting of a negative sign ("-") followed by a finite-length
+     * sequence of decimal digits (#x30-#x39).
      *
      * <p>For example: -1, -12678967543233, -100000.
      */
@@ -36,17 +36,15 @@ public class XSNegativeIntegerStrategyTest extends TestSchema {
 
         Object result = strategy.parse(element(text, qname), value);
 
-        if (!(result instanceof BigInteger) && result instanceof Number) {
-            result = BigInteger.valueOf(((Number) result).longValue());
+        if (!(result instanceof BigInteger) && result instanceof Number number) {
+            result = BigInteger.valueOf(number.longValue());
         }
 
         assertEquals(integer(expected), integer(result));
     }
 
     public BigInteger integer(Object value) {
-        return (value instanceof BigInteger)
-                ? ((BigInteger) value)
-                : BigInteger.valueOf(((Number) value).longValue());
+        return value instanceof BigInteger bi ? bi : BigInteger.valueOf(((Number) value).longValue());
     }
 
     public Number number(String number) {

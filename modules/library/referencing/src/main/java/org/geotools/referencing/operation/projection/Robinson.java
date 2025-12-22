@@ -27,26 +27,27 @@ import static java.lang.Math.toDegrees;
 import static java.lang.Math.toRadians;
 
 import java.awt.geom.Point2D;
+import java.io.Serial;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
  * Robinson projection
  *
- * @see <A HREF="http://en.wikipedia.org/wiki/Robinson_projection">Robinson projection on
- *     Wikipedia</A>
- * @see <A HREF="http://www.remotesensing.org/geotiff/proj_list/robinson.html">"Robinson" on
- *     RemoteSensing.org</A>
+ * @see <A HREF="http://en.wikipedia.org/wiki/Robinson_projection">Robinson projection on Wikipedia</A>
+ * @see <A HREF="http://www.remotesensing.org/geotiff/proj_list/robinson.html">"Robinson" on RemoteSensing.org</A>
  * @since 2.6.3
  * @author Andrea Aime
  */
+@SuppressWarnings("FloatingPointLiteralPrecision")
 public class Robinson extends MapProjection {
     /** For cross-version compatibility. */
+    @Serial
     private static final long serialVersionUID = 8428056162968814860L;
 
     static final class Coeff {
@@ -148,12 +149,11 @@ public class Robinson extends MapProjection {
     }
 
     /**
-     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in
-     * radians) and stores the result in {@code ptDst} (linear distance on a unit sphere).
+     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in radians) and stores the
+     * result in {@code ptDst} (linear distance on a unit sphere).
      */
     @Override
-    protected Point2D transformNormalized(double lam, double phi, final Point2D ptDst)
-            throws ProjectionException {
+    protected Point2D transformNormalized(double lam, double phi, final Point2D ptDst) throws ProjectionException {
 
         double dphi = abs(phi);
         int i = (int) floor(dphi * C1);
@@ -175,20 +175,15 @@ public class Robinson extends MapProjection {
         }
     }
 
-    /**
-     * Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in
-     * {@code ptDst}.
-     */
+    /** Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in {@code ptDst}. */
     @Override
-    protected Point2D inverseTransformNormalized(double x, double y, final Point2D ptDst)
-            throws ProjectionException {
+    protected Point2D inverseTransformNormalized(double x, double y, final Point2D ptDst) throws ProjectionException {
         double lam = x / FXC;
         double phi = abs(y / FYC);
         if (phi >= 1d) {
             /* simple pathologic cases */
             if (phi > ONEEPS) {
-                throw new ProjectionException(
-                        "Tolerance error occurred appling inverse Robinson projection");
+                throw new ProjectionException("Tolerance error occurred appling inverse Robinson projection");
             } else {
                 phi = y < 0. ? -PI / 2 : PI / 2;
                 lam /= X[NODES].c0;
@@ -249,8 +244,8 @@ public class Robinson extends MapProjection {
     //////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform
-     * provider} for the Robinson projection (not part of the EPSG database).
+     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform provider} for the
+     * Robinson projection (not part of the EPSG database).
      *
      * @since 2.6.3
      * @author Andrea Aime
@@ -258,16 +253,17 @@ public class Robinson extends MapProjection {
      */
     public static class Provider extends AbstractProvider {
         /** For cross-version compatibility. */
+        @Serial
         private static final long serialVersionUID = 3586488124601927036L;
 
         /** The parameters group. */
-        static final ParameterDescriptorGroup PARAMETERS =
-                createDescriptorGroup(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(Citations.GEOTOOLS, "Robinson"),
-                            new NamedIdentifier(Citations.ESRI, "Robinson")
-                        },
-                        new ParameterDescriptor[] {SEMI_MAJOR, SEMI_MINOR, CENTRAL_MERIDIAN});
+        static final ParameterDescriptorGroup PARAMETERS = createDescriptorGroup(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(Citations.GEOTOOLS, "Robinson"),
+                    new NamedIdentifier(Citations.ESRI, "Robinson"),
+                    new NamedIdentifier(Citations.PROJ, "robin")
+                },
+                new ParameterDescriptor[] {SEMI_MAJOR, SEMI_MINOR, CENTRAL_MERIDIAN, FALSE_EASTING, FALSE_NORTHING});
 
         /** Constructs a new provider. */
         public Provider() {

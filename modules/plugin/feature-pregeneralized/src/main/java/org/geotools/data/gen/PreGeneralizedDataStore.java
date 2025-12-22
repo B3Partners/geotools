@@ -24,36 +24,35 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.geotools.data.DataStore;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.LockingManager;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Repository;
+import org.geotools.api.data.ServiceInfo;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
 import org.geotools.data.DefaultServiceInfo;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.LockingManager;
-import org.geotools.data.Query;
-import org.geotools.data.Repository;
-import org.geotools.data.ServiceInfo;
-import org.geotools.data.Transaction;
 import org.geotools.data.gen.info.GeneralizationInfo;
 import org.geotools.data.gen.info.GeneralizationInfos;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.feature.FeatureTypes;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
 
 /**
  * @author Christian Mueller
  *     <p>Datastore for multiple feature types with pregeneralized geometries
- *     <p>The data store is read only, all modifying methods throw an {@link
- *     UnsupportedOperationException}
+ *     <p>The data store is read only, all modifying methods throw an {@link UnsupportedOperationException}
  *     <p>This data store does business as usual with the following exception:
- *     <p>If a method has a {@link Query} parameter and {@link Query#getHints()} includes {@link
- *     Hints#GEOMETRY_DISTANCE} with a given distance, the datastore looks for the best fit
- *     pregeneralized geometries and returns these geometries instead of the original ones.
- *     <p>This process results in a lower memory usage, lower cpu usage for further processing and
- *     will decrease response time for the user.
+ *     <p>If a method has a {@link Query} parameter and {@link Query#getHints()} includes
+ *     {@link Hints#GEOMETRY_DISTANCE} with a given distance, the datastore looks for the best fit pregeneralized
+ *     geometries and returns these geometries instead of the original ones.
+ *     <p>This process results in a lower memory usage, lower cpu usage for further processing and will decrease
+ *     response time for the user.
  */
 public class PreGeneralizedDataStore implements DataStore {
 
@@ -71,19 +70,17 @@ public class PreGeneralizedDataStore implements DataStore {
     }
 
     /** */
-    public PreGeneralizedDataStore(
-            GeneralizationInfos infos, Repository repository, URI namespace) {
+    public PreGeneralizedDataStore(GeneralizationInfos infos, Repository repository, URI namespace) {
         this.namespace = namespace;
         featureSources = new HashMap<>();
         for (GeneralizationInfo gi : infos.getGeneralizationInfoCollection()) {
-            featureSources.put(
-                    gi.getFeatureName(), new PreGeneralizedFeatureSource(gi, repository, this));
+            featureSources.put(gi.getFeatureName(), new PreGeneralizedFeatureSource(gi, repository, this));
         }
     }
 
     @Override
-    public FeatureReader<SimpleFeatureType, SimpleFeature> getFeatureReader(
-            Query query, Transaction transaction) throws IOException {
+    public FeatureReader<SimpleFeatureType, SimpleFeature> getFeatureReader(Query query, Transaction transaction)
+            throws IOException {
         PreGeneralizedFeatureSource fs = featureSources.get(query.getTypeName());
         if (fs == null) throw new IOException(query.getTypeName() + " not found");
         return fs.getFeatureReader(query, transaction);
@@ -97,8 +94,8 @@ public class PreGeneralizedDataStore implements DataStore {
     }
 
     @Override
-    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriter(
-            String typeName, Transaction transaction) throws IOException {
+    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriter(String typeName, Transaction transaction)
+            throws IOException {
 
         throw new UnsupportedOperationException("getFeatureWriter");
     }

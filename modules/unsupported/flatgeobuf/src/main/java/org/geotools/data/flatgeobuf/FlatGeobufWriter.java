@@ -19,8 +19,8 @@ package org.geotools.data.flatgeobuf;
 import com.google.flatbuffers.FlatBufferBuilder;
 import java.io.IOException;
 import java.io.OutputStream;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.wololo.flatgeobuf.Constants;
 import org.wololo.flatgeobuf.HeaderMeta;
 
@@ -38,11 +38,13 @@ public class FlatGeobufWriter {
 
     public void writeFeature(SimpleFeature feature) throws IOException {
         FeatureConversions.serialize(feature, this.headerMeta, this.outputStream, this.builder);
+        builder.clear();
     }
 
     public void writeFeatureType(SimpleFeatureType featureType) throws IOException {
         outputStream.write(Constants.MAGIC_BYTES);
         headerMeta = HeaderMetaUtil.fromFeatureType(featureType, 0);
         HeaderMeta.write(headerMeta, outputStream, builder);
+        builder.clear();
     }
 }

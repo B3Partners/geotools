@@ -18,19 +18,66 @@ package org.geotools.styling;
 
 // OpenGIS dependencies
 
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.Displacement;
+import org.geotools.api.style.StyleVisitor;
+import org.geotools.api.style.TraversingStyleVisitor;
+import org.geotools.api.util.Cloneable;
 import org.geotools.factory.CommonFactoryFinder;
+import org.geotools.filter.ConstantExpression;
 import org.geotools.util.Utilities;
 import org.geotools.util.factory.GeoTools;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.StyleVisitor;
-import org.opengis.util.Cloneable;
 
 /**
  * @author Ian Turton, CCG
  * @version $Id$
  */
-public class DisplacementImpl implements Displacement, Cloneable {
+public class DisplacementImpl implements Cloneable, org.geotools.api.style.Displacement {
+    /** Default Displacement instance. */
+    public static final Displacement DEFAULT = new ConstantDisplacement() {
+        private void cannotModifyConstant() {
+            throw new UnsupportedOperationException("Constant Stroke may not be modified");
+        }
+
+        @Override
+        public Expression getDisplacementX() {
+            return ConstantExpression.ZERO;
+        }
+
+        @Override
+        public Expression getDisplacementY() {
+            return ConstantExpression.ZERO;
+        }
+
+        @Override
+        public Object accept(TraversingStyleVisitor visitor, Object extraData) {
+            cannotModifyConstant();
+            return null;
+        }
+    };
+    /** Null Displacement instance. */
+    public static final Displacement NULL = new ConstantDisplacement() {
+        private void cannotModifyConstant() {
+            throw new UnsupportedOperationException("Constant Stroke may not be modified");
+        }
+
+        @Override
+        public Expression getDisplacementX() {
+            return ConstantExpression.NULL;
+        }
+
+        @Override
+        public Expression getDisplacementY() {
+            return ConstantExpression.NULL;
+        }
+
+        @Override
+        public Object accept(TraversingStyleVisitor visitor, Object extraData) {
+            cannotModifyConstant();
+            return null;
+        }
+    };
     /** The logger for the default core module. */
     private static final java.util.logging.Logger LOGGER =
             org.geotools.util.logging.Logging.getLogger(DisplacementImpl.class);
@@ -55,7 +102,7 @@ public class DisplacementImpl implements Displacement, Cloneable {
     }
 
     public DisplacementImpl(Expression dx, Expression dy) {
-        filterFactory = CommonFactoryFinder.getFilterFactory2(null);
+        filterFactory = CommonFactoryFinder.getFilterFactory(null);
         displacementX = dx;
         displacementY = dy;
     }
@@ -127,17 +174,17 @@ public class DisplacementImpl implements Displacement, Cloneable {
     }
 
     @Override
-    public Object accept(StyleVisitor visitor, Object data) {
+    public Object accept(TraversingStyleVisitor visitor, Object data) {
         return visitor.visit(this, data);
     }
 
     @Override
-    public void accept(org.geotools.styling.StyleVisitor visitor) {
+    public void accept(StyleVisitor visitor) {
         visitor.visit(this);
     }
 
     /* (non-Javadoc)
-     * @see org.opengis.util.Cloneable#clone()
+     * @see org.geotools.api.util.Cloneable#clone()
      */
     @Override
     public Object clone() {
@@ -157,8 +204,7 @@ public class DisplacementImpl implements Displacement, Cloneable {
             return true;
         }
 
-        if (obj instanceof DisplacementImpl) {
-            DisplacementImpl other = (DisplacementImpl) obj;
+        if (obj instanceof DisplacementImpl other) {
 
             return Utilities.equals(displacementX, other.displacementX)
                     && Utilities.equals(displacementY, other.displacementY);
@@ -176,27 +222,48 @@ public class DisplacementImpl implements Displacement, Cloneable {
         int result = 17;
 
         if (displacementX != null) {
-            result = (result * PRIME) + displacementX.hashCode();
+            result = result * PRIME + displacementX.hashCode();
         }
 
         if (displacementY != null) {
-            result = (result * PRIME) + displacementY.hashCode();
+            result = result * PRIME + displacementY.hashCode();
         }
 
         return result;
     }
 
-    static DisplacementImpl cast(org.opengis.style.Displacement displacement) {
+    static DisplacementImpl cast(org.geotools.api.style.Displacement displacement) {
         if (displacement == null) {
             return null;
-        } else if (displacement instanceof DisplacementImpl) {
-            return (DisplacementImpl) displacement;
+        } else if (displacement instanceof DisplacementImpl impl) {
+            return impl;
         } else {
             DisplacementImpl copy = new DisplacementImpl();
             copy.setDisplacementX(displacement.getDisplacementX());
             copy.setDisplacementY(displacement.getDisplacementY());
 
             return copy;
+        }
+    }
+
+    abstract static class ConstantDisplacement implements Displacement {
+        private void cannotModifyConstant() {
+            throw new UnsupportedOperationException("Constant Displacement may not be modified");
+        }
+
+        @Override
+        public void setDisplacementX(Expression x) {
+            cannotModifyConstant();
+        }
+
+        @Override
+        public void setDisplacementY(Expression y) {
+            cannotModifyConstant();
+        }
+
+        @Override
+        public void accept(StyleVisitor visitor) {
+            cannotModifyConstant();
         }
     }
 }

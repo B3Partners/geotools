@@ -20,17 +20,17 @@ package org.geotools.data.mongodb;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.data.mongodb.geojson.GeoJSONMongoTestSetup;
 import org.geotools.feature.visitor.MaxVisitor;
 import org.geotools.feature.visitor.MinVisitor;
 import org.geotools.filter.IllegalFilterException;
 import org.junit.Test;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.PropertyName;
 
 public class MongoFeatureSourceVisitorTest extends MongoTestSupport {
 
@@ -82,10 +82,7 @@ public class MongoFeatureSourceVisitorTest extends MongoTestSupport {
 
         dataStore.getFeatureSource("ft1").accepts(Query.ALL, v, null);
 
-        Date minDate =
-                Date.from(
-                        Instant.from(
-                                DateTimeFormatter.ISO_DATE_TIME.parse("2015-01-01T00:00:00Z")));
+        Date minDate = Date.from(Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse("2015-01-01T00:00:00Z")));
         assertEquals(minDate, v.getResult().getValue());
 
         assertFalse(visited);
@@ -126,10 +123,7 @@ public class MongoFeatureSourceVisitorTest extends MongoTestSupport {
 
         dataStore.getFeatureSource("ft1").accepts(Query.ALL, v, null);
 
-        Date minDate =
-                Date.from(
-                        Instant.from(
-                                DateTimeFormatter.ISO_DATE_TIME.parse("2015-01-01T21:30:00Z")));
+        Date minDate = Date.from(Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse("2015-01-01T21:30:00Z")));
         assertEquals(minDate, v.getResult().getValue());
 
         assertFalse(visited);

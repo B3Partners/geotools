@@ -16,11 +16,11 @@
  */
 package org.geotools.filter.spatial;
 
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.spatial.Within;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.spatial.Within;
 
 public class WithinImpl extends AbstractPreparedGeometryFilter implements Within {
 
@@ -38,21 +38,18 @@ public class WithinImpl extends AbstractPreparedGeometryFilter implements Within
         switch (literals) {
             case BOTH:
                 return cacheValue;
-            case RIGHT:
-                {
-                    // if the right contains left then left is within right
-                    return rightPreppedGeom.contains(left);
-                }
-            case LEFT:
-                {
-                    // since within does not have an optimization with prepared geometries
-                    // there is nothing to be gained in this case so use the normal check
-                    return basicEvaluate(leftPreppedGeom.getGeometry(), right);
-                }
-            default:
-                {
-                    return basicEvaluate(left, right);
-                }
+            case RIGHT: {
+                // if the right contains left then left is within right
+                return rightPreppedGeom.contains(left);
+            }
+            case LEFT: {
+                // since within does not have an optimization with prepared geometries
+                // there is nothing to be gained in this case so use the normal check
+                return basicEvaluate(leftPreppedGeom.getGeometry(), right);
+            }
+            default: {
+                return basicEvaluate(left, right);
+            }
         }
     }
 

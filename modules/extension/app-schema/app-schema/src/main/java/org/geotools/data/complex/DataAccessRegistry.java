@@ -24,22 +24,22 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.Repository;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.identity.FeatureId;
 import org.geotools.appschema.util.InterpolationProperties;
-import org.geotools.data.DataAccess;
-import org.geotools.data.DataSourceException;
-import org.geotools.data.DataStore;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.Repository;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.identity.FeatureId;
 
 /**
- * A registry that stores data access instances per application. This allows feature sources from
- * different data accesses to be accessed globally.
+ * A registry that stores data access instances per application. This allows feature sources from different data
+ * accesses to be accessed globally.
  *
  * @author Rini Angreani (CSIRO Earth Science and Resource Engineering)
  * @author Niels Charlier (Curtin University Of Technology)
@@ -79,12 +79,11 @@ public class DataAccessRegistry implements Repository {
      *
      * @return feature source
      */
-    public synchronized FeatureSource<FeatureType, Feature> featureSource(Name name)
-            throws IOException {
+    public synchronized FeatureSource<FeatureType, Feature> featureSource(Name name) throws IOException {
         for (DataAccess<FeatureType, Feature> dataAccess : registry) {
             if (dataAccess.getNames().contains(name)) {
-                if (dataAccess instanceof AppSchemaDataAccess) {
-                    return ((AppSchemaDataAccess) dataAccess).getFeatureSourceByName(name);
+                if (dataAccess instanceof AppSchemaDataAccess access) {
+                    return access.getFeatureSourceByName(name);
                 } else {
                     return dataAccess.getFeatureSource(name);
                 }
@@ -106,14 +105,12 @@ public class DataAccessRegistry implements Repository {
 
     @Override
     public DataStore dataStore(Name name) {
-        throw new UnsupportedOperationException(
-                "Simple feature DataStores not supported by app-schema registry.");
+        throw new UnsupportedOperationException("Simple feature DataStores not supported by app-schema registry.");
     }
 
     @Override
     public List<DataStore> getDataStores() {
-        throw new UnsupportedOperationException(
-                "Simple feature DataStores not supported by app-schema registry.");
+        throw new UnsupportedOperationException("Simple feature DataStores not supported by app-schema registry.");
     }
 
     /**
@@ -126,27 +123,22 @@ public class DataAccessRegistry implements Repository {
     }
 
     /**
-     * Unregister a data access. This is important especially at the end of test cases, so that the
-     * mappings contained in the data access do not conflict with mappings of the same type used in
-     * other tests.
+     * Unregister a data access. This is important especially at the end of test cases, so that the mappings contained
+     * in the data access do not conflict with mappings of the same type used in other tests.
      *
      * @param dataAccess Data access to be unregistered
      */
     public synchronized void unregisterAccess(DataAccess<FeatureType, Feature> dataAccess) {
         registry.remove(dataAccess);
 
-        if (dataAccess instanceof AppSchemaDataAccess) {
-            AppSchemaDataAccess asda = (AppSchemaDataAccess) dataAccess;
+        if (dataAccess instanceof AppSchemaDataAccess asda) {
             // NOTE: this code assumes hidden data accesses are never removed directly by the user,
             // only by the automatic disposal algorithm, so no need to run it again
             if (!asda.hidden && asda.url != null) {
                 try {
                     disposeHiddenDataAccessInstances(asda.url);
                 } catch (IOException e) {
-                    LOGGER.log(
-                            Level.SEVERE,
-                            "Exception occurred disposing unused data access instances",
-                            e);
+                    LOGGER.log(Level.SEVERE, "Exception occurred disposing unused data access instances", e);
                 }
             }
         }
@@ -159,8 +151,7 @@ public class DataAccessRegistry implements Repository {
     private void disposeHiddenDataAccessInstances(URL url) throws IOException {
         List<DataAccess<FeatureType, Feature>> copyRegistry = new ArrayList<>(registry);
         for (DataAccess<FeatureType, Feature> da : copyRegistry) {
-            if (da instanceof AppSchemaDataAccess) {
-                AppSchemaDataAccess asda = (AppSchemaDataAccess) da;
+            if (da instanceof AppSchemaDataAccess asda) {
                 if (asda.hidden && asda.parentUrl != null && asda.parentUrl.equals(url)) {
                     asda.dispose();
                 }
@@ -169,9 +160,8 @@ public class DataAccessRegistry implements Repository {
     }
 
     /**
-     * Dispose and unregister all data accesses in the registry. This is may be needed to prevent
-     * unit tests from conflicting with data accesses with the same type name registered for other
-     * tests.
+     * Dispose and unregister all data accesses in the registry. This is may be needed to prevent unit tests from
+     * conflicting with data accesses with the same type name registered for other tests.
      */
     public synchronized void disposeAndUnregisterAll() {
         List<DataAccess<FeatureType, Feature>> copyRegistry = new ArrayList<>(registry);
@@ -182,9 +172,8 @@ public class DataAccessRegistry implements Repository {
     }
 
     /**
-     * Return true if a type name is mapped in one of the registered data accesses. If the type
-     * mapping has mappingName, then it will be the key that is matched in the search. If it
-     * doesn't, then it will match the targetElementName.
+     * Return true if a type name is mapped in one of the registered data accesses. If the type mapping has mappingName,
+     * then it will be the key that is matched in the search. If it doesn't, then it will match the targetElementName.
      *
      * @param name Feature type name
      */
@@ -198,17 +187,15 @@ public class DataAccessRegistry implements Repository {
     }
 
     /**
-     * Return true if a type name is mapped in one of the registered app-schema data accesses. If
-     * the type mapping has mappingName, then it will be the key that is matched in the search. If
-     * it doesn't, then it will match the targetElementName.
+     * Return true if a type name is mapped in one of the registered app-schema data accesses. If the type mapping has
+     * mappingName, then it will be the key that is matched in the search. If it doesn't, then it will match the
+     * targetElementName.
      *
      * @param name Feature type name
      */
     public synchronized boolean hasAppSchemaAccessName(Name name) throws IOException {
         for (DataAccess<FeatureType, Feature> dataAccess : registry) {
-            if (dataAccess instanceof AppSchemaDataAccess
-                    && (((AppSchemaDataAccess) dataAccess).hasName(name)
-                            || ((AppSchemaDataAccess) dataAccess).hasElement(name))) {
+            if (dataAccess instanceof AppSchemaDataAccess access && (access.hasName(name) || access.hasElement(name))) {
                 return true;
             }
         }
@@ -216,16 +203,16 @@ public class DataAccessRegistry implements Repository {
     }
 
     /**
-     * Get a feature type mapping from a registered app-schema data access. Please note that this is
-     * only possible for app-schema data access instances.
+     * Get a feature type mapping from a registered app-schema data access. Please note that this is only possible for
+     * app-schema data access instances.
      *
      * @return feature type mapping
      */
     public synchronized FeatureTypeMapping mappingByName(Name name) throws IOException {
         for (DataAccess<FeatureType, Feature> dataAccess : registry) {
-            if (dataAccess instanceof AppSchemaDataAccess) {
-                if (((AppSchemaDataAccess) dataAccess).hasName(name)) {
-                    return ((AppSchemaDataAccess) dataAccess).getMappingByName(name);
+            if (dataAccess instanceof AppSchemaDataAccess access) {
+                if (access.hasName(name)) {
+                    return access.getMappingByName(name);
                 }
             }
         }
@@ -236,9 +223,9 @@ public class DataAccessRegistry implements Repository {
 
     public synchronized FeatureTypeMapping mappingByElement(Name name) throws IOException {
         for (DataAccess<FeatureType, Feature> dataAccess : registry) {
-            if (dataAccess instanceof AppSchemaDataAccess) {
-                if (((AppSchemaDataAccess) dataAccess).hasElement(name)) {
-                    return ((AppSchemaDataAccess) dataAccess).getMappingByNameOrElement(name);
+            if (dataAccess instanceof AppSchemaDataAccess access) {
+                if (access.hasElement(name)) {
+                    return access.getMappingByNameOrElement(name);
                 }
             }
         }
@@ -248,14 +235,13 @@ public class DataAccessRegistry implements Repository {
     }
 
     /**
-     * Return true if a type name is mapped in one of the registered app-schema data accesses as
-     * targetElementName, regardless whether or not mappingName exists.
+     * Return true if a type name is mapped in one of the registered app-schema data accesses as targetElementName,
+     * regardless whether or not mappingName exists.
      */
     public synchronized boolean hasAppSchemaTargetElement(Name name) throws IOException {
         for (DataAccess<FeatureType, Feature> dataAccess : registry) {
-            if (dataAccess instanceof AppSchemaDataAccess
-                    && Arrays.asList(((AppSchemaDataAccess) dataAccess).getTypeNames())
-                            .contains(name)) {
+            if (dataAccess instanceof AppSchemaDataAccess access
+                    && Arrays.asList(access.getTypeNames()).contains(name)) {
                 return true;
             }
         }
@@ -288,13 +274,11 @@ public class DataAccessRegistry implements Repository {
      *
      * @return feature source
      */
-    public static FeatureSource<FeatureType, Feature> getFeatureSource(Name featureTypeName)
-            throws IOException {
+    public static FeatureSource<FeatureType, Feature> getFeatureSource(Name featureTypeName) throws IOException {
         return getInstance().featureSource(featureTypeName);
     }
 
-    public static DataAccess<FeatureType, Feature> getDataAccess(Name featureTypeName)
-            throws IOException {
+    public static DataAccess<FeatureType, Feature> getDataAccess(Name featureTypeName) throws IOException {
         return getInstance().featureSource(featureTypeName).getDataStore();
     }
 
@@ -308,10 +292,9 @@ public class DataAccessRegistry implements Repository {
     }
 
     /**
-     * Unregister a data access. This is important especially at the end of test cases, so that the
-     * mappings contained in the data access do not conflict with mappings of the same type used in
-     * other tests. * Does not dispose * This method should not be called directly, instead use
-     * dispose method from DataAccess
+     * Unregister a data access. This is important especially at the end of test cases, so that the mappings contained
+     * in the data access do not conflict with mappings of the same type used in other tests. * Does not dispose * This
+     * method should not be called directly, instead use dispose method from DataAccess
      *
      * @param dataAccess Data access to be unregistered
      */
@@ -320,18 +303,16 @@ public class DataAccessRegistry implements Repository {
     }
 
     /**
-     * Unregister * and dispose * all data accesses in the registry. This is may be needed to
-     * prevent unit tests from conflicting with data accesses with the same type name registered for
-     * other tests.
+     * Unregister * and dispose * all data accesses in the registry. This is may be needed to prevent unit tests from
+     * conflicting with data accesses with the same type name registered for other tests.
      */
     public static void unregisterAndDisposeAll() {
         getInstance().disposeAndUnregisterAll();
     }
 
     /**
-     * Return true if a type name is mapped in one of the registered data accesses. If the type
-     * mapping has mappingName, then it will be the key that is matched in the search. If it
-     * doesn't, then it will match the targetElementName.
+     * Return true if a type name is mapped in one of the registered data accesses. If the type mapping has mappingName,
+     * then it will be the key that is matched in the search. If it doesn't, then it will match the targetElementName.
      *
      * @param featureTypeName Feature type name
      */
@@ -353,13 +334,12 @@ public class DataAccessRegistry implements Repository {
         for (DataAccess<FeatureType, Feature> featureTypeFeatureDataAccess : registry) {
             typeNames.addAll(featureTypeFeatureDataAccess.getNames());
         }
-        throw new DataSourceException(
-                "Feature type "
-                        + featureTypeName
-                        + " not found."
-                        + " Has the data access been registered in DataAccessRegistry?"
-                        + " Available: "
-                        + typeNames.toString());
+        throw new DataSourceException("Feature type "
+                + featureTypeName
+                + " not found."
+                + " Has the data access been registered in DataAccessRegistry?"
+                + " Available: "
+                + typeNames.toString());
     }
 
     public Feature findFeature(FeatureId id, Hints hints) throws IOException {
@@ -367,8 +347,8 @@ public class DataAccessRegistry implements Repository {
             if (Thread.currentThread().isInterrupted()) {
                 return null;
             }
-            if (dataAccess instanceof AppSchemaDataAccess) {
-                Feature feature = ((AppSchemaDataAccess) dataAccess).findFeature(id, hints);
+            if (dataAccess instanceof AppSchemaDataAccess access) {
+                Feature feature = access.findFeature(id, hints);
                 if (feature != null) {
                     return feature;
                 }

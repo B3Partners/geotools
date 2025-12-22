@@ -19,14 +19,19 @@ package org.geotools.filter;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.VolatileFunction;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.function.FilterFunction_property;
+import org.geotools.filter.function.GeometryFunction;
 import org.geotools.filter.visitor.DefaultFilterVisitor;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.expression.VolatileFunction;
+import org.geotools.util.logging.Logging;
 
 /**
  * A simple visitor that extracts every attribute used by a filter or an expression
@@ -40,15 +45,16 @@ import org.opengis.filter.expression.VolatileFunction;
  *   <li>DataUtilities.attributeNames( Expression, FeatureType )
  * </ul>
  *
- * The class can also be used to determine if an expression is "static", that is, despite a complex
- * structure does not use attribute or volatile functions, and can be thus replaced by a constant:
- * for this use case refer to the {@link #isConstantExpression()} method
+ * The class can also be used to determine if an expression is "static", that is, despite a complex structure does not
+ * use attribute or volatile functions, and can be thus replaced by a constant: for this use case refer to the
+ * {@link #isConstantExpression()} method
  *
  * @author Andrea Aime - GeoSolutions
  */
 public class FilterAttributeExtractor extends DefaultFilterVisitor {
 
-    static final FilterFactory2 FF = CommonFactoryFinder.getFilterFactory2();
+    static final Logger LOGGER = Logging.getLogger(FilterAttributeExtractor.class);
+    static final FilterFactory FF = CommonFactoryFinder.getFilterFactory();
 
     /** Last set visited */
     protected Set<String> attributeNames = new HashSet<>();
@@ -78,8 +84,7 @@ public class FilterAttributeExtractor extends DefaultFilterVisitor {
     }
 
     /**
-     * Lists the PropertyNames found so far; useful when dealing with cpath expressions involving
-     * namespace informaiton.
+     * Lists the PropertyNames found so far; useful when dealing with cpath expressions involving namespace informaiton.
      */
     public Set<PropertyName> getPropertyNameSet() {
         return propertyNames;
@@ -127,15 +132,16 @@ public class FilterAttributeExtractor extends DefaultFilterVisitor {
     }
 
     @Override
-    public Object visit(org.opengis.filter.expression.Function expression, Object data) {
+    public Object visit(org.geotools.api.filter.expression.Function expression, Object data) {
         if (expression instanceof VolatileFunction) {
             usingVolatileFunctions = true;
         }
         if (expression instanceof FilterFunction_property) {
             boolean foundLiteral = false;
             // dynamic property usage
-            if (expression.getParameters() != null && expression.getParameters().size() > 0) {
-                org.opengis.filter.expression.Expression firstParam =
+            if (expression.getParameters() != null
+                    && !expression.getParameters().isEmpty()) {
+                org.geotools.api.filter.expression.Expression firstParam =
                         expression.getParameters().get(0);
 
                 FilterAttributeExtractor secondary = new FilterAttributeExtractor();
@@ -153,13 +159,25 @@ public class FilterAttributeExtractor extends DefaultFilterVisitor {
             if (!foundLiteral) {
                 usingDynamicProperties = true;
             }
+        } else if (expression instanceof GeometryFunction) {
+            if (featureType == null) {
+                LOGGER.log(
+                        Level.FINE,
+                        "\"geometry\" function cannot be evaluated without a feature type, skipping attribute extraction");
+            } else {
+                GeometryDescriptor gd = featureType.getGeometryDescriptor();
+                if (gd != null) {
+                    String geomName = gd.getLocalName();
+                    attributeNames.add(geomName);
+                    propertyNames.add(FF.property(geomName));
+                }
+            }
         }
         return super.visit(expression, data);
-    };
-
+    }
     /**
-     * Returns true if the last visited expression is a constant, that is, does not depend on any
-     * attribute and does not use any {@link VolatileFunction}
+     * Returns true if the last visited expression is a constant, that is, does not depend on any attribute and does not
+     * use any {@link VolatileFunction}
      */
     public boolean isConstantExpression() {
         return !usingVolatileFunctions
@@ -168,8 +186,8 @@ public class FilterAttributeExtractor extends DefaultFilterVisitor {
     }
 
     /**
-     * Returns true if the expression is using dynamic property names, so a static analysis of the
-     * expression won't be able to return all the properties in use
+     * Returns true if the expression is using dynamic property names, so a static analysis of the expression won't be
+     * able to return all the properties in use
      */
     public boolean isUsingDynamincProperties() {
         return usingDynamicProperties;

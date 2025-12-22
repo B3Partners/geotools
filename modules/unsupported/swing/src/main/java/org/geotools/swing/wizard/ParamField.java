@@ -19,13 +19,12 @@ package org.geotools.swing.wizard;
 import java.io.File;
 import java.net.URL;
 import javax.swing.JComponent;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
 import org.geotools.swing.wizard.JWizard.Controller;
 import org.locationtech.jts.geom.Geometry;
 
 /**
- * Super class that provides additional helper methods useful when implementing your own
- * ParamWidget.
+ * Super class that provides additional helper methods useful when implementing your own ParamWidget.
  *
  * @author gdavis
  */
@@ -33,17 +32,14 @@ public abstract class ParamField {
 
     protected final Parameter<?> parameter;
 
-    /**
-     * Holds on to the parameter so implementations can consult the type and metadata information.
-     */
+    /** Holds on to the parameter so implementations can consult the type and metadata information. */
     ParamField(Parameter<?> parameter) {
         this.parameter = parameter;
     }
 
     /**
-     * Called to build the widget, initialize it (setting defaults or whatever) and setup any
-     * listeners needed for validation of the widget value. The returned JComponent will contain the
-     * widget for editing.
+     * Called to build the widget, initialize it (setting defaults or whatever) and setup any listeners needed for
+     * validation of the widget value. The returned JComponent will contain the widget for editing.
      *
      * @return JComponent or null if error
      */

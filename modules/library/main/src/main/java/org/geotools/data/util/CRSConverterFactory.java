@@ -18,11 +18,11 @@ package org.geotools.data.util;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.referencing.CRS;
 import org.geotools.util.Converter;
 import org.geotools.util.ConverterFactory;
 import org.geotools.util.factory.Hints;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Convert String to CRS classes.
@@ -33,8 +33,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  */
 public class CRSConverterFactory implements ConverterFactory {
 
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(CRSConverterFactory.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(CRSConverterFactory.class);
 
     private static final CRSConverter STRING_TO_CRS = new CRSConverter();
 
@@ -51,13 +50,11 @@ public class CRSConverterFactory implements ConverterFactory {
             }
             return null; // only do strings
         }
-        if (CoordinateReferenceSystem.class.isAssignableFrom(target)
-                && String.class.isAssignableFrom(source)) {
+        if (CoordinateReferenceSystem.class.isAssignableFrom(target) && String.class.isAssignableFrom(source)) {
             return STRING_TO_CRS;
         }
 
-        if (CoordinateReferenceSystem.class.isAssignableFrom(source)
-                && String.class.isAssignableFrom(target)) {
+        if (CoordinateReferenceSystem.class.isAssignableFrom(source) && String.class.isAssignableFrom(target)) {
             return STRING_TO_CRS;
         }
 
@@ -80,17 +77,13 @@ public class CRSConverterFactory implements ConverterFactory {
             }
 
             // STRING TO CRS
-            if ((source instanceof String)
-                    && CoordinateReferenceSystem.class.isAssignableFrom(target)) {
+            if (source instanceof String input && CoordinateReferenceSystem.class.isAssignableFrom(target)) {
                 if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine(
-                            "CRSConverter: Converting object of class "
-                                    + source.getClass().getCanonicalName()
-                                    + " to "
-                                    + target.getCanonicalName());
+                    LOGGER.fine("CRSConverter: Converting object of class "
+                            + source.getClass().getCanonicalName()
+                            + " to "
+                            + target.getCanonicalName());
                 }
-                // convert
-                String input = (String) source;
                 input = input.trim();
 
                 // try the decode first for EPSG:XXX
@@ -113,17 +106,15 @@ public class CRSConverterFactory implements ConverterFactory {
             }
 
             // CRS TO STRING
-            if ((source instanceof CoordinateReferenceSystem)
-                    && String.class.isAssignableFrom(target)) {
+            if (source instanceof CoordinateReferenceSystem system && String.class.isAssignableFrom(target)) {
                 if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine(
-                            "CRSConverter: Converting object of class "
-                                    + source.getClass().getCanonicalName()
-                                    + " to "
-                                    + target.getCanonicalName());
+                    LOGGER.fine("CRSConverter: Converting object of class "
+                            + source.getClass().getCanonicalName()
+                            + " to "
+                            + target.getCanonicalName());
                 }
                 try {
-                    return (T) ((CoordinateReferenceSystem) source).toWKT();
+                    return (T) system.toWKT();
                 } catch (Exception e) {
                     if (LOGGER.isLoggable(Level.FINE)) {
                         LOGGER.log(Level.FINE, e.getLocalizedMessage(), e);
@@ -133,11 +124,10 @@ public class CRSConverterFactory implements ConverterFactory {
 
             // failed
             if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.fine(
-                        "CRSConverter: Unable to convert object of class "
-                                + source.getClass().getCanonicalName()
-                                + " to "
-                                + target.getCanonicalName());
+                LOGGER.fine("CRSConverter: Unable to convert object of class "
+                        + source.getClass().getCanonicalName()
+                        + " to "
+                        + target.getCanonicalName());
             }
             return null;
         }

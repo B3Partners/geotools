@@ -17,62 +17,61 @@
 package org.geotools.filter.text.cql2;
 
 import java.util.logging.Logger;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.ExcludeFilter;
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.IncludeFilter;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNil;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
+import org.geotools.api.filter.temporal.After;
+import org.geotools.api.filter.temporal.AnyInteracts;
+import org.geotools.api.filter.temporal.Before;
+import org.geotools.api.filter.temporal.Begins;
+import org.geotools.api.filter.temporal.BegunBy;
+import org.geotools.api.filter.temporal.During;
+import org.geotools.api.filter.temporal.EndedBy;
+import org.geotools.api.filter.temporal.Ends;
+import org.geotools.api.filter.temporal.Meets;
+import org.geotools.api.filter.temporal.MetBy;
+import org.geotools.api.filter.temporal.OverlappedBy;
+import org.geotools.api.filter.temporal.TContains;
+import org.geotools.api.filter.temporal.TEquals;
+import org.geotools.api.filter.temporal.TOverlaps;
 import org.geotools.filter.text.commons.FilterToTextUtil;
-import org.opengis.filter.And;
-import org.opengis.filter.ExcludeFilter;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.Id;
-import org.opengis.filter.IncludeFilter;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNil;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
-import org.opengis.filter.temporal.After;
-import org.opengis.filter.temporal.AnyInteracts;
-import org.opengis.filter.temporal.Before;
-import org.opengis.filter.temporal.Begins;
-import org.opengis.filter.temporal.BegunBy;
-import org.opengis.filter.temporal.During;
-import org.opengis.filter.temporal.EndedBy;
-import org.opengis.filter.temporal.Ends;
-import org.opengis.filter.temporal.Meets;
-import org.opengis.filter.temporal.MetBy;
-import org.opengis.filter.temporal.OverlappedBy;
-import org.opengis.filter.temporal.TContains;
-import org.opengis.filter.temporal.TEquals;
-import org.opengis.filter.temporal.TOverlaps;
 
 /**
  * This is a utility class used by CQL.encode( Filter ) method to do the hard work.
  *
- * <p>Please note that this encoder is a bit more strict than you may be used to (the Common Query
- * Language for example demands Equals.getExpression1() is a PropertyName). If you used
- * FilterFactory to produce your filter you should be okay (as it only provides methods to make a
- * valid Filter); if not please expect ClassCastExceptions.
+ * <p>Please note that this encoder is a bit more strict than you may be used to (the Common Query Language for example
+ * demands Equals.getExpression1() is a PropertyName). If you used FilterFactory to produce your filter you should be
+ * okay (as it only provides methods to make a valid Filter); if not please expect ClassCastExceptions.
  *
- * <p>This visitor will return a StringBuilder; you can also provide a StringBuilder as the data
- * parameter in order to cut down on the number of objects created during encoding.
+ * <p>This visitor will return a StringBuilder; you can also provide a StringBuilder as the data parameter in order to
+ * cut down on the number of objects created during encoding.
  *
  * <pre>
  * <code>
@@ -108,8 +107,8 @@ class FilterToCQL implements FilterVisitor {
     /**
      * Encoding an Id filter is not supported by CQL.
      *
-     * <p>This is because in the Catalog specification retreiving an object by an id is a distinct
-     * operation seperate from a filter based query.
+     * <p>This is because in the Catalog specification retreiving an object by an id is a distinct operation seperate
+     * from a filter based query.
      */
     @Override
     public Object visit(Id filter, Object extraData) {
@@ -272,9 +271,8 @@ class FilterToCQL implements FilterVisitor {
     /**
      * A filter has not been provided.
      *
-     * <p>In general this is a bad situtation which we ask people to represent with Filter.INCLUDES
-     * or Filter.EXCLUDES depending on what behaviour they want to see happen - in this case
-     * literally <code>null</code> was provided.
+     * <p>In general this is a bad situtation which we ask people to represent with Filter.INCLUDES or Filter.EXCLUDES
+     * depending on what behaviour they want to see happen - in this case literally <code>null</code> was provided.
      *
      * <p>
      */
@@ -302,8 +300,7 @@ class FilterToCQL implements FilterVisitor {
 
     @Override
     public Object visit(AnyInteracts anyInteracts, Object extraData) {
-        throw new UnsupportedOperationException(
-                "Temporal filter AnyInteracts has not a CQL expression");
+        throw new UnsupportedOperationException("Temporal filter AnyInteracts has not a CQL expression");
     }
 
     @Override
@@ -343,8 +340,7 @@ class FilterToCQL implements FilterVisitor {
 
     @Override
     public Object visit(TContains contains, Object extraData) {
-        throw new UnsupportedOperationException(
-                "Temporal filter TContains has not a CQL expression");
+        throw new UnsupportedOperationException("Temporal filter TContains has not a CQL expression");
     }
 
     @Override
@@ -354,7 +350,6 @@ class FilterToCQL implements FilterVisitor {
 
     @Override
     public Object visit(TOverlaps contains, Object extraData) {
-        throw new UnsupportedOperationException(
-                "Temporal filter TOverlaps has not a CQL expression");
+        throw new UnsupportedOperationException("Temporal filter TOverlaps has not a CQL expression");
     }
 }

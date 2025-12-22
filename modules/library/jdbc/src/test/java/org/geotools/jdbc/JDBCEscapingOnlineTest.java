@@ -4,14 +4,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.store.ContentFeatureCollection;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public abstract class JDBCEscapingOnlineTest extends JDBCTestSupport {
 
@@ -27,9 +27,7 @@ public abstract class JDBCEscapingOnlineTest extends JDBCTestSupport {
     protected void connect() throws Exception {
         super.connect();
         escapingSchema =
-                DataUtilities.createType(
-                        dataStore.getNamespaceURI() + "." + ESCAPING,
-                        ID + ":0," + NAME + ":String");
+                DataUtilities.createType(dataStore.getNamespaceURI() + "." + ESCAPING, ID + ":0," + NAME + ":String");
     }
 
     @Test
@@ -45,7 +43,8 @@ public abstract class JDBCEscapingOnlineTest extends JDBCTestSupport {
             fw.write();
         }
 
-        ContentFeatureCollection fc = dataStore.getFeatureSource(tname(ESCAPING)).getFeatures();
+        ContentFeatureCollection fc =
+                dataStore.getFeatureSource(tname(ESCAPING)).getFeatures();
         assertEquals(1, fc.size());
         try (SimpleFeatureIterator fr = fc.features()) {
             assertTrue(fr.hasNext());

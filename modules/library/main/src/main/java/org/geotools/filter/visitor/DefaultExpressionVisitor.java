@@ -16,24 +16,24 @@
  */
 package org.geotools.filter.visitor;
 
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.Multiply;
-import org.opengis.filter.expression.NilExpression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.expression.Subtract;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.Multiply;
+import org.geotools.api.filter.expression.NilExpression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.Subtract;
 
 /**
  * Abstract implementation of ExpressionVisitor that simply walks the data structure.
  *
- * <p>This class implements the full ExpressionVisitor interface and will visit every Filter member
- * of an Expression object. This class performs no actions and is not intended to be used directly,
- * instead extend it and overide the methods for the Expression type you are interested in. Remember
- * to call the super method if you want to ensure that the entire expression tree is still visited.
+ * <p>This class implements the full ExpressionVisitor interface and will visit every Filter member of an Expression
+ * object. This class performs no actions and is not intended to be used directly, instead extend it and overide the
+ * methods for the Expression type you are interested in. Remember to call the super method if you want to ensure that
+ * the entire expression tree is still visited.
  *
  * <pre><code>
  * FilterVisitor allProperties = new DefaultExpressionVisitor(){

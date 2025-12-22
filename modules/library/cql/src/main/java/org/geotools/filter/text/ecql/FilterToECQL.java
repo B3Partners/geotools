@@ -19,56 +19,56 @@ package org.geotools.filter.text.ecql;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.ExcludeFilter;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.IncludeFilter;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNil;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.identity.Identifier;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
+import org.geotools.api.filter.temporal.After;
+import org.geotools.api.filter.temporal.AnyInteracts;
+import org.geotools.api.filter.temporal.Before;
+import org.geotools.api.filter.temporal.Begins;
+import org.geotools.api.filter.temporal.BegunBy;
+import org.geotools.api.filter.temporal.During;
+import org.geotools.api.filter.temporal.EndedBy;
+import org.geotools.api.filter.temporal.Ends;
+import org.geotools.api.filter.temporal.Meets;
+import org.geotools.api.filter.temporal.MetBy;
+import org.geotools.api.filter.temporal.OverlappedBy;
+import org.geotools.api.filter.temporal.TContains;
+import org.geotools.api.filter.temporal.TEquals;
+import org.geotools.api.filter.temporal.TOverlaps;
 import org.geotools.filter.text.commons.ExpressionToText;
 import org.geotools.filter.text.commons.FilterToTextUtil;
 import org.geotools.util.factory.Hints;
-import org.opengis.filter.And;
-import org.opengis.filter.ExcludeFilter;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.Id;
-import org.opengis.filter.IncludeFilter;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNil;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.identity.Identifier;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
-import org.opengis.filter.temporal.After;
-import org.opengis.filter.temporal.AnyInteracts;
-import org.opengis.filter.temporal.Before;
-import org.opengis.filter.temporal.Begins;
-import org.opengis.filter.temporal.BegunBy;
-import org.opengis.filter.temporal.During;
-import org.opengis.filter.temporal.EndedBy;
-import org.opengis.filter.temporal.Ends;
-import org.opengis.filter.temporal.Meets;
-import org.opengis.filter.temporal.MetBy;
-import org.opengis.filter.temporal.OverlappedBy;
-import org.opengis.filter.temporal.TContains;
-import org.opengis.filter.temporal.TEquals;
-import org.opengis.filter.temporal.TOverlaps;
 
 /**
  * This class is responsible to transform a filter to an ECQL predicate.
@@ -82,10 +82,7 @@ final class FilterToECQL implements FilterVisitor {
 
     ExpressionToText expressionVisitor;
 
-    /**
-     * Default constructor. The behavior of EWKT encoding is controlled by the {@link
-     * Hints#ENCODE_EWKT} hint
-     */
+    /** Default constructor. The behavior of EWKT encoding is controlled by the {@link Hints#ENCODE_EWKT} hint */
     public FilterToECQL() {
         this(ECQL.isEwktEncodingEnabled());
     }
@@ -154,8 +151,8 @@ final class FilterToECQL implements FilterVisitor {
     /**
      * Builds the OR logical operator.
      *
-     * <p>This visitor checks for {@link #isInFilter(Or)} and is willing to output ECQL of the form
-     * <code>left IN (right, right, right)</code>.
+     * <p>This visitor checks for {@link #isInFilter(Or)} and is willing to output ECQL of the form <code>
+     * left IN (right, right, right)</code>.
      */
     @Override
     public Object visit(Or filter, Object extraData) {
@@ -173,8 +170,7 @@ final class FilterToECQL implements FilterVisitor {
         }
         Expression left = null;
         for (Filter child : filter.getChildren()) {
-            if (child instanceof PropertyIsEqualTo) {
-                PropertyIsEqualTo equal = (PropertyIsEqualTo) child;
+            if (child instanceof PropertyIsEqualTo equal) {
                 if (left == null) {
                     left = equal.getExpression1();
                 } else if (!left.equals(equal.getExpression1())) {
@@ -225,8 +221,7 @@ final class FilterToECQL implements FilterVisitor {
     }
 
     /** Check if this is an encoding of ECQL geospatial operation */
-    private boolean isFunctionTrue(
-            PropertyIsEqualTo filter, String operation, int numberOfArguments) {
+    private boolean isFunctionTrue(PropertyIsEqualTo filter, String operation, int numberOfArguments) {
         if (filter.getExpression1() instanceof Function) {
             Function function = (Function) filter.getExpression1();
             List<Expression> parameters = function.getParameters();
@@ -268,8 +263,7 @@ final class FilterToECQL implements FilterVisitor {
             Function function = (Function) filter.getExpression1();
             List<Expression> parameters = function.getParameters();
             Expression param3 = parameters.get(2);
-            if (param3 instanceof Literal) {
-                Literal literal = (Literal) param3;
+            if (param3 instanceof Literal literal) {
                 Object value = literal.getValue();
                 if (!(value instanceof String)) {
                     return false; // not a relate
@@ -345,26 +339,22 @@ final class FilterToECQL implements FilterVisitor {
 
     @Override
     public Object visit(Beyond filter, Object extraData) {
-        return FilterToTextUtil.buildDistanceBufferOperation(
-                "BEYOND", filter, extraData, expressionVisitor);
+        return FilterToTextUtil.buildDistanceBufferOperation("BEYOND", filter, extraData, expressionVisitor);
     }
 
     @Override
     public Object visit(Contains filter, Object extraData) {
-        return FilterToTextUtil.buildBinarySpatialOperator(
-                "CONTAINS", filter, extraData, expressionVisitor);
+        return FilterToTextUtil.buildBinarySpatialOperator("CONTAINS", filter, extraData, expressionVisitor);
     }
 
     @Override
     public Object visit(Crosses filter, Object extraData) {
-        return FilterToTextUtil.buildBinarySpatialOperator(
-                "CROSSES", filter, extraData, expressionVisitor);
+        return FilterToTextUtil.buildBinarySpatialOperator("CROSSES", filter, extraData, expressionVisitor);
     }
 
     @Override
     public Object visit(Disjoint filter, Object extraData) {
-        return FilterToTextUtil.buildBinarySpatialOperator(
-                "DISJOINT", filter, extraData, expressionVisitor);
+        return FilterToTextUtil.buildBinarySpatialOperator("DISJOINT", filter, extraData, expressionVisitor);
     }
 
     @Override
@@ -374,32 +364,27 @@ final class FilterToECQL implements FilterVisitor {
 
     @Override
     public Object visit(Equals filter, Object extraData) {
-        return FilterToTextUtil.buildBinarySpatialOperator(
-                "EQUALS", filter, extraData, expressionVisitor);
+        return FilterToTextUtil.buildBinarySpatialOperator("EQUALS", filter, extraData, expressionVisitor);
     }
 
     @Override
     public Object visit(Intersects filter, Object extraData) {
-        return FilterToTextUtil.buildBinarySpatialOperator(
-                "INTERSECTS", filter, extraData, expressionVisitor);
+        return FilterToTextUtil.buildBinarySpatialOperator("INTERSECTS", filter, extraData, expressionVisitor);
     }
 
     @Override
     public Object visit(Overlaps filter, Object extraData) {
-        return FilterToTextUtil.buildBinarySpatialOperator(
-                "OVERLAPS", filter, extraData, expressionVisitor);
+        return FilterToTextUtil.buildBinarySpatialOperator("OVERLAPS", filter, extraData, expressionVisitor);
     }
 
     @Override
     public Object visit(Touches filter, Object extraData) {
-        return FilterToTextUtil.buildBinarySpatialOperator(
-                "TOUCHES", filter, extraData, expressionVisitor);
+        return FilterToTextUtil.buildBinarySpatialOperator("TOUCHES", filter, extraData, expressionVisitor);
     }
 
     @Override
     public Object visit(Within filter, Object extraData) {
-        return FilterToTextUtil.buildBinarySpatialOperator(
-                "WITHIN", filter, extraData, expressionVisitor);
+        return FilterToTextUtil.buildBinarySpatialOperator("WITHIN", filter, extraData, expressionVisitor);
     }
 
     @Override
@@ -434,8 +419,7 @@ final class FilterToECQL implements FilterVisitor {
      * @return UnsupportedOperationException
      */
     private static UnsupportedOperationException ecqlUnsupported(final String filterName) {
-        return new UnsupportedOperationException(
-                "The" + filterName + " has not an ECQL expression");
+        return new UnsupportedOperationException("The" + filterName + " has not an ECQL expression");
     }
 
     @Override

@@ -30,9 +30,10 @@ import static java.lang.Math.sin;
 import static java.lang.Math.sqrt;
 
 import java.awt.geom.Point2D;
+import java.io.Serial;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
 
 /**
  * The oblique case of the {@link Orthographic} projection. Only the spherical form is given here.
@@ -43,6 +44,7 @@ import org.opengis.parameter.ParameterValueGroup;
  */
 public class ObliqueOrthographic extends Orthographic {
     /** For compatibility with different versions during deserialization. */
+    @Serial
     private static final long serialVersionUID = -2306183438166607066L;
 
     /** Maximum difference allowed when comparing real numbers. */
@@ -60,20 +62,18 @@ public class ObliqueOrthographic extends Orthographic {
      * @param parameters The parameter values in standard units.
      * @throws ParameterNotFoundException if a mandatory parameter is missing.
      */
-    protected ObliqueOrthographic(final ParameterValueGroup parameters)
-            throws ParameterNotFoundException {
+    protected ObliqueOrthographic(final ParameterValueGroup parameters) throws ParameterNotFoundException {
         super(parameters);
         sinphi0 = sin(latitudeOfOrigin);
         cosphi0 = cos(latitudeOfOrigin);
     }
 
     /**
-     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in
-     * radians) and stores the result in {@code ptDst} (linear distance on a unit sphere).
+     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in radians) and stores the
+     * result in {@code ptDst} (linear distance on a unit sphere).
      */
     @Override
-    protected Point2D transformNormalized(double x, double y, final Point2D ptDst)
-            throws ProjectionException {
+    protected Point2D transformNormalized(double x, double y, final Point2D ptDst) throws ProjectionException {
         final double cosphi = cos(y);
         final double coslam = cos(x);
         final double sinphi = sin(y);
@@ -90,17 +90,13 @@ public class ObliqueOrthographic extends Orthographic {
         return new Point2D.Double(x, y);
     }
 
-    /**
-     * Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in
-     * {@code ptDst}.
-     */
+    /** Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in {@code ptDst}. */
     @Override
-    protected Point2D inverseTransformNormalized(double x, double y, final Point2D ptDst)
-            throws ProjectionException {
+    protected Point2D inverseTransformNormalized(double x, double y, final Point2D ptDst) throws ProjectionException {
         final double rho = hypot(x, y);
         double sinc = rho;
         if (sinc > 1.0) {
-            if ((sinc - 1.0) > EPSILON) {
+            if (sinc - 1.0 > EPSILON) {
                 throw new ProjectionException(ErrorKeys.POINT_OUTSIDE_HEMISPHERE);
             }
             sinc = 1.0;
@@ -110,13 +106,13 @@ public class ObliqueOrthographic extends Orthographic {
             y = latitudeOfOrigin;
             x = 0.0;
         } else {
-            double phi = (cosc * sinphi0) + (y * sinc * cosphi0 / rho);
+            double phi = cosc * sinphi0 + y * sinc * cosphi0 / rho;
             y = (cosc - sinphi0 * phi) * rho; // rather clever; equivalent to part of (20-15)
             x *= sinc * cosphi0;
 
             // begin sinchk
             if (abs(phi) >= 1.0) {
-                phi = (phi < 0.0) ? -PI / 2 : PI / 2;
+                phi = phi < 0.0 ? -PI / 2 : PI / 2;
             } else {
                 phi = asin(phi);
             }
@@ -126,7 +122,7 @@ public class ObliqueOrthographic extends Orthographic {
                 if (x == 0.0) {
                     x = 0.0;
                 } else {
-                    x = (x < 0.0) ? -PI / 2 : PI / 2;
+                    x = x < 0.0 ? -PI / 2 : PI / 2;
                 }
             } else {
                 x = atan2(x, y);

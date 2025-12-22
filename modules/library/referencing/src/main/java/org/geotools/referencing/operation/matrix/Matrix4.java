@@ -16,13 +16,12 @@
  */
 package org.geotools.referencing.operation.matrix;
 
+import java.io.Serial;
+import org.geotools.api.referencing.operation.Matrix;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
-import org.opengis.referencing.operation.Matrix;
 
 /**
- * A matrix of fixed {@value #SIZE}&times;{@value #SIZE} size. It is used primarily for supporting
- * datum shifts.
+ * A matrix of fixed {@value #SIZE}&times;{@value #SIZE} size. It is used primarily for supporting datum shifts.
  *
  * @since 2.2
  * @version 13.0
@@ -31,6 +30,7 @@ import org.opengis.referencing.operation.Matrix;
  */
 public class Matrix4 extends GeneralMatrix implements XMatrix {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 5685762518066856311L;
 
     /** The matrix size, which is {@value}. */
@@ -60,25 +60,22 @@ public class Matrix4 extends GeneralMatrix implements XMatrix {
             double m31,
             double m32,
             double m33) {
-        super(
-                SIZE,
-                SIZE,
-                new double[] {
-                    m00, m01, m02, m03,
-                    m10, m11, m12, m13,
-                    m20, m21, m22, m23,
-                    m30, m31, m32, m33
-                });
+        super(SIZE, SIZE, new double[] {
+            m00, m01, m02, m03,
+            m10, m11, m12, m13,
+            m20, m21, m22, m23,
+            m30, m31, m32, m33
+        });
     }
 
     /**
-     * Creates a new matrix initialized to the same value than the specified one. The specified
-     * matrix size must be {@value #SIZE}&times;{@value #SIZE}.
+     * Creates a new matrix initialized to the same value than the specified one. The specified matrix size must be
+     * {@value #SIZE}&times;{@value #SIZE}.
      */
     public Matrix4(final Matrix matrix) {
         super(SIZE);
         if (matrix.getNumRow() != SIZE || matrix.getNumCol() != SIZE) {
-            throw new IllegalArgumentException(Errors.format(ErrorKeys.ILLEGAL_MATRIX_SIZE));
+            throw new IllegalArgumentException(ErrorKeys.ILLEGAL_MATRIX_SIZE);
         }
         for (int j = 0; j < SIZE; j++) {
             for (int i = 0; i < SIZE; i++) {
@@ -87,19 +84,13 @@ public class Matrix4 extends GeneralMatrix implements XMatrix {
         }
     }
 
-    /**
-     * Returns the number of rows in this matrix, which is always {@value #SIZE} in this
-     * implementation.
-     */
+    /** Returns the number of rows in this matrix, which is always {@value #SIZE} in this implementation. */
     @Override
     public final int getNumRow() {
         return SIZE;
     }
 
-    /**
-     * Returns the number of colmuns in this matrix, which is always {@value #SIZE} in this
-     * implementation.
-     */
+    /** Returns the number of colmuns in this matrix, which is always {@value #SIZE} in this implementation. */
     @Override
     public final int getNumCol() {
         return SIZE;

@@ -35,11 +35,12 @@ import static tech.units.indriya.unit.Units.WATT;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.Map;
 import javax.measure.Unit;
 import javax.measure.format.MeasurementParseException;
 import org.geotools.imageio.netcdf.NetCDFUnitFormat;
-import org.junit.After;
+import org.geotools.measure.UnitFormat;
+import org.geotools.measure.UnitFormatter;
 import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
@@ -47,7 +48,6 @@ import org.junit.runners.Parameterized;
 import si.uom.NonSI;
 import si.uom.SI;
 import tech.units.indriya.AbstractUnit;
-import tech.units.indriya.format.SimpleUnitFormat;
 import tech.units.indriya.function.LogConverter;
 
 @RunWith(Enclosed.class)
@@ -58,74 +58,64 @@ public class NetCDFUnitParserTest {
 
         @Parameterized.Parameters(name = "{index}: {0} -> {1}")
         public static Collection<Object[]> data() {
-            return Arrays.asList(
-                    new Object[][] {
-                        {"microgram", MICRO(GRAM)},
-                        {"microgram/m3", MICRO(GRAM).divide(METRE.pow(3))},
-                        {"nanograms/m3", NANO(GRAM).divide(METRE.pow(3))},
-                        {"microgrammes per cubic meter", MICRO(GRAM).divide(METRE.pow(3))},
-                        {"m2", METRE.pow(2)},
-                        {"m3", METRE.pow(3)},
-                        {"µmol", MICRO(MOLE)},
-                        {"g m-3", GRAM.multiply(METRE.pow(-3))},
-                        {"mg", MILLI(GRAM)},
-                        {"mol m-2", MOLE.multiply(METRE.pow(-2))},
-                        {"Pa", SI.PASCAL},
-                        {"unitless", AbstractUnit.ONE},
-                        {"m/s", METRE.divide(SI.SECOND)},
-                        {"W m-2", WATT.multiply(METRE.pow(-2))},
-                        {
-                            "kg m-2 s-1",
-                            SI.KILOGRAM.multiply(METRE.pow(-2).multiply(SI.SECOND.pow(-1)))
-                        },
-                        {
-                            "mW m^-2 sr^-1 nm^-1",
-                            MILLI(WATT)
-                                    .multiply(METRE.pow(-2))
-                                    .multiply(STERADIAN.pow(-1))
-                                    .multiply(NANO(METRE).pow(-1))
-                        },
-                        {
-                            "mW m^-2 nm^-1",
-                            MILLI(WATT).multiply(METRE.pow(-2)).multiply(NANO(METRE).pow(-1))
-                        },
-                        {"mol cm-3", MOLE.divide(CENTI(METRE).pow(3))},
-                        {"Pa", SI.PASCAL},
-                        {"percentage", AbstractUnit.ONE.divide(100)},
-                        {"Meter", METRE},
-                        {"meter", METRE},
-                        {"dB", AbstractUnit.ONE.transform(new LogConverter(10)).divide(10)},
-                        {"degree", NonSI.DEGREE_ANGLE},
-                        {"m2/m2", METRE.pow(2).divide(METRE.pow(2))},
-                        {"m-1 s", METRE.pow(-1).multiply(SECOND)},
-                        {"kg m-3", KILOGRAM.multiply(METRE.pow(-3))},
-                        {"K m-1", KELVIN.multiply(METRE.pow(-1))},
-                        {"mol kg-1", MOLE.multiply(KILOGRAM.pow(-1))},
-                        {"J kg-1", JOULE.multiply(KILOGRAM.pow(-1))},
-                        {"kg m-2 s-1", KILOGRAM.multiply(METRE.pow(-2).multiply(SECOND.pow(-1)))},
-                        {"J m-2", JOULE.multiply(METRE.pow(-2))},
-                        {"m2 s-1", METRE.pow(2).multiply(SECOND.pow(-1))},
-                        {"kg m-2", KILOGRAM.multiply(METRE.pow(-2))},
-                        {"mol m-2", MOLE.multiply(METRE.pow(-2))},
-                        {"s-1 m-3", SECOND.pow(-1).multiply(METRE.pow(-3))},
-                        {"g kg-1", GRAM.multiply(KILOGRAM.pow(-1))},
-                        {"Pa m", PASCAL.multiply(METRE)},
-                        {"W m-2", WATT.multiply(METRE.pow(-2))},
-                        {
-                            "mol m-2 s-1 m-1 sr-1",
-                            MOLE.divide(
-                                    METRE.pow(2)
-                                            .multiply(SECOND)
-                                            .multiply(METRE)
-                                            .multiply(STERADIAN))
-                        },
-                        {
-                            "K m2 kg-1 s-1",
-                            KELVIN.multiply(METRE.pow(2))
-                                    .multiply(KILOGRAM.pow(-1))
-                                    .multiply(SECOND.pow(-1))
-                        }
-                    });
+            return Arrays.asList(new Object[][] {
+                {"microgram", MICRO(GRAM)},
+                {"microgram/m3", MICRO(GRAM).divide(METRE.pow(3))},
+                {"nanograms/m3", NANO(GRAM).divide(METRE.pow(3))},
+                {"microgrammes per cubic meter", MICRO(GRAM).divide(METRE.pow(3))},
+                {"m2", METRE.pow(2)},
+                {"m3", METRE.pow(3)},
+                {"µmol", MICRO(MOLE)},
+                {"g m-3", GRAM.multiply(METRE.pow(-3))},
+                {"mg", MILLI(GRAM)},
+                {"mol m-2", MOLE.multiply(METRE.pow(-2))},
+                {"Pa", SI.PASCAL},
+                {"unitless", AbstractUnit.ONE},
+                {"m/s", METRE.divide(SI.SECOND)},
+                {"W m-2", WATT.multiply(METRE.pow(-2))},
+                {"kg m-2 s-1", SI.KILOGRAM.multiply(METRE.pow(-2).multiply(SI.SECOND.pow(-1)))},
+                {
+                    "mW m^-2 sr^-1 nm^-1",
+                    MILLI(WATT)
+                            .multiply(METRE.pow(-2))
+                            .multiply(STERADIAN.pow(-1))
+                            .multiply(NANO(METRE).pow(-1))
+                },
+                {
+                    "mW m^-2 nm^-1",
+                    MILLI(WATT).multiply(METRE.pow(-2)).multiply(NANO(METRE).pow(-1))
+                },
+                {"mol cm-3", MOLE.divide(CENTI(METRE).pow(3))},
+                {"Pa", SI.PASCAL},
+                {"percentage", AbstractUnit.ONE.divide(100)},
+                {"Meter", METRE},
+                {"meter", METRE},
+                {"dB", AbstractUnit.ONE.transform(new LogConverter(10)).divide(10)},
+                {"degree", NonSI.DEGREE_ANGLE},
+                {"m2/m2", METRE.pow(2).divide(METRE.pow(2))},
+                {"m-1 s", METRE.pow(-1).multiply(SECOND)},
+                {"kg m-3", KILOGRAM.multiply(METRE.pow(-3))},
+                {"K m-1", KELVIN.multiply(METRE.pow(-1))},
+                {"mol kg-1", MOLE.multiply(KILOGRAM.pow(-1))},
+                {"J kg-1", JOULE.multiply(KILOGRAM.pow(-1))},
+                {"kg m-2 s-1", KILOGRAM.multiply(METRE.pow(-2).multiply(SECOND.pow(-1)))},
+                {"J m-2", JOULE.multiply(METRE.pow(-2))},
+                {"m2 s-1", METRE.pow(2).multiply(SECOND.pow(-1))},
+                {"kg m-2", KILOGRAM.multiply(METRE.pow(-2))},
+                {"mol m-2", MOLE.multiply(METRE.pow(-2))},
+                {"s-1 m-3", SECOND.pow(-1).multiply(METRE.pow(-3))},
+                {"g kg-1", GRAM.multiply(KILOGRAM.pow(-1))},
+                {"Pa m", PASCAL.multiply(METRE)},
+                {"W m-2", WATT.multiply(METRE.pow(-2))},
+                {
+                    "mol m-2 s-1 m-1 sr-1",
+                    MOLE.divide(METRE.pow(2).multiply(SECOND).multiply(METRE).multiply(STERADIAN))
+                },
+                {
+                    "K m2 kg-1 s-1",
+                    KELVIN.multiply(METRE.pow(2)).multiply(KILOGRAM.pow(-1)).multiply(SECOND.pow(-1))
+                }
+            });
         }
 
         private String input;
@@ -141,7 +131,7 @@ public class NetCDFUnitParserTest {
         public void test() {
             // compare the symbols, as using direct comparison checks also the parent
             // units which are not always the same
-            Unit<?> actual = NetCDFUnitFormat.parse(input);
+            Unit<?> actual = NetCDFUnitFormat.createWithBuiltInConfig().parse(input);
             String message = actual + " !-> " + expected;
             assertTrue("Not compatible, " + message, expected.isCompatible(actual));
             assertEquals(expected.toString(), actual.toString());
@@ -150,39 +140,36 @@ public class NetCDFUnitParserTest {
 
     public static class SimpleTests {
 
-        @After
-        public void reset() {
-            // clean up any configuration
-            NetCDFUnitFormat.reset();
-        }
-
         @Test
-        public void testDU() throws Exception {
+        public void testDU() {
             // could not find a way to make this work with the above test, so doing it another way
-            Unit<?> unit = NetCDFUnitFormat.parse("DU");
+            Unit<?> unit = NetCDFUnitFormat.createWithBuiltInConfig().parse("DU");
             assertEquals("μmol·(1/m²)*446.2", unit.toString());
         }
 
         @Test(expected = MeasurementParseException.class)
         public void testIsolation() {
-            // the normal instance should be isolated, the configuration of the the NetCDF
+            // the normal instance should be isolated, the configuration of the NetCDF
             // unit parse should not affect the normal parser
-            SimpleUnitFormat instance = SimpleUnitFormat.getInstance();
+            UnitFormatter instance = UnitFormat.getInstance();
             instance.parse("degree");
         }
 
         @Test
         public void testReconfigureAliases() {
-            NetCDFUnitFormat.setAliases(Collections.singletonMap("foobar", "m^3"));
-            Unit<?> parsed = NetCDFUnitFormat.parse("foobar");
+            Map<String, String> aliases = NetCDFUnitFormat.builtInAliases();
+            aliases.put("foobar", "m^3");
+            NetCDFUnitFormat format = NetCDFUnitFormat.create(NetCDFUnitFormat.builtInReplacements(), aliases);
+            Unit<?> parsed = format.parse("foobar");
             assertEquals(parsed, METRE.pow(3));
         }
 
         @Test
         public void testReconfigureReplacements() {
-            NetCDFUnitFormat.setReplacements(
-                    Collections.singletonMap("one two three four!", "g*m^2*s^-2"));
-            Unit<?> parsed = NetCDFUnitFormat.parse("one two three four!");
+            Map<String, String> replacements = NetCDFUnitFormat.builtInReplacements();
+            replacements.put("one two three four!", "g*m^2*s^-2");
+            NetCDFUnitFormat format = NetCDFUnitFormat.create(replacements, NetCDFUnitFormat.builtInAliases());
+            Unit<?> parsed = format.parse("one two three four!");
             Unit<?> expected = GRAM.multiply(METRE.pow(2)).multiply(SECOND.pow(-2));
             assertEquals(expected, parsed);
         }

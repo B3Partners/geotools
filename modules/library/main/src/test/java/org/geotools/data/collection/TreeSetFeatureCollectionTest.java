@@ -20,20 +20,18 @@
 package org.geotools.data.collection;
 
 import java.util.List;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
 /**
  * Verify TreeSetFeatureCollection is conforming to the FeatureCollection api contract.
  *
  * @author Jody
  */
-public class TreeSetFeatureCollectionTest
-        extends org.geotools.data.collection.FeatureCollectionTest {
+public class TreeSetFeatureCollectionTest extends org.geotools.data.collection.FeatureCollectionTest {
 
     @Override
-    protected TreeSetFeatureCollection newCollection(
-            SimpleFeatureType schema, List<SimpleFeature> list) {
+    protected TreeSetFeatureCollection newCollection(SimpleFeatureType schema, List<SimpleFeature> list) {
         TreeSetFeatureCollection treeset = new TreeSetFeatureCollection(null, null);
         treeset.addAll(list);
         return treeset;

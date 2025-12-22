@@ -20,17 +20,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
 import org.geotools.data.DataTestCase;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
 
 public class MemoryFeatureReaderTest extends DataTestCase {
 
@@ -51,8 +51,7 @@ public class MemoryFeatureReaderTest extends DataTestCase {
         int currentFeatureCount = 0;
 
         try (FeatureReader<SimpleFeatureType, SimpleFeature> featureReader =
-                memoryDataStore.getFeatureReader(
-                        new Query(roadType.getTypeName(), Filter.INCLUDE), transaction)) {
+                memoryDataStore.getFeatureReader(new Query(roadType.getTypeName(), Filter.INCLUDE), transaction)) {
 
             // start iterating through content
             if (featureReader.hasNext()) {
@@ -74,8 +73,7 @@ public class MemoryFeatureReaderTest extends DataTestCase {
         int currentFeatureCount = 0;
 
         try (FeatureReader<SimpleFeatureType, SimpleFeature> featureReader =
-                memoryDataStore.getFeatureReader(
-                        new Query(roadType.getTypeName(), Filter.INCLUDE), transaction)) {
+                memoryDataStore.getFeatureReader(new Query(roadType.getTypeName(), Filter.INCLUDE), transaction)) {
 
             // start iterating through content
             if (featureReader.hasNext()) {
@@ -95,8 +93,7 @@ public class MemoryFeatureReaderTest extends DataTestCase {
 
                 transaction.commit();
 
-                assertReaderHasFeatureCount(
-                        expectedFeatureCount, currentFeatureCount, featureReader);
+                assertReaderHasFeatureCount(expectedFeatureCount, currentFeatureCount, featureReader);
             }
         }
     }
@@ -116,8 +113,6 @@ public class MemoryFeatureReaderTest extends DataTestCase {
         }
 
         assertEquals(
-                "a write in MemoryDataStore should not 'destroy' readers",
-                expectedFeatureCount,
-                currentFeatureCount);
+                "a write in MemoryDataStore should not 'destroy' readers", expectedFeatureCount, currentFeatureCount);
     }
 }

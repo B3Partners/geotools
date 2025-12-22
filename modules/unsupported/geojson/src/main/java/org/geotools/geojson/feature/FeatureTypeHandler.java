@@ -22,23 +22,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geojson.DelegatingHandler;
 import org.geotools.geojson.IContentHandler;
 import org.json.simple.parser.ParseException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * Obtains a complete feature type from GeoJSON by parsing beyond first feature and finding
- * attributes that did not appear in the first feature or had null values.
+ * Obtains a complete feature type from GeoJSON by parsing beyond first feature and finding attributes that did not
+ * appear in the first feature or had null values.
  *
- * <p>If null values are encoded, parsing will stop when all data types are found. In the worst
- * case, all features will be parsed. If null values are not encoded, all features will be parsed
- * anyway.
+ * <p>If null values are encoded, parsing will stop when all data types are found. In the worst case, all features will
+ * be parsed. If null values are not encoded, all features will be parsed anyway.
  */
 public class FeatureTypeHandler extends DelegatingHandler<SimpleFeatureType>
         implements IContentHandler<SimpleFeatureType> {
@@ -50,6 +49,8 @@ public class FeatureTypeHandler extends DelegatingHandler<SimpleFeatureType>
     private Map<String, Class<?>> propertyTypes = new LinkedHashMap<>();
 
     private boolean inProperties;
+
+    private int complexNestingLevel; // level inside a complex property
 
     private String currentProp;
 
@@ -65,6 +66,9 @@ public class FeatureTypeHandler extends DelegatingHandler<SimpleFeatureType>
 
     @Override
     public boolean startObjectEntry(String key) throws ParseException, IOException {
+        if (complexNestingLevel > 0) {
+            return true;
+        }
         if ("crs".equals(key)) {
             delegate = new CRSHandler();
             return true;
@@ -103,16 +107,63 @@ public class FeatureTypeHandler extends DelegatingHandler<SimpleFeatureType>
             return true;
         }
 
+        if (inProperties && currentProp != null) {
+            if (complexNestingLevel++ == 0) {
+                // Record property type
+                if (!propertyTypes.containsKey(currentProp)) {
+                    // found previously unknown property
+                    propertyTypes.put(currentProp, List.class);
+                } else {
+                    checkValueCompatibility(List.class);
+                }
+            }
+            return true;
+        }
+
         return super.startArray();
+    }
+
+    @Override
+    public boolean endArray() throws ParseException, IOException {
+        super.endArray();
+
+        if (inProperties) {
+            --complexNestingLevel;
+        }
+        return true;
+    }
+
+    @Override
+    public boolean startObject() throws ParseException, IOException {
+        super.startObject();
+        if (inProperties && currentProp != null) {
+            if (complexNestingLevel++ == 0) {
+                // Record property type
+                if (!propertyTypes.containsKey(currentProp)) {
+                    // found previously unknown property
+                    propertyTypes.put(currentProp, Map.class);
+                } else {
+                    checkValueCompatibility(Map.class);
+                }
+            }
+        }
+        return true;
     }
 
     @Override
     public boolean endObject() throws ParseException, IOException {
         super.endObject();
 
-        if (delegate instanceof FeatureHandler) {
+        if (inProperties && currentProp != null) {
+            --complexNestingLevel;
+        }
+        if (complexNestingLevel > 0) {
+            return true;
+        }
+
+        if (delegate instanceof FeatureHandler handler) {
             // obtain a type from the first feature
-            SimpleFeature feature = ((FeatureHandler) delegate).getValue();
+            SimpleFeature feature = handler.getValue();
             if (feature != null) {
                 geom = feature.getFeatureType().getGeometryDescriptor();
                 List<AttributeDescriptor> attributeDescriptors =
@@ -137,35 +188,46 @@ public class FeatureTypeHandler extends DelegatingHandler<SimpleFeatureType>
     @Override
     public boolean primitive(Object value) throws ParseException, IOException {
 
-        if (value != null) {
-            Class<?> newType = value.getClass();
-            if (currentProp != null) {
-                Class<?> knownType = propertyTypes.get(currentProp);
-                if (knownType == Object.class) {
-                    propertyTypes.put(currentProp, newType);
-
-                    if (foundAllValues()) {
-                        // found the last unknown type, stop parsing
-                        buildType();
-                        return false;
-                    }
-                } else if (knownType != newType) {
-                    if (Number.class.isAssignableFrom(knownType) && newType == Double.class) {
-                        propertyTypes.put(currentProp, Double.class);
-                    } else {
-                        throw new IllegalStateException(
-                                "Found conflicting types "
-                                        + knownType.getSimpleName()
-                                        + " and "
-                                        + newType.getSimpleName()
-                                        + " for property "
-                                        + currentProp);
-                    }
-                }
+        if (inProperties && complexNestingLevel == 0 && currentProp != null) {
+            if (!checkValueCompatibility(value)) {
+                return false;
             }
         }
 
         return super.primitive(value);
+    }
+
+    private boolean checkValueCompatibility(Object value) {
+        if (value != null) {
+            return checkValueCompatibility(value.getClass());
+        }
+        return true;
+    }
+
+    private boolean checkValueCompatibility(Class<?> newType) {
+        Class<?> knownType = propertyTypes.get(currentProp);
+        if (knownType == Object.class) {
+            propertyTypes.put(currentProp, newType);
+
+            if (foundAllValues()) {
+                // found the last unknown type, stop parsing
+                buildType();
+                return false;
+            }
+        } else if (knownType != newType) {
+            if (Number.class.isAssignableFrom(knownType) && newType == Double.class
+                    || Number.class.isAssignableFrom(newType) && knownType == Double.class) {
+                propertyTypes.put(currentProp, Double.class);
+            } else {
+                throw new IllegalStateException("Found conflicting types "
+                        + knownType.getSimpleName()
+                        + " and "
+                        + newType.getSimpleName()
+                        + " for property "
+                        + currentProp);
+            }
+        }
+        return true;
     }
 
     /*
@@ -190,16 +252,18 @@ public class FeatureTypeHandler extends DelegatingHandler<SimpleFeatureType>
     public boolean endObjectEntry() throws ParseException, IOException {
 
         super.endObjectEntry();
+        if (complexNestingLevel > 0) {
+            // Still inside complex property
+            return true;
+        }
 
-        if (delegate != null && delegate instanceof CRSHandler) {
-            crs = ((CRSHandler) delegate).getValue();
+        if (delegate != null && delegate instanceof CRSHandler handler) {
+            crs = handler.getValue();
             if (crs != null) {
                 delegate = NULL;
             }
         } else if (currentProp != null) {
             currentProp = null;
-        } else if (inProperties) {
-            inProperties = false;
         }
         return true;
     }

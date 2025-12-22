@@ -16,14 +16,14 @@
  */
 package org.geotools.temporal.object;
 
+import org.geotools.api.temporal.IndeterminateValue;
+import org.geotools.api.temporal.TemporalPosition;
+import org.geotools.api.temporal.TemporalReferenceSystem;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
 import org.geotools.temporal.reference.DefaultTemporalReferenceSystem;
 import org.geotools.util.SimpleInternationalString;
 import org.geotools.util.Utilities;
-import org.opengis.temporal.IndeterminateValue;
-import org.opengis.temporal.TemporalPosition;
-import org.opengis.temporal.TemporalReferenceSystem;
 
 /**
  * Used for describing temporal positions referenced to other temporal reference systems.
@@ -33,13 +33,13 @@ import org.opengis.temporal.TemporalReferenceSystem;
 public class DefaultTemporalPosition implements TemporalPosition {
 
     /**
-     * This is the TM_ReferenceSystem associated with this TM_TemporalPosition, if not specified, it
-     * is assumed to be an association to the Gregorian calendar and UTC.
+     * This is the TM_ReferenceSystem associated with this TM_TemporalPosition, if not specified, it is assumed to be an
+     * association to the Gregorian calendar and UTC.
      */
     private TemporalReferenceSystem frame;
     /**
-     * This attribute provides the only value for TM_TemporalPosition unless a subtype of
-     * TM_TemporalPosition is used as the data type.
+     * This attribute provides the only value for TM_TemporalPosition unless a subtype of TM_TemporalPosition is used as
+     * the data type.
      */
     private IndeterminateValue indeterminatePosition;
 
@@ -49,15 +49,14 @@ public class DefaultTemporalPosition implements TemporalPosition {
      * @param frame cannot be @CODE null
      * @param indeterminatePosition can be @CODE NULL if none.
      */
-    public DefaultTemporalPosition(
-            TemporalReferenceSystem frame, IndeterminateValue indeterminatePosition) {
+    public DefaultTemporalPosition(TemporalReferenceSystem frame, IndeterminateValue indeterminatePosition) {
         this.frame = frame;
         this.indeterminatePosition = indeterminatePosition;
     }
 
     /**
-     * When this attribute is used with a subtype of {@code TemporalPosition}, it provides a
-     * qualifier to the specific value for temporal position provided by the subtype.
+     * When this attribute is used with a subtype of {@code TemporalPosition}, it provides a qualifier to the specific
+     * value for temporal position provided by the subtype.
      */
     @Override
     public IndeterminateValue getIndeterminatePosition() {
@@ -65,17 +64,13 @@ public class DefaultTemporalPosition implements TemporalPosition {
     }
 
     /**
-     * Returns the TM_ReferenceSystem associated with this TM_TemporalPosition, if not specified, it
-     * is assumed to be an association to the Gregorian calendar and UTC.
+     * Returns the TM_ReferenceSystem associated with this TM_TemporalPosition, if not specified, it is assumed to be an
+     * association to the Gregorian calendar and UTC.
      */
     public TemporalReferenceSystem getFrame() {
         if (frame == null) {
-            frame =
-                    new DefaultTemporalReferenceSystem(
-                            new NamedIdentifier(
-                                    Citations.CRS,
-                                    new SimpleInternationalString("Gregorian calendar")),
-                            null);
+            frame = new DefaultTemporalReferenceSystem(
+                    new NamedIdentifier(Citations.CRS, new SimpleInternationalString("Gregorian calendar")), null);
         }
         return frame;
     }
@@ -93,8 +88,7 @@ public class DefaultTemporalPosition implements TemporalPosition {
         if (object == this) {
             return true;
         }
-        if (object instanceof DefaultTemporalPosition) {
-            final DefaultTemporalPosition that = (DefaultTemporalPosition) object;
+        if (object instanceof DefaultTemporalPosition that) {
 
             return Utilities.equals(this.frame, that.frame)
                     && Utilities.equals(this.indeterminatePosition, that.indeterminatePosition);
@@ -106,11 +100,7 @@ public class DefaultTemporalPosition implements TemporalPosition {
     public int hashCode() {
         int hash = 5;
         hash = 37 * hash + (this.frame != null ? this.frame.hashCode() : 0);
-        hash =
-                37 * hash
-                        + (this.indeterminatePosition != null
-                                ? this.indeterminatePosition.hashCode()
-                                : 0);
+        hash = 37 * hash + (this.indeterminatePosition != null ? this.indeterminatePosition.hashCode() : 0);
         return hash;
     }
 

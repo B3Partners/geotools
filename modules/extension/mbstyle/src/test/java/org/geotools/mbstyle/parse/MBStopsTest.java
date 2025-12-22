@@ -22,11 +22,11 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.List;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.StyledLayerDescriptor;
 import org.geotools.mbstyle.MBStyle;
 import org.geotools.mbstyle.MapboxTestUtils;
 import org.geotools.mbstyle.layer.MBLayer;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.StyledLayerDescriptor;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
@@ -48,15 +48,12 @@ public class MBStopsTest {
             MBObjectStops mbObjectStops = new MBObjectStops(layer);
             if (mbObjectStops.ls.hasStops()) {
                 // System.out.println(layer.getId() + " Contains property and zoom functions");
-                assertTrue(
-                        layer.getId() + " Contains property and zoom functions",
-                        mbObjectStops.ls.hasStops());
+                assertTrue(layer.getId() + " Contains property and zoom functions", mbObjectStops.ls.hasStops());
             } else {
                 // System.out.println(layer.getId() + " does not contain property and zoom
                 // functions");
                 assertFalse(
-                        layer.getId() + " does not contain property and zoom functions",
-                        mbObjectStops.ls.hasStops());
+                        layer.getId() + " does not contain property and zoom functions", mbObjectStops.ls.hasStops());
             }
         }
     }
@@ -225,15 +222,12 @@ public class MBStopsTest {
                     Double minScaleDenom = MBObjectStops.zoomLevelToScaleDenominator(20);
                     Double maxScaleDenom = MBObjectStops.zoomLevelToScaleDenominator(0);
                     assertEquals(0, i);
-                    assertEquals(
-                            minScaleDenom, (Double) layer.rules().get(0).getMinScaleDenominator());
-                    assertEquals(
-                            maxScaleDenom, (Double) layer.rules().get(0).getMaxScaleDenominator());
+                    assertEquals(minScaleDenom, (Double) layer.rules().get(0).getMinScaleDenominator());
+                    assertEquals(maxScaleDenom, (Double) layer.rules().get(0).getMaxScaleDenominator());
                 } else if (i == 1) {
                     assertEquals(1, i);
                     Double maxScaleDenom = MBObjectStops.zoomLevelToScaleDenominator(20);
-                    assertEquals(
-                            maxScaleDenom, (Double) layer.rules().get(0).getMaxScaleDenominator());
+                    assertEquals(maxScaleDenom, (Double) layer.rules().get(0).getMaxScaleDenominator());
                 }
                 i++;
             }
@@ -241,8 +235,7 @@ public class MBStopsTest {
     }
 
     @Test
-    public void testPropertyAndZoomScaleDenominatorsFloatStops()
-            throws IOException, ParseException {
+    public void testPropertyAndZoomScaleDenominatorsFloatStops() throws IOException, ParseException {
         JSONObject jsonObject = MapboxTestUtils.parseTestStyle("functionParseFloatStopsTest.json");
         MBStyle mbStyle = new MBStyle(jsonObject);
         StyledLayerDescriptor transformed = mbStyle.transform();
@@ -258,15 +251,12 @@ public class MBStopsTest {
                     Double minScaleDenom = MBObjectStops.zoomLevelToScaleDenominator(20.5);
                     Double maxScaleDenom = MBObjectStops.zoomLevelToScaleDenominator(1.5);
                     assertEquals(0, i);
-                    assertEquals(
-                            minScaleDenom, (Double) layer.rules().get(0).getMinScaleDenominator());
-                    assertEquals(
-                            maxScaleDenom, (Double) layer.rules().get(0).getMaxScaleDenominator());
+                    assertEquals(minScaleDenom, (Double) layer.rules().get(0).getMinScaleDenominator());
+                    assertEquals(maxScaleDenom, (Double) layer.rules().get(0).getMaxScaleDenominator());
                 } else if (i == 1) {
                     assertEquals(1, i);
                     Double maxScaleDenom = MBObjectStops.zoomLevelToScaleDenominator(20.6);
-                    assertEquals(
-                            maxScaleDenom, (Double) layer.rules().get(0).getMaxScaleDenominator());
+                    assertEquals(maxScaleDenom, (Double) layer.rules().get(0).getMaxScaleDenominator());
                 }
                 i++;
             }

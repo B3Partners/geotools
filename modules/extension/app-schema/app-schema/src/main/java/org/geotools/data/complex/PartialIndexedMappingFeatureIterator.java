@@ -19,11 +19,11 @@ package org.geotools.data.complex;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.filter.Filter;
 import org.geotools.data.complex.IndexQueryManager.PartialIndexQueryManager;
-import org.opengis.feature.Feature;
-import org.opengis.filter.Filter;
 
 /**
  * MappingFeatureIterator with partial index query support
@@ -62,8 +62,8 @@ public class PartialIndexedMappingFeatureIterator extends IndexedMappingFeatureI
     }
 
     /**
-     * Build the query for execute on index source partial Implementation manages pagination by
-     * itself, so remove bounds from query
+     * Build the query for execute on index source partial Implementation manages pagination by itself, so remove bounds
+     * from query
      *
      * @return Query
      */
@@ -101,9 +101,8 @@ public class PartialIndexedMappingFeatureIterator extends IndexedMappingFeatureI
         nextQuery.setMaxFeatures(Integer.MAX_VALUE);
         // instance appschema feature iterator:
         try {
-            sourceIterator =
-                    MappingFeatureIteratorFactory.getInstance(
-                            store, mapping, nextQuery, unrolledFilter, transaction, false);
+            sourceIterator = MappingFeatureIteratorFactory.getInstance(
+                    store, mapping, nextQuery, unrolledFilter, transaction, false);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -141,7 +140,7 @@ public class PartialIndexedMappingFeatureIterator extends IndexedMappingFeatureI
         if (sourceIterator != null && sourceIterator.hasNext()) {
             // if feature counter is bigger than limits, no more results.
             int start = query.getStartIndex() != null ? query.getStartIndex() : 0;
-            if (sourceFeaturesCounter >= (start + query.getMaxFeatures())) {
+            if (sourceFeaturesCounter >= start + query.getMaxFeatures()) {
                 return false;
             }
             // if feature counter is lower than limits, fast skip to first requested result

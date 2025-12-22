@@ -19,9 +19,9 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 /**
  * This function is used to evaluate a or operator with a left and right operands
@@ -30,12 +30,8 @@ import org.opengis.filter.capability.FunctionName;
  */
 public class OrFunction extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "Or",
-                    Boolean.class,
-                    parameter("left", Boolean.class),
-                    parameter("right", Boolean.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "Or", Boolean.class, parameter("left", Boolean.class), parameter("right", Boolean.class));
 
     /** Creates a new instance of AndFunction */
     public OrFunction() {
@@ -48,7 +44,7 @@ public class OrFunction extends FunctionExpressionImpl {
         boolean right;
 
         try { // attempt to get the left value and perform conversion
-            left = (getExpression(0).evaluate(feature, Boolean.class));
+            left = getExpression(0).evaluate(feature, Boolean.class);
         } catch (Exception e) // probably a type error
         {
             throw new IllegalArgumentException(
@@ -56,7 +52,7 @@ public class OrFunction extends FunctionExpressionImpl {
         }
 
         try { // attempt to get the right value and perform conversion
-            right = (getExpression(1).evaluate(feature, Boolean.class));
+            right = getExpression(1).evaluate(feature, Boolean.class);
         } catch (Exception e) // probably a type error
         {
             throw new IllegalArgumentException(

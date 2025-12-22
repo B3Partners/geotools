@@ -18,12 +18,12 @@
 package org.geotools.gce.arcgrid;
 
 import java.util.Iterator;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
 import org.geotools.coverage.grid.io.GridFormatFactorySpi;
 import org.geotools.coverage.grid.io.GridFormatFinder;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
 
 /**
  * Class for testing availaibility of arcgrid format factory
@@ -36,7 +36,8 @@ public class ServiceTest {
     @Test
     public void testIsAvailable() throws NoSuchAuthorityCodeException, FactoryException {
         GridFormatFinder.scanForPlugins();
-        Iterator<GridFormatFactorySpi> list = GridFormatFinder.getAvailableFormats().iterator();
+        Iterator<GridFormatFactorySpi> list =
+                GridFormatFinder.getAvailableFormats().iterator();
         boolean found = false;
         GridFormatFactorySpi fac = null;
         while (list.hasNext()) {

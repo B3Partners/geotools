@@ -16,13 +16,13 @@
  */
 package org.geotools.data.complex.filter;
 
+import org.geotools.api.filter.Filter;
 import org.geotools.appschema.util.IndexQueryUtils;
 import org.geotools.data.complex.FeatureTypeMapping;
-import org.opengis.filter.Filter;
 
 /**
- * Detects which AND/OR filter (BinaryLogicOperator) is the parent operator of indexed filter(s).
- * Then collects the full-indexed subfilter(s). Xpath Filter implementation
+ * Detects which AND/OR filter (BinaryLogicOperator) is the parent operator of indexed filter(s). Then collects the
+ * full-indexed subfilter(s). Xpath Filter implementation
  *
  * @author Fernando Miño - Geosolutions
  */
@@ -34,7 +34,6 @@ public class SchemaIndexedFilterDetectorVisitor extends IndexedFilterDetectorVis
 
     @Override
     protected boolean isFullyIndexed(Filter filter) {
-        return IndexQueryUtils.checkAllPropertiesIndexed(
-                IndexQueryUtils.getAttributesOnFilter(filter), mapping);
+        return IndexQueryUtils.checkAllPropertiesIndexed(IndexQueryUtils.getAttributesOnFilter(filter), mapping);
     }
 }

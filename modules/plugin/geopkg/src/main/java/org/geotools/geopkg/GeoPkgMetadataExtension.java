@@ -16,7 +16,6 @@
  */
 package org.geotools.geopkg;
 
-import static java.lang.String.format;
 import static org.geotools.geopkg.GeoPackage.METADATA;
 import static org.geotools.geopkg.GeoPackage.METADATA_REFERENCE;
 
@@ -36,8 +35,8 @@ import java.util.logging.Logger;
 import org.geotools.util.logging.Logging;
 
 /**
- * Supports the GeoPackage metadata extension, defined as a "registered extension" in the GeoPackage
- * standard at http://www.geopackage.org/spec121/#extension_metadata
+ * Supports the GeoPackage metadata extension, defined as a "registered extension" in the GeoPackage standard at
+ * http://www.geopackage.org/spec121/#extension_metadata
  */
 public class GeoPkgMetadataExtension extends GeoPkgExtension {
 
@@ -82,7 +81,7 @@ public class GeoPkgMetadataExtension extends GeoPkgExtension {
             if (!isRegistered(cx)) {
                 return null;
             }
-            String sql = format("SELECT * FROM %s", METADATA);
+            String sql = "SELECT * FROM %s".formatted(METADATA);
             try (PreparedStatement ps = cx.prepareStatement(sql);
                     ResultSet rs = ps.executeQuery()) {
                 List<GeoPkgMetadata> metadata = new ArrayList<>();
@@ -98,7 +97,7 @@ public class GeoPkgMetadataExtension extends GeoPkgExtension {
     public GeoPkgMetadata getMetadata(Long id) throws SQLException {
         if (id == null) return null;
         try (Connection cx = getConnection()) {
-            String sql = format("SELECT * FROM %s where id = ?", METADATA);
+            String sql = "SELECT * FROM %s where id = ?".formatted(METADATA);
             try (PreparedStatement ps = cx.prepareStatement(sql)) {
                 ps.setLong(1, id);
                 try (ResultSet rs = ps.executeQuery()) {
@@ -112,9 +111,7 @@ public class GeoPkgMetadataExtension extends GeoPkgExtension {
     /** Adds a metadata entry in the GeoPacakge */
     public void addMetadata(GeoPkgMetadata metadata) throws SQLException {
         String sql =
-                String.format(
-                        "INSERT INTO %s(md_scope, md_standard_uri, mime_type, metadata) VALUES(?, ?, ?, ?)",
-                        METADATA);
+                "INSERT INTO %s(md_scope, md_standard_uri, mime_type, metadata) VALUES(?, ?, ?, ?)".formatted(METADATA);
         try (Connection cx = getConnection();
                 PreparedStatement ps = cx.prepareStatement(sql)) {
             ps.setString(1, metadata.getScope().getSqlValue());
@@ -129,15 +126,14 @@ public class GeoPkgMetadataExtension extends GeoPkgExtension {
 
     /** Updates metadata entry in the GeoPackage */
     public void updateMetadata(GeoPkgMetadata metadata) throws SQLException {
-        String sql =
-                String.format(
-                        "UPDATE %s "
-                                + "set md_scope = ?, "
-                                + "md_standard_uri = ?, "
-                                + "mime_type = ?, "
-                                + "metadata = ? "
-                                + "WHERE id = ?",
-                        METADATA);
+        String sql = String.format(
+                "UPDATE %s "
+                        + "set md_scope = ?, "
+                        + "md_standard_uri = ?, "
+                        + "mime_type = ?, "
+                        + "metadata = ? "
+                        + "WHERE id = ?",
+                METADATA);
         try (Connection cx = getConnection();
                 PreparedStatement ps = cx.prepareStatement(sql)) {
             ps.setString(1, metadata.getScope().getSqlValue());
@@ -151,7 +147,7 @@ public class GeoPkgMetadataExtension extends GeoPkgExtension {
 
     /** Deletes a metadata entry from the GeoPackage */
     public void removeMetadata(GeoPkgMetadata metadata) throws SQLException {
-        String sql = String.format("DELETE from %s WHERE id = ?", METADATA);
+        String sql = "DELETE from %s WHERE id = ?".formatted(METADATA);
         try (Connection cx = getConnection();
                 PreparedStatement ps = cx.prepareStatement(sql)) {
             ps.setLong(1, metadata.getId());
@@ -171,10 +167,9 @@ public class GeoPkgMetadataExtension extends GeoPkgExtension {
     private GeoPkgMetadata.Scope getMetadataScope(ResultSet rs) throws SQLException {
         String scope = rs.getString("md_scope");
         if (scope != null) {
-            Optional<GeoPkgMetadata.Scope> enumValue =
-                    Arrays.stream(GeoPkgMetadata.Scope.values())
-                            .filter(s -> scope.equals(s.getSqlValue()))
-                            .findFirst();
+            Optional<GeoPkgMetadata.Scope> enumValue = Arrays.stream(GeoPkgMetadata.Scope.values())
+                    .filter(s -> scope.equals(s.getSqlValue()))
+                    .findFirst();
             if (enumValue.isPresent()) return enumValue.get();
         }
 
@@ -186,15 +181,14 @@ public class GeoPkgMetadataExtension extends GeoPkgExtension {
         return GeoPkgMetadata.Scope.Dataset;
     }
 
-    public List<GeoPkgMetadataReference> getReferences(GeoPkgMetadata metadata)
-            throws SQLException {
+    public List<GeoPkgMetadataReference> getReferences(GeoPkgMetadata metadata) throws SQLException {
         try (Connection cx = getConnection()) {
             if (!isRegistered(cx)) {
                 return null;
             }
 
             // TODO: is it worth doing a join to get parents in a single query?
-            String sql = format("SELECT rowid, * FROM %s where md_file_id = ?", METADATA_REFERENCE);
+            String sql = "SELECT rowid, * FROM %s where md_file_id = ?".formatted(METADATA_REFERENCE);
             try (PreparedStatement ps = cx.prepareStatement(sql)) {
                 ps.setLong(1, metadata.getId());
                 List<GeoPkgMetadataReference> references = new ArrayList<>();
@@ -208,8 +202,7 @@ public class GeoPkgMetadataExtension extends GeoPkgExtension {
         }
     }
 
-    private GeoPkgMetadataReference mapReference(ResultSet rs, GeoPkgMetadata metadata)
-            throws SQLException {
+    private GeoPkgMetadataReference mapReference(ResultSet rs, GeoPkgMetadata metadata) throws SQLException {
         Long rowId = rs.getLong("row_id_value");
         if (rs.wasNull()) rowId = null;
         return new GeoPkgMetadataReference(
@@ -233,10 +226,9 @@ public class GeoPkgMetadataExtension extends GeoPkgExtension {
 
     private GeoPkgMetadataReference.Scope getReferenceScope(String scope) throws SQLException {
         if (scope != null) {
-            Optional<GeoPkgMetadataReference.Scope> enumValue =
-                    Arrays.stream(GeoPkgMetadataReference.Scope.values())
-                            .filter(s -> scope.equals(s.getSqlValue()))
-                            .findFirst();
+            Optional<GeoPkgMetadataReference.Scope> enumValue = Arrays.stream(GeoPkgMetadataReference.Scope.values())
+                    .filter(s -> scope.equals(s.getSqlValue()))
+                    .findFirst();
             if (enumValue.isPresent()) return enumValue.get();
         }
 
@@ -255,12 +247,11 @@ public class GeoPkgMetadataExtension extends GeoPkgExtension {
      * @throws SQLException
      */
     public void addReference(GeoPkgMetadataReference reference) throws SQLException {
-        String sql =
-                String.format(
-                        "INSERT INTO %s(reference_scope, table_name, column_name, row_id_value, "
-                                + "timestamp, md_file_id, md_parent_id) "
-                                + "VALUES(?, ?, ?, ?, ?, ?, ?)",
-                        METADATA_REFERENCE);
+        String sql = String.format(
+                "INSERT INTO %s(reference_scope, table_name, column_name, row_id_value, "
+                        + "timestamp, md_file_id, md_parent_id) "
+                        + "VALUES(?, ?, ?, ?, ?, ?, ?)",
+                METADATA_REFERENCE);
         try (Connection cx = getConnection();
                 PreparedStatement ps = cx.prepareStatement(sql)) {
             ps.setString(1, reference.getScope().getSqlValue());
@@ -288,17 +279,16 @@ public class GeoPkgMetadataExtension extends GeoPkgExtension {
      * @throws SQLException
      */
     public void updateReference(GeoPkgMetadataReference reference) throws SQLException {
-        String sql =
-                String.format(
-                        "UPDATE %s set reference_scope = ?, "
-                                + "table_name = ?, "
-                                + "column_name = ?, "
-                                + "row_id_value = ?, "
-                                + "timestamp = ?, "
-                                + "md_file_id = ?,"
-                                + "md_parent_id = ? "
-                                + "where rowid = ?",
-                        METADATA_REFERENCE);
+        String sql = String.format(
+                "UPDATE %s set reference_scope = ?, "
+                        + "table_name = ?, "
+                        + "column_name = ?, "
+                        + "row_id_value = ?, "
+                        + "timestamp = ?, "
+                        + "md_file_id = ?,"
+                        + "md_parent_id = ? "
+                        + "where rowid = ?",
+                METADATA_REFERENCE);
         try (Connection cx = getConnection();
                 PreparedStatement ps = cx.prepareStatement(sql)) {
             ps.setString(1, reference.getScope().getSqlValue());
@@ -320,7 +310,7 @@ public class GeoPkgMetadataExtension extends GeoPkgExtension {
 
     /** Removes the given metadata reference from the package */
     public void removeReference(GeoPkgMetadataReference reference) throws SQLException {
-        String sql = String.format("DELETE FROM %s WHERE rowid = ?", METADATA_REFERENCE);
+        String sql = "DELETE FROM %s WHERE rowid = ?".formatted(METADATA_REFERENCE);
 
         try (Connection cx = getConnection();
                 PreparedStatement ps = cx.prepareStatement(sql)) {

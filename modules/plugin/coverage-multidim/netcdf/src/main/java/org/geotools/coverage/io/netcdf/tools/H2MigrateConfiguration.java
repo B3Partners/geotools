@@ -24,9 +24,9 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.Properties;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFactorySpi;
-import org.geotools.data.DataStoreFinder;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFactorySpi;
+import org.geotools.api.data.DataStoreFinder;
 import org.geotools.data.DataUtilities;
 import org.geotools.gce.imagemosaic.Utils;
 import org.geotools.util.Converters;
@@ -37,23 +37,22 @@ public class H2MigrateConfiguration {
     private String indexStoreName;
 
     /**
-     * Builds a datastore from a property file configuration, using GeoTools default convention as
-     * well as ImageMosaic own one
+     * Builds a datastore from a property file configuration, using GeoTools default convention as well as ImageMosaic
+     * own one
      */
     public static DataStore getDataStore(Properties configuration)
-            throws IOException, ClassNotFoundException, IllegalAccessException,
-                    InstantiationException, NoSuchMethodException, InvocationTargetException {
+            throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException,
+                    NoSuchMethodException, InvocationTargetException {
         // first try out the default GeoTools approach
-        final DataStore dataStore =
-                DataStoreFinder.getDataStore(DataUtilities.toConnectionParameters(configuration));
+        final DataStore dataStore = DataStoreFinder.getDataStore(DataUtilities.toConnectionParameters(configuration));
         if (dataStore == null) {
             // use ImageMosaic bizarre own way
             final String spiClass = (String) configuration.get("SPI");
-            DataStoreFactorySpi spi =
-                    (DataStoreFactorySpi)
-                            Class.forName(spiClass).getDeclaredConstructor().newInstance();
-            Map<String, Serializable> datastoreParams =
-                    Utils.filterDataStoreParams(configuration, spi);
+            DataStoreFactorySpi spi = Class.forName(spiClass)
+                    .asSubclass(DataStoreFactorySpi.class)
+                    .getDeclaredConstructor()
+                    .newInstance();
+            Map<String, Serializable> datastoreParams = Utils.filterDataStoreParams(configuration, spi);
             return spi.createDataStore(datastoreParams);
         }
 
@@ -102,15 +101,13 @@ public class H2MigrateConfiguration {
     public Properties loadStoreProperties(String configPath) {
         File configFile = new File(configPath);
         if (!configFile.exists() || !configFile.isFile()) {
-            throw new ConfigurationException(
-                    "Target store configuration file does not exist: " + configPath);
+            throw new ConfigurationException("Target store configuration file does not exist: " + configPath);
         }
         Properties properties = new Properties();
         try (InputStream is = new FileInputStream(configFile)) {
             properties.load(is);
         } catch (IOException e) {
-            throw new ConfigurationException(
-                    "Could not load the store configuration from: " + configPath, e);
+            throw new ConfigurationException("Could not load the store configuration from: " + configPath, e);
         }
         try {
             final DataStore dataStore = getDataStore(properties);
@@ -122,11 +119,7 @@ public class H2MigrateConfiguration {
             dataStore.dispose();
         } catch (Exception e) {
             throw new ConfigurationException(
-                    "Failed to load data store from configuration at "
-                            + configPath
-                            + ": "
-                            + e.getMessage(),
-                    e);
+                    "Failed to load data store from configuration at " + configPath + ": " + e.getMessage(), e);
         }
         return properties;
     }
@@ -149,8 +142,7 @@ public class H2MigrateConfiguration {
 
     public void setConcurrency(int concurrency) {
         if (concurrency < 1) {
-            throw new ConfigurationException(
-                    "Invalid concurrency level, must be a positive number " + concurrency);
+            throw new ConfigurationException("Invalid concurrency level, must be a positive number " + concurrency);
         }
         this.concurrency = concurrency;
     }
@@ -159,8 +151,7 @@ public class H2MigrateConfiguration {
         this.logDirectory = new File(logDirectoryPath);
         if (!logDirectory.exists() && !logDirectory.isDirectory()) {
             throw new ConfigurationException(
-                    "Invalid log file location, does not exist or it's not a directory "
-                            + logDirectoryPath);
+                    "Invalid log file location, does not exist or it's not a directory " + logDirectoryPath);
         }
     }
 

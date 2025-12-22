@@ -20,18 +20,14 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_lessEqualThan extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "lessEqualThan",
-                    Boolean.class,
-                    parameter("a", Number.class),
-                    parameter("b", Number.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "lessEqualThan", Boolean.class, parameter("a", Number.class), parameter("b", Number.class));
 
     public FilterFunction_lessEqualThan() {
         super(NAME);

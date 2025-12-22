@@ -21,14 +21,13 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Composite;
 import java.awt.Paint;
-import org.geotools.styling.LineSymbolizer;
-import org.geotools.styling.Stroke;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.Stroke;
 
 /**
- * A dynamic line style, that will compute its parameters each time they are requested instead of
- * caching them
+ * A dynamic line style, that will compute its parameters each time they are requested instead of caching them
  *
  * @author jamesm
  */
@@ -79,7 +78,7 @@ public class DynamicLineStyle2D extends org.geotools.renderer.style.LineStyle2D 
         // now set up the stroke
         BasicStroke stroke2d;
 
-        if ((dashes != null) && (dashes.length > 0)) {
+        if (dashes != null && dashes.length > 0) {
             stroke2d = new BasicStroke(width, capCode, joinCode, 1, dashes, dashOffset);
         } else {
             stroke2d = new BasicStroke(width, capCode, joinCode, 1);
@@ -139,7 +138,7 @@ public class DynamicLineStyle2D extends org.geotools.renderer.style.LineStyle2D 
         }
 
         // if a graphic fill is to be used, prepare the paint accordingly....
-        org.geotools.styling.Graphic gr = stroke.getGraphicFill();
+        org.geotools.api.style.Graphic gr = stroke.getGraphicFill();
         SLDStyleFactory fac = new SLDStyleFactory();
 
         if (gr != null) {
@@ -150,8 +149,8 @@ public class DynamicLineStyle2D extends org.geotools.renderer.style.LineStyle2D 
     }
 
     /**
-     * Evaluates an expression over the passed feature, if the expression or the result is null, the
-     * default value will be returned
+     * Evaluates an expression over the passed feature, if the expression or the result is null, the default value will
+     * be returned
      */
     private String evaluateExpression(Expression e, SimpleFeature feature, String defaultValue) {
         String result = defaultValue;

@@ -24,15 +24,15 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.operation.matrix.GeneralMatrix;
 import org.geotools.referencing.operation.transform.ProjectiveTransform;
 import org.junit.Test;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
  * Tests the {@link GridCoverage2D} implementation.
@@ -57,7 +57,7 @@ public final class GridCoverageFactoryTest {
         }
 
         // Firstly, test the create method using an Envelope
-        GeneralEnvelope env = new GeneralEnvelope(new Rectangle2D.Double(10, 10, 10, 10));
+        GeneralBounds env = new GeneralBounds(new Rectangle2D.Double(10, 10, 10, 10));
         CoordinateReferenceSystem crs = CRS.decode("EPSG:4326");
         env.setCoordinateReferenceSystem(crs);
 
@@ -65,8 +65,7 @@ public final class GridCoverageFactoryTest {
         try {
             coverage = new GridCoverageFactory().create(name, raster, env, null);
         } catch (NullPointerException e) {
-            fail(
-                    "NullPointerException was thrown despite the javadocs indicating that 'bands' is nullable");
+            fail("NullPointerException was thrown despite the javadocs indicating that 'bands' is nullable");
         }
 
         // And check that the GridCoverage actually contains data that matches what we put into it.
@@ -82,8 +81,7 @@ public final class GridCoverageFactoryTest {
         try {
             coverage = new GridCoverageFactory().create(name, raster, crs, mathTx, null);
         } catch (NullPointerException e) {
-            fail(
-                    "NullPointerException was thrown despite the javadocs indicating that 'bands' is nullable");
+            fail("NullPointerException was thrown despite the javadocs indicating that 'bands' is nullable");
         }
 
         coverage.evaluate(new Point2D.Double(15, 14), dest);

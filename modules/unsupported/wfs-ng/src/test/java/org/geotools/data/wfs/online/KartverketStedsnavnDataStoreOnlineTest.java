@@ -31,7 +31,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import javax.xml.namespace.QName;
-import org.geotools.data.FeatureSource;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Id;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.wfs.WFSDataStoreFactory;
 import org.geotools.data.wfs.WFSTestData;
 import org.geotools.data.wfs.WFSTestData.TestDataType;
@@ -44,33 +54,19 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.Feature;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Id;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /** @author Roar Brænden */
 public class KartverketStedsnavnDataStoreOnlineTest extends AbstractWfsDataStoreOnlineTest {
 
-    static final String SERVER_URL =
-            "https://wfs.geonorge.no/skwms1/wfs.stedsnavn?request=GetCapabilities&service=WFS";
+    static final String SERVER_URL = "https://wfs.geonorge.no/skwms1/wfs.stedsnavn?request=GetCapabilities&service=WFS";
 
     static final String NAME = "Sted";
 
-    static final TestDataType KARTVERKET_STEDSNAVN =
-            new TestDataType(
-                    "KartverketNo",
-                    new QName(
-                            "http://skjema.geonorge.no/SOSI/produktspesifikasjon/StedsnavnForVanligBruk/20181115",
-                            "sted"),
-                    "app_" + NAME,
-                    "urn:ogc:def:crs:EPSG::4258");
+    static final TestDataType KARTVERKET_STEDSNAVN = new TestDataType(
+            "KartverketNo",
+            new QName("http://skjema.geonorge.no/SOSI/produktspesifikasjon/StedsnavnForVanligBruk/20181115", "sted"),
+            "app_" + NAME,
+            "urn:ogc:def:crs:EPSG::4258");
 
     static final String defaultGeometryName = "område";
 
@@ -121,8 +117,33 @@ public class KartverketStedsnavnDataStoreOnlineTest extends AbstractWfsDataStore
     }
 
     /**
-     * Check that the returned feature doesn't have other property names than those specified when
-     * calling getSchema()
+     * Check that we can call getSchema without SCHEMA_CACHE_LOCATION being set.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testComplexSchemaWithoutCache() throws Exception {
+        if (!isOnline()) {
+            return;
+        }
+        Map<String, Serializable> params = new HashMap<>();
+        params.put(WFSDataStoreFactory.URL.key, new URL(SERVER_URL));
+
+        WFSDataAccessFactory dataStoreFactory = new WFSDataAccessFactory();
+        WFSContentDataAccess dataAccess = (WFSContentDataAccess) dataStoreFactory.createDataStore(params);
+        Name featureName = null;
+        for (Name nextName : dataAccess.getNames()) {
+            if (NAME.equals(nextName.getLocalPart())) {
+                featureName = nextName;
+                break;
+            }
+        }
+        FeatureType schema = dataAccess.getSchema(featureName);
+        Assert.assertNotNull(schema);
+    }
+
+    /**
+     * Check that the returned feature doesn't have other property names than those specified when calling getSchema()
      */
     @Test
     public void testComplexSchemaMatches() throws Exception {
@@ -139,8 +160,7 @@ public class KartverketStedsnavnDataStoreOnlineTest extends AbstractWfsDataStore
                         .getAbsolutePath()); // Must be specified when Schema is http
 
         WFSDataAccessFactory dataStoreFactory = new WFSDataAccessFactory();
-        WFSContentDataAccess dataAccess =
-                (WFSContentDataAccess) dataStoreFactory.createDataStore(params);
+        WFSContentDataAccess dataAccess = (WFSContentDataAccess) dataStoreFactory.createDataStore(params);
         Name featureName = null;
         for (Name nextName : dataAccess.getNames()) {
             if (NAME.equals(nextName.getLocalPart())) {
@@ -148,7 +168,7 @@ public class KartverketStedsnavnDataStoreOnlineTest extends AbstractWfsDataStore
                 break;
             }
         }
-        Assert.assertNotNull(String.format("We should find %s here.", NAME), featureName);
+        Assert.assertNotNull("We should find %s here.".formatted(NAME), featureName);
 
         FeatureSource<FeatureType, Feature> source = dataAccess.getFeatureSource(featureName);
         HashSet<String> properties = new HashSet<>();
@@ -160,8 +180,7 @@ public class KartverketStedsnavnDataStoreOnlineTest extends AbstractWfsDataStore
             Feature feature = iterator.next();
             for (Property prop : feature.getProperties()) {
                 final String name = prop.getName().getLocalPart();
-                Assert.assertTrue(
-                        "Schema doesn't contain property: " + name, properties.contains(name));
+                Assert.assertTrue("Schema doesn't contain property: " + name, properties.contains(name));
             }
         }
     }
@@ -184,8 +203,7 @@ public class KartverketStedsnavnDataStoreOnlineTest extends AbstractWfsDataStore
                 TestData.file(WFSTestData.class, "KartverketNo")
                         .getAbsolutePath()); // Must be specified when Schema is http
 
-        WFSContentDataAccess dataAccess =
-                (WFSContentDataAccess) new WFSDataAccessFactory().createDataStore(params);
+        WFSContentDataAccess dataAccess = (WFSContentDataAccess) new WFSDataAccessFactory().createDataStore(params);
         Name featureName = null;
         for (Name nextName : dataAccess.getNames()) {
             if (NAME.equals(nextName.getLocalPart())) {
@@ -204,8 +222,6 @@ public class KartverketStedsnavnDataStoreOnlineTest extends AbstractWfsDataStore
                 stedsnr.add((Number) feature.getProperty("stedsnummer").getValue());
             }
         }
-        assertTrue(
-                "Should contain Blistein with id=6948 (BigInteger)",
-                stedsnr.contains(BigInteger.valueOf(6948)));
+        assertTrue("Should contain Blistein with id=6948 (BigInteger)", stedsnr.contains(BigInteger.valueOf(6948)));
     }
 }

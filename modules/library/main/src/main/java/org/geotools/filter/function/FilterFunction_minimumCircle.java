@@ -18,10 +18,10 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.capability.FunctionName;
 
 /**
  * A FilterFunction that expects a Geometry and returns it's minimum bounding circle.
@@ -31,8 +31,7 @@ import org.opengis.filter.capability.FunctionName;
 public class FilterFunction_minimumCircle extends FunctionExpressionImpl {
 
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "mincircle", Geometry.class, parameter("geometry", Geometry.class));
+            new FunctionNameImpl("mincircle", Geometry.class, parameter("geometry", Geometry.class));
 
     /** Create a new FilterFunction_minimumCircle instance */
     public FilterFunction_minimumCircle() {
@@ -59,6 +58,6 @@ public class FilterFunction_minimumCircle extends FunctionExpressionImpl {
                     "Filter Function problem for function minimum bounding circle argument #0 - expected type Geometry");
         }
 
-        return (StaticGeometry.minimumCircle(arg0));
+        return StaticGeometry.minimumCircle(arg0);
     }
 }

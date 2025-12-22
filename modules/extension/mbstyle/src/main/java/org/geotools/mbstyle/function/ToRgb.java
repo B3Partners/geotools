@@ -19,20 +19,19 @@ package org.geotools.mbstyle.function;
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
 import java.awt.Color;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 /** Generate a rgb color from integer values between 0-255. */
 public class ToRgb extends FunctionExpressionImpl {
 
-    public static final FunctionName NAME =
-            new FunctionNameImpl(
-                    "torgb",
-                    parameter("r", Integer.class),
-                    parameter("g", Integer.class),
-                    parameter("b", Integer.class),
-                    parameter("fallback", Color.class));
+    public static final FunctionName NAME = new FunctionNameImpl(
+            "torgb",
+            parameter("r", Integer.class),
+            parameter("g", Integer.class),
+            parameter("b", Integer.class),
+            parameter("fallback", Color.class));
 
     public ToRgb() {
         super(NAME);
@@ -53,8 +52,7 @@ public class ToRgb extends FunctionExpressionImpl {
             arg2 = blue.intValue();
         } catch (Exception e) {
             // probably a type error
-            throw new IllegalArgumentException(
-                    "Function problem for function torgb - expected type integer");
+            throw new IllegalArgumentException("Function problem for function torgb - expected type integer");
         }
         return new Color(arg0, arg1, arg2);
     }

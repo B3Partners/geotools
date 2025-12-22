@@ -20,17 +20,16 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.util.Converters;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Finds the nearest value to the provided one in the attribute domain.
  *
  * @author Andrea Aime - GeoSolutions
  * @author Ilkka Rinne / Spatineo Inc for the Finnish Meteorological Institute
- * @param <T>
  */
 public class NearestVisitor implements FeatureCalc, FeatureAttributeVisitor {
     private Expression expr;
@@ -58,14 +57,14 @@ public class NearestVisitor implements FeatureCalc, FeatureAttributeVisitor {
     }
 
     /**
-     * Visitor function, which looks at each feature and finds the value of the attribute given
-     * attribute nearest to the given comparison value.
+     * Visitor function, which looks at each feature and finds the value of the attribute given attribute nearest to the
+     * given comparison value.
      *
      * @param feature the feature to be visited
      */
     @Override
     @SuppressWarnings("unchecked")
-    public void visit(org.opengis.feature.Feature feature) {
+    public void visit(org.geotools.api.feature.Feature feature) {
         // bail out immediately if we have already found an exact match
         if (visited) {
             return;
@@ -81,9 +80,7 @@ public class NearestVisitor implements FeatureCalc, FeatureAttributeVisitor {
 
         // extract the value
         Object attribValue = expr.evaluate(feature);
-        if (attribValue == null) {
-            return;
-        } else {
+        if (attribValue != null) {
             visited |= accumulator.visit(attribValue);
         }
     }
@@ -99,15 +96,13 @@ public class NearestVisitor implements FeatureCalc, FeatureAttributeVisitor {
             Geometry convertedTarget = Converters.convert(valueToMatch, Geometry.class);
             return new GeometryAccumulator(convertedTarget);
         } else if (Comparable.class.isAssignableFrom(attributeClass)) {
-            Comparable convertedTarget =
-                    (Comparable) Converters.convert(valueToMatch, attributeClass);
+            Comparable convertedTarget = (Comparable) Converters.convert(valueToMatch, attributeClass);
             return new ComparableAccumulator(convertedTarget);
         }
         // TODO: we should probably create a custom one for strings, there are various
         // string distance algorithms described on the net
 
-        throw new IllegalArgumentException(
-                "Don't know how to compute nearest for target class " + attributeClass);
+        throw new IllegalArgumentException("Don't know how to compute nearest for target class " + attributeClass);
     }
 
     public void reset() {
@@ -129,8 +124,7 @@ public class NearestVisitor implements FeatureCalc, FeatureAttributeVisitor {
             this.nearest = maxBelow;
         } else {
             @SuppressWarnings("unchecked")
-            NearestAccumulator<Object> accumulator =
-                    (NearestAccumulator<Object>) getAccumulator(maxBelow.getClass());
+            NearestAccumulator<Object> accumulator = (NearestAccumulator<Object>) getAccumulator(maxBelow.getClass());
             accumulator.visit(maxBelow);
             accumulator.visit(minAbove);
             nearest = accumulator.getNearest();
@@ -249,7 +243,7 @@ public class NearestVisitor implements FeatureCalc, FeatureAttributeVisitor {
         }
     }
 
-    class NumberAccumulator implements NearestAccumulator<Number> {
+    static class NumberAccumulator implements NearestAccumulator<Number> {
 
         double targetValue;
 
@@ -279,7 +273,7 @@ public class NearestVisitor implements FeatureCalc, FeatureAttributeVisitor {
         }
     }
 
-    class DateAccumulator implements NearestAccumulator<Date> {
+    static class DateAccumulator implements NearestAccumulator<Date> {
 
         long targetValue;
 
@@ -309,7 +303,7 @@ public class NearestVisitor implements FeatureCalc, FeatureAttributeVisitor {
         }
     }
 
-    class GeometryAccumulator implements NearestAccumulator<Geometry> {
+    static class GeometryAccumulator implements NearestAccumulator<Geometry> {
 
         Geometry targetValue;
 

@@ -18,19 +18,18 @@ package org.geotools.mbstyle.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.json.simple.JSONArray;
-import org.opengis.filter.capability.FunctionName;
 
 /** Returns the value in a JSONArray at a given index. */
 public class AtFunction extends FunctionExpressionImpl {
-    public static final FunctionName NAME =
-            new FunctionNameImpl(
-                    "at",
-                    parameter("array", JSONArray.class),
-                    parameter("index", Integer.class),
-                    parameter("fallback", Object.class));
+    public static final FunctionName NAME = new FunctionNameImpl(
+            "at",
+            parameter("array", JSONArray.class),
+            parameter("index", Integer.class),
+            parameter("fallback", Object.class));
 
     public AtFunction() {
         super(NAME);

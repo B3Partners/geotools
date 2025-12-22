@@ -17,12 +17,12 @@
 package org.geotools.filter.expression;
 
 import java.util.Collection;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Subtract;
 import org.geotools.filter.Filters;
 import org.geotools.filter.MathExpressionImpl;
 import org.geotools.util.Utilities;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Subtract;
 
 /**
  * Implementation of Subtract expression.
@@ -64,8 +64,7 @@ public class SubtractImpl extends MathExpressionImpl implements Subtract {
      */
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof SubtractImpl) {
-            SubtractImpl other = (SubtractImpl) obj;
+        if (obj instanceof SubtractImpl other) {
 
             return Utilities.equals(getExpression1(), other.getExpression1())
                     && Utilities.equals(getExpression2(), other.getExpression2());
@@ -82,8 +81,8 @@ public class SubtractImpl extends MathExpressionImpl implements Subtract {
     public int hashCode() {
         int result = 23;
 
-        result = (37 * result) + getExpression1().hashCode();
-        result = (37 * result) + getExpression2().hashCode();
+        result = 37 * result + getExpression1().hashCode();
+        result = 37 * result + getExpression2().hashCode();
 
         return result;
     }

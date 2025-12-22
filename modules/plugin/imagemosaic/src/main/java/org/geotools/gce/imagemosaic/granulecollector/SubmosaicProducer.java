@@ -19,21 +19,18 @@ package org.geotools.gce.imagemosaic.granulecollector;
 
 import java.io.IOException;
 import java.util.List;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
 import org.geotools.gce.imagemosaic.GranuleDescriptor;
 import org.geotools.gce.imagemosaic.MosaicElement;
 
 /**
- * Responsible for creating subsets of the whole imagemosaic. Since there are frequently parts of a
- * mosaic that need to be handled differently, a submosaic producer is responsible for handling
- * those parts separately before they're added to the whole mosaic. For example a single dimension
- * can be handled on its own before being
+ * Responsible for creating subsets of the whole imagemosaic. Since there are frequently parts of a mosaic that need to
+ * be handled differently, a submosaic producer is responsible for handling those parts separately before they're added
+ * to the whole mosaic. For example a single dimension can be handled on its own before being
  */
 public interface SubmosaicProducer {
 
-    /**
-     * Gives the producer an opportunity to pre-visit the granules, if it needs so for any reason
-     */
+    /** Gives the producer an opportunity to pre-visit the granules, if it needs so for any reason */
     default void init(Query query) throws IOException, Exception {}
 
     boolean accept(GranuleDescriptor granuleDescriptor);

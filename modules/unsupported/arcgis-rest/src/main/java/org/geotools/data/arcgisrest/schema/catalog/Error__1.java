@@ -1,9 +1,28 @@
+/*
+ *    GeoTools - The Open Source Java GIS Toolkit
+ *    http://geotools.org
+ *
+ *    (C) 2018, Open Source Geospatial Foundation (OSGeo)
+ *
+ *    This library is free software; you can redistribute it and/or
+ *    modify it under the terms of the GNU Lesser General Public
+ *    License as published by the Free Software Foundation;
+ *    version 2.1 of the License.
+ *
+ *    This library is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    Lesser General Public License for more details.
+ *
+ */
+
 package org.geotools.data.arcgisrest.schema.catalog;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Error__1 {
 
@@ -18,7 +37,7 @@ public class Error__1 {
     /** (Required) */
     @SerializedName("details")
     @Expose
-    private List<String> details = new ArrayList<String>();
+    private List<String> details = new ArrayList<>();
 
     /** (Required) */
     public Integer getCode() {
@@ -95,11 +114,8 @@ public class Error__1 {
             return false;
         }
         Error__1 rhs = ((Error__1) other);
-        return ((((this.details == rhs.details)
-                                || ((this.details != null) && this.details.equals(rhs.details)))
-                        && ((this.code == rhs.code)
-                                || ((this.code != null) && this.code.equals(rhs.code))))
-                && ((this.message == rhs.message)
-                        || ((this.message != null) && this.message.equals(rhs.message))));
+        return Objects.equals(this.details, rhs.details)
+                && Objects.equals(this.code, rhs.code)
+                && Objects.equals(this.message, rhs.message);
     }
 }

@@ -20,18 +20,18 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.QueryCapabilities;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.geometry.BoundingBox;
 import org.geotools.coverage.grid.io.footprint.MultiLevelROI;
 import org.geotools.coverage.grid.io.footprint.MultiLevelROIProvider;
-import org.geotools.data.Query;
-import org.geotools.data.QueryCapabilities;
-import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.visitor.FeatureCalc;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.geometry.BoundingBox;
 
 class DelegatingGranuleCatalog extends GranuleCatalog {
 
@@ -43,8 +43,7 @@ class DelegatingGranuleCatalog extends GranuleCatalog {
     }
 
     @Override
-    public void addGranules(
-            String typeName, Collection<SimpleFeature> granules, Transaction transaction)
+    public void addGranules(String typeName, Collection<SimpleFeature> granules, Transaction transaction)
             throws IOException {
         adaptee.addGranules(typeName, granules, transaction);
     }
@@ -55,8 +54,7 @@ class DelegatingGranuleCatalog extends GranuleCatalog {
     }
 
     @Override
-    public void createType(String namespace, String typeName, String typeSpec)
-            throws IOException, SchemaException {
+    public void createType(String namespace, String typeName, String typeSpec) throws IOException, SchemaException {
         adaptee.createType(namespace, typeName, typeSpec);
     }
 
@@ -66,8 +64,7 @@ class DelegatingGranuleCatalog extends GranuleCatalog {
     }
 
     @Override
-    public void createType(String identification, String typeSpec)
-            throws SchemaException, IOException {
+    public void createType(String identification, String typeSpec) throws SchemaException, IOException {
         adaptee.createType(identification, typeSpec);
     }
 
@@ -137,8 +134,7 @@ class DelegatingGranuleCatalog extends GranuleCatalog {
     }
 
     @Override
-    public void addGranule(String typeName, SimpleFeature granule, Transaction transaction)
-            throws IOException {
+    public void addGranule(String typeName, SimpleFeature granule, Transaction transaction) throws IOException {
         adaptee.addGranule(typeName, granule, transaction);
     }
 

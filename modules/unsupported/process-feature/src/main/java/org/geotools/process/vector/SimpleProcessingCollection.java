@@ -17,23 +17,21 @@
  */
 package org.geotools.process.vector;
 
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.collection.SortedSimpleFeatureCollection;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
 
 /**
- * The simple feature version of {@link ProcessingCollection}. Please see the base class for further
- * information on how to implement a proper streaming processing collection on top of this base
- * class
+ * The simple feature version of {@link ProcessingCollection}. Please see the base class for further information on how
+ * to implement a proper streaming processing collection on top of this base class
  *
  * @author Andrea Aime - GeoSolutions
  */
-public abstract class SimpleProcessingCollection
-        extends ProcessingCollection<SimpleFeatureType, SimpleFeature>
+public abstract class SimpleProcessingCollection extends ProcessingCollection<SimpleFeatureType, SimpleFeature>
         implements SimpleFeatureCollection {
 
     @Override

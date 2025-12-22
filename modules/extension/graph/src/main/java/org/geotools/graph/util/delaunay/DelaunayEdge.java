@@ -24,8 +24,7 @@ import org.geotools.graph.structure.line.XYNode;
 /** @author jfc173 */
 public class DelaunayEdge extends BasicEdge {
 
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(DelaunayEdge.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(DelaunayEdge.class);
     Triangle faceA, faceB;
 
     /** Creates a new instance of DelaunayEdge */
@@ -53,7 +52,7 @@ public class DelaunayEdge extends BasicEdge {
     }
 
     public boolean hasEndPoint(XYNode node) {
-        return ((node.equals(this.getNodeA())) || (node.equals(this.getNodeB())));
+        return node.equals(this.getNodeA()) || node.equals(this.getNodeB());
     }
 
     public Triangle getOtherFace(Triangle t) {
@@ -90,18 +89,15 @@ public class DelaunayEdge extends BasicEdge {
     }
 
     public double getEuclideanDistance() {
-        return ((XYNode) this.getNodeA())
-                .getCoordinate()
-                .distance(((XYNode) this.getNodeB()).getCoordinate());
+        return ((XYNode) this.getNodeA()).getCoordinate().distance(((XYNode) this.getNodeB()).getCoordinate());
     }
 
     @Override
     public boolean equals(Object o) {
-        return ((o instanceof DelaunayEdge)
-                && ((this.getNodeA().equals(((DelaunayEdge) o).getNodeA())
-                                && (this.getNodeB().equals(((DelaunayEdge) o).getNodeB())))
-                        || (this.getNodeA().equals(((DelaunayEdge) o).getNodeB())
-                                && (this.getNodeB().equals(((DelaunayEdge) o).getNodeA())))));
+        return o instanceof DelaunayEdge de
+                && (this.getNodeA().equals(de.getNodeA()) && this.getNodeB().equals(de.getNodeB())
+                        || this.getNodeA().equals(de.getNodeB())
+                                && this.getNodeB().equals(de.getNodeA()));
     }
 
     @Override

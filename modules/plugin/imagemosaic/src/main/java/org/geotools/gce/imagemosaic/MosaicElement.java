@@ -19,12 +19,12 @@ package org.geotools.gce.imagemosaic;
 
 import it.geosolutions.imageio.pam.PAMDataset;
 import java.awt.image.RenderedImage;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.ROI;
+import org.eclipse.imagen.PlanarImage;
+import org.eclipse.imagen.ROI;
 
 /**
- * Represents the input raster element for a mosaic operation, source {@link RenderedImage}, {@link
- * ROI} and alpha channel.
+ * Represents the input raster element for a mosaic operation, source {@link RenderedImage}, {@link ROI} and alpha
+ * channel.
  *
  * <p>This class is just a simple bean that holds a single element for the mosaic.
  *
@@ -40,8 +40,7 @@ public class MosaicElement {
 
     PAMDataset pamDataset;
 
-    public MosaicElement(
-            PlanarImage alphaChannel, ROI roi, RenderedImage source, PAMDataset pamDataset) {
+    public MosaicElement(PlanarImage alphaChannel, ROI roi, RenderedImage source, PAMDataset pamDataset) {
         this.alphaChannel = alphaChannel;
         this.roi = roi;
         this.source = source;

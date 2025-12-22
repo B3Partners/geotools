@@ -17,9 +17,9 @@
 package org.geotools.brewer.styling.builder;
 
 import java.awt.Color;
-import org.geotools.styling.ColorMapEntry;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.ColorMapEntry;
 import org.geotools.util.Converters;
-import org.opengis.filter.expression.Expression;
 
 public class ColorMapEntryBuilder extends AbstractStyleBuilder<ColorMapEntry> {
 
@@ -52,8 +52,7 @@ public class ColorMapEntryBuilder extends AbstractStyleBuilder<ColorMapEntry> {
     public ColorMapEntryBuilder colorHex(String hex) {
         Color color = Converters.convert(hex, Color.class);
         if (color == null) {
-            throw new IllegalArgumentException(
-                    "The provided expression could not be turned into a color: " + hex);
+            throw new IllegalArgumentException("The provided expression could not be turned into a color: " + hex);
         }
         return color(color);
     }

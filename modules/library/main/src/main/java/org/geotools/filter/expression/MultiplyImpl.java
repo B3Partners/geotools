@@ -17,12 +17,12 @@
 package org.geotools.filter.expression;
 
 import java.util.Collection;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Multiply;
 import org.geotools.filter.Filters;
 import org.geotools.filter.MathExpressionImpl;
 import org.geotools.util.Utilities;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Multiply;
 
 /**
  * Implementation of Multiply expression.
@@ -63,8 +63,7 @@ public class MultiplyImpl extends MathExpressionImpl implements Multiply {
      */
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof MultiplyImpl) {
-            MultiplyImpl other = (MultiplyImpl) obj;
+        if (obj instanceof MultiplyImpl other) {
 
             return Utilities.equals(getExpression1(), other.getExpression1())
                     && Utilities.equals(getExpression2(), other.getExpression2());
@@ -81,8 +80,8 @@ public class MultiplyImpl extends MathExpressionImpl implements Multiply {
     public int hashCode() {
         int result = 23;
 
-        result = (37 * result) + getExpression1().hashCode();
-        result = (37 * result) + getExpression2().hashCode();
+        result = 37 * result + getExpression1().hashCode();
+        result = 37 * result + getExpression2().hashCode();
 
         return result;
     }

@@ -22,6 +22,9 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.referencing.operation.transform.ProjectiveTransform;
 import org.junit.Assert;
 import org.junit.Test;
@@ -32,9 +35,6 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.TopologyException;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 
 /** @author jamesm,iant */
 public class LiteShapeTest {
@@ -84,13 +84,11 @@ public class LiteShapeTest {
     public void testPolygonShape() throws TransformException, FactoryException {
         GeometryFactory geomFac = new GeometryFactory();
         Polygon polygon = makeSamplePolygon(geomFac, 0, 0);
-        LiteShape2 lineShape =
-                new LiteShape2(
-                        polygon,
-                        ProjectiveTransform.create(new AffineTransform()),
-                        new Decimator(
-                                ProjectiveTransform.create(new AffineTransform()), new Rectangle()),
-                        false);
+        LiteShape2 lineShape = new LiteShape2(
+                polygon,
+                ProjectiveTransform.create(new AffineTransform()),
+                new Decimator(ProjectiveTransform.create(new AffineTransform()), new Rectangle()),
+                false);
 
         Assert.assertFalse(lineShape.contains(0, 0));
         Assert.assertTrue(lineShape.contains(100, 100));
@@ -123,10 +121,7 @@ public class LiteShapeTest {
         LineString ls = geomFac.createLineString(cs);
         LineString copy = (LineString) ls.copy();
         new LiteShape2(
-                ls,
-                ProjectiveTransform.create(AffineTransform.getScaleInstance(10, 10)),
-                new Decimator(4, 4),
-                true);
+                ls, ProjectiveTransform.create(AffineTransform.getScaleInstance(10, 10)), new Decimator(4, 4), true);
         Assert.assertTrue(ls.equalsExact(copy));
 
         new LiteShape2(
@@ -138,8 +133,7 @@ public class LiteShapeTest {
         Assert.assertFalse(ls.equalsExact(copy));
     }
 
-    private LineString makeSampleLineString(
-            final GeometryFactory geomFac, double xoff, double yoff) {
+    private LineString makeSampleLineString(final GeometryFactory geomFac, double xoff, double yoff) {
         Coordinate[] linestringCoordinates = new Coordinate[8];
         linestringCoordinates[0] = new Coordinate(50.0d + xoff, 50.0d + yoff);
         linestringCoordinates[1] = new Coordinate(60.0d + xoff, 50.0d + yoff);

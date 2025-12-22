@@ -22,13 +22,13 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.junit.Test;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * Unit tests for the Grids class.
@@ -42,8 +42,7 @@ public class GridsHexagonalTest {
     private final ReferencedEnvelope BOUNDS = new ReferencedEnvelope(0, 90, 0, 100, null);
     private final double SIDE_LEN = 5.0;
 
-    private final int expectedCols =
-            (int) ((BOUNDS.getWidth() - 2 * SIDE_LEN) / (1.5 * SIDE_LEN)) + 1;
+    private final int expectedCols = (int) ((BOUNDS.getWidth() - 2 * SIDE_LEN) / (1.5 * SIDE_LEN)) + 1;
     private final int expectedRows = (int) (BOUNDS.getHeight() / (Math.sqrt(3.0) * SIDE_LEN));
     private final int expectedNumElements = expectedRows * expectedCols;
 
@@ -62,8 +61,7 @@ public class GridsHexagonalTest {
     @Test
     public void createDensifiedGrid() throws Exception {
         final int vertexDensity = 10;
-        SimpleFeatureSource gridSource =
-                Grids.createHexagonalGrid(BOUNDS, SIDE_LEN, SIDE_LEN / vertexDensity);
+        SimpleFeatureSource gridSource = Grids.createHexagonalGrid(BOUNDS, SIDE_LEN, SIDE_LEN / vertexDensity);
         assertGridSizeAndIds(gridSource);
 
         try (SimpleFeatureIterator iter = gridSource.getFeatures().features()) {

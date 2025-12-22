@@ -18,21 +18,22 @@ package org.geotools.data.crs;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.feature.FeatureTypes;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * ForceCoordinateSystemFeatureReader provides a CoordinateReferenceSystem for FeatureTypes.
  *
- * <p>ForceCoordinateSystemFeatureReader is a wrapper used to force GeometryAttributes to a user
- * supplied CoordinateReferenceSystem rather then the default supplied by the DataStore.
+ * <p>ForceCoordinateSystemFeatureReader is a wrapper used to force GeometryAttributes to a user supplied
+ * CoordinateReferenceSystem rather then the default supplied by the DataStore.
  *
  * <p>Example Use:
  *
@@ -54,8 +55,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  * @author $Author: jive $ (last modification)
  * @version $Id$
  */
-public class ForceCoordinateSystemIterator
-        implements SimpleFeatureIterator, Iterator<SimpleFeature> {
+public class ForceCoordinateSystemIterator implements SimpleFeatureIterator, Iterator<SimpleFeature> {
     protected FeatureIterator<SimpleFeature> reader;
     protected SimpleFeatureBuilder builder;
 
@@ -67,15 +67,12 @@ public class ForceCoordinateSystemIterator
 
     /** Builds a new ForceCoordinateSystemFeatureReader */
     public ForceCoordinateSystemIterator(
-            FeatureIterator<SimpleFeature> reader,
-            SimpleFeatureType type,
-            CoordinateReferenceSystem cs)
+            FeatureIterator<SimpleFeature> reader, SimpleFeatureType type, CoordinateReferenceSystem cs)
             throws SchemaException {
         if (cs == null) {
             throw new NullPointerException("CoordinateSystem required");
         }
-        CoordinateReferenceSystem originalCs =
-                type.getGeometryDescriptor().getCoordinateReferenceSystem();
+        CoordinateReferenceSystem originalCs = type.getGeometryDescriptor().getCoordinateReferenceSystem();
 
         if (!cs.equals(originalCs)) {
             type = FeatureTypes.transform(type, cs);
@@ -85,7 +82,7 @@ public class ForceCoordinateSystemIterator
         this.reader = reader;
     }
 
-    /** @see org.geotools.data.FeatureReader#getFeatureType() */
+    /** @see FeatureReader#getFeatureType() */
     public SimpleFeatureType getFeatureType() {
         if (reader == null || builder == null) {
             throw new IllegalStateException("Reader has already been closed");
@@ -93,7 +90,7 @@ public class ForceCoordinateSystemIterator
         return builder.getFeatureType();
     }
 
-    /** @see org.geotools.data.FeatureReader#next() */
+    /** @see FeatureReader#next() */
     @Override
     public SimpleFeature next() throws NoSuchElementException {
         if (reader == null) {
@@ -106,12 +103,11 @@ public class ForceCoordinateSystemIterator
         try {
             return SimpleFeatureBuilder.retype(next, builder);
         } catch (IllegalAttributeException eep) {
-            throw (IllegalStateException)
-                    new IllegalStateException(eep.getMessage()).initCause(eep);
+            throw (IllegalStateException) new IllegalStateException(eep.getMessage()).initCause(eep);
         }
     }
 
-    /** @see org.geotools.data.FeatureReader#hasNext() */
+    /** @see FeatureReader#hasNext() */
     @Override
     public boolean hasNext() {
         if (reader == null) {
@@ -125,7 +121,7 @@ public class ForceCoordinateSystemIterator
     public void remove() {
         throw new UnsupportedOperationException();
     }
-    /** @see org.geotools.data.FeatureReader#close() */
+    /** @see FeatureReader#close() */
     @Override
     public void close() {
         if (reader == null) {

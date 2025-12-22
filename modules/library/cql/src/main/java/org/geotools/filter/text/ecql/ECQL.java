@@ -19,30 +19,29 @@ package org.geotools.filter.text.ecql;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
 import javax.xml.transform.TransformerException;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.filter.text.commons.CompilerUtil;
 import org.geotools.filter.text.commons.ExpressionToText;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.util.factory.Hints;
 import org.geotools.xml.filter.FilterTransformer;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 
 /**
- * <b>Extended Contextual Query Language (ECQL)</b> is an extension of <b>CQL</b>. This class
- * presents the operations available to parse the ECQL language and generates the correspondent
- * filter.
+ * <b>Extended Contextual Query Language (ECQL)</b> is an extension of <b>CQL</b>. This class presents the operations
+ * available to parse the ECQL language and generates the correspondent filter.
  *
  * <p>
  *
  * <h2>Usage</h2>
  *
- * Here are some usage examples. Refer to the <a
- * href="http://docs.codehaus.org/display/GEOTOOLS/ECQL+Parser+Design">BNF of grammar</a> to see
- * what exactly you can do.
+ * Here are some usage examples. Refer to the <a href="http://docs.codehaus.org/display/GEOTOOLS/ECQL+Parser+Design">BNF
+ * of grammar</a> to see what exactly you can do.
  *
  * <pre>
  * <code>
@@ -69,8 +68,8 @@ import org.opengis.filter.expression.Expression;
  * </code>
  * </pre>
  *
- * The reverse process is possible too. To generate the ECQL associated to a filter you should use
- * the <b>toCQL(...)</b> methods.
+ * The reverse process is possible too. To generate the ECQL associated to a filter you should use the <b>toCQL(...)</b>
+ * methods.
  *
  * @author Jody Garnett
  * @author Mauricio Pazos (Axios Engineering)
@@ -84,12 +83,10 @@ public class ECQL {
     }
 
     /**
-     * Parses the input string in ECQL format into a Filter, using the systems default FilterFactory
-     * implementation.
+     * Parses the input string in ECQL format into a Filter, using the systems default FilterFactory implementation.
      *
      * @param ecqlPredicate a string containing a query predicate in ECQL format.
-     * @return a {@link Filter} equivalent to the constraint specified in <code>ecqlPredicate</code>
-     *     .
+     * @return a {@link Filter} equivalent to the constraint specified in <code>ecqlPredicate</code> .
      */
     public static Filter toFilter(final String ecqlPredicate) throws CQLException {
         Filter filter = ECQL.toFilter(ecqlPredicate, null);
@@ -101,12 +98,11 @@ public class ECQL {
      * Parses the input string in ECQL format into a Filter, using the provided FilterFactory.
      *
      * @param ecqlPredicate a string containing a query predicate in ECQL format.
-     * @param filterFactory the {@link FilterFactory} to use for the creation of the Filter. If it
-     *     is null the method finds the default implementation.
+     * @param filterFactory the {@link FilterFactory} to use for the creation of the Filter. If it is null the method
+     *     finds the default implementation.
      * @return a {@link Filter} equivalent to the constraint specified in <code>Predicate</code>.
      */
-    public static Filter toFilter(final String ecqlPredicate, final FilterFactory filterFactory)
-            throws CQLException {
+    public static Filter toFilter(final String ecqlPredicate, final FilterFactory filterFactory) throws CQLException {
 
         ECQLCompilerFactory compilerFactory = new ECQLCompilerFactory();
         Filter result = CompilerUtil.parseFilter(ecqlPredicate, compilerFactory, filterFactory);
@@ -115,8 +111,8 @@ public class ECQL {
     }
 
     /**
-     * Parses the input string in ECQL format into an Expression, using the systems default {@link
-     * FilterFactory} implementation.
+     * Parses the input string in ECQL format into an Expression, using the systems default {@link FilterFactory}
+     * implementation.
      *
      * @param ecqlExpression a string containing an ECQL expression.
      * @return a {@link Expression} equivalent to the one specified in <code>ecqlExpression</code>.
@@ -126,22 +122,20 @@ public class ECQL {
     }
 
     /**
-     * Parses the input string in ECQL format and makes the correspondent Expression , using the
-     * provided FilterFactory.
+     * Parses the input string in ECQL format and makes the correspondent Expression , using the provided FilterFactory.
      *
      * @param ecqlExpression a string containing a ECQL expression.
-     * @param filterFactory the {@link FilterFactory} to use for the creation of the Expression. If
-     *     it is null the method finds the default implementation.
+     * @param filterFactory the {@link FilterFactory} to use for the creation of the Expression. If it is null the
+     *     method finds the default implementation.
      * @return a {@link Filter} equivalent to the constraint specified in <code>ecqlExpression
      *     </code>.
      */
-    public static Expression toExpression(
-            final String ecqlExpression, final FilterFactory filterFactory) throws CQLException {
+    public static Expression toExpression(final String ecqlExpression, final FilterFactory filterFactory)
+            throws CQLException {
 
         ECQLCompilerFactory compilerFactory = new ECQLCompilerFactory();
 
-        Expression expression =
-                CompilerUtil.parseExpression(ecqlExpression, compilerFactory, filterFactory);
+        Expression expression = CompilerUtil.parseExpression(ecqlExpression, compilerFactory, filterFactory);
 
         return expression;
     }
@@ -153,8 +147,7 @@ public class ECQL {
      * @param ecqlSequencePredicate a list of ECQL predicates separated by "<code>;</code>"
      * @return a List of {@link Filter}, one for each input ECQL statement
      */
-    public static List<Filter> toFilterList(final String ecqlSequencePredicate)
-            throws CQLException {
+    public static List<Filter> toFilterList(final String ecqlSequencePredicate) throws CQLException {
 
         return toFilterList(ecqlSequencePredicate, null);
     }
@@ -167,13 +160,12 @@ public class ECQL {
      * @param filterFactory the factory used to make the filters
      * @return a List of {@link Filter}, one for each input ECQL statement
      */
-    public static List<Filter> toFilterList(
-            final String ecqlSequencePredicate, FilterFactory filterFactory) throws CQLException {
+    public static List<Filter> toFilterList(final String ecqlSequencePredicate, FilterFactory filterFactory)
+            throws CQLException {
 
         ECQLCompilerFactory compilerFactory = new ECQLCompilerFactory();
 
-        List<Filter> filters =
-                CompilerUtil.parseFilterList(ecqlSequencePredicate, compilerFactory, filterFactory);
+        List<Filter> filters = CompilerUtil.parseFilterList(ecqlSequencePredicate, compilerFactory, filterFactory);
 
         return filters;
     }
@@ -239,7 +231,7 @@ public class ECQL {
         System.out.println("ECQL Filters Tester");
         System.out.println("Seperate with \";\" or \"quit\" to finish)");
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
         FilterTransformer filterTransformer = new FilterTransformer();
         filterTransformer.setIndentation(4);
 

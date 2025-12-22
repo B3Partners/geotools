@@ -17,18 +17,18 @@
  */
 package org.geotools.ysld.encode;
 
-import org.geotools.styling.LineSymbolizer;
-import org.geotools.styling.PointSymbolizer;
-import org.geotools.styling.PolygonSymbolizer;
-import org.geotools.styling.RasterSymbolizer;
-import org.geotools.styling.Rule;
-import org.geotools.styling.Symbolizer;
-import org.geotools.styling.TextSymbolizer;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.RasterSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.Symbolizer;
+import org.geotools.api.style.TextSymbolizer;
 
 /**
  * Encodes an iterator of {@link Symbolizer} as YSLD, delegating to {@link PointSymblolizerEncoder},
- * {@link PolygonSymbolizerEncoder}, {@link LineSymbolizerEncoder}, {@link TextSymbolizerEncoder},
- * or {@link RasterSymbolizerEncoder} as appropriate.
+ * {@link PolygonSymbolizerEncoder}, {@link LineSymbolizerEncoder}, {@link TextSymbolizerEncoder}, or
+ * {@link RasterSymbolizerEncoder} as appropriate.
  */
 public class SymbolizersEncoder extends YsldEncodeHandler<Symbolizer> {
 
@@ -38,16 +38,16 @@ public class SymbolizersEncoder extends YsldEncodeHandler<Symbolizer> {
 
     @Override
     protected void encode(Symbolizer sym) {
-        if (sym instanceof PointSymbolizer) {
-            push("point").inline(new PointSymblolizerEncoder((PointSymbolizer) sym));
-        } else if (sym instanceof LineSymbolizer) {
-            push("line").inline(new LineSymbolizerEncoder((LineSymbolizer) sym));
-        } else if (sym instanceof PolygonSymbolizer) {
-            push("polygon").inline(new PolygonSymbolizerEncoder((PolygonSymbolizer) sym));
-        } else if (sym instanceof TextSymbolizer) {
-            push("text").inline(new TextSymbolizerEncoder((TextSymbolizer) sym));
-        } else if (sym instanceof RasterSymbolizer) {
-            push("raster").inline(new RasterSymbolizerEncoder((RasterSymbolizer) sym));
+        if (sym instanceof PointSymbolizer symbolizer4) {
+            push("point").inline(new PointSymblolizerEncoder(symbolizer4));
+        } else if (sym instanceof LineSymbolizer symbolizer3) {
+            push("line").inline(new LineSymbolizerEncoder(symbolizer3));
+        } else if (sym instanceof PolygonSymbolizer symbolizer2) {
+            push("polygon").inline(new PolygonSymbolizerEncoder(symbolizer2));
+        } else if (sym instanceof TextSymbolizer symbolizer1) {
+            push("text").inline(new TextSymbolizerEncoder(symbolizer1));
+        } else if (sym instanceof RasterSymbolizer symbolizer) {
+            push("raster").inline(new RasterSymbolizerEncoder(symbolizer));
         }
     }
 

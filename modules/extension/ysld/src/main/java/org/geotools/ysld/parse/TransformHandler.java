@@ -26,15 +26,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.style.FeatureTypeStyle;
 import org.geotools.filter.FunctionFactory;
-import org.geotools.styling.FeatureTypeStyle;
 import org.geotools.ysld.ProcessUtil;
 import org.geotools.ysld.YamlMap;
 import org.geotools.ysld.YamlObject;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
 
 /** Handles parsing a Ysld "transform" property into a transformation {@link Function} object. */
 public class TransformHandler extends YsldParseHandler {
@@ -54,8 +54,7 @@ public class TransformHandler extends YsldParseHandler {
     public void handle(YamlObject<?> obj, YamlParseContext context) {
         // lookup process function factory, if null means process modules not on classpath
         if (functionFactory == null) {
-            LOG.warning(
-                    "Unable to load process factory, ignoring transform, ensure process modules installed");
+            LOG.warning("Unable to load process factory, ignoring transform, ensure process modules installed");
             return;
         }
 
@@ -96,13 +95,9 @@ public class TransformHandler extends YsldParseHandler {
         Expression outputWidth = null;
         Expression outputHeight = null;
         if (wmsParams) {
-            outputBBOX =
-                    paramExpression("outputBBOX", Collections.singletonList(envVar("wms_bbox")));
-            outputWidth =
-                    paramExpression("outputWidth", Collections.singletonList(envVar("wms_width")));
-            outputHeight =
-                    paramExpression(
-                            "outputHeight", Collections.singletonList(envVar("wms_height")));
+            outputBBOX = paramExpression("outputBBOX", Collections.singletonList(envVar("wms_bbox")));
+            outputWidth = paramExpression("outputWidth", Collections.singletonList(envVar("wms_width")));
+            outputHeight = paramExpression("outputHeight", Collections.singletonList(envVar("wms_height")));
         }
 
         YamlMap params = map.map("params");
@@ -115,8 +110,8 @@ public class TransformHandler extends YsldParseHandler {
 
                 Parameter<?> p = processInfo.get(key);
                 if (p != null) {
-                    if (val instanceof String) {
-                        Expression expr = Util.expression((String) val, true, factory);
+                    if (val instanceof String string) {
+                        Expression expr = Util.expression(string, true, factory);
                         if (expr != null) {
                             valueArgs.add(expr);
                         }
@@ -126,7 +121,7 @@ public class TransformHandler extends YsldParseHandler {
                         convertAndAdd(val, p, valueArgs);
                     }
                 } else {
-                    LOG.warning(String.format("unknown transform parameter: %s", key));
+                    LOG.warning("unknown transform parameter: %s".formatted(key));
                 }
 
                 if (valueArgs.isEmpty()) {
@@ -172,19 +167,18 @@ public class TransformHandler extends YsldParseHandler {
         List<Expression> paramArgs = new ArrayList<>(valueArgs.size() + 1);
         paramArgs.add(factory.filter.literal(name));
         paramArgs.addAll(valueArgs);
-        return factory.filter.function(
-                "parameter", paramArgs.toArray(new Expression[paramArgs.size()]));
+        return factory.filter.function("parameter", paramArgs.toArray(new Expression[paramArgs.size()]));
     }
 
     void convertAndAdd(Object val, Parameter<?> p, List<Expression> valueArgs) {
         // handle collection case
-        if (p.getMaxOccurs() > 1 && val instanceof Collection) {
-            for (Object o : (Collection<?>) val) {
+        if (p.getMaxOccurs() > 1 && val instanceof Collection<?> collection) {
+            for (Object o : collection) {
                 // just add directly
                 valueArgs.add(factory.filter.literal(o));
             }
-        } else if (val instanceof Map) {
-            YamlMap map = YamlMap.<Map<?, ?>>create((Map<?, ?>) val).map();
+        } else if (val instanceof Map<?, ?> map1) {
+            YamlMap map = YamlMap.<Map<?, ?>>create(map1).map();
             valueArgs.add(process(map));
         } else {
             // just add directly

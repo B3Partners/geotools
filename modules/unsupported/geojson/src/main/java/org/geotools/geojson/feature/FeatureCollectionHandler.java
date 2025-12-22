@@ -19,16 +19,15 @@ package org.geotools.geojson.feature;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geojson.DelegatingHandler;
 import org.json.simple.parser.ParseException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
-public class FeatureCollectionHandler extends DelegatingHandler<SimpleFeature>
-        implements IFeatureCollectionHandler {
+public class FeatureCollectionHandler extends DelegatingHandler<SimpleFeature> implements IFeatureCollectionHandler {
 
     SimpleFeatureBuilder builder;
     AttributeIO attio;
@@ -112,8 +111,8 @@ public class FeatureCollectionHandler extends DelegatingHandler<SimpleFeature>
     public boolean endObject() throws ParseException, IOException {
         super.endObject();
 
-        if (delegate instanceof FeatureHandler) {
-            feature = ((FeatureHandler) delegate).getValue();
+        if (delegate instanceof FeatureHandler handler1) {
+            feature = handler1.getValue();
             if (feature != null) {
                 // check for a null builder, if it is null set it with the feature type
                 // from this feature
@@ -126,12 +125,12 @@ public class FeatureCollectionHandler extends DelegatingHandler<SimpleFeature>
                     builder = new SimpleFeatureBuilder(featureType);
                 }
 
-                ((FeatureHandler) delegate).init();
+                handler1.init();
                 // we want to pause at this point
                 return false;
             }
-        } else if (delegate instanceof CRSHandler) {
-            crs = ((CRSHandler) delegate).getValue();
+        } else if (delegate instanceof CRSHandler handler) {
+            crs = handler.getValue();
             if (crs != null) {
                 delegate = NULL;
             }

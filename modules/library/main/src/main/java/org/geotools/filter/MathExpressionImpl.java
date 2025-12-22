@@ -19,17 +19,16 @@ package org.geotools.filter;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.geotools.api.filter.expression.BinaryExpression;
 import org.geotools.util.Converters;
-import org.opengis.filter.expression.BinaryExpression;
 
 /**
- * Holds a mathematical relationship between two expressions. Note that the sub expressions must be
- * math expressions. In other words, they must be a math literal, another math expression, or a
- * feature attribute with a declared math type. You may create math expressions of arbitrary
- * complexity by nesting other math expressions as sub expressions in one or more math expressions.
- * This filter defines left and right values to clarify the sub expression precedence for
- * non-associative operations, such as subtraction and division. For example, the left value is the
- * numerator and the right is the denominator in an ExpressionMath division operation.
+ * Holds a mathematical relationship between two expressions. Note that the sub expressions must be math expressions. In
+ * other words, they must be a math literal, another math expression, or a feature attribute with a declared math type.
+ * You may create math expressions of arbitrary complexity by nesting other math expressions as sub expressions in one
+ * or more math expressions. This filter defines left and right values to clarify the sub expression precedence for
+ * non-associative operations, such as subtraction and division. For example, the left value is the numerator and the
+ * right is the denominator in an ExpressionMath division operation.
  *
  * @author Rob Hranac, Vision for New York
  * @version $Id$
@@ -37,17 +36,16 @@ import org.opengis.filter.expression.BinaryExpression;
 public abstract class MathExpressionImpl extends DefaultExpression implements BinaryExpression {
 
     /** Holds the 'left' value of this math expression. */
-    private org.opengis.filter.expression.Expression leftValue = null;
+    private org.geotools.api.filter.expression.Expression leftValue = null;
 
     /** Holds the 'right' value of this math expression. */
-    private org.opengis.filter.expression.Expression rightValue = null;
+    private org.geotools.api.filter.expression.Expression rightValue = null;
 
     /** No argument constructor. */
     protected MathExpressionImpl() {}
 
     protected MathExpressionImpl(
-            org.opengis.filter.expression.Expression e1,
-            org.opengis.filter.expression.Expression e2) {
+            org.geotools.api.filter.expression.Expression e1, org.geotools.api.filter.expression.Expression e2) {
         this.leftValue = e1;
         this.rightValue = e2;
     }
@@ -58,15 +56,14 @@ public abstract class MathExpressionImpl extends DefaultExpression implements Bi
      * @return the expression on the first side of the comparison.
      */
     @Override
-    public org.opengis.filter.expression.Expression getExpression1() {
+    public org.geotools.api.filter.expression.Expression getExpression1() {
         return leftValue;
     }
 
     /** Gets the left or first expression. */
-    public void setExpression1(org.opengis.filter.expression.Expression expression) {
+    public void setExpression1(org.geotools.api.filter.expression.Expression expression) {
         if (isGeometryExpression(Filters.getExpressionType(expression))) {
-            throw new IllegalFilterException(
-                    "Attempted to add Geometry expression to math expression.");
+            throw new IllegalFilterException("Attempted to add Geometry expression to math expression.");
         }
         this.leftValue = expression;
     }
@@ -77,29 +74,27 @@ public abstract class MathExpressionImpl extends DefaultExpression implements Bi
      * @return the expression on the second side of the comparison.
      */
     @Override
-    public org.opengis.filter.expression.Expression getExpression2() {
+    public org.geotools.api.filter.expression.Expression getExpression2() {
         return rightValue;
     }
 
     /** Gets the second expression. */
-    public void setExpression2(org.opengis.filter.expression.Expression expression) {
+    public void setExpression2(org.geotools.api.filter.expression.Expression expression) {
         // Check to see if this is a valid math expression before adding.
         if (isGeometryExpression(Filters.getExpressionType(expression))) {
-            throw new IllegalFilterException(
-                    "Attempted to add Geometry expression to math expression.");
+            throw new IllegalFilterException("Attempted to add Geometry expression to math expression.");
         }
         this.rightValue = expression;
     }
 
     /**
-     * Convenience method which ensures that both expressions have been set. If any of operands not
-     * set an exception is thrown.
+     * Convenience method which ensures that both expressions have been set. If any of operands not set an exception is
+     * thrown.
      */
     protected void ensureOperandsSet() throws IllegalArgumentException {
         // Checks to make sure both sub expressions exist.
-        if ((leftValue == null) || (rightValue == null)) {
-            throw new IllegalArgumentException(
-                    "Attempted read math expression with missing sub expressions.");
+        if (leftValue == null || rightValue == null) {
+            throw new IllegalArgumentException("Attempted read math expression with missing sub expressions.");
         }
     }
 
@@ -118,9 +113,7 @@ public abstract class MathExpressionImpl extends DefaultExpression implements Bi
             @SuppressWarnings("unchecked")
             Collection<Object> c1 = (Collection<Object>) value1;
             numericList =
-                    c1.stream()
-                            .map(v -> Converters.convert(v, Number.class))
-                            .collect(Collectors.toList());
+                    c1.stream().map(v -> Converters.convert(v, Number.class)).collect(Collectors.toList());
             scalar = Filters.number(value2);
 
         } else {
@@ -128,9 +121,7 @@ public abstract class MathExpressionImpl extends DefaultExpression implements Bi
             @SuppressWarnings("unchecked")
             Collection<Object> unc = (Collection<Object>) value2;
             numericList =
-                    unc.stream()
-                            .map(v -> Converters.convert(v, Number.class))
-                            .collect(Collectors.toList());
+                    unc.stream().map(v -> Converters.convert(v, Number.class)).collect(Collectors.toList());
             scalar = Filters.number(value1);
         }
 

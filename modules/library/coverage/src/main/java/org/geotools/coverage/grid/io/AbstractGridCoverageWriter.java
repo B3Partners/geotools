@@ -20,17 +20,16 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.stream.ImageOutputStream;
+import org.geotools.api.coverage.grid.GridCoverageWriter;
 import org.geotools.util.factory.GeoTools;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
-import org.opengis.coverage.grid.GridCoverageWriter;
 
 /**
- * An {@link AbstractGridCoverageWriter} is the base class for all {@link GridCoverageWriter}
- * implementations in GeoTools toolkit.
+ * An {@link AbstractGridCoverageWriter} is the base class for all {@link GridCoverageWriter} implementations in
+ * GeoTools toolkit.
  *
- * <p>We expect it to become the place where to move functionalities common to all {@link
- * GridCoverageWriter}.
+ * <p>We expect it to become the place where to move functionalities common to all {@link GridCoverageWriter}.
  *
  * @author Simone Giannecchini
  * @since 2.3.x
@@ -79,7 +78,7 @@ public abstract class AbstractGridCoverageWriter implements GridCoverageWriter {
     /**
      * (non-Javadoc)
      *
-     * @see org.opengis.coverage.grid.GridCoverageWriter#getDestination()
+     * @see org.geotools.api.coverage.grid.GridCoverageWriter#getDestination()
      */
     @Override
     public Object getDestination() {
@@ -87,35 +86,32 @@ public abstract class AbstractGridCoverageWriter implements GridCoverageWriter {
     }
 
     /**
-     * Implementation of getMetadataNames. Currently unimplemented because it has not been specified
-     * where to retrieve the metadata
+     * Implementation of getMetadataNames. Currently unimplemented because it has not been specified where to retrieve
+     * the metadata
      *
      * @return null
-     * @see org.opengis.coverage.grid.GridCoverageWriter#getMetadataNames()
+     * @see org.geotools.api.coverage.grid.GridCoverageWriter#getMetadataNames()
      */
     @Override
     public String[] getMetadataNames() {
         throw new UnsupportedOperationException("Unsupported method");
     }
 
-    /** @see org.opengis.coverage.grid.GridCoverageWriter#setCurrentSubname(java.lang.String) */
+    /** @see org.geotools.api.coverage.grid.GridCoverageWriter#setCurrentSubname(java.lang.String) */
     @Override
     public void setCurrentSubname(String name) throws IOException {
         throw new UnsupportedOperationException("Unsupported method");
     }
 
-    /**
-     * @see org.opengis.coverage.grid.GridCoverageWriter#setMetadataValue(java.lang.String,
-     *     java.lang.String)
-     */
+    /** @see org.geotools.api.coverage.grid.GridCoverageWriter#setMetadataValue(java.lang.String, java.lang.String) */
     @Override
     public void setMetadataValue(String name, String value) throws IOException {
         throw new UnsupportedOperationException("Unsupported method");
     }
 
     /**
-     * Forcing the disposal of this {@link AbstractGridCoverageWriter} which may keep a reference to
-     * an open {@link ImageOutputStream}
+     * Forcing the disposal of this {@link AbstractGridCoverageWriter} which may keep a reference to an open
+     * {@link ImageOutputStream}
      */
     @Override
     @SuppressWarnings("deprecation") // finalize is deprecated in Java 9

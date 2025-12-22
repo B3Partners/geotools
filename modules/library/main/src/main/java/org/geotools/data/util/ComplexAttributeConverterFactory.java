@@ -18,17 +18,17 @@
 package org.geotools.data.util;
 
 import java.util.Collection;
+import org.geotools.api.feature.Attribute;
+import org.geotools.api.feature.ComplexAttribute;
+import org.geotools.api.feature.GeometryAttribute;
+import org.geotools.api.feature.Property;
+import org.geotools.api.filter.identity.FeatureId;
 import org.geotools.feature.AttributeImpl;
 import org.geotools.filter.identity.FeatureIdImpl;
 import org.geotools.util.Converter;
 import org.geotools.util.ConverterFactory;
 import org.geotools.util.Converters;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.ComplexAttribute;
-import org.opengis.feature.GeometryAttribute;
-import org.opengis.feature.Property;
-import org.opengis.filter.identity.FeatureId;
 
 /**
  * This converter retrieves the values out of attributes.
@@ -45,8 +45,7 @@ public class ComplexAttributeConverterFactory implements ConverterFactory {
                 @Override
                 public <T> T convert(Object source, Class<T> target) throws Exception {
                     if (source instanceof ComplexAttribute) {
-                        Collection<? extends Property> valueMap =
-                                ((ComplexAttribute) source).getValue();
+                        Collection<? extends Property> valueMap = ((ComplexAttribute) source).getValue();
                         if (valueMap.isEmpty() || valueMap.size() > 1) {
                             return null;
                         } else {
@@ -67,8 +66,8 @@ public class ComplexAttributeConverterFactory implements ConverterFactory {
             return new Converter() {
                 @Override
                 public <T> T convert(Object source, Class<T> target) throws Exception {
-                    if (source instanceof GeometryAttribute) {
-                        return Converters.convert(((GeometryAttribute) source).getValue(), target);
+                    if (source instanceof GeometryAttribute attribute) {
+                        return Converters.convert(attribute.getValue(), target);
                     }
                     return null;
                 }
@@ -93,9 +92,7 @@ public class ComplexAttributeConverterFactory implements ConverterFactory {
             return new Converter() {
                 @Override
                 public <T> T convert(Object source, Class<T> target) throws Exception {
-                    if (source instanceof Attribute) {
-                        // get the attribute value
-                        Attribute attribute = (Attribute) source;
+                    if (source instanceof Attribute attribute) {
                         Object value = attribute.getValue();
                         // let the available converters do their job
                         return target.cast(Converters.convert(value, target));
@@ -144,8 +141,8 @@ public class ComplexAttributeConverterFactory implements ConverterFactory {
     }
 
     /**
-     * Helper method that just checks if the provided source is a collection of objects and that all
-     * the objects are either NULL or that the expected type is assignable from them.
+     * Helper method that just checks if the provided source is a collection of objects and that all the objects are
+     * either NULL or that the expected type is assignable from them.
      */
     private boolean isCollectionOf(Object source, Class<?> expected) {
         if (!(source instanceof Collection<?>)) {

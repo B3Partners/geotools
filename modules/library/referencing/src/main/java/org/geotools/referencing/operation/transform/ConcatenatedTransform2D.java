@@ -16,9 +16,10 @@
  */
 package org.geotools.referencing.operation.transform;
 
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.MathTransform2D;
-import org.opengis.referencing.operation.NoninvertibleTransformException;
+import java.io.Serial;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.MathTransform2D;
+import org.geotools.api.referencing.operation.NoninvertibleTransformException;
 
 /**
  * Concatenated transform in which the resulting transform is two-dimensional.
@@ -29,6 +30,7 @@ import org.opengis.referencing.operation.NoninvertibleTransformException;
  */
 final class ConcatenatedTransform2D extends ConcatenatedTransform implements MathTransform2D {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -7307709788564866500L;
 
     /** Constructs a concatenated transform. */

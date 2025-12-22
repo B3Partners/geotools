@@ -22,15 +22,11 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import javax.xml.XMLConstants;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
-import org.custommonkey.xmlunit.SimpleNamespaceContext;
-import org.custommonkey.xmlunit.XMLUnit;
 import org.eclipse.xsd.XSDSchema;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.gml3.bindings.TEST;
@@ -39,21 +35,12 @@ import org.geotools.xsd.Configuration;
 import org.geotools.xsd.Encoder;
 import org.geotools.xsd.Parser;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 public class GML3EncodingOnlineTest {
-
-    @Before
-    public void setUp() throws Exception {
-
-        Map<String, String> namespaces = new HashMap<>();
-        namespaces.put("test", TEST.TestFeature.getNamespaceURI());
-        XMLUnit.setXpathNamespaceContext(new SimpleNamespaceContext(namespaces));
-    }
 
     boolean isOffline() throws Exception {
         // this test will only run if network is available
@@ -81,8 +68,7 @@ public class GML3EncodingOnlineTest {
         // first parse in test data
         Parser parser = new Parser(configuration);
         SimpleFeatureCollection fc =
-                (SimpleFeatureCollection)
-                        parser.parse(TestConfiguration.class.getResourceAsStream("test.xml"));
+                (SimpleFeatureCollection) parser.parse(TestConfiguration.class.getResourceAsStream("test.xml"));
         Assert.assertNotNull(fc);
 
         XSDSchema schema = TEST.getInstance().getSchema();
@@ -110,8 +96,7 @@ public class GML3EncodingOnlineTest {
         // first parse in test data
         Parser parser = new Parser(configuration);
         SimpleFeatureCollection fc =
-                (SimpleFeatureCollection)
-                        parser.parse(TestConfiguration.class.getResourceAsStream("test.xml"));
+                (SimpleFeatureCollection) parser.parse(TestConfiguration.class.getResourceAsStream("test.xml"));
         Assert.assertNotNull(fc);
 
         XSDSchema schema = TEST.getInstance().getSchema();
@@ -133,20 +118,19 @@ public class GML3EncodingOnlineTest {
         Validator v = s.newValidator();
 
         final ArrayList<SAXParseException> errors = new ArrayList<>();
-        DefaultHandler handler =
-                new DefaultHandler() {
-                    @Override
-                    public void error(SAXParseException e) throws SAXException {
-                        // System.out.println(e.getMessage());
-                        errors.add(e);
-                    }
+        DefaultHandler handler = new DefaultHandler() {
+            @Override
+            public void error(SAXParseException e) throws SAXException {
+                // System.out.println(e.getMessage());
+                errors.add(e);
+            }
 
-                    @Override
-                    public void fatalError(SAXParseException e) throws SAXException {
-                        // System.out.println(e.getMessage());
-                        errors.add(e);
-                    }
-                };
+            @Override
+            public void fatalError(SAXParseException e) throws SAXException {
+                // System.out.println(e.getMessage());
+                errors.add(e);
+            }
+        };
 
         v.setErrorHandler(handler);
         v.validate(new StreamSource(new ByteArrayInputStream(data)));

@@ -17,20 +17,19 @@
  */
 package org.geotools.ysld.parse;
 
-import org.geotools.styling.AnchorPoint;
-import org.geotools.styling.Fill;
-import org.geotools.styling.Font;
-import org.geotools.styling.Graphic;
-import org.geotools.styling.Halo;
-import org.geotools.styling.LinePlacement;
-import org.geotools.styling.PointPlacement;
-import org.geotools.styling.Rule;
-import org.geotools.styling.Symbolizer;
-import org.geotools.styling.TextSymbolizer;
-import org.geotools.styling.TextSymbolizer2;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.style.AnchorPoint;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Font;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.Halo;
+import org.geotools.api.style.LinePlacement;
+import org.geotools.api.style.PointPlacement;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.Symbolizer;
+import org.geotools.api.style.TextSymbolizer;
 import org.geotools.ysld.YamlMap;
 import org.geotools.ysld.YamlObject;
-import org.opengis.filter.FilterFactory;
 
 /** Handles parsing a Ysld "text" symbolizer property into a {@link Symbolizer} object. */
 public class TextParser extends SymbolizerParser<TextSymbolizer> {
@@ -54,23 +53,20 @@ public class TextParser extends SymbolizerParser<TextSymbolizer> {
         context.push(new FontHandler());
         context.push("halo", new HaloParser());
         context.push(new PlacementParser());
-        context.push(
-                new FillParser(factory) {
-                    @Override
-                    protected void fill(Fill fill) {
-                        sym.setFill(fill);
-                    }
-                });
-        context.push(
-                "graphic",
-                new GraphicParser(factory) {
-                    @Override
-                    protected void graphic(Graphic g) {
-                        if (sym instanceof TextSymbolizer2) {
-                            ((TextSymbolizer2) sym).setGraphic(g);
-                        }
-                    }
-                });
+        context.push(new FillParser(factory) {
+            @Override
+            protected void fill(Fill fill) {
+                sym.setFill(fill);
+            }
+        });
+        context.push("graphic", new GraphicParser(factory) {
+            @Override
+            protected void graphic(Graphic g) {
+                if (sym instanceof TextSymbolizer) {
+                    sym.setGraphic(g);
+                }
+            }
+        });
     }
 
     class FontHandler extends YsldParseHandler {
@@ -81,12 +77,8 @@ public class TextParser extends SymbolizerParser<TextSymbolizer> {
             super(TextParser.this.factory);
 
             FilterFactory ff = factory.filter;
-            font =
-                    factory.style.createFont(
-                            ff.literal("serif"),
-                            ff.literal("normal"),
-                            ff.literal("normal"),
-                            ff.literal(10));
+            font = factory.style.createFont(
+                    ff.literal("serif"), ff.literal("normal"), ff.literal("normal"), ff.literal(10));
         }
 
         @Override
@@ -126,13 +118,12 @@ public class TextParser extends SymbolizerParser<TextSymbolizer> {
 
             YamlMap map = obj.map();
 
-            context.push(
-                    new FillParser(factory) {
-                        @Override
-                        protected void fill(Fill fill) {
-                            halo.setFill(fill);
-                        }
-                    });
+            context.push(new FillParser(factory) {
+                @Override
+                protected void fill(Fill fill) {
+                    halo.setFill(fill);
+                }
+            });
 
             if (map.has("radius")) {
                 halo.setRadius(Util.expression(map.str("radius"), factory));

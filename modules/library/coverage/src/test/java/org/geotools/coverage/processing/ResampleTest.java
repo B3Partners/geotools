@@ -16,6 +16,7 @@
  */
 package org.geotools.coverage.processing;
 
+import static org.geotools.referencing.crs.DefaultGeographicCRS.WGS84;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -35,13 +36,26 @@ import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.awt.image.renderable.ParameterBlock;
 import java.io.File;
+import java.io.IOException;
 import javax.imageio.ImageIO;
-import javax.media.jai.Interpolation;
-import javax.media.jai.JAI;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.RasterFactory;
-import javax.media.jai.TiledImage;
+import org.eclipse.imagen.ImageN;
+import org.eclipse.imagen.Interpolation;
+import org.eclipse.imagen.PlanarImage;
+import org.eclipse.imagen.RasterFactory;
+import org.eclipse.imagen.TiledImage;
 import org.geotools.TestData;
+import org.geotools.api.coverage.grid.GridGeometry;
+import org.geotools.api.geometry.Bounds;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.NoSuchIdentifierException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.GeographicCRS;
+import org.geotools.api.referencing.datum.Ellipsoid;
+import org.geotools.api.referencing.datum.PixelInCell;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.coverage.CoverageFactoryFinder;
 import org.geotools.coverage.grid.GeneralGridEnvelope;
 import org.geotools.coverage.grid.GridCoverage2D;
@@ -49,9 +63,9 @@ import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.processing.operation.Extrema;
-import org.geotools.geometry.DirectPosition2D;
-import org.geotools.geometry.Envelope2D;
 import org.geotools.geometry.PixelTranslation;
+import org.geotools.geometry.Position2D;
+import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.image.ImageWorker;
 import org.geotools.image.test.ImageAssert;
 import org.geotools.referencing.CRS;
@@ -64,22 +78,10 @@ import org.geotools.util.factory.Hints;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.coverage.grid.GridGeometry;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.geometry.Envelope;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.NoSuchIdentifierException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.GeographicCRS;
-import org.opengis.referencing.datum.Ellipsoid;
-import org.opengis.referencing.datum.PixelInCell;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
- * Visual test of the "Resample" operation. A remote sensing image is projected from a fitted
- * coordinate system to a geographic one.
+ * Visual test of the "Resample" operation. A remote sensing image is projected from a fitted coordinate system to a
+ * geographic one.
  *
  * @version $Id$
  * @author Rémi Eve (IRD)
@@ -88,44 +90,44 @@ import org.opengis.referencing.operation.MathTransform;
  */
 public final class ResampleTest extends GridProcessingTestBase {
 
-    private static final String GOOGLE_MERCATOR_WKT =
-            "PROJCS[\"WGS 84 / Pseudo-Mercator\","
-                    + "GEOGCS[\"Popular Visualisation CRS\","
-                    + "DATUM[\"Popular_Visualisation_Datum\","
-                    + "SPHEROID[\"Popular Visualisation Sphere\",6378137,0,"
-                    + "AUTHORITY[\"EPSG\",\"7059\"]],"
-                    + "TOWGS84[0,0,0,0,0,0,0],"
-                    + "AUTHORITY[\"EPSG\",\"6055\"]],"
-                    + "PRIMEM[\"Greenwich\",0,"
-                    + "AUTHORITY[\"EPSG\",\"8901\"]],"
-                    + "UNIT[\"degree\",0.01745329251994328,"
-                    + "AUTHORITY[\"EPSG\",\"9122\"]],"
-                    + "AUTHORITY[\"EPSG\",\"4055\"]],"
-                    + "UNIT[\"metre\",1,"
-                    + "AUTHORITY[\"EPSG\",\"9001\"]],"
-                    + "PROJECTION[\"Mercator_1SP\"],"
-                    + "PARAMETER[\"central_meridian\",0],"
-                    + "PARAMETER[\"scale_factor\",1],"
-                    + "PARAMETER[\"false_easting\",0],"
-                    + "PARAMETER[\"false_northing\",0],"
-                    + "AUTHORITY[\"EPSG\",\"3785\"],"
-                    + "AXIS[\"X\",EAST],"
-                    + "AXIS[\"Y\",NORTH]]";
+    private static final String GOOGLE_MERCATOR_WKT = "PROJCS[\"WGS 84 / Pseudo-Mercator\","
+            + "GEOGCS[\"Popular Visualisation CRS\","
+            + "DATUM[\"Popular_Visualisation_Datum\","
+            + "SPHEROID[\"Popular Visualisation Sphere\",6378137,0,"
+            + "AUTHORITY[\"EPSG\",\"7059\"]],"
+            + "TOWGS84[0,0,0,0,0,0,0],"
+            + "AUTHORITY[\"EPSG\",\"6055\"]],"
+            + "PRIMEM[\"Greenwich\",0,"
+            + "AUTHORITY[\"EPSG\",\"8901\"]],"
+            + "UNIT[\"degree\",0.01745329251994328,"
+            + "AUTHORITY[\"EPSG\",\"9122\"]],"
+            + "AUTHORITY[\"EPSG\",\"4055\"]],"
+            + "UNIT[\"metre\",1,"
+            + "AUTHORITY[\"EPSG\",\"9001\"]],"
+            + "PROJECTION[\"Mercator_1SP\"],"
+            + "PARAMETER[\"central_meridian\",0],"
+            + "PARAMETER[\"scale_factor\",1],"
+            + "PARAMETER[\"false_easting\",0],"
+            + "PARAMETER[\"false_northing\",0],"
+            + "AUTHORITY[\"EPSG\",\"3785\"],"
+            + "AXIS[\"X\",EAST],"
+            + "AXIS[\"Y\",NORTH]]";
+
     /**
-     * The source grid coverage, to be initialized by {@link #setUp}. Contains 8-bits indexed color
-     * model for a PNG image, with categories.
+     * The source grid coverage, to be initialized by {@link #setUp}. Contains 8-bits indexed color model for a PNG
+     * image, with categories.
      */
     private GridCoverage2D coverage;
 
     /**
-     * An other source coverage initialized by {@link #setUp}. Contains indexed color model for a
-     * GIF image, without categories.
+     * An other source coverage initialized by {@link #setUp}. Contains indexed color model for a GIF image, without
+     * categories.
      */
     private GridCoverage2D indexedCoverage;
 
     /**
-     * An other source coverage initialized by {@link #setUp}. Contains indexed color model for a
-     * GIF image, without categories.
+     * An other source coverage initialized by {@link #setUp}. Contains indexed color model for a GIF image, without
+     * categories.
      */
     private GridCoverage2D indexedCoverageWithTransparency;
 
@@ -152,8 +154,7 @@ public final class ResampleTest extends GridProcessingTestBase {
             final GeographicCRS base = (GeographicCRS) coverage.getCoordinateReferenceSystem();
             final Ellipsoid ellipsoid = base.getDatum().getEllipsoid();
             final DefaultMathTransformFactory factory = new DefaultMathTransformFactory();
-            final ParameterValueGroup parameters =
-                    factory.getDefaultParameters("Oblique_Stereographic");
+            final ParameterValueGroup parameters = factory.getDefaultParameters("Oblique_Stereographic");
             parameters.parameter("semi_major").setValue(ellipsoid.getSemiMajorAxis());
             parameters.parameter("semi_minor").setValue(ellipsoid.getSemiMinorAxis());
             parameters.parameter("central_meridian").setValue(5);
@@ -173,8 +174,8 @@ public final class ResampleTest extends GridProcessingTestBase {
     }
 
     /**
-     * Projects the specified coverage to the same CRS without hints. The result will be displayed
-     * in a window if {@link #SHOW} is set to {@code true}.
+     * Projects the specified coverage to the same CRS without hints. The result will be displayed in a window if
+     * {@link #SHOW} is set to {@code true}.
      *
      * @param coverage The coverage to project.
      * @return The operation name which was applied on the image, or {@code null} if none.
@@ -201,15 +202,9 @@ public final class ResampleTest extends GridProcessingTestBase {
     public void testCrop() {
         final MathTransform gridToCRS = null;
         final GridGeometry2D g1 =
-                new GridGeometry2D(
-                        new GeneralGridEnvelope(new Rectangle(50, 50, 100, 100), 2),
-                        gridToCRS,
-                        null);
+                new GridGeometry2D(new GeneralGridEnvelope(new Rectangle(50, 50, 100, 100), 2), gridToCRS, null);
         final GridGeometry2D g2 =
-                new GridGeometry2D(
-                        new GeneralGridEnvelope(new Rectangle(50, 50, 200, 200), 2),
-                        gridToCRS,
-                        null);
+                new GridGeometry2D(new GeneralGridEnvelope(new Rectangle(50, 50, 200, 200), 2), gridToCRS, null);
         assertEquals("Crop", showProjected(coverage, null, g2, null));
         assertEquals("Crop", showProjected(indexedCoverage, null, g1, null));
         assertEquals("Crop", showProjected(indexedCoverageWithTransparency, null, g1, null));
@@ -226,8 +221,7 @@ public final class ResampleTest extends GridProcessingTestBase {
     public void testReproject() throws NoSuchAuthorityCodeException, FactoryException {
 
         // do it again, make sure the image does not turn black since
-        GridCoverage2D coverage_ =
-                project(ushortCoverage, CRS.parseWKT(GOOGLE_MERCATOR_WKT), null, "nearest", null);
+        GridCoverage2D coverage_ = project(ushortCoverage, CRS.parseWKT(GOOGLE_MERCATOR_WKT), null, "nearest", null);
 
         // reproject the ushort and check that things did not go bad, that is it turned black
         coverage_ = (GridCoverage2D) Operations.DEFAULT.extrema(coverage_);
@@ -246,11 +240,7 @@ public final class ResampleTest extends GridProcessingTestBase {
             // we supplied both crs and target gg in different crs, we get an exception backS
             assertEquals(
                     "Warp",
-                    showProjected(
-                            coverage,
-                            CRS.parseWKT(GOOGLE_MERCATOR_WKT),
-                            coverage.getGridGeometry(),
-                            null));
+                    showProjected(coverage, CRS.parseWKT(GOOGLE_MERCATOR_WKT), coverage.getGridGeometry(), null));
             fail("We should not be allowed to set different crs for target crs and target gg");
         } catch (Exception e) {
             // ok!
@@ -270,7 +260,7 @@ public final class ResampleTest extends GridProcessingTestBase {
 
         // Setting Force ReplaceIndexColorModel and CoverageProcessingView as SAME
         Hints hints = GeoTools.getDefaultHints().clone();
-        hints.put(JAI.KEY_REPLACE_INDEX_COLOR_MODEL, true);
+        hints.put(ImageN.KEY_REPLACE_INDEX_COLOR_MODEL, true);
 
         // Create a new GridCoverage
         GridCoverageFactory factory = new GridCoverageFactory(hints);
@@ -304,17 +294,15 @@ public final class ResampleTest extends GridProcessingTestBase {
     @Test
     public void testsNad83() throws FactoryException {
         Hints.putSystemDefault(Hints.RESAMPLE_TOLERANCE, 0.0);
-        final CoordinateReferenceSystem crs =
-                CRS.parseWKT(
-                        "GEOGCS[\"NAD83\","
-                                + "DATUM[\"North_American_Datum_1983\","
-                                + "SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],"
-                                + "TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6269\"]],"
-                                + "PRIMEM[\"Greenwich\",0, AUTHORITY[\"EPSG\",\"8901\"]],"
-                                + "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],"
-                                + "AXIS[\"Lat\",NORTH],"
-                                + "AXIS[\"Long\",EAST],"
-                                + "AUTHORITY[\"EPSG\",\"4269\"]]");
+        final CoordinateReferenceSystem crs = CRS.parseWKT("GEOGCS[\"NAD83\","
+                + "DATUM[\"North_American_Datum_1983\","
+                + "SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],"
+                + "TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6269\"]],"
+                + "PRIMEM[\"Greenwich\",0, AUTHORITY[\"EPSG\",\"8901\"]],"
+                + "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],"
+                + "AXIS[\"Lat\",NORTH],"
+                + "AXIS[\"Long\",EAST],"
+                + "AUTHORITY[\"EPSG\",\"4269\"]]");
         assertEquals("Warp", showProjected(indexedCoverage, crs, null, null));
         assertEquals("Warp", showProjected(indexedCoverageWithTransparency, crs, null, null));
     }
@@ -325,26 +313,67 @@ public final class ResampleTest extends GridProcessingTestBase {
         RenderedImage image = ImageIO.read(world);
 
         final CoordinateReferenceSystem wgs84 = CRS.decode("EPSG:4326", true);
-        Envelope2D envelope = new Envelope2D(wgs84, -180, -90, 360, 180);
+        ReferencedEnvelope envelope = ReferencedEnvelope.rect(-180, -90, 360, 180, wgs84);
         GridCoverage2D gcFullWorld = new GridCoverageFactory().create("world", image, envelope);
 
         // crop, we cannot reproject it fully to the google projection
-        final Envelope2D cropEnvelope = new Envelope2D(wgs84, -180, -80, 360, 160);
-        GridCoverage2D gcCropWorld =
-                (GridCoverage2D) Operations.DEFAULT.crop(gcFullWorld, cropEnvelope);
+        final ReferencedEnvelope cropEnvelope = ReferencedEnvelope.rect(-180, -80, 360, 160, wgs84);
+        GridCoverage2D gcCropWorld = (GridCoverage2D) Operations.DEFAULT.crop(gcFullWorld, cropEnvelope);
 
         // resample
         Hints.putSystemDefault(Hints.RESAMPLE_TOLERANCE, 0d);
-        GridCoverage2D gcResampled =
-                (GridCoverage2D)
-                        Operations.DEFAULT.resample(
-                                gcCropWorld,
-                                CRS.decode("EPSG:3857"),
-                                null,
-                                Interpolation.getInstance(Interpolation.INTERP_BILINEAR));
+        GridCoverage2D gcResampled = (GridCoverage2D) Operations.DEFAULT.resample(
+                gcCropWorld, CRS.decode("EPSG:3857"), null, Interpolation.getInstance(Interpolation.INTERP_BILINEAR));
 
-        File expected =
-                new File("src/test/resources/org/geotools/image/test-data/google-reproject.png");
+        File expected = new File("src/test/resources/org/geotools/image/test-data/google-reproject.png");
+        // allow one row of difference
+        ImageAssert.assertEquals(expected, gcResampled.getRenderedImage(), 600);
+    }
+
+    @Test
+    public void testOrthographicWorld() throws Exception {
+        // spin the world a bit, remaining inside the case where one read is enough
+        // (no need to perform two reads across the dateline)
+        testOrthographicWorlds(
+                ReferencedEnvelope.rect(-180, -90, 180, 180, WGS84),
+                CRS.decode("AUTO:42003,9001,-90,0"),
+                "ortho-reproject-m90.png");
+        testOrthographicWorlds(
+                ReferencedEnvelope.rect(-135, -90, 180, 180, WGS84),
+                CRS.decode("AUTO:42003,9001,-45,0"),
+                "ortho-reproject-m45.png");
+        testOrthographicWorlds(
+                ReferencedEnvelope.rect(-90, -90, 180, 180, WGS84),
+                CRS.decode("AUTO:42003,9001,0,0"),
+                "ortho-reproject-0.png");
+        testOrthographicWorlds(
+                ReferencedEnvelope.rect(-45, -90, 180, 180, WGS84),
+                CRS.decode("AUTO:42003,9001,45,0"),
+                "ortho-reproject-45.png");
+        testOrthographicWorlds(
+                ReferencedEnvelope.rect(0, -90, 180, 180, WGS84),
+                CRS.decode("AUTO:42003,9001,90,0"),
+                "ortho-reproject-90.png");
+    }
+
+    private void testOrthographicWorlds(
+            ReferencedEnvelope cropEnvelope, CoordinateReferenceSystem crs, String expectedFileName)
+            throws IOException, FactoryException {
+        File world = TestData.copy(this, "geotiff/world.tiff");
+        RenderedImage image = ImageIO.read(world);
+
+        ReferencedEnvelope envelope = ReferencedEnvelope.rect(-180, -90, 360, 180, WGS84);
+        GridCoverage2D gcFullWorld = new GridCoverageFactory().create("world", image, envelope);
+
+        // crop, we cannot reproject it fully to orthographic
+        GridCoverage2D gcCropWorld = (GridCoverage2D) Operations.DEFAULT.crop(gcFullWorld, cropEnvelope);
+
+        // resample
+        Hints.putSystemDefault(Hints.RESAMPLE_TOLERANCE, 0d);
+        GridCoverage2D gcResampled = (GridCoverage2D) Operations.DEFAULT.resample(
+                gcCropWorld, crs, null, Interpolation.getInstance(Interpolation.INTERP_BILINEAR));
+
+        File expected = new File("src/test/resources/org/geotools/image/test-data/" + expectedFileName);
         // allow one row of difference
         ImageAssert.assertEquals(expected, gcResampled.getRenderedImage(), 600);
     }
@@ -355,36 +384,24 @@ public final class ResampleTest extends GridProcessingTestBase {
         RenderedImage image = ImageIO.read(world);
 
         final CoordinateReferenceSystem wgs84 = CRS.decode("EPSG:4326", true);
-        Envelope2D envelope = new Envelope2D(wgs84, -180, -90, 360, 180);
+        ReferencedEnvelope envelope = ReferencedEnvelope.rect(-180, -90, 360, 180, wgs84);
         GridCoverage2D gcFullWorld = new GridCoverageFactory().create("world", image, envelope);
 
         // crop, we cannot reproject it fully to the google projection
-        final Envelope2D cropEnvelope = new Envelope2D(wgs84, -180, -80, 360, 160);
-        GridCoverage2D gcCropWorld =
-                (GridCoverage2D) Operations.DEFAULT.crop(gcFullWorld, cropEnvelope);
+        final ReferencedEnvelope cropEnvelope = ReferencedEnvelope.rect(-180, -80, 360, 160, wgs84);
+        GridCoverage2D gcCropWorld = (GridCoverage2D) Operations.DEFAULT.crop(gcFullWorld, cropEnvelope);
 
         // resample with approximation
         Hints.putSystemDefault(Hints.RESAMPLE_TOLERANCE, Hints.DEFAULT_RESAMPLE_TOLERANCE);
-        GridCoverage2D gcResampledApprox =
-                (GridCoverage2D)
-                        Operations.DEFAULT.resample(
-                                gcCropWorld,
-                                CRS.decode("EPSG:3857"),
-                                null,
-                                Interpolation.getInstance(Interpolation.INTERP_BILINEAR));
+        GridCoverage2D gcResampledApprox = (GridCoverage2D) Operations.DEFAULT.resample(
+                gcCropWorld, CRS.decode("EPSG:3857"), null, Interpolation.getInstance(Interpolation.INTERP_BILINEAR));
 
         Hints.putSystemDefault(Hints.RESAMPLE_TOLERANCE, 0d);
-        GridCoverage2D gcResampledAccurate =
-                (GridCoverage2D)
-                        Operations.DEFAULT.resample(
-                                gcCropWorld,
-                                CRS.decode("EPSG:3857"),
-                                null,
-                                Interpolation.getInstance(Interpolation.INTERP_BILINEAR));
+        GridCoverage2D gcResampledAccurate = (GridCoverage2D) Operations.DEFAULT.resample(
+                gcCropWorld, CRS.decode("EPSG:3857"), null, Interpolation.getInstance(Interpolation.INTERP_BILINEAR));
 
         // allow one row of difference
-        ImageAssert.assertEquals(
-                gcResampledAccurate.getRenderedImage(), gcResampledApprox.getRenderedImage(), 600);
+        ImageAssert.assertEquals(gcResampledAccurate.getRenderedImage(), gcResampledApprox.getRenderedImage(), 600);
     }
 
     /** Tests the "Resample" operation with an "Scale" transform. */
@@ -396,8 +413,7 @@ public final class ResampleTest extends GridProcessingTestBase {
     }
 
     /**
-     * Tests <var>X</var>,<var>Y</var> translation in the {@link GridGeometry} after a "Resample"
-     * operation.
+     * Tests <var>X</var>,<var>Y</var> translation in the {@link GridGeometry} after a "Resample" operation.
      *
      * @throws NoninvertibleTransformException If a "grid to CRS" transform is not invertible.
      */
@@ -412,8 +428,7 @@ public final class ResampleTest extends GridProcessingTestBase {
     @Test
     public void testFlipTranslated() throws Exception {
         // build a translated image
-        SampleModel sm =
-                RasterFactory.createPixelInterleavedSampleModel(DataBuffer.TYPE_BYTE, 256, 256, 3);
+        SampleModel sm = RasterFactory.createPixelInterleavedSampleModel(DataBuffer.TYPE_BYTE, 256, 256, 3);
         ColorModel cm = PlanarImage.createColorModel(sm);
         TiledImage ti = new TiledImage(-10, -10, 5, 5, 0, 0, sm, cm);
         Graphics2D g = ti.createGraphics();
@@ -424,32 +439,24 @@ public final class ResampleTest extends GridProcessingTestBase {
         // build a coverage around it
         CoordinateReferenceSystem wgs84LatLon = CRS.decode("EPSG:4326");
         final GridCoverageFactory factory = CoverageFactoryFinder.getGridCoverageFactory(null);
-        GridCoverage2D coverage =
-                factory.create("translated", ti, new Envelope2D(wgs84LatLon, 3, 5, 6, 8));
+        GridCoverage2D coverage = factory.create("translated", ti, ReferencedEnvelope.rect(3, 5, 6, 8, wgs84LatLon));
 
         // verify we're good
         int[] pixel = new int[3];
-        coverage.evaluate((DirectPosition) new DirectPosition2D(4, 6), pixel);
+        coverage.evaluate((Position) new Position2D(4, 6), pixel);
         assertEquals(0, pixel[0]);
         assertEquals(255, pixel[1]);
         assertEquals(0, pixel[2]);
 
         // now reproject flipping the axis
         CoordinateReferenceSystem wgs84LonLat = CRS.decode("EPSG:4326", true);
-        GridGeometry gg =
-                new GridGeometry2D(
-                        new GridEnvelope2D(-10, -10, 5, 5),
-                        (Envelope) new Envelope2D(wgs84LonLat, 5, 3, 8, 6));
-        GridCoverage2D flipped =
-                (GridCoverage2D)
-                        Operations.DEFAULT.resample(
-                                coverage,
-                                wgs84LonLat,
-                                gg,
-                                Interpolation.getInstance(Interpolation.INTERP_NEAREST));
+        GridGeometry gg = new GridGeometry2D(
+                new GridEnvelope2D(-10, -10, 5, 5), (Bounds) ReferencedEnvelope.rect(5, 3, 8, 6, wgs84LonLat));
+        GridCoverage2D flipped = (GridCoverage2D) Operations.DEFAULT.resample(
+                coverage, wgs84LonLat, gg, Interpolation.getInstance(Interpolation.INTERP_NEAREST));
 
         // before the fix the pixel would have been black
-        flipped.evaluate((DirectPosition) new DirectPosition2D(6, 4), pixel);
+        flipped.evaluate((Position) new Position2D(6, 4), pixel);
         assertEquals(0, pixel[0]);
         assertEquals(255, pixel[1]);
         assertEquals(0, pixel[2]);
@@ -466,12 +473,11 @@ public final class ResampleTest extends GridProcessingTestBase {
         final int transY = -456;
         final double scaleX = 0.04;
         final double scaleY = -0.04;
-        final ParameterBlock block =
-                new ParameterBlock()
-                        .addSource(grid.getRenderedImage())
-                        .add((float) transX)
-                        .add((float) transY);
-        RenderedImage image = JAI.create("Translate", block);
+        final ParameterBlock block = new ParameterBlock()
+                .addSource(grid.getRenderedImage())
+                .add((float) transX)
+                .add((float) transY);
+        RenderedImage image = ImageN.create("Translate", block);
         assertEquals("Incorrect X translation", transX, image.getMinX());
         assertEquals("Incorrect Y translation", transY, image.getMinY());
 
@@ -484,14 +490,13 @@ public final class ResampleTest extends GridProcessingTestBase {
         assertNotNull(expected);
         expected = new AffineTransform(expected); // Get a mutable instance.
         final GridCoverageFactory factory = CoverageFactoryFinder.getGridCoverageFactory(null);
-        grid =
-                factory.create(
-                        "Translated",
-                        image,
-                        grid.getEnvelope(),
-                        grid.getSampleDimensions(),
-                        new GridCoverage2D[] {grid},
-                        grid.getProperties());
+        grid = factory.create(
+                "Translated",
+                image,
+                grid.getEnvelope(),
+                grid.getSampleDimensions(),
+                new GridCoverage2D[] {grid},
+                grid.getProperties());
         expected.translate(-transX, -transY);
         assertTransformEquals(expected, getAffineTransform(grid));
 
@@ -508,9 +513,7 @@ public final class ResampleTest extends GridProcessingTestBase {
                 PixelTranslation.translate(tr, PixelInCell.CELL_CORNER, PixelInCell.CELL_CENTER);
         final GridGeometry2D geometry = new GridGeometry2D(null, correctedTransform, null);
         final GridCoverage2D newGrid =
-                (GridCoverage2D)
-                        Operations.DEFAULT.resample(
-                                grid, grid.getCoordinateReferenceSystem(), geometry, null);
+                (GridCoverage2D) Operations.DEFAULT.resample(grid, grid.getCoordinateReferenceSystem(), geometry, null);
         assertEquals(correctedTransform, getAffineTransform(newGrid));
         image = newGrid.getRenderedImage();
         expected.preConcatenate(at.createInverse());
@@ -527,15 +530,14 @@ public final class ResampleTest extends GridProcessingTestBase {
     public void testFloatCoverage() throws Exception {
         // make sure final GG is slightly bigger than original
         CoordinateReferenceSystem webMercator = CRS.parseWKT(GOOGLE_MERCATOR_WKT);
-        GridGeometry2D targetGG =
-                new GridGeometry2D(
-                        new GridEnvelope2D(
-                                floatCoverage.getGridGeometry().getGridRange2D().x - 10,
-                                floatCoverage.getGridGeometry().getGridRange2D().y - 10,
-                                floatCoverage.getGridGeometry().getGridRange2D().width + 20,
-                                floatCoverage.getGridGeometry().getGridRange2D().height + 20),
-                        floatCoverage.getGridGeometry().getCRSToGrid2D(),
-                        webMercator);
+        GridGeometry2D targetGG = new GridGeometry2D(
+                new GridEnvelope2D(
+                        floatCoverage.getGridGeometry().getGridRange2D().x - 10,
+                        floatCoverage.getGridGeometry().getGridRange2D().y - 10,
+                        floatCoverage.getGridGeometry().getGridRange2D().width + 20,
+                        floatCoverage.getGridGeometry().getGridRange2D().height + 20),
+                floatCoverage.getGridGeometry().getCRSToGrid2D(),
+                webMercator);
 
         // reproject
         GridCoverage2D coverage_ = project(floatCoverage, webMercator, targetGG, "bilinear", null);

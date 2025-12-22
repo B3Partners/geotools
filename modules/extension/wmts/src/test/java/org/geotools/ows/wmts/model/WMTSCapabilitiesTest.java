@@ -22,14 +22,15 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.metadata.citation.Address;
 import org.geotools.data.ows.OperationType;
 import org.geotools.ows.wms.CRSEnvelope;
+import org.geotools.ows.wms.StyleImpl;
 import org.geotools.ows.wmts.WMTSSpecification;
 import org.geotools.ows.wmts.WebMapTileServer;
 import org.geotools.util.logging.Logging;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.metadata.citation.Address;
 import org.xml.sax.SAXException;
 
 public class WMTSCapabilitiesTest {
@@ -54,18 +55,17 @@ public class WMTSCapabilitiesTest {
 
     @Test
     public void testCreateParser() throws Exception {
-        WMTSCapabilities capabilities =
-                createCapabilities("GeoServer_2.2.x/1.0.0/GetCapabilities.xml");
+        WMTSCapabilities capabilities = createCapabilities("GeoServer_2.2.x/1.0.0/GetCapabilities.xml");
         try {
             Assert.assertEquals("1.0.0", capabilities.getVersion());
             Assert.assertEquals("OGC WMTS", capabilities.getService().getName());
             Assert.assertEquals(
-                    "Web Map Tile Service - GeoWebCache", capabilities.getService().getTitle());
+                    "Web Map Tile Service - GeoWebCache",
+                    capabilities.getService().getTitle());
 
             for (int i = 0; i < capabilities.getService().getKeywordList().length; i++) {
                 Assert.assertEquals(
-                        capabilities.getService().getKeywordList()[i],
-                        "OpenGIS WMS Web Map Server".split(" ")[i]);
+                        capabilities.getService().getKeywordList()[i], "OpenGIS WMS Web Map Server".split(" ")[i]);
             }
 
             WMTSRequest request = capabilities.getRequest();
@@ -103,19 +103,38 @@ public class WMTSCapabilitiesTest {
 
             CRSEnvelope bbox = layers.get(1).getBoundingBoxes().get("EPSG:4326");
             Assert.assertNotNull(bbox);
+
+            List<StyleImpl> styles = l0.getStyles();
+            Assert.assertNotNull(styles);
+            Assert.assertEquals(1, styles.size());
+
+            StyleImpl style0 = styles.get(0);
+            Assert.assertNull(style0.getName());
+            Assert.assertNull(style0.getTitle());
+            Assert.assertNull(style0.getAbstract());
+            Assert.assertTrue(style0.isDefault());
+
+            List<?> legendUrls = style0.getLegendURLs();
+            Assert.assertNotNull(legendUrls);
+            Assert.assertEquals(1, legendUrls.size());
+
+            Assert.assertEquals(
+                    "http://astun-desktop:8080/geoserver/ows?service=WMS&request=GetLegendGraphic&format=image%2Fpng&width=20&height=20&layer=openmap-local%3AOML_Foreshore",
+                    legendUrls.get(0));
+
         } catch (Exception e) {
             Logger.getGlobal().log(Level.INFO, "", e);
-            if ((e.getMessage() != null) && e.getMessage().indexOf("timed out") > 0) {
+            if (e.getMessage() != null && e.getMessage().indexOf("timed out") > 0) {
                 LOGGER.warning("Unable to test - timed out: " + e);
             } else {
-                throw (e);
+                throw e;
             }
         }
     }
 
     /**
-     * A Layer might have a MatrixSetLink with an identifier that isn't within the MatrixSet's. Such
-     * a link should be removed.
+     * A Layer might have a MatrixSetLink with an identifier that isn't within the MatrixSet's. Such a link should be
+     * removed.
      */
     @Test
     public void testMissingMatrixSetLink() throws Exception {
@@ -158,31 +177,57 @@ public class WMTSCapabilitiesTest {
             Assert.assertNotNull("Missing dimensions", l0.getDimensions());
             Assert.assertEquals("Bad dimensions size", 1, l0.getDimensions().size());
             String dimName = l0.getDimensions().keySet().iterator().next();
-            Assert.assertTrue(
-                    "Bad dimension name (Time!=" + dimName + ")", "Time".equalsIgnoreCase(dimName));
+            Assert.assertTrue("Bad dimension name (Time!=" + dimName + ")", "Time".equalsIgnoreCase(dimName));
 
             Assert.assertNotNull(l0.getTileMatrixLinks());
             Assert.assertEquals(1, l0.getTileMatrixLinks().keySet().size());
-            Assert.assertEquals("2056_26", l0.getTileMatrixLinks().keySet().iterator().next());
             Assert.assertEquals(
-                    "2056_26", l0.getTileMatrixLinks().values().iterator().next().getIdentifier());
+                    "2056_26", l0.getTileMatrixLinks().keySet().iterator().next());
             Assert.assertEquals(
-                    0, l0.getTileMatrixLinks().values().iterator().next().getLimits().size());
+                    "2056_26",
+                    l0.getTileMatrixLinks().values().iterator().next().getIdentifier());
+            Assert.assertEquals(
+                    0,
+                    l0.getTileMatrixLinks()
+                            .values()
+                            .iterator()
+                            .next()
+                            .getLimits()
+                            .size());
 
             Assert.assertEquals(12, capabilities.getMatrixSets().size());
             Assert.assertEquals("2056_17", capabilities.getMatrixSets().get(0).getIdentifier());
-            Assert.assertEquals(18, capabilities.getMatrixSets().get(0).getMatrices().size());
+            Assert.assertEquals(
+                    18, capabilities.getMatrixSets().get(0).getMatrices().size());
             Assert.assertEquals(
                     14285750.5715,
                     capabilities.getMatrixSets().get(0).getMatrices().get(0).getDenominator(),
                     0d);
 
+            List<StyleImpl> styles = l0.getStyles();
+            Assert.assertNotNull(styles);
+            Assert.assertEquals(1, styles.size());
+
+            StyleImpl style0 = styles.get(0);
+            Assert.assertEquals("ch.are.agglomerationen_isolierte_staedte", style0.getName());
+            Assert.assertEquals(
+                    "Agglomerationen und isolierte Städte", style0.getTitle().toString());
+            Assert.assertNull(style0.getAbstract());
+            Assert.assertFalse(style0.isDefault());
+
+            List<?> legendUrls = style0.getLegendURLs();
+            Assert.assertNotNull(legendUrls);
+            Assert.assertEquals(1, legendUrls.size());
+
+            Assert.assertEquals(
+                    "http://api3.geo.admin.ch/static/images/legends/ch.are.agglomerationen_isolierte_staedte_de.png",
+                    legendUrls.get(0));
         } catch (Exception e) {
             Logger.getGlobal().log(Level.INFO, "", e);
-            if ((e.getMessage() != null) && e.getMessage().indexOf("timed out") > 0) {
+            if (e.getMessage() != null && e.getMessage().indexOf("timed out") > 0) {
                 LOGGER.warning("Unable to test - timed out: " + e);
             } else {
-                throw (e);
+                throw e;
             }
         }
     }
@@ -195,8 +240,7 @@ public class WMTSCapabilitiesTest {
 
             WMTSService service = (WMTSService) capabilities.getService();
             Assert.assertEquals("OGC WMTS", service.getName());
-            Assert.assertEquals(
-                    "NASA Global Imagery Browse Services for EOSDIS", service.getTitle());
+            Assert.assertEquals("NASA Global Imagery Browse Services for EOSDIS", service.getTitle());
 
             String[] keywordList = service.getKeywordList();
             Assert.assertNotNull(keywordList);
@@ -223,18 +267,30 @@ public class WMTSCapabilitiesTest {
             Assert.assertNotNull("Missing dimensions", l0.getDimensions());
             Assert.assertEquals("Bad dimensions size", 1, l0.getDimensions().size());
             String dimName = l0.getDimensions().keySet().iterator().next();
-            Assert.assertTrue(
-                    "Bad dimension name (Time!=" + dimName + ")", "Time".equalsIgnoreCase(dimName));
+            Assert.assertTrue("Bad dimension name (Time!=" + dimName + ")", "Time".equalsIgnoreCase(dimName));
 
             CRSEnvelope bbox = layers.get(1).getBoundingBoxes().get("CRS:84");
             Assert.assertNotNull(bbox);
 
+            List<StyleImpl> styles = l0.getStyles();
+            Assert.assertNotNull(styles);
+            Assert.assertEquals(1, styles.size());
+
+            StyleImpl style0 = styles.get(0);
+            Assert.assertEquals("default", style0.getName());
+            Assert.assertEquals("default", style0.getTitle().toString());
+            Assert.assertNull(style0.getAbstract());
+            Assert.assertTrue(style0.isDefault());
+
+            List<?> legendUrls = style0.getLegendURLs();
+            Assert.assertNotNull(legendUrls);
+            Assert.assertEquals(0, legendUrls.size());
         } catch (Exception e) {
             Logger.getGlobal().log(Level.INFO, "", e);
-            if ((e.getMessage() != null) && e.getMessage().indexOf("timed out") > 0) {
+            if (e.getMessage() != null && e.getMessage().indexOf("timed out") > 0) {
                 LOGGER.warning("Unable to test - timed out: " + e);
             } else {
-                throw (e);
+                throw e;
             }
         }
     }
@@ -256,12 +312,28 @@ public class WMTSCapabilitiesTest {
                     "urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible",
                     matrixSets.get(0).getWellKnownScaleSet());
 
+            List<WMTSLayer> layers = capabilities.getLayerList();
+            WMTSLayer l0 = layers.get(0);
+
+            List<StyleImpl> styles = l0.getStyles();
+            Assert.assertNotNull(styles);
+            Assert.assertEquals(1, styles.size());
+
+            StyleImpl style0 = styles.get(0);
+            Assert.assertEquals("style=39", style0.getName());
+            Assert.assertEquals("Weighted point styles", style0.getTitle().toString());
+            Assert.assertNull(style0.getAbstract());
+            Assert.assertTrue(style0.isDefault());
+
+            List<?> legendUrls = style0.getLegendURLs();
+            Assert.assertNotNull(legendUrls);
+            Assert.assertEquals(0, legendUrls.size());
         } catch (Exception e) {
             // a standard catch block shared with the other tests
-            if ((e.getMessage() != null) && e.getMessage().indexOf("timed out") > 0) {
+            if (e.getMessage() != null && e.getMessage().indexOf("timed out") > 0) {
                 LOGGER.warning("Unable to test - timed out: " + e);
             } else {
-                throw (e);
+                throw e;
             }
         }
     }
@@ -291,12 +363,25 @@ public class WMTSCapabilitiesTest {
             Assert.assertEquals("brtachtergrondkaart", l0.getName());
             Assert.assertTrue(l0.getSrs().contains("EPSG:28992")); // case
 
+            List<StyleImpl> styles = l0.getStyles();
+            Assert.assertNotNull(styles);
+            Assert.assertEquals(1, styles.size());
+
+            StyleImpl style0 = styles.get(0);
+            Assert.assertNull(style0.getName());
+            Assert.assertNull(style0.getTitle());
+            Assert.assertNull(style0.getAbstract());
+            Assert.assertTrue(style0.isDefault());
+
+            List<?> legendUrls = style0.getLegendURLs();
+            Assert.assertNotNull(legendUrls);
+            Assert.assertEquals(0, legendUrls.size());
         } catch (Exception e) {
             // a standard catch block shared with the other tests
-            if ((e.getMessage() != null) && e.getMessage().indexOf("timed out") > 0) {
+            if (e.getMessage() != null && e.getMessage().indexOf("timed out") > 0) {
                 LOGGER.warning("Unable to test - timed out: " + e);
             } else {
-                throw (e);
+                throw e;
             }
         }
     }
@@ -314,21 +399,35 @@ public class WMTSCapabilitiesTest {
     }
 
     /**
-     * The section OperationsMetadata of GetCapabilities is optional. WMTSCapabilities used as
-     * argument for WebMapTileServer shouldn't make a NullPointerException.
+     * The section OperationsMetadata of GetCapabilities is optional. WMTSCapabilities used as argument for
+     * WebMapTileServer shouldn't make a NullPointerException.
      */
     @Test
     public void testMissingOperationsMetadata() throws Exception {
         WMTSCapabilities capabilities = createCapabilities("linz_basemaps_capabilities.xml");
-        WebMapTileServer tileServer =
-                new WebMapTileServer(
-                        new URL("https://basemaps.linz.govt.nz/v1/tiles/WMTSCapabilities.xml"),
-                        capabilities);
+        WebMapTileServer tileServer = new WebMapTileServer(
+                new URL("https://basemaps.linz.govt.nz/v1/tiles/WMTSCapabilities.xml"), capabilities);
         Assert.assertNotNull(tileServer);
     }
 
-    protected WebMapTileServer getCustomWMS(URL featureURL)
-            throws SAXException, URISyntaxException, IOException {
+    /**
+     * Testing WMTSCapabilities parseLayer and it's support for missing Title, multiple Title elements with different
+     * xml:lang, and multiple abstracts.
+     */
+    @Test
+    public void testMultilanguageCapabilities() throws Exception {
+        WMTSCapabilities capabilities = createCapabilities("multilang.getcapa.xml");
+        WMTSLayer layer = capabilities.getLayer("plz");
+        Assert.assertEquals("Post Code", layer.getTitle());
+
+        WMTSLayer layer2 = capabilities.getLayer("isolines");
+        Assert.assertEquals("isolines", layer2.getTitle());
+
+        WMTSLayer layer3 = capabilities.getLayer("overlay-all");
+        Assert.assertEquals("Map overlay with all layers.", layer3.get_abstract());
+    }
+
+    protected WebMapTileServer getCustomWMS(URL featureURL) throws SAXException, URISyntaxException, IOException {
         return new WebMapTileServer(featureURL);
     }
 }

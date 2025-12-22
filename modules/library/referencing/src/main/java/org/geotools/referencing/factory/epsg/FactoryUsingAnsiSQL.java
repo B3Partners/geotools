@@ -36,7 +36,7 @@ public class FactoryUsingAnsiSQL extends FactoryUsingSQL {
     /** The default map using ANSI names. */
     private static final String[] ANSI = {
         "[Alias]", "epsg_alias",
-        "[Area]", "epsg_area",
+        "[Extent]", "epsg_extent",
         "[Coordinate Axis]", "epsg_coordinateaxis",
         "[Coordinate Axis Name]", "epsg_coordinateaxisname",
         "[Coordinate_Operation]", "epsg_coordoperation",
@@ -58,13 +58,13 @@ public class FactoryUsingAnsiSQL extends FactoryUsingSQL {
     };
 
     /**
-     * Maps the MS-Access names to ANSI names. Keys are MS-Access names including bracket. Values
-     * are ANSI names. Keys and values are case-sensitive. The default content of this map is:
+     * Maps the MS-Access names to ANSI names. Keys are MS-Access names including bracket. Values are ANSI names. Keys
+     * and values are case-sensitive. The default content of this map is:
      *
      * <pre><table>
      *   <tr><th align="center">MS-Access name</th>            <th align="center">ANSI name</th></tr>
      *   <tr><td>[Alias]</td>                                  <td>epsg_alias</td></tr>
-     *   <tr><td>[Area]</td>                                   <td>epsg_area</td></tr>
+     *   <tr><td>[Extent]</td>                                 <td>epsg_extent</td></tr>
      *   <tr><td>[Coordinate Axis]</td>                        <td>epsg_coordinateaxis</td></tr>
      *   <tr><td>[Coordinate Axis Name]</td>                   <td>epsg_coordinateaxisname</td></tr>
      *   <tr><td>[Coordinate_Operation]</td>                   <td>epsg_coordoperation</td></tr>
@@ -88,10 +88,7 @@ public class FactoryUsingAnsiSQL extends FactoryUsingSQL {
      */
     protected final Map<String, String> map = new LinkedHashMap<>();
 
-    /**
-     * The prefix before any table name. May be replaced by a schema if {@link #setSchema} is
-     * invoked.
-     */
+    /** The prefix before any table name. May be replaced by a schema if {@link #setSchema} is invoked. */
     private String prefix = "epsg_";
 
     /**
@@ -123,9 +120,9 @@ public class FactoryUsingAnsiSQL extends FactoryUsingSQL {
     }
 
     /**
-     * Replaces the {@code "epsg_"} prefix by the specified schema name. If the removal of the
-     * {@code "epsg_"} prefix is not wanted, append it to the schema name (e.g. {@code
-     * "myschema.epsg_"}). This method should be invoked at construction time only.
+     * Replaces the {@code "epsg_"} prefix by the specified schema name. If the removal of the {@code "epsg_"} prefix is
+     * not wanted, append it to the schema name (e.g. {@code "myschema.epsg_"}). This method should be invoked at
+     * construction time only.
      *
      * @param schema The database schema in which the epsg tables are stored.
      * @since 2.2
@@ -142,17 +139,15 @@ public class FactoryUsingAnsiSQL extends FactoryUsingSQL {
         } else if (length == 1) {
             throw new IllegalArgumentException(schema);
         }
-        /**
-         * Update the map, prepending the schema name to the table name so long as the value is a
-         * table name and not a field. This algorithm assumes that all old table names start with
-         * "epsg_".
+        /*
+         * Update the map, prepending the schema name to the table name so long as the value is a table name and not a
+         * field. This algorithm assumes that all old table names start with "epsg_".
          */
         for (final Map.Entry<String, String> entry : map.entrySet()) {
             final String tableName = entry.getValue();
-            /**
-             * Update the map, prepending the schema name to the table name so long as the value is
-             * a table name and not a field. This algorithm assumes that all old table names start
-             * with "epsg_".
+            /*
+             * Update the map, prepending the schema name to the table name so long as the value is a table name and not
+             * a field. This algorithm assumes that all old table names start with "epsg_".
              */
             if (tableName.startsWith(prefix)) {
                 entry.setValue(schema + tableName.substring(prefix.length()));
@@ -162,9 +157,8 @@ public class FactoryUsingAnsiSQL extends FactoryUsingSQL {
     }
 
     /**
-     * Modifies the given SQL string to be suitable for non MS-Access databases. This replaces table
-     * and field names in the SQL with the new names in the SQL DDL scripts provided with EPSG
-     * database.
+     * Modifies the given SQL string to be suitable for non MS-Access databases. This replaces table and field names in
+     * the SQL with the new names in the SQL DDL scripts provided with EPSG database.
      *
      * @param statement The statement in MS-Access syntax.
      * @return The SQL statement in ANSI syntax.
@@ -172,10 +166,9 @@ public class FactoryUsingAnsiSQL extends FactoryUsingSQL {
     @Override
     protected String adaptSQL(final String statement) {
         final StringBuilder modified = new StringBuilder(statement);
-        for (Map.Entry<String, String> stringStringEntry : map.entrySet()) {
-            final Map.Entry entry = (Map.Entry) stringStringEntry;
-            final String oldName = (String) entry.getKey();
-            final String newName = (String) entry.getValue();
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            final String oldName = entry.getKey();
+            final String newName = entry.getValue();
             /*
              * Replaces all occurences of 'oldName' by 'newName'.
              */

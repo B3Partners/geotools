@@ -20,20 +20,19 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_equalsExactTolerance extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "equalsExactTolerance",
-                    Boolean.class,
-                    parameter("geometry1", Geometry.class),
-                    parameter("geometry2", Geometry.class),
-                    parameter("tolarance", Double.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "equalsExactTolerance",
+            Boolean.class,
+            parameter("geometry1", Geometry.class),
+            parameter("geometry2", Geometry.class),
+            parameter("tolarance", Double.class));
 
     public FilterFunction_equalsExactTolerance() {
         super(NAME);
@@ -62,7 +61,7 @@ public class FilterFunction_equalsExactTolerance extends FunctionExpressionImpl 
         }
 
         try { // attempt to get value and perform conversion
-            arg2 = (getExpression(2).evaluate(feature, Double.class)).doubleValue();
+            arg2 = getExpression(2).evaluate(feature, Double.class).doubleValue();
         } catch (Exception e) // probably a type error
         {
             throw new IllegalArgumentException(

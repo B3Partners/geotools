@@ -37,7 +37,14 @@ import org.apache.solr.client.solrj.request.LukeRequest;
 import org.apache.solr.client.solrj.response.LukeResponse;
 import org.apache.solr.client.solrj.response.LukeResponse.FieldInfo;
 import org.apache.solr.client.solrj.response.LukeResponse.FieldTypeInfo;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortOrder;
 import org.geotools.data.solr.SolrUtils.ExtendedFieldSchemaInfo;
 import org.geotools.data.store.ContentDataStore;
 import org.geotools.data.store.ContentEntry;
@@ -49,13 +56,6 @@ import org.geotools.filter.FilterCapabilities;
 import org.geotools.filter.visitor.SimplifyingFilterVisitor;
 import org.geotools.util.factory.Hints;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.sort.SortOrder;
 
 /**
  * Datastore implementation for SOLR document <br>
@@ -90,17 +90,13 @@ public class SolrDataStore extends ContentDataStore {
     public SolrDataStore(URL url, SolrLayerMapper layerMapper, IndexesConfig indexesConfig) {
         this(url, layerMapper);
         // build the feature types based on the provided indexes configuration
-        indexesConfig
-                .getIndexesNames()
-                .forEach(
-                        indexName -> {
-                            // get from Apache Solr the index schema and retrieve its attributes
-                            List<SolrAttribute> solrAttributes = getSolrAttributes(indexName);
-                            // build the feature type using the index configuration
-                            SimpleFeatureType defaultFeatureType =
-                                    indexesConfig.buildFeatureType(indexName, solrAttributes);
-                            defaultFeatureTypes.put(indexName, defaultFeatureType);
-                        });
+        indexesConfig.getIndexesNames().forEach(indexName -> {
+            // get from Apache Solr the index schema and retrieve its attributes
+            List<SolrAttribute> solrAttributes = getSolrAttributes(indexName);
+            // build the feature type using the index configuration
+            SimpleFeatureType defaultFeatureType = indexesConfig.buildFeatureType(indexName, solrAttributes);
+            defaultFeatureTypes.put(indexName, defaultFeatureType);
+        });
     }
 
     /**
@@ -123,24 +119,21 @@ public class SolrDataStore extends ContentDataStore {
         // TODO: make connection timeouts configurable
         this.url = url;
         this.layerMapper = layerMapper;
-        this.solrServer =
-                new HttpSolrClient.Builder()
-                        .withBaseSolrUrl(url.toString())
-                        .allowCompression(true)
-                        .withConnectionTimeout(10000)
-                        .withSocketTimeout(10000)
-                        .build();
+        this.solrServer = new HttpSolrClient.Builder()
+                .withBaseSolrUrl(url.toString())
+                .allowCompression(true)
+                .withConnectionTimeout(10000)
+                .withSocketTimeout(10000)
+                .build();
         this.solrServer.setFollowRedirects(true);
     }
 
     /**
      * Retrieve SOLR attribute for specific type <br>
-     * Two SOLR LukeRequest are needed to discover SOLR fields and theirs schema for dynamic and
-     * static kinds. <br>
-     * For each discovered field a SOLR request is needed to verify if the field has no values in
-     * the actual type, this information will be stored in {@link SolrAttribute#setEmpty}. <br>
-     * SolrJ not extracts information about uniqueKey so custom class {@link
-     * ExtendedFieldSchemaInfo} is used. <br>
+     * Two SOLR LukeRequest are needed to discover SOLR fields and theirs schema for dynamic and static kinds. <br>
+     * For each discovered field a SOLR request is needed to verify if the field has no values in the actual type, this
+     * information will be stored in {@link SolrAttribute#setEmpty}. <br>
+     * SolrJ not extracts information about uniqueKey so custom class {@link ExtendedFieldSchemaInfo} is used. <br>
      * MultiValued SOLR field is mapped as String type
      *
      * @param layerName the type to use to query the SOLR field {@link SolrDataStore#field}
@@ -171,8 +164,7 @@ public class SolrDataStore extends ContentDataStore {
                         Class<?> objType = SolrUtils.decodeSolrFieldType(solrTypeName);
                         if (objType != null) {
                             ExtendedFieldSchemaInfo extendedFieldSchemaInfo =
-                                    new SolrUtils.ExtendedFieldSchemaInfo(
-                                            processSchema, processField, name);
+                                    new SolrUtils.ExtendedFieldSchemaInfo(processSchema, processField, name);
                             SolrAttribute at = new SolrAttribute(name, objType);
                             at.setSolrType(solrTypeName);
                             if (extendedFieldSchemaInfo.getUniqueKey()) {
@@ -207,9 +199,8 @@ public class SolrDataStore extends ContentDataStore {
         return solrAttributes;
     }
 
-    @SuppressWarnings("unchecked")
     private Comparator<SolrAttribute> getEmptyComparator() {
-        return new BeanComparator("empty").thenComparing(new BeanComparator("name"));
+        return new BeanComparator<SolrAttribute>("empty").thenComparing(new BeanComparator<>("name"));
     }
 
     @Override
@@ -243,12 +234,11 @@ public class SolrDataStore extends ContentDataStore {
 
     @Override
     public FilterFactory getFilterFactory() {
-        return CommonFactoryFinder.getFilterFactory2();
+        return CommonFactoryFinder.getFilterFactory();
     }
 
     /**
-     * The filter capabilities which reports which spatial operations the underlying SOLR server can
-     * handle natively.
+     * The filter capabilities which reports which spatial operations the underlying SOLR server can handle natively.
      *
      * @return The filter capabilities, never <code>null</code>.
      */
@@ -273,9 +263,7 @@ public class SolrDataStore extends ContentDataStore {
         return url;
     }
 
-    /**
-     * Gets the document loader controlling how documents are mapped to layers from the solr index.
-     */
+    /** Gets the document loader controlling how documents are mapped to layers from the solr index. */
     public SolrLayerMapper getLayerMapper() {
         return layerMapper;
     }
@@ -300,12 +288,11 @@ public class SolrDataStore extends ContentDataStore {
     }
 
     /**
-     * Builds the SolrJ query with support of subset of fields, limit/offset, sorting, OGC filter
-     * encoding and viewParams <br>
-     * The SOLR query always need the order by PK field to enable pagination and efficient data
-     * retrieving <br>
-     * Currently only additional "q" and "fq" SOLR parameters can be passed using vireParams, this
-     * conditions are added in AND with others
+     * Builds the SolrJ query with support of subset of fields, limit/offset, sorting, OGC filter encoding and
+     * viewParams <br>
+     * The SOLR query always need the order by PK field to enable pagination and efficient data retrieving <br>
+     * Currently only additional "q" and "fq" SOLR parameters can be passed using vireParams, this conditions are added
+     * in AND with others
      *
      * @param featureType the feature type to query
      * @param q the OGC query to translate in SOLR request
@@ -338,14 +325,9 @@ public class SolrDataStore extends ContentDataStore {
                     if (sort.getPropertyName() != null) {
                         query.addSort(
                                 sort.getPropertyName().getPropertyName(),
-                                sort.getSortOrder().equals(SortOrder.ASCENDING)
-                                        ? ORDER.asc
-                                        : ORDER.desc);
+                                sort.getSortOrder().equals(SortOrder.ASCENDING) ? ORDER.asc : ORDER.desc);
                     } else {
-                        naturalSortOrder =
-                                sort.getSortOrder().equals(SortOrder.ASCENDING)
-                                        ? ORDER.asc
-                                        : ORDER.desc;
+                        naturalSortOrder = sort.getSortOrder().equals(SortOrder.ASCENDING) ? ORDER.asc : ORDER.desc;
                     }
                 }
             }
@@ -378,8 +360,7 @@ public class SolrDataStore extends ContentDataStore {
      * @param visitor UniqueVisitor with group settings
      * @return Solr query
      */
-    protected SolrQuery selectUniqueValues(
-            SimpleFeatureType featureType, Query q, UniqueVisitor visitor) {
+    protected SolrQuery selectUniqueValues(SimpleFeatureType featureType, Query q, UniqueVisitor visitor) {
         SolrQuery query = select(featureType, q);
         // normal fields empty
         query.setFields(new String[] {});
@@ -392,10 +373,9 @@ public class SolrDataStore extends ContentDataStore {
     }
 
     /**
-     * Builds the SolrJ count query with support of limit/offset, OGC filter encoding and viewParams
-     * <br>
-     * Currently only additional "q" and "fq" SOLR parameters can be passed using viewParams, this
-     * conditions are added in AND with others
+     * Builds the SolrJ count query with support of limit/offset, OGC filter encoding and viewParams <br>
+     * Currently only additional "q" and "fq" SOLR parameters can be passed using viewParams, this conditions are added
+     * in AND with others
      *
      * @param featureType the feature type to query
      * @param q the OGC query to translate in SOLR request

@@ -19,6 +19,7 @@ package org.geotools.xsd.test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.eclipse.xsd.XSDSchema;
+import org.geotools.test.xml.XmlTestSupport;
 import org.geotools.xsd.Binding;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.DOMParser;
@@ -54,8 +56,8 @@ import org.xml.sax.helpers.NamespaceSupport;
 /**
  * Abstract test class to be used to unit test bindings.
  *
- * <p>Subclasses must implement the {@link #createConfiguration()} method. It must return a new
- * instance of {@link Configuration}. Example:
+ * <p>Subclasses must implement the {@link #createConfiguration()} method. It must return a new instance of
+ * {@link Configuration}. Example:
  *
  * <pre>
  *         <code>
@@ -68,8 +70,8 @@ import org.xml.sax.helpers.NamespaceSupport;
  *         </code>
  * </pre>
  *
- * <p>The {@link #parse()} method is used to test binding parsing. Subclasses should call this from
- * test methods after building up an instance document with {@link #document}. Example
+ * <p>The {@link #parse()} method is used to test binding parsing. Subclasses should call this from test methods after
+ * building up an instance document with {@link #document}. Example
  *
  * <pre>
  *         <code>
@@ -92,8 +94,8 @@ import org.xml.sax.helpers.NamespaceSupport;
  *         </code>
  * </pre>
  *
- * <p>The {@link #encode(Object, QName)} method is used to test binding encoding. Subclasses should
- * call this method from test methods after creating an object to be encoded. Example:
+ * <p>The {@link #encode(Object, QName)} method is used to test binding encoding. Subclasses should call this method
+ * from test methods after creating an object to be encoded. Example:
  *
  * <pre>
  *         <code>
@@ -113,9 +115,8 @@ import org.xml.sax.helpers.NamespaceSupport;
  *         </code>
  * </pre>
  *
- * <p>The {@link #binding(QName)} method is used to obtain an instance of a particular binding.
- * Subclasses should call this method to assert other properties of the binding, such as type
- * mapping and execution mode. Example:
+ * <p>The {@link #binding(QName)} method is used to obtain an instance of a particular binding. Subclasses should call
+ * this method to assert other properties of the binding, such as type mapping and execution mode. Example:
  *
  * <pre>
  *         <code>
@@ -139,16 +140,12 @@ import org.xml.sax.helpers.NamespaceSupport;
  *
  * @author Justin Deoliveira, The Open Planning Project, jdeolive@openplans.org
  */
-public abstract class XMLTestSupport {
+public abstract class XMLTestSupport extends XmlTestSupport {
     /** Logging instance */
-    protected static Logger logger =
-            org.geotools.util.logging.Logging.getLogger(XMLTestSupport.class);
+    protected static Logger logger = org.geotools.util.logging.Logging.getLogger(XMLTestSupport.class);
 
     /** the instance document */
     protected Document document;
-
-    /** additional namespace mappings */
-    protected Map<String, String> namespaceMappings;
 
     /** Creates an empty xml document. */
     @Before
@@ -157,20 +154,6 @@ public abstract class XMLTestSupport {
         docFactory.setNamespaceAware(true);
 
         document = docFactory.newDocumentBuilder().newDocument();
-        namespaceMappings = new HashMap<>();
-    }
-
-    /**
-     * Registers a namespace mapping.
-     *
-     * <p>This mapping will be included in the "namespace context" of both the parser and the
-     * encoder.
-     *
-     * @param prefix The prefix of the namespace, not <code>null</code>.
-     * @param uri The uri of the namespace, not <code>null</code>.
-     */
-    protected void registerNamespaceMapping(String prefix, String uri) {
-        namespaceMappings.put(prefix, uri);
     }
 
     /**
@@ -197,16 +180,14 @@ public abstract class XMLTestSupport {
         Configuration config = createConfiguration();
 
         if (type != null) {
-            config.getContext()
-                    .registerComponentInstance("http://geotools.org/typeDefinition", type);
+            config.getContext().registerComponentInstance("http://geotools.org/typeDefinition", type);
         }
 
         // register additional namespaces
         root.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
-        for (Map.Entry<String, String> stringStringEntry : namespaceMappings.entrySet()) {
-            Map.Entry mapping = (Map.Entry) stringStringEntry;
-            String prefix = (String) mapping.getKey();
-            String uri = (String) mapping.getValue();
+        for (Map.Entry<String, String> namespace : getNamespaces().entrySet()) {
+            String prefix = namespace.getKey();
+            String uri = namespace.getValue();
 
             root.setAttribute("xmlns:" + prefix, uri);
         }
@@ -267,9 +248,7 @@ public abstract class XMLTestSupport {
 
         if (type != null) {
             // set the hint
-            configuration
-                    .getContext()
-                    .registerComponentInstance("http://geotools.org/typeDefinition", type);
+            configuration.getContext().registerComponentInstance("http://geotools.org/typeDefinition", type);
         }
 
         XSDSchema schema = configuration.getXSD().getSchema();
@@ -277,10 +256,9 @@ public abstract class XMLTestSupport {
         Encoder encoder = new Encoder(configuration, schema);
 
         // additional namespaces
-        for (Map.Entry<String, String> stringStringEntry : namespaceMappings.entrySet()) {
-            Map.Entry mapping = (Map.Entry) stringStringEntry;
-            String prefix = (String) mapping.getKey();
-            String uri = (String) mapping.getValue();
+        for (Map.Entry<String, String> namespace : getNamespaces().entrySet()) {
+            String prefix = namespace.getKey();
+            String uri = namespace.getValue();
 
             encoder.getNamespaces().declarePrefix(prefix, uri);
         }
@@ -317,8 +295,8 @@ public abstract class XMLTestSupport {
     /**
      * Convenience method for obtaining an instance of a binding.
      *
-     * @param name The qualified name of the element,attribute,or type the binding "binds" to, the
-     *     key of the binding in the container.
+     * @param name The qualified name of the element,attribute,or type the binding "binds" to, the key of the binding in
+     *     the container.
      * @return The binding.
      */
     protected Binding binding(QName name) {
@@ -360,15 +338,14 @@ public abstract class XMLTestSupport {
             throw new RuntimeException(e);
         }
 
-        for (Map.Entry<String, String> stringStringEntry : mappings.entrySet()) {
-            Map.Entry mapping = (Map.Entry) stringStringEntry;
-            String key = (String) mapping.getKey();
+        for (Map.Entry<String, String> mapping : mappings.entrySet()) {
+            String key = mapping.getKey();
 
             if (key == null) {
                 key = "";
             }
 
-            namespaces.declarePrefix(key, (String) mapping.getValue());
+            namespaces.declarePrefix(key, mapping.getValue());
         }
 
         context.registerComponentInstance(namespaces);
@@ -389,8 +366,8 @@ public abstract class XMLTestSupport {
     }
 
     /**
-     * Convenience method which parses the specified string into a dom and sets the built document
-     * which is to be parsed.
+     * Convenience method which parses the specified string into a dom and sets the built document which is to be
+     * parsed.
      *
      * @param xml A string of xml
      */
@@ -398,7 +375,8 @@ public abstract class XMLTestSupport {
         DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
         docFactory.setNamespaceAware(true);
 
-        document = docFactory.newDocumentBuilder().parse(new ByteArrayInputStream(xml.getBytes()));
+        document =
+                docFactory.newDocumentBuilder().parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
     }
 
     /** Convenience method for finding a node in a document which matches the specified name. */
@@ -406,10 +384,7 @@ public abstract class XMLTestSupport {
         return getElementByQName(dom.getDocumentElement(), name);
     }
 
-    /**
-     * Convenience method for finding a single descendant of a particular node which matches the
-     * specified name.
-     */
+    /** Convenience method for finding a single descendant of a particular node which matches the specified name. */
     protected Element getElementByQName(Element parent, QName name) {
         NodeList nodes = parent.getElementsByTagNameNS(name.getNamespaceURI(), name.getLocalPart());
 
@@ -425,10 +400,7 @@ public abstract class XMLTestSupport {
         return getElementsByQName(dom.getDocumentElement(), name);
     }
 
-    /**
-     * Convenience method for finding decendants of a particular node which match the specified
-     * name.
-     */
+    /** Convenience method for finding decendants of a particular node which match the specified name. */
     protected NodeList getElementsByQName(Element parent, QName name) {
         return parent.getElementsByTagNameNS(name.getNamespaceURI(), name.getLocalPart());
     }

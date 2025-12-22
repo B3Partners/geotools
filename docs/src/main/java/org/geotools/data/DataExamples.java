@@ -16,21 +16,31 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.FileDataStoreFactorySpi;
+import org.geotools.api.data.FileDataStoreFinder;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
 import org.geotools.data.memory.MemoryDataStore;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.util.URLs;
-import org.opengis.feature.Feature;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
+import org.geotools.util.logging.Logging;
 
 public class DataExamples {
+
+    private static final Logger LOGGER = Logging.getLogger(DataExamples.class);
 
     // alter start
     SimpleFeatureSource alter(
@@ -54,6 +64,7 @@ public class DataExamples {
 
             collection.accepts(
                     new FeatureVisitor() {
+                        @Override
                         public void visit(Feature feature) {
                             SimpleFeatureBuilder builder = new SimpleFeatureBuilder(schema);
 
@@ -72,7 +83,7 @@ public class DataExamples {
             return memory.getFeatureSource(typename);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Unexpected error", e);
         }
         return null;
     }
@@ -80,8 +91,7 @@ public class DataExamples {
     // alter end
 
     // exportToShapefile start
-    DataStore exportToShapefile(MemoryDataStore memory, String typeName, File directory)
-            throws IOException {
+    DataStore exportToShapefile(MemoryDataStore memory, String typeName, File directory) throws IOException {
         // existing feature source from MemoryDataStore
         SimpleFeatureSource featureSource = memory.getFeatureSource(typeName);
         SimpleFeatureType ft = featureSource.getSchema();
@@ -135,8 +145,7 @@ public class DataExamples {
     }
 
     // exportToShapefile2 start
-    DataStore exportToShapefile2(MemoryDataStore memory, String typeName, File directory)
-            throws IOException {
+    DataStore exportToShapefile2(MemoryDataStore memory, String typeName, File directory) throws IOException {
         // existing feature source from MemoryDataStore
         SimpleFeatureSource featureSource = memory.getFeatureSource(typeName);
         SimpleFeatureType ft = featureSource.getSchema();
@@ -157,8 +166,7 @@ public class DataExamples {
         try (Transaction t = new DefaultTransaction()) {
             SimpleFeatureCollection collection = featureSource.getFeatures(); // grab all features
 
-            FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
-                    dataStore.getFeatureWriter(typeName, t);
+            FeatureWriter<SimpleFeatureType, SimpleFeature> writer = dataStore.getFeatureWriter(typeName, t);
 
             SimpleFeatureIterator iterator = collection.features();
             SimpleFeature feature;

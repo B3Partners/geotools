@@ -31,6 +31,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -40,6 +41,11 @@ import java.util.List;
 import java.util.Properties;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.ParameterValue;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
@@ -47,7 +53,6 @@ import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.GranuleSource;
 import org.geotools.coverage.grid.io.HarvestedSource;
-import org.geotools.data.Query;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
@@ -56,24 +61,20 @@ import org.geotools.gce.imagemosaic.Utils.Prop;
 import org.geotools.gce.imagemosaic.catalog.GranuleCatalog;
 import org.geotools.gce.imagemosaic.properties.FSDateExtractorSPI;
 import org.geotools.gce.imagemosaic.properties.PropertiesCollector;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.test.TestData;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.ParameterValue;
 
 /** Testing using COG remote granules on an ImageMosaic */
 public class ImageMosaicCogOnlineTest {
 
     /**
-     * The following tests use S3 Sentinel-2 Cloud-Optimized GeoTIFFs. S3 Sentinel-2 Cloud-Optimized
-     * GeoTIFFs was accessed from https://registry.opendata.aws/sentinel-2-l2a-cogs.
+     * The following tests use S3 Sentinel-2 Cloud-Optimized GeoTIFFs. S3 Sentinel-2 Cloud-Optimized GeoTIFFs was
+     * accessed from https://registry.opendata.aws/sentinel-2-l2a-cogs.
      */
     @BeforeClass
     public static void init() {
@@ -91,7 +92,7 @@ public class ImageMosaicCogOnlineTest {
     public void testCogMosaic() throws Exception {
         File workDir = prepareWorkingDir("s3cogtest.zip", "s3cogtest", "");
         ImageMosaicReader reader = IMAGE_MOSAIC_FORMAT.getReader(workDir);
-        GridCoverage2D coverage = reader.read(null);
+        GridCoverage2D coverage = reader.read();
         Assert.assertNotNull(coverage);
         RenderedImage image = coverage.getRenderedImage();
         int numTileX = image.getNumXTiles();
@@ -113,14 +114,13 @@ public class ImageMosaicCogOnlineTest {
 
         GeneralParameterValue[] params = new GeneralParameterValue[1];
         // Define a GridGeometry in order to reduce the output
-        final ParameterValue<GridGeometry2D> gg =
-                AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
-        final GeneralEnvelope envelope = reader.getOriginalEnvelope();
+        final ParameterValue<GridGeometry2D> gg = AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
+        final GeneralBounds envelope = reader.getOriginalEnvelope();
         final Dimension dim = new Dimension();
         dim.setSize(
                 reader.getOriginalGridRange().getSpan(0) / 24,
                 reader.getOriginalGridRange().getSpan(1) / 24);
-        final Rectangle rasterArea = ((GridEnvelope2D) reader.getOriginalGridRange());
+        final Rectangle rasterArea = (GridEnvelope2D) reader.getOriginalGridRange();
         rasterArea.setSize(dim);
         final GridEnvelope2D range = new GridEnvelope2D(rasterArea);
         gg.setValue(new GridGeometry2D(range, envelope));
@@ -135,8 +135,7 @@ public class ImageMosaicCogOnlineTest {
         assertEquals(512, raster.getWidth());
         assertEquals(512, raster.getHeight());
         assertEquals(1, raster.getNumBands());
-        Object fileLocation =
-                coverage.getProperty(AbstractGridCoverage2DReader.FILE_SOURCE_PROPERTY);
+        Object fileLocation = coverage.getProperty(AbstractGridCoverage2DReader.FILE_SOURCE_PROPERTY);
         Assert.assertNotNull(fileLocation);
         assertTrue(fileLocation instanceof String);
         String path = (String) fileLocation;
@@ -154,14 +153,14 @@ public class ImageMosaicCogOnlineTest {
             properties.load(fin);
         }
 
-        try (FileWriter fw = new FileWriter(file)) {
+        try (FileWriter fw = new FileWriter(file, StandardCharsets.UTF_8)) {
             Assert.assertNotNull(properties.remove("CogRangeReader"));
             Assert.assertNotNull(properties.remove("SuggestedSPI"));
             properties.store(fw, "");
         }
 
         ImageMosaicReader reader = IMAGE_MOSAIC_FORMAT.getReader(workDir);
-        GridCoverage2D coverage = reader.read(null);
+        GridCoverage2D coverage = reader.read();
         Assert.assertNotNull(coverage);
         RenderedImage image = coverage.getRenderedImage();
         int numTileX = image.getNumXTiles();
@@ -182,7 +181,7 @@ public class ImageMosaicCogOnlineTest {
             properties.load(fin);
         }
 
-        try (FileWriter fw = new FileWriter(file)) {
+        try (FileWriter fw = new FileWriter(file, StandardCharsets.UTF_8)) {
             Assert.assertNotNull(properties.remove("CogRangeReader"));
             Assert.assertNotNull(properties.remove("SuggestedSPI"));
             properties.store(fw, "");
@@ -211,7 +210,7 @@ public class ImageMosaicCogOnlineTest {
             properties.load(fin);
         }
 
-        try (FileWriter fw = new FileWriter(file)) {
+        try (FileWriter fw = new FileWriter(file, StandardCharsets.UTF_8)) {
             Assert.assertNotNull(properties.remove("UseExistingSchema"));
             properties.store(fw, "");
         }
@@ -225,9 +224,8 @@ public class ImageMosaicCogOnlineTest {
 
         try {
             // now go and harvest the url
-            URL source =
-                    new URL(
-                            "https://s3-us-west-2.amazonaws.com/sentinel-cogs/sentinel-s2-l2a-cogs/5/C/MK/2018/10/S2B_5CMK_20181020_0_L2A/B01.tif");
+            URL source = new URL(
+                    "https://s3-us-west-2.amazonaws.com/sentinel-cogs/sentinel-s2-l2a-cogs/5/C/MK/2018/10/S2B_5CMK_20181020_0_L2A/B01.tif");
             reader.harvest(null, source, null);
 
             // check the granule catalog
@@ -244,13 +242,10 @@ public class ImageMosaicCogOnlineTest {
     @Test
     public void testEmptyMosaic() throws Exception {
         final File workDir = prepareWorkingDir("emptycog.zip", "emptyCogMosaic", "");
-        try (FileWriter out =
-                new FileWriter(
-                        new File(
-                                TestData.file(this, "."),
-                                "/emptyCogMosaic/datastore.properties"))) {
+        try (FileWriter out = new FileWriter(
+                new File(TestData.file(this, "."), "/emptyCogMosaic/datastore.properties"), StandardCharsets.UTF_8)) {
             out.write("database=cogmosaic\n");
-            out.write(ImageMosaicReaderTest.H2_SAMPLE_PROPERTIES);
+            out.write(ImageMosaicReaderTest.GEOPKG_SAMPLE_PROPERTIES);
             out.flush();
         }
         ImageMosaicReader reader = IMAGE_MOSAIC_FORMAT.getReader(workDir);
@@ -285,23 +280,19 @@ public class ImageMosaicCogOnlineTest {
     @Test
     public void testTimeDimensionMosaic() throws Exception {
         final File workDir = prepareWorkingDir("emptycog.zip", "timeMosaic", "");
-        try (FileWriter out =
-                new FileWriter(
-                        new File(TestData.file(this, "."), "/timeMosaic/datastore.properties"))) {
+        try (FileWriter out = new FileWriter(
+                new File(TestData.file(this, "."), "/timeMosaic/datastore.properties"), StandardCharsets.UTF_8)) {
             out.write("database=cogtimemosaic\n");
-            out.write(ImageMosaicReaderTest.H2_SAMPLE_PROPERTIES);
+            out.write(ImageMosaicReaderTest.GEOPKG_SAMPLE_PROPERTIES);
             out.flush();
         }
-        try (FileWriter out =
-                new FileWriter(
-                        new File(TestData.file(this, "."), "/timeMosaic/timeregex.properties"))) {
+        try (FileWriter out = new FileWriter(
+                new File(TestData.file(this, "."), "/timeMosaic/timeregex.properties"), StandardCharsets.UTF_8)) {
             out.write("regex=[0-9]{8},fullPath=true");
             out.flush();
         }
         try (FileWriter out =
-                new FileWriter(
-                        new File(TestData.file(this, "."), "/timeMosaic/indexer.properties"),
-                        true)) {
+                new FileWriter(new File(TestData.file(this, "."), "/timeMosaic/indexer.properties"), true)) {
             out.write("\nPropertyCollectors=TimestampFileNameExtractorSPI[timeregex](time)");
             out.write("\nTimeAttribute=time");
             out.write("\nSchema=location:String,time:java.util.Date,*the_geom:Polygon\n");
@@ -314,8 +305,7 @@ public class ImageMosaicCogOnlineTest {
         try {
             // now go and harvest 2 granules
             List<URL> urls = new LinkedList<>();
-            String prefix =
-                    "https://s3-us-west-2.amazonaws.com/sentinel-cogs/sentinel-s2-l2a-cogs/";
+            String prefix = "https://s3-us-west-2.amazonaws.com/sentinel-cogs/sentinel-s2-l2a-cogs/";
             urls.add(new URL(prefix + "5/C/MK/2018/10/S2B_5CMK_20181019_0_L2A/B01.tif"));
             urls.add(new URL(prefix + "5/C/MK/2018/10/S2B_5CMK_20181020_0_L2A/B01.tif"));
             List<HarvestedSource> summary = reader.harvest(null, urls, null);
@@ -323,10 +313,8 @@ public class ImageMosaicCogOnlineTest {
             assertEquals(2, summary.size());
 
             assertEquals("true", reader.getMetadataValue("HAS_TIME_DOMAIN"));
-            assertEquals(
-                    "2018-10-19T00:00:00.000Z", reader.getMetadataValue("TIME_DOMAIN_MINIMUM"));
-            assertEquals(
-                    "2018-10-20T00:00:00.000Z", reader.getMetadataValue("TIME_DOMAIN_MAXIMUM"));
+            assertEquals("2018-10-19T00:00:00.000Z", reader.getMetadataValue("TIME_DOMAIN_MINIMUM"));
+            assertEquals("2018-10-20T00:00:00.000Z", reader.getMetadataValue("TIME_DOMAIN_MAXIMUM"));
         } finally {
             reader.dispose();
         }
@@ -335,9 +323,8 @@ public class ImageMosaicCogOnlineTest {
     /** Checking time get extracted from remote URL too. */
     @Test
     public void testFSDateCollect() throws Exception {
-        URL url =
-                new URL(
-                        "https://s3-us-west-2.amazonaws.com/sentinel-cogs/sentinel-s2-l2a-cogs/5/C/MK/2018/10/S2B_5CMK_20181019_0_L2A/B01.tif");
+        URL url = new URL(
+                "https://s3-us-west-2.amazonaws.com/sentinel-cogs/sentinel-s2-l2a-cogs/5/C/MK/2018/10/S2B_5CMK_20181019_0_L2A/B01.tif");
         final FSDateExtractorSPI spi = new FSDateExtractorSPI();
         final PropertiesCollector collector = spi.create(spi, Arrays.asList("createdate"));
         final SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
@@ -356,13 +343,12 @@ public class ImageMosaicCogOnlineTest {
         assertEquals(9, calendar.get(Calendar.MONTH) + 1);
     }
 
-    private File prepareWorkingDir(String zipName, String folder, String subFolder)
-            throws IOException {
+    private File prepareWorkingDir(String zipName, String folder, String subFolder) throws IOException {
         File workDir = new File(TestData.file(this, "."), folder);
         String destinationPath = folder + "/";
         if (StringUtils.isNotBlank(subFolder)) {
             workDir = new File(workDir, subFolder);
-            destinationPath += (subFolder + "/");
+            destinationPath += subFolder + "/";
         }
         destinationPath += zipName;
         if (!workDir.mkdirs()) {
@@ -380,7 +366,7 @@ public class ImageMosaicCogOnlineTest {
     public void testGSCogMosaic() throws Exception {
         File workDir = prepareWorkingDir("gscogtest.zip", "gscogtest", "");
         ImageMosaicReader reader = IMAGE_MOSAIC_FORMAT.getReader(workDir);
-        GridCoverage2D coverage = reader.read(null);
+        GridCoverage2D coverage = reader.read();
         Assert.assertNotNull(coverage);
         RenderedImage image = coverage.getRenderedImage();
         int numTileX = image.getNumXTiles();
@@ -396,7 +382,7 @@ public class ImageMosaicCogOnlineTest {
     public void testGSURICogMosaic() throws Exception {
         File workDir = prepareWorkingDir("gsuricogtest.zip", "gsuricogtest", "");
         ImageMosaicReader reader = IMAGE_MOSAIC_FORMAT.getReader(workDir);
-        GridCoverage2D coverage = reader.read(null);
+        GridCoverage2D coverage = reader.read();
         Assert.assertNotNull(coverage);
         RenderedImage image = coverage.getRenderedImage();
         int numTileX = image.getNumXTiles();
@@ -412,10 +398,9 @@ public class ImageMosaicCogOnlineTest {
     @Test
     public void testHarvestGSPublicURL() throws Exception {
         String folder = "emptyGSCogMosaic";
-        String granuleUrl =
-                "https://storage.googleapis.com/gcp-public-data-landsat/LC08/01/044/034"
-                        + "/LC08_L1GT_044034_20130330_20170310_01_T2"
-                        + "/LC08_L1GT_044034_20130330_20170310_01_T2_B11.TIF";
+        String granuleUrl = "https://storage.googleapis.com/gcp-public-data-landsat/LC08/01/044/034"
+                + "/LC08_L1GT_044034_20130330_20170310_01_T2"
+                + "/LC08_L1GT_044034_20130330_20170310_01_T2_B11.TIF";
         URL source = new URL(granuleUrl);
 
         harvestSingleGoogleCOG(folder, granuleUrl, source);
@@ -425,10 +410,9 @@ public class ImageMosaicCogOnlineTest {
     @Test
     public void testHarvestGSURI() throws Exception {
         String folder = "emptyGSURICogMosaic";
-        String uri =
-                "gs://gcp-public-data-landsat/LC08/01/044/034"
-                        + "/LC08_L1GT_044034_20130330_20170310_01_T2"
-                        + "/LC08_L1GT_044034_20130330_20170310_01_T2_B11.TIF";
+        String uri = "gs://gcp-public-data-landsat/LC08/01/044/034"
+                + "/LC08_L1GT_044034_20130330_20170310_01_T2"
+                + "/LC08_L1GT_044034_20130330_20170310_01_T2_B11.TIF";
         URI granuleUri = new URI(uri);
 
         harvestSingleGoogleCOG(folder, uri, granuleUri);
@@ -438,22 +422,19 @@ public class ImageMosaicCogOnlineTest {
     @Test
     public void testHarvestGSString() throws Exception {
         String folder = "emptyGSStringCogMosaic";
-        String uri =
-                "gs://gcp-public-data-landsat/LC08/01/044/034"
-                        + "/LC08_L1GT_044034_20130330_20170310_01_T2"
-                        + "/LC08_L1GT_044034_20130330_20170310_01_T2_B11.TIF";
+        String uri = "gs://gcp-public-data-landsat/LC08/01/044/034"
+                + "/LC08_L1GT_044034_20130330_20170310_01_T2"
+                + "/LC08_L1GT_044034_20130330_20170310_01_T2_B11.TIF";
 
         harvestSingleGoogleCOG(folder, uri, uri);
     }
 
-    private void harvestSingleGoogleCOG(String folder, String expected, Object source)
-            throws IOException {
+    private void harvestSingleGoogleCOG(String folder, String expected, Object source) throws IOException {
         final File workDir = prepareWorkingDir("emptygscog.zip", folder, "");
-        try (FileWriter out =
-                new FileWriter(
-                        new File(TestData.file(this, "."), folder + "/datastore.properties"))) {
+        try (FileWriter out = new FileWriter(
+                new File(TestData.file(this, "."), folder + "/datastore.properties"), StandardCharsets.UTF_8)) {
             out.write("database=cogmosaic\n");
-            out.write(ImageMosaicReaderTest.H2_SAMPLE_PROPERTIES);
+            out.write(ImageMosaicReaderTest.GEOPKG_SAMPLE_PROPERTIES);
             out.flush();
         }
         ImageMosaicReader reader = IMAGE_MOSAIC_FORMAT.getReader(workDir);
@@ -467,10 +448,7 @@ public class ImageMosaicCogOnlineTest {
     }
 
     private void harvestGranule(
-            String expected,
-            Object source,
-            ImageMosaicReader reader,
-            GranuleCatalog originalCatalog)
+            String expected, Object source, ImageMosaicReader reader, GranuleCatalog originalCatalog)
             throws IOException {
 
         // now go and harvest a granule
@@ -497,13 +475,13 @@ public class ImageMosaicCogOnlineTest {
         final File workDir = new File("./target/" + folder);
         FileUtils.deleteDirectory(workDir);
         assertTrue(workDir.mkdir());
-        try (FileWriter out = new FileWriter(new File(workDir, "datastore.properties"))) {
+        try (FileWriter out = new FileWriter(new File(workDir, "datastore.properties"), StandardCharsets.UTF_8)) {
             out.write("database=cogmosaic\n");
-            out.write(ImageMosaicReaderTest.H2_SAMPLE_PROPERTIES);
+            out.write(ImageMosaicReaderTest.GEOPKG_SAMPLE_PROPERTIES);
             out.flush();
         }
         String name = "emptycog";
-        try (FileWriter out = new FileWriter(new File(workDir, "indexer.properties"))) {
+        try (FileWriter out = new FileWriter(new File(workDir, "indexer.properties"), StandardCharsets.UTF_8)) {
             Properties p = new Properties();
             p.put(Prop.COG, "true");
             p.put(Prop.NAME, name);
@@ -518,23 +496,19 @@ public class ImageMosaicCogOnlineTest {
         try {
             GranuleCatalog originalCatalog = reader.granuleCatalog;
 
-            String location =
-                    "gs://gcp-public-data-landsat/LC08/01/044/034"
-                            + "/LC08_L1GT_044034_20130330_20170310_01_T2"
-                            + "/LC08_L1GT_044034_20130330_20170310_01_T2_B11.TIF";
+            String location = "gs://gcp-public-data-landsat/LC08/01/044/034"
+                    + "/LC08_L1GT_044034_20130330_20170310_01_T2"
+                    + "/LC08_L1GT_044034_20130330_20170310_01_T2_B11.TIF";
             harvestGranule(location, location, reader, originalCatalog);
 
             // check the catalog is actually skipping overviews
             RasterManager manager = reader.rasterManagers.get(name);
-            manager.granuleCatalog.getGranuleDescriptors(
-                    new Query(name),
-                    (granule, feature) -> {
-                        assertTrue(granule.getMaskOverviewProvider().isSkipExternalLookup());
-                        assertTrue(
-                                ((GeoTiffReader) granule.getReader())
-                                        .getMaskOverviewProvider()
-                                        .isSkipExternalLookup());
-                    });
+            manager.granuleCatalog.getGranuleDescriptors(new Query(name), (granule, feature) -> {
+                assertTrue(granule.getMaskOverviewProvider().isSkipExternalLookup());
+                assertTrue(((GeoTiffReader) granule.getReader())
+                        .getMaskOverviewProvider()
+                        .isSkipExternalLookup());
+            });
         } finally {
             if (reader != null) reader.dispose();
         }

@@ -18,16 +18,15 @@ package org.geotools.feature.type;
 
 import java.util.Collection;
 import java.util.List;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.util.InternationalString;
 import org.geotools.util.Utilities;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.filter.Filter;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.util.InternationalString;
 
 /**
  * Base implementation of FeatureType.
@@ -50,7 +49,7 @@ public class FeatureTypeImpl extends ComplexTypeImpl implements FeatureType {
         super(name, schema, true, isAbstract, restrictions, superType, description);
         this.defaultGeometry = defaultGeometry;
 
-        if (defaultGeometry != null && !(defaultGeometry.getType() instanceof GeometryType)) {
+        if (defaultGeometry != null && defaultGeometry.getType() == null) {
             throw new IllegalArgumentException("defaultGeometry must have a GeometryType");
         }
     }
@@ -64,8 +63,7 @@ public class FeatureTypeImpl extends ComplexTypeImpl implements FeatureType {
             }
             if (crs == null) {
                 for (PropertyDescriptor property : getDescriptors()) {
-                    if (property instanceof GeometryDescriptor) {
-                        GeometryDescriptor geometry = (GeometryDescriptor) property;
+                    if (property instanceof GeometryDescriptor geometry) {
                         if (geometry.getType().getCoordinateReferenceSystem() != null) {
                             crs = geometry.getType().getCoordinateReferenceSystem();
                             break;
@@ -82,8 +80,8 @@ public class FeatureTypeImpl extends ComplexTypeImpl implements FeatureType {
     public GeometryDescriptor getGeometryDescriptor() {
         if (defaultGeometry == null) {
             for (PropertyDescriptor property : getDescriptors()) {
-                if (property instanceof GeometryDescriptor) {
-                    defaultGeometry = (GeometryDescriptor) property;
+                if (property instanceof GeometryDescriptor descriptor) {
+                    defaultGeometry = descriptor;
                     break;
                 }
             }

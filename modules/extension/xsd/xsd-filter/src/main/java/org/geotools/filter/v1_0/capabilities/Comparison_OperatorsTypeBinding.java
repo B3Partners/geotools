@@ -19,12 +19,12 @@ package org.geotools.filter.v1_0.capabilities;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.capability.ComparisonOperators;
+import org.geotools.api.filter.capability.Operator;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.capability.ComparisonOperators;
-import org.opengis.filter.capability.Operator;
 
 /**
  * Binding object for the type http://www.opengis.net/ogc:Comparison_OperatorsType.
@@ -115,7 +115,7 @@ public class Comparison_OperatorsTypeBinding extends AbstractComplexBinding {
     public Object getProperty(Object object, QName name) throws Exception {
         ComparisonOperators comparison = (ComparisonOperators) object;
 
-        if (name.equals(OGC.Simple_Comparisons) && (comparison.getOperator("LessThan") != null)) {
+        if (name.equals(OGC.Simple_Comparisons) && comparison.getOperator("LessThan") != null) {
             return new Object();
         }
 

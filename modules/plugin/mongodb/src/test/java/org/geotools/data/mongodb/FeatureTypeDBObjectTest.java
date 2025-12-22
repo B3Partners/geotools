@@ -28,16 +28,16 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /** @author tkunicki@boundlessgeo.com */
 public class FeatureTypeDBObjectTest {
@@ -45,8 +45,7 @@ public class FeatureTypeDBObjectTest {
     public FeatureTypeDBObjectTest() {}
 
     @Test
-    public void testRoundTripConversion()
-            throws FileNotFoundException, IOException, FactoryException {
+    public void testRoundTripConversion() throws FileNotFoundException, IOException, FactoryException {
 
         SimpleFeatureType original = buildDummyFeatureType("dummy");
 
@@ -113,8 +112,7 @@ public class FeatureTypeDBObjectTest {
         return original;
     }
 
-    static void compareFeatureTypes(
-            SimpleFeatureType left, SimpleFeatureType right, boolean strictGeometryClass) {
+    static void compareFeatureTypes(SimpleFeatureType left, SimpleFeatureType right, boolean strictGeometryClass) {
 
         assertThat(right.getTypeName(), is(equalTo(left.getTypeName())));
         // verify feature type user data persisted
@@ -134,18 +132,13 @@ public class FeatureTypeDBObjectTest {
         // verify we persist and restore CRS (this should always be WGS84 in the wild)
         assertTrue(
                 "CRS are equal",
-                CRS.equalsIgnoreMetadata(
-                        right.getCoordinateReferenceSystem(), left.getCoordinateReferenceSystem()));
+                CRS.equalsIgnoreMetadata(right.getCoordinateReferenceSystem(), left.getCoordinateReferenceSystem()));
 
         if (strictGeometryClass) {
             assertThat(
                     right.getGeometryDescriptor().getType().getBinding().getSimpleName(),
-                    is(
-                            equalTo(
-                                    left.getGeometryDescriptor()
-                                            .getType()
-                                            .getBinding()
-                                            .getSimpleName())));
+                    is(equalTo(
+                            left.getGeometryDescriptor().getType().getBinding().getSimpleName())));
         } else {
             // NOTE!  Geometry type is generalized when persisted...
             assertThat(

@@ -43,30 +43,40 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.postgresql.jdbc.PgConnection;
+import org.postgresql.jdbc.SslMode;
 
 public class PostgisNGDataStoreFactoryTest {
 
-    @Mock private DataSource ds = null;
+    @Mock
+    private DataSource ds = null;
 
-    @Mock private Connection conn = null;
+    @Mock
+    private Connection conn = null;
 
-    @Mock private PgConnection pgConn = null;
+    @Mock
+    private PgConnection pgConn = null;
 
-    @Mock private DatabaseMetaData md = null;
+    @Mock
+    private DatabaseMetaData md = null;
 
-    @Mock private Statement st1 = null;
+    @Mock
+    private Statement st1 = null;
 
-    @Mock private Statement st2 = null;
+    @Mock
+    private Statement st2 = null;
 
-    @Mock private ResultSet rs1 = null;
+    @Mock
+    private ResultSet rs1 = null;
 
-    @Mock private ResultSet rs2 = null;
+    @Mock
+    private ResultSet rs2 = null;
 
     private JDBCDataStore store = null;
 
     private AutoCloseable mocks = null;
 
     @Before
+    @SuppressWarnings("PMD.CheckResultSet")
     public void setUp() throws Exception {
         this.mocks = MockitoAnnotations.openMocks(this);
         when(this.ds.getConnection()).thenReturn(this.conn);
@@ -130,8 +140,8 @@ public class PostgisNGDataStoreFactoryTest {
         verifyFilterToSqlSettings(true, true, true);
     }
 
-    private void verifyFilterToSqlSettings(
-            boolean escapeBackslash, boolean withPS, boolean withQuery) throws Exception {
+    private void verifyFilterToSqlSettings(boolean escapeBackslash, boolean withPS, boolean withQuery)
+            throws Exception {
         if (withQuery) {
             when(this.st2.executeQuery("SHOW standard_conforming_strings")).thenReturn(this.rs2);
             when(this.rs2.next()).thenReturn(true);
@@ -148,8 +158,7 @@ public class PostgisNGDataStoreFactoryTest {
         assertNotNull(this.store);
         SQLDialect dialect = this.store.getSQLDialect();
         assertThat(dialect, instanceOf(withPS ? PostGISPSDialect.class : PostGISDialect.class));
-        PostGISDialect pgDialect =
-                withPS ? ((PostGISPSDialect) dialect).getDelegate() : (PostGISDialect) dialect;
+        PostGISDialect pgDialect = withPS ? ((PostGISPSDialect) dialect).getDelegate() : (PostGISDialect) dialect;
         assertEquals(new Version("15.1"), pgDialect.getPostgreSQLVersion(this.conn));
         assertEquals(new Version("3.3.2"), pgDialect.getVersion(this.conn));
         assertEquals(escapeBackslash, pgDialect.isEscapeBackslash());
@@ -159,5 +168,41 @@ public class PostgisNGDataStoreFactoryTest {
         verify(this.rs1).close();
         verify(this.st2, withQuery ? times(1) : never()).close();
         verify(this.rs2, withQuery ? times(1) : never()).close();
+    }
+
+    @Test
+    public void testGetJDBCUrl() throws Exception {
+        Map<String, Object> params = new HashMap<>();
+        params.put(PostgisNGDataStoreFactory.HOST.key, "localhost");
+        params.put(PostgisNGDataStoreFactory.PORT.key, 5432);
+        params.put(PostgisNGDataStoreFactory.DATABASE.key, "template1");
+        params.put(PostgisNGDataStoreFactory.REWRITE_BATCHED_INSERTS.key, Boolean.TRUE);
+        assertEquals(
+                "jdbc:postgresql://localhost:5432/template1?reWriteBatchedInserts=true",
+                new PostgisNGDataStoreFactory().getJDBCUrl(params));
+    }
+
+    @Test
+    public void testGetJDBCUrlSslModePreferEnumValue() throws Exception {
+        Map<String, Object> params = new HashMap<>();
+        params.put(PostgisNGDataStoreFactory.HOST.key, "localhost");
+        params.put(PostgisNGDataStoreFactory.PORT.key, 5432);
+        params.put(PostgisNGDataStoreFactory.DATABASE.key, "template1");
+        params.put(PostgisNGDataStoreFactory.SSL_MODE.key, SslMode.PREFER);
+        assertEquals(
+                "jdbc:postgresql://localhost:5432/template1?reWriteBatchedInserts=false&sslmode=prefer&binaryTransferEnable=bytea",
+                new PostgisNGDataStoreFactory().getJDBCUrl(params));
+    }
+
+    @Test
+    public void testGetJDBCUrlSslModePreferString() throws Exception {
+        Map<String, Object> params = new HashMap<>();
+        params.put(PostgisNGDataStoreFactory.HOST.key, "localhost");
+        params.put(PostgisNGDataStoreFactory.PORT.key, 5432);
+        params.put(PostgisNGDataStoreFactory.DATABASE.key, "template1");
+        params.put(PostgisNGDataStoreFactory.SSL_MODE.key, "prefer");
+        assertEquals(
+                "jdbc:postgresql://localhost:5432/template1?reWriteBatchedInserts=false&sslmode=prefer&binaryTransferEnable=bytea",
+                new PostgisNGDataStoreFactory().getJDBCUrl(params));
     }
 }

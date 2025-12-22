@@ -31,8 +31,8 @@ import org.geotools.graph.traverse.basic.BasicGraphTraversal;
 import org.geotools.graph.traverse.standard.DepthFirstIterator;
 
 /**
- * Creates a collection of connected graphs from a single graph. A connected graph in which for
- * every two pair of nodes, there is a path between them.
+ * Creates a collection of connected graphs from a single graph. A connected graph in which for every two pair of nodes,
+ * there is a path between them.
  *
  * @author Justin Deoliveira, Refractions Research Inc, jdeolive@refractions.net
  */
@@ -94,7 +94,7 @@ public class GraphPartitioner implements GraphWalker {
                 }
 
                 // if we could not find a source, return false
-                if (source == null || source.isVisited()) return (false);
+                if (source == null || source.isVisited()) return false;
 
                 iterator.setSource(source);
                 traversal.traverse();
@@ -122,11 +122,11 @@ public class GraphPartitioner implements GraphWalker {
 
             m_partitions = graphs;
 
-            return (true);
+            return true;
         } catch (Exception e) {
             java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
         }
-        return (false);
+        return false;
     }
 
     /**
@@ -136,7 +136,7 @@ public class GraphPartitioner implements GraphWalker {
      * @see Graph
      */
     public ArrayList<Serializable> getPartitions() {
-        return (m_partitions);
+        return m_partitions;
     }
 
     /**
@@ -149,7 +149,7 @@ public class GraphPartitioner implements GraphWalker {
         // add element to current set
         m_nvisited--;
         m_partition.add((Serializable) element);
-        return (GraphTraversal.CONTINUE);
+        return GraphTraversal.CONTINUE;
     }
 
     /**

@@ -17,19 +17,19 @@
 package org.geotools.data.flatgeobuf;
 
 import java.io.IOException;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.Query;
-import org.geotools.data.QueryCapabilities;
-import org.geotools.data.ResourceInfo;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.QueryCapabilities;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureStore;
 import org.geotools.data.store.ContentState;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
 
 public class FlatGeobufFeatureStore extends ContentFeatureStore {
 
@@ -37,14 +37,13 @@ public class FlatGeobufFeatureStore extends ContentFeatureStore {
         super(entry, query);
     }
 
-    FlatGeobufFeatureSource delegate =
-            new FlatGeobufFeatureSource(entry, query) {
-                @Override
-                public void setTransaction(Transaction transaction) {
-                    super.setTransaction(transaction);
-                    FlatGeobufFeatureStore.this.setTransaction(transaction);
-                }
-            };
+    FlatGeobufFeatureSource delegate = new FlatGeobufFeatureSource(entry, query) {
+        @Override
+        public void setTransaction(Transaction transaction) {
+            super.setTransaction(transaction);
+            FlatGeobufFeatureStore.this.setTransaction(transaction);
+        }
+    };
 
     @Override
     public void setTransaction(Transaction transaction) {
@@ -60,8 +59,7 @@ public class FlatGeobufFeatureStore extends ContentFeatureStore {
     }
 
     @Override
-    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query)
-            throws IOException {
+    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query) throws IOException {
         return delegate.getReaderInternal(query);
     }
 

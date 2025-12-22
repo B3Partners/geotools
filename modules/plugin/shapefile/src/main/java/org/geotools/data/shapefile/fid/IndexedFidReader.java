@@ -25,7 +25,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.util.NoSuchElementException;
 import java.util.logging.Logger;
-import org.geotools.data.FIDReader;
+import org.geotools.api.data.FIDReader;
 import org.geotools.data.shapefile.files.FileReader;
 import org.geotools.data.shapefile.files.ShpFiles;
 import org.geotools.data.shapefile.files.StreamLogging;
@@ -39,8 +39,7 @@ import org.geotools.util.URLs;
  * @author Jesse
  */
 public class IndexedFidReader implements FIDReader, FileReader, AutoCloseable {
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(IndexedFidReader.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(IndexedFidReader.class);
     private ReadableByteChannel readChannel;
     private ByteBuffer buffer;
     private long count;
@@ -108,8 +107,7 @@ public class IndexedFidReader implements FIDReader, FileReader, AutoCloseable {
             byte version = buffer.get();
 
             if (version != 1) {
-                throw new IOException(
-                        "File is not of a compatible version for this reader or file is corrupt.");
+                throw new IOException("File is not of a compatible version for this reader or file is corrupt.");
             }
 
             this.count = buffer.getLong();
@@ -139,20 +137,18 @@ public class IndexedFidReader implements FIDReader, FileReader, AutoCloseable {
     /**
      * Returns the number of features that have been removed since the fid index was regenerated.
      *
-     * @return Returns the number of features that have been removed since the fid index was
-     *     regenerated.
+     * @return Returns the number of features that have been removed since the fid index was regenerated.
      */
     public int getRemoves() {
         return removes;
     }
 
     /**
-     * Returns the offset to the location in the SHX file that the fid identifies. This search take
-     * logN time.
+     * Returns the offset to the location in the SHX file that the fid identifies. This search take logN time.
      *
      * @param fid the fid to find.
-     * @return Returns the record number of the record in the SHX file that the fid identifies. Will
-     *     return -1 if the fid was not found.
+     * @return Returns the record number of the record in the SHX file that the fid identifies. Will return -1 if the
+     *     fid was not found.
      */
     public long findFid(String fid) throws IOException {
         try {
@@ -168,7 +164,7 @@ public class IndexedFidReader implements FIDReader, FileReader, AutoCloseable {
                 return -1;
             }
 
-            if ((desired < 0)) {
+            if (desired < 0) {
                 return -1;
             }
 
@@ -212,11 +208,11 @@ public class IndexedFidReader implements FIDReader, FileReader, AutoCloseable {
             long newPrediction = predictedRec + newOffset;
 
             if (newPrediction <= minRec) {
-                newPrediction = minRec + ((predictedRec - minRec) / 2);
+                newPrediction = minRec + (predictedRec - minRec) / 2;
             }
 
             if (newPrediction >= maxRec) {
-                newPrediction = predictedRec + ((maxRec - predictedRec) / 2);
+                newPrediction = predictedRec + (maxRec - predictedRec) / 2;
             }
 
             if (newPrediction == predictedRec) {
@@ -234,11 +230,9 @@ public class IndexedFidReader implements FIDReader, FileReader, AutoCloseable {
     @SuppressWarnings("PMD.CloseResource") // FileChannel managed as a field
     public void goTo(long recno) throws IOException {
         assert recno < count;
-        if (readChannel instanceof FileChannel) {
-            long newPosition =
-                    IndexedFidWriter.HEADER_SIZE + (recno * IndexedFidWriter.RECORD_SIZE);
+        if (readChannel instanceof FileChannel fc) {
+            long newPosition = IndexedFidWriter.HEADER_SIZE + recno * IndexedFidWriter.RECORD_SIZE;
             if (newPosition >= bufferStart + buffer.limit() || newPosition < bufferStart) {
-                FileChannel fc = (FileChannel) readChannel;
                 fc.position(newPosition);
                 buffer.limit(buffer.capacity());
                 buffer.position(buffer.limit());
@@ -289,8 +283,7 @@ public class IndexedFidReader implements FIDReader, FileReader, AutoCloseable {
     @Override
     public String next() throws IOException {
         if (!hasNext()) {
-            throw new NoSuchElementException(
-                    "FID index could not be read; the index may be invalid");
+            throw new NoSuchElementException("FID index could not be read; the index may be invalid");
         }
 
         currentId = buffer.getLong();
@@ -302,16 +295,15 @@ public class IndexedFidReader implements FIDReader, FileReader, AutoCloseable {
     }
 
     /**
-     * Returns the record number of the feature in the shx or shp that is identified by the the last
-     * fid returned by next().
+     * Returns the record number of the feature in the shx or shp that is identified by the the last fid returned by
+     * next().
      *
-     * @return Returns the record number of the feature in the shx or shp that is identified by the
-     *     the last fid returned by next().
+     * @return Returns the record number of the feature in the shx or shp that is identified by the the last fid
+     *     returned by next().
      */
     public int currentSHXIndex() {
         if (currentShxIndex == -1) {
-            throw new NoSuchElementException(
-                    "Next must be called before there exists a current element.");
+            throw new NoSuchElementException("Next must be called before there exists a current element.");
         }
 
         return currentShxIndex;

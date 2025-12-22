@@ -28,7 +28,9 @@ import java.nio.BufferUnderflowException;
 import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.FileUtils;
 import org.geotools.TestData;
-import org.geotools.data.DataSourceException;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.spatial.BBOX;
 import org.geotools.data.shapefile.files.ShpFileType;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
@@ -37,20 +39,19 @@ import org.geotools.util.factory.GeoTools;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.spatial.BBOX;
 
 public class ShapefileDescriptorLeakTest {
 
-    @Rule public TemporaryFolder folder = new TemporaryFolder();
+    @Rule
+    public TemporaryFolder folder = new TemporaryFolder();
 
     @Test
     public void testFileDescriptorLeakInvalidShp() throws IOException {
         // leak existed before GEOT-7088 fix for any shapefile with an invalid .shp file
         ShapefileDataStore store = createTestDataStore(ShpFileType.SHP);
         try {
-            assertThrows(
-                    BufferUnderflowException.class, () -> store.getFeatureSource().getFeatures());
+            assertThrows(BufferUnderflowException.class, () -> store.getFeatureSource()
+                    .getFeatures());
             // verify that all opened file channels were closed
             assertEquals(0, store.shpFiles.numberOfLocks());
         } finally {
@@ -115,8 +116,7 @@ public class ShapefileDescriptorLeakTest {
             BBOX bbox = ff.bbox("", -180, -90, 180, 90, null);
             SimpleFeatureCollection features =
                     store.getFeatureSource().getFeatures().subCollection(bbox);
-            RuntimeException exception =
-                    assertThrows(RuntimeException.class, () -> features.features());
+            RuntimeException exception = assertThrows(RuntimeException.class, () -> features.features());
             assertThat(exception.getCause(), instanceOf(DataSourceException.class));
             // verify that all opened file channels were closed
             assertEquals(0, store.shpFiles.numberOfLocks());
@@ -133,8 +133,7 @@ public class ShapefileDescriptorLeakTest {
         ShapefileDataStore store = createTestDataStore(ShpFileType.FIX);
         try {
             SimpleFeatureCollection features = store.getFeatureSource().getFeatures();
-            RuntimeException exception =
-                    assertThrows(RuntimeException.class, () -> features.features());
+            RuntimeException exception = assertThrows(RuntimeException.class, () -> features.features());
             assertThat(exception.getCause(), instanceOf(IOException.class));
             // verify that all opened file channels were closed
             assertEquals(0, store.shpFiles.numberOfLocks());
@@ -176,8 +175,7 @@ public class ShapefileDescriptorLeakTest {
     }
 
     private void copyFile(String dstName, ShpFileType type) throws IOException {
-        File srcFile =
-                TestData.file(this, "empty-shapefile/empty-shapefile" + type.extensionWithPeriod);
+        File srcFile = TestData.file(this, "empty-shapefile/empty-shapefile" + type.extensionWithPeriod);
         File dstFile = new File(folder.getRoot(), dstName + type.extensionWithPeriod);
         FileUtils.copyFile(srcFile, dstFile);
     }

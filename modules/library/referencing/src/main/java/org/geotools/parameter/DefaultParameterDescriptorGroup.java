@@ -19,6 +19,8 @@
  */
 package org.geotools.parameter;
 
+import java.io.Serial;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -26,18 +28,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
+import org.geotools.api.parameter.InvalidParameterNameException;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.referencing.AbstractIdentifiedObject;
 import org.geotools.referencing.NamedIdentifier;
 import org.geotools.util.UnmodifiableArrayList;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.parameter.GeneralParameterDescriptor;
-import org.opengis.parameter.InvalidParameterNameException;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
 
 /**
  * The definition of a group of related parameters used by an operation method.
@@ -48,28 +49,23 @@ import org.opengis.parameter.ParameterValueGroup;
  * @see ParameterGroup
  * @see DefaultParameterDescriptor
  */
-public class DefaultParameterDescriptorGroup extends AbstractParameterDescriptor
-        implements ParameterDescriptorGroup {
+public class DefaultParameterDescriptorGroup extends AbstractParameterDescriptor implements ParameterDescriptorGroup {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -4613190550542423839L;
 
-    /**
-     * The maximum number of times that values for this parameter group or parameter are required.
-     */
+    /** The maximum number of times that values for this parameter group or parameter are required. */
     private final int maximumOccurs;
 
     /** The {@linkplain #descriptors() parameter descriptors} for this group. */
     private final GeneralParameterDescriptor[] parameters;
 
-    /**
-     * A view of {@link #parameters} as an immutable list. Will be constructed only when first
-     * needed.
-     */
+    /** A view of {@link #parameters} as an immutable list. Will be constructed only when first needed. */
     private transient List<GeneralParameterDescriptor> asList;
 
     /**
-     * Constructs a group with the same values than the specified one. This copy constructor may be
-     * used in order to wraps an arbitrary implementation into a Geotools one.
+     * Constructs a group with the same values than the specified one. This copy constructor may be used in order to
+     * wraps an arbitrary implementation into a Geotools one.
      *
      * @since 2.2
      */
@@ -86,32 +82,27 @@ public class DefaultParameterDescriptorGroup extends AbstractParameterDescriptor
      * @param name The parameter group name.
      * @param parameters The {@linkplain #descriptors() parameter descriptors} for this group.
      */
-    public DefaultParameterDescriptorGroup(
-            final String name, final GeneralParameterDescriptor... parameters) {
+    public DefaultParameterDescriptorGroup(final String name, final GeneralParameterDescriptor... parameters) {
         this(Collections.singletonMap(NAME_KEY, name), parameters);
     }
 
     /**
-     * Constructs a parameter group from a name and an authority. This parameter group will be
-     * required exactly once.
+     * Constructs a parameter group from a name and an authority. This parameter group will be required exactly once.
      *
-     * @param authority The authority (e.g. {@link org.geotools.metadata.iso.citation.Citations#OGC
-     *     OGC}).
+     * @param authority The authority (e.g. {@link org.geotools.metadata.iso.citation.Citations#OGC OGC}).
      * @param name The parameter group name.
      * @param parameters The {@linkplain #descriptors() parameter descriptors} for this group.
      * @since 2.2
      */
     public DefaultParameterDescriptorGroup(
-            final Citation authority,
-            final String name,
-            final GeneralParameterDescriptor... parameters) {
+            final Citation authority, final String name, final GeneralParameterDescriptor... parameters) {
         this(Collections.singletonMap(NAME_KEY, new NamedIdentifier(authority, name)), parameters);
     }
 
     /**
-     * Constructs a parameter group from a set of properties. This parameter group will be required
-     * exactly once. The properties map is given unchanged to the {@linkplain
-     * AbstractIdentifiedObject#AbstractIdentifiedObject(Map) super-class constructor}.
+     * Constructs a parameter group from a set of properties. This parameter group will be required exactly once. The
+     * properties map is given unchanged to the {@linkplain AbstractIdentifiedObject#AbstractIdentifiedObject(Map)
+     * super-class constructor}.
      *
      * @param properties Set of properties. Should contains at least {@code "name"}.
      * @param parameters The {@linkplain #descriptors() parameter descriptors} for this group.
@@ -122,15 +113,14 @@ public class DefaultParameterDescriptorGroup extends AbstractParameterDescriptor
     }
 
     /**
-     * Constructs a parameter group from a set of properties. The properties map is given unchanged
-     * to the {@linkplain AbstractIdentifiedObject#AbstractIdentifiedObject(Map) super-class
-     * constructor}.
+     * Constructs a parameter group from a set of properties. The properties map is given unchanged to the
+     * {@linkplain AbstractIdentifiedObject#AbstractIdentifiedObject(Map) super-class constructor}.
      *
      * @param properties Set of properties. Should contains at least {@code "name"}.
-     * @param minimumOccurs The {@linkplain #getMinimumOccurs minimum number of times} that values
-     *     for this parameter group are required.
-     * @param maximumOccurs The {@linkplain #getMaximumOccurs maximum number of times} that values
-     *     for this parameter group are required.
+     * @param minimumOccurs The {@linkplain #getMinimumOccurs minimum number of times} that values for this parameter
+     *     group are required.
+     * @param maximumOccurs The {@linkplain #getMaximumOccurs maximum number of times} that values for this parameter
+     *     group are required.
      * @param parameters The {@linkplain #descriptors() parameter descriptors} for this group.
      */
     public DefaultParameterDescriptorGroup(
@@ -155,14 +145,9 @@ public class DefaultParameterDescriptorGroup extends AbstractParameterDescriptor
             for (int j = 0; j < parameters.length; j++) {
                 if (i != j) {
                     if (nameMatches(parameters[j], name)) {
+                        final Object arg0 = parameters[j].getName().getCode();
                         throw new InvalidParameterNameException(
-                                Errors.format(
-                                        ErrorKeys.PARAMETER_NAME_CLASH_$4,
-                                        parameters[j].getName().getCode(),
-                                        j,
-                                        name,
-                                        i),
-                                name);
+                                MessageFormat.format(ErrorKeys.PARAMETER_NAME_CLASH_$4, arg0, j, name, i), name);
                     }
                 }
             }
@@ -180,9 +165,9 @@ public class DefaultParameterDescriptorGroup extends AbstractParameterDescriptor
     }
 
     /**
-     * Creates a new instance of {@linkplain ParameterGroup parameter value group} initialized with
-     * the {@linkplain ParameterDescriptor#getDefaultValue default values}. The {@linkplain
-     * org.opengis.parameter.ParameterValueGroup#getDescriptor parameter value descriptor} for the
+     * Creates a new instance of {@linkplain ParameterGroup parameter value group} initialized with the
+     * {@linkplain ParameterDescriptor#getDefaultValue default values}. The
+     * {@linkplain org.geotools.api.parameter.ParameterValueGroup#getDescriptor parameter value descriptor} for the
      * created group will be {@code this} object.
      */
     @Override
@@ -191,12 +176,13 @@ public class DefaultParameterDescriptorGroup extends AbstractParameterDescriptor
     }
 
     /**
-     * A view of {@link #parameters} as an unmodifiable list. This class overides {@link #contains}
-     * with a faster implementation based on {@link HashSet}. It can help for map projection
-     * implementations (among other), which test often for a parameter validity.
+     * A view of {@link #parameters} as an unmodifiable list. This class overides {@link #contains} with a faster
+     * implementation based on {@link HashSet}. It can help for map projection implementations (among other), which test
+     * often for a parameter validity.
      */
     private static final class AsList extends UnmodifiableArrayList<GeneralParameterDescriptor> {
         /** For compatibility with different versions. */
+        @Serial
         private static final long serialVersionUID = -2116304004367396735L;
 
         /** The element as a set. Will be constructed only when first needed. */
@@ -219,7 +205,6 @@ public class DefaultParameterDescriptorGroup extends AbstractParameterDescriptor
 
     /** Returns the parameters in this group. */
     @Override
-    @SuppressWarnings("fallthrough")
     public List<GeneralParameterDescriptor> descriptors() {
         if (asList == null) {
             if (parameters == null) {
@@ -245,8 +230,8 @@ public class DefaultParameterDescriptorGroup extends AbstractParameterDescriptor
     }
 
     /**
-     * Returns the first parameter in this group for the specified {@linkplain
-     * org.opengis.metadata.Identifier#getCode identifier code}.
+     * Returns the first parameter in this group for the specified
+     * {@linkplain org.geotools.api.metadata.Identifier#getCode identifier code}.
      *
      * @param name The case insensitive identifier code of the parameter to search for.
      * @return The parameter for the given identifier code.
@@ -264,12 +249,12 @@ public class DefaultParameterDescriptorGroup extends AbstractParameterDescriptor
                     if (nameMatches(param, name)) {
                         return param;
                     }
-                } else if (param instanceof DefaultParameterDescriptorGroup) {
+                } else if (param instanceof DefaultParameterDescriptorGroup group) {
                     if (subgroups == null) {
                         subgroups = new LinkedList<>();
                     }
                     assert !subgroups.contains(param) : param;
-                    subgroups.add((DefaultParameterDescriptorGroup) param);
+                    subgroups.add(group);
                 }
             }
             /*
@@ -281,16 +266,15 @@ public class DefaultParameterDescriptorGroup extends AbstractParameterDescriptor
             }
             parameters = subgroups.remove(0).descriptors();
         }
-        throw new ParameterNotFoundException(
-                Errors.format(ErrorKeys.MISSING_PARAMETER_$1, name), name);
+        throw new ParameterNotFoundException(MessageFormat.format(ErrorKeys.MISSING_PARAMETER_$1, name), name);
     }
 
     /**
      * Compares the specified object with this parameter group for equality.
      *
      * @param object The object to compare to {@code this}.
-     * @param compareMetadata {@code true} for performing a strict comparaison, or {@code false} for
-     *     comparing only properties relevant to transformations.
+     * @param compareMetadata {@code true} for performing a strict comparaison, or {@code false} for comparing only
+     *     properties relevant to transformations.
      * @return {@code true} if both objects are equal.
      */
     @Override
@@ -309,8 +293,7 @@ public class DefaultParameterDescriptorGroup extends AbstractParameterDescriptor
     /**
      * Returns a hash value for this parameter.
      *
-     * @return The hash code value. This value doesn't need to be the same in past or future
-     *     versions of this class.
+     * @return The hash code value. This value doesn't need to be the same in past or future versions of this class.
      */
     @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")

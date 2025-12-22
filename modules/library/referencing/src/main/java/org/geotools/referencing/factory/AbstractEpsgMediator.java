@@ -21,18 +21,18 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.sql.DataSource;
+import org.geotools.api.metadata.Identifier;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.IdentifiedObject;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.util.GenericName;
+import org.geotools.api.util.InternationalString;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.util.SimpleInternationalString;
 import org.geotools.util.factory.GeoTools;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
-import org.opengis.metadata.Identifier;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.IdentifiedObject;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.util.GenericName;
-import org.opengis.util.InternationalString;
 
 /**
  * Abstract implementation for EPSG (has a DataSource reference inside).
@@ -68,10 +68,9 @@ public abstract class AbstractEpsgMediator extends AbstractAuthorityMediator {
      */
     static DataSource lookupDataSource(Hints hints) throws FactoryException {
         Object hint = hints.get(Hints.EPSG_DATA_SOURCE);
-        if (hint instanceof DataSource) {
-            return (DataSource) hint;
-        } else if (hint instanceof String) {
-            String name = (String) hint;
+        if (hint instanceof DataSource source) {
+            return source;
+        } else if (hint instanceof String name) {
             try {
                 return (DataSource) GeoTools.jndiLookup(name);
             } catch (Exception e) {
@@ -91,8 +90,7 @@ public abstract class AbstractEpsgMediator extends AbstractAuthorityMediator {
                 this.datasource = lookupDataSource(hints);
             } catch (FactoryException lookupFailed) {
                 throw (NullPointerException)
-                        new NullPointerException("DataSource not provided:" + lookupFailed)
-                                .initCause(lookupFailed);
+                        new NullPointerException("DataSource not provided:" + lookupFailed).initCause(lookupFailed);
             }
         }
         hints.put(Hints.EPSG_DATA_SOURCE, this.datasource);
@@ -127,8 +125,8 @@ public abstract class AbstractEpsgMediator extends AbstractAuthorityMediator {
      * Gets a description of the object corresponding to a code.
      *
      * @param code Value allocated by authority.
-     * @return A description of the object, or {@code null} if the object corresponding to the
-     *     specified {@code code} has no description.
+     * @return A description of the object, or {@code null} if the object corresponding to the specified {@code code}
+     *     has no description.
      * @throws NoSuchAuthorityCodeException if the specified {@code code} was not found.
      * @throws FactoryException if the query failed for some other reason.
      */
@@ -136,8 +134,8 @@ public abstract class AbstractEpsgMediator extends AbstractAuthorityMediator {
     public InternationalString getDescriptionText(final String code) throws FactoryException {
         IdentifiedObject identifiedObject = createObject(code);
         final Identifier identifier = identifiedObject.getName();
-        if (identifier instanceof GenericName) {
-            return ((GenericName) identifier).toInternationalString();
+        if (identifier instanceof GenericName name) {
+            return name.toInternationalString();
         }
         return new SimpleInternationalString(identifier.getCode());
     }

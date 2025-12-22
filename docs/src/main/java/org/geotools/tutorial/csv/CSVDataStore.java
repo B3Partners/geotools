@@ -17,14 +17,15 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.store.ContentDataStore;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.feature.NameImpl;
-import org.opengis.feature.type.Name;
 
 /**
  * DataStore for Comma Seperated Value (CSV) files.
@@ -44,19 +45,19 @@ public class CSVDataStore extends ContentDataStore {
 
     // reader start
     /**
-     * Allow read access to file; for our package visible "friends". Please close the reader when
-     * done.
+     * Allow read access to file; for our package visible "friends". Please close the reader when done.
      *
      * @return CsvReader for file
      */
     CsvReader read() throws IOException {
-        Reader reader = new FileReader(file);
+        Reader reader = new FileReader(file, StandardCharsets.UTF_8);
         CsvReader csvReader = new CsvReader(reader);
         return csvReader;
     }
     // reader end
 
     // createTypeNames start
+    @Override
     protected List<Name> createTypeNames() throws IOException {
         String name = file.getName();
         name = name.substring(0, name.lastIndexOf('.'));

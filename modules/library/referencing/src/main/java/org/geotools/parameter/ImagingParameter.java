@@ -16,16 +16,17 @@
  */
 package org.geotools.parameter;
 
+import java.io.Serial;
 import java.net.URI;
+import java.text.MessageFormat;
 import javax.measure.Unit;
-import javax.media.jai.ParameterList;
+import org.eclipse.imagen.ParameterList;
+import org.geotools.api.parameter.InvalidParameterTypeException;
+import org.geotools.api.parameter.InvalidParameterValueException;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterValue;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.util.Utilities;
-import org.opengis.parameter.InvalidParameterTypeException;
-import org.opengis.parameter.InvalidParameterValueException;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterValue;
 
 /**
  * A particular parameter in a JAI's {@link ParameterList}.
@@ -36,6 +37,7 @@ import org.opengis.parameter.ParameterValue;
  */
 final class ImagingParameter<T> extends AbstractParameter implements ParameterValue<T> {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -170895429717041733L;
 
     /** The JAI's parameter list used as the backing store for parameter values. */
@@ -56,17 +58,16 @@ final class ImagingParameter<T> extends AbstractParameter implements ParameterVa
 
     /** Returns the exception to be throws for an operation on a wrong parameter type. */
     private InvalidParameterTypeException invalidType(final ClassCastException cause) {
-        final InvalidParameterTypeException exception =
-                new InvalidParameterTypeException(
-                        Errors.format(ErrorKeys.ILLEGAL_OPERATION_FOR_VALUE_CLASS_$1, getType()),
-                        getName(descriptor));
+        final Object arg0 = getType();
+        final InvalidParameterTypeException exception = new InvalidParameterTypeException(
+                MessageFormat.format(ErrorKeys.ILLEGAL_OPERATION_FOR_VALUE_CLASS_$1, arg0), getName(descriptor));
         exception.initCause(cause);
         return exception;
     }
 
     /**
-     * Returns the unlocalized operation name. This is different from {@link
-     * AbstractParameter#getName}, which may returns a localized name.
+     * Returns the unlocalized operation name. This is different from {@link AbstractParameter#getName}, which may
+     * returns a localized name.
      */
     private String getName() {
         return descriptor.getName().getCode();
@@ -95,11 +96,11 @@ final class ImagingParameter<T> extends AbstractParameter implements ParameterVa
         final String name = getName();
         final Class type = getType();
         try {
-            if (type.equals(Float.class)) parameters.getFloatParameter(name);
-            if (type.equals(Long.class)) parameters.getLongParameter(name);
-            if (type.equals(Integer.class)) parameters.getIntParameter(name);
-            if (type.equals(Short.class)) parameters.getShortParameter(name);
-            if (type.equals(Byte.class)) parameters.getByteParameter(name);
+            if (type.equals(Float.class)) return parameters.getFloatParameter(name);
+            if (type.equals(Long.class)) return parameters.getLongParameter(name);
+            if (type.equals(Integer.class)) return parameters.getIntParameter(name);
+            if (type.equals(Short.class)) return parameters.getShortParameter(name);
+            if (type.equals(Byte.class)) return parameters.getByteParameter(name);
             return parameters.getDoubleParameter(name);
         } catch (ClassCastException exception) {
             throw invalidType(exception);
@@ -175,7 +176,7 @@ final class ImagingParameter<T> extends AbstractParameter implements ParameterVa
     /**
      * Returns a reference to a file or a part of a file containing one or more parameter value.
      *
-     * @todo Add automatic conversions, if it appears usefull for JAI parameters.
+     * @todo Add automatic conversions, if it appears usefull for ImageN parameters.
      */
     @Override
     public URI valueFile() throws InvalidParameterTypeException {
@@ -188,9 +189,8 @@ final class ImagingParameter<T> extends AbstractParameter implements ParameterVa
     }
 
     /**
-     * Returns the parameter value as an object. The object type is typically a {@link Double},
-     * {@link Integer}, {@link Boolean}, {@link String}, {@link URI}, {@code double[]} or {@code
-     * int[]}.
+     * Returns the parameter value as an object. The object type is typically a {@link Double}, {@link Integer},
+     * {@link Boolean}, {@link String}, {@link URI}, {@code double[]} or {@code int[]}.
      */
     @Override
     public T getValue() {
@@ -278,8 +278,8 @@ final class ImagingParameter<T> extends AbstractParameter implements ParameterVa
     }
 
     /**
-     * Set the parameter value as an object. The object type is typically a {@link Double}, {@link
-     * Integer}, {@link Boolean}, {@link String}, {@link URI}, {@code double[]} or {@code int[]}.
+     * Set the parameter value as an object. The object type is typically a {@link Double}, {@link Integer},
+     * {@link Boolean}, {@link String}, {@link URI}, {@code double[]} or {@code int[]}.
      */
     @Override
     public void setValue(final Object value) throws InvalidParameterValueException {
@@ -323,8 +323,8 @@ final class ImagingParameter<T> extends AbstractParameter implements ParameterVa
     }
 
     /**
-     * Returns a clone of this parameter. Actually returns a different classes, since this parameter
-     * is not really cloneable (it would requires a clone of {@link #parameters} first).
+     * Returns a clone of this parameter. Actually returns a different classes, since this parameter is not really
+     * cloneable (it would requires a clone of {@link #parameters} first).
      */
     @Override
     public Parameter<T> clone() {

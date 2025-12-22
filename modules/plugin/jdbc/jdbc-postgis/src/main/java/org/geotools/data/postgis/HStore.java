@@ -16,11 +16,13 @@
  */
 package org.geotools.data.postgis;
 
+import java.io.Serial;
 import java.util.HashMap;
 import java.util.Map;
 
 public class HStore extends HashMap<String, String> {
 
+    @Serial
     private static final long serialVersionUID = -2696388478311744741L;
 
     public static final String TYPENAME = "hstore";
@@ -46,9 +48,7 @@ public class HStore extends HashMap<String, String> {
         String prefix = "";
         for (Map.Entry<String, String> entry : entrySet()) {
             sb.append(prefix);
-            sb.append(doubleQuoteString(entry.getKey()))
-                    .append(":")
-                    .append(doubleQuoteString(entry.getValue()));
+            sb.append(doubleQuoteString(entry.getKey())).append(":").append(doubleQuoteString(entry.getValue()));
             prefix = ",";
         }
         sb.append("}");
@@ -56,6 +56,6 @@ public class HStore extends HashMap<String, String> {
     }
 
     private static final String doubleQuoteString(String string) {
-        return string != null ? ("\"" + string + "\"") : NULL;
+        return string != null ? "\"" + string + "\"" : NULL;
     }
 }

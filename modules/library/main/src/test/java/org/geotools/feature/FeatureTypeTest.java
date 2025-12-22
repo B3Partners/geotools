@@ -34,6 +34,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.FeatureType;
 import org.geotools.data.DataTestCase;
 import org.geotools.data.DataUtilities;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -43,9 +46,6 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.FeatureType;
 
 /**
  * Test SimpleFeatureTypeBuilder and friends.
@@ -75,12 +75,8 @@ public class FeatureTypeTest extends DataTestCase {
         // URI("http://www.opengis.net/gml"),"Feature"));
         // assertTrue("extends gml feature", FeatureTypes.isDecendedFrom(abstractType2, new
         // URI("http://www.opengis.net/gml"),"Feature"));
-        assertTrue(
-                "abstractType2 --|> abstractType",
-                FeatureTypes.isDecendedFrom(abstractType2, abstractType));
-        assertFalse(
-                "abstractType2 !--|> abstractType",
-                FeatureTypes.isDecendedFrom(abstractType, abstractType2));
+        assertTrue("abstractType2 --|> abstractType", FeatureTypes.isDecendedFrom(abstractType2, abstractType));
+        assertFalse("abstractType2 !--|> abstractType", FeatureTypes.isDecendedFrom(abstractType, abstractType2));
 
         try {
             SimpleFeatureBuilder.build(abstractType, new Object[0], null);
@@ -128,12 +124,11 @@ public class FeatureTypeTest extends DataTestCase {
     }
 
     /**
-     * Test FeatureTypes.getAncestors() by constructing three levels of derived types and testing
-     * that the expected ancestors are returned at each level in reverse order.
+     * Test FeatureTypes.getAncestors() by constructing three levels of derived types and testing that the expected
+     * ancestors are returned at each level in reverse order.
      *
      * <p>UML type hierarchy of test types: Feature <|-- A <|-- B <|-- C
      */
-    @SuppressWarnings("serial")
     @Test
     public void testAncestors() throws Exception {
         URI uri = new URI("http://www.geotools.org/example");
@@ -164,33 +159,16 @@ public class FeatureTypeTest extends DataTestCase {
                 FeatureTypes.getAncestors(BasicFeatureTypes.FEATURE));
 
         assertEquals(
-                "Ancestors of A, nearest first",
-                new ArrayList<FeatureType>() {
-                    {
-                        add(BasicFeatureTypes.FEATURE);
-                    }
-                },
-                FeatureTypes.getAncestors(typeA));
+                "Ancestors of A, nearest first", List.of(BasicFeatureTypes.FEATURE), FeatureTypes.getAncestors(typeA));
 
         assertEquals(
                 "Ancestors of B, nearest first",
-                new ArrayList<FeatureType>() {
-                    {
-                        add(typeA);
-                        add(BasicFeatureTypes.FEATURE);
-                    }
-                },
+                List.of(typeA, BasicFeatureTypes.FEATURE),
                 FeatureTypes.getAncestors(typeB));
 
         assertEquals(
                 "Ancestors of C, nearest first",
-                new ArrayList<FeatureType>() {
-                    {
-                        add(typeB);
-                        add(typeA);
-                        add(BasicFeatureTypes.FEATURE);
-                    }
-                },
+                List.of(typeB, typeA, BasicFeatureTypes.FEATURE),
                 FeatureTypes.getAncestors(typeC));
     }
 
@@ -260,15 +238,11 @@ public class FeatureTypeTest extends DataTestCase {
             int length2 = Array.getLength(value);
             assertEquals(message, length1, length2);
             for (int i = 0; i < length1; i++) {
-                assertDuplicate(
-                        message + "[" + i + "]", Array.get(expected, i), Array.get(value, i));
+                assertDuplicate(message + "[" + i + "]", Array.get(expected, i), Array.get(value, i));
             }
             // assertNotSame( message, expected, value );
-        } else if (expected instanceof SimpleFeature) {
-            assertDuplicate(
-                    message,
-                    ((SimpleFeature) expected).getAttributes(),
-                    ((SimpleFeature) value).getAttributes());
+        } else if (expected instanceof SimpleFeature feature) {
+            assertDuplicate(message, feature.getAttributes(), ((SimpleFeature) value).getAttributes());
         } else {
             assertEquals(message, expected, value);
         }

@@ -17,23 +17,68 @@ downloading now before proceeding on to the step by step install instructions.
 
 The following tools are required to build GeoTools:
 
-* Apache Maven
+1. Required: Java Development Kit 17 (JDK 17)
   
-  Apache build tool used for GeoTools. Excels at managing dependencies.
+   Open JDK:
   
-  * http://maven.apache.org/download.html  
+   * https://adoptium.net/temurin/releases/?version=17 Temurin 17 (LTS) - Recommended
+  
+   `SDKMAN! <https://sdkman.io>`__ installation:
+   
+   .. code-block:: bash
+   
+      # list to determine latest Temurin JDK 17
+      sdk list java | grep "17.*-tem"
+   
+      # Installing latest Temurin JDK 17 shown above
+      sdk install java 17.0.15-tem
 
-* Recommended: Java Development Kit 8 (JDK 8)
+2. Optional: Java Development Kit 21 (JDK 21)
   
-  Open JDK:
+   Open JDK:
   
-  * https://adoptium.net Temurin 8 (LTS)
+   * https://adoptium.net/temurin/releases/?version=21 Temurin 21 (LTS)
+
+   `SDKMAN! <https://sdkman.io>`__ installation:
+   
+   .. code-block:: bash
+   
+      # list to determine latest Temurin JDK 21
+      sdk list java | grep "21.*-tem"
+   
+      # Installing latest Temurin JDK 21 shown above
+      sdk install java 21.0.7-tem
+   
+   GeoTools build process takes advantage of quality assurance tools compatible with the JDK you have installed.
+   Pull-requests are tested with both JDK 17 and JDK 21.
+
+   It is recommended you have both JDK 17 and JDK 21 both on hand troubleshoot QA failures.
+
+3. Apache Maven
   
-* Optional: Java Development Kit 11 (JDK 11)
+   Maven is the primary build tool used for GeoTools.
+   
+   Maven excels at downloading and managing dependencies.
+   Jars are staged in your home directory :file:`.m2/repository` folder for use when building.
+     
+   * http://maven.apache.org/download.html
+   
+  `SDKMAN! <https://sdkman.io>`__ installation:
   
-  Open JDK:
+   .. code-block:: bash
+   
+      sdk install maven
+
+4. Optional: Apache Ant
   
-  * https://adoptium.net Temurin 11 (LTS) - Recommended
+   A few update scripts and build integration scripts use Apache Ant.
+   
+   Apache Ant provides a cross-platform `Makefile` of build targets .. with all the usability of XML.
   
-GeoTools build process takes advantage of QA tools compatible with the JDK you have installed.
-It is recommended to have both JDK 8 and JDK 11 on hand to troubleshoot QA failures.
+   * https://ant.apache.org/bindownload.cgi
+   
+  `SDKMAN! <https://sdkman.io>`__ installation:
+  
+   .. code-block:: bash
+   
+      sdk install ant

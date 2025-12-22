@@ -23,22 +23,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.feature.NameImpl;
 import org.geotools.filter.FunctionFactory;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.process.ProcessFactory;
 import org.geotools.process.Processors;
 import org.geotools.process.RenderingProcess;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
 
 /**
- * A bridge between the process world and the filter function world: any process returning a single
- * value can be seen as a filter function
+ * A bridge between the process world and the filter function world: any process returning a single value can be seen as
+ * a filter function
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -48,22 +48,21 @@ public class ProcessFunctionFactory implements FunctionFactory {
     public static final String PRIMARY_OUTPUT = "PRIMARY";
 
     /** Compares process factories by their title */
-    static final Comparator<ProcessFactory> FACTORY_COMPARATOR =
-            (pf1, pf2) -> {
-                if (pf1.getTitle() == null) {
-                    if (pf2.getTitle() == null) {
-                        return 0;
-                    } else {
-                        return -1;
-                    }
-                } else {
-                    if (pf2.getTitle() == null) {
-                        return 1;
-                    } else {
-                        return pf1.getTitle().compareTo(pf2.getTitle());
-                    }
-                }
-            };
+    static final Comparator<ProcessFactory> FACTORY_COMPARATOR = (pf1, pf2) -> {
+        if (pf1.getTitle() == null) {
+            if (pf2.getTitle() == null) {
+                return 0;
+            } else {
+                return -1;
+            }
+        } else {
+            if (pf2.getTitle() == null) {
+                return 1;
+            } else {
+                return pf1.getTitle().compareTo(pf2.getTitle());
+            }
+        }
+    };
 
     /** Maps from function to process name */
     HashMap<Name, FunctionName> processToFunction;
@@ -95,9 +94,8 @@ public class ProcessFunctionFactory implements FunctionFactory {
             // wrap the process
             org.geotools.process.Process process = Processors.createProcess(processName);
             Map<String, Parameter<?>> parameters = Processors.getParameterInfo(processName);
-            if (process instanceof RenderingProcess) {
-                return new RenderingProcessFunction(
-                        processName, args, parameters, (RenderingProcess) process, fallback);
+            if (process instanceof RenderingProcess renderingProcess) {
+                return new RenderingProcessFunction(processName, args, parameters, renderingProcess, fallback);
             } else {
                 return new ProcessFunction(processName, args, parameters, process, fallback);
             }
@@ -128,21 +126,17 @@ public class ProcessFunctionFactory implements FunctionFactory {
                 }
                 for (Name processName : factory.getNames()) {
                     try {
-                        Map<String, Parameter<?>> resultInfo =
-                                factory.getResultInfo(processName, null);
+                        Map<String, Parameter<?>> resultInfo = factory.getResultInfo(processName, null);
                         Parameter<?> result = getPrimary(resultInfo);
                         // check there is a single output
                         if (result != null) {
-                            Map<String, Parameter<?>> parameterInfo =
-                                    factory.getParameterInfo(processName);
+                            Map<String, Parameter<?>> parameterInfo = factory.getParameterInfo(processName);
                             List<String> argumentNames = new ArrayList<>(parameterInfo.keySet());
-                            List<org.opengis.parameter.Parameter<?>> args =
-                                    new ArrayList<>(argumentNames.size());
+                            List<org.geotools.api.parameter.Parameter<?>> args = new ArrayList<>(argumentNames.size());
                             for (String argumentName : argumentNames) {
                                 args.add(parameterInfo.get(argumentName));
                             }
-                            FunctionName functionName =
-                                    new FunctionNameImpl(processName, result, args);
+                            FunctionName functionName = new FunctionNameImpl(processName, result, args);
                             functionNames.add(functionName);
                             processToFunction.put(processName, functionName);
                         }

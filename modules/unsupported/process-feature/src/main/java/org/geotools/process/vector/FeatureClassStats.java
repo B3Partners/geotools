@@ -17,12 +17,24 @@
 package org.geotools.process.vector;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import org.eclipse.imagen.media.range.Range;
+import org.eclipse.imagen.media.range.RangeFactory;
+import org.eclipse.imagen.media.stats.Statistics;
+import org.eclipse.imagen.media.stats.Statistics.StatsType;
+import org.eclipse.imagen.media.stats.StatsFactory;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
@@ -32,7 +44,6 @@ import org.geotools.filter.function.JenksNaturalBreaksFunction;
 import org.geotools.filter.function.QuantileFunction;
 import org.geotools.filter.function.RangedClassifier;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.process.ProcessException;
 import org.geotools.process.classify.ClassificationMethod;
 import org.geotools.process.classify.ClassificationStats;
@@ -41,13 +52,6 @@ import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
 import org.geotools.util.Converters;
 import org.geotools.util.logging.Logging;
-import org.jaitools.numeric.Range;
-import org.jaitools.numeric.Statistic;
-import org.jaitools.numeric.StreamingSampleStats;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.filter.FilterFactory;
-import org.opengis.util.ProgressListener;
 
 /**
  * Process that classifies vector data into "classes" using one of the following methods:
@@ -60,8 +64,7 @@ import org.opengis.util.ProgressListener;
  */
 @DescribeProcess(
         title = "featureClassStats",
-        description =
-                "Calculates statistics from feature" + " values classified into bins/classes.")
+        description = "Calculates statistics from feature" + " values classified into bins/classes.")
 public class FeatureClassStats implements VectorProcess {
 
     static Logger LOG = Logging.getLogger(FeatureClassStats.class);
@@ -72,18 +75,13 @@ public class FeatureClassStats implements VectorProcess {
     public Results execute(
             @DescribeParameter(name = "features", description = "The feature collection to analyze")
                     FeatureCollection features,
-            @DescribeParameter(name = "attribute", description = "The feature attribute to analyze")
-                    String attribute,
+            @DescribeParameter(name = "attribute", description = "The feature attribute to analyze") String attribute,
             @DescribeParameter(
                             name = "stats",
                             description = "The statistics to calculate for each class",
-                            collectionType = Statistic.class)
-                    Set<Statistic> stats,
-            @DescribeParameter(
-                            name = "classes",
-                            description = "The number of breaks/classes",
-                            min = 0)
-                    Integer classes,
+                            collectionType = StatsType.class)
+                    List<StatsType> statTypes,
+            @DescribeParameter(name = "classes", description = "The number of breaks/classes", min = 0) Integer classes,
             @DescribeParameter(name = "method", description = "The classification method", min = 0)
                     ClassificationMethod method,
             @DescribeParameter(
@@ -98,10 +96,10 @@ public class FeatureClassStats implements VectorProcess {
         // initial checks/defaults
         //
         if (features == null) {
-            throw new ProcessException(Errors.format(ErrorKeys.NULL_ARGUMENT_$1, "features"));
+            throw new ProcessException(MessageFormat.format(ErrorKeys.NULL_ARGUMENT_$1, "features"));
         }
         if (attribute == null) {
-            throw new ProcessException(Errors.format(ErrorKeys.NULL_ARGUMENT_$1, "attribute"));
+            throw new ProcessException(MessageFormat.format(ErrorKeys.NULL_ARGUMENT_$1, "attribute"));
         }
         PropertyDescriptor property = features.getSchema().getDescriptor(attribute);
         if (property == null) {
@@ -116,16 +114,15 @@ public class FeatureClassStats implements VectorProcess {
         }
 
         if (classes < 1) {
-            throw new ProcessException(
-                    Errors.format(ErrorKeys.ILLEGAL_ARGUMENT_$2, "classes", classes));
+            throw new ProcessException(MessageFormat.format(ErrorKeys.ILLEGAL_ARGUMENT_$2, "classes", classes));
         }
 
         // other defaults
         if (method == null) {
             method = ClassificationMethod.EQUAL_INTERVAL;
         }
-        if (stats == null || stats.isEmpty()) {
-            stats = Collections.singleton(Statistic.MEAN);
+        if (statTypes == null || statTypes.isEmpty()) {
+            statTypes = Collections.singletonList(StatsType.MEAN);
         }
 
         // choose the classification function
@@ -143,31 +140,22 @@ public class FeatureClassStats implements VectorProcess {
             default:
                 throw new ProcessException("Unknown method: " + method);
         }
-        cf.setParameters(
-                Arrays.asList(filterFactory.property(attribute), filterFactory.literal(classes)));
+        cf.setParameters(Arrays.asList(filterFactory.property(attribute), filterFactory.literal(classes)));
 
         // compute the breaks
         RangedClassifier rc = (RangedClassifier) cf.evaluate(features);
 
         // build up the stats
-        List<Range<Double>> ranges = new ArrayList<>();
-        StreamingSampleStats[] sampleStats = new StreamingSampleStats[rc.getSize()];
+        List<Range> ranges = new ArrayList<>();
+        RangeStatistics[] sampleStats = new RangeStatistics[rc.getSize()];
         for (int i = 0; i < rc.getSize(); i++) {
-            ranges.add(
-                    Range.create(
-                            (Double) rc.getMin(i),
-                            true,
-                            (Double) rc.getMax(i),
-                            i == rc.getSize() - 1));
+            ranges.add(RangeFactory.create((Double) rc.getMin(i), true, (Double) rc.getMax(i), i == rc.getSize() - 1));
 
-            StreamingSampleStats s = new StreamingSampleStats(Range.Type.INCLUDE);
-            s.setStatistics(stats.toArray(new Statistic[stats.size()]));
-
+            RangeStatistics rangeStatistics = new RangeStatistics(statTypes);
             if (noData != null) {
-                s.addNoDataValue(noData);
+                rangeStatistics.setNodata(noData);
             }
-
-            sampleStats[i] = s;
+            sampleStats[i] = rangeStatistics;
         }
 
         // calculate all the stats
@@ -182,32 +170,29 @@ public class FeatureClassStats implements VectorProcess {
                 // convert to double
                 Double dubVal = Converters.convert(val, Double.class);
                 if (dubVal == null) {
-                    LOG.warning(
-                            String.format(
-                                    "Unable to convert value %s (attribute '%s') to Double, "
-                                            + "skipping",
-                                    val, attribute));
+                    LOG.warning(String.format(
+                            "Unable to convert value %s (attribute '%s') to Double, " + "skipping", val, attribute));
                     continue;
                 }
 
                 int slot = rc.classify(dubVal);
-                sampleStats[slot].offer(dubVal);
+                sampleStats[slot].addSample(dubVal);
             }
         }
 
-        return new Results(ranges, sampleStats);
+        return new Results(ranges, statTypes, sampleStats);
     }
 
     public static class Results implements ClassificationStats {
 
-        List<Range<Double>> ranges;
-        StreamingSampleStats[] sampleStats;
-        Statistic firstStat;
+        private final List<StatsType> statsTypes;
+        List<Range> ranges;
+        RangeStatistics[] sampleStats;
 
-        public Results(List<Range<Double>> ranges, StreamingSampleStats[] sampleStats) {
+        public Results(List<Range> ranges, List<StatsType> statsTypes, RangeStatistics[] sampleStats) {
             this.ranges = ranges;
             this.sampleStats = sampleStats;
-            this.firstStat = sampleStats[0].getStatistics().iterator().next();
+            this.statsTypes = statsTypes;
         }
 
         @Override
@@ -216,8 +201,8 @@ public class FeatureClassStats implements VectorProcess {
         }
 
         @Override
-        public Set<Statistic> getStats() {
-            return sampleStats[0].getStatistics();
+        public Set<StatsType> getStats() {
+            return new LinkedHashSet<>(statsTypes);
         }
 
         @Override
@@ -226,22 +211,66 @@ public class FeatureClassStats implements VectorProcess {
         }
 
         @Override
-        public Double value(int i, Statistic stat) {
+        public Double value(int i, StatsType stat) {
             return sampleStats[i].getStatisticValue(stat);
         }
 
         @Override
         public Long count(int i) {
-            return sampleStats[i].getNumAccepted(firstStat);
+            return sampleStats[i].getNumAccepted();
         }
 
         public void print() {
             for (int i = 0; i < size(); i++) {
                 LOG.info(String.valueOf(range(i)));
-                for (Statistic stat : sampleStats[0].getStatistics()) {
-                    LOG.info(stat + " = " + value(i, stat));
+                for (StatsType type : statsTypes) {
+                    LOG.info(type + " = " + value(i, type));
                 }
             }
+        }
+    }
+
+    private static class RangeStatistics {
+        private final List<Statistics> stats;
+        private final List<StatsType> statTypes;
+        private Double noData;
+
+        public RangeStatistics(List<StatsType> statTypes) {
+            this.statTypes = statTypes;
+            stats = statTypes.stream()
+                    .map(t -> StatsFactory.createSimpleStatisticsObjectFromInt(t.getStatsId()))
+                    .collect(Collectors.toList());
+        }
+
+        public List<Statistics> getStats() {
+            return stats;
+        }
+
+        public void addSample(double value) {
+            if (Double.isNaN(value) || noData != null && noData.equals(value)) {
+                return; // skip noData values
+            }
+            for (Statistics stat : stats) {
+                stat.addSample(value);
+            }
+        }
+
+        public void setNodata(Double noData) {
+            this.noData = noData;
+        }
+
+        public Long getNumAccepted() {
+            return stats.get(0).getNumSamples();
+        }
+
+        public Double getStatisticValue(StatsType stat) {
+            int idx = statTypes.indexOf(stat);
+            if (idx < 0 || idx >= stats.size()) {
+                throw new IllegalArgumentException("Unknown statistic: " + stat);
+            }
+
+            Statistics statistics = stats.get(idx);
+            return ((Number) statistics.getResult()).doubleValue();
         }
     }
 }

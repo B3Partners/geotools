@@ -10,16 +10,16 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import org.geotools.data.Parameter;
+import org.eclipse.imagen.media.range.Range;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.feature.type.Name;
 import org.geotools.feature.NameImpl;
 import org.geotools.process.Processors;
 import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
 import org.geotools.util.factory.FactoryIteratorProvider;
 import org.geotools.util.factory.GeoTools;
-import org.jaitools.numeric.Range;
 import org.junit.Test;
-import org.opengis.feature.type.Name;
 
 public class RasterProcessFactoryTest {
 
@@ -34,8 +34,7 @@ public class RasterProcessFactoryTest {
 
     @Test
     public void testRangeLookup() {
-        Map<String, Parameter<?>> params =
-                factory.getParameterInfo(new NameImpl("ras", "RangeLookup"));
+        Map<String, Parameter<?>> params = factory.getParameterInfo(new NameImpl("ras", "RangeLookup"));
         Parameter<?> ranges = params.get("ranges");
         assertEquals("ranges", ranges.getName());
         assertEquals(0, ranges.getMinOccurs());
@@ -47,18 +46,17 @@ public class RasterProcessFactoryTest {
     public void testAddCustomProcess() {
         assertNull(Processors.createProcess(new NameImpl("ras", "Custom")));
 
-        FactoryIteratorProvider p =
-                new FactoryIteratorProvider() {
-                    @Override
-                    public <T> Iterator<T> iterator(Class<T> category) {
-                        if (category == RasterProcess.class) {
-                            @SuppressWarnings("unchecked")
-                            T customProcess = (T) new CustomProcess();
-                            return Arrays.asList(customProcess).iterator();
-                        }
-                        return null;
-                    }
-                };
+        FactoryIteratorProvider p = new FactoryIteratorProvider() {
+            @Override
+            public <T> Iterator<T> iterator(Class<T> category) {
+                if (category == RasterProcess.class) {
+                    @SuppressWarnings("unchecked")
+                    T customProcess = (T) new CustomProcess();
+                    return Arrays.asList(customProcess).iterator();
+                }
+                return null;
+            }
+        };
         GeoTools.addFactoryIteratorProvider(p);
         try {
             Processors.reset();

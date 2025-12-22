@@ -48,7 +48,7 @@ import org.locationtech.jts.geom.Polygon;
 
 // unfortunately Geometry.equals(Geometry) does not behave as Geometry.equals(Object)
 // see https://github.com/locationtech/jts/issues/159
-@SuppressWarnings({"unchecked", "PMD.SimplifiableTestAssertion"})
+@SuppressWarnings("unchecked")
 public class ElasticParserUtilTest {
 
     private ElasticParserUtil parserUtil;
@@ -152,8 +152,7 @@ public class ElasticParserUtilTest {
     public void testGeoPointAsStringArray() {
         final double lat = rand.nextDouble() * 90 - 90;
         final double lon = rand.nextDouble() * 180 - 180;
-        final Geometry geometry =
-                parserUtil.createGeometry(Arrays.asList(String.valueOf(lon), String.valueOf(lat)));
+        final Geometry geometry = parserUtil.createGeometry(Arrays.asList(String.valueOf(lon), String.valueOf(lat)));
         assertTrue(geometry.equals(geometryFactory.createPoint(new Coordinate(lon, lat))));
     }
 
@@ -384,10 +383,10 @@ public class ElasticParserUtilTest {
 
     @Test
     public void testReadStringFieldWithConfuser() {
-        properties.put("parent1", new LinkedHashMap<String, Object>());
+        properties.put("parent1", new LinkedHashMap<>());
         ((Map) properties.get("parent1")).put("attr", "value2");
         properties.put("attr", "value");
-        properties.put("parent2", new LinkedHashMap<String, Object>());
+        properties.put("parent2", new LinkedHashMap<>());
         ((Map) properties.get("parent2")).put("attr", "value3");
         List<Object> values = parserUtil.readField(properties, "attr");
         assertEquals(1, values.size());
@@ -396,7 +395,7 @@ public class ElasticParserUtilTest {
 
     @Test
     public void testReadInnerString() {
-        properties.put("parent", new LinkedHashMap<String, Object>());
+        properties.put("parent", new LinkedHashMap<>());
         ((Map) properties.get("parent")).put("attr", "value");
         List<Object> values = parserUtil.readField(properties, "parent.attr");
         assertEquals(1, values.size());
@@ -405,7 +404,7 @@ public class ElasticParserUtilTest {
 
     @Test
     public void testReadInnerStringArray() {
-        properties.put("parent", new LinkedHashMap<String, Object>());
+        properties.put("parent", new LinkedHashMap<>());
         ((Map) properties.get("parent")).put("attr", Arrays.asList("value1", "value2"));
         List<Object> values = parserUtil.readField(properties, "parent.attr");
         assertEquals(2, values.size());
@@ -415,10 +414,10 @@ public class ElasticParserUtilTest {
 
     @Test
     public void testReadStringFromObjectArray() {
-        properties.put("parent", new ArrayList<Map<String, Object>>());
-        ((List) properties.get("parent")).add(new LinkedHashMap<String, Object>());
+        properties.put("parent", new ArrayList<>());
+        ((List) properties.get("parent")).add(new LinkedHashMap<>());
         ((Map) ((List) properties.get("parent")).get(0)).put("attr", "value1");
-        ((List) properties.get("parent")).add(new LinkedHashMap<String, Object>());
+        ((List) properties.get("parent")).add(new LinkedHashMap<>());
         ((Map) ((List) properties.get("parent")).get(1)).put("attr", "value2");
         List<Object> values = parserUtil.readField(properties, "parent.attr");
         assertEquals(2, values.size());
@@ -428,14 +427,12 @@ public class ElasticParserUtilTest {
 
     @Test
     public void testReadStringFromObjectArrayOnceRemoved() {
-        properties.put("parent", new ArrayList<Map<String, Object>>());
-        ((List) properties.get("parent")).add(new LinkedHashMap<String, Object>());
-        ((Map) ((List) properties.get("parent")).get(0))
-                .put("child", new LinkedHashMap<String, Object>());
+        properties.put("parent", new ArrayList<>());
+        ((List) properties.get("parent")).add(new LinkedHashMap<>());
+        ((Map) ((List) properties.get("parent")).get(0)).put("child", new LinkedHashMap<>());
         ((Map) ((Map) ((List) properties.get("parent")).get(0)).get("child")).put("attr", "value1");
-        ((List) properties.get("parent")).add(new LinkedHashMap<String, Object>());
-        ((Map) ((List) properties.get("parent")).get(1))
-                .put("child", new LinkedHashMap<String, Object>());
+        ((List) properties.get("parent")).add(new LinkedHashMap<>());
+        ((Map) ((List) properties.get("parent")).get(1)).put("child", new LinkedHashMap<>());
         ((Map) ((Map) ((List) properties.get("parent")).get(1)).get("child")).put("attr", "value2");
         List<Object> values = parserUtil.readField(properties, "parent.child.attr");
         assertEquals(2, values.size());
@@ -500,8 +497,8 @@ public class ElasticParserUtilTest {
     }
 
     /**
-     * This test ensures that GeoJSON formatted values are returned correctly when dots are used
-     * within the attribute name.
+     * This test ensures that GeoJSON formatted values are returned correctly when dots are used within the attribute
+     * name.
      */
     @Test
     public void testGeoJSONAttributesContainingDots() {

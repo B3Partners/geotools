@@ -2,11 +2,11 @@ package org.geotools.se.v1_1;
 
 import static org.junit.Assert.assertEquals;
 
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.TextSymbolizer;
 import org.geotools.measure.Units;
 import org.junit.Test;
-import org.opengis.style.PointSymbolizer;
-import org.opengis.style.PolygonSymbolizer;
-import org.opengis.style.TextSymbolizer;
 import si.uom.SI;
 
 public class RountTripLocalUomTest extends SETestSupport {
@@ -25,8 +25,7 @@ public class RountTripLocalUomTest extends SETestSupport {
 
     @Test
     public void testRoundTripPolygon() throws Exception {
-        PolygonSymbolizer sym =
-                (PolygonSymbolizer) parse("example-polygonsymbolizer-local-uom.xml");
+        PolygonSymbolizer sym = (PolygonSymbolizer) parse("example-polygonsymbolizer-local-uom.xml");
         assertEquals(SI.METRE, sym.getUnitOfMeasure());
         assertEquals("2m", sym.getStroke().getWidth().evaluate(null, String.class));
         encode(sym, SE.PolygonSymbolizer);

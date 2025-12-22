@@ -18,6 +18,9 @@ package org.geotools.geometry.jts;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.referencing.operation.transform.AffineTransform2D;
 import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.CoordinateSequenceFactory;
@@ -31,18 +34,14 @@ import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 
 /**
- * Service object that takes a geometry and applies a {@link MathTransform} to the coordinates it
- * contains, creating a new geometry as the transformed output.
+ * Service object that takes a geometry and applies a {@link MathTransform} to the coordinates it contains, creating a
+ * new geometry as the transformed output.
  *
- * <p>The standard usage pattern is to supply a {@link MathTransform} and @link
- * CoordinateReferenceSystem} explicitly. The {@link #transform(Geometry)} method can then be used
- * to construct transformed geometries using the {@link GeometryFactory} and {@link
- * CoordinateSequenceFactory} of the input geometry.
+ * <p>The standard usage pattern is to supply a {@link MathTransform} and @link CoordinateReferenceSystem} explicitly.
+ * The {@link #transform(Geometry)} method can then be used to construct transformed geometries using the
+ * {@link GeometryFactory} and {@link CoordinateSequenceFactory} of the input geometry.
  *
  * @author Andrea Aime
  * @author Martin Davis
@@ -56,10 +55,7 @@ public class GeometryCoordinateSequenceTransformer {
 
     private boolean curveCompatible;
 
-    /**
-     * Creates a transformer which uses the {@link CoordinateSequenceFactory} of the source
-     * geometries.
-     */
+    /** Creates a transformer which uses the {@link CoordinateSequenceFactory} of the source geometries. */
     public GeometryCoordinateSequenceTransformer() {
         // the csTransformer is initialized from the first geometry
         // and the supplied transform
@@ -68,9 +64,8 @@ public class GeometryCoordinateSequenceTransformer {
     /**
      * Creates a transformer which uses a client-specified {@link CoordinateSequenceTransformer}.
      *
-     * <p><b>WARNING:</b> The CoordinateSequenceTransformer must use the same {@link
-     * CoordinateSequenceFactory} as the output GeometryFactory, so that geometries are constructed
-     * consistently.
+     * <p><b>WARNING:</b> The CoordinateSequenceTransformer must use the same {@link CoordinateSequenceFactory} as the
+     * output GeometryFactory, so that geometries are constructed consistently.
      */
     public GeometryCoordinateSequenceTransformer(CoordinateSequenceTransformer transformer) {
         inputCSTransformer = transformer;
@@ -86,8 +81,7 @@ public class GeometryCoordinateSequenceTransformer {
     /**
      * Sets the target coordinate reference system.
      *
-     * <p>This value is used to set the coordinate reference system of geometries after they have
-     * been transformed.
+     * <p>This value is used to set the coordinate reference system of geometries after they have been transformed.
      *
      * @param crs The target coordinate reference system.
      */
@@ -124,10 +118,9 @@ public class GeometryCoordinateSequenceTransformer {
         // lazily init csTransformer using geometry's CSFactory
         init(factory);
 
-        if (g instanceof Point) {
-            transformed = transformPoint((Point) g, factory);
-        } else if (g instanceof MultiPoint) {
-            MultiPoint mp = (MultiPoint) g;
+        if (g instanceof Point point) {
+            transformed = transformPoint(point, factory);
+        } else if (g instanceof MultiPoint mp) {
             Point[] points = new Point[mp.getNumGeometries()];
 
             for (int i = 0; i < points.length; i++) {
@@ -135,10 +128,9 @@ public class GeometryCoordinateSequenceTransformer {
             }
 
             transformed = factory.createMultiPoint(points);
-        } else if (g instanceof LineString) {
-            transformed = transformLineString((LineString) g, factory);
-        } else if (g instanceof MultiLineString) {
-            MultiLineString mls = (MultiLineString) g;
+        } else if (g instanceof LineString string) {
+            transformed = transformLineString(string, factory);
+        } else if (g instanceof MultiLineString mls) {
             LineString[] lines = new LineString[mls.getNumGeometries()];
 
             for (int i = 0; i < lines.length; i++) {
@@ -146,10 +138,9 @@ public class GeometryCoordinateSequenceTransformer {
             }
 
             transformed = factory.createMultiLineString(lines);
-        } else if (g instanceof Polygon) {
-            transformed = transformPolygon((Polygon) g, factory);
-        } else if (g instanceof MultiPolygon) {
-            MultiPolygon mp = (MultiPolygon) g;
+        } else if (g instanceof Polygon polygon) {
+            transformed = transformPolygon(polygon, factory);
+        } else if (g instanceof MultiPolygon mp) {
             Polygon[] polygons = new Polygon[mp.getNumGeometries()];
 
             for (int i = 0; i < polygons.length; i++) {
@@ -157,8 +148,7 @@ public class GeometryCoordinateSequenceTransformer {
             }
 
             transformed = factory.createMultiPolygon(polygons);
-        } else if (g instanceof GeometryCollection) {
-            GeometryCollection gc = (GeometryCollection) g;
+        } else if (g instanceof GeometryCollection gc) {
             Geometry[] geoms = new Geometry[gc.getNumGeometries()];
 
             for (int i = 0; i < geoms.length; i++) {
@@ -174,7 +164,7 @@ public class GeometryCoordinateSequenceTransformer {
         // do a special check for coordinate reference system
         transformed.setUserData(g.getUserData());
 
-        if ((g.getUserData() == null) || g.getUserData() instanceof CoordinateReferenceSystem) {
+        if (g.getUserData() == null || g.getUserData() instanceof CoordinateReferenceSystem) {
             // set the new one to be the target crs
             if (crs != null) {
                 transformed.setUserData(crs);
@@ -185,10 +175,9 @@ public class GeometryCoordinateSequenceTransformer {
     }
 
     /** @throws TransformException */
-    public LineString transformLineString(LineString ls, GeometryFactory gf)
-            throws TransformException {
-        if (ls instanceof CurvedGeometry<?> && curveCompatible) {
-            return transformCurvedLineString((CurvedGeometry) ls, gf);
+    public LineString transformLineString(LineString ls, GeometryFactory gf) throws TransformException {
+        if (ls instanceof CurvedGeometry geometry && curveCompatible) {
+            return transformCurvedLineString(geometry, gf);
         } else {
             return transformStraightLineString(ls, gf);
         }
@@ -202,12 +191,10 @@ public class GeometryCoordinateSequenceTransformer {
         AffineTransform2D at = (AffineTransform2D) mt;
         // return true if we are scaling by the same amount, and the rotational
         // elements are equal in absolute value
-        return at.getScaleX() == at.getScaleY()
-                && Math.abs(at.getShearX()) == Math.abs(at.getShearY());
+        return at.getScaleX() == at.getScaleY() && Math.abs(at.getShearX()) == Math.abs(at.getShearY());
     }
 
-    private LineString transformStraightLineString(LineString ls, GeometryFactory gf)
-            throws TransformException {
+    private LineString transformStraightLineString(LineString ls, GeometryFactory gf) throws TransformException {
         // if required, init csTransformer using geometry's CSFactory
         init(gf);
 
@@ -227,8 +214,7 @@ public class GeometryCoordinateSequenceTransformer {
     private LineString transformCurvedLineString(CurvedGeometry<?> curved, GeometryFactory gf)
             throws TransformException {
         CurvedGeometryFactory cf = CurvedGeometries.getFactory(curved);
-        if (curved instanceof SingleCurvedGeometry<?>) {
-            SingleCurvedGeometry<?> single = (SingleCurvedGeometry<?>) curved;
+        if (curved instanceof SingleCurvedGeometry<?> single) {
             double[] controlPoints = single.getControlPoints();
             double[] target = new double[controlPoints.length];
             transform.transform(controlPoints, 0, target, 0, controlPoints.length / 2);
@@ -257,8 +243,7 @@ public class GeometryCoordinateSequenceTransformer {
     }
 
     /** @param cs a CoordinateSequence */
-    private CoordinateSequence projectCoordinateSequence(CoordinateSequence cs)
-            throws TransformException {
+    private CoordinateSequence projectCoordinateSequence(CoordinateSequence cs) throws TransformException {
         return csTransformer.transform(cs, transform);
     }
 

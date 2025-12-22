@@ -17,21 +17,21 @@
 package org.geotools.data.ogr;
 
 import java.io.IOException;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
-import org.geotools.data.QueryCapabilities;
-import org.geotools.data.ResourceInfo;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.QueryCapabilities;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureStore;
 import org.geotools.data.store.ContentState;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
 
 /**
  * FeatureStore for the OGR store, based on the {@link ContentFeatureStore} framework
@@ -50,8 +50,8 @@ class OGRFeatureStore extends ContentFeatureStore {
     }
 
     @Override
-    protected FeatureWriter<SimpleFeatureType, SimpleFeature> getWriterInternal(
-            Query query, int flags) throws IOException {
+    protected FeatureWriter<SimpleFeatureType, SimpleFeature> getWriterInternal(Query query, int flags)
+            throws IOException {
         OGRDataSource dataSource = null;
         Object layer = null;
         boolean cleanup = true;
@@ -65,8 +65,7 @@ class OGRFeatureStore extends ContentFeatureStore {
             FeatureReader<SimpleFeatureType, SimpleFeature> reader =
                     delegate.getReaderInternal(dataSource, layer, query);
             GeometryFactory gf = delegate.getGeometryFactory(query);
-            OGRDirectFeatureWriter result =
-                    new OGRDirectFeatureWriter(dataSource, layer, reader, getSchema(), gf, ogr);
+            OGRDirectFeatureWriter result = new OGRDirectFeatureWriter(dataSource, layer, reader, getSchema(), gf, ogr);
             cleanup = false;
             return result;
         } finally {
@@ -112,8 +111,7 @@ class OGRFeatureStore extends ContentFeatureStore {
     }
 
     @Override
-    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query)
-            throws IOException {
+    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query) throws IOException {
         return delegate.getReaderInternal(query);
     }
 
@@ -147,18 +145,18 @@ class OGRFeatureStore extends ContentFeatureStore {
     }
 
     @Override
-    protected boolean canFilter() {
-        return delegate.canFilter();
+    protected boolean canFilter(Query query) {
+        return delegate.canFilter(query);
     }
 
     @Override
-    protected boolean canSort() {
-        return delegate.canSort();
+    protected boolean canSort(Query query) {
+        return delegate.canSort(query);
     }
 
     @Override
-    protected boolean canRetype() {
-        return delegate.canRetype();
+    protected boolean canRetype(Query query) {
+        return delegate.canRetype(query);
     }
 
     @Override

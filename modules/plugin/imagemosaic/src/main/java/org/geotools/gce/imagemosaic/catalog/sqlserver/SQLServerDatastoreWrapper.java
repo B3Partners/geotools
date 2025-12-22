@@ -26,15 +26,15 @@ import java.sql.Statement;
 import java.util.Properties;
 import java.util.logging.Level;
 import org.apache.commons.beanutils.BeanUtils;
-import org.geotools.data.DataStore;
-import org.geotools.data.Transaction;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.gce.imagemosaic.catalog.oracle.DataStoreWrapper;
 import org.geotools.gce.imagemosaic.catalog.oracle.FeatureTypeMapper;
 import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.jdbc.SQLDialect;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /** Specific SQLServer implementation for a {@link DataStoreWrapper} */
 public class SQLServerDatastoreWrapper extends DataStoreWrapper {
@@ -42,15 +42,16 @@ public class SQLServerDatastoreWrapper extends DataStoreWrapper {
     public static final String DEFAULT_METADATA_TABLE = "mosaic_geometry_metadata";
     private static final String METADATA_TABLE_PROPERTY = "geometryMetadataTable";
     private static final String CREATE_METADATA_TABLE =
-            "CREATE TABLE %s(\n"
-                    + "   F_TABLE_SCHEMA VARCHAR(128),\n"
-                    + "   F_TABLE_NAME VARCHAR(128) NOT NULL,\n"
-                    + "   F_GEOMETRY_COLUMN VARCHAR(128) NOT NULL,\n"
-                    + "   COORD_DIMENSION INTEGER,\n"
-                    + "   SRID INTEGER NOT NULL,\n"
-                    + "   TYPE VARCHAR(30) NOT NULL,\n"
-                    + "   UNIQUE(F_TABLE_SCHEMA, F_TABLE_NAME, F_GEOMETRY_COLUMN),\n"
-                    + "   CHECK(TYPE IN ('POINT','LINE', 'POLYGON', 'COLLECTION', 'MULTIPOINT', 'MULTILINE', 'MULTIPOLYGON', 'GEOMETRY') ))";
+            """
+            CREATE TABLE %s(
+               F_TABLE_SCHEMA VARCHAR(128),
+               F_TABLE_NAME VARCHAR(128) NOT NULL,
+               F_GEOMETRY_COLUMN VARCHAR(128) NOT NULL,
+               COORD_DIMENSION INTEGER,
+               SRID INTEGER NOT NULL,
+               TYPE VARCHAR(30) NOT NULL,
+               UNIQUE(F_TABLE_SCHEMA, F_TABLE_NAME, F_GEOMETRY_COLUMN),
+               CHECK(TYPE IN ('POINT','LINE', 'POLYGON', 'COLLECTION', 'MULTIPOINT', 'MULTILINE', 'MULTIPOLYGON', 'GEOMETRY') ))""";
 
     public SQLServerDatastoreWrapper(DataStore datastore, String location) {
         super(datastore, location);
@@ -86,13 +87,12 @@ public class SQLServerDatastoreWrapper extends DataStoreWrapper {
 
                     // check if it's already there
                     try (ResultSet res =
-                            metaData.getTables(
-                                    null, databaseSchema, metadataTable, new String[] {"TABLE"})) {
+                            metaData.getTables(null, databaseSchema, metadataTable, new String[] {"TABLE"})) {
                         createMetadataTable = !res.next();
                     }
                     // it not create
                     if (createMetadataTable) {
-                        st.executeUpdate(String.format(CREATE_METADATA_TABLE, qualifiedTableName));
+                        st.executeUpdate(CREATE_METADATA_TABLE.formatted(qualifiedTableName));
                     }
                 }
             }
@@ -109,8 +109,8 @@ public class SQLServerDatastoreWrapper extends DataStoreWrapper {
     }
 
     /**
-     * Return a specific {@link FeatureTypeMapper} by parsing mapping properties contained within
-     * the specified {@link Properties} object
+     * Return a specific {@link FeatureTypeMapper} by parsing mapping properties contained within the specified
+     * {@link Properties} object
      */
     @Override
     protected FeatureTypeMapper getFeatureTypeMapper(final Properties props) throws Exception {
@@ -119,21 +119,19 @@ public class SQLServerDatastoreWrapper extends DataStoreWrapper {
     }
 
     @Override
-    protected FeatureTypeMapper getFeatureTypeMapper(SimpleFeatureType featureType)
-            throws Exception {
+    protected FeatureTypeMapper getFeatureTypeMapper(SimpleFeatureType featureType) throws Exception {
         return new SQLServerTypeMapper(featureType);
     }
 
     @Override
-    protected SimpleFeatureSource transformFeatureStore(
-            SimpleFeatureStore store, FeatureTypeMapper mapper) throws IOException {
+    protected SimpleFeatureSource transformFeatureStore(SimpleFeatureStore store, FeatureTypeMapper mapper)
+            throws IOException {
         SimpleFeatureSource transformedSource = mapper.getSimpleFeatureSource();
         if (transformedSource != null) {
             return transformedSource;
         } else {
             transformedSource =
-                    new SQLServerTransformFeatureStore(
-                            store, mapper.getName(), mapper.getDefinitions(), datastore);
+                    new SQLServerTransformFeatureStore(store, mapper.getName(), mapper.getDefinitions(), datastore);
             ((SQLServerTypeMapper) mapper).setSimpleFeatureSource(transformedSource);
             return transformedSource;
         }

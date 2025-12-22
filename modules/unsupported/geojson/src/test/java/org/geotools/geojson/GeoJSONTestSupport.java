@@ -19,10 +19,10 @@ package org.geotools.geojson;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.util.Converters;
 import org.junit.Assert;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
 
 public abstract class GeoJSONTestSupport {
 
@@ -44,7 +44,6 @@ public abstract class GeoJSONTestSupport {
         return sb.toString();
     }
 
-    @SuppressWarnings("PMD.SimplifiableTestAssertion")
     protected void assertEqualsLax(SimpleFeature f1, SimpleFeature f2) {
         Assert.assertEquals(f1.getID(), f1.getID());
         Assert.assertEquals(f1.getAttributeCount(), f2.getAttributeCount());
@@ -53,17 +52,16 @@ public abstract class GeoJSONTestSupport {
             Object o1 = f1.getAttribute(i);
             Object o2 = f2.getAttribute(i);
 
-            if (o1 instanceof Geometry) {
-                Assert.assertTrue(((Geometry) o1).equals((Geometry) o2));
+            if (o1 instanceof Geometry geometry) {
+                Assert.assertTrue(geometry.equals((Geometry) o2));
             } else {
-                if (o1 instanceof Number) {
+                if (o1 instanceof Number number) {
                     if (o1 instanceof Integer || o1 instanceof Long) {
                         Assert.assertTrue(o2 instanceof Integer || o2 instanceof Long);
-                        Assert.assertEquals(((Number) o1).intValue(), ((Number) o2).intValue());
+                        Assert.assertEquals(number.intValue(), ((Number) o2).intValue());
                     } else if (o1 instanceof Float || o1 instanceof Double) {
                         Assert.assertTrue(o2 instanceof Float || o2 instanceof Double);
-                        Assert.assertEquals(
-                                ((Number) o1).doubleValue(), ((Number) o2).doubleValue(), 0d);
+                        Assert.assertEquals(number.doubleValue(), ((Number) o2).doubleValue(), 0d);
                     } else {
                         Assert.fail();
                     }
@@ -79,8 +77,6 @@ public abstract class GeoJSONTestSupport {
     }
 
     protected String toString(int val) {
-        return val == 0
-                ? "zero"
-                : val == 1 ? "one" : val == 2 ? "two" : val == 3 ? "three" : "four";
+        return val == 0 ? "zero" : val == 1 ? "one" : val == 2 ? "two" : val == 3 ? "three" : "four";
     }
 }

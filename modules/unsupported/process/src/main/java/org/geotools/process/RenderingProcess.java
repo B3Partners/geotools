@@ -17,47 +17,44 @@
 package org.geotools.process;
 
 import java.util.Map;
-import org.geotools.data.Query;
-import org.opengis.coverage.grid.GridCoverageReader;
-import org.opengis.coverage.grid.GridGeometry;
-import org.opengis.parameter.GeneralParameterValue;
+import org.geotools.api.coverage.grid.GridCoverageReader;
+import org.geotools.api.coverage.grid.GridGeometry;
+import org.geotools.api.data.Query;
+import org.geotools.api.parameter.GeneralParameterValue;
 
 /**
- * An interface to be implemented by processes meant to be integrated as feature collection/grid
- * coverage transformations in a rendering chain.
+ * An interface to be implemented by processes meant to be integrated as feature collection/grid coverage
+ * transformations in a rendering chain.
  *
- * <p>The method provide information about how the data is altered so that the renderer can query
- * the appropriate part of the input data that will feed the process
+ * <p>The method provide information about how the data is altered so that the renderer can query the appropriate part
+ * of the input data that will feed the process
  *
  * @author Andrea Aime - GeoSolutions
  */
 public interface RenderingProcess extends Process {
 
     /**
-     * Given a target query and a target grid geometry returns the query to be used to read the
-     * input data of the process involved in rendering. This method will be called only if the input
-     * data is a feature collection.
+     * Given a target query and a target grid geometry returns the query to be used to read the input data of the
+     * process involved in rendering. This method will be called only if the input data is a feature collection.
      *
      * @param input The process inputs
      * @param targetQuery The query against the transformation outputs
      * @param gridGeometry The grid geometry desired for the outputs of the transformation
      * @return The transformed query, or null if no inversion is possible/meaningful
      */
-    Query invertQuery(Map<String, Object> input, Query targetQuery, GridGeometry gridGeometry)
-            throws ProcessException;
+    Query invertQuery(Map<String, Object> input, Query targetQuery, GridGeometry gridGeometry) throws ProcessException;
 
     /**
-     * Given a target query and a target grid geometry returns the grid geometry to be used to read
-     * the input data of the process involved in rendering. This method will be called only if the
-     * input data is a grid coverage or a grid coverage reader
+     * Given a target query and a target grid geometry returns the grid geometry to be used to read the input data of
+     * the process involved in rendering. This method will be called only if the input data is a grid coverage or a grid
+     * coverage reader
      *
      * @param input The process inputs
      * @param targetQuery The query against the transformation outputs
      * @param targetGridGeometry The grid geometry desired for the outputs of the transformation
      * @return The transformed query, or null if no inversion is possible/meaningful
      */
-    GridGeometry invertGridGeometry(
-            Map<String, Object> input, Query targetQuery, GridGeometry targetGridGeometry)
+    GridGeometry invertGridGeometry(Map<String, Object> input, Query targetQuery, GridGeometry targetGridGeometry)
             throws ProcessException;
 
     /**
@@ -71,5 +68,17 @@ public interface RenderingProcess extends Process {
     default GeneralParameterValue[] customizeReadParams(
             Map<String, Object> input, GridCoverageReader reader, GeneralParameterValue[] params) {
         return params;
+    }
+
+    /**
+     * Returns true if the code should be given a raster input that is clipped to the rendering area, false if the input
+     * can also contain data outside the rendering area (e.g., for interpolation). Applies only to transformations
+     * taking a raster input. Default implementation returns false
+     *
+     * @param input The process input parameters
+     * @return True if the input should be clipped to the rendering area, false otherwise
+     */
+    default boolean clipOnRenderingArea(Map<String, Object> input) {
+        return false;
     }
 }

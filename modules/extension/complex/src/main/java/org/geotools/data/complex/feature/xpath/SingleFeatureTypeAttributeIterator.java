@@ -18,8 +18,8 @@ package org.geotools.data.complex.feature.xpath;
 
 import org.apache.commons.jxpath.ri.model.NodeIterator;
 import org.apache.commons.jxpath.ri.model.NodePointer;
-import org.opengis.feature.type.ComplexType;
-import org.opengis.feature.type.Name;
+import org.geotools.api.feature.type.ComplexType;
+import org.geotools.api.feature.type.Name;
 
 /**
  * Iterates over a single attribute of a feature type.
@@ -40,8 +40,7 @@ public class SingleFeatureTypeAttributeIterator implements NodeIterator {
      *
      * @param pointer The pointer to the feature.
      */
-    public SingleFeatureTypeAttributeIterator(
-            NodePointer pointer, ComplexType featureType, Name name) {
+    public SingleFeatureTypeAttributeIterator(NodePointer pointer, ComplexType featureType, Name name) {
         this.pointer = pointer;
         this.name = name;
         this.featureType = featureType;

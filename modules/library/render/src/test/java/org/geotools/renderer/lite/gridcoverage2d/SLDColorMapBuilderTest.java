@@ -18,23 +18,23 @@ package org.geotools.renderer.lite.gridcoverage2d;
 
 import static org.junit.Assert.assertEquals;
 
-import it.geosolutions.jaiext.classifier.LinearColorMap;
-import it.geosolutions.jaiext.classifier.LinearColorMap.LinearColorMapType;
-import it.geosolutions.jaiext.classifier.LinearColorMapElement;
 import java.util.HashMap;
 import java.util.Map;
+import org.eclipse.imagen.media.classifier.LinearColorMap;
+import org.eclipse.imagen.media.classifier.LinearColorMap.LinearColorMapType;
+import org.eclipse.imagen.media.classifier.LinearColorMapElement;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.style.ColorMapEntry;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.function.EnvFunction;
-import org.geotools.styling.ColorMapEntry;
 import org.geotools.styling.ColorMapEntryImpl;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.filter.FilterFactory2;
 
 public class SLDColorMapBuilderTest {
     private SLDColorMapBuilder builder;
     private ColorMapEntry entry;
-    FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+    FilterFactory ff = CommonFactoryFinder.getFilterFactory();
     Map<String, Object> envValues;
 
     @Before

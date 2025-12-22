@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -88,8 +87,7 @@ public class CacheConfig {
 
         if (System.getProperty(S3_CACHING_CHUNK_SIZE_BYTES) != null) {
             try {
-                Integer chunkSize =
-                        Integer.parseInt(System.getProperty(S3_CACHING_CHUNK_SIZE_BYTES));
+                Integer chunkSize = Integer.parseInt(System.getProperty(S3_CACHING_CHUNK_SIZE_BYTES));
                 config.setChunkSizeBytes(chunkSize);
             } catch (NumberFormatException e) {
                 LOGGER.log(Level.FINER, "Can't parse chunk size", e);
@@ -107,8 +105,7 @@ public class CacheConfig {
 
         if (System.getProperty(S3_CACHING_DISK_CACHE_SIZE) != null) {
             try {
-                Integer diskCacheSize =
-                        Integer.parseInt(System.getProperty(S3_CACHING_DISK_CACHE_SIZE));
+                Integer diskCacheSize = Integer.parseInt(System.getProperty(S3_CACHING_DISK_CACHE_SIZE));
                 config.setDiskCacheSize(diskCacheSize);
             } catch (NumberFormatException e) {
                 LOGGER.log(Level.FINER, "Can't parse disk cache size", e);
@@ -118,7 +115,7 @@ public class CacheConfig {
         if (System.getProperty(S3_CACHING_DISK_PATH) != null) {
             try {
                 String diskPath = System.getProperty(S3_CACHING_DISK_PATH);
-                Path cachePath = Paths.get(diskPath);
+                Path cachePath = Path.of(diskPath);
                 config.setCacheDirectory(cachePath);
             } catch (InvalidPathException e) {
                 LOGGER.log(Level.FINER, "Can't parse disk cache path", e);
@@ -128,8 +125,7 @@ public class CacheConfig {
                 try {
                     config.setCacheDirectory(Files.createTempDirectory("s3Cachine"));
                 } catch (IOException e) {
-                    throw new RuntimeException(
-                            "CAN'T CREATE TEMP CACHING DIRECTORY AND NO DIRECTORY SPECIFIED", e);
+                    throw new RuntimeException("CAN'T CREATE TEMP CACHING DIRECTORY AND NO DIRECTORY SPECIFIED", e);
                 }
             }
         }

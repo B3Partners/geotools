@@ -19,9 +19,10 @@ package org.geotools.data.transform;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortOrder;
 import org.junit.Test;
-import org.opengis.filter.sort.SortOrder;
 
 public class TransformerTest extends AbstractTransformTest {
 
@@ -36,7 +37,22 @@ public class TransformerTest extends AbstractTransformTest {
         assertNotNull(transformedQuery);
         assertNotNull(transformedQuery.getSortBy());
         assertEquals(1, transformedQuery.getSortBy().length);
-        assertEquals("state_name", transformedQuery.getSortBy()[0].getPropertyName().toString());
+        assertEquals(
+                "state_name", transformedQuery.getSortBy()[0].getPropertyName().toString());
+    }
+
+    @Test
+    public void testTransformedSortBy_naturalOrder() throws Exception {
+        TransformFeatureSource transformedSource = (TransformFeatureSource) transformWithRename();
+
+        Query query = new Query(Query.ALL);
+        query.setSortBy(SortBy.NATURAL_ORDER);
+
+        Query transformedQuery = transformedSource.transformer.transformQuery(query);
+        assertNotNull(transformedQuery);
+        assertNotNull(transformedQuery.getSortBy());
+        assertEquals(1, transformedQuery.getSortBy().length);
+        assertEquals(SortBy.NATURAL_ORDER, transformedQuery.getSortBy()[0]);
     }
 
     @Test
@@ -52,5 +68,18 @@ public class TransformerTest extends AbstractTransformTest {
         assertNotNull(transformedQuery.getStartIndex());
         assertEquals(10, transformedQuery.getStartIndex().intValue());
         assertEquals(5, transformedQuery.getMaxFeatures());
+    }
+
+    @Test
+    public void testTransformFids() throws Exception {
+        TransformFeatureSource transformedSource = (TransformFeatureSource) transformWithRename();
+
+        Query query = new Query(Query.ALL);
+        query.setFilter(FF.id(FF.featureId("usa.1")));
+
+        Query transformedQuery = transformedSource.transformer.transformQuery(query);
+        assertNotNull(transformedQuery);
+        assertNotNull(transformedQuery.getFilter());
+        assertEquals(FF.id(FF.featureId("states.1")), transformedQuery.getFilter());
     }
 }

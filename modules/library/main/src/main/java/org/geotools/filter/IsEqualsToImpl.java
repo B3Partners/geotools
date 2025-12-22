@@ -16,21 +16,24 @@
  */
 package org.geotools.filter;
 
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.util.ConverterFactory;
 import org.geotools.util.Converters;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
+import org.geotools.util.factory.Hints;
 
 /** @author jdeolive TODO: rename this class to IsEqualToImpl */
 public class IsEqualsToImpl extends MultiCompareFilterImpl implements PropertyIsEqualTo {
+
+    public static final Hints SAFE_CONVERSION_HINTS = new Hints(ConverterFactory.SAFE_CONVERSION, true);
 
     protected IsEqualsToImpl(Expression expression1, Expression expression2) {
         this(expression1, expression2, true);
     }
 
-    protected IsEqualsToImpl(
-            Expression expression1, Expression expression2, MatchAction matchAction) {
+    protected IsEqualsToImpl(Expression expression1, Expression expression2, MatchAction matchAction) {
         this(expression1, expression2, true, matchAction);
     }
 
@@ -39,10 +42,7 @@ public class IsEqualsToImpl extends MultiCompareFilterImpl implements PropertyIs
     }
 
     protected IsEqualsToImpl(
-            Expression expression1,
-            Expression expression2,
-            boolean matchCase,
-            MatchAction matchAction) {
+            Expression expression1, Expression expression2, boolean matchCase, MatchAction matchAction) {
         super(expression1, expression2, matchCase, matchAction);
     }
 
@@ -72,8 +72,8 @@ public class IsEqualsToImpl extends MultiCompareFilterImpl implements PropertyIs
          * them. It is better to fallback on the more generic code following the "if" block in order
          * to ensure consistent behavior.
          */
-        if (!matchingCase && value1 instanceof String && value2 instanceof String) {
-            return ((String) value1).equalsIgnoreCase((String) value2);
+        if (!matchingCase && value1 instanceof String string && value2 instanceof String string1) {
+            return string.equalsIgnoreCase(string1);
         } else if (value1.equals(value2)) {
             return true;
         } else if (value1.getClass().equals(value2.getClass())) {
@@ -89,12 +89,21 @@ public class IsEqualsToImpl extends MultiCompareFilterImpl implements PropertyIs
             if (v2 != null && v2.equals(value1)) return true;
         }
 
+        // if one side is string and the other is not, try to convert the string to non-string
+        if (value1 instanceof String && !(value2 instanceof String)) {
+            Object v1 = Converters.convert(value1, value2.getClass(), SAFE_CONVERSION_HINTS);
+            if (v1 != null && v1.equals(value2)) return true;
+        } else if (value2 instanceof String && !(value1 instanceof String)) {
+            Object v2 = Converters.convert(value2, value1.getClass(), SAFE_CONVERSION_HINTS);
+            if (v2 != null && v2.equals(value1)) return true;
+        }
+
         // try the usual conversions then
-        final boolean isNumeric1 = (value1 instanceof Number);
-        final boolean isNumeric2 = (value2 instanceof Number);
-        if ((isNumeric1 && isNumeric2)
-                || (isNumeric1 && (value2 instanceof CharSequence))
-                || (isNumeric2 && (value1 instanceof CharSequence))) {
+        final boolean isNumeric1 = value1 instanceof Number;
+        final boolean isNumeric2 = value2 instanceof Number;
+        if (isNumeric1 && isNumeric2
+                || isNumeric1 && value2 instanceof CharSequence
+                || isNumeric2 && value1 instanceof CharSequence) {
             // Numeric comparison, try to parse strings to numbers and do proper
             // comparison between, say, 5 and 5.0 (Long and Double would say
             // they are different)
@@ -109,7 +118,7 @@ public class IsEqualsToImpl extends MultiCompareFilterImpl implements PropertyIs
             final double fp1 = n1.doubleValue();
             final double fp2 = n2.doubleValue();
             final long lg1, lg2; // 'lg2' will not be initialized if not needed.
-            if (fp1 == (double) (lg1 = n1.longValue()) && fp2 == (double) (lg2 = n2.longValue())) {
+            if (fp1 == (lg1 = n1.longValue()) && fp2 == (lg2 = n2.longValue())) {
                 // Compares the values as 'long' if and only if the 'double' values
                 // do not contains any additional informations.
                 return lg1 == lg2;
@@ -117,7 +126,7 @@ public class IsEqualsToImpl extends MultiCompareFilterImpl implements PropertyIs
                 // Floating point comparaisons. Note: we do NOT use Double.equals or
                 // Double.doubleToLongBits because we want to consider +0.0 == -0.0.
                 // The Double.equals method would returns 'false' in the above case.
-                return (fp1 == fp2) || (Double.isNaN(fp1) && Double.isNaN(fp2));
+                return fp1 == fp2 || Double.isNaN(fp1) && Double.isNaN(fp2);
             }
         } else if (!isMatchingCase()) {
             // fall back to string and check the case insensitive flag

@@ -19,14 +19,17 @@ package org.geotools.data.elasticsearch;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -34,19 +37,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.TimeZone;
+import java.util.logging.Logger;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.temporal.Instant;
+import org.geotools.api.temporal.Period;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.NameImpl;
 import org.geotools.temporal.object.DefaultInstant;
 import org.geotools.temporal.object.DefaultPeriod;
 import org.geotools.temporal.object.DefaultPosition;
+import org.geotools.util.logging.Logging;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.temporal.Instant;
-import org.opengis.temporal.Period;
+import org.junit.BeforeClass;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.containers.wait.strategy.WaitStrategy;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
+import org.testcontainers.utility.DockerImageName;
 
 public class ElasticTestSupport {
 
@@ -62,18 +72,13 @@ public class ElasticTestSupport {
 
     private static ElasticsearchContainer elasticsearch;
 
-    static {
-        String image = System.getProperty(IMAGE_PROPERTY_NAME, DEFAULT_IMAGE);
-        String version = System.getProperty(VERSION_PROPERTY_NAME, DEFAULT_VERSION);
-        elasticsearch = new ElasticsearchContainer(image + ":" + version);
-        elasticsearch.start();
-    }
-
     private static final String TEST_FILE = "wifiAccessPoint.json";
 
     private static final String LEGACY_ACTIVE_MAPPINGS_FILE = "active_mappings_legacy.json";
 
     private static final String NG_ACTIVE_MAPPINGS_FILE = "active_mappings_ng.json";
+
+    private static final String V8_ACTIVE_MAPPINGS_FILE = "active_mappings_v8.json";
 
     private static final String ACTIVE_MAPPINGS_FILE = "active_mappings.json";
 
@@ -110,13 +115,70 @@ public class ElasticTestSupport {
 
     protected ElasticClient client;
 
+    protected static final Logger log = Logging.getLogger(ElasticTestSupport.class);
+
+    @BeforeClass
+    public static void startContainer() {
+        String image = System.getProperty(IMAGE_PROPERTY_NAME, DEFAULT_IMAGE);
+        String version = System.getProperty(VERSION_PROPERTY_NAME, DEFAULT_VERSION);
+        DockerImageName dockerImageName = DockerImageName.parse(image + ":" + version);
+        elasticsearch = new ElasticsearchContainer(dockerImageName);
+        // Disable security for Elasticsearch 8+/9+ non-OSS images to allow HTTP connections
+        // OSS images don't have X-Pack security, so skip these settings
+        if (!image.contains("-oss")) {
+            elasticsearch.withEnv("xpack.security.enabled", "false");
+            elasticsearch.withEnv("xpack.security.http.ssl.enabled", "false");
+        }
+
+        // Workaround for cgroup v2 issue in CI environments (GitHub Actions) Elasticsearch fails to read cgroup metrics
+        // on some systems with cgroup v2  (at least for the 7.15.2 docker image)
+        elasticsearch.withEnv("ES_JAVA_OPTS", "-Djdk.internal.platform.CgroupSubsystemController.enabled=false");
+
+        final String regex = ".*(\"message\":\\s?\"started[\\s?|\"].*|] started\n$)";
+        WaitStrategy waitStrategy = Wait.forLogMessage(regex, 1);
+        // In CI environments containers may take longer to start up due to resource constraints
+        // Use longer timeout in CI (GitHub Actions sets CI=true)
+        final boolean ciEnvironment = System.getenv("CI") != null;
+        int timeoutSeconds = ciEnvironment ? 60 : 15;
+        waitStrategy = waitStrategy.withStartupTimeout(Duration.ofSeconds(timeoutSeconds));
+        elasticsearch.setWaitStrategy(waitStrategy);
+
+        log.warning("starting " + dockerImageName);
+        Stopwatch sw = Stopwatch.createStarted();
+        elasticsearch.start();
+        log.warning(dockerImageName + " started in " + sw.stop());
+    }
+
+    private static void enableIdFieldDataIfNeeded(ElasticClient client) throws IOException {
+        // Enable _id field data access for Elasticsearch 8+ (required for natural sorting)
+        // This is a dynamic cluster setting that must be set via API after startup
+        if (client.getVersion() >= 8) {
+            try {
+                Map<String, Object> settings =
+                        ImmutableMap.of("persistent", ImmutableMap.of("indices.id_field_data.enabled", true));
+                ((RestElasticClient) client).performRequest("PUT", "/_cluster/settings", settings);
+                log.info("Enabled indices.id_field_data for Elasticsearch " + client.getVersion());
+            } catch (Exception e) {
+                log.warning("Failed to enable indices.id_field_data: " + e.getMessage());
+            }
+        }
+    }
+
+    @AfterClass
+    public static void stopContainer() {
+        if (elasticsearch != null && elasticsearch.isCreated()) {
+            elasticsearch.stop();
+        }
+    }
+
     @Before
     public void beforeTest() throws Exception {
-        host = elasticsearch.getContainerIpAddress();
+        host = elasticsearch.getHost();
         port = elasticsearch.getFirstMappedPort();
         indexName = "gt_integ_test_" + System.nanoTime();
-        client =
-                new RestElasticClient(RestClient.builder(new HttpHost(host, port, "http")).build());
+        client = new RestElasticClient(
+                RestClient.builder(new HttpHost(host, port, "http")).build());
+        enableIdFieldDataIfNeeded(client);
         Map<String, Serializable> params = createConnectionParams();
         ElasticDataStoreFactory factory = new ElasticDataStoreFactory();
         dataStore = (ElasticDataStore) factory.createDataStore(params);
@@ -130,15 +192,15 @@ public class ElasticTestSupport {
         client.close();
     }
 
-    private void createIndices() throws IOException {
+    protected void createIndices(ElasticClient client, String indexName) throws IOException {
         // create index and add mappings
         Map<String, Object> settings = new HashMap<>();
-        settings.put(
-                "settings",
-                ImmutableMap.of("number_of_shards", numShards, "number_of_replicas", numReplicas));
+        settings.put("settings", ImmutableMap.of("number_of_shards", numShards, "number_of_replicas", numReplicas));
         final String filename;
         if (client.getVersion() < 5) {
             filename = LEGACY_ACTIVE_MAPPINGS_FILE;
+        } else if (client.getVersion() >= 8) {
+            filename = V8_ACTIVE_MAPPINGS_FILE;
         } else if (client.getVersion() > 6.1) {
             filename = NG_ACTIVE_MAPPINGS_FILE;
         } else {
@@ -146,7 +208,7 @@ public class ElasticTestSupport {
         }
         final InputStream resource = ClassLoader.getSystemResourceAsStream(filename);
         if (resource != null) {
-            try (Scanner s = new Scanner(resource)) {
+            try (Scanner s = new Scanner(resource, StandardCharsets.UTF_8)) {
                 s.useDelimiter("\\A");
                 Map<String, Object> source = mapReader.readValue(s.next());
                 if (client.getVersion() < 7) {
@@ -158,22 +220,23 @@ public class ElasticTestSupport {
                 }
             }
         }
-        performRequest("PUT", "/" + indexName, settings);
+        performRequest(client, "PUT", "/" + indexName, settings);
 
         // add alias
-        Map<String, Object> aliases =
-                ImmutableMap.of(
-                        "actions",
-                        ImmutableList.of(
-                                ImmutableMap.of(
-                                        "index", indexName, "alias", indexName + "_alias")));
-        performRequest("PUT", "/_alias", aliases);
+        Map<String, Object> aliasAction =
+                ImmutableMap.of("add", ImmutableMap.of("index", indexName, "alias", indexName + "_alias"));
+        Map<String, Object> aliases = ImmutableMap.of("actions", ImmutableList.of(aliasAction));
+        performRequest(client, "POST", "/_aliases", aliases);
+    }
+
+    private void createIndices() throws IOException {
+        createIndices(client, indexName);
     }
 
     private void indexDocuments(String status) throws IOException {
         try (InputStream inputStream = ClassLoader.getSystemResourceAsStream(TEST_FILE)) {
             if (inputStream != null) {
-                try (Scanner scanner = new Scanner(inputStream)) {
+                try (Scanner scanner = new Scanner(inputStream, StandardCharsets.UTF_8)) {
                     scanner.useDelimiter(System.lineSeparator());
                     final StringBuilder builder = new StringBuilder();
                     while (scanner.hasNext()) {
@@ -184,20 +247,13 @@ public class ElasticTestSupport {
                     }
                     final Map<String, Object> content = mapReader.readValue(builder.toString());
                     @SuppressWarnings("unchecked")
-                    final List<Map<String, Object>> features =
-                            (List<Map<String, Object>>) content.get("features");
+                    final List<Map<String, Object>> features = (List<Map<String, Object>>) content.get("features");
                     for (final Map<String, Object> featureSource : features) {
                         if (featureSource.containsKey("status_s")
                                 && featureSource.get("status_s").equals(status)) {
-                            final String id =
-                                    featureSource.containsKey("id")
-                                            ? (String) featureSource.get("id")
-                                            : null;
+                            final String id = featureSource.containsKey("id") ? (String) featureSource.get("id") : null;
                             final String typeName = client.getVersion() < 7 ? TYPE_NAME : "_doc";
-                            performRequest(
-                                    "POST",
-                                    "/" + indexName + "/" + typeName + "/" + id,
-                                    featureSource);
+                            performRequest("POST", "/" + indexName + "/" + typeName + "/" + id, featureSource);
                         }
                     }
 
@@ -247,7 +303,11 @@ public class ElasticTestSupport {
         featureSource = (ElasticFeatureSource) dataStore.getFeatureSource(TYPE_NAME);
     }
 
-    private void performRequest(String method, String endpoint, Map<String, Object> body)
+    private void performRequest(String method, String endpoint, Map<String, Object> body) throws IOException {
+        performRequest(client, method, endpoint, body);
+    }
+
+    protected void performRequest(ElasticClient client, String method, String endpoint, Map<String, Object> body)
             throws IOException {
         ((RestElasticClient) client).performRequest(method, endpoint, body);
     }
@@ -266,12 +326,10 @@ public class ElasticTestSupport {
 
     List<SimpleFeature> readFeatures(SimpleFeatureIterator iterator) {
         final List<SimpleFeature> features = new ArrayList<>();
-        try {
+        try (iterator) {
             while (iterator.hasNext()) {
                 features.add(iterator.next());
             }
-        } finally {
-            iterator.close();
         }
         return features;
     }

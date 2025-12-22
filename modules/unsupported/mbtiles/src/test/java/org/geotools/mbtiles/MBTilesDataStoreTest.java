@@ -29,12 +29,17 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.DataSourceException;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFinder;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.referencing.FactoryException;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.feature.NameImpl;
 import org.geotools.jdbc.JDBCDataStoreFactory;
@@ -45,11 +50,6 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.referencing.FactoryException;
 
 public class MBTilesDataStoreTest {
 
@@ -109,15 +109,12 @@ public class MBTilesDataStoreTest {
             SimpleFeature feature = reader.next();
             assertThat(feature.getAttribute("bool_false"), equalTo(false));
             assertThat(feature.getAttribute("bool_true"), equalTo(true));
-            assertThat(
-                    ((Number) feature.getAttribute("float_value")).doubleValue(),
-                    closeTo(1.25, 0.01));
+            assertThat(((Number) feature.getAttribute("float_value")).doubleValue(), closeTo(1.25, 0.01));
             assertThat(feature.getAttribute("int64_value"), equalTo(123456789012345L));
             assertThat(feature.getAttribute("neg_int_value"), equalTo(-1L));
             assertThat(feature.getAttribute("pos_int_value"), equalTo(1L));
             assertThat(feature.getAttribute("string_value"), equalTo("str"));
-            Point expected =
-                    (Point) new WKTReader().read("POINT (215246.671651058 6281289.23636264)");
+            Point expected = (Point) new WKTReader().read("POINT (215246.671651058 6281289.23636264)");
             Point actual = (Point) feature.getDefaultGeometry();
             assertTrue(actual.equalsExact(expected, 0.01));
         }

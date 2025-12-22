@@ -16,28 +16,27 @@
  */
 package org.geotools.coverage.processing.operation;
 
-// JAI dependencies (for javadoc)
+// ImageN dependencies (for javadoc)
 
-import it.geosolutions.jaiext.JAIExt;
-import it.geosolutions.jaiext.algebra.AlgebraDescriptor.Operator;
 import java.awt.image.RenderedImage;
+import java.io.Serial;
 import java.util.Collection;
 import java.util.Map;
-import javax.media.jai.ParameterBlockJAI;
-import javax.media.jai.operator.InvertDescriptor;
+import org.eclipse.imagen.ParameterBlockImageN;
+import org.eclipse.imagen.media.algebra.AlgebraDescriptor.Operator;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.BaseMathOperationJAI;
 import org.geotools.util.NumberRange;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.util.InternationalString;
 
 // Geotools dependencies
 
 /**
- * Inverts the sample values of a coverage. For source coverages with signed data types, the sample
- * values of the destination coverage are defined by the pseudocode:
+ * Inverts the sample values of a coverage. For source coverages with signed data types, the sample values of the
+ * destination coverage are defined by the pseudocode:
  *
  * <BLOCKQUOTE>
  *
@@ -78,11 +77,12 @@ public class Invert extends BaseMathOperationJAI {
     private static final String ALGEBRIC = "algebric";
     private static final String INVERT = "Invert";
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 7297641092994880308L;
 
     /** Constructs a default {@code "Invert"} operation. */
     public Invert() {
-        super(INVERT, getOperationDescriptor(JAIExt.getOperationName(INVERT)));
+        super(INVERT, getOperationDescriptor(ALGEBRIC));
     }
 
     @Override
@@ -101,16 +101,13 @@ public class Invert extends BaseMathOperationJAI {
     }
 
     @Override
-    protected void handleJAIEXTParams(
-            ParameterBlockJAI parameters, ParameterValueGroup parameters2) {
-        if (JAIExt.isJAIExtOperation(ALGEBRIC)) {
-            parameters.set(Operator.INVERT, 0);
-            @SuppressWarnings("unchecked")
-            Collection<GridCoverage2D> sources =
-                    (Collection<GridCoverage2D>) parameters2.parameter("sources").getValue();
-            for (GridCoverage2D source : sources) {
-                handleROINoDataInternal(parameters, source, ALGEBRIC, 1, 2);
-            }
+    protected void handleJAIEXTParams(ParameterBlockImageN parameters, ParameterValueGroup parameters2) {
+        parameters.set(Operator.INVERT, 0);
+        @SuppressWarnings("unchecked")
+        Collection<GridCoverage2D> sources =
+                (Collection<GridCoverage2D>) parameters2.parameter("sources").getValue();
+        for (GridCoverage2D source : sources) {
+            handleROINoDataInternal(parameters, source, ALGEBRIC, 1, 2);
         }
     }
 
@@ -122,7 +119,6 @@ public class Invert extends BaseMathOperationJAI {
             MathTransform gridToCRS,
             GridCoverage2D[] sources,
             Parameters parameters) {
-        return handleROINoDataProperties(
-                null, parameters.parameters, sources[0], ALGEBRIC, 1, 2, 3);
+        return handleROINoDataProperties(null, parameters.parameters, sources[0], ALGEBRIC, 1, 2, 3);
     }
 }

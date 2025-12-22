@@ -27,12 +27,11 @@ import org.geotools.util.Utilities;
 /**
  * Adapter for preventing memory leaks created by substitution group affiliations.
  *
- * <p>When an application schema contains an element in the gml:_Feature substitution group a link
- * from gml:_Feature back to the app schema element is created. Since the gml schema (and thus the
- * gml:_Feature) element is a singleton this creates a memory leak. This adapter watches the {@link
- * XSDElementDeclaration#getSubstitutionGroup()} of the gml:_Feature element and prevents it from
- * growing in size by making it a unique list of {@link XSDElementDeclaration} based on qualified
- * name.
+ * <p>When an application schema contains an element in the gml:_Feature substitution group a link from gml:_Feature
+ * back to the app schema element is created. Since the gml schema (and thus the gml:_Feature) element is a singleton
+ * this creates a memory leak. This adapter watches the {@link XSDElementDeclaration#getSubstitutionGroup()} of the
+ * gml:_Feature element and prevents it from growing in size by making it a unique list of {@link XSDElementDeclaration}
+ * based on qualified name.
  *
  * @author Justin Deoliveira, OpenGeo
  */
@@ -78,8 +77,8 @@ public class SubstitutionGroupLeakPreventer implements Adapter {
                 for (int i = 0; i < e.getSubstitutionGroup().size(); i++) {
                     XSDElementDeclaration se = e.getSubstitutionGroup().get(i);
                     if (se == null
-                            || (Utilities.equals(el.getTargetNamespace(), se.getTargetNamespace())
-                                    && Utilities.equals(el.getName(), se.getName()))) {
+                            || Utilities.equals(el.getTargetNamespace(), se.getTargetNamespace())
+                                    && Utilities.equals(el.getName(), se.getName())) {
                         toremove.add(i);
                     }
                 }
@@ -94,8 +93,7 @@ public class SubstitutionGroupLeakPreventer implements Adapter {
                 // set the removed elements sub affiliation to a clone of the actual element
                 for (XSDElementDeclaration se : removed) {
                     if (se != null && e.equals(se.getSubstitutionGroupAffiliation())) {
-                        XSDElementDeclaration clone =
-                                (XSDElementDeclaration) e.cloneConcreteComponent(false, false);
+                        XSDElementDeclaration clone = (XSDElementDeclaration) e.cloneConcreteComponent(false, false);
                         clone.setTargetNamespace(GML.NAMESPACE);
 
                         se.setSubstitutionGroupAffiliation(clone);

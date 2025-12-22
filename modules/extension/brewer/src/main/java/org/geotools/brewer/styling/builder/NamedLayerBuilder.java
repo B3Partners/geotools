@@ -18,9 +18,9 @@ package org.geotools.brewer.styling.builder;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.geotools.styling.FeatureTypeConstraint;
-import org.geotools.styling.NamedLayer;
-import org.geotools.styling.Style;
+import org.geotools.api.style.FeatureTypeConstraint;
+import org.geotools.api.style.NamedLayer;
+import org.geotools.api.style.Style;
 
 public class NamedLayerBuilder extends AbstractSLDBuilder<NamedLayer> {
 
@@ -92,8 +92,7 @@ public class NamedLayerBuilder extends AbstractSLDBuilder<NamedLayer> {
         featureTypeConstraint.clear();
         if (layer.layerFeatureConstraints() != null) {
             for (FeatureTypeConstraint featureConstraint : layer.layerFeatureConstraints()) {
-                featureTypeConstraint.add(
-                        new FeatureTypeConstraintBuilder(this).reset(featureConstraint));
+                featureTypeConstraint.add(new FeatureTypeConstraintBuilder(this).reset(featureConstraint));
             }
         }
         styles.clear();

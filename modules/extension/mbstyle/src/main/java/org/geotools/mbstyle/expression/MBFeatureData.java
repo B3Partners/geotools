@@ -16,9 +16,9 @@
  */
 package org.geotools.mbstyle.expression;
 
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.mbstyle.parse.MBFormatException;
 import org.json.simple.JSONArray;
-import org.opengis.filter.expression.Expression;
 
 public class MBFeatureData extends MBExpression {
 
@@ -32,8 +32,8 @@ public class MBFeatureData extends MBExpression {
     }
 
     /**
-     * Gets the feature's geometry type: Point, MultiPoint, LineString, MultiLineString, Polygon,
-     * MultiPolygon.Example: ["geometry-type"]: string
+     * Gets the feature's geometry type: Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon.Example:
+     * ["geometry-type"]: string
      *
      * @return geometry type expression
      */
@@ -51,8 +51,8 @@ public class MBFeatureData extends MBExpression {
     }
 
     /**
-     * Gets the feature properties object. Note that in some cases, it may be more efficient to use
-     * ["get", "property_name"] directly. Example: ["properties"]: object
+     * Gets the feature properties object. Note that in some cases, it may be more efficient to use ["get",
+     * "property_name"] directly. Example: ["properties"]: object
      *
      * @return expression of feature attributes
      */

@@ -19,9 +19,9 @@ package org.geotools.filter.v1_0.capabilities;
 import static org.junit.Assert.assertEquals;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.xsd.Binding;
 import org.junit.Test;
-import org.opengis.filter.capability.FunctionName;
 import org.w3c.dom.Document;
 
 public class Function_NamesTypeBindingTest extends FilterCapabilitiesTestSupport {
@@ -48,12 +48,10 @@ public class Function_NamesTypeBindingTest extends FilterCapabilitiesTestSupport
 
     @Test
     public void testEncode() throws Exception {
-        Document dom =
-                encode(
-                        FilterMockData.functionNames(),
-                        new QName(OGC.NAMESPACE, "Function_Names"),
-                        OGC.Function_NamesType);
+        Document dom = encode(
+                FilterMockData.functionNames(), new QName(OGC.NAMESPACE, "Function_Names"), OGC.Function_NamesType);
 
-        assertEquals(2, dom.getElementsByTagNameNS(OGC.NAMESPACE, "Function_Name").getLength());
+        assertEquals(
+                2, dom.getElementsByTagNameNS(OGC.NAMESPACE, "Function_Name").getLength());
     }
 }

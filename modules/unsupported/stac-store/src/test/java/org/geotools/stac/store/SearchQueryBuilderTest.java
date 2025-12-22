@@ -23,13 +23,13 @@ import static org.junit.Assert.assertNull;
 import java.io.IOException;
 import java.util.Arrays;
 import org.apache.commons.lang3.tuple.Pair;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
 import org.geotools.filter.text.ecql.ECQL;
 import org.geotools.stac.client.SearchQuery;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
 
 public class SearchQueryBuilderTest extends AbstractSTACStoreTest {
 
@@ -91,8 +91,7 @@ public class SearchQueryBuilderTest extends AbstractSTACStoreTest {
     public void testSpatioTemporal() throws Exception {
         Query q = new Query(schema.getTypeName());
         q.setFilter(
-                ECQL.toFilter(
-                        "BBOX(geometry, -180, -90, 180, 90, 'CRS:84') and datetime BEFORE 2006-11-30T01:30:00Z"));
+                ECQL.toFilter("BBOX(geometry, -180, -90, 180, 90, 'CRS:84') and datetime BEFORE 2006-11-30T01:30:00Z"));
 
         Pair<SearchQuery, Filter> pair = builder.toSearchQuery(q, true);
         assertEquals(Filter.INCLUDE, pair.getValue());
@@ -107,9 +106,8 @@ public class SearchQueryBuilderTest extends AbstractSTACStoreTest {
     @Test
     public void testMixed() throws Exception {
         Query q = new Query(schema.getTypeName());
-        q.setFilter(
-                ECQL.toFilter(
-                        "BBOX(geometry, -180, -90, 180, 90, 'CRS:84') and datetime BEFORE 2006-11-30T01:30:00Z and foo > 10"));
+        q.setFilter(ECQL.toFilter(
+                "BBOX(geometry, -180, -90, 180, 90, 'CRS:84') and datetime BEFORE 2006-11-30T01:30:00Z and foo > 10"));
         q.setPropertyNames("geometry", "datetime");
 
         Pair<SearchQuery, Filter> pair = builder.toSearchQuery(q, true);
@@ -119,14 +117,7 @@ public class SearchQueryBuilderTest extends AbstractSTACStoreTest {
         assertArrayEquals(new double[] {-180, -90, 180, 90}, sq.getBbox(), 0d);
         assertEquals(
                 Arrays.asList(
-                        "geometry",
-                        "properties.datetime",
-                        "type",
-                        "id",
-                        "-bbox",
-                        "-properties",
-                        "-assets",
-                        "-links"),
+                        "geometry", "properties.datetime", "type", "id", "-bbox", "-properties", "-assets", "-links"),
                 sq.getFields());
         assertEquals(ECQL.toFilter("foo > 10"), sq.getFilter());
         assertEquals("../2006-11-30T01:30:00Z", sq.getDatetime());

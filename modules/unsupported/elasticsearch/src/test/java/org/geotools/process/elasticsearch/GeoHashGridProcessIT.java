@@ -24,6 +24,8 @@ import java.awt.image.DataBufferFloat;
 import java.awt.image.RenderedImage;
 import java.io.IOException;
 import java.util.stream.IntStream;
+import org.geotools.api.geometry.Bounds;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.data.elasticsearch.ElasticLayerConfiguration;
 import org.geotools.data.elasticsearch.ElasticTestSupport;
@@ -34,46 +36,40 @@ import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.geometry.Envelope;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class GeoHashGridProcessIT extends ElasticTestSupport {
 
+    @Before
+    @Override
+    public void init() throws Exception {
+        super.init();
+    }
+
     @Test
     public void testAutomaticAggregation() throws Exception {
-        init();
-
         ContentFeatureCollection features = featureSource.getFeatures();
         String aggregationDefinition = null;
-        GridCoverage2D grid =
-                new GeoHashGridProcess()
-                        .execute(
-                                features,
-                                "Basic",
-                                null,
-                                null,
-                                null,
-                                null,
-                                false,
-                                new ReferencedEnvelope(
-                                        -180, 180, -90, 90, DefaultGeographicCRS.WGS84),
-                                360,
-                                180,
-                                aggregationDefinition /* agg definition */,
-                                null,
-                                null);
+        GridCoverage2D grid = new GeoHashGridProcess()
+                .execute(
+                        features,
+                        "Basic",
+                        null,
+                        null,
+                        null,
+                        null,
+                        false,
+                        new ReferencedEnvelope(-180, 180, -90, 90, DefaultGeographicCRS.WGS84),
+                        360,
+                        180,
+                        aggregationDefinition /* agg definition */,
+                        null,
+                        null);
         // automatic aggregation should have created a geohash with precision
         assertNotNull(grid);
         // precision = 3 has been chosen, level 4 would have too many cells
         RenderedImage ri = grid.getRenderedImage();
         assertEquals(256, ri.getWidth());
         assertEquals(128, ri.getHeight());
-    }
-
-    @Before
-    @Override
-    public void init() throws Exception {
-        super.init();
     }
 
     @Test
@@ -98,23 +94,21 @@ public class GeoHashGridProcessIT extends ElasticTestSupport {
         // force it to a small grid that's easy to check
         ContentFeatureCollection features = fs.getFeatures();
         String aggregationDefinition = null;
-        GridCoverage2D grid =
-                new GeoHashGridProcess()
-                        .execute(
-                                features,
-                                "Basic",
-                                null,
-                                null,
-                                null,
-                                null,
-                                false,
-                                new ReferencedEnvelope(
-                                        -180, 180, -90, 90, DefaultGeographicCRS.WGS84),
-                                8,
-                                4,
-                                aggregationDefinition /* agg definition */,
-                                null,
-                                null);
+        GridCoverage2D grid = new GeoHashGridProcess()
+                .execute(
+                        features,
+                        "Basic",
+                        null,
+                        null,
+                        null,
+                        null,
+                        false,
+                        new ReferencedEnvelope(-180, 180, -90, 90, DefaultGeographicCRS.WGS84),
+                        8,
+                        4,
+                        aggregationDefinition /* agg definition */,
+                        null,
+                        null);
         // automatic aggregation should have created a geohash with precision
         assertNotNull(grid);
         // precision = 1 has been chosen
@@ -133,35 +127,33 @@ public class GeoHashGridProcessIT extends ElasticTestSupport {
 
     @Test
     public void testReprojected() throws Exception {
-        ReferencedEnvelope base =
-                new ReferencedEnvelope(-50, 50, -50, 50, DefaultGeographicCRS.WGS84);
+        ReferencedEnvelope base = new ReferencedEnvelope(-50, 50, -50, 50, DefaultGeographicCRS.WGS84);
         CoordinateReferenceSystem webMercator = CRS.decode("EPSG:3857", true);
         ReferencedEnvelope transformed = base.transform(webMercator, true);
 
         ContentFeatureCollection features = featureSource.getFeatures();
         String aggregationDefinition = null;
-        GridCoverage2D grid =
-                new GeoHashGridProcess()
-                        .execute(
-                                features,
-                                "Basic",
-                                null,
-                                null,
-                                null,
-                                null,
-                                false,
-                                transformed,
-                                12,
-                                12,
-                                aggregationDefinition /* agg definition */,
-                                null,
-                                null);
+        GridCoverage2D grid = new GeoHashGridProcess()
+                .execute(
+                        features,
+                        "Basic",
+                        null,
+                        null,
+                        null,
+                        null,
+                        false,
+                        transformed,
+                        12,
+                        12,
+                        aggregationDefinition /* agg definition */,
+                        null,
+                        null);
         assertNotNull(grid);
         // the output is a GeoHash grid, always in WGS84
         assertEquals(DefaultGeographicCRS.WGS84, grid.getCoordinateReferenceSystem2D());
         // Locked on precision 2 containing the data (with a bit of padding due to reprojection)
         // At precision 2 cells are 11.25 by 5.625 degrees
-        Envelope envelope = grid.getEnvelope();
+        Bounds envelope = grid.getEnvelope();
         assertEquals(-67.5, envelope.getMinimum(0), 0d);
         assertEquals(-61.875, envelope.getMinimum(1), 0d);
         assertEquals(56.25, envelope.getMaximum(0), 0d);
@@ -174,7 +166,8 @@ public class GeoHashGridProcessIT extends ElasticTestSupport {
         assertEquals(DataBuffer.TYPE_FLOAT, ri.getData().getTransferType());
         float[] data = ((DataBufferFloat) ri.getData().getDataBuffer()).getData();
         // at this precision data is spread out in various cells, let's check the total
-        int matches = (int) IntStream.range(0, data.length).mapToDouble(i -> data[i]).sum();
+        int matches =
+                (int) IntStream.range(0, data.length).mapToDouble(i -> data[i]).sum();
         assertEquals(11, matches);
     }
 

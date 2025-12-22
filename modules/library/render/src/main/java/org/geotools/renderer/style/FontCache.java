@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +35,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * Lookup and caches font definitions for faster retrieval
@@ -42,8 +43,7 @@ import java.util.stream.Collectors;
  */
 public class FontCache {
     /** The logger for the rendering module. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(FontCache.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(FontCache.class);
 
     static volatile FontCache defaultInstance;
 
@@ -139,9 +139,7 @@ public class FontCache {
     }
 
     private static InputStream getInputStream(String fontUrl) {
-        if (fontUrl.startsWith("http")
-                || fontUrl.startsWith("file:")
-                || fontUrl.startsWith("jar:")) {
+        if (fontUrl.startsWith("http") || fontUrl.startsWith("file:") || fontUrl.startsWith("jar:")) {
             try {
                 URL url = new URL(fontUrl);
                 return url.openStream();
@@ -178,17 +176,14 @@ public class FontCache {
     }
 
     /**
-     * Adds the specified font in the font cache. Useful if you want to load fonts that are not
-     * installed in the Operating System and cannot provide a full path to fonts either.
+     * Adds the specified font in the font cache. Useful if you want to load fonts that are not installed in the
+     * Operating System and cannot provide a full path to fonts either.
      */
     public void registerFont(Font f) {
         loadedFonts.put(f.getName(), f);
     }
 
-    /**
-     * Resets the font loading cache. If any font was manually registered, it will have to be
-     * registered again
-     */
+    /** Resets the font loading cache. If any font was manually registered, it will have to be registered again */
     public synchronized void resetCache() {
         if (systemFonts != null) {
             systemFonts.clear();
@@ -230,8 +225,7 @@ public class FontCache {
     }
 
     /**
-     * Returns the set of font families and font faces available in the system and those manually
-     * loaded into the cache
+     * Returns the set of font families and font faces available in the system and those manually loaded into the cache
      */
     public Set<String> getAvailableFonts() {
         Set<String> availableFonts = new HashSet<>();
@@ -243,30 +237,54 @@ public class FontCache {
     }
 
     /**
-     * Given a font name, returns alternatives for other scripts, based on the assumption they start
-     * with the same base name, e.g., "Noto Sans" also has a number of alternative fonts dedicated
-     * to specific scripts, like "Noti Sans Urdu", "Noto Sans Arabic", "Noto Sans Javanese" and so
-     * on. The code will not return style alterations like "Noto Sans Bold" or "Noto Sans Bold
-     * Italic" thought (strips all font names containing "bold" and "italic", case insesitive).
+     * Given a font name, returns alternatives for other scripts, based on the assumption they start with the same base
+     * name, e.g., "Noto Sans" also has a number of alternative fonts dedicated to specific scripts, like "Noti Sans
+     * Urdu", "Noto Sans Arabic", "Noto Sans Javanese" and so on. The code will not return style alterations like "Noto
+     * Sans Bold" or "Noto Sans Bold Italic" thought (strips all font names containing "bold" and "italic", case
+     * insesitive).
      *
      * @return A list of font names with the same base name
      */
     public List<String> getAlternatives(String name) {
         List<String> result = alternatives.get(name);
         if (result == null) {
-            result =
-                    FontCache.getDefaultInstance().getAvailableFonts().stream()
-                            .filter(f -> f.startsWith(name))
-                            .filter(
-                                    f -> { // leave out alterations, use base fonts
-                                        String lc = f.toLowerCase();
-                                        return !lc.contains(" bold") && !lc.contains(" italic");
-                                    })
-                            .sorted() // leave further altered fonts down the line, base ones first
-                            .collect(Collectors.toList());
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            result = new ArrayList<>();
+            // load first local fonts
+            for (Font font : loadedFonts.values()) {
+                collectAlternative(name, font.getName(), result);
+            }
+            // then system fonts
+            Font[] fonts = ge.getAllFonts();
+            for (Font font : fonts) {
+                collectAlternative(name, font.getName(), result);
+            }
+            // leave further altered fonts down the line, base ones first
+            Collections.sort(result);
             alternatives.put(name, result);
         }
 
         return result;
+    }
+
+    /**
+     * Collects alternatives to font names, skipping the ones that are related to rendering
+     *
+     * @param name
+     * @param fontName
+     * @param result
+     */
+    static void collectAlternative(String name, String fontName, List<String> result) {
+        if (fontName.startsWith(name)) {
+            String lowExtension = fontName.substring(name.length()).toLowerCase();
+            // skip all alterations
+            if (!lowExtension.contains("black")
+                    && !lowExtension.contains("medium")
+                    && !lowExtension.contains("bold")
+                    && !lowExtension.contains("italic")
+                    && !lowExtension.contains("thin")
+                    && !lowExtension.contains("condensed")
+                    && !lowExtension.contains("light")) result.add(fontName);
+        }
     }
 }

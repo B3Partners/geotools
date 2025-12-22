@@ -29,9 +29,15 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.data.LockingManager;
+import org.geotools.api.data.Repository;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.type.Name;
 import org.geotools.feature.NameImpl;
-import org.opengis.feature.type.Name;
 
 /**
  * Default Repository implementation allows GeoTools to manage your DataStores.
@@ -40,8 +46,8 @@ import org.opengis.feature.type.Name;
  *
  * <ul>
  *   <li>load( File )
- *   <li>This also serves as a reminder that we need CrossDataStore functionality - at least for
- *       Locks. And possibly for "Query".
+ *   <li>This also serves as a reminder that we need CrossDataStore functionality - at least for Locks. And possibly for
+ *       "Query".
  *
  * @author Jody Garnett DefaultRepository.java $
  */
@@ -122,14 +128,13 @@ public class DefaultRepository implements Repository {
     /**
      * Implement lockRefresh.
      *
-     * <p>Currently it is an error if the lockID is not found. Because if we can't find it we cannot
-     * refresh it.
+     * <p>Currently it is an error if the lockID is not found. Because if we can't find it we cannot refresh it.
      *
-     * <p>Since locks are time sensitive it is impossible to check if a lockExists and then be sure
-     * it will still exist when you try to refresh it. Nothing we do can protect client code from
-     * this fact, they will need to do with the IOException when (not if) this situation occurs.
+     * <p>Since locks are time sensitive it is impossible to check if a lockExists and then be sure it will still exist
+     * when you try to refresh it. Nothing we do can protect client code from this fact, they will need to do with the
+     * IOException when (not if) this situation occurs.
      *
-     * @see org.geotools.data.Catalog#lockRefresh(java.lang.String, org.geotools.data.Transaction)
+     * @see org.geotools.data.Catalog#lockRefresh(java.lang.String, Transaction)
      * @param lockID Authorizataion of lock to refresh
      * @param transaction Transaction used to authorize refresh
      * @throws IOException If opperation encounters problems, or lock not found
@@ -140,8 +145,7 @@ public class DefaultRepository implements Repository {
             throw new IllegalArgumentException("lockID required");
         }
         if (transaction == null || transaction == Transaction.AUTO_COMMIT) {
-            throw new IllegalArgumentException(
-                    "Tansaction required (with authorization for " + lockID + ")");
+            throw new IllegalArgumentException("Tansaction required (with authorization for " + lockID + ")");
         }
         LockingManager lockManager;
 
@@ -162,11 +166,11 @@ public class DefaultRepository implements Repository {
     /**
      * Implement lockRelease.
      *
-     * <p>Currently it is <b>not</b> and error if the lockID is not found, it may have expired.
-     * Since locks are time sensitive it is impossible to check if a lockExists and then be sure it
-     * will still exist when you try to release it.
+     * <p>Currently it is <b>not</b> and error if the lockID is not found, it may have expired. Since locks are time
+     * sensitive it is impossible to check if a lockExists and then be sure it will still exist when you try to release
+     * it.
      *
-     * @see org.geotools.data.Catalog#lockRefresh(java.lang.String, org.geotools.data.Transaction)
+     * @see org.geotools.data.Catalog#lockRefresh(java.lang.String, Transaction)
      * @param lockID Authorizataion of lock to refresh
      * @param transaction Transaction used to authorize refresh
      * @throws IOException If opperation encounters problems
@@ -177,8 +181,7 @@ public class DefaultRepository implements Repository {
             throw new IllegalArgumentException("lockID required");
         }
         if (transaction == null || transaction == Transaction.AUTO_COMMIT) {
-            throw new IllegalArgumentException(
-                    "Tansaction required (with authorization for " + lockID + ")");
+            throw new IllegalArgumentException("Tansaction required (with authorization for " + lockID + ")");
         }
 
         LockingManager lockManager;
@@ -201,7 +204,7 @@ public class DefaultRepository implements Repository {
      *
      * <p>Description ...
      *
-     * @see org.geotools.data.Catalog#registerDataStore(org.geotools.data.DataStore)
+     * @see org.geotools.data.Catalog#registerDataStore(DataStore)
      */
     public void register(String name, DataAccess<?, ?> dataStore) throws IOException {
         register(new NameImpl(name), dataStore);
@@ -227,8 +230,7 @@ public class DefaultRepository implements Repository {
     }
 
     /** Internal method parsing parameters from a string */
-    private static final Map<String, Serializable> definition(String definition)
-            throws ParseException {
+    private static final Map<String, Serializable> definition(String definition) throws ParseException {
         Map<String, Serializable> map = new HashMap<>();
 
         String[] params = definition.split(",");
@@ -252,7 +254,7 @@ public class DefaultRepository implements Repository {
     @Override
     @SuppressWarnings("unchecked")
     public List<DataStore> getDataStores() {
-        List list = new ArrayList(repository.values());
+        List list = new ArrayList<>(repository.values());
         return (List<DataStore>) list;
     }
 }

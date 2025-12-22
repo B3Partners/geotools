@@ -19,9 +19,9 @@ package org.geotools.sld.bindings;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import org.geotools.api.style.SelectedChannelType;
 import org.geotools.filter.function.EnvFunction;
 import org.geotools.filter.v1_0.OGC;
-import org.geotools.styling.SelectedChannelType;
 import org.junit.Test;
 import org.w3c.dom.Element;
 
@@ -63,8 +63,7 @@ public class SLDSelectedChannelTypeBindingTest extends SLDTestSupport {
         name.appendChild(expression);
         Element envName = document.createElementNS(OGC.NAMESPACE, OGC.Literal.getLocalPart());
         envName.appendChild(document.createTextNode(b1));
-        Element envDefaultValue =
-                document.createElementNS(OGC.NAMESPACE, OGC.Literal.getLocalPart());
+        Element envDefaultValue = document.createElementNS(OGC.NAMESPACE, OGC.Literal.getLocalPart());
         envDefaultValue.appendChild(document.createTextNode("1"));
         expression.appendChild(envName);
         expression.appendChild(envDefaultValue);

@@ -20,19 +20,18 @@ package org.geotools.data.complex.feature.type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.util.InternationalString;
 import org.geotools.data.complex.util.ComplexFeatureConstants;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.filter.Filter;
-import org.opengis.util.InternationalString;
 
 /**
- * This is a specialization of complex feature type that can be nested inside another feature type.
- * A system attribute descriptor called "FEATURE_LINK" is added in the descriptors so it can be used
- * to link the type to its parent type, without being encoded, since it doesn't exist in the real
- * schema.
+ * This is a specialization of complex feature type that can be nested inside another feature type. A system attribute
+ * descriptor called "FEATURE_LINK" is added in the descriptors so it can be used to link the type to its parent type,
+ * without being encoded, since it doesn't exist in the real schema.
  *
  * @author Rini Angreani (CSIRO Earth Science and Resource Engineering)
  */
@@ -61,12 +60,12 @@ public class ComplexFeatureTypeImpl extends UniqueNameFeatureTypeImpl {
             InternationalString description) {
         super(
                 name,
-                new ArrayList<PropertyDescriptor>(schema) {
+                new ArrayList<>(schema) {
                     private static final long serialVersionUID = 1L;
 
                     {
                         add(ComplexFeatureConstants.FEATURE_CHAINING_LINK);
-                    };
+                    }
                 },
                 defaultGeometry,
                 isAbstract,
@@ -83,8 +82,7 @@ public class ComplexFeatureTypeImpl extends UniqueNameFeatureTypeImpl {
      * @param type Type to copy
      * @param schema Set of descriptors
      */
-    public ComplexFeatureTypeImpl(
-            ComplexFeatureTypeImpl type, Collection<PropertyDescriptor> schema) {
+    public ComplexFeatureTypeImpl(ComplexFeatureTypeImpl type, Collection<PropertyDescriptor> schema) {
         super(
                 type.name,
                 schema,
@@ -98,8 +96,8 @@ public class ComplexFeatureTypeImpl extends UniqueNameFeatureTypeImpl {
     }
 
     /**
-     * Return all the descriptors that come from the schema, excluding the system descriptors, such
-     * as 'FEATURE_LINK', used for linking features.
+     * Return all the descriptors that come from the schema, excluding the system descriptors, such as 'FEATURE_LINK',
+     * used for linking features.
      *
      * @return schema descriptors
      */

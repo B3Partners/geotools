@@ -19,12 +19,11 @@ package org.geotools.data.postgis;
 import org.geotools.util.Version;
 
 /**
- * Sets up a trigger to the feature insertion target table This setup enable to test the increment
- * of multiple database sequences upon a single feature insertion
+ * Sets up a trigger to the feature insertion target table This setup enable to test the increment of multiple database
+ * sequences upon a single feature insertion
  *
  * @author Lorenzo Pini (lorenzo.pini@geo-solutions.it)
  */
-@SuppressWarnings("PMD.JUnit4TestShouldUseAfterAnnotation") // not a test by itself
 public class PostGISFeatureStoreTestSetup extends PostGISTestSetup {
 
     @Override

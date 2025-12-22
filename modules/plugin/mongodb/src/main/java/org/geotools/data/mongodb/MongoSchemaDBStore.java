@@ -27,8 +27,8 @@ import com.mongodb.MongoClientURI;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
 
 /** @author tkunicki@boundlessgeo.com */
 @SuppressWarnings("deprecation") // DB was replaced by MongoDatabase but API is not the same
@@ -59,8 +59,7 @@ public class MongoSchemaDBStore implements MongoSchemaStore {
         }
         collection = database.getCollection(collectionName);
         collection.createIndex(
-                new BasicDBObject(FeatureTypeDBObject.KEY_typeName, 1),
-                new BasicDBObject("unique", true));
+                new BasicDBObject(FeatureTypeDBObject.KEY_typeName, 1), new BasicDBObject("unique", true));
     }
 
     @Override
@@ -86,8 +85,7 @@ public class MongoSchemaDBStore implements MongoSchemaStore {
         if (typeName == null) {
             return null;
         }
-        DBObject document =
-                collection.findOne(new BasicDBObject(FeatureTypeDBObject.KEY_typeName, typeName));
+        DBObject document = collection.findOne(new BasicDBObject(FeatureTypeDBObject.KEY_typeName, typeName));
         SimpleFeatureType featureType = null;
         if (document != null) {
             try {
@@ -114,16 +112,14 @@ public class MongoSchemaDBStore implements MongoSchemaStore {
     @Override
     public List<String> typeNames() {
         try (DBCursor cursor =
-                collection.find(
-                        new BasicDBObject(),
-                        new BasicDBObject(FeatureTypeDBObject.KEY_typeName, 1))) {
+                collection.find(new BasicDBObject(), new BasicDBObject(FeatureTypeDBObject.KEY_typeName, 1))) {
             List<String> typeNames = new ArrayList<>(cursor.count());
             while (cursor.hasNext()) {
                 DBObject document = cursor.next();
                 if (document != null) {
                     Object typeName = document.get(FeatureTypeDBObject.KEY_typeName);
-                    if (typeName instanceof String) {
-                        typeNames.add((String) typeName);
+                    if (typeName instanceof String string) {
+                        typeNames.add(string);
                     }
                 }
             }

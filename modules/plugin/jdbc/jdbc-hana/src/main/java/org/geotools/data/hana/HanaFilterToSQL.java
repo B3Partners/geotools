@@ -22,6 +22,37 @@ import java.util.Map;
 import javax.measure.Unit;
 import javax.measure.UnitConverter;
 import javax.measure.quantity.Length;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.BBOX3D;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.DistanceBufferOperator;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
+import org.geotools.api.filter.temporal.After;
+import org.geotools.api.filter.temporal.Before;
+import org.geotools.api.filter.temporal.Begins;
+import org.geotools.api.filter.temporal.BegunBy;
+import org.geotools.api.filter.temporal.During;
+import org.geotools.api.filter.temporal.EndedBy;
+import org.geotools.api.filter.temporal.Ends;
+import org.geotools.api.filter.temporal.TEquals;
+import org.geotools.api.filter.temporal.TOverlaps;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.geometry.BoundingBox3D;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.GeographicCRS;
 import org.geotools.filter.ConstantExpression;
 import org.geotools.filter.FilterCapabilities;
 import org.geotools.filter.function.FilterFunction_strConcat;
@@ -50,37 +81,6 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.BBOX3D;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.DistanceBufferOperator;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
-import org.opengis.filter.temporal.After;
-import org.opengis.filter.temporal.Before;
-import org.opengis.filter.temporal.Begins;
-import org.opengis.filter.temporal.BegunBy;
-import org.opengis.filter.temporal.During;
-import org.opengis.filter.temporal.EndedBy;
-import org.opengis.filter.temporal.Ends;
-import org.opengis.filter.temporal.TEquals;
-import org.opengis.filter.temporal.TOverlaps;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.geometry.BoundingBox3D;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.GeographicCRS;
 
 /**
  * A filter-to-SQL converter for SAP HANA.
@@ -110,12 +110,10 @@ public class HanaFilterToSQL extends PreparedFilterToSQL {
         UNITS_MAP.put("feet", 0.3048);
         UNITS_MAP.put("ft", 0.3048);
         UNITS_MAP.put("in", 0.0254);
-    };
+    }
 
     public HanaFilterToSQL(
-            PreparedStatementSQLDialect dialect,
-            boolean functionEncodingEnabled,
-            HanaVersion hanaVersion) {
+            PreparedStatementSQLDialect dialect, boolean functionEncodingEnabled, HanaVersion hanaVersion) {
         super(dialect);
         this.functionEncodingEnabled = functionEncodingEnabled;
         this.hanaVersion = hanaVersion;
@@ -181,19 +179,13 @@ public class HanaFilterToSQL extends PreparedFilterToSQL {
 
     @Override
     protected Object visitBinarySpatialOperator(
-            BinarySpatialOperator filter,
-            PropertyName property,
-            Literal geometry,
-            boolean swapped,
-            Object extraData) {
-        if (filter instanceof DistanceBufferOperator) {
-            return visitDistanceSpatialOperator(
-                    (DistanceBufferOperator) filter, property, geometry, swapped, extraData);
-        } else if (filter instanceof BBOX) {
-            return visitBBOXSpatialOperator((BBOX) filter, property, geometry, extraData);
+            BinarySpatialOperator filter, PropertyName property, Literal geometry, boolean swapped, Object extraData) {
+        if (filter instanceof DistanceBufferOperator operator) {
+            return visitDistanceSpatialOperator(operator, property, geometry, swapped, extraData);
+        } else if (filter instanceof BBOX oX) {
+            return visitBBOXSpatialOperator(oX, property, geometry, extraData);
         } else {
-            return visitBinarySpatialOperator(
-                    filter, property, (Expression) geometry, swapped, extraData);
+            return visitBinarySpatialOperator(filter, property, (Expression) geometry, swapped, extraData);
         }
     }
 
@@ -209,11 +201,7 @@ public class HanaFilterToSQL extends PreparedFilterToSQL {
     }
 
     private Object visitDistanceSpatialOperator(
-            DistanceBufferOperator filter,
-            PropertyName property,
-            Literal geometry,
-            boolean swapped,
-            Object extraData) {
+            DistanceBufferOperator filter, PropertyName property, Literal geometry, boolean swapped, Object extraData) {
         if (!(filter instanceof DWithin) && !(filter instanceof Beyond)) {
             throw new IllegalArgumentException("Unsupported filter type " + filter.getClass());
         }
@@ -229,12 +217,11 @@ public class HanaFilterToSQL extends PreparedFilterToSQL {
                 out.write(", 'meter'");
             } else {
                 out.write(Double.toString(filter.getDistance()));
-                out.write(", '");
-                out.write(filter.getDistanceUnits());
-                out.write("'");
+                out.write(", ");
+                out.write(HanaUtil.toStringLiteral(filter.getDistanceUnits()));
             }
             out.write(")");
-            if ((filter instanceof DWithin) != swapped) {
+            if (filter instanceof DWithin != swapped) {
                 out.write(" = 1");
             } else {
                 out.write(" = 0");
@@ -247,8 +234,7 @@ public class HanaFilterToSQL extends PreparedFilterToSQL {
 
     private static final int FLAT_OFFSET = 1000000000;
 
-    private Object visitBBOXSpatialOperator(
-            BBOX filter, PropertyName property, Literal geometry, Object extraData) {
+    private Object visitBBOXSpatialOperator(BBOX filter, PropertyName property, Literal geometry, Object extraData) {
         try {
             property.accept(this, extraData);
             if (hanaVersion.getVersion() > 1) {
@@ -256,13 +242,10 @@ public class HanaFilterToSQL extends PreparedFilterToSQL {
                 writeIntersectsRectArguments("ST_IntersectsRectPlanar", bbox);
             } else {
                 CoordinateReferenceSystem hcrs = getHorizontalCRS(filter.getBounds());
-                if ((hcrs instanceof GeographicCRS)
-                        && (currentSRID != null)
-                        && (currentSRID <= FLAT_OFFSET)) {
+                if (hcrs instanceof GeographicCRS && currentSRID != null && currentSRID <= FLAT_OFFSET) {
                     currentSRID += FLAT_OFFSET;
                     try {
-                        String function =
-                                "ST_SRID(" + Integer.toString(currentSRID) + ").ST_IntersectsRect";
+                        String function = "ST_SRID(" + Integer.toString(currentSRID) + ").ST_IntersectsRect";
                         BoundingBox bbox = clamp(filter.getBounds(), 0.5);
                         writeIntersectsRectArguments(function, bbox);
                     } finally {
@@ -273,8 +256,7 @@ public class HanaFilterToSQL extends PreparedFilterToSQL {
                     writeIntersectsRectArguments("ST_IntersectsRect", bbox);
                 }
             }
-            if (filter instanceof BBOX3D) {
-                BBOX3D filter3d = (BBOX3D) filter;
+            if (filter instanceof BBOX3D filter3d) {
                 BoundingBox3D bbox3d = filter3d.getBounds();
                 double minz = bbox3d.getMinZ();
                 double maxz = bbox3d.getMaxZ();
@@ -302,8 +284,7 @@ public class HanaFilterToSQL extends PreparedFilterToSQL {
         return hcrs;
     }
 
-    private void writeIntersectsRectArguments(String function, BoundingBox bbox)
-            throws IOException {
+    private void writeIntersectsRectArguments(String function, BoundingBox bbox) throws IOException {
         out.write('.');
         out.write(function);
         out.write("(");
@@ -362,11 +343,7 @@ public class HanaFilterToSQL extends PreparedFilterToSQL {
     }
 
     private Object visitBinarySpatialOperator(
-            BinarySpatialOperator filter,
-            Expression e1,
-            Expression e2,
-            boolean swapped,
-            Object extraData) {
+            BinarySpatialOperator filter, Expression e1, Expression e2, boolean swapped, Object extraData) {
         try {
             e1.accept(this, extraData);
             out.write('.');

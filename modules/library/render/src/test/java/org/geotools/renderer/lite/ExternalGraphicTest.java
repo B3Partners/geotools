@@ -23,14 +23,14 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.style.Style;
 import org.geotools.data.property.PropertyDataStore;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.image.test.ImageAssert;
 import org.geotools.map.FeatureLayer;
 import org.geotools.map.MapContent;
 import org.geotools.referencing.CRS;
-import org.geotools.styling.Style;
 import org.geotools.test.TestData;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -75,16 +75,14 @@ public class ExternalGraphicTest {
     }
 
     File file(String name) {
-        return new File(
-                "src/test/resources/org/geotools/renderer/lite/test-data/graphic/" + name + ".png");
+        return new File("src/test/resources/org/geotools/renderer/lite/test-data/graphic/" + name + ".png");
     }
 
     @Test
     public void testExternalGraphic() throws Exception {
         StreamingRenderer renderer = setupMap("externalGraphic.sld");
 
-        BufferedImage image =
-                RendererBaseTest.showRender("External graphic", renderer, TIME, bounds);
+        BufferedImage image = RendererBaseTest.showRender("External graphic", renderer, TIME, bounds);
         ImageAssert.assertEquals(file("externalGraphic"), image, 50);
     }
 
@@ -92,8 +90,7 @@ public class ExternalGraphicTest {
     public void testExternalGraphicAnchor() throws Exception {
         StreamingRenderer renderer = setupMap("externalGraphicAnchor.sld");
 
-        BufferedImage image =
-                RendererBaseTest.showRender("External graphic anchor", renderer, TIME, bounds);
+        BufferedImage image = RendererBaseTest.showRender("External graphic anchor", renderer, TIME, bounds);
         ImageAssert.assertEquals(file("externalGraphicAnchor"), image, 50);
     }
 
@@ -101,9 +98,7 @@ public class ExternalGraphicTest {
     public void testExternalGraphicDisplacement() throws Exception {
         StreamingRenderer renderer = setupMap("externalGraphicDisplacement.sld");
 
-        BufferedImage image =
-                RendererBaseTest.showRender(
-                        "External graphic displacement", renderer, TIME, bounds);
+        BufferedImage image = RendererBaseTest.showRender("External graphic displacement", renderer, TIME, bounds);
         ImageAssert.assertEquals(file("externalGraphicDisplacement"), image, 50);
     }
 }

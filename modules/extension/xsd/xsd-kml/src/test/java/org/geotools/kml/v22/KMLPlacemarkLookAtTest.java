@@ -20,17 +20,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.xsd.Parser;
 import org.junit.Test;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
 
 public class KMLPlacemarkLookAtTest extends KMLTestSupport {
     @Test
     public void testParseDocument() throws Exception {
         Parser parser = new Parser(createConfiguration());
-        SimpleFeature doc =
-                (SimpleFeature) parser.parse(getClass().getResourceAsStream("geot5666.kml"));
+        SimpleFeature doc = (SimpleFeature) parser.parse(getClass().getResourceAsStream("geot5666.kml"));
         assertNotNull(doc);
         assertEquals("document", doc.getType().getTypeName());
         assertEquals("GEOT-5666", doc.getAttribute("name"));

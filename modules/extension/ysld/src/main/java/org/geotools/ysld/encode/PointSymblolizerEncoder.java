@@ -17,7 +17,7 @@
  */
 package org.geotools.ysld.encode;
 
-import org.geotools.styling.PointSymbolizer;
+import org.geotools.api.style.PointSymbolizer;
 
 /** Encodes a {@link PointSymbolizer} as YSLD. */
 public class PointSymblolizerEncoder extends SymbolizerEncoder<PointSymbolizer> {
@@ -27,7 +27,7 @@ public class PointSymblolizerEncoder extends SymbolizerEncoder<PointSymbolizer> 
 
     @Override
     protected void encode(PointSymbolizer sym) {
-        inline(new GraphicEncoder((sym.getGraphic())));
+        inline(new GraphicEncoder(sym.getGraphic()));
         super.encode(sym);
     }
 }

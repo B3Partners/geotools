@@ -18,6 +18,9 @@ package org.geotools.graph.build.feature;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
@@ -29,9 +32,6 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class FeatureGraphGeneratorTest {
 
@@ -69,11 +69,7 @@ public class FeatureGraphGeneratorTest {
         LineString[] lines = new LineString[5];
 
         for (int i = 0; i < lines.length; i++) {
-            lines[i] =
-                    gf.createLineString(
-                            new Coordinate[] {
-                                new Coordinate(i, i + 1), new Coordinate(i + 2, i + 3)
-                            });
+            lines[i] = gf.createLineString(new Coordinate[] {new Coordinate(i, i + 1), new Coordinate(i + 2, i + 3)});
         }
 
         return lines;
@@ -90,9 +86,7 @@ public class FeatureGraphGeneratorTest {
 
         for (int i = 0; i < lines.length; i++) {
             Integer id = Integer.valueOf(i);
-            features[i] =
-                    SimpleFeatureBuilder.build(
-                            schema, new Object[] {lines[i], id}, "fid" + id.toString());
+            features[i] = SimpleFeatureBuilder.build(schema, new Object[] {lines[i], id}, "fid" + id.toString());
         }
 
         return features;

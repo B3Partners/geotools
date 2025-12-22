@@ -27,10 +27,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.geotools.api.metadata.citation.Citation;
 import org.geotools.metadata.iso.citation.CitationImpl;
 import org.geotools.metadata.iso.citation.Citations;
 import org.junit.Test;
-import org.opengis.metadata.citation.Citation;
 
 /**
  * Tests the {@link MetadataStandard} class.
@@ -89,14 +89,8 @@ public final class MetadataStandardTest {
 
         // Note: AbstractCollection do not defines hashCode(); we have to wraps in a HashSet.
         final int hashCode = citation.hashCode();
-        assertEquals(
-                "hashCode() should be as in a Set.",
-                hashCode,
-                new HashSet<>(map.values()).hashCode());
-        assertEquals(
-                "hashCode() should be as in a Set.",
-                hashCode,
-                new HashSet<>(copy.values()).hashCode());
+        assertEquals("hashCode() should be as in a Set.", hashCode, new HashSet<>(map.values()).hashCode());
+        assertEquals("hashCode() should be as in a Set.", hashCode, new HashSet<>(copy.values()).hashCode());
 
         map.remove("identifiers");
         final int newHashCode = citation.hashCode();

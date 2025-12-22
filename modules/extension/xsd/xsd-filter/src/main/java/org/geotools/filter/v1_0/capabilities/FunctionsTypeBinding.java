@@ -17,12 +17,12 @@
 package org.geotools.filter.v1_0.capabilities;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.capability.Functions;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.capability.Functions;
 
 /**
  * Binding object for the type http://www.opengis.net/ogc:FunctionsType.
@@ -83,8 +83,7 @@ public class FunctionsTypeBinding extends AbstractComplexBinding {
 
     @Override
     public Object getProperty(Object object, QName name) throws Exception {
-        if ("Function_Names".equals(name.getLocalPart())
-                || "FunctionNames".equals(name.getLocalPart()) /* 1.1 */) {
+        if ("Function_Names".equals(name.getLocalPart()) || "FunctionNames".equals(name.getLocalPart()) /* 1.1 */) {
             Functions functions = (Functions) object;
 
             return functions.getFunctionNames();

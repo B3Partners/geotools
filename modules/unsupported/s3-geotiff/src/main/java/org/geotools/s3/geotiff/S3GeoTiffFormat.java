@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.gce.geotiff.GeoTiffFormat;
 import org.geotools.gce.geotiff.GeoTiffReader;
@@ -34,11 +35,10 @@ import org.geotools.parameter.ParameterGroup;
 import org.geotools.s3.S3Connector;
 import org.geotools.s3.S3ImageInputStreamImpl;
 import org.geotools.util.factory.Hints;
-import org.opengis.parameter.GeneralParameterDescriptor;
 
 /**
- * Just a basic wrapper around GeoTiffFormat in order to support GeoTiff over S3. Hopefully this
- * wrapper either won't be permanent, or won't require overriding very many properties/methods
+ * Just a basic wrapper around GeoTiffFormat in order to support GeoTiff over S3. Hopefully this wrapper either won't be
+ * permanent, or won't require overriding very many properties/methods
  */
 public class S3GeoTiffFormat extends GeoTiffFormat {
 
@@ -53,33 +53,21 @@ public class S3GeoTiffFormat extends GeoTiffFormat {
         writeParameters = null;
         mInfo = new HashMap<>();
         mInfo.put("name", "S3GeoTiff");
-        mInfo.put(
-                "description", "Tagged Image File Format with Geographic information hosted on S3");
+        mInfo.put("description", "Tagged Image File Format with Geographic information hosted on S3");
         mInfo.put("vendor", "Boundless Geo");
         mInfo.put("version", "1.0");
 
         // reading parameters
         readParameters =
-                new ParameterGroup(
-                        new DefaultParameterDescriptorGroup(
-                                mInfo,
-                                new GeneralParameterDescriptor[] {
-                                    READ_GRIDGEOMETRY2D,
-                                    INPUT_TRANSPARENT_COLOR,
-                                    SUGGESTED_TILE_SIZE,
-                                    AWS_REGION
-                                }));
+                new ParameterGroup(new DefaultParameterDescriptorGroup(mInfo, new GeneralParameterDescriptor[] {
+                    READ_GRIDGEOMETRY2D, INPUT_TRANSPARENT_COLOR, SUGGESTED_TILE_SIZE, AWS_REGION
+                }));
 
         // writing parameters
         writeParameters =
-                new ParameterGroup(
-                        new DefaultParameterDescriptorGroup(
-                                mInfo,
-                                new GeneralParameterDescriptor[] {
-                                    RETAIN_AXES_ORDER,
-                                    AbstractGridFormat.GEOTOOLS_WRITE_PARAMS,
-                                    AbstractGridFormat.PROGRESS_LISTENER
-                                }));
+                new ParameterGroup(new DefaultParameterDescriptorGroup(mInfo, new GeneralParameterDescriptor[] {
+                    RETAIN_AXES_ORDER, AbstractGridFormat.GEOTOOLS_WRITE_PARAMS, AbstractGridFormat.PROGRESS_LISTENER
+                }));
         try {
             if (prop == null) {
                 prop = new Properties();
@@ -89,9 +77,8 @@ public class S3GeoTiffFormat extends GeoTiffFormat {
                         prop.load(resourceAsStream);
                     }
                 } else {
-                    LOGGER.severe(
-                            "Properties are missing! The system property 's3.properties.location' should be set "
-                                    + "and contain the path to the s3.properties file.");
+                    LOGGER.severe("Properties are missing! The system property 's3.properties.location' should be set "
+                            + "and contain the path to the s3.properties file.");
                 }
             }
         } catch (IOException e) {
@@ -107,24 +94,18 @@ public class S3GeoTiffFormat extends GeoTiffFormat {
             S3ImageInputStreamImpl inStream;
             if (source instanceof File) {
                 throw new UnsupportedOperationException("Can't instantiate S3 with a File handle");
-            } else if (source instanceof String) {
-                inStream = new S3ImageInputStreamImpl((String) source);
-            } else if (source instanceof URL) {
-                inStream = new S3ImageInputStreamImpl((URL) source);
+            } else if (source instanceof String string) {
+                inStream = new S3ImageInputStreamImpl(string);
+            } else if (source instanceof URL rL) {
+                inStream = new S3ImageInputStreamImpl(rL);
             } else {
                 throw new IllegalArgumentException(
-                        "Can't create S3ImageInputStream from input of "
-                                + "type: "
-                                + source.getClass());
+                        "Can't create S3ImageInputStream from input of " + "type: " + source.getClass());
             }
 
             return new S3GeoTiffReader(inStream, hints);
         } catch (Exception e) {
-            LOGGER.log(
-                    Level.FINE,
-                    "Exception raised trying to instantiate S3 image input "
-                            + "stream from source.",
-                    e);
+            LOGGER.log(Level.FINE, "Exception raised trying to instantiate S3 image input " + "stream from source.", e);
             throw new RuntimeException(e);
         }
     }
@@ -135,13 +116,12 @@ public class S3GeoTiffFormat extends GeoTiffFormat {
             return false;
         } else {
             boolean accepts = false;
-            if (o instanceof String) {
-                String url = (String) o;
+            if (o instanceof String url) {
                 if (url.contains("://")) {
                     accepts = containsS3orAliasPrefix(url.split("://")[0]);
                 }
-            } else if (o instanceof URL) {
-                String protocol = ((URL) o).getProtocol();
+            } else if (o instanceof URL rL) {
+                String protocol = rL.getProtocol();
                 accepts = containsS3orAliasPrefix(protocol);
             }
             return accepts;

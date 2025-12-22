@@ -27,9 +27,7 @@ import org.geotools.process.factory.DescribeResult;
  *
  * @author Andrea Aime
  */
-@DescribeProcess(
-        title = "Count Features",
-        description = "Computes the number of features in a feature collection.")
+@DescribeProcess(title = "Count Features", description = "Computes the number of features in a feature collection.")
 public class CountProcess implements VectorProcess {
     /** The functions this process can handle */
     public enum AggregationFunction {
@@ -38,7 +36,7 @@ public class CountProcess implements VectorProcess {
         Median,
         Min,
         StdDev,
-        Sum;
+        Sum
     }
 
     @DescribeResult(name = "result", description = "Number of features")

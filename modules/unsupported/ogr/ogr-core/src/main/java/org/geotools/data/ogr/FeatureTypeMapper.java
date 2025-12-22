@@ -19,6 +19,10 @@ package org.geotools.data.ogr;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.FeatureTypes;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.feature.type.BasicFeatureTypes;
@@ -32,10 +36,6 @@ import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Helper mapping between geotools and OGR feature types
@@ -51,8 +51,7 @@ class FeatureTypeMapper {
     }
 
     /** Returns the geotools feature type equivalent from the native OGR one */
-    SimpleFeatureType getFeatureType(Object layer, String typeName, String namespaceURI)
-            throws IOException {
+    SimpleFeatureType getFeatureType(Object layer, String typeName, String namespaceURI) throws IOException {
         Object definition = null;
         try {
             // setup the builder
@@ -87,13 +86,11 @@ class FeatureTypeMapper {
             }
 
             // compute a default parent feature type
-            if ((geometryBinding == Point.class) || (geometryBinding == MultiPoint.class)) {
+            if (geometryBinding == Point.class || geometryBinding == MultiPoint.class) {
                 tb.setSuperType(BasicFeatureTypes.POINT);
-            } else if ((geometryBinding == Polygon.class)
-                    || (geometryBinding == MultiPolygon.class)) {
+            } else if (geometryBinding == Polygon.class || geometryBinding == MultiPolygon.class) {
                 tb.setSuperType(BasicFeatureTypes.POLYGON);
-            } else if ((geometryBinding == LineString.class)
-                    || (geometryBinding == MultiLineString.class)) {
+            } else if (geometryBinding == LineString.class || geometryBinding == MultiLineString.class) {
                 tb.setSuperType(BasicFeatureTypes.LINE);
             }
 
@@ -274,8 +271,7 @@ class FeatureTypeMapper {
                 || value == ogr.GetMultiPolygonType()
                 || value == ogr.GetMultiPolygon25DType()) {
             return MultiPolygon.class;
-        } else if (value == ogr.GetGeometryCollectionType()
-                || value == ogr.GetGeometryCollection25DType()) {
+        } else if (value == ogr.GetGeometryCollectionType() || value == ogr.GetGeometryCollection25DType()) {
             return GeometryCollection.class;
         } else if (value == ogr.GetGeometryNoneType()) {
             return null;
@@ -319,9 +315,7 @@ class FeatureTypeMapper {
         }
     }
 
-    /**
-     * Returns a Pointer to a OGR spatial reference object equivalent to the specified GeoTools CRS
-     */
+    /** Returns a Pointer to a OGR spatial reference object equivalent to the specified GeoTools CRS */
     public Object getSpatialReference(CoordinateReferenceSystem crs) {
         if (crs == null) {
             return null;

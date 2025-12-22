@@ -14,17 +14,17 @@ package org.geotools.tutorial.csv;
 
 import com.csvreader.CsvReader;
 import java.io.IOException;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.Query;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
 
 /**
  * Read-only access to CSV File.
@@ -39,20 +39,22 @@ public class CSVFeatureSource extends ContentFeatureSource {
 
     // getDataStore start
     /** Access parent CSVDataStore. */
+    @Override
     public CSVDataStore getDataStore() {
         return (CSVDataStore) super.getDataStore();
     }
     // getDataStore end
 
     // reader start
-    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query)
-            throws IOException {
+    @Override
+    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query) throws IOException {
         return new CSVFeatureReader(getState(), query);
     }
 
     // reader end
 
     // count start
+    @Override
     protected int getCountInternal(Query query) throws IOException {
         if (query.getFilter() == Filter.INCLUDE) {
             CsvReader reader = getDataStore().read();
@@ -75,16 +77,15 @@ public class CSVFeatureSource extends ContentFeatureSource {
     // count end
 
     // bounds start
-    /**
-     * Implementation that generates the total bounds (many file formats record this information in
-     * the header)
-     */
+    /** Implementation that generates the total bounds (many file formats record this information in the header) */
+    @Override
     protected ReferencedEnvelope getBoundsInternal(Query query) throws IOException {
         return null; // feature by feature scan required to establish bounds
     }
     // bounds end
 
     // schema start
+    @Override
     protected SimpleFeatureType buildFeatureType() throws IOException {
 
         SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();

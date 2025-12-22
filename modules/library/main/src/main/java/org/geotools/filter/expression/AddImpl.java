@@ -17,12 +17,12 @@
 package org.geotools.filter.expression;
 
 import java.util.Collection;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
 import org.geotools.filter.Filters;
 import org.geotools.filter.MathExpressionImpl;
 import org.geotools.util.Utilities;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
 
 /**
  * Implementation of Add expression.
@@ -63,8 +63,7 @@ public class AddImpl extends MathExpressionImpl implements Add {
      */
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof AddImpl) {
-            AddImpl other = (AddImpl) obj;
+        if (obj instanceof AddImpl other) {
 
             return Utilities.equals(getExpression1(), other.getExpression1())
                     && Utilities.equals(getExpression2(), other.getExpression2());
@@ -81,8 +80,8 @@ public class AddImpl extends MathExpressionImpl implements Add {
     public int hashCode() {
         int result = 23;
 
-        result = (37 * result) + getExpression1().hashCode();
-        result = (37 * result) + getExpression2().hashCode();
+        result = 37 * result + getExpression1().hashCode();
+        result = 37 * result + getExpression2().hashCode();
 
         return result;
     }

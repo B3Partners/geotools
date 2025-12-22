@@ -7,13 +7,13 @@
                                                                                 
         Version: $Id$              
      ======================================================================= -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                                 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                                 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.geotools.jdbc</groupId>
     <artifactId>gt-jdbc</artifactId>
-    <version>29-SNAPSHOT</version>
+    <version>35-SNAPSHOT</version>
   </parent>
 
   <!-- =========================================================== -->
@@ -52,28 +52,16 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.opengeo</groupId>
-      <artifactId>geodb</artifactId>
-      <version>0.9</version>
-      <exclusions>
-        <exclusion>
-          <artifactId>h2</artifactId>
-          <groupId>com.h2database</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>hatbox</artifactId>
-          <groupId>net.sourceforge.hatbox</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.opengeo</groupId>
+      <artifactId>geodb</artifactId>
+    </dependency>
+    <dependency>
       <groupId>net.sourceforge.hatbox</groupId>
       <artifactId>hatbox</artifactId>
-      <version>1.0.b11</version>
     </dependency>
   </dependencies>
 

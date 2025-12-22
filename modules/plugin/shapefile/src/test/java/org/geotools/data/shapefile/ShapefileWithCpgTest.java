@@ -30,20 +30,20 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.DataStore;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.test.TestData;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
 
 public class ShapefileWithCpgTest extends TestCaseSupport {
 
@@ -69,8 +69,7 @@ public class ShapefileWithCpgTest extends TestCaseSupport {
         dataStore.setTryCPGFile(true);
         try {
             String typeName = dataStore.getTypeNames()[0];
-            FeatureSource<SimpleFeatureType, SimpleFeature> source =
-                    dataStore.getFeatureSource(typeName);
+            FeatureSource<SimpleFeatureType, SimpleFeature> source = dataStore.getFeatureSource(typeName);
 
             try (FeatureIterator<SimpleFeature> features =
                     source.getFeatures(Filter.INCLUDE).features()) {
@@ -90,8 +89,7 @@ public class ShapefileWithCpgTest extends TestCaseSupport {
         ShapefileDataStore dataStore = new ShapefileDataStore(url);
         try {
             String typeName = dataStore.getTypeNames()[0];
-            FeatureSource<SimpleFeatureType, SimpleFeature> source =
-                    dataStore.getFeatureSource(typeName);
+            FeatureSource<SimpleFeatureType, SimpleFeature> source = dataStore.getFeatureSource(typeName);
 
             try (FeatureIterator<SimpleFeature> features =
                     source.getFeatures(Filter.INCLUDE).features()) {
@@ -177,19 +175,17 @@ public class ShapefileWithCpgTest extends TestCaseSupport {
         File file = copyShapefiles(DANISH);
 
         Map<String, Object> params = new HashMap<>();
-        params.put(ShapefileDataStoreFactory.URLP.key, file.getParentFile().toURI().toURL());
+        params.put(
+                ShapefileDataStoreFactory.URLP.key, file.getParentFile().toURI().toURL());
         ShapefileDirectoryFactory factory = new ShapefileDirectoryFactory();
 
         DataStore dataStore = factory.createDataStore(params);
 
         try {
-            assertThat(
-                    Arrays.asList(dataStore.getTypeNames()),
-                    hasItems("rus-windows-1251", "danish_point"));
+            assertThat(Arrays.asList(dataStore.getTypeNames()), hasItems("rus-windows-1251", "danish_point"));
 
             for (String typeName : dataStore.getTypeNames()) {
-                FeatureSource<SimpleFeatureType, SimpleFeature> source =
-                        dataStore.getFeatureSource(typeName);
+                FeatureSource<SimpleFeatureType, SimpleFeature> source = dataStore.getFeatureSource(typeName);
 
                 try (FeatureIterator<SimpleFeature> features =
                         source.getFeatures(Filter.INCLUDE).features()) {
@@ -211,20 +207,18 @@ public class ShapefileWithCpgTest extends TestCaseSupport {
         File file = copyShapefiles(DANISH);
 
         Map<String, Object> params = new HashMap<>();
-        params.put(ShapefileDataStoreFactory.URLP.key, file.getParentFile().toURI().toURL());
+        params.put(
+                ShapefileDataStoreFactory.URLP.key, file.getParentFile().toURI().toURL());
         params.put(ShapefileDataStoreFactory.DBFCHARSET.key, StandardCharsets.ISO_8859_1);
         ShapefileDirectoryFactory factory = new ShapefileDirectoryFactory();
 
         DataStore dataStore = factory.createDataStore(params);
 
         try {
-            assertThat(
-                    Arrays.asList(dataStore.getTypeNames()),
-                    hasItems("rus-windows-1251", "danish_point"));
+            assertThat(Arrays.asList(dataStore.getTypeNames()), hasItems("rus-windows-1251", "danish_point"));
 
             for (String typeName : dataStore.getTypeNames()) {
-                FeatureSource<SimpleFeatureType, SimpleFeature> source =
-                        dataStore.getFeatureSource(typeName);
+                FeatureSource<SimpleFeatureType, SimpleFeature> source = dataStore.getFeatureSource(typeName);
 
                 try (FeatureIterator<SimpleFeature> features =
                         source.getFeatures(Filter.INCLUDE).features()) {

@@ -16,29 +16,27 @@
  */
 package org.geotools.coverage.processing.operation;
 
-// JAI dependencies (for javadoc)
+// ImageN dependencies (for javadoc)
 
-import it.geosolutions.jaiext.JAIExt;
-import it.geosolutions.jaiext.algebra.AlgebraDescriptor.Operator;
 import java.awt.image.RenderedImage;
+import java.io.Serial;
 import java.util.Map;
-import javax.media.jai.ParameterBlockJAI;
-import javax.media.jai.operator.SubtractConstDescriptor;
+import org.eclipse.imagen.ParameterBlockImageN;
+import org.eclipse.imagen.media.algebra.AlgebraDescriptor.Operator;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.OperationJAI;
 import org.geotools.util.NumberRange;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.util.InternationalString;
 
 // Geotools dependencies
 
 /**
- * Subtracts constants (one for each band) from every sample values of the source coverage. If the
- * number of constants supplied is less than the number of bands of the destination, then the
- * constant from entry 0 is applied to all the bands. Otherwise, a constant from a different entry
- * is applied to each band.
+ * Subtracts constants (one for each band) from every sample values of the source coverage. If the number of constants
+ * supplied is less than the number of bands of the destination, then the constant from entry 0 is applied to all the
+ * bands. Otherwise, a constant from a different entry is applied to each band.
  *
  * <p><STRONG>Name:</STRONG>&nbsp;<CODE>"SubtractConst"</CODE><br>
  * <STRONG>JAI operator:</STRONG>&nbsp;<CODE>"{@linkplain SubtractConstDescriptor SubtractConst}"
@@ -78,12 +76,14 @@ import org.opengis.util.InternationalString;
  *     HREF="http://jira.codehaus.org/browse/GEOT-610">GEOT-610</A>.
  */
 public class SubtractConst extends OperationJAI {
+    private static final String OPERATION_CONST = "operationConst";
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 279426577290256732L;
 
     /** Constructs a default {@code "SubtractConst"} operation. */
     public SubtractConst() {
-        super("SubtractConst", getOperationDescriptor(JAIExt.getOperationName("SubtractConst")));
+        super("SubtractConst", getOperationDescriptor(OPERATION_CONST));
     }
 
     @Override
@@ -107,12 +107,10 @@ public class SubtractConst extends OperationJAI {
     }
 
     @Override
-    protected void handleJAIEXTParams(
-            ParameterBlockJAI parameters, ParameterValueGroup parameters2) {
-        GridCoverage2D source = (GridCoverage2D) parameters2.parameter("source0").getValue();
-        if (JAIExt.isJAIExtOperation("operationConst")) {
-            parameters.set(Operator.SUBTRACT, 1);
-        }
+    protected void handleJAIEXTParams(ParameterBlockImageN parameters, ParameterValueGroup parameters2) {
+        GridCoverage2D source =
+                (GridCoverage2D) parameters2.parameter("source0").getValue();
+        parameters.set(Operator.SUBTRACT, 1);
         handleROINoDataInternal(parameters, source, "operationConst", 2, 3);
     }
 
@@ -124,7 +122,6 @@ public class SubtractConst extends OperationJAI {
             MathTransform gridToCRS,
             GridCoverage2D[] sources,
             Parameters parameters) {
-        return handleROINoDataProperties(
-                null, parameters.parameters, sources[0], "operationConst", 2, 3, 4);
+        return handleROINoDataProperties(null, parameters.parameters, sources[0], "operationConst", 2, 3, 4);
     }
 }

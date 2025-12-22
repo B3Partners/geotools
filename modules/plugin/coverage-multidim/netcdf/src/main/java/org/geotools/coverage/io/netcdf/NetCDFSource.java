@@ -22,15 +22,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.referencing.ReferenceIdentifier;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.coverage.io.CoverageReadRequest;
 import org.geotools.coverage.io.CoverageResponse;
 import org.geotools.coverage.io.impl.DefaultCoverageSource;
 import org.geotools.imageio.netcdf.NetCDFImageReader;
 import org.geotools.parameter.DefaultParameterDescriptor;
-import org.opengis.feature.type.Name;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.referencing.ReferenceIdentifier;
-import org.opengis.util.ProgressListener;
 
 /**
  * Implementation of a coverage source for netcdf data
@@ -40,8 +40,7 @@ import org.opengis.util.ProgressListener;
 public class NetCDFSource extends DefaultCoverageSource {
 
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(NetCDFSource.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(NetCDFSource.class);
 
     NetCDFImageReader reader;
 
@@ -53,8 +52,7 @@ public class NetCDFSource extends DefaultCoverageSource {
     }
 
     @Override
-    public CoverageResponse read(CoverageReadRequest request, ProgressListener listener)
-            throws IOException {
+    public CoverageResponse read(CoverageReadRequest request, ProgressListener listener) throws IOException {
         ensureNotDisposed();
         if (LOGGER.isLoggable(Level.FINE)) {
             LOGGER.fine("Reading NetCDFSource with request: " + request);
@@ -82,13 +80,12 @@ public class NetCDFSource extends DefaultCoverageSource {
             List<AdditionalDomain> domains = getAdditionalDomains();
             if (domains != null && !domains.isEmpty()) {
                 for (AdditionalDomain domain : domains) {
-                    dynamicParameters.add(
-                            DefaultParameterDescriptor.create(
-                                    domain.getName().toUpperCase(),
-                                    "Additional " + domain.getName() + " domain",
-                                    List.class,
-                                    null,
-                                    false));
+                    dynamicParameters.add(DefaultParameterDescriptor.create(
+                            domain.getName().toUpperCase(),
+                            "Additional " + domain.getName() + " domain",
+                            List.class,
+                            null,
+                            false));
                 }
             }
         }

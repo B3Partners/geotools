@@ -19,14 +19,14 @@ package org.geotools.gml3;
 import org.geotools.xs.XSConfiguration;
 import org.geotools.xsd.Configuration;
 import org.picocontainer.MutablePicoContainer;
+import org.xml.sax.EntityResolver;
 
 /**
  * An xml configuration for application schemas.
  *
- * <p>This Configuration expects the namespace and schema location URI of the main xsd file for a
- * given application schema and is able to resolve the schema location for the includes and imports
- * as well as they're defined as relative paths and the provided <code>schemaLocation</code> is a
- * file URI.
+ * <p>This Configuration expects the namespace and schema location URI of the main xsd file for a given application
+ * schema and is able to resolve the schema location for the includes and imports as well as they're defined as relative
+ * paths and the provided <code>schemaLocation</code> is a file URI.
  *
  * @author Justin Deoliveira, The Open Planning Project
  * @author Gabriel Roldan, Axios Engineering
@@ -35,7 +35,11 @@ import org.picocontainer.MutablePicoContainer;
  */
 public class ApplicationSchemaConfiguration extends Configuration {
     public ApplicationSchemaConfiguration(String namespace, String schemaLocation) {
-        super(new ApplicationSchemaXSD(namespace, schemaLocation));
+        this(namespace, schemaLocation, null);
+    }
+
+    public ApplicationSchemaConfiguration(String namespace, String schemaLocation, EntityResolver resolver) {
+        super(new ApplicationSchemaXSD(namespace, schemaLocation, resolver));
         addDependency(new XSConfiguration());
         addDependency(new GMLConfiguration());
     }

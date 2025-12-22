@@ -21,13 +21,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import javax.swing.AbstractListModel;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.referencing.ReferencingFactoryFinder;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * List model class for {@code JCRSChooser}. Supports filtering by case-insensitive sub-string
- * matching.
+ * List model class for {@code JCRSChooser}. Supports filtering by case-insensitive sub-string matching.
  *
  * @author Michael Bedward
  * @since 8.0
@@ -53,16 +52,14 @@ public class CRSListModel extends AbstractListModel<String> {
     private List<Item> filterItems = new ArrayList<>();
 
     /**
-     * Constructor. Populates the model with available reference systems for the specified
-     * authority. If {@code authority} is {@code null} or empty, it defaults to {@link
-     * JCRSChooser#DEFAULT_AUTHORITY}.
+     * Constructor. Populates the model with available reference systems for the specified authority. If
+     * {@code authority} is {@code null} or empty, it defaults to {@link JCRSChooser#DEFAULT_AUTHORITY}.
      *
      * @param authority the authority name
      */
     public CRSListModel(String authority) {
         try {
-            CRSAuthorityFactory fac =
-                    ReferencingFactoryFinder.getCRSAuthorityFactory(authority, null);
+            CRSAuthorityFactory fac = ReferencingFactoryFinder.getCRSAuthorityFactory(authority, null);
 
             Set<String> codes = fac.getAuthorityCodes(CoordinateReferenceSystem.class);
 
@@ -117,7 +114,8 @@ public class CRSListModel extends AbstractListModel<String> {
             String lo = subStr.toLowerCase();
 
             for (Item item : allItems) {
-                if (item.code.toLowerCase().contains(lo) || item.desc.toLowerCase().contains(lo)) {
+                if (item.code.toLowerCase().contains(lo)
+                        || item.desc.toLowerCase().contains(lo)) {
                     filterItems.add(item);
                 }
             }

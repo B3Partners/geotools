@@ -16,16 +16,17 @@
  */
 package org.geotools.referencing.operation.projection;
 
+import java.io.Serial;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.operation.CylindricalProjection;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.metadata.i18n.Vocabulary;
 import org.geotools.metadata.i18n.VocabularyKeys;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.operation.CylindricalProjection;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
  * Mercator Cylindrical 2SP Projection.
@@ -39,6 +40,7 @@ import org.opengis.referencing.operation.MathTransform;
  */
 public class Mercator2SP extends Mercator {
     /** For cross-version compatibility. */
+    @Serial
     private static final long serialVersionUID = -5693375873386007245L;
 
     /**
@@ -66,6 +68,7 @@ public class Mercator2SP extends Mercator {
      */
     private static final class Spherical extends Mercator.Spherical {
         /** For cross-version compatibility. */
+        @Serial
         private static final long serialVersionUID = 7693484746681095374L;
 
         /**
@@ -74,8 +77,7 @@ public class Mercator2SP extends Mercator {
          * @param parameters The parameter values in standard units.
          * @throws ParameterNotFoundException if a mandatory parameter is missing.
          */
-        protected Spherical(final ParameterValueGroup parameters)
-                throws ParameterNotFoundException {
+        Spherical(final ParameterValueGroup parameters) throws ParameterNotFoundException {
             super(parameters);
         }
 
@@ -95,8 +97,8 @@ public class Mercator2SP extends Mercator {
     //////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform
-     * provider} for a {@linkplain Mercator2SP Mercator 2SP} projection (EPSG code 9805).
+     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform provider} for a
+     * {@linkplain Mercator2SP Mercator 2SP} projection (EPSG code 9805).
      *
      * @version $Id$
      * @author Martin Desruisseaux
@@ -105,34 +107,34 @@ public class Mercator2SP extends Mercator {
      */
     public static class Provider extends AbstractProvider {
         /** For cross-version compatibility. */
+        @Serial
         private static final long serialVersionUID = 6356028352681135786L;
 
         /** The parameters group. */
-        static final ParameterDescriptorGroup PARAMETERS =
-                createDescriptorGroup(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(Citations.OGC, "Mercator_2SP"),
-                            new NamedIdentifier(Citations.EPSG, "Mercator (2SP)"),
-                            new NamedIdentifier(Citations.EPSG, "Mercator (variant B)"),
-                            new NamedIdentifier(Citations.EPSG, "Mercator (variant C)"),
-                            new NamedIdentifier(Citations.EPSG, "1044"),
-                            new NamedIdentifier(Citations.EPSG, "9805"),
-                            new NamedIdentifier(Citations.GEOTIFF, "CT_Mercator"),
-                            new NamedIdentifier(Citations.ESRI, "Mercator"),
-                            new NamedIdentifier(
-                                    Citations.GEOTOOLS,
-                                    Vocabulary.formatInternational(
-                                            VocabularyKeys.CYLINDRICAL_MERCATOR_PROJECTION))
-                        },
-                        new ParameterDescriptor[] {
-                            SEMI_MAJOR,
-                            SEMI_MINOR,
-                            STANDARD_PARALLEL_1,
-                            LATITUDE_OF_ORIGIN,
-                            CENTRAL_MERIDIAN,
-                            FALSE_EASTING,
-                            FALSE_NORTHING
-                        });
+        static final ParameterDescriptorGroup PARAMETERS = createDescriptorGroup(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(Citations.OGC, "Mercator_2SP"),
+                    new NamedIdentifier(Citations.EPSG, "Mercator (2SP)"),
+                    new NamedIdentifier(Citations.EPSG, "Mercator (variant B)"),
+                    new NamedIdentifier(Citations.EPSG, "Mercator (variant C)"),
+                    new NamedIdentifier(Citations.EPSG, "1044"),
+                    new NamedIdentifier(Citations.EPSG, "9805"),
+                    new NamedIdentifier(Citations.GEOTIFF, "CT_Mercator"),
+                    new NamedIdentifier(Citations.ESRI, "Mercator"),
+                    new NamedIdentifier(
+                            Citations.GEOTOOLS,
+                            Vocabulary.formatInternational(VocabularyKeys.CYLINDRICAL_MERCATOR_PROJECTION)),
+                    new NamedIdentifier(Citations.PROJ, "merc")
+                },
+                new ParameterDescriptor[] {
+                    SEMI_MAJOR,
+                    SEMI_MINOR,
+                    STANDARD_PARALLEL_1,
+                    LATITUDE_OF_ORIGIN,
+                    CENTRAL_MERIDIAN,
+                    FALSE_EASTING,
+                    FALSE_NORTHING
+                });
 
         /** Constructs a new provider. */
         public Provider() {

@@ -25,12 +25,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class DateRangeVisitorTest {
 
@@ -70,7 +70,8 @@ public class DateRangeVisitorTest {
         Set<String> range = visitor.getRange();
         assertEquals(1, range.size());
         assertEquals(
-                "2008-10-31T00:00:00.000Z/2008-11-01T00:00:00.000Z/PT1S", range.iterator().next());
+                "2008-10-31T00:00:00.000Z/2008-11-01T00:00:00.000Z/PT1S",
+                range.iterator().next());
     }
 
     @Test

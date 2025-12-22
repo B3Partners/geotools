@@ -20,12 +20,12 @@ import it.geosolutions.imageio.plugins.mrsid.MrSIDImageReaderSpi;
 import java.io.IOException;
 import java.util.logging.Logger;
 import javax.imageio.ImageReader;
+import org.geotools.api.coverage.grid.Format;
+import org.geotools.api.coverage.grid.GridCoverageReader;
+import org.geotools.api.data.DataSourceException;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverageio.gdal.BaseGDALGridCoverage2DReader;
-import org.geotools.data.DataSourceException;
 import org.geotools.util.factory.Hints;
-import org.opengis.coverage.grid.Format;
-import org.opengis.coverage.grid.GridCoverageReader;
 
 /**
  * This class can read a MrSID data source and create a {@link GridCoverage2D} from the data.
@@ -37,8 +37,7 @@ import org.opengis.coverage.grid.GridCoverageReader;
 public final class MrSIDReader extends BaseGDALGridCoverage2DReader implements GridCoverageReader {
     /** Logger. */
     @SuppressWarnings("unused")
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(MrSIDReader.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(MrSIDReader.class);
 
     private static final String worldFileExt = ".sdw";
 
@@ -64,8 +63,7 @@ public final class MrSIDReader extends BaseGDALGridCoverage2DReader implements G
     /**
      * Setting Envelope, GridRange and CRS from the given {@code ImageReader}
      *
-     * @param reader the {@code ImageReader} from which to retrieve metadata (if available) for
-     *     setting properties
+     * @param reader the {@code ImageReader} from which to retrieve metadata (if available) for setting properties
      */
     @Override
     protected void setCoverageProperties(ImageReader reader) throws IOException {
@@ -80,12 +78,12 @@ public final class MrSIDReader extends BaseGDALGridCoverage2DReader implements G
         // //
         super.setCoverageProperties(reader);
 
-        if (this.originalGridRange != null && this.crs != null && originalEnvelope != null) return;
-
         // Uncomment this section in case we stop using the default CRS.
         // The CRS information coming from GDAL are computed from the
         // same MrSID metadata.
 
+        // if (this.originalGridRange != null && this.crs != null && originalEnvelope != null) return;
+        //
         //    final IIOMetadata metadata = reader.getImageMetadata(0);
         //    if (!(metadata instanceof GDALCommonIIOImageMetadata)) {
         //        throw new DataSourceException(
@@ -185,7 +183,7 @@ public final class MrSIDReader extends BaseGDALGridCoverage2DReader implements G
         //    }
     }
 
-    /** @see org.opengis.coverage.grid.GridCoverageReader#getFormat() */
+    /** @see org.geotools.api.coverage.grid.GridCoverageReader#getFormat() */
     @Override
     public Format getFormat() {
         return new MrSIDFormat();

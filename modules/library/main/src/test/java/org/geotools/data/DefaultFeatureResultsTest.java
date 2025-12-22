@@ -21,11 +21,15 @@ import static org.easymock.EasyMock.createNiceMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 
-import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class DefaultFeatureResultsTest {
 
@@ -35,8 +39,7 @@ public class DefaultFeatureResultsTest {
         q.setMaxFeatures(10);
 
         // mock up the feature source so that it'll return a count of 20
-        SimpleFeatureType type =
-                DataUtilities.createType("roads", "_=the_geom:Point,FID:String,NAME:String");
+        SimpleFeatureType type = DataUtilities.createType("roads", "_=the_geom:Point,FID:String,NAME:String");
         SimpleFeatureSource fs = createMock(SimpleFeatureSource.class);
         expect(fs.getSchema()).andReturn(type).anyTimes();
         expect(fs.getCount(q)).andReturn(20);
@@ -62,8 +65,7 @@ public class DefaultFeatureResultsTest {
         expect(ds.getFeatureReader(q, Transaction.AUTO_COMMIT)).andReturn(fr);
         replay(ds);
 
-        SimpleFeatureType type =
-                DataUtilities.createType("roads", "_=the_geom:Point,FID:String,NAME:String");
+        SimpleFeatureType type = DataUtilities.createType("roads", "_=the_geom:Point,FID:String,NAME:String");
         SimpleFeatureSource fs = createMock(SimpleFeatureSource.class);
         expect(fs.getSchema()).andReturn(type).anyTimes();
         expect(fs.getCount(q)).andReturn(-1);

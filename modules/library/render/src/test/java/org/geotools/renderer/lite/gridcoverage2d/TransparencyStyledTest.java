@@ -30,11 +30,21 @@ import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.RenderedOp;
-import javax.media.jai.operator.ExtremaDescriptor;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
+import org.eclipse.imagen.PlanarImage;
+import org.geotools.api.coverage.grid.GridCoverage;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.RasterSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.style.StyledLayerDescriptor;
+import org.geotools.api.style.UserLayer;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.footprint.FootprintBehavior;
@@ -42,50 +52,34 @@ import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.gce.imagemosaic.ImageMosaicFormatFactory;
 import org.geotools.gce.imagemosaic.ImageMosaicReader;
+import org.geotools.image.ImageWorker;
 import org.geotools.image.util.ImageUtilities;
 import org.geotools.referencing.CRS;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.RasterSymbolizer;
-import org.geotools.styling.Rule;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyleFactory;
-import org.geotools.styling.StyledLayerDescriptor;
-import org.geotools.styling.UserLayer;
 import org.geotools.test.TestData;
 import org.geotools.util.factory.GeoTools;
 import org.geotools.xml.styling.SLDParser;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opengis.coverage.grid.GridCoverage;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
 
 /**
- * A Testing class involving footprint and transparency settings together with SLD, making sure that
- * transparency is preserved.
+ * A Testing class involving footprint and transparency settings together with SLD, making sure that transparency is
+ * preserved.
  */
 public class TransparencyStyledTest {
 
-    private static final StyleFactory SF =
-            CommonFactoryFinder.getStyleFactory(GeoTools.getDefaultHints());
+    private static final StyleFactory SF = CommonFactoryFinder.getStyleFactory(GeoTools.getDefaultHints());
 
-    private GridCoverage2D readCoverage(
-            File mosaicDirectory, FootprintBehavior fp, Color transparentColor)
+    private GridCoverage2D readCoverage(File mosaicDirectory, FootprintBehavior fp, Color transparentColor)
             throws NoSuchAuthorityCodeException, FactoryException, IOException {
 
-        ImageMosaicReader reader =
-                (ImageMosaicReader)
-                        new ImageMosaicFormatFactory().createFormat().getReader(mosaicDirectory);
+        ImageMosaicReader reader = (ImageMosaicReader)
+                new ImageMosaicFormatFactory().createFormat().getReader(mosaicDirectory);
 
-        ParameterValue<String> footprintBehaviorParam =
-                AbstractGridFormat.FOOTPRINT_BEHAVIOR.createValue();
+        ParameterValue<String> footprintBehaviorParam = AbstractGridFormat.FOOTPRINT_BEHAVIOR.createValue();
         footprintBehaviorParam.setValue(fp.name());
 
-        ParameterValue<Color> inputTransparentColor =
-                AbstractGridFormat.INPUT_TRANSPARENT_COLOR.createValue();
+        ParameterValue<Color> inputTransparentColor = AbstractGridFormat.INPUT_TRANSPARENT_COLOR.createValue();
         inputTransparentColor.setValue(transparentColor);
 
         GeneralParameterValue[] readParams = {footprintBehaviorParam, inputTransparentColor};
@@ -121,8 +115,8 @@ public class TransparencyStyledTest {
     }
 
     /**
-     * Test transparency is preserved when applying an RGB ChannelSelect and ContrastEnhancement
-     * style to an imageMosaic with Transparent Footprint setting.
+     * Test transparency is preserved when applying an RGB ChannelSelect and ContrastEnhancement style to an imageMosaic
+     * with Transparent Footprint setting.
      */
     @Test
     public void testTransparentFootprintWithContrastEnhancementInChannelSelect()
@@ -131,9 +125,9 @@ public class TransparencyStyledTest {
         GridCoverage2D gc = readCoverage(mosaicDirectory, FootprintBehavior.Transparent, null);
 
         RenderedImage ri = gc.getRenderedImage();
-        RenderedOp extrema = ExtremaDescriptor.create(ri, null, 1, 1, false, 1, null);
-        double[] minimum = (double[]) extrema.getProperty("minimum");
-        double[] maximum = (double[]) extrema.getProperty("maximum");
+        ImageWorker iw = new ImageWorker(ri);
+        double[] minimum = iw.getMinimums();
+        double[] maximum = iw.getMaximums();
 
         // read values, not stretched, alpha is present
         assertArrayEquals(new double[] {0, 0, 0, 0}, minimum, 1E-6);
@@ -145,21 +139,21 @@ public class TransparencyStyledTest {
         // Assert the alpha band has been preserved, even with a CS+CE SLD in place
         assertHasAlpha(ri);
 
-        extrema = ExtremaDescriptor.create(ri, null, 1, 1, false, 1, null);
-        minimum = (double[]) extrema.getProperty("minimum");
-        maximum = (double[]) extrema.getProperty("maximum");
+        iw = new ImageWorker(ri);
+        minimum = iw.getMinimums();
+        maximum = iw.getMaximums();
 
         // values are stretched
         assertArrayEquals(new double[] {0, 0, 0, 0}, minimum, 1E-6);
         assertArrayEquals(new double[] {255, 255, 255, 255}, maximum, 1E-6);
 
         disposeCoverage(output);
-        ImageUtilities.disposePlanarImageChain(extrema);
+        ImageUtilities.disposeImage(ri);
     }
 
     /**
-     * Test transparency is preserved when applying an RGB ChannelSelect and ContrastEnhancement
-     * style to an imageMosaic with transparent color being set
+     * Test transparency is preserved when applying an RGB ChannelSelect and ContrastEnhancement style to an imageMosaic
+     * with transparent color being set
      */
     @Test
     public void testTransparentColorWithContrastEnhancementInChannelSelect()
@@ -168,9 +162,9 @@ public class TransparencyStyledTest {
         GridCoverage2D gc = readCoverage(mosaicDirectory, FootprintBehavior.None, Color.BLACK);
 
         RenderedImage ri = gc.getRenderedImage();
-        RenderedOp extrema = ExtremaDescriptor.create(ri, null, 1, 1, false, 1, null);
-        double[] minimum = (double[]) extrema.getProperty("minimum");
-        double[] maximum = (double[]) extrema.getProperty("maximum");
+        ImageWorker iw = new ImageWorker(ri);
+        double[] minimum = iw.getMinimums();
+        double[] maximum = iw.getMaximums();
 
         // read values, not stretched, alpha is present
         assertArrayEquals(new double[] {0, 0, 0, 0}, minimum, 1E-6);
@@ -182,27 +176,27 @@ public class TransparencyStyledTest {
         // Assert the alpha band has been preserved, even with a CS+CE SLD in place
         assertHasAlpha(ri);
 
-        extrema = ExtremaDescriptor.create(ri, null, 1, 1, false, 1, null);
-        minimum = (double[]) extrema.getProperty("minimum");
-        maximum = (double[]) extrema.getProperty("maximum");
+        iw = new ImageWorker(ri);
+        minimum = iw.getMinimums();
+        maximum = iw.getMaximums();
 
         // values are stretched
         assertArrayEquals(new double[] {0, 0, 0, 0}, minimum, 1E-6);
         assertArrayEquals(new double[] {255, 255, 255, 255}, maximum, 1E-6);
 
         disposeCoverage(output);
-        ImageUtilities.disposePlanarImageChain(extrema);
+        ImageUtilities.disposeImage(ri);
     }
 
     /**
-     * Test transparency is preserved when applying an RGB ChannelSelect and ContrastEnhancement
-     * style to an imageMosaic with transparent color being set
+     * Test transparency is preserved when applying an RGB ChannelSelect and ContrastEnhancement style to an imageMosaic
+     * with transparent color being set
      */
     @Test
     public void testRGBAWithContrastEnhancementInChannelSelect()
             throws IOException, NoSuchAuthorityCodeException, FactoryException {
         GeoTiffReader reader = new GeoTiffReader(TestData.file(this, "map.tif"));
-        GridCoverage2D gc = reader.read(null);
+        GridCoverage2D gc = reader.read();
 
         RenderedImage ri = gc.getRenderedImage();
         GridCoverage2D output = (GridCoverage2D) symbolizeRaster(gc, "ce_cs.sld");
@@ -215,8 +209,8 @@ public class TransparencyStyledTest {
     }
 
     /**
-     * Test transparency is preserved when applying a ChannelSelect style to an imageMosaic with
-     * Transparent Footprint setting.
+     * Test transparency is preserved when applying a ChannelSelect style to an imageMosaic with Transparent Footprint
+     * setting.
      */
     @Test
     public void testTransparentFootprintWithChannelSelectRGB()
@@ -232,8 +226,8 @@ public class TransparencyStyledTest {
     }
 
     /**
-     * Test transparency is preserved when applying a ChannelSelect style to an imageMosaic with
-     * Transparent color being set.
+     * Test transparency is preserved when applying a ChannelSelect style to an imageMosaic with Transparent color being
+     * set.
      */
     @Test
     public void testTransparentColorWithChannelSelectRGB()
@@ -249,8 +243,8 @@ public class TransparencyStyledTest {
     }
 
     /**
-     * Test transparency is preserved when applying a ChannelSelect and Colormap style to an
-     * imageMosaic with Transparent Footprint setting.
+     * Test transparency is preserved when applying a ChannelSelect and Colormap style to an imageMosaic with
+     * Transparent Footprint setting.
      */
     @Test
     public void testTransparentFootprintWithChannelSelectColormap()
@@ -267,8 +261,8 @@ public class TransparencyStyledTest {
     }
 
     /**
-     * Test transparency is preserved when applying a ChannelSelect (Gray) style to an imageMosaic
-     * with Transparent Footprint setting.
+     * Test transparency is preserved when applying a ChannelSelect (Gray) style to an imageMosaic with Transparent
+     * Footprint setting.
      */
     @Test
     public void testTransparentFootprintWithChannelSelectGray()
@@ -341,8 +335,8 @@ public class TransparencyStyledTest {
         if (cm instanceof ComponentColorModel) {
             // Get the value of the alpha component
             assertEquals(0, raster.getSample(0, 0, numComponents - 1));
-        } else if (cm instanceof IndexColorModel) {
-            int transparentPixel = ((IndexColorModel) cm).getTransparentPixel();
+        } else if (cm instanceof IndexColorModel model) {
+            int transparentPixel = model.getTransparentPixel();
             assertEquals(transparentPixel, raster.getSample(0, 0, 0));
         }
     }

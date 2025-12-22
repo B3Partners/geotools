@@ -46,8 +46,7 @@ import org.geotools.util.factory.Hints;
  */
 public class NumericConverterFactory implements ConverterFactory {
 
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(NumericConverterFactory.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(NumericConverterFactory.class);
 
     @Override
     public Converter createConverter(Class source, Class target, Hints hints) {
@@ -57,8 +56,7 @@ public class NumericConverterFactory implements ConverterFactory {
 
         // check if source is a number or a string. We can't convert to a number
         // from anything else.
-        if (!(Number.class.isAssignableFrom(source)) && !(String.class.isAssignableFrom(source)))
-            return null;
+        if (!Number.class.isAssignableFrom(source) && !String.class.isAssignableFrom(source)) return null;
 
         // check if target is one of supported
         if (Long.class.equals(target)
@@ -74,8 +72,7 @@ public class NumericConverterFactory implements ConverterFactory {
             // check if the safe conversion flag was set and if so only allow save conversions
             if (hints != null) {
                 Object safeConversion = hints.get(ConverterFactory.SAFE_CONVERSION);
-                if (safeConversion instanceof Boolean
-                        && ((Boolean) safeConversion).booleanValue()) {
+                if (safeConversion instanceof Boolean boolean1 && boolean1.booleanValue()) {
                     return new SafeNumericConverter();
                 }
             }
@@ -85,7 +82,7 @@ public class NumericConverterFactory implements ConverterFactory {
         return null;
     }
 
-    class SafeNumericConverter implements Converter {
+    static class SafeNumericConverter implements Converter {
         // target.cast won't work for both the object wrapper and the primitive class
         @Override
         @SuppressWarnings("unchecked")
@@ -95,8 +92,7 @@ public class NumericConverterFactory implements ConverterFactory {
 
         public Object convertInternal(Object source, Class<?> target) {
             target = primitiveToWrapperClass(target);
-            if (source instanceof Number) {
-                Number number = (Number) source;
+            if (source instanceof Number number) {
                 Class c = number.getClass();
 
                 if (BigDecimal.class.equals(target)) {
@@ -112,10 +108,7 @@ public class NumericConverterFactory implements ConverterFactory {
                         // return Double.valueOf(source.toString());
                     }
                 } else if (Float.class.equals(target)) {
-                    if (c == Float.class
-                            || c == Integer.class
-                            || c == Short.class
-                            || c == Byte.class) {
+                    if (c == Float.class || c == Integer.class || c == Short.class || c == Byte.class) {
                         return Float.valueOf(number.floatValue());
                         // return Float.valueOf(source.toString());
                     }
@@ -129,10 +122,7 @@ public class NumericConverterFactory implements ConverterFactory {
                         // return new BigInteger(source.toString());
                     }
                 } else if (Long.class.equals(target)) {
-                    if (c == Long.class
-                            || c == Integer.class
-                            || c == Short.class
-                            || c == Byte.class) {
+                    if (c == Long.class || c == Integer.class || c == Short.class || c == Byte.class) {
                         return Long.valueOf(number.longValue());
                         // return Long.valueOf(source.toString());
                     }
@@ -152,8 +142,7 @@ public class NumericConverterFactory implements ConverterFactory {
                         // return Byte.valueOf(source.toString());
                     }
                 }
-            } else if (source instanceof String) {
-                String src = (String) source;
+            } else if (source instanceof String src) {
                 try {
                     if (BigDecimal.class.isAssignableFrom(target)) {
                         return new BigDecimal(src);
@@ -190,7 +179,7 @@ public class NumericConverterFactory implements ConverterFactory {
         }
     }
 
-    class NumericConverter implements Converter {
+    static class NumericConverter implements Converter {
 
         // target.cast won't work for both the object wrapper and the primitive class
         @Override
@@ -203,8 +192,7 @@ public class NumericConverterFactory implements ConverterFactory {
             target = primitiveToWrapperClass(target);
             source = cleanSource(source, target);
 
-            if (source instanceof Number) {
-                Number s = (Number) source;
+            if (source instanceof Number s) {
 
                 // integral
                 if (Long.class.equals(target)) {
@@ -241,25 +229,28 @@ public class NumericConverterFactory implements ConverterFactory {
                     try {
                         return Integer.valueOf(s.toString());
                     } catch (Exception e) {
+                        // ignore and continue
                     }
 
                     try {
                         return new BigInteger(s.toString());
                     } catch (Exception e) {
+                        // ignore and continue
                     }
 
                     try {
                         return Double.valueOf(s.toString());
                     } catch (Exception e) {
+                        // ignore and continue
                     }
 
                     try {
                         return new BigDecimal(s.toString());
                     } catch (Exception e) {
+                        // ignore and continue
                     }
                 }
-            } else if (source instanceof String) {
-                String s = (String) source;
+            } else if (source instanceof String s) {
                 // ensure we trim any space off the string
                 s = s.trim();
 
@@ -300,21 +291,25 @@ public class NumericConverterFactory implements ConverterFactory {
                         try {
                             return Integer.valueOf(integral);
                         } catch (Exception e) {
+                            // ignore and continue
                         }
 
                         try {
                             return new BigInteger(integral);
                         } catch (Exception e) {
+                            // ignore and continue
                         }
                     }
                     try {
                         return Double.valueOf(s);
                     } catch (Exception e) {
+                        // ignore and continue
                     }
 
                     try {
                         return new BigDecimal(s);
                     } catch (Exception e) {
+                        // ignore and continue
                     }
                 }
             }
@@ -360,20 +355,18 @@ public class NumericConverterFactory implements ConverterFactory {
     }
 
     /**
-     * @return a BigDecimal in case the source is a String in scientific notation and the target is
-     *     an integral number, null otherwise
+     * @return a BigDecimal in case the source is a String in scientific notation and the target is an integral number,
+     *     null otherwise
      */
     static BigDecimal getBigDecimalFromScientificNotation(Object source, Class target) {
-        if (source instanceof String
+        if (source instanceof String string
                 && (Long.class.equals(target)
                         || Integer.class.equals(target)
                         || Short.class.equals(target)
                         || Byte.class.equals(target)
                         || BigInteger.class.equals(target))) {
             try {
-                return ((String) source).toUpperCase().contains("E")
-                        ? new BigDecimal((String) source)
-                        : null;
+                return string.toUpperCase().contains("E") ? new BigDecimal(string) : null;
             } catch (NumberFormatException ex) {
                 if (LOGGER.isLoggable(Level.FINEST)) {
                     LOGGER.finest("NumberFormatException for source=" + source);

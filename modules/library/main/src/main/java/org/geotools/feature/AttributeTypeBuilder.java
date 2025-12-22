@@ -20,21 +20,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.FeatureTypeFactory;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.util.InternationalString;
 import org.geotools.data.DataUtilities;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.util.Classes;
+import org.geotools.util.NumberRange;
 import org.geotools.util.SimpleInternationalString;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.FeatureTypeFactory;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.util.InternationalString;
 
 /**
  * Builder for attribute types and descriptors.
@@ -122,29 +123,24 @@ public class AttributeTypeBuilder {
     // AttributeDescriptor
     //
     /**
-     * Minimum number of occurrences allowed. See minOccurs() function for the default value based
-     * on nillable if not explicitly set.
+     * Minimum number of occurrences allowed. See minOccurs() function for the default value based on nillable if not
+     * explicitly set.
      */
     protected Integer minOccurs = null;
 
-    /**
-     * Maximum number of occurrences allowed. See maxOccurs() function for the default value (of 1).
-     */
+    /** Maximum number of occurrences allowed. See maxOccurs() function for the default value (of 1). */
     protected Integer maxOccurs = null;
 
     /**
      * True if value is allowed to be null.
      *
-     * <p>Depending on this value minOccurs, maxOccurs and defaultValue() will return different
-     * results.
+     * <p>Depending on this value minOccurs, maxOccurs and defaultValue() will return different results.
      *
      * <p>The default value is <code>true</code>.
      */
     protected boolean isNillable = true;
 
-    /**
-     * If this value is set an additional restriction will be added based on the length function.
-     */
+    /** If this value is set an additional restriction will be added based on the length function. */
     protected Integer length = null;
 
     /** User data for the attribute. */
@@ -155,6 +151,9 @@ public class AttributeTypeBuilder {
 
     /** The list of valid values for attributes described by this type (enumeration). */
     private List<?> options;
+
+    /** The range to which the attribute value should be contained in. */
+    private NumberRange<? extends Number> range;
 
     /** Constructs the builder. */
     public AttributeTypeBuilder() {
@@ -177,8 +176,7 @@ public class AttributeTypeBuilder {
     /**
      * Resets all builder state used to build the attribute type.
      *
-     * <p>This method is called automatically after {@link #buildType()} and {@link
-     * #buildGeometryType()}.
+     * <p>This method is called automatically after {@link #buildType()} and {@link #buildGeometryType()}.
      */
     protected void resetTypeState() {
         name = null;
@@ -204,6 +202,7 @@ public class AttributeTypeBuilder {
         isDefaultValueSet = false;
         length = null;
         options = null;
+        range = null;
     }
 
     public AttributeTypeBuilder setFactory(FeatureTypeFactory factory) {
@@ -227,9 +226,10 @@ public class AttributeTypeBuilder {
         binding = type.getBinding();
         superType = type.getSuper();
 
-        if (type instanceof GeometryType) {
-            crs = ((GeometryType) type).getCoordinateReferenceSystem();
+        if (type instanceof GeometryType geometryType) {
+            crs = geometryType.getCoordinateReferenceSystem();
         }
+
         return this;
     }
 
@@ -355,8 +355,8 @@ public class AttributeTypeBuilder {
     }
 
     /**
-     * Sets a list of possible valid values for the attribute type being built, and returns a
-     * reference to the builder itself
+     * Sets a list of possible valid values for the attribute type being built, and returns a reference to the builder
+     * itself
      */
     public AttributeTypeBuilder options(List<?> options) {
         setOptions(options);
@@ -366,6 +366,19 @@ public class AttributeTypeBuilder {
     /** Sets a list of possible valid values for the attribute type being built */
     public void setOptions(List<?> options) {
         this.options = options;
+    }
+
+    /**
+     * Sets a range to which the attribute value should be contained in and returns a reference to the builder itself
+     */
+    public AttributeTypeBuilder range(NumberRange<? extends Number> range) {
+        setRange(range);
+        return this;
+    }
+
+    /** Sets a range to which the attribute value should be contained in. */
+    public void setRange(NumberRange<? extends Number> range) {
+        this.range = range;
     }
 
     public AttributeTypeBuilder restriction(Filter restriction) {
@@ -425,15 +438,13 @@ public class AttributeTypeBuilder {
             restrictions().add(optionsRestriction);
         }
 
-        AttributeType type =
-                factory.createAttributeType(
-                        name(),
-                        binding,
-                        isIdentifiable,
-                        isAbstract,
-                        restrictions(),
-                        superType,
-                        description());
+        if (range != null) {
+            Filter rangeRestriction = FeatureTypes.createFieldRange(range);
+            restrictions().add(rangeRestriction);
+        }
+
+        AttributeType type = factory.createAttributeType(
+                name(), binding, isIdentifiable, isAbstract, restrictions(), superType, description());
         resetTypeState();
 
         return type;
@@ -445,16 +456,8 @@ public class AttributeTypeBuilder {
      * <p>This method resets all state after the attribute is built.
      */
     public GeometryType buildGeometryType() {
-        GeometryType type =
-                factory.createGeometryType(
-                        name(),
-                        binding,
-                        crs,
-                        isIdentifiable,
-                        isAbstract,
-                        restrictions(),
-                        superType,
-                        description());
+        GeometryType type = factory.createGeometryType(
+                name(), binding, crs, isIdentifiable, isAbstract, restrictions(), superType, description());
 
         resetTypeState();
 
@@ -465,9 +468,7 @@ public class AttributeTypeBuilder {
         if (name == null) {
             name = Classes.getShortName(binding);
         }
-        return separator == null
-                ? new NameImpl(namespaceURI, name)
-                : new NameImpl(namespaceURI, separator, name);
+        return separator == null ? new NameImpl(namespaceURI, name) : new NameImpl(namespaceURI, separator, name);
     }
 
     private InternationalString description() {
@@ -477,12 +478,12 @@ public class AttributeTypeBuilder {
     /**
      * Builds an attribute descriptor first building an attribute type from internal state.
      *
-     * <p>If {@link #crs} has been set via {@link #setCRS(CoordinateReferenceSystem)}, or {@link
-     * #binding} is of Geometry. The internal attribute type will be built via {@link
-     * #buildGeometryType()}, and {@link #buildDescriptor(String, GeometryType)} will be called.
+     * <p>If {@link #crs} has been set via {@link #setCRS(CoordinateReferenceSystem)}, or {@link #binding} is of
+     * Geometry. The internal attribute type will be built via {@link #buildGeometryType()}, and
+     * {@link #buildDescriptor(String, GeometryType)} will be called.
      *
-     * <p>Otherwise it will be built via {@link #buildType()}, and {@link #buildDescriptor(String,
-     * AttributeType)} will be called.
+     * <p>Otherwise it will be built via {@link #buildType()}, and {@link #buildDescriptor(String, AttributeType)} will
+     * be called.
      *
      * @param name The name of the descriptor.
      * @see #buildDescriptor(String, AttributeType)
@@ -527,8 +528,7 @@ public class AttributeTypeBuilder {
 
         // build the descriptor
         AttributeDescriptor descriptor =
-                factory.createAttributeDescriptor(
-                        type, name, minOccurs(), maxOccurs(), isNillable, defaultValue());
+                factory.createAttributeDescriptor(type, name, minOccurs(), maxOccurs(), isNillable, defaultValue());
 
         // set the user data
         descriptor.getUserData().putAll(userData);
@@ -538,8 +538,7 @@ public class AttributeTypeBuilder {
 
     public GeometryDescriptor buildDescriptor(Name name, GeometryType type) {
         GeometryDescriptor descriptor =
-                factory.createGeometryDescriptor(
-                        type, name, minOccurs(), maxOccurs(), isNillable, defaultValue());
+                factory.createGeometryDescriptor(type, name, minOccurs(), maxOccurs(), isNillable, defaultValue());
 
         // set the user data
         descriptor.getUserData().putAll(userData);

@@ -49,8 +49,7 @@ public class ExecuteProcessResponse extends Response {
 
     /** */
     @SuppressWarnings("PMD.UseTryWithResources") // multiple init points for InputStream
-    public ExecuteProcessResponse(HTTPResponse httpResponse, boolean raw)
-            throws IOException, ServiceException {
+    public ExecuteProcessResponse(HTTPResponse httpResponse, boolean raw) throws IOException, ServiceException {
         super(httpResponse);
 
         InputStream inputStream = null;
@@ -76,8 +75,7 @@ public class ExecuteProcessResponse extends Response {
                         factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
                         // disable external entities
                         factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
-                        XMLStreamReader parser =
-                                factory.createXMLStreamReader(inputStream, "UTF-8");
+                        XMLStreamReader parser = factory.createXMLStreamReader(inputStream, "UTF-8");
                         // position at root element
                         while (parser.hasNext()) {
                             if (START_ELEMENT == parser.next()) {
@@ -129,17 +127,16 @@ public class ExecuteProcessResponse extends Response {
         }
 
         // try casting the response
-        if (object instanceof ExecuteResponseType) {
-            exeResponse = (ExecuteResponseType) object;
+        if (object instanceof ExecuteResponseType type1) {
+            exeResponse = type1;
             // in case of exceptions let's be explicit about them
-            if (exeResponse.getStatus() != null
-                    && exeResponse.getStatus().getProcessFailed() != null) {
+            if (exeResponse.getStatus() != null && exeResponse.getStatus().getProcessFailed() != null) {
                 excepResponse = exeResponse.getStatus().getProcessFailed().getExceptionReport();
             }
         }
         // exception caught on server and returned
-        else if (object instanceof ExceptionReportType) {
-            excepResponse = (ExceptionReportType) object;
+        else if (object instanceof ExceptionReportType type) {
+            excepResponse = type;
         }
     }
 
@@ -152,8 +149,8 @@ public class ExecuteProcessResponse extends Response {
     }
 
     /**
-     * If a raw response was requested, and no service exception has been sent, we should get the
-     * raw response stream here
+     * If a raw response was requested, and no service exception has been sent, we should get the raw response stream
+     * here
      */
     public InputStream getRawResponseStream() {
         return rawResponseStream;

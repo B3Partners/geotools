@@ -19,10 +19,10 @@ package org.geotools.renderer.lite;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import org.geotools.data.FeatureSource;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.filter.sort.SortBy;
 import org.geotools.renderer.lite.StreamingRenderer.RenderableFeature;
-import org.opengis.feature.Feature;
-import org.opengis.filter.sort.SortBy;
 
 /**
  * Paints a group of {@link LiteFeatureTypeStyle} all associated with the same {@link FeatureSource}
@@ -48,10 +48,7 @@ class ZGroupLayerPainter implements AutoCloseable {
     boolean complete = false;
 
     public ZGroupLayerPainter(
-            MarkFeatureIterator iterator,
-            List<LiteFeatureTypeStyle> lfts,
-            StreamingRenderer renderer,
-            String layerId)
+            MarkFeatureIterator iterator, List<LiteFeatureTypeStyle> lfts, StreamingRenderer renderer, String layerId)
             throws IOException {
         super();
         this.iterator = iterator;
@@ -85,7 +82,7 @@ class ZGroupLayerPainter implements AutoCloseable {
             }
             // we have to restart from the beginning with the next fts, remember
             // the first feature was already loaded
-            if (i < (lfts.size() - 1)) {
+            if (i < lfts.size() - 1) {
                 iterator.reset();
                 complete = false;
                 currentFeature = startFeature;

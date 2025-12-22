@@ -22,6 +22,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.text.NumberFormat;
 import java.util.Locale;
+import org.geotools.api.feature.type.FeatureTypeFactory;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.GeometryType;
 import org.geotools.data.solr.SolrSpatialStrategy.BBoxStrategy;
 import org.geotools.data.solr.SolrSpatialStrategy.DefaultStrategy;
 import org.geotools.feature.NameImpl;
@@ -30,33 +33,25 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.type.FeatureTypeFactory;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.GeometryType;
 
 public class SolrSpatialStrategyTest {
 
     @Test
     public void testCreate() throws Exception {
 
-        assertTrue(
-                SolrSpatialStrategy.createStrategy(newDescriptor(null)) instanceof DefaultStrategy);
+        assertTrue(SolrSpatialStrategy.createStrategy(newDescriptor(null)) instanceof DefaultStrategy);
         assertTrue(
                 SolrSpatialStrategy.createStrategy(
-                                newDescriptor(
-                                        "org.apache.solr.schema.SpatialRecursivePrefixTreeFieldType"))
+                                newDescriptor("org.apache.solr.schema.SpatialRecursivePrefixTreeFieldType"))
                         instanceof DefaultStrategy);
         assertTrue(
-                SolrSpatialStrategy.createStrategy(
-                                newDescriptor("org.apache.solr.schema.LatLonType"))
+                SolrSpatialStrategy.createStrategy(newDescriptor("org.apache.solr.schema.LatLonType"))
                         instanceof DefaultStrategy);
         assertTrue(
-                SolrSpatialStrategy.createStrategy(
-                                newDescriptor("org.apache.solr.schema.BBoxField"))
+                SolrSpatialStrategy.createStrategy(newDescriptor("org.apache.solr.schema.BBoxField"))
                         instanceof BBoxStrategy);
         assertTrue(
-                SolrSpatialStrategy.createStrategy(
-                                newDescriptor("org.apache.solr.spatial.pending.BBoxFieldType"))
+                SolrSpatialStrategy.createStrategy(newDescriptor("org.apache.solr.spatial.pending.BBoxFieldType"))
                         instanceof BBoxStrategy);
     }
 
@@ -92,17 +87,8 @@ public class SolrSpatialStrategyTest {
     GeometryDescriptor newDescriptor(String solrTypeValue) {
         FeatureTypeFactory ftf = new FeatureTypeFactoryImpl();
         GeometryType type =
-                ftf.createGeometryType(
-                        new NameImpl("fooType"),
-                        Geometry.class,
-                        null,
-                        false,
-                        false,
-                        null,
-                        null,
-                        null);
-        GeometryDescriptor att =
-                ftf.createGeometryDescriptor(type, new NameImpl("foo"), 1, 1, true, null);
+                ftf.createGeometryType(new NameImpl("fooType"), Geometry.class, null, false, false, null, null, null);
+        GeometryDescriptor att = ftf.createGeometryDescriptor(type, new NameImpl("foo"), 1, 1, true, null);
 
         att.getUserData().put(SolrFeatureSource.KEY_SOLR_TYPE, solrTypeValue);
         return att;

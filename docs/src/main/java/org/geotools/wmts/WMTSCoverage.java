@@ -15,6 +15,8 @@ import java.awt.Rectangle;
 import java.io.File;
 import java.net.URL;
 import javax.imageio.ImageIO;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
@@ -27,8 +29,6 @@ import org.geotools.ows.wmts.model.WMTSLayer;
 import org.geotools.parameter.Parameter;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Uses the WMTSCoverageReader to write a mosaicked image of tiles covering a given extent.
@@ -57,16 +57,11 @@ public class WMTSCoverage {
         WMTSCoverageReader reader = new WMTSCoverageReader(wmts, layer);
 
         ReferencedEnvelope envelope =
-                new ReferencedEnvelope(
-                        17.0697, 18.1937, 79.3052, 79.4667, DefaultGeographicCRS.WGS84);
+                new ReferencedEnvelope(17.0697, 18.1937, 79.3052, 79.4667, DefaultGeographicCRS.WGS84);
 
         CoordinateReferenceSystem upsCrs = CRS.decode("EPSG:32661");
-        ReferencedEnvelope upsExtent =
-                new ReferencedEnvelope(
-                        JTS.transform(
-                                envelope,
-                                CRS.findMathTransform(DefaultGeographicCRS.WGS84, upsCrs)),
-                        upsCrs);
+        ReferencedEnvelope upsExtent = new ReferencedEnvelope(
+                JTS.transform(envelope, CRS.findMathTransform(DefaultGeographicCRS.WGS84, upsCrs)), upsCrs);
 
         System.out.println(upsExtent);
 
@@ -75,8 +70,7 @@ public class WMTSCoverage {
 
         Parameter<GridGeometry2D> readGG =
                 (Parameter<GridGeometry2D>) AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
-        readGG.setValue(
-                new GridGeometry2D(new GridEnvelope2D(new Rectangle(width, height)), upsExtent));
+        readGG.setValue(new GridGeometry2D(new GridEnvelope2D(new Rectangle(width, height)), upsExtent));
 
         GeneralParameterValue[] parameters = new GeneralParameterValue[] {readGG};
         GridCoverage2D coverage = reader.read(parameters);

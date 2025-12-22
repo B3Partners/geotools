@@ -21,6 +21,9 @@ import static org.junit.Assert.assertNotEquals;
 
 import java.util.Calendar;
 import java.util.Date;
+import org.geotools.api.temporal.TemporalCoordinate;
+import org.geotools.api.temporal.TemporalCoordinateSystem;
+import org.geotools.api.util.InternationalString;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
 import org.geotools.temporal.object.DefaultTemporalCoordinate;
@@ -28,9 +31,6 @@ import org.geotools.util.SimpleInternationalString;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.temporal.TemporalCoordinate;
-import org.opengis.temporal.TemporalCoordinateSystem;
-import org.opengis.util.InternationalString;
 
 /** @author Mehdi Sidhoum (Geomatys) */
 public class DefaultTemporalCoordinateSystemTest {
@@ -47,14 +47,11 @@ public class DefaultTemporalCoordinateSystemTest {
         Calendar cal = Calendar.getInstance();
         cal.set(2000, 1, 1);
         temporalCoordinateSystem1 =
-                new DefaultTemporalCoordinateSystem(
-                        name1, null, cal.getTime(), new SimpleInternationalString("day"));
-        temporalCoordinate1 =
-                new DefaultTemporalCoordinate(temporalCoordinateSystem1, null, 50785.48);
+                new DefaultTemporalCoordinateSystem(name1, null, cal.getTime(), new SimpleInternationalString("day"));
+        temporalCoordinate1 = new DefaultTemporalCoordinate(temporalCoordinateSystem1, null, 50785.48);
         cal.set(1981, 6, 25);
         temporalCoordinateSystem2 =
-                new DefaultTemporalCoordinateSystem(
-                        name2, null, cal.getTime(), new SimpleInternationalString("month"));
+                new DefaultTemporalCoordinateSystem(name2, null, cal.getTime(), new SimpleInternationalString("month"));
         temporalCoordinate2 = new DefaultTemporalCoordinate(temporalCoordinateSystem2, null, 285);
     }
 

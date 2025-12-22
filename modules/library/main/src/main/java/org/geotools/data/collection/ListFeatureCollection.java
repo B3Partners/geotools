@@ -23,41 +23,37 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CopyOnWriteArrayList;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.feature.collection.AbstractFeatureCollection;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
 
 /**
  * FeatureCollection implementation wrapping around a java.util.List.
  *
- * <p>This implementation wraps around a java.util.List and is suitable for quickly getting
- * something on screen.
+ * <p>This implementation wraps around a java.util.List and is suitable for quickly getting something on screen.
  *
  * <p>Usage notes:
  *
  * <ul>
- *   <li>This implementation does not use a spatial index, please do not expect spatial operations
- *       to be fast.
+ *   <li>This implementation does not use a spatial index, please do not expect spatial operations to be fast.
  *   <li>FeatureCollections are not allowed to have duplicates
  * </ul>
  *
- * <p>This implementation is intended to quickly wrap up a list of features and get them on screen;
- * as such it respects various hints about the copying of internal content as provided by the
- * renderer.
+ * <p>This implementation is intended to quickly wrap up a list of features and get them on screen; as such it respects
+ * various hints about the copying of internal content as provided by the renderer.
  *
  * @see Hints#FEATURE_DETACHED
  * @author Oliver Gottwald
  * @author Jody
  */
-public class ListFeatureCollection extends AbstractFeatureCollection
-        implements Collection<SimpleFeature> {
+public class ListFeatureCollection extends AbstractFeatureCollection implements Collection<SimpleFeature> {
     /** wrapped list of features containing the contents */
     protected List<SimpleFeature> list;
 
@@ -69,24 +65,22 @@ public class ListFeatureCollection extends AbstractFeatureCollection
         this(schema, new ArrayList<>());
     }
     /**
-     * Create a ListFeatureCollection around the provided list. The contents of the list should all
-     * be of the provided schema for this to make sense. Please keep in mind the feature collection
-     * constraints, no two Features in the list should have the same feature id, and you should not
-     * insert the same feature more then once.
+     * Create a ListFeatureCollection around the provided list. The contents of the list should all be of the provided
+     * schema for this to make sense. Please keep in mind the feature collection constraints, no two Features in the
+     * list should have the same feature id, and you should not insert the same feature more then once.
      *
-     * <p>The provided list is directly used for storage, most feature collection operations just
-     * use a simple iterator so there is no performance advantaged to be gained over using an
-     * ArrayList vs a LinkedList (other then for the size() method of course).
+     * <p>The provided list is directly used for storage, most feature collection operations just use a simple iterator
+     * so there is no performance advantaged to be gained over using an ArrayList vs a LinkedList (other then for the
+     * size() method of course).
      */
     public ListFeatureCollection(SimpleFeatureType schema, List<SimpleFeature> list) {
         super(schema);
         this.list = list;
     }
     /**
-     * Create a ListFeatureCollection around the provided array. The contents of the array should
-     * all be of the provided schema for this to make sense. Please keep in mind the feature
-     * collection constraints, no two Features in the list should have the same feature id, and you
-     * should not insert the same feature more then once.
+     * Create a ListFeatureCollection around the provided array. The contents of the array should all be of the provided
+     * schema for this to make sense. Please keep in mind the feature collection constraints, no two Features in the
+     * list should have the same feature id, and you should not insert the same feature more then once.
      *
      * <p>The provided array is directly used with a {@link CopyOnWriteArrayList} for storage.
      */
@@ -95,14 +89,13 @@ public class ListFeatureCollection extends AbstractFeatureCollection
         this.list = new CopyOnWriteArrayList<>(array);
     }
     /**
-     * Create a ListFeatureCollection around the provided list. The contents of the list should all
-     * be of the provided schema for this to make sense. Please keep in mind the feature collection
-     * control, no two Features in the list should have the same feature id, and you should not
-     * insert the same feature more then once.
+     * Create a ListFeatureCollection around the provided list. The contents of the list should all be of the provided
+     * schema for this to make sense. Please keep in mind the feature collection control, no two Features in the list
+     * should have the same feature id, and you should not insert the same feature more then once.
      *
-     * <p>The provided list is directly used for storage, most feature collection operations just
-     * use a simple iterator so there is no performance advantaged to be gained over using an
-     * ArrayList vs a LinkedList (other then for the size() method of course).
+     * <p>The provided list is directly used for storage, most feature collection operations just use a simple iterator
+     * so there is no performance advantaged to be gained over using an ArrayList vs a LinkedList (other then for the
+     * size() method of course).
      */
     public ListFeatureCollection(SimpleFeatureCollection copy) throws IOException {
         this(copy.getSchema());
@@ -147,8 +140,7 @@ public class ListFeatureCollection extends AbstractFeatureCollection
     }
     /** Calculate bounds from features */
     protected ReferencedEnvelope calculateBounds() {
-        ReferencedEnvelope extent =
-                ReferencedEnvelope.create(getSchema().getCoordinateReferenceSystem());
+        ReferencedEnvelope extent = ReferencedEnvelope.create(getSchema().getCoordinateReferenceSystem());
         for (SimpleFeature feature : list) {
             if (feature == null) {
                 continue;
@@ -171,7 +163,7 @@ public class ListFeatureCollection extends AbstractFeatureCollection
      *
      * @author Jody
      */
-    private class ListFeatureIterator implements SimpleFeatureIterator {
+    private static class ListFeatureIterator implements SimpleFeatureIterator {
         private Iterator<SimpleFeature> iter;
 
         public ListFeatureIterator(List<SimpleFeature> features) {
@@ -179,9 +171,10 @@ public class ListFeatureCollection extends AbstractFeatureCollection
         }
 
         @Override
+        @SuppressWarnings("PMD.CloseResource")
         public void close() {
-            if (iter instanceof FeatureIterator) {
-                ((FeatureIterator<?>) iter).close();
+            if (iter instanceof FeatureIterator<?> iterator) {
+                iterator.close();
             }
         }
 

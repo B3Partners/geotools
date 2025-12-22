@@ -22,6 +22,7 @@ import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -31,6 +32,11 @@ import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.DimensionDescriptor;
 import org.geotools.coverage.grid.io.GridFormatFinder;
@@ -41,7 +47,6 @@ import org.geotools.coverage.io.catalog.CoverageSlice;
 import org.geotools.coverage.io.catalog.CoverageSlicesCatalog;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultRepository;
-import org.geotools.data.Query;
 import org.geotools.data.directory.DirectoryDataStore;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory.ShpFileStoreFactory;
@@ -55,19 +60,16 @@ import org.geotools.test.TestData;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
 import ucar.nc2.Variable;
 import ucar.nc2.dataset.NetcdfDataset;
+import ucar.nc2.dataset.NetcdfDatasets;
 
 /**
  * Testing Low level reader infrastructure.
  *
  * @author Simone Giannecchini, GeoSolutions SAS
  */
-public final class NetCDFBasicTest extends Assert {
+public final class NetCDFBasicTest extends NetCDFBaseTest {
 
     private static final Logger LOGGER = Logger.getLogger(NetCDFBasicTest.class.toString());
 
@@ -114,8 +116,7 @@ public final class NetCDFBasicTest extends Assert {
             // get typenames
             final String[] typeNames = cs.getTypeNames();
             for (String typeName : typeNames) {
-                final List<CoverageSlice> granules =
-                        cs.getGranules(new Query(typeName, Filter.INCLUDE));
+                final List<CoverageSlice> granules = cs.getGranules(new Query(typeName, Filter.INCLUDE));
                 assertNotNull(granules);
                 assertFalse(granules.isEmpty());
                 for (CoverageSlice slice : granules) {
@@ -126,8 +127,7 @@ public final class NetCDFBasicTest extends Assert {
 
                     // checks
                     for (Property p : sf.getProperties()) {
-                        assertNotNull(
-                                "Property " + p.getName() + " had a null value!", p.getValue());
+                        assertNotNull("Property " + p.getName() + " had a null value!", p.getValue());
                     }
                 }
             }
@@ -150,26 +150,23 @@ public final class NetCDFBasicTest extends Assert {
     @Test
     public void testImageReaderPolyphemusSimple2() throws Exception {
         // setup repository
-        ShpFileStoreFactory dialect =
-                new ShpFileStoreFactory(new ShapefileDataStoreFactory(), new HashMap<>());
+        ShpFileStoreFactory dialect = new ShpFileStoreFactory(new ShapefileDataStoreFactory(), new HashMap<>());
         File indexDirectory = new File("./target/polyphemus_simple_idx");
         FileUtils.deleteQuietly(indexDirectory);
         indexDirectory.mkdir();
         File properties = new File(indexDirectory, "test.properties");
         String theStoreName = "testStore";
-        FileUtils.writeStringToFile(
-                properties, NetCDFUtilities.STORE_NAME + "=" + theStoreName, "UTF-8");
+        FileUtils.writeStringToFile(properties, NetCDFUtilities.STORE_NAME + "=" + theStoreName, "UTF-8");
 
         DirectoryDataStore dataStore = new DirectoryDataStore(indexDirectory, dialect);
 
         DefaultRepository repository = new DefaultRepository();
         repository.register(new NameImpl(theStoreName), dataStore);
 
-        testImageReaderPolyphemusSimple(
-                reader -> {
-                    reader.setRepository(repository);
-                    reader.setAuxiliaryDatastorePath(properties.getAbsolutePath());
-                });
+        testImageReaderPolyphemusSimple(reader -> {
+            reader.setRepository(repository);
+            reader.setAuxiliaryDatastorePath(properties.getAbsolutePath());
+        });
 
         // the index files have actually been created
         List<String> typeNames = Arrays.asList(dataStore.getTypeNames());
@@ -179,8 +176,7 @@ public final class NetCDFBasicTest extends Assert {
         dataStore.dispose();
     }
 
-    protected void testImageReaderPolyphemusSimple(Consumer<NetCDFImageReader> readerCustomizer)
-            throws Exception {
+    protected void testImageReaderPolyphemusSimple(Consumer<NetCDFImageReader> readerCustomizer) throws Exception {
         final File file = TestData.file(this, "O3-NO2.nc");
         final NetCDFImageReaderSpi unidataImageReaderSpi = new NetCDFImageReaderSpi();
         assertTrue(unidataImageReaderSpi.canDecodeInput(file));
@@ -208,8 +204,7 @@ public final class NetCDFBasicTest extends Assert {
             // get typenames
             final String[] typeNames = cs.getTypeNames();
             for (String typeName : typeNames) {
-                final List<CoverageSlice> granules =
-                        cs.getGranules(new Query(typeName, Filter.INCLUDE));
+                final List<CoverageSlice> granules = cs.getGranules(new Query(typeName, Filter.INCLUDE));
                 assertNotNull(granules);
                 assertFalse(granules.isEmpty());
                 for (CoverageSlice slice : granules) {
@@ -220,8 +215,7 @@ public final class NetCDFBasicTest extends Assert {
 
                     // checks
                     for (Property p : sf.getProperties()) {
-                        assertNotNull(
-                                "Property " + p.getName() + " had a null value!", p.getValue());
+                        assertNotNull("Property " + p.getName() + " had a null value!", p.getValue());
                     }
                 }
             }
@@ -252,7 +246,7 @@ public final class NetCDFBasicTest extends Assert {
     public void testNoValid2DVariable() throws Exception {
         final File file = TestData.file(this, "noVars.nc");
         NetCDFImageReader reader = null;
-        try (NetcdfDataset dataset = NetcdfDataset.acquireDataset(file.getAbsolutePath(), null)) {
+        try (NetcdfDataset dataset = NetcdfDatasets.openDataset(file.getAbsolutePath())) {
             List<Variable> variables = dataset.getVariables();
             boolean speedVariableIsPresent = false;
             String speedVariableName = "";
@@ -409,8 +403,7 @@ public final class NetCDFBasicTest extends Assert {
             // get typenames
             final String[] typeNames = cs.getTypeNames();
             for (String typeName : typeNames) {
-                final List<CoverageSlice> granules =
-                        cs.getGranules(new Query(typeName, Filter.INCLUDE));
+                final List<CoverageSlice> granules = cs.getGranules(new Query(typeName, Filter.INCLUDE));
                 assertNotNull(granules);
                 assertFalse(granules.isEmpty());
                 for (CoverageSlice slice : granules) {
@@ -422,14 +415,10 @@ public final class NetCDFBasicTest extends Assert {
                     // checks
                     for (Property p : sf.getProperties()) {
                         final String pName = p.getName().toString();
-                        if (!pName.equalsIgnoreCase("time")
-                                && !pName.equalsIgnoreCase("elevation")) {
-                            assertNotNull(
-                                    "Property " + p.getName() + " had a null value!", p.getValue());
+                        if (!pName.equalsIgnoreCase("time") && !pName.equalsIgnoreCase("elevation")) {
+                            assertNotNull("Property " + p.getName() + " had a null value!", p.getValue());
                         } else {
-                            assertNull(
-                                    "Property " + p.getName() + " did not have a null value!",
-                                    p.getValue());
+                            assertNull("Property " + p.getName() + " did not have a null value!", p.getValue());
                         }
                     }
                 }
@@ -477,19 +466,14 @@ public final class NetCDFBasicTest extends Assert {
             assertNotNull(cs);
 
             MessageDigest md = MessageDigest.getInstance("SHA-1");
-            md.update(file.getCanonicalPath().getBytes());
+            md.update(file.getCanonicalPath().getBytes(StandardCharsets.UTF_8));
             String hashCode = AncillaryFileManager.convertToHex(md.digest());
 
             // Check if the auxiliary files directory is present
             File parentDir = file.getParentFile();
 
             String auxiliaryDirPath =
-                    parentDir
-                            + File.separator
-                            + "."
-                            + FilenameUtils.getBaseName(file.getName())
-                            + "_"
-                            + hashCode;
+                    parentDir + File.separator + "." + FilenameUtils.getBaseName(file.getName()) + "_" + hashCode;
 
             File auxiliaryDir = new File(auxiliaryDirPath);
 
@@ -553,8 +537,7 @@ public final class NetCDFBasicTest extends Assert {
             // get typenames
             final String[] typeNames = cs.getTypeNames();
             for (String typeName : typeNames) {
-                final List<CoverageSlice> granules =
-                        cs.getGranules(new Query(typeName, Filter.INCLUDE));
+                final List<CoverageSlice> granules = cs.getGranules(new Query(typeName, Filter.INCLUDE));
                 assertNotNull(granules);
                 assertFalse(granules.isEmpty());
                 for (CoverageSlice slice : granules) {
@@ -566,14 +549,10 @@ public final class NetCDFBasicTest extends Assert {
                     // checks
                     for (Property p : sf.getProperties()) {
                         final String pName = p.getName().toString();
-                        if (!pName.equalsIgnoreCase("time")
-                                && !pName.equalsIgnoreCase("elevation")) {
-                            assertNotNull(
-                                    "Property " + p.getName() + " had a null value!", p.getValue());
+                        if (!pName.equalsIgnoreCase("time") && !pName.equalsIgnoreCase("elevation")) {
+                            assertNotNull("Property " + p.getName() + " had a null value!", p.getValue());
                         } else {
-                            assertNull(
-                                    "Property " + p.getName() + " did not have a null value!",
-                                    p.getValue());
+                            assertNull("Property " + p.getName() + " did not have a null value!", p.getValue());
                         }
                     }
                 }
@@ -668,8 +647,7 @@ public final class NetCDFBasicTest extends Assert {
             // get typenames
             final String[] typeNames = cs.getTypeNames();
             for (String typeName : typeNames) {
-                final List<CoverageSlice> granules =
-                        cs.getGranules(new Query(typeName, Filter.INCLUDE));
+                final List<CoverageSlice> granules = cs.getGranules(new Query(typeName, Filter.INCLUDE));
                 assertNotNull(granules);
                 assertFalse(granules.isEmpty());
                 for (CoverageSlice slice : granules) {
@@ -680,8 +658,7 @@ public final class NetCDFBasicTest extends Assert {
 
                     // checks
                     for (Property p : sf.getProperties()) {
-                        assertNotNull(
-                                "Property " + p.getName() + " had a null value!", p.getValue());
+                        assertNotNull("Property " + p.getName() + " had a null value!", p.getValue());
                     }
                 }
             }
@@ -735,9 +712,11 @@ public final class NetCDFBasicTest extends Assert {
         boolean isNC4available = NetCDFUtilities.isNC4CAvailable();
         if (!isNC4available) {
             LOGGER.warning(
-                    "NetCDF4 reading test will be skipped due to "
-                            + "missing NetCDF C library.\nIf you want test to be executed, make sure you have "
-                            + "added the NetCDF C libraries location to the PATH environment variable");
+                    """
+                    NetCDF4 reading test will be skipped due to \
+                    missing NetCDF C library.
+                    If you want test to be executed, make sure you have \
+                    added the NetCDF C libraries location to the PATH environment variable""");
             return;
         }
         String name = "temperatureisobaricNC4.nc";
@@ -771,7 +750,7 @@ public final class NetCDFBasicTest extends Assert {
     }
 
     @Test
-    public void testNetCDFWithDifferentTimeDimensions() throws MalformedURLException, IOException {
+    public void testNetCDFWithDifferentTimeDimensions() throws IOException {
         // Selection of the input file
         final File workDir = new File(TestData.file(this, "."), "times");
         if (!workDir.mkdir()) {

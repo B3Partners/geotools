@@ -31,9 +31,13 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.FeatureCollection;
@@ -41,10 +45,6 @@ import org.geotools.feature.FeatureIterator;
 import org.geotools.jdbc.JDBCUDTOnlineTest;
 import org.geotools.jdbc.JDBCUDTTestSetup;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
 
 public class PostgisUDTOnlineTest extends JDBCUDTOnlineTest {
 
@@ -69,14 +69,17 @@ public class PostgisUDTOnlineTest extends JDBCUDTOnlineTest {
         assertEquals(Integer.class, type.getDescriptor(aname("ut8")).getType().getBinding());
         assertEquals(Time.class, type.getDescriptor(aname("ut9")).getType().getBinding());
         assertEquals(Time.class, type.getDescriptor(aname("ut10")).getType().getBinding());
-        assertEquals(Timestamp.class, type.getDescriptor(aname("ut11")).getType().getBinding());
-        assertEquals(Timestamp.class, type.getDescriptor(aname("ut12")).getType().getBinding());
+        assertEquals(
+                Timestamp.class, type.getDescriptor(aname("ut11")).getType().getBinding());
+        assertEquals(
+                Timestamp.class, type.getDescriptor(aname("ut12")).getType().getBinding());
         assertEquals(UUID.class, type.getDescriptor(aname("ut13")).getType().getBinding());
     }
 
     @Override
     public void testRead() throws Exception {
-        SimpleFeatureCollection features = dataStore.getFeatureSource(tname("udt")).getFeatures();
+        SimpleFeatureCollection features =
+                dataStore.getFeatureSource(tname("udt")).getFeatures();
         try (SimpleFeatureIterator fi = features.features()) {
             assertTrue(fi.hasNext());
             SimpleFeature item = fi.next();
@@ -89,8 +92,10 @@ public class PostgisUDTOnlineTest extends JDBCUDTOnlineTest {
             assertEquals("3.3", item.getAttribute(aname("ut7")).toString());
             assertEquals("2", item.getAttribute(aname("ut8")).toString());
             assertEquals("14:30:00", item.getAttribute(aname("ut9")).toString());
-            assertEquals("2004-10-31 16:30:00.0", item.getAttribute(aname("ut11")).toString());
-            assertEquals("2004-10-30 17:30:00.0", item.getAttribute(aname("ut12")).toString());
+            assertEquals(
+                    "2004-10-31 16:30:00.0", item.getAttribute(aname("ut11")).toString());
+            assertEquals(
+                    "2004-10-30 17:30:00.0", item.getAttribute(aname("ut12")).toString());
             assertEquals(
                     "00000000-0000-0000-0000-000000000000",
                     item.getAttribute(aname("ut13")).toString());
@@ -128,8 +133,7 @@ public class PostgisUDTOnlineTest extends JDBCUDTOnlineTest {
         assertEquals("292269055-12-02T16:47:04 BC", df.format(d));
 
         // test round trip
-        try (FeatureWriter w =
-                dataStore.getFeatureWriterAppend(tname("date_udt"), Transaction.AUTO_COMMIT)) {
+        try (FeatureWriter w = dataStore.getFeatureWriterAppend(tname("date_udt"), Transaction.AUTO_COMMIT)) {
             SimpleFeature f = (SimpleFeature) w.next();
             f.setAttribute(aname("bd"), new Date(-62135769600000L));
             f.setAttribute(aname("name"), "ce2");
@@ -141,8 +145,7 @@ public class PostgisUDTOnlineTest extends JDBCUDTOnlineTest {
 
         // test filters
         FilterFactory ff = dataStore.getFilterFactory();
-        Filter filter =
-                ff.equals(ff.property(aname("bd")), ff.literal(df.parse("1970-01-01T00:00:00 AD")));
+        Filter filter = ff.equals(ff.property(aname("bd")), ff.literal(df.parse("1970-01-01T00:00:00 AD")));
 
         FeatureCollection features = source.getFeatures(filter);
         try (FeatureIterator it = features.features()) {
@@ -154,15 +157,13 @@ public class PostgisUDTOnlineTest extends JDBCUDTOnlineTest {
             assertFalse(it.hasNext());
         }
 
-        filter =
-                ff.greaterOrEqual(
-                        ff.property(aname("bd")), ff.literal(df.parse("1970-01-01T00:00:00 AD")));
+        filter = ff.greaterOrEqual(ff.property(aname("bd")), ff.literal(df.parse("1970-01-01T00:00:00 AD")));
         features = source.getFeatures(filter);
 
         Set<String> names = new HashSet<>();
         try (FeatureIterator it = features.features()) {
             while (it.hasNext()) {
-                names.add((((SimpleFeature) it.next()).getAttribute("name")).toString());
+                names.add(((SimpleFeature) it.next()).getAttribute("name").toString());
             }
         }
 
@@ -177,8 +178,7 @@ public class PostgisUDTOnlineTest extends JDBCUDTOnlineTest {
 
     SimpleFeature feature(FeatureSource source, String name) throws IOException {
         FilterFactory ff = dataStore.getFilterFactory();
-        FeatureCollection features =
-                source.getFeatures(ff.equals(ff.property(aname("name")), ff.literal(name)));
+        FeatureCollection features = source.getFeatures(ff.equals(ff.property(aname("name")), ff.literal(name)));
         try (FeatureIterator it = features.features()) {
             assertTrue("No feature with name: " + name, it.hasNext());
 

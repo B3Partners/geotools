@@ -22,25 +22,22 @@ import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
 
 /** A new function to check if a property exists. */
 public class PropertyExistsFunction extends FunctionExpressionImpl {
 
     // public static FunctionName NAME = new FunctionNameImpl("PropertyExists","propertyName");
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "PropertyExists",
-                    parameter("exists", Boolean.class),
-                    parameter("propertyName", Object.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "PropertyExists", parameter("exists", Boolean.class), parameter("propertyName", Object.class));
 
     public PropertyExistsFunction() {
         super(NAME);
@@ -55,10 +52,10 @@ public class PropertyExistsFunction extends FunctionExpressionImpl {
     private String getPropertyName(Expression expr) {
         String propertyName;
 
-        if (expr instanceof Literal) {
-            propertyName = String.valueOf(((Literal) expr).getValue());
-        } else if (expr instanceof PropertyName) {
-            propertyName = ((PropertyName) expr).getPropertyName();
+        if (expr instanceof Literal literal) {
+            propertyName = String.valueOf(literal.getValue());
+        } else if (expr instanceof PropertyName propertyName1) {
+            propertyName = propertyName1.getPropertyName();
         } else {
             throw new IllegalStateException("Not a property name expression: " + expr);
         }
@@ -67,9 +64,8 @@ public class PropertyExistsFunction extends FunctionExpressionImpl {
     }
 
     /**
-     * @return {@link Boolean#TRUE} if the <code>feature</code>'s {@link FeatureType} contains an
-     *     attribute named as the property name passed as this function argument, {@link
-     *     Boolean#FALSE} otherwise.
+     * @return {@link Boolean#TRUE} if the <code>feature</code>'s {@link FeatureType} contains an attribute named as the
+     *     property name passed as this function argument, {@link Boolean#FALSE} otherwise.
      */
     public Object evaluate(SimpleFeature feature) {
         String propName = getPropertyName();
@@ -79,14 +75,14 @@ public class PropertyExistsFunction extends FunctionExpressionImpl {
     }
 
     /**
-     * @return {@link Boolean#TRUE} if the Class of the object passed as argument defines a property
-     *     names as the property name passed as this function argument, following the standard Java
-     *     Beans naming conventions for getters. {@link Boolean#FALSE} otherwise.
+     * @return {@link Boolean#TRUE} if the Class of the object passed as argument defines a property names as the
+     *     property name passed as this function argument, following the standard Java Beans naming conventions for
+     *     getters. {@link Boolean#FALSE} otherwise.
      */
     @Override
     public Object evaluate(Object bean) {
-        if (bean instanceof SimpleFeature) {
-            return evaluate((SimpleFeature) bean);
+        if (bean instanceof SimpleFeature feature) {
+            return evaluate(feature);
         }
 
         final String propName = getPropertyName();
@@ -125,6 +121,7 @@ public class PropertyExistsFunction extends FunctionExpressionImpl {
             // PropertyUtils.getProperty(bean, propName);
             // return true;
         } catch (IntrospectionException ignore) {
+            // ignored
         }
         return false;
     }

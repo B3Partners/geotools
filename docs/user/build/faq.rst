@@ -9,7 +9,7 @@ Our policy is waiting for the majority of our users before migrating to a new ve
 language. In general we are held up by the slow migration of Java Enterprise Edition environments
 such as websphere.
 
-GeoTools 29.x uses Java 11.
+GeoTools 34.x uses Java 17.
 
 How do I build from source code?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -83,10 +83,10 @@ How do I create an executable jar for my GeoTools app?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you're familiar with Maven you might have used the `assembly plugin
-<http://maven.apache.org/plugins/maven-assembly-plugin/>`_ to create self-contained, executable jars. The bad news is
-that this generally won't work with GeoTools. The problem is that GeoTools
-modules often define one or more files in its ``META-INF/services`` directory
-with the same names as files defined in other modules.  The assembly plugin just
+<http://maven.apache.org/plugins/maven-assembly-plugin/>`_ to create self-contained, executable jars.
+Note that this does not work for GeoTools without additional configuration. The problem is that GeoTools
+plugins are connected to the library using one or more files in the ``META-INF/services`` directory
+with the name of the plugin interface being registered. The assembly plugin just
 copies files with the same name over the top of each other rather than merging
 their contents.
 
@@ -101,7 +101,7 @@ GeoTools modules and their dependencies.
 .. sourcecode:: xml
 
   <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.geotools.demo</groupId>
     <artifactId>quickstart</artifactId>
@@ -111,7 +111,7 @@ GeoTools modules and their dependencies.
     <url>http://geotools.org</url>
 
     <properties>
-        <geotools.version>14.1</geotools.version>
+        <gt.version>34.0</gt.version>
     </properties>
 
     <build>
@@ -120,14 +120,13 @@ GeoTools modules and their dependencies.
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <encoding>UTF-8</encoding>
-                    <target>11</target>
-                    <source>11</source>
+                    <release>17</release>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>1.3.1</version>
+                <version>3.6.1</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -135,16 +134,37 @@ GeoTools modules and their dependencies.
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <filters>
+                        <!-- filter signed jars in the dependencies -->
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>shaded</shadedClassifierName>
                             <transformers>
-                                <!-- This bit sets the main class for the executable jar as you otherwise -->
-                                <!-- would with the assembly plugin                                       -->
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <manifestEntries>
-                                        <Main-Class>org.geotools.demo.Quickstart</Main-Class>
-                                    </manifestEntries>
+                                    <mainClass>org.geotools.demo.Quickstart</mainClass>
                                 </transformer>
-                                <!-- This bit merges the various GeoTools META-INF/services files         -->
+
+                                <!-- merges the various GeoTools META-INF/services files  (e.g. referencing plugins) -->
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <!-- merges META-INF/services/ entries instead of overwriting -->
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+
+                                <!-- merges META-INF/org.eclipse.imagen.registryFile.imagen entries instead of overwriting -->
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                  <resource>META-INF/org.eclipse.imagen.registryFile.imagen</resource>
+                                </transformer>
+                                <!-- merges META-INF/registryFile.imagen entries instead of overwriting -->
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                  <resource>META-INF/registryFile.imagen</resource>
+                                </transformer>
                             </transformers>
                         </configuration>
                     </execution>
@@ -153,27 +173,31 @@ GeoTools modules and their dependencies.
         </plugins>
     </build>
 
+  <dependencyManagement>
+    <dependencies>
+      <!-- Import the GeoTools BOM -->
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-bom</artifactId>
+        <version>${gt.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-shapefile</artifactId>
-            <version>${geotools.version}</version>
         </dependency>
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-epsg-hsql</artifactId>
-            <version>${geotools.version}</version>
         </dependency>
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-swing</artifactId>
-            <version>${geotools.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.5</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
   </project>

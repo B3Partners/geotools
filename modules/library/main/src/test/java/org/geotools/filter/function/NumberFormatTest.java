@@ -2,13 +2,13 @@ package org.geotools.filter.function;
 
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.factory.CommonFactoryFinder;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
 
 public class NumberFormatTest {
 
@@ -71,8 +71,7 @@ public class NumberFormatTest {
         Literal ds = ff.literal(":");
         Literal gs = ff.literal(";");
 
-        Function f =
-                ff.function("numberFormat2", new Expression[] {pattern, number, minus, ds, gs});
+        Function f = ff.function("numberFormat2", new Expression[] {pattern, number, minus, ds, gs});
         Assert.assertEquals("x123;456:79", f.evaluate(null, String.class));
     }
 
@@ -105,8 +104,7 @@ public class NumberFormatTest {
         Literal ds = ff.literal(":");
         Literal gs = ff.literal(";");
 
-        Function f =
-                ff.function("numberFormat2", new Expression[] {pattern, number, minus, ds, gs});
+        Function f = ff.function("numberFormat2", new Expression[] {pattern, number, minus, ds, gs});
         Assert.assertNull(f.evaluate(null, String.class));
     }
 
@@ -119,8 +117,7 @@ public class NumberFormatTest {
         Literal ds = ff.literal(":");
         Literal gs = ff.literal(";");
 
-        Function f =
-                ff.function("numberFormat2", new Expression[] {pattern, number, minus, ds, gs});
+        Function f = ff.function("numberFormat2", new Expression[] {pattern, number, minus, ds, gs});
         Assert.assertNull(f.evaluate(null, String.class));
     }
 

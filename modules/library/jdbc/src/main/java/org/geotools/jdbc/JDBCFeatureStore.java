@@ -23,27 +23,27 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import org.geotools.data.FeatureEvent;
-import org.geotools.data.FeatureEvent.Type;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
+import org.geotools.api.data.FeatureEvent;
+import org.geotools.api.data.FeatureEvent.Type;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.QueryCapabilities;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
 import org.geotools.data.FilteringFeatureWriter;
-import org.geotools.data.Query;
-import org.geotools.data.QueryCapabilities;
-import org.geotools.data.ResourceInfo;
-import org.geotools.data.Transaction;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureStore;
 import org.geotools.data.store.ContentState;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.util.factory.Hints;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
 
 /**
  * FeatureStore implementation for jdbc based relational database tables.
@@ -55,8 +55,8 @@ import org.opengis.filter.Filter;
 public final class JDBCFeatureStore extends ContentFeatureStore {
 
     /**
-     * jdbc feature source to delegate to, we do this b/c we can't inherit from both
-     * ContentFeatureStore and JDBCFeatureSource at the same time
+     * jdbc feature source to delegate to, we do this b/c we can't inherit from both ContentFeatureStore and
+     * JDBCFeatureSource at the same time
      */
     public JDBCFeatureSource delegate;
 
@@ -70,16 +70,15 @@ public final class JDBCFeatureStore extends ContentFeatureStore {
     public JDBCFeatureStore(ContentEntry entry, Query query) throws IOException {
         super(entry, query);
 
-        delegate =
-                new JDBCFeatureSource(entry, query) {
-                    @Override
-                    public void setTransaction(Transaction transaction) {
-                        super.setTransaction(transaction);
+        delegate = new JDBCFeatureSource(entry, query) {
+            @Override
+            public void setTransaction(Transaction transaction) {
+                super.setTransaction(transaction);
 
-                        // keep this feature store in sync
-                        JDBCFeatureStore.this.setTransaction(transaction);
-                    }
-                };
+                // keep this feature store in sync
+                JDBCFeatureStore.this.setTransaction(transaction);
+            }
+        };
 
         Set<Hints.Key> jdbcHints = new HashSet<>();
 
@@ -149,19 +148,19 @@ public final class JDBCFeatureStore extends ContentFeatureStore {
     }
 
     /**
-     * Sets the flag which will expose columns which compose a tables identifying or primary key,
-     * through feature type attributes.
+     * Sets the flag which will expose columns which compose a tables identifying or primary key, through feature type
+     * attributes.
      *
-     * <p>Note: setting this flag which affect all feature sources created from or working against
-     * the current transaction.
+     * <p>Note: setting this flag which affect all feature sources created from or working against the current
+     * transaction.
      */
     public void setExposePrimaryKeyColumns(boolean exposePrimaryKeyColumns) {
         delegate.setExposePrimaryKeyColumns(exposePrimaryKeyColumns);
     }
 
     /**
-     * The flag which will expose columns which compose a tables identifying or primary key, through
-     * feature type attributes.
+     * The flag which will expose columns which compose a tables identifying or primary key, through feature type
+     * attributes.
      */
     public boolean isExposePrimaryKeyColumns() {
         return delegate.isExposePrimaryKeyColumns();
@@ -183,28 +182,28 @@ public final class JDBCFeatureStore extends ContentFeatureStore {
     }
 
     @Override
-    protected boolean canFilter() {
-        return delegate.canFilter();
+    protected boolean canFilter(Query query) {
+        return delegate.canFilter(query);
     }
 
     @Override
-    protected boolean canSort() {
-        return delegate.canSort();
+    protected boolean canSort(Query query) {
+        return delegate.canSort(query);
     }
 
     @Override
-    protected boolean canRetype() {
-        return delegate.canRetype();
+    protected boolean canRetype(Query query) {
+        return delegate.canRetype(query);
     }
 
     @Override
-    protected boolean canLimit() {
-        return delegate.canLimit();
+    protected boolean canLimit(Query query) {
+        return delegate.canLimit(query);
     }
 
     @Override
-    protected boolean canOffset() {
-        return delegate.canOffset();
+    protected boolean canOffset(Query query) {
+        return delegate.canOffset(query);
     }
 
     @Override
@@ -213,8 +212,7 @@ public final class JDBCFeatureStore extends ContentFeatureStore {
     }
 
     @Override
-    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query)
-            throws IOException {
+    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query) throws IOException {
         return delegate.getReaderInternal(query);
     }
 
@@ -244,8 +242,8 @@ public final class JDBCFeatureStore extends ContentFeatureStore {
 
     @Override
     @SuppressWarnings("PMD.CloseResource") // the cx is passed to the reader which will close it
-    protected FeatureWriter<SimpleFeatureType, SimpleFeature> getWriterInternal(
-            Query query, int flags) throws IOException {
+    protected FeatureWriter<SimpleFeatureType, SimpleFeature> getWriterInternal(Query query, int flags)
+            throws IOException {
 
         if (flags == 0) {
             throw new IllegalArgumentException("no write flags set");
@@ -276,7 +274,7 @@ public final class JDBCFeatureStore extends ContentFeatureStore {
             }
 
             // split the filter
-            Filter[] split = delegate.splitFilter(query.getFilter());
+            Filter[] split = delegate.splitFilter(query.getFilter(), query.getHints());
             Filter preFilter = split[0];
             postFilter = split[1];
 
@@ -289,9 +287,7 @@ public final class JDBCFeatureStore extends ContentFeatureStore {
                     writer = new JDBCUpdateFeatureWriter(ps, cx, delegate, query);
                 } else {
                     // update insert case
-                    writer =
-                            new JDBCUpdateInsertFeatureWriter(
-                                    ps, cx, delegate, query.getPropertyNames(), query);
+                    writer = new JDBCUpdateInsertFeatureWriter(ps, cx, delegate, query.getPropertyNames(), query);
                 }
             } else {
                 String sql = getDataStore().selectSQL(getSchema(), preQuery);
@@ -308,8 +304,8 @@ public final class JDBCFeatureStore extends ContentFeatureStore {
             // close the connection
             getDataStore().closeSafe(cx);
             // safely rethrow
-            if (e instanceof Error) {
-                throw (Error) e;
+            if (e instanceof Error error) {
+                throw error;
             } else {
                 throw (IOException) new IOException().initCause(e);
             }
@@ -335,7 +331,7 @@ public final class JDBCFeatureStore extends ContentFeatureStore {
         }
 
         // split the filter
-        Filter[] splitted = delegate.splitFilter(filter);
+        Filter[] splitted = delegate.splitFilter(filter, this.query != null ? this.query.getHints() : null);
         Filter preFilter = splitted[0];
         Filter postFilter = splitted[1];
 
@@ -354,8 +350,7 @@ public final class JDBCFeatureStore extends ContentFeatureStore {
                 // we want to support a "batch" update, but we need to be weary of locks
                 SimpleFeatureType featureType = getSchema();
                 try {
-                    getDataStore()
-                            .ensureAuthorization(featureType, preFilter, getTransaction(), cx);
+                    getDataStore().ensureAuthorization(featureType, preFilter, getTransaction(), cx);
                 } catch (SQLException e) {
                     throw (IOException) new IOException().initCause(e);
                 }
@@ -364,8 +359,7 @@ public final class JDBCFeatureStore extends ContentFeatureStore {
                         ReferencedEnvelope.create(getSchema().getCoordinateReferenceSystem());
                 if (state.hasListener()) {
                     // gather bounds before modification
-                    ReferencedEnvelope before =
-                            getBounds(new Query(getSchema().getTypeName(), preFilter));
+                    ReferencedEnvelope before = getBounds(new Query(getSchema().getTypeName(), preFilter));
                     if (before != null && !before.isEmpty()) {
                         bounds = before;
                     }
@@ -373,14 +367,13 @@ public final class JDBCFeatureStore extends ContentFeatureStore {
                 try {
                     getDataStore().update(getSchema(), innerTypes, values, preFilter, cx);
                 } catch (SQLException e) {
-                    throw (IOException) (new IOException(e.getMessage()).initCause(e));
+                    throw (IOException) new IOException(e.getMessage()).initCause(e);
                 }
 
                 if (state.hasListener()) {
                     // gather any updated bounds due to a geometry modification
                     for (Object value : values) {
-                        if (value instanceof Geometry) {
-                            Geometry geometry = (Geometry) value;
+                        if (value instanceof Geometry geometry) {
                             bounds.expandToInclude(geometry.getEnvelopeInternal());
                         }
                     }
@@ -398,7 +391,7 @@ public final class JDBCFeatureStore extends ContentFeatureStore {
 
     @Override
     public void removeFeatures(Filter filter) throws IOException {
-        Filter[] splitted = delegate.splitFilter(filter);
+        Filter[] splitted = delegate.splitFilter(filter, this.query != null ? this.query.getHints() : null);
         Filter preFilter = splitted[0];
         Filter postFilter = splitted[1];
 
@@ -418,8 +411,7 @@ public final class JDBCFeatureStore extends ContentFeatureStore {
                 // we want to support a "batch" delete, but we need to be weary of locks
                 SimpleFeatureType featureType = getSchema();
                 try {
-                    getDataStore()
-                            .ensureAuthorization(featureType, preFilter, getTransaction(), cx);
+                    getDataStore().ensureAuthorization(featureType, preFilter, getTransaction(), cx);
                 } catch (SQLException e) {
                     throw (IOException) new IOException().initCause(e);
                 }
@@ -428,8 +420,7 @@ public final class JDBCFeatureStore extends ContentFeatureStore {
                         ReferencedEnvelope.create(getSchema().getCoordinateReferenceSystem());
                 if (state.hasListener()) {
                     // gather bounds before modification
-                    ReferencedEnvelope before =
-                            getBounds(new Query(getSchema().getTypeName(), preFilter));
+                    ReferencedEnvelope before = getBounds(new Query(getSchema().getTypeName(), preFilter));
                     if (before != null && !before.isEmpty()) {
                         bounds = before;
                     }

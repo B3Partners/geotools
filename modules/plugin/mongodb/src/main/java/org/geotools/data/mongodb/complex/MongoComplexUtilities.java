@@ -32,17 +32,17 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.data.mongodb.AbstractCollectionMapper;
 import org.geotools.data.mongodb.MongoFeature;
 import org.geotools.data.mongodb.MongoGeometryBuilder;
 import org.geotools.geometry.jts.GeometryCoordinateSequenceTransformer;
 import org.geotools.util.logging.Logging;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 
 /** This class contains utilities methods for dealing with MongoDB complex features. */
 public final class MongoComplexUtilities {
@@ -52,8 +52,7 @@ public final class MongoComplexUtilities {
     // key used to store the parent JSON path in a feature user data map
     public static final String MONGO_PARENT_PATH = "MONGO_PARENT_PATH";
 
-    private static ThreadLocal<
-                    Pair<CoordinateReferenceSystem, GeometryCoordinateSequenceTransformer>>
+    private static ThreadLocal<Pair<CoordinateReferenceSystem, GeometryCoordinateSequenceTransformer>>
             transformerLocal = new ThreadLocal<>();
 
     private MongoComplexUtilities() {}
@@ -69,10 +68,7 @@ public final class MongoComplexUtilities {
         feature.getUserData().put(MONGO_PARENT_PATH, parentPath);
     }
 
-    /**
-     * Will try to extract from the provided object the value that correspond to the given json
-     * path.
-     */
+    /** Will try to extract from the provided object the value that correspond to the given json path. */
     public static Object getValue(Object object, String jsonPath) {
         // let's make sure we have a feature
         if (!(object instanceof Feature)) {
@@ -83,17 +79,14 @@ public final class MongoComplexUtilities {
         // try before to resolve jsonpath against the feature. If it is SimpleFeature
         // and we are on the root appSchema object there is no need to retrieve attributes
         // from the DBObject
-        if (feature instanceof SimpleFeature) {
-            SimpleFeature sf = (SimpleFeature) feature;
+        if (feature instanceof SimpleFeature sf) {
             Object value = sf.getAttribute(jsonPath);
             if (value != null) return value;
         }
 
         Feature extracted = extractFeature(feature, jsonPath);
 
-        if (extracted instanceof MongoFeature) {
-            // no a nested element mongo feature
-            MongoFeature mongoFeature = (MongoFeature) extracted;
+        if (extracted instanceof MongoFeature mongoFeature) {
 
             // if the feature is a MongoFeature then the geometry attribute
             // needs no reprojection
@@ -102,12 +95,9 @@ public final class MongoComplexUtilities {
 
             return getValue(mongoFeature.getMongoObject(), jsonPath, transformer);
         }
-        if (extracted instanceof MongoCollectionFeature) {
-            // a mongo feature in the context of a nested element
-            MongoCollectionFeature collectionFeature = (MongoCollectionFeature) extracted;
+        if (extracted instanceof MongoCollectionFeature collectionFeature) {
             MongoFeature mongoFeature = collectionFeature.getMongoFeature();
-            Supplier<GeometryCoordinateSequenceTransformer> transformer =
-                    getTransformer(feature, mongoFeature);
+            Supplier<GeometryCoordinateSequenceTransformer> transformer = getTransformer(feature, mongoFeature);
             return getValue(
                     collectionFeature.getMongoFeature().getMongoObject(),
                     collectionFeature.getCollectionsIndexes(),
@@ -118,8 +108,7 @@ public final class MongoComplexUtilities {
         throw invalidFeature(feature, jsonPath);
     }
 
-    static Supplier<GeometryCoordinateSequenceTransformer> getTransformer(
-            Feature feature, MongoFeature mongoFeature) {
+    static Supplier<GeometryCoordinateSequenceTransformer> getTransformer(Feature feature, MongoFeature mongoFeature) {
         // helper method to retrieve a transformation if the CRS between the Feature
         // object and the MongoFeature is different. This might happen if a ComplexFeature
         // is reprojected. In that case the feature is rebuilt with the MongoFeature
@@ -131,8 +120,7 @@ public final class MongoComplexUtilities {
         CoordinateReferenceSystem crs = mongoFeature.getOriginalCRS();
         CoordinateReferenceSystem target =
                 feature.getDefaultGeometryProperty().getDescriptor().getCoordinateReferenceSystem();
-        Pair<CoordinateReferenceSystem, GeometryCoordinateSequenceTransformer> pair =
-                transformerLocal.get();
+        Pair<CoordinateReferenceSystem, GeometryCoordinateSequenceTransformer> pair = transformerLocal.get();
         if (pair != null && pair.getLeft().equals(target)) {
             final GeometryCoordinateSequenceTransformer cachedTransformer = pair.getRight();
             return () -> cachedTransformer;
@@ -141,8 +129,7 @@ public final class MongoComplexUtilities {
         try {
             if (crs != null && target != null && !crs.equals(target)) {
                 MathTransform transform = findMathTransform(crs, target);
-                GeometryCoordinateSequenceTransformer transformer =
-                        new GeometryCoordinateSequenceTransformer();
+                GeometryCoordinateSequenceTransformer transformer = new GeometryCoordinateSequenceTransformer();
                 transformer.setMathTransform(transform);
                 pair.setValue(transformer);
                 // return a supplier to allow lazy evaluation
@@ -173,38 +160,29 @@ public final class MongoComplexUtilities {
     /** Method for extracting or casting a feature from the provided object. */
     public static Feature extractFeature(Feature feature, String jsonPath) {
         // let's see if we have the a mongo feature in the user data
-        Object mongoFeature =
-                feature.getUserData().get(AbstractCollectionMapper.MONGO_OBJECT_FEATURE_KEY);
+        Object mongoFeature = feature.getUserData().get(AbstractCollectionMapper.MONGO_OBJECT_FEATURE_KEY);
         // if we could not find a mongo feature in the user data we stick we the original feature
         return mongoFeature == null ? feature : (Feature) mongoFeature;
     }
 
-    /**
-     * Helper method that creates an exception for when the provided object is not of the correct
-     * type.
-     */
+    /** Helper method that creates an exception for when the provided object is not of the correct type. */
     static RuntimeException invalidFeature(Object feature, String jsonPath) {
-        return new RuntimeException(
-                String.format(
-                        "No possible to obtain a mongo object from '%s' to extract '%s'.",
-                        feature.getClass(), jsonPath));
+        return new RuntimeException("No possible to obtain a mongo object from '%s' to extract '%s'."
+                .formatted(feature.getClass(), jsonPath));
     }
 
     /**
-     * Will extract from the mongo db object the value that correspond to the given json path. If
-     * the path contain a nested list of values an exception will be throw.
+     * Will extract from the mongo db object the value that correspond to the given json path. If the path contain a
+     * nested list of values an exception will be throw.
      */
     public static Object getValue(
-            DBObject mongoObject,
-            String jsonPath,
-            Supplier<GeometryCoordinateSequenceTransformer> transformer) {
+            DBObject mongoObject, String jsonPath, Supplier<GeometryCoordinateSequenceTransformer> transformer) {
         return getValue(mongoObject, Collections.emptyMap(), jsonPath, transformer);
     }
 
     /**
-     * Will extract from the mongo db object the value that correspond to the given json path. The
-     * provided collections indexes will be used to select the proper element for the collections
-     * present in the path.
+     * Will extract from the mongo db object the value that correspond to the given json path. The provided collections
+     * indexes will be used to select the proper element for the collections present in the path.
      */
     public static Object getValue(
             DBObject mongoObject,
@@ -216,11 +194,8 @@ public final class MongoComplexUtilities {
         return convertGeometry(walker.getValue(), transformer);
     }
 
-    /**
-     * Helper method that checks if a mongodb value is a geometry and perform the proper conversion.
-     */
-    private static Object convertGeometry(
-            Object value, Supplier<GeometryCoordinateSequenceTransformer> transformer) {
+    /** Helper method that checks if a mongodb value is a geometry and perform the proper conversion. */
+    private static Object convertGeometry(Object value, Supplier<GeometryCoordinateSequenceTransformer> transformer) {
         if (!(value instanceof DBObject) || value instanceof List) {
             // not a mongodb object or a list of values so nothing to do
             return value;
@@ -256,8 +231,7 @@ public final class MongoComplexUtilities {
         private int currentJsonPathPartIndex;
         private Object currentObject;
 
-        MongoObjectWalker(
-                DBObject mongoObject, Map<String, Integer> collectionsIndexes, String jsonPath) {
+        MongoObjectWalker(DBObject mongoObject, Map<String, Integer> collectionsIndexes, String jsonPath) {
             this.collectionsIndexes = collectionsIndexes;
             this.jsonPathParts = jsonPath.split("\\.");
             this.currentJsonPath = "";
@@ -282,8 +256,7 @@ public final class MongoComplexUtilities {
                 return false;
             }
             return currentJsonPathPartIndex < jsonPathParts.length
-                    || (currentObject instanceof BasicDBList
-                            && collectionsIndexes.get(currentJsonPath) != null);
+                    || currentObject instanceof BasicDBList && collectionsIndexes.get(currentJsonPath) != null;
         }
 
         private boolean isAnEmptyList(Object object) {
@@ -298,16 +271,14 @@ public final class MongoComplexUtilities {
 
         private void next() {
             // let's walk to the next path part using the current object
-            if (currentObject instanceof List) {
+            if (currentObject instanceof List list) {
                 // the current object is a list, we need to select the current index
-                currentObject = next((List) currentObject);
-            } else if (currentObject instanceof DBObject) {
-                currentObject = next((DBObject) currentObject);
+                currentObject = next(list);
+            } else if (currentObject instanceof DBObject object) {
+                currentObject = next(object);
             } else {
-                throw new RuntimeException(
-                        String.format(
-                                "Trying to get data from a non MongoDB object, current json path is '%s'.",
-                                currentJsonPath));
+                throw new RuntimeException("Trying to get data from a non MongoDB object, current json path is '%s'."
+                        .formatted(currentJsonPath));
             }
         }
 
@@ -330,25 +301,18 @@ public final class MongoComplexUtilities {
             }
             if (rawCollectionIndex == null) {
                 throw new RuntimeException(
-                        String.format(
-                                "There is no index available for collection '%s'.",
-                                currentJsonPath));
+                        "There is no index available for collection '%s'.".formatted(currentJsonPath));
             }
             // just return the list element that matches the current index
             return basicDBList.get(rawCollectionIndex);
         }
     }
 
-    /**
-     * Will try to extract from the provided object all the values that correspond to the given json
-     * path.
-     */
+    /** Will try to extract from the provided object all the values that correspond to the given json path. */
     public static Object getValues(Object object, String jsonPath) {
         // let's make sure we have a feature
         Feature feature = extractFeature(object, jsonPath);
-        if (feature instanceof MongoFeature) {
-            // no a nested element mongo feature
-            MongoFeature mongoFeature = (MongoFeature) feature;
+        if (feature instanceof MongoFeature mongoFeature) {
             return getValues(mongoFeature.getMongoObject(), jsonPath);
         }
         if (feature instanceof MongoCollectionFeature) {
@@ -361,13 +325,11 @@ public final class MongoComplexUtilities {
     }
 
     /**
-     * Will extract from the mongo db object all the values that correspond to the given json path.
-     * If the path contains nested collections the values from all the branches will be merged.
+     * Will extract from the mongo db object all the values that correspond to the given json path. If the path contains
+     * nested collections the values from all the branches will be merged.
      */
     public static Object getValues(
-            DBObject dbObject,
-            String jsonPath,
-            Supplier<GeometryCoordinateSequenceTransformer> transformer) {
+            DBObject dbObject, String jsonPath, Supplier<GeometryCoordinateSequenceTransformer> transformer) {
         if (jsonPath == null || jsonPath.isEmpty() || dbObject == null) {
             // nothing to do here
             return Collections.emptyList();
@@ -375,8 +337,7 @@ public final class MongoComplexUtilities {
         // let's split the json path in parts which will give us the necessary keys
         String[] jsonPathParts = jsonPath.split("\\.");
         // recursively get the values using an helper function
-        List<Object> values =
-                getValuesHelper(dbObject, jsonPathParts, new ArrayList<>(), 0, transformer);
+        List<Object> values = getValuesHelper(dbObject, jsonPathParts, new ArrayList<>(), 0, transformer);
         if (values.size() == 1) {
             // we only have a single value, let's extract it
             return values.get(0);
@@ -384,10 +345,7 @@ public final class MongoComplexUtilities {
         return values;
     }
 
-    /**
-     * Helper function that will walk a mongo db object and retrieve all the values for a certain
-     * path.
-     */
+    /** Helper function that will walk a mongo db object and retrieve all the values for a certain path. */
     private static List<Object> getValuesHelper(
             DBObject dbObject,
             String[] jsonPathParts,
@@ -403,16 +361,16 @@ public final class MongoComplexUtilities {
         // check if we reach the end of the json path
         boolean finalPath = index == jsonPathParts.length - 1;
         index++;
-        if (object instanceof List) {
+        if (object instanceof List list) {
             if (finalPath) {
                 // we reached the end of the json path and we have a list, so let's add all the
                 // elements of the list
-                for (Object value : (List) object) {
+                for (Object value : list) {
                     values.add(convertGeometry(value, transformer));
                 }
             } else {
                 // well we have a list so we need to interact over each element of the list
-                for (Object element : (List) object) {
+                for (Object element : list) {
                     getValuesHelper((DBObject) element, jsonPathParts, values, index, transformer);
                 }
             }
@@ -446,38 +404,33 @@ public final class MongoComplexUtilities {
     }
 
     /**
-     * Compute the mappings for a mongodb cursor(iterator), this can be used to create a feature
-     * mapping. This method will close the cursor.
+     * Compute the mappings for a mongodb cursor(iterator), this can be used to create a feature mapping. This method
+     * will close the cursor.
      */
     public static Map<String, Class> findMappings(DBCursor cursor) {
         Map<String, Class> mappings = new HashMap<>();
-        try {
+        try (cursor) {
             while (cursor.hasNext()) {
                 findMappingsHelper(cursor.next(), "", mappings);
             }
-        } finally {
-            cursor.close();
         }
         return mappings;
     }
 
     /** Helper method that will recursively walk a mongo db object and compute is mappings. */
-    private static void findMappingsHelper(
-            Object object, String parentPath, Map<String, Class> mappings) {
+    private static void findMappingsHelper(Object object, String parentPath, Map<String, Class> mappings) {
         if (object == null) {
             return;
         }
-        if (object instanceof DBObject) {
+        if (object instanceof DBObject dbObject) {
             LOG.log(Level.INFO, "Generating mappings from object: {0}", object);
-            DBObject dbObject = (DBObject) object;
             for (String key : dbObject.keySet()) {
                 Object value = dbObject.get(key);
                 if (value == null) {
                     continue;
                 }
                 String path = concatPath(parentPath, key);
-                if (value instanceof List) {
-                    List list = (List) value;
+                if (value instanceof List list) {
                     if (!list.isEmpty()) {
                         for (Object eo : list) {
                             findMappingsHelper(eo, path, mappings);

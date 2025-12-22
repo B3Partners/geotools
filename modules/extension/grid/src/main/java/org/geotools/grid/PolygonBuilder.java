@@ -22,7 +22,6 @@ import java.util.Map;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.locationtech.jts.geom.Envelope;
 
 /**
  * The base class for builders that generate polygonal grid elements.
@@ -41,8 +40,7 @@ public abstract class PolygonBuilder {
         this.gridBounds = gridBounds;
     }
 
-    public boolean buildGrid(
-            GridFeatureBuilder gridFeatureBuilder, double vertexSpacing, ListFeatureCollection fc) {
+    public boolean buildGrid(GridFeatureBuilder gridFeatureBuilder, double vertexSpacing, ListFeatureCollection fc) {
 
         boolean result = true;
 
@@ -57,7 +55,7 @@ public abstract class PolygonBuilder {
 
         while (el.getBounds().getMinY() <= gridBounds.getMaxY()) {
             while (el.getBounds().getMaxX() <= gridBounds.getMaxX()) {
-                if (((Envelope) gridBounds).contains(el.getBounds())) {
+                if (gridBounds.contains(el.getBounds())) {
                     if (gridFeatureBuilder.getCreateFeature(el)) {
                         Map<String, Object> attrMap = new HashMap<>();
                         gridFeatureBuilder.setAttributes(el, attrMap);

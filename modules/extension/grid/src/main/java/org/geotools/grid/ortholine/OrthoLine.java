@@ -17,6 +17,7 @@
 
 package org.geotools.grid.ortholine;
 
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.grid.LineElement;
@@ -24,7 +25,6 @@ import org.locationtech.jts.densify.Densifier;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * An ortho-line grid element.
@@ -43,19 +43,15 @@ public class OrthoLine implements LineElement {
     private final Coordinate v1;
 
     /**
-     * Creates a new ortho-line element. The line position is specified by a single ordinate which
-     * will be its X-ordinate if vertical, or its Y-ordinate if horizontal.
+     * Creates a new ortho-line element. The line position is specified by a single ordinate which will be its
+     * X-ordinate if vertical, or its Y-ordinate if horizontal.
      *
      * @param gridBounds bounds of the area containing this line
      * @param orientation line orientation
      * @param ordinate position of the line
      * @param level integer level associated with this line
      */
-    public OrthoLine(
-            ReferencedEnvelope gridBounds,
-            LineOrientation orientation,
-            double ordinate,
-            int level) {
+    public OrthoLine(ReferencedEnvelope gridBounds, LineOrientation orientation, double ordinate, int level) {
 
         this.crs = gridBounds.getCoordinateReferenceSystem();
         this.orientation = orientation;
@@ -71,8 +67,8 @@ public class OrthoLine implements LineElement {
     }
 
     /**
-     * {@inheritDoc} Note that this will be a degenerate rectangle with either 0 width, if the line
-     * is vertical, or zero height, if horizontal.
+     * {@inheritDoc} Note that this will be a degenerate rectangle with either 0 width, if the line is vertical, or zero
+     * height, if horizontal.
      */
     @Override
     public ReferencedEnvelope getBounds() {

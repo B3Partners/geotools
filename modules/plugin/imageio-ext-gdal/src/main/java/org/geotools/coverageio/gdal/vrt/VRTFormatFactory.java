@@ -19,9 +19,9 @@ package org.geotools.coverageio.gdal.vrt;
 import it.geosolutions.imageio.plugins.vrt.VRTImageReaderSpi;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.coverage.grid.Format;
 import org.geotools.coverage.grid.io.GridFormatFactorySpi;
 import org.geotools.coverageio.BaseGridFormatFactorySPI;
-import org.opengis.coverage.grid.Format;
 
 /**
  * Implementation of the {@link Format} service provider interface for VRT files.
@@ -30,18 +30,16 @@ import org.opengis.coverage.grid.Format;
  * @author Simone Giannecchini (simboss), GeoSolutions
  * @since 2.10.x
  */
-public final class VRTFormatFactory extends BaseGridFormatFactorySPI
-        implements GridFormatFactorySpi {
+public final class VRTFormatFactory extends BaseGridFormatFactorySPI implements GridFormatFactorySpi {
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(VRTFormatFactory.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(VRTFormatFactory.class);
 
     @Override
     public boolean isAvailable() {
         boolean available = true;
 
         // if these classes are here, then the runtime environment has
-        // access to JAI and the JAI ImageI/O toolbox.
+        // access to ImageN and the ImageN ImageI/O toolbox.
         try {
             Class.forName("it.geosolutions.imageio.plugins.vrt.VRTImageReaderSpi");
             available = new VRTImageReaderSpi().isAvailable();

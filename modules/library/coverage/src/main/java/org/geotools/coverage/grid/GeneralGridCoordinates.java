@@ -16,14 +16,15 @@
  */
 package org.geotools.coverage.grid;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
+import org.geotools.api.coverage.grid.GridCoordinates;
 import org.geotools.util.Classes;
-import org.opengis.coverage.grid.GridCoordinates;
 
 /**
- * Holds the set of grid coordinates that specifies the location of the {@linkplain GridPoint grid
- * point} within the {@linkplain Grid grid}.
+ * Holds the set of grid coordinates that specifies the location of the {@linkplain GridPoint grid point} within the
+ * {@linkplain Grid grid}.
  *
  * @since 2.4
  * @version $Id$
@@ -32,14 +33,14 @@ import org.opengis.coverage.grid.GridCoordinates;
  */
 public class GeneralGridCoordinates implements GridCoordinates, Serializable {
     /** For cross-version compatibility. */
+    @Serial
     private static final long serialVersionUID = 8146318677770695383L;
 
     /** The grid coordinates. */
     final int[] coordinates;
 
     /**
-     * Creates a grid coordinates of the specified dimension. All coordinates are initially set to
-     * 0.
+     * Creates a grid coordinates of the specified dimension. All coordinates are initially set to 0.
      *
      * @param dimension The number of dimension.
      */
@@ -90,13 +91,12 @@ public class GeneralGridCoordinates implements GridCoordinates, Serializable {
     }
 
     /**
-     * Returns one integer value for each dimension of the grid. The ordering of these coordinate
-     * values shall be the same as that of the elements of {@link Grid#getAxisNames}. The value of a
-     * single coordinate shall be the number of offsets from the origin of the grid in the direction
-     * of a specific axis.
+     * Returns one integer value for each dimension of the grid. The ordering of these coordinate values shall be the
+     * same as that of the elements of {@link Grid#getAxisNames}. The value of a single coordinate shall be the number
+     * of offsets from the origin of the grid in the direction of a specific axis.
      *
-     * @return A copy of the coordinates. Changes in the returned array will not be reflected back
-     *     in this {@code GeneralGridCoordinates} object.
+     * @return A copy of the coordinates. Changes in the returned array will not be reflected back in this
+     *     {@code GeneralGridCoordinates} object.
      */
     @Override
     public int[] getCoordinateValues() {
@@ -174,8 +174,7 @@ public class GeneralGridCoordinates implements GridCoordinates, Serializable {
         }
         // We do not require the exact same class because we that that clones of
         // immutable grid coordinates to be equal to their original coordinates.
-        if (object instanceof GeneralGridCoordinates) {
-            final GeneralGridCoordinates that = (GeneralGridCoordinates) object;
+        if (object instanceof GeneralGridCoordinates that) {
             return Arrays.equals(this.coordinates, that.coordinates);
         }
         return false;
@@ -196,9 +195,9 @@ public class GeneralGridCoordinates implements GridCoordinates, Serializable {
     }
 
     /**
-     * An immutable {@link GridCoordinates}. This is sometime useful for creating a single instance
-     * to be shared by many objects without the cost of cloning. This class is final in order to
-     * prevent subclasses from making it mutable again.
+     * An immutable {@link GridCoordinates}. This is sometime useful for creating a single instance to be shared by many
+     * objects without the cost of cloning. This class is final in order to prevent subclasses from making it mutable
+     * again.
      *
      * @since 2.5
      * @version $Id$
@@ -206,6 +205,7 @@ public class GeneralGridCoordinates implements GridCoordinates, Serializable {
      */
     public static final class Immutable extends GeneralGridCoordinates {
         /** For cross-version compatibility. */
+        @Serial
         private static final long serialVersionUID = -7723383411061425866L;
 
         /**
@@ -239,9 +239,8 @@ public class GeneralGridCoordinates implements GridCoordinates, Serializable {
 
         /**
          * Translates all ordinate values by the given offset. This method is for internal usage by
-         * {@link GeneralGridEnvelope} only, to be invoked only right after construction and before
-         * the instance goes public. This method should not be public since it breaks the
-         * immutability contract.
+         * {@link GeneralGridEnvelope} only, to be invoked only right after construction and before the instance goes
+         * public. This method should not be public since it breaks the immutability contract.
          */
         final void translate(final int offset) {
             for (int i = 0; i < coordinates.length; i++) {
@@ -255,14 +254,13 @@ public class GeneralGridCoordinates implements GridCoordinates, Serializable {
          * @throws UnsupportedOperationException always thrown.
          */
         @Override
-        public void setCoordinateValue(final int dimension, final int value)
-                throws UnsupportedOperationException {
+        public void setCoordinateValue(final int dimension, final int value) throws UnsupportedOperationException {
             throw new UnsupportedOperationException();
         }
 
         /**
-         * Returns a mutable clone of this grid coordinates. The clone is an instance of {@link
-         * GeneralGridCoordinates} rather than this {@code Immutable} subclass.
+         * Returns a mutable clone of this grid coordinates. The clone is an instance of {@link GeneralGridCoordinates}
+         * rather than this {@code Immutable} subclass.
          *
          * @return A mutable clone of this grid coordinates.
          */

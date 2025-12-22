@@ -27,8 +27,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.geotools.data.DataAccessFactory.Param;
-import org.geotools.data.DataStoreFinder;
+import org.geotools.api.data.DataAccessFactory.Param;
+import org.geotools.api.data.DataStoreFinder;
 import org.junit.Test;
 
 /**
@@ -94,39 +94,38 @@ public abstract class JDBCJNDIDataSourceOnlineTest extends JDBCTestSupport {
     }
 
     protected JDBCDataStoreFactory getBaseFactory() {
-        JDBCDataStoreFactory factory =
-                new JDBCDataStoreFactory() {
+        JDBCDataStoreFactory factory = new JDBCDataStoreFactory() {
 
-                    @Override
-                    public String getDescription() {
-                        // nothing to do here
-                        return null;
-                    }
+            @Override
+            public String getDescription() {
+                // nothing to do here
+                return null;
+            }
 
-                    @Override
-                    protected String getValidationQuery() {
-                        // nothing to do here
-                        return null;
-                    }
+            @Override
+            protected String getValidationQuery() {
+                // nothing to do here
+                return null;
+            }
 
-                    @Override
-                    protected String getDriverClassName() {
-                        // nothing to do here
-                        return null;
-                    }
+            @Override
+            protected String getDriverClassName() {
+                // nothing to do here
+                return null;
+            }
 
-                    @Override
-                    protected String getDatabaseID() {
-                        // nothing to do here
-                        return null;
-                    }
+            @Override
+            protected String getDatabaseID() {
+                // nothing to do here
+                return null;
+            }
 
-                    @Override
-                    protected SQLDialect createSQLDialect(JDBCDataStore dataStore) {
-                        // nothing to do here
-                        return null;
-                    }
-                };
+            @Override
+            protected SQLDialect createSQLDialect(JDBCDataStore dataStore) {
+                // nothing to do here
+                return null;
+            }
+        };
         return factory;
     }
 

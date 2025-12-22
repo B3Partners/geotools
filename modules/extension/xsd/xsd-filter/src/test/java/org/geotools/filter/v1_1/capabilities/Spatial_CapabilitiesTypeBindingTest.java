@@ -20,10 +20,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.capability.SpatialCapabilities;
 import org.geotools.filter.v1_1.OGC;
 import org.geotools.xsd.Binding;
 import org.junit.Test;
-import org.opengis.filter.capability.SpatialCapabilities;
 import org.w3c.dom.Document;
 
 /**
@@ -48,7 +48,8 @@ import org.w3c.dom.Document;
 public class Spatial_CapabilitiesTypeBindingTest extends OGCTestSupport {
     @Test
     public void testType() {
-        assertEquals(SpatialCapabilities.class, binding(OGC.Spatial_CapabilitiesType).getType());
+        assertEquals(
+                SpatialCapabilities.class, binding(OGC.Spatial_CapabilitiesType).getType());
     }
 
     @Test
@@ -67,11 +68,10 @@ public class Spatial_CapabilitiesTypeBindingTest extends OGCTestSupport {
 
     @Test
     public void testEncode() throws Exception {
-        Document dom =
-                encode(
-                        FilterMockData.spatialCapabilities(),
-                        new QName(OGC.NAMESPACE, "SpatialCapabilities"),
-                        OGC.Spatial_CapabilitiesType);
+        Document dom = encode(
+                FilterMockData.spatialCapabilities(),
+                new QName(OGC.NAMESPACE, "SpatialCapabilities"),
+                OGC.Spatial_CapabilitiesType);
 
         assertNotNull(getElementByQName(dom, new QName(OGC.NAMESPACE, "SpatialOperators")));
     }

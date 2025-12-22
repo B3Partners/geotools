@@ -17,7 +17,8 @@
 package org.geotools.data.shapefile;
 
 import java.io.IOException;
-import org.geotools.data.CloseableIterator;
+import org.geotools.api.data.CloseableIterator;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.shapefile.dbf.DbaseFileReader;
 import org.geotools.data.shapefile.dbf.DbaseFileReader.Row;
 import org.geotools.data.shapefile.dbf.IndexedDbaseFileReader;
@@ -26,12 +27,8 @@ import org.geotools.data.shapefile.index.Data;
 import org.geotools.data.shapefile.shp.ShapefileReader;
 import org.geotools.data.shapefile.shp.ShapefileReader.Record;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeatureType;
 
-/**
- * The indexed version of the shapefile feature reader, will only read the records specified in the
- * constructor
- */
+/** The indexed version of the shapefile feature reader, will only read the records specified in the constructor */
 class IndexedShapefileFeatureReader extends ShapefileFeatureReader {
 
     protected CloseableIterator<Data> goodRecs;
@@ -43,8 +40,7 @@ class IndexedShapefileFeatureReader extends ShapefileFeatureReader {
      *
      * @param schema - the schema that we are going to read.
      * @param shp - the shape reader, required
-     * @param dbf - the dbf file reader. May be null, in this case no attributes will be read from
-     *     the dbf file
+     * @param dbf - the dbf file reader. May be null, in this case no attributes will be read from the dbf file
      * @param goodRecs Collection of good indexes that match the query.
      */
     public IndexedShapefileFeatureReader(

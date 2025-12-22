@@ -2,12 +2,12 @@
 <!-- ======================================================================= 
 	Maven Project Configuration File The Geotools Project http://www.geotools.org/ 
 	Version: $Id$ ======================================================================= -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                                 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                                 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.geotools</groupId>
     <artifactId>modules</artifactId>
-    <version>29-SNAPSHOT</version>
+    <version>35-SNAPSHOT</version>
   </parent>
   <!-- =========================================================== -->
   <!-- Module Description -->
@@ -41,13 +41,15 @@
     <module>ogr</module>
     <module>postgis-raster</module>
     <module>tpk</module>
-    <module>cql-json</module>
     <module>vsi</module>
-    <module>cql2</module>
     <module>jdbc-teradata</module>
     <module>stac-store</module>
     <module>vector-mosaic</module>
     <module>jdbc-h2gis</module>
+    <module>graticules</module>
+    <module>geoparquet</module>
+    <module>jdbc-singlestore</module>
+    <module>pmtiles</module>
   </modules>
   <profiles>
     <!-- ================================================== -->
@@ -102,12 +104,6 @@
       </modules>
     </profile>
     <profile>
-      <id>feature-aggreate</id>
-      <modules>
-        <module>feature-aggreate</module>
-      </modules>
-    </profile>
-    <profile>
       <id>ogcapi</id>
       <modules>
         <module>ogcapi-client</module>
@@ -133,17 +129,6 @@
       </activation>
       <modules>
         <module>elasticsearch</module>
-      </modules>
-    </profile>
-    <profile>
-      <id>geobuf</id>
-      <activation>
-        <property>
-          <name>all</name>
-        </property>
-      </activation>
-      <modules>
-        <module>geobuf</module>
       </modules>
     </profile>
     <profile>
@@ -199,6 +184,12 @@
       </modules>
     </profile>
     <profile>
+      <id>graticules</id>
+      <modules>
+        <module>graticules</module>
+      </modules>
+    </profile>
+    <profile>
       <id>unsupported</id>
       <activation>
         <property>
@@ -215,6 +206,8 @@
         <module>vpf</module>
         <module>vsi</module>
         <module>jdbc-teradata</module>
+        <module>graticules</module>
+        <module>jdbc-singlestore</module>
       </modules>
     </profile>
     <profile>
@@ -233,6 +226,29 @@
       <id>teradata</id>
       <modules>
         <module>jdbc-teradata</module>
+      </modules>
+    </profile>
+    <profile>
+      <id>geoparquet</id>
+      <modules>
+        <module>geoparquet</module>
+      </modules>
+    </profile>
+    <profile>
+      <id>singlestore</id>
+      <modules>
+        <module>jdbc-singlestore</module>
+      </modules>
+    </profile>
+    <profile>
+      <id>dggs</id>
+      <activation>
+        <property>
+          <name>all</name>
+        </property>
+      </activation>
+      <modules>
+        <module>dggs</module>
       </modules>
     </profile>
   </profiles>

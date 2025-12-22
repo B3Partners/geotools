@@ -16,12 +16,13 @@
  */
 package org.geotools.coverage.processing.operation;
 
-import javax.media.jai.operator.ConvolveDescriptor;
+import java.io.Serial;
+import org.eclipse.imagen.media.convolve.ConvolveDescriptor;
 import org.geotools.coverage.processing.OperationJAI;
 
 /**
- * Computes each output sample by multiplying elements of a kernel with the samples surrounding a
- * particular source sample.
+ * Computes each output sample by multiplying elements of a kernel with the samples surrounding a particular source
+ * sample.
  *
  * <p><STRONG>Name:</STRONG>&nbsp;<CODE>"Convolve"</CODE><br>
  * <STRONG>JAI operator:</STRONG>&nbsp;<CODE>"{@linkplain ConvolveDescriptor Convolve}"</CODE><br>
@@ -44,7 +45,7 @@ import org.geotools.coverage.processing.OperationJAI;
  *   </tr>
  *   <tr>
  *     <td>{@code "kernel"}</td>
- *     <td>{@link javax.media.jai.KernelJAI}</td>
+ *     <td>{@link org.eclipse.imagen.KernelImageN}</td>
  *     <td align="center">N/A</td>
  *     <td align="center">N/A</td>
  *     <td align="center">N/A</td>
@@ -57,6 +58,7 @@ import org.geotools.coverage.processing.OperationJAI;
  */
 public class Convolve extends OperationJAI {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -8324284100732653109L;
 
     /** Constructs a default {@code "Convolve"} operation. */

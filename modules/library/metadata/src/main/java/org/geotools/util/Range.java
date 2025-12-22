@@ -16,46 +16,45 @@
  */
 package org.geotools.util;
 
+import java.io.Serial;
 import java.io.Serializable;
+import java.text.MessageFormat;
 import javax.measure.Unit;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 
 /**
- * A range between a minimum and maximum comparable. The minimum/maximum may be included, excluded
- * or unbounded. The later case is indicated by {@code null} values on one or both ends.
+ * A range between a minimum and maximum comparable. The minimum/maximum may be included, excluded or unbounded. The
+ * later case is indicated by {@code null} values on one or both ends.
  *
- * <p>This class is a method compatible replacement for the {@link javax.media.jai.util.Range} class
- * with the following differences:
+ * <p>This class is a method compatible replacement for the {@link org.eclipse.imagen.util.Range} class with the
+ * following differences:
  *
  * <ul>
  *   <li>
- *       <p>Unbounded ranges (i.e. {@code null} minimal or maximal values) are considered
- *       <em>exclusive</em> rather than inclusive, since an iteration over the values will never
- *       reach the infinite bound. This interpretation brings some simplification in implementation
- *       and usage (e.g. a loop over the values should not attempt to process the {@code null}
- *       value).
+ *       <p>Unbounded ranges (i.e. {@code null} minimal or maximal values) are considered <em>exclusive</em> rather than
+ *       inclusive, since an iteration over the values will never reach the infinite bound. This interpretation brings
+ *       some simplification in implementation and usage (e.g. a loop over the values should not attempt to process the
+ *       {@code null} value).
  *   <li>
  *       <p>{@link #subtract} returns an empty array if the whole range is subtracted.
  * </ul>
  *
- * The exact {@linkplain #getElementClass element class} doesn't need to be known at compile time.
- * Widening conversions are allowed as needed (subclasses like {@link NumberRange} do that). This
- * class is weakly parameterized in order to allow this flexibility. If any constructor or method is
- * invoked with an argument value of illegal class, then an {@link IllegalArgumentException} is
- * thrown. The {@link ClassCastException} is thrown only in case of bug in the {@code Range} class
- * or subclasses implementation.
+ * The exact {@linkplain #getElementClass element class} doesn't need to be known at compile time. Widening conversions
+ * are allowed as needed (subclasses like {@link NumberRange} do that). This class is weakly parameterized in order to
+ * allow this flexibility. If any constructor or method is invoked with an argument value of illegal class, then an
+ * {@link IllegalArgumentException} is thrown. The {@link ClassCastException} is thrown only in case of bug in the
+ * {@code Range} class or subclasses implementation.
  *
- * @param <T> The type of range elements, typically {@link java.util.Date} or some subclass of
- *     {@link Number}.
+ * @param <T> The type of range elements, typically {@link java.util.Date} or some subclass of {@link Number}.
  * @since 2.5
  * @version $Id$
  * @author Jody Garnett
  * @author Martin Desruisseaux
- * @see javax.media.jai.util.Range
+ * @see org.eclipse.imagen.util.Range
  */
 public class Range<T extends Comparable<? super T>> implements Serializable {
     /** For cross-version compatibility. */
+    @Serial
     private static final long serialVersionUID = -5393896130562660517L;
 
     /** The class of elements. */
@@ -68,12 +67,11 @@ public class Range<T extends Comparable<? super T>> implements Serializable {
     private final boolean isMinIncluded, isMaxIncluded;
 
     /**
-     * Creates a new range bounded by a single inclusive value. The {@linkplain #getMinimum minimum}
-     * and {@linkplain #getMaximum maximum} values are set to the given one.
+     * Creates a new range bounded by a single inclusive value. The {@linkplain #getMinimum minimum} and
+     * {@linkplain #getMaximum maximum} values are set to the given one.
      *
      * @param elementClass The class of the range elements.
-     * @param value The minimal and maximum value (inclusive), or {@code null} for an unbounded
-     *     range.
+     * @param value The minimal and maximum value (inclusive), or {@code null} for an unbounded range.
      */
     public Range(final Class<T> elementClass, final T value) {
         this(elementClass, value, true, value, true);
@@ -95,11 +93,9 @@ public class Range<T extends Comparable<? super T>> implements Serializable {
      *
      * @param elementClass The class of the range elements.
      * @param minValue The minimal value, or {@code null} if none.
-     * @param isMinIncluded {@code true} if the minimal value is inclusive, or {@code false} if
-     *     exclusive.
+     * @param isMinIncluded {@code true} if the minimal value is inclusive, or {@code false} if exclusive.
      * @param maxValue The maximal value, or {@code null} if none.
-     * @param isMaxIncluded {@code true} if the maximal value is inclusive, or {@code false} if
-     *     exclusive.
+     * @param isMaxIncluded {@code true} if the maximal value is inclusive, or {@code false} if exclusive.
      */
     public Range(
             final Class<T> elementClass,
@@ -123,29 +119,23 @@ public class Range<T extends Comparable<? super T>> implements Serializable {
     }
 
     /**
-     * Creates a new range using the same element class than this range. This method will be
-     * overriden by subclasses in order to create a range of a more specific type.
+     * Creates a new range using the same element class than this range. This method will be overriden by subclasses in
+     * order to create a range of a more specific type.
      */
-    Range<T> create(
-            final T minValue,
-            final boolean isMinIncluded,
-            final T maxValue,
-            final boolean isMaxIncluded) {
+    Range<T> create(final T minValue, final boolean isMinIncluded, final T maxValue, final boolean isMaxIncluded) {
         return new Range<>(elementClass, minValue, isMinIncluded, maxValue, isMaxIncluded);
     }
 
     /** Ensures that the given argument is non-null. */
-    static void ensureNonNull(final String name, final Object value)
-            throws IllegalArgumentException {
+    static void ensureNonNull(final String name, final Object value) throws IllegalArgumentException {
         if (value == null) {
-            throw new IllegalArgumentException(Errors.format(ErrorKeys.NULL_ARGUMENT_$1, name));
+            throw new IllegalArgumentException(MessageFormat.format(ErrorKeys.NULL_ARGUMENT_$1, name));
         }
     }
 
     /** Ensures that the given range use the same element class than this range. */
     @SuppressWarnings("unchecked")
-    private Range<? extends T> ensureCompatible(final Range<?> range)
-            throws IllegalArgumentException {
+    private Range<? extends T> ensureCompatible(final Range<?> range) throws IllegalArgumentException {
         ensureNonNull("range", range);
         ensureCompatible(range.elementClass);
         return (Range<? extends T>) range;
@@ -154,20 +144,19 @@ public class Range<T extends Comparable<? super T>> implements Serializable {
     /** Ensures that the given type is compatible with the type expected by this range. */
     private void ensureCompatible(final Class<?> type) throws IllegalArgumentException {
         if (!elementClass.isAssignableFrom(type)) {
-            throw new IllegalArgumentException(
-                    Errors.format(ErrorKeys.ILLEGAL_CLASS_$2, type, elementClass));
+            throw new IllegalArgumentException(MessageFormat.format(ErrorKeys.ILLEGAL_CLASS_$2, type, elementClass));
         }
     }
 
     /**
-     * Ensures that {@link #elementClass} is compatible with the type expected by this range class.
-     * Used at construction time for argument check. To be overriden by {@link NumberRange} only.
+     * Ensures that {@link #elementClass} is compatible with the type expected by this range class. Used at construction
+     * time for argument check. To be overriden by {@link NumberRange} only.
      */
     void checkElementClass() throws IllegalArgumentException {}
 
     /**
-     * Returns an initially empty array of the given length. To be overriden by {@link NumberRange}
-     * and subclasses in order to create arrays of more specific type.
+     * Returns an initially empty array of the given length. To be overriden by {@link NumberRange} and subclasses in
+     * order to create arrays of more specific type.
      */
     @SuppressWarnings("unchecked") // Generic array creation.
     Range<T>[] newArray(final int length) {
@@ -178,18 +167,18 @@ public class Range<T extends Comparable<? super T>> implements Serializable {
      * Returns the class of elements in this range. The element class extends {@link Comparable}.
      *
      * @return The class of elements in this range.
-     * @see javax.media.jai.util.Range#getElementClass
+     * @see org.eclipse.imagen.util.Range#getElementClass
      */
     public Class<T> getElementClass() {
         return elementClass;
     }
 
     /**
-     * Returns the minimal value, or {@code null} if unbounded. If {@link #isMinIncluded} is {@code
-     * true}, then the value is considered included in the set. Otherwise it is considered excluded.
+     * Returns the minimal value, or {@code null} if unbounded. If {@link #isMinIncluded} is {@code true}, then the
+     * value is considered included in the set. Otherwise it is considered excluded.
      *
      * @return The minimal value.
-     * @see javax.media.jai.util.Range#getMinValue
+     * @see org.eclipse.imagen.util.Range#getMinValue
      */
     public T getMinValue() {
         return minValue;
@@ -199,18 +188,18 @@ public class Range<T extends Comparable<? super T>> implements Serializable {
      * Indicates if {@link #getMinValue} is included in the range.
      *
      * @return {@code true} if the minimal value is inclusive.
-     * @see javax.media.jai.util.Range#isMinIncluded
+     * @see org.eclipse.imagen.util.Range#isMinIncluded
      */
     public boolean isMinIncluded() {
         return isMinIncluded;
     }
 
     /**
-     * Returns the maximal value, or {@code null} if unbounded. If {@link #isMaxIncluded} is {@code
-     * true}, then the value is considered included in the set. Otherwise it is considered excluded.
+     * Returns the maximal value, or {@code null} if unbounded. If {@link #isMaxIncluded} is {@code true}, then the
+     * value is considered included in the set. Otherwise it is considered excluded.
      *
      * @return The maximal value.
-     * @see javax.media.jai.util.Range#getMaxValue
+     * @see org.eclipse.imagen.util.Range#getMaxValue
      */
     public T getMaxValue() {
         return maxValue;
@@ -220,19 +209,19 @@ public class Range<T extends Comparable<? super T>> implements Serializable {
      * Indicates if {@link #getMaxValue} is included in the range.
      *
      * @return {@code true} if the maximal value is inclusive.
-     * @see javax.media.jai.util.Range#isMaxIncluded
+     * @see org.eclipse.imagen.util.Range#isMaxIncluded
      */
     public boolean isMaxIncluded() {
         return isMaxIncluded;
     }
 
     /**
-     * Returns {@code true} if this range is empty. A range is empty if the {@linkplain #getMinValue
-     * minimum value} is smaller than the {@linkplain #getMaxValue maximum value}, or if they are
-     * equals while at least one of them is exclusive.
+     * Returns {@code true} if this range is empty. A range is empty if the {@linkplain #getMinValue minimum value} is
+     * smaller than the {@linkplain #getMaxValue maximum value}, or if they are equals while at least one of them is
+     * exclusive.
      *
      * @return {@code true} if this range is empty.
-     * @see javax.media.jai.util.Range#isEmpty
+     * @see org.eclipse.imagen.util.Range#isEmpty
      */
     public boolean isEmpty() {
         if (minValue == null || maxValue == null) {
@@ -247,15 +236,14 @@ public class Range<T extends Comparable<? super T>> implements Serializable {
     }
 
     /**
-     * Returns {@code true} if this range contains the given value. A range never contains the
-     * {@code null} value. This is consistent with the {@linkplain Range class javadoc} stating that
-     * null {@linkplain #getMinValue minimum} or {@linkplain #getMaxValue maximum} values are
-     * exclusive.
+     * Returns {@code true} if this range contains the given value. A range never contains the {@code null} value. This
+     * is consistent with the {@linkplain Range class javadoc} stating that null {@linkplain #getMinValue minimum} or
+     * {@linkplain #getMaxValue maximum} values are exclusive.
      *
      * @param value The value to check for inclusion in this range.
      * @return {@code true} if the given value is included in this range.
-     * @throws IllegalArgumentException is the given value can not be converted to a valid type
-     *     through widening conversion.
+     * @throws IllegalArgumentException is the given value can not be converted to a valid type through widening
+     *     conversion.
      */
     @SuppressWarnings("unchecked")
     public boolean contains(final Comparable<?> value) throws IllegalArgumentException {
@@ -267,8 +255,8 @@ public class Range<T extends Comparable<? super T>> implements Serializable {
     }
 
     /**
-     * Implementation of {@link #contains(T)} to be invoked directly by subclasses. "NC" stands for
-     * "No Cast" - this method do not try to cast the value to a compatible type.
+     * Implementation of {@link #contains(T)} to be invoked directly by subclasses. "NC" stands for "No Cast" - this
+     * method do not try to cast the value to a compatible type.
      */
     @SuppressWarnings("unchecked")
     final boolean containsNC(final Comparable<T> value) {
@@ -296,21 +284,20 @@ public class Range<T extends Comparable<? super T>> implements Serializable {
      *
      * @param range The range to check for inclusion in this range.
      * @return {@code true} if the given range is included in this range.
-     * @throws IllegalArgumentException is the given range can not be converted to a valid type
-     *     through widening conversion.
+     * @throws IllegalArgumentException is the given range can not be converted to a valid type through widening
+     *     conversion.
      */
     public boolean contains(final Range<?> range) throws IllegalArgumentException {
         return containsNC(ensureCompatible(range));
     }
 
     /**
-     * Implementation of {@link #contains(Range)} to be invoked directly by subclasses. "NC" stands
-     * for "No Cast" - this method do not try to cast the value to a compatible type.
+     * Implementation of {@link #contains(Range)} to be invoked directly by subclasses. "NC" stands for "No Cast" - this
+     * method do not try to cast the value to a compatible type.
      */
     final boolean containsNC(final Range<? extends T> range) {
         return (minValue == null || compareMinTo(range.minValue, range.isMinIncluded ? 0 : +1) <= 0)
-                && (maxValue == null
-                        || compareMaxTo(range.maxValue, range.isMaxIncluded ? 0 : -1) >= 0);
+                && (maxValue == null || compareMaxTo(range.maxValue, range.isMaxIncluded ? 0 : -1) >= 0);
     }
 
     /**
@@ -318,17 +305,17 @@ public class Range<T extends Comparable<? super T>> implements Serializable {
      *
      * @param range The range to check for intersection with this range.
      * @return {@code true} if the given range intersects this range.
-     * @throws IllegalArgumentException is the given range can not be converted to a valid type
-     *     through widening conversion.
-     * @see javax.media.jai.util.Range#intersects
+     * @throws IllegalArgumentException is the given range can not be converted to a valid type through widening
+     *     conversion.
+     * @see org.eclipse.imagen.util.Range#intersects
      */
     public boolean intersects(final Range<?> range) throws IllegalArgumentException {
         return intersectsNC(ensureCompatible(range));
     }
 
     /**
-     * Implementation of {@link #intersects(Range)} to be invoked directly by subclasses. "NC"
-     * stands for "No Cast" - this method do not try to cast the value to a compatible type.
+     * Implementation of {@link #intersects(Range)} to be invoked directly by subclasses. "NC" stands for "No Cast" -
+     * this method do not try to cast the value to a compatible type.
      */
     final boolean intersectsNC(final Range<? extends T> range) {
         return !isEmpty()
@@ -342,25 +329,22 @@ public class Range<T extends Comparable<? super T>> implements Serializable {
      *
      * @param range The range to intersect.
      * @return The intersection of this range with the provided range.
-     * @throws IllegalArgumentException is the given range can not be converted to a valid type
-     *     through widening conversion.
-     * @see javax.media.jai.util.Range#intersect
+     * @throws IllegalArgumentException is the given range can not be converted to a valid type through widening
+     *     conversion.
+     * @see org.eclipse.imagen.util.Range#intersect
      */
     public Range<?> intersect(final Range<?> range) throws IllegalArgumentException {
         return intersectNC(ensureCompatible(range));
     }
 
     /**
-     * Implementation of {@link #intersect(Range)} to be invoked directly by subclasses. "NC" stands
-     * for "No Cast" - this method do not try to cast the value to a compatible type.
+     * Implementation of {@link #intersect(Range)} to be invoked directly by subclasses. "NC" stands for "No Cast" -
+     * this method do not try to cast the value to a compatible type.
      */
-    final Range<? extends T> intersectNC(final Range<? extends T> range)
-            throws IllegalArgumentException {
+    final Range<? extends T> intersectNC(final Range<? extends T> range) throws IllegalArgumentException {
         final Range<? extends T> intersect;
-        final Range<? extends T> min =
-                compareMinTo(range.minValue, range.isMinIncluded ? 0 : +1) < 0 ? range : this;
-        final Range<? extends T> max =
-                compareMaxTo(range.maxValue, range.isMaxIncluded ? 0 : -1) > 0 ? range : this;
+        final Range<? extends T> min = compareMinTo(range.minValue, range.isMinIncluded ? 0 : +1) < 0 ? range : this;
+        final Range<? extends T> max = compareMaxTo(range.maxValue, range.isMaxIncluded ? 0 : -1) > 0 ? range : this;
         if (min == max) {
             intersect = min;
         } else {
@@ -371,31 +355,31 @@ public class Range<T extends Comparable<? super T>> implements Serializable {
     }
 
     /**
-     * Returns the range of values that are in this range but not in the given range. This method
-     * returns an array of length 0, 1 or 2:
+     * Returns the range of values that are in this range but not in the given range. This method returns an array of
+     * length 0, 1 or 2:
      *
      * <p>
      *
      * <ul>
      *   <li>If the given range contains fully this range, returns an array of length 0.
-     *   <li>If the given range is in the middle of this range, then the subtraction results in two
-     *       disjoint ranges which will be returned as two elements in the array.
+     *   <li>If the given range is in the middle of this range, then the subtraction results in two disjoint ranges
+     *       which will be returned as two elements in the array.
      *   <li>Otherwise returns an array of length 1.
      * </ul>
      *
      * @param range The range to substract.
      * @return This range without the given range.
-     * @throws IllegalArgumentException is the given range can not be converted to a valid type
-     *     through widening conversion.
-     * @see javax.media.jai.util.Range#subtract
+     * @throws IllegalArgumentException is the given range can not be converted to a valid type through widening
+     *     conversion.
+     * @see org.eclipse.imagen.util.Range#subtract
      */
     public Range<?>[] subtract(final Range<?> range) throws IllegalArgumentException {
         return subtractNC(ensureCompatible(range));
     }
 
     /**
-     * Implementation of {@link #subtract(Range)} to be invoked directly by subclasses. "NC" stands
-     * for "No Cast" - this method do not try to cast the value to a compatible type.
+     * Implementation of {@link #subtract(Range)} to be invoked directly by subclasses. "NC" stands for "No Cast" - this
+     * method do not try to cast the value to a compatible type.
      */
     final Range<T>[] subtractNC(final Range<? extends T> range) throws IllegalArgumentException {
         final Range<T> subtract;
@@ -414,10 +398,8 @@ public class Range<T extends Comparable<? super T>> implements Serializable {
             } else {
                 if (!clipMax) {
                     final Range<T>[] array = newArray(2);
-                    array[0] =
-                            create(minValue, isMinIncluded, range.minValue, !range.isMinIncluded);
-                    array[1] =
-                            create(range.maxValue, !range.isMaxIncluded, maxValue, isMaxIncluded);
+                    array[0] = create(minValue, isMinIncluded, range.minValue, !range.isMinIncluded);
+                    array[1] = create(range.maxValue, !range.isMaxIncluded, maxValue, isMaxIncluded);
                     return array;
                 }
                 subtract = create(minValue, isMinIncluded, range.minValue, !range.isMinIncluded);
@@ -435,24 +417,22 @@ public class Range<T extends Comparable<? super T>> implements Serializable {
      *
      * @param range The range to add to this range.
      * @return The union of this range with the given range.
-     * @throws IllegalArgumentException is the given range can not be converted to a valid type
-     *     through widening conversion.
-     * @see javax.media.jai.util.Range#union
+     * @throws IllegalArgumentException is the given range can not be converted to a valid type through widening
+     *     conversion.
+     * @see org.eclipse.imagen.util.Range#union
      */
     public Range<?> union(final Range<?> range) throws IllegalArgumentException {
         return unionNC(ensureCompatible(range));
     }
 
     /**
-     * Implementation of {@link #union(Range)} to be invoked directly by subclasses. "NC" stands for
-     * "No Cast" - this method do not try to cast the value to a compatible type.
+     * Implementation of {@link #union(Range)} to be invoked directly by subclasses. "NC" stands for "No Cast" - this
+     * method do not try to cast the value to a compatible type.
      */
     final Range<?> unionNC(final Range<? extends T> range) throws IllegalArgumentException {
         final Range<? extends T> union;
-        final Range<? extends T> min =
-                compareMinTo(range.minValue, range.isMinIncluded ? 0 : +1) > 0 ? range : this;
-        final Range<? extends T> max =
-                compareMaxTo(range.maxValue, range.isMaxIncluded ? 0 : -1) < 0 ? range : this;
+        final Range<? extends T> min = compareMinTo(range.minValue, range.isMinIncluded ? 0 : +1) > 0 ? range : this;
+        final Range<? extends T> max = compareMaxTo(range.maxValue, range.isMaxIncluded ? 0 : -1) < 0 ? range : this;
         if (min == max) {
             union = min;
         } else {
@@ -464,14 +444,14 @@ public class Range<T extends Comparable<? super T>> implements Serializable {
     }
 
     /**
-     * Compares the provided value with the {@linkplain #getMinValue minimum value}, taking in
-     * account the included or excluded state.
+     * Compares the provided value with the {@linkplain #getMinValue minimum value}, taking in account the included or
+     * excluded state.
      *
      * @param value The value to compare to this range {@linkplain #getMinValue minimum}.
-     * @param delta 0 if the value is inclusive, -1 if exclusive and the first inclusive value is
-     *     lower, or +1 if exclusive and the first inclusive value is higher than the given one.
-     * @return 0 if the given value is equal to the {@link #minValue} and both are included,
-     *     negative if {@link #minValue} is lower, positive if {@link #minValue} is higher.
+     * @param delta 0 if the value is inclusive, -1 if exclusive and the first inclusive value is lower, or +1 if
+     *     exclusive and the first inclusive value is higher than the given one.
+     * @return 0 if the given value is equal to the {@link #minValue} and both are included, negative if
+     *     {@link #minValue} is lower, positive if {@link #minValue} is higher.
      */
     final int compareMinTo(final T value, final int delta) {
         if (value == null) {
@@ -513,14 +493,14 @@ public class Range<T extends Comparable<? super T>> implements Serializable {
     }
 
     /**
-     * Compares the provided value with the {@linkplain #getMaxValue maximum value}, taking in
-     * account the included or excluded state.
+     * Compares the provided value with the {@linkplain #getMaxValue maximum value}, taking in account the included or
+     * excluded state.
      *
      * @param value The value to compare to this range {@linkplain #getMaxValue maximum}.
-     * @param delta 0 if the value is inclusive, -1 if exclusive and the first inclusive value is
-     *     lower, or +1 if exclusive and the first inclusive value is higher than the given one.
-     * @return 0 if the given value is equal to the {@link #maxValue} and both are included,
-     *     negative if {@link #maxValue} is lower, positive if {@link #maxValue} is higher.
+     * @param delta 0 if the value is inclusive, -1 if exclusive and the first inclusive value is lower, or +1 if
+     *     exclusive and the first inclusive value is higher than the given one.
+     * @return 0 if the given value is equal to the {@link #maxValue} and both are included, negative if
+     *     {@link #maxValue} is lower, positive if {@link #maxValue} is higher.
      */
     final int compareMaxTo(final T value, final int delta) {
         // Same comments than 'compareMinTo' with logic reversed.

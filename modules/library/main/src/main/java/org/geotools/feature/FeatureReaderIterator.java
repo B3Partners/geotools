@@ -21,19 +21,19 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import org.geotools.data.FeatureReader;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
 
 /**
  * An iterator that wraps around a FeatureReader.
  *
- * <p>The Iterator's hasNext() will return false if the wrapped feature reader's hasNext method
- * throws an exception. If next() throws an exception a NoSuchElementException will be thrown.
+ * <p>The Iterator's hasNext() will return false if the wrapped feature reader's hasNext method throws an exception. If
+ * next() throws an exception a NoSuchElementException will be thrown.
  *
- * <p>{@link #close()} shall be called before disposing the iterator. Before propagating an
- * exception from {@link #next()} or eating an exception from the underlying feature reader at
- * {@link #hasNext()}, this iterator will auto-close.
+ * <p>{@link #close()} shall be called before disposing the iterator. Before propagating an exception from
+ * {@link #next()} or eating an exception from the underlying feature reader at {@link #hasNext()}, this iterator will
+ * auto-close.
  *
  * @author jeichar
  * @author Jody Garnett
@@ -74,14 +74,12 @@ public class FeatureReaderIterator<F extends Feature> implements Iterator<F>, Cl
             return reader.next();
         } catch (IOException io) {
             close();
-            NoSuchElementException problem =
-                    new NoSuchElementException("Could not obtain the next feature:" + io);
+            NoSuchElementException problem = new NoSuchElementException("Could not obtain the next feature:" + io);
             problem.initCause(io);
             throw problem;
-        } catch (org.opengis.feature.IllegalAttributeException create) {
+        } catch (org.geotools.api.feature.IllegalAttributeException create) {
             close();
-            NoSuchElementException problem =
-                    new NoSuchElementException("Could not create the next feature:" + create);
+            NoSuchElementException problem = new NoSuchElementException("Could not create the next feature:" + create);
             problem.initCause(create);
             throw problem;
         }

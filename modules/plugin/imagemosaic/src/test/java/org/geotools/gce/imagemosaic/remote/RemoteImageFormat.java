@@ -19,14 +19,14 @@ package org.geotools.gce.imagemosaic.remote;
 import java.io.IOException;
 import java.net.URL;
 import org.geotools.TestData;
+import org.geotools.api.coverage.grid.Format;
+import org.geotools.api.coverage.grid.GridCoverageWriter;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.imageio.GeoToolsWriteParams;
 import org.geotools.gce.image.WorldImageFormat;
 import org.geotools.gce.image.WorldImageReader;
 import org.geotools.gce.imagemosaic.RemoteTest;
 import org.geotools.util.factory.Hints;
-import org.opengis.coverage.grid.Format;
-import org.opengis.coverage.grid.GridCoverageWriter;
 
 public class RemoteImageFormat extends AbstractGridFormat implements Format {
 
@@ -41,8 +41,7 @@ public class RemoteImageFormat extends AbstractGridFormat implements Format {
     public WorldImageReader getReader(Object source, Hints hints) {
         try {
             return /*new RemoteImageReader(*/ delegate.getReader(
-                    TestData.file(RemoteTest.class, "remote_test" + ((URL) source).getPath()),
-                    hints) /*)*/;
+                    TestData.file(RemoteTest.class, "remote_test" + ((URL) source).getPath()), hints) /*)*/;
         } catch (IOException e) {
             return null;
         }
@@ -50,10 +49,10 @@ public class RemoteImageFormat extends AbstractGridFormat implements Format {
 
     @Override
     public boolean accepts(Object source, Hints hints) {
-        return (source instanceof URL)
-                && ((URL) source).getProtocol().equals("http")
-                && ((URL) source).getHost().equals("localhost")
-                && ((URL) source).getPort() == 8089;
+        return source instanceof URL url
+                && url.getProtocol().equals("http")
+                && url.getHost().equals("localhost")
+                && url.getPort() == 8089;
     }
 
     @Override

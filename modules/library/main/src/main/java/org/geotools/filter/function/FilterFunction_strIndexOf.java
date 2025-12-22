@@ -20,18 +20,17 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_strIndexOf extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "strIndexOf",
-                    parameter("index", Integer.class),
-                    parameter("String", String.class),
-                    parameter("lookup", String.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "strIndexOf",
+            parameter("index", Integer.class),
+            parameter("String", String.class),
+            parameter("lookup", String.class));
 
     public FilterFunction_strIndexOf() {
         super(NAME);

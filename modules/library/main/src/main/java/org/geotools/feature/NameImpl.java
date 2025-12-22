@@ -16,15 +16,16 @@
  */
 package org.geotools.feature;
 
+import java.io.Serial;
 import java.io.Serializable;
+import org.geotools.api.feature.type.Name;
 import org.geotools.util.Utilities;
-import org.opengis.feature.type.Name;
 
 /**
  * Simple implementation of Name.
  *
- * <p>This class emulates QName, and is used as the implementation of both AttributeName and
- * TypeName (so when the API settles down we should have a quick fix.
+ * <p>This class emulates QName, and is used as the implementation of both AttributeName and TypeName (so when the API
+ * settles down we should have a quick fix.
  *
  * <p>Its is advantageous to us to be able to:
  *
@@ -33,15 +34,16 @@ import org.opengis.feature.type.Name;
  *   <li>Strongly type AttributeName and TypeName separately
  * </ul>
  *
- * The ISO interface move towards combining the AttributeName and Attribute classes, and TypeName
- * and Type classes, while we understand the attractiveness of this on a UML diagram it is very
- * helpful to keep these concepts separate when playing with a strongly typed language like java.
+ * The ISO interface move towards combining the AttributeName and Attribute classes, and TypeName and Type classes,
+ * while we understand the attractiveness of this on a UML diagram it is very helpful to keep these concepts separate
+ * when playing with a strongly typed language like java.
  *
  * <p>It case it is not obvious this is a value object and equality is based on namespace and name.
  *
  * @author Justin Deoliveira, The Open Planning Project, jdeolive@openplans.org
  */
-public class NameImpl implements org.opengis.feature.type.Name, Serializable, Comparable<NameImpl> {
+public class NameImpl implements org.geotools.api.feature.type.Name, Serializable, Comparable<NameImpl> {
+    @Serial
     private static final long serialVersionUID = 4564070184645559899L;
 
     /** namespace / scope */
@@ -109,7 +111,7 @@ public class NameImpl implements org.opengis.feature.type.Name, Serializable, Co
 
     @Override
     public String getURI() {
-        if ((namespace == null) && (local == null)) {
+        if (namespace == null && local == null) {
             return null;
         }
         if (namespace == null) {
@@ -124,8 +126,7 @@ public class NameImpl implements org.opengis.feature.type.Name, Serializable, Co
     /** Returns a hash code value for this operand. */
     @Override
     public int hashCode() {
-        return (namespace == null ? 0 : namespace.hashCode())
-                + 37 * (local == null ? 0 : local.hashCode());
+        return (namespace == null ? 0 : namespace.hashCode()) + 37 * (local == null ? 0 : local.hashCode());
     }
 
     /** value object with equality based on name and namespace. */
@@ -133,8 +134,7 @@ public class NameImpl implements org.opengis.feature.type.Name, Serializable, Co
     public boolean equals(Object obj) {
         if (obj == this) return true;
 
-        if (obj instanceof Name) {
-            NameImpl other = (NameImpl) obj;
+        if (obj instanceof Name other) {
             if (!Utilities.equals(this.namespace, other.getNamespaceURI())) {
                 return false;
             }
@@ -157,6 +157,14 @@ public class NameImpl implements org.opengis.feature.type.Name, Serializable, Co
         if (other == null) {
             return 1; // we are greater than null!
         }
-        return getURI().compareTo(other.getURI());
+        int c = compare(getNamespaceURI(), other.getNamespaceURI());
+        return c != 0 ? c : compare(getLocalPart(), other.getLocalPart());
+    }
+
+    private int compare(String s1, String s2) {
+        if (s1 == null || s2 == null) {
+            return s1 == s2 ? 0 : s1 == null ? 1 : -1;
+        }
+        return s1.compareTo(s2);
     }
 }

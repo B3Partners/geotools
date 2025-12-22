@@ -20,12 +20,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.data.complex.FeatureTypeMapping;
 import org.geotools.data.complex.NestedAttributeMapping;
 import org.geotools.data.complex.config.AppSchemaDataAccessConfigurator;
 import org.geotools.data.complex.util.XPathUtil;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.expression.Expression;
 import org.xml.sax.helpers.NamespaceSupport;
 
 /** Helper class used to find implementations for extensions points. */
@@ -62,17 +62,16 @@ public final class CustomImplementationsFinder {
             XPathUtil.StepList sourcePath,
             NamespaceSupport namespaces) {
         for (CustomMappingFactory factory : mappingsFactories) {
-            NestedAttributeMapping mapping =
-                    factory.createNestedAttributeMapping(
-                            configuration,
-                            idExpression,
-                            parentExpression,
-                            targetXPath,
-                            isMultiValued,
-                            clientProperties,
-                            sourceElement,
-                            sourcePath,
-                            namespaces);
+            NestedAttributeMapping mapping = factory.createNestedAttributeMapping(
+                    configuration,
+                    idExpression,
+                    parentExpression,
+                    targetXPath,
+                    isMultiValued,
+                    clientProperties,
+                    sourceElement,
+                    sourcePath,
+                    namespaces);
             if (mapping != null) {
                 return mapping;
             }
@@ -81,12 +80,9 @@ public final class CustomImplementationsFinder {
     }
 
     public static Expression find(
-            FeatureTypeMapping mappings,
-            XPathUtil.StepList xpath,
-            NestedAttributeMapping nestedMapping) {
+            FeatureTypeMapping mappings, XPathUtil.StepList xpath, NestedAttributeMapping nestedMapping) {
         for (CustomAttributeExpressionFactory factory : attributesFactories) {
-            Expression attributeExpression =
-                    factory.createNestedAttributeExpression(mappings, xpath, nestedMapping);
+            Expression attributeExpression = factory.createNestedAttributeExpression(mappings, xpath, nestedMapping);
             if (attributeExpression != null) {
                 return attributeExpression;
             }

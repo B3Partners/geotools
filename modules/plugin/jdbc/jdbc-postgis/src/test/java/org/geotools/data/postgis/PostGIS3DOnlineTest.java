@@ -20,7 +20,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.function.Predicate;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.feature.FeatureIterator;
@@ -30,7 +31,6 @@ import org.geotools.util.factory.Hints;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
 
 public class PostGIS3DOnlineTest extends JDBC3DOnlineTest {
 
@@ -57,8 +57,7 @@ public class PostGIS3DOnlineTest extends JDBC3DOnlineTest {
         checkGeometryDimension(q, fs, c -> Double.isNaN(c.getZ()));
     }
 
-    private void checkGeometryDimension(
-            Query q, ContentFeatureSource fs, Predicate<Coordinate> testCondition)
+    private void checkGeometryDimension(Query q, ContentFeatureSource fs, Predicate<Coordinate> testCondition)
             throws IOException {
         SimpleFeatureCollection fc = fs.getFeatures(q);
         try (FeatureIterator<SimpleFeature> fi = fc.features()) {

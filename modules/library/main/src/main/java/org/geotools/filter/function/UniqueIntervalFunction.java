@@ -26,6 +26,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.util.NullProgressListener;
 import org.geotools.feature.FeatureCollection;
@@ -34,9 +37,6 @@ import org.geotools.feature.visitor.CalcResult;
 import org.geotools.feature.visitor.GroupByVisitor;
 import org.geotools.feature.visitor.UniqueVisitor;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
 
 /**
  * Clone of EqualIntervalFunction for unique values
@@ -45,13 +45,12 @@ import org.opengis.filter.expression.Literal;
  */
 public class UniqueIntervalFunction extends ClassificationFunction {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "UniqueInterval",
-                    RangedClassifier.class,
-                    parameter("value", Double.class),
-                    parameter("classes", Integer.class),
-                    parameter("percentages", Boolean.class, 0, 1));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "UniqueInterval",
+            RangedClassifier.class,
+            parameter("value", Double.class),
+            parameter("classes", Integer.class),
+            parameter("percentages", Boolean.class, 0, 1));
 
     public UniqueIntervalFunction() {
         super(NAME);
@@ -71,22 +70,20 @@ public class UniqueIntervalFunction extends ClassificationFunction {
             if (calcResult == null) return null;
             List result = calcResult.toList();
             // sort the results and put them in an array
-            Collections.sort(
-                    result,
-                    (o1, o2) -> {
-                        if (o1 == null) {
-                            if (o2 == null) {
-                                return 0; // equal
-                            }
-                            return -1; // less than
-                        } else if (o2 == null) {
-                            return 1;
-                        }
-                        if (o1 instanceof String && o2 instanceof String) {
-                            return ((String) o1).compareTo((String) o2);
-                        }
-                        return 0;
-                    });
+            Collections.sort(result, (o1, o2) -> {
+                if (o1 == null) {
+                    if (o2 == null) {
+                        return 0; // equal
+                    }
+                    return -1; // less than
+                } else if (o2 == null) {
+                    return 1;
+                }
+                if (o1 instanceof String string && o2 instanceof String string1) {
+                    return string.compareTo(string1);
+                }
+                return 0;
+            });
             Object[] results = result.toArray();
             // put the results into their respective slots/bins/buckets
             Set[] values;
@@ -103,12 +100,10 @@ public class UniqueIntervalFunction extends ClassificationFunction {
                 int itemIndex = 0;
                 // for each bin
                 for (int binIndex = 0; binIndex < classNum; binIndex++) {
-                    HashSet val = new HashSet();
+                    HashSet val = new HashSet<>();
                     // add the items
-                    for (int binItem = 0; binItem < binPop; binItem++)
-                        val.add(results[itemIndex++]);
-                    if (lastBigBin == binIndex)
-                        binPop--; // decrease the number of items in a bin for the
+                    for (int binItem = 0; binItem < binPop; binItem++) val.add(results[itemIndex++]);
+                    if (lastBigBin == binIndex) binPop--; // decrease the number of items in a bin for the
                     // next iteration
                     // store the bin
                     values[binIndex] = val;
@@ -121,7 +116,7 @@ public class UniqueIntervalFunction extends ClassificationFunction {
                 values = new Set[classNum];
                 // assign straight-across (1 item per class)
                 for (int i = 0; i < classNum; i++) {
-                    HashSet val = new HashSet();
+                    HashSet val = new HashSet<>();
                     val.add(results[i]);
                     values[i] = val;
                 }
@@ -150,29 +145,26 @@ public class UniqueIntervalFunction extends ClassificationFunction {
         return calculate((SimpleFeatureCollection) feature);
     }
 
-    private double[] getPercentages(FeatureCollection collection, Set... values)
-            throws IOException {
+    private double[] getPercentages(FeatureCollection collection, Set... values) throws IOException {
         Expression prop = getParameters().get(0);
-        GroupByVisitor groupBy =
-                new GroupByVisitor(Aggregate.COUNT, prop, Arrays.asList(prop), null);
+        GroupByVisitor groupBy = new GroupByVisitor(Aggregate.COUNT, prop, Arrays.asList(prop), null);
         collection.accepts(groupBy, null);
         @SuppressWarnings("unchecked")
         Map<List, Integer> result = groupBy.getResult().toMap();
         return computePercentages(result, collection.size(), values);
     }
 
-    private double[] computePercentages(
-            Map<List, Integer> queryResult, int totalSize, Set... values) {
+    private double[] computePercentages(Map<List, Integer> queryResult, int totalSize, Set... values) {
         double[] percentages = new double[values.length];
         for (int i = 0; i < values.length; i++) {
             Set s = values[i];
             double value = 0.0;
             for (Object o : s) {
                 List key = Arrays.asList(o);
-                value += (double) queryResult.get(key);
+                value += queryResult.get(key);
             }
             if (value > 0.0) {
-                percentages[i] = (value / totalSize) * 100;
+                percentages[i] = value / totalSize * 100;
             } else {
                 percentages[i] = 0.0;
             }

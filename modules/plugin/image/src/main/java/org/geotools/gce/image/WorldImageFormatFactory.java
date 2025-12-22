@@ -22,8 +22,8 @@ import java.util.Map;
 import org.geotools.coverage.grid.io.GridFormatFactorySpi;
 
 /**
- * @author rgould TODO To change the template for this generated type comment go to Window -
- *     Preferences - Java - Code Style - Code Templates
+ * @author rgould TODO To change the template for this generated type comment go to Window - Preferences - Java - Code
+ *     Style - Code Templates
  */
 public final class WorldImageFormatFactory implements GridFormatFactorySpi {
     @Override
@@ -36,10 +36,10 @@ public final class WorldImageFormatFactory implements GridFormatFactorySpi {
         boolean available = true;
 
         // if these classes are here, then the runtine environment has
-        // access to JAI and the JAI ImageI/O toolbox.
+        // access to ImageN and the ImageN ImageI/O toolbox.
         try {
-            Class.forName("javax.media.jai.JAI");
-            Class.forName("com.sun.media.jai.operator.ImageReadDescriptor");
+            Class.forName("org.eclipse.imagen.ImageN");
+            Class.forName("org.eclipse.imagen.media.imageread.ImageReadDescriptor");
         } catch (ClassNotFoundException cnf) {
             available = false;
         }

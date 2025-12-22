@@ -20,6 +20,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -45,7 +46,7 @@ class PerceptualDiff {
             this.imagesDifferent = different;
             this.output = output;
         }
-    };
+    }
 
     static {
         if (Boolean.getBoolean("org.geotools.image.test.enabled")) {
@@ -65,13 +66,12 @@ class PerceptualDiff {
      *
      * @param image1 A png/tiff file
      * @param image2 A png/tiff file
-     * @param threshold The number of pixels to be visually different in order to consider the test
-     *     a failure, if negative the PerceptualDiff default value will be used
+     * @param threshold The number of pixels to be visually different in order to consider the test a failure, if
+     *     negative the PerceptualDiff default value will be used
      */
     public static Difference compareImages(File image1, File image2, int threshold) {
         if (!AVAILABLE) {
-            LOGGER.severe(
-                    "perceptualdiff is not available, can't compare " + image1 + " with image2");
+            LOGGER.severe("perceptualdiff is not available, can't compare " + image1 + " with image2");
             return new Difference(false, "Perceptual diff not available...");
         }
 
@@ -109,7 +109,7 @@ class PerceptualDiff {
         builder.redirectErrorStream(true);
         Process p = builder.start();
         try (BufferedReader reader =
-                new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                new BufferedReader(new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8))) {
             String line = null;
             while ((line = reader.readLine()) != null) {
                 if (sb != null) {

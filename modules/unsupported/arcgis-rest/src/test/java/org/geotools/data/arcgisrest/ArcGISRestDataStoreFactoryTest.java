@@ -16,8 +16,8 @@
  */
 package org.geotools.data.arcgisrest;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.geotools.data.DataStore;
+import org.geotools.api.data.DataStore;
 import org.geotools.util.logging.Logging;
 import org.junit.After;
 import org.junit.Before;
@@ -58,7 +58,7 @@ public class ArcGISRestDataStoreFactoryTest {
     @Before
     public void setUp() throws Exception {
         dsf = new ArcGISRestDataStoreFactory();
-        params = new HashMap<String, Serializable>();
+        params = new HashMap<>();
     }
 
     @After
@@ -75,12 +75,13 @@ public class ArcGISRestDataStoreFactoryTest {
      * @throws FileNotFoundException
      */
     public static String readJSONAsString(String fileName) throws FileNotFoundException {
-        Scanner input = new Scanner(readJSONAsStream(fileName));
-        StringBuilder jsonObj = new StringBuilder();
-        while (input.hasNextLine()) {
-            jsonObj.append(input.nextLine());
+        try (Scanner input = new Scanner(readJSONAsStream(fileName))) {
+            StringBuilder jsonObj = new StringBuilder();
+            while (input.hasNextLine()) {
+                jsonObj.append(input.nextLine());
+            }
+            return jsonObj.toString();
         }
-        return jsonObj.toString();
     }
 
     /**
@@ -91,14 +92,14 @@ public class ArcGISRestDataStoreFactoryTest {
      * @throws FileNotFoundException
      */
     public static InputStream readJSONAsStream(String fileName) throws FileNotFoundException {
-        return new FileInputStream(
-                new File(ArcGISRestDataStoreFactoryTest.class.getResource(fileName).getFile()));
+        return new FileInputStream(new File(
+                ArcGISRestDataStoreFactoryTest.class.getResource(fileName).getFile()));
     }
 
     /** Helper method to create a default test data store with Open Data catlaog */
     public static DataStore createDefaultArcGISServerTestDataStore() throws IOException {
 
-        Map<String, Serializable> params = new HashMap<String, Serializable>();
+        Map<String, Serializable> params = new HashMap<>();
         params.put(ArcGISRestDataStoreFactory.NAMESPACE_PARAM.key, NAMESPACE);
         params.put(ArcGISRestDataStoreFactory.URL_PARAM.key, URL_ARCGISSERVER);
         params.put(ArcGISRestDataStoreFactory.ISOPENDATA_PARAM.key, false);
@@ -110,7 +111,7 @@ public class ArcGISRestDataStoreFactoryTest {
     /** Helper method to create a default test data store on ArcGIS Server */
     public static DataStore createDefaultOpenDataTestDataStore() throws IOException {
 
-        Map<String, Serializable> params = new HashMap<String, Serializable>();
+        Map<String, Serializable> params = new HashMap<>();
         params.put(ArcGISRestDataStoreFactory.NAMESPACE_PARAM.key, NAMESPACE);
         params.put(ArcGISRestDataStoreFactory.URL_PARAM.key, URL);
         params.put(ArcGISRestDataStoreFactory.ISOPENDATA_PARAM.key, true);
@@ -130,11 +131,7 @@ public class ArcGISRestDataStoreFactoryTest {
      * @throws IOException
      */
     public DataStore createDataStore(
-            final String namespace,
-            final String url,
-            boolean flag,
-            final String user,
-            final String password)
+            final String namespace, final String url, boolean flag, final String user, final String password)
             throws IOException {
 
         params.put(ArcGISRestDataStoreFactory.NAMESPACE_PARAM.key, namespace);

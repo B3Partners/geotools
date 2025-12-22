@@ -22,14 +22,14 @@ import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Function;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Function;
 
 public abstract class JDBCInEncodingOnlineTest extends JDBCTestSupport {
 
@@ -39,9 +39,7 @@ public abstract class JDBCInEncodingOnlineTest extends JDBCTestSupport {
     @Test
     public void testSimpleIn() throws IOException {
         FilterFactory ff = dataStore.getFilterFactory();
-        Function function =
-                ff.function(
-                        "in", ff.property(aname("intProperty")), ff.literal("1"), ff.literal("2"));
+        Function function = ff.function("in", ff.property(aname("intProperty")), ff.literal("1"), ff.literal("2"));
         Filter filter = ff.equal(function, ff.literal("true"), false);
 
         SimpleFeatureSource fs = dataStore.getFeatureSource(tname("ft1"));
@@ -53,13 +51,8 @@ public abstract class JDBCInEncodingOnlineTest extends JDBCTestSupport {
     @Test
     public void testSimpleIn3() throws IOException {
         FilterFactory ff = dataStore.getFilterFactory();
-        Function function =
-                ff.function(
-                        "in3",
-                        ff.property(aname("intProperty")),
-                        ff.literal("1"),
-                        ff.literal("1"),
-                        ff.literal("1"));
+        Function function = ff.function(
+                "in3", ff.property(aname("intProperty")), ff.literal("1"), ff.literal("1"), ff.literal("1"));
         Filter filter = ff.equal(function, ff.literal("true"), false);
 
         SimpleFeatureSource fs = dataStore.getFeatureSource(tname("ft1"));
@@ -70,9 +63,7 @@ public abstract class JDBCInEncodingOnlineTest extends JDBCTestSupport {
     @Test
     public void testNotEqual() throws IOException {
         FilterFactory ff = dataStore.getFilterFactory();
-        Function function =
-                ff.function(
-                        "in", ff.property(aname("intProperty")), ff.literal("1"), ff.literal("2"));
+        Function function = ff.function("in", ff.property(aname("intProperty")), ff.literal("1"), ff.literal("2"));
         Filter filter = ff.notEqual(function, ff.literal("true"), false);
 
         SimpleFeatureSource fs = dataStore.getFeatureSource(tname("ft1"));
@@ -83,9 +74,7 @@ public abstract class JDBCInEncodingOnlineTest extends JDBCTestSupport {
     @Test
     public void testNegated() throws IOException {
         FilterFactory ff = dataStore.getFilterFactory();
-        Function function =
-                ff.function(
-                        "in", ff.property(aname("intProperty")), ff.literal("1"), ff.literal("2"));
+        Function function = ff.function("in", ff.property(aname("intProperty")), ff.literal("1"), ff.literal("2"));
         Filter filter = ff.not(ff.equal(function, ff.literal("true"), false));
 
         SimpleFeatureSource fs = dataStore.getFeatureSource(tname("ft1"));
@@ -96,9 +85,7 @@ public abstract class JDBCInEncodingOnlineTest extends JDBCTestSupport {
     @Test
     public void testGreater() throws IOException {
         FilterFactory ff = dataStore.getFilterFactory();
-        Function function =
-                ff.function(
-                        "in", ff.property(aname("intProperty")), ff.literal("1"), ff.literal("2"));
+        Function function = ff.function("in", ff.property(aname("intProperty")), ff.literal("1"), ff.literal("2"));
         Filter filter = ff.greater(function, ff.literal("false"), false);
 
         SimpleFeatureSource fs = dataStore.getFeatureSource(tname("ft1"));

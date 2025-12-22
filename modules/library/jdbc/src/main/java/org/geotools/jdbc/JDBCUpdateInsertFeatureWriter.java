@@ -21,25 +21,20 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
-import org.geotools.data.Query;
-import org.opengis.feature.simple.SimpleFeature;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeature;
 
 public class JDBCUpdateInsertFeatureWriter extends JDBCUpdateFeatureWriter {
 
     JDBCInsertFeatureWriter inserter;
 
-    public JDBCUpdateInsertFeatureWriter(
-            String sql, Connection cx, JDBCFeatureSource featureSource, Query query)
+    public JDBCUpdateInsertFeatureWriter(String sql, Connection cx, JDBCFeatureSource featureSource, Query query)
             throws SQLException, IOException {
         super(sql, cx, featureSource, query);
     }
 
     public JDBCUpdateInsertFeatureWriter(
-            PreparedStatement ps,
-            Connection cx,
-            JDBCFeatureSource featureSource,
-            String[] attributeNames,
-            Query query)
+            PreparedStatement ps, Connection cx, JDBCFeatureSource featureSource, String[] attributeNames, Query query)
             throws SQLException, IOException {
         super(ps, cx, featureSource, query);
     }
@@ -62,8 +57,7 @@ public class JDBCUpdateInsertFeatureWriter extends JDBCUpdateFeatureWriter {
     }
 
     @Override
-    public SimpleFeature next()
-            throws IOException, IllegalArgumentException, NoSuchElementException {
+    public SimpleFeature next() throws IOException, IllegalArgumentException, NoSuchElementException {
         if (inserter != null) {
             return inserter.next();
         }

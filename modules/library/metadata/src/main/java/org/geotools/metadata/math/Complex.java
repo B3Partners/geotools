@@ -16,17 +16,16 @@
  */
 package org.geotools.metadata.math;
 
+import java.io.Serial;
 import java.io.Serializable;
-import org.opengis.util.Cloneable;
+import org.geotools.api.util.Cloneable;
 
 /**
- * A simple class for the handling of complex numbers. This is not the purpose of this class to
- * provides a full-fledged library for complex number handling. This class exists mostly for the
- * limited needs of some transformation methods.
+ * A simple class for the handling of complex numbers. This is not the purpose of this class to provides a full-fledged
+ * library for complex number handling. This class exists mostly for the limited needs of some transformation methods.
  *
- * <p>For performance reasons, the methods in this class never create new objects. They always
- * operate on an object specified in argument, and store the result in the object on which the
- * method was invoked.
+ * <p>For performance reasons, the methods in this class never create new objects. They always operate on an object
+ * specified in argument, and store the result in the object on which the method was invoked.
  *
  * <p>This class is final for performance reason.
  *
@@ -37,6 +36,7 @@ import org.opengis.util.Cloneable;
  */
 public final class Complex implements Cloneable, Serializable {
     /** For compatibility with previous versions during deserialization. */
+    @Serial
     private static final long serialVersionUID = -8143196508298758583L;
 
     /** The real part of the complex number. */
@@ -61,8 +61,7 @@ public final class Complex implements Cloneable, Serializable {
     }
 
     /**
-     * Set this complex number to the same value than the specified one. This method computes the
-     * following:
+     * Set this complex number to the same value than the specified one. This method computes the following:
      *
      * <blockquote>
      *
@@ -109,8 +108,8 @@ public final class Complex implements Cloneable, Serializable {
         final double y1 = c1.imag;
         final double x2 = c2.real;
         final double y2 = c2.imag;
-        real = (x1 * x2) - (y1 * y2);
-        imag = (y1 * x2) + (x1 * y2);
+        real = x1 * x2 - y1 * y2;
+        imag = y1 * x2 + x1 * y2;
     }
 
     /**
@@ -129,9 +128,9 @@ public final class Complex implements Cloneable, Serializable {
         final double y1 = c1.imag;
         final double x2 = c2.real;
         final double y2 = c2.imag;
-        final double denom = (x2 * x2) + (y2 * y2);
-        real = ((x1 * x2) + (y1 * y2)) / denom;
-        imag = ((y1 * x2) - (x1 * y2)) / denom;
+        final double denom = x2 * x2 + y2 * y2;
+        real = (x1 * x2 + y1 * y2) / denom;
+        imag = (y1 * x2 - x1 * y2) / denom;
     }
 
     /**
@@ -151,8 +150,7 @@ public final class Complex implements Cloneable, Serializable {
     }
 
     /**
-     * Multplies two complex numbers, and add the result to a third one. This method computes the
-     * following:
+     * Multplies two complex numbers, and add the result to a third one. This method computes the following:
      *
      * <blockquote>
      *
@@ -167,8 +165,8 @@ public final class Complex implements Cloneable, Serializable {
         final double y1 = c1.imag;
         final double x2 = c2.real;
         final double y2 = c2.imag;
-        real = c0.real + ((x1 * x2) - (y1 * y2));
-        imag = c0.imag + ((y1 * x2) + (x1 * y2));
+        real = c0.real + (x1 * x2 - y1 * y2);
+        imag = c0.imag + (y1 * x2 + x1 * y2);
     }
 
     /**
@@ -186,59 +184,47 @@ public final class Complex implements Cloneable, Serializable {
         final double x = c.real;
         final double y = c.imag;
         switch (power) {
-            case 0:
-                {
-                    real = 1;
-                    imag = 0;
-                    break;
-                }
-            case 1:
-                {
-                    real = x;
-                    imag = y;
-                    break;
-                }
-            case 2:
-                {
-                    real = (x * x) - (y * y);
-                    imag = 2 * x * y;
-                    break;
-                }
-            case 3:
-                {
-                    real = (x * x * x) - (3 * x * y * y);
-                    imag = (3 * x * x * y) - (y * y * y);
-                    break;
-                }
-            case 4:
-                {
-                    real = (x * x * x * x) - (6 * x * x * y * y) + (y * y * y * y);
-                    imag = (4 * x * x * x * y) - (4 * x * y * y * y);
-                    break;
-                }
-            case 5:
-                {
-                    real = (x * x * x * x * x) - (10 * x * x * x * y * y) + (5 * x * y * y * y * y);
-                    imag = (5 * x * x * x * x * y) - (10 * x * x * y * y * y) + (y * y * y * y * y);
-                    break;
-                }
-            case 6:
-                {
-                    real =
-                            ((x * x * x * x * x * x)
-                                            - (15 * x * x * x * x * y * y)
-                                            + (15 * x * x * y * y * y * y))
-                                    - (y * y * y * y * y * y);
-                    imag =
-                            (6 * x * x * x * x * x * y)
-                                    - (20 * x * x * x * y * y * y)
-                                    + (6 * x * y * y * y * y * y);
-                    break;
-                }
-            default:
-                {
-                    throw new IllegalArgumentException(String.valueOf(power));
-                }
+            case 0: {
+                real = 1;
+                imag = 0;
+                break;
+            }
+            case 1: {
+                real = x;
+                imag = y;
+                break;
+            }
+            case 2: {
+                real = x * x - y * y;
+                imag = 2 * x * y;
+                break;
+            }
+            case 3: {
+                real = x * x * x - 3 * x * y * y;
+                imag = 3 * x * x * y - y * y * y;
+                break;
+            }
+            case 4: {
+                real = x * x * x * x - 6 * x * x * y * y + y * y * y * y;
+                imag = 4 * x * x * x * y - 4 * x * y * y * y;
+                break;
+            }
+            case 5: {
+                real = x * x * x * x * x - 10 * x * x * x * y * y + 5 * x * y * y * y * y;
+                imag = 5 * x * x * x * x * y - 10 * x * x * y * y * y + y * y * y * y * y;
+                break;
+            }
+            case 6: {
+                real = x * x * x * x * x * x
+                        - 15 * x * x * x * x * y * y
+                        + 15 * x * x * y * y * y * y
+                        - y * y * y * y * y * y;
+                imag = 6 * x * x * x * x * x * y - 20 * x * x * x * y * y * y + 6 * x * y * y * y * y * y;
+                break;
+            }
+            default: {
+                throw new IllegalArgumentException(String.valueOf(power));
+            }
         }
     }
 
@@ -249,6 +235,7 @@ public final class Complex implements Cloneable, Serializable {
     }
 
     /** Returns {@code true} if this complex number has the same value than the specified one. */
+    @SuppressWarnings("NonOverridingEquals") // Type-specific helper method, not overriding Object.equals
     public boolean equals(final Complex c) {
         return Double.doubleToLongBits(real) == Double.doubleToLongBits(c.real)
                 && Double.doubleToLongBits(imag) == Double.doubleToLongBits(c.imag);
@@ -257,7 +244,7 @@ public final class Complex implements Cloneable, Serializable {
     /** Compares this complex with the specified object for equality. */
     @Override
     public boolean equals(final Object c) {
-        return (c instanceof Complex) && equals((Complex) c);
+        return c instanceof Complex c1 && equals(c1);
     }
 
     /** Returns a hash value for this complex number. */

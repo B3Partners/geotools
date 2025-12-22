@@ -16,9 +16,9 @@
  */
 package org.geotools.mbstyle.expression;
 
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.mbstyle.parse.MBFormatException;
 import org.json.simple.JSONArray;
-import org.opengis.filter.expression.Expression;
 
 public class MBVariableBinding extends MBExpression {
 
@@ -52,8 +52,7 @@ public class MBVariableBinding extends MBExpression {
             case "var":
                 return variableBindingVar();
             default:
-                throw new MBFormatException(
-                        name + " is an unsupported variable binding expression");
+                throw new MBFormatException(name + " is an unsupported variable binding expression");
         }
     }
 }

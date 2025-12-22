@@ -18,13 +18,15 @@ package org.geotools.styling;
 
 // OpenGIS dependencies
 
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.Halo;
+import org.geotools.api.style.StyleVisitor;
+import org.geotools.api.style.TraversingStyleVisitor;
+import org.geotools.api.util.Cloneable;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.util.Utilities;
 import org.geotools.util.factory.GeoTools;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.StyleVisitor;
-import org.opengis.util.Cloneable;
 
 /**
  * Direct implementation of Halo.
@@ -34,8 +36,7 @@ import org.opengis.util.Cloneable;
  */
 public class HaloImpl implements Halo, Cloneable {
     /** The logger for the default core module. */
-    private static final java.util.logging.Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(HaloImpl.class);
+    private static final java.util.logging.Logger LOGGER = org.geotools.util.logging.Logging.getLogger(HaloImpl.class);
 
     private FilterFactory filterFactory;
     private FillImpl fill;
@@ -46,11 +47,11 @@ public class HaloImpl implements Halo, Cloneable {
      *
      * @return HaloImpl equal to the provided halo
      */
-    static HaloImpl cast(org.opengis.style.Halo halo) {
+    static HaloImpl cast(org.geotools.api.style.Halo halo) {
         if (halo == null) {
             return null;
-        } else if (halo instanceof HaloImpl) {
-            return (HaloImpl) halo;
+        } else if (halo instanceof HaloImpl impl) {
+            return impl;
         } else {
             HaloImpl copy = new HaloImpl();
             copy.setFill(halo.getFill());
@@ -101,7 +102,7 @@ public class HaloImpl implements Halo, Cloneable {
      * @param fill New value of property fill.
      */
     @Override
-    public void setFill(org.opengis.style.Fill fill) {
+    public void setFill(org.geotools.api.style.Fill fill) {
         this.fill = FillImpl.cast(fill);
     }
 
@@ -126,12 +127,12 @@ public class HaloImpl implements Halo, Cloneable {
     }
 
     @Override
-    public Object accept(StyleVisitor visitor, Object data) {
+    public Object accept(TraversingStyleVisitor visitor, Object data) {
         return visitor.visit(this, data);
     }
 
     @Override
-    public void accept(org.geotools.styling.StyleVisitor visitor) {
+    public void accept(StyleVisitor visitor) {
         visitor.visit(this);
     }
 
@@ -144,7 +145,7 @@ public class HaloImpl implements Halo, Cloneable {
     public Object clone() {
         try {
             HaloImpl clone = (HaloImpl) super.clone();
-            clone.fill = (FillImpl) ((Cloneable) fill).clone();
+            clone.fill = (FillImpl) fill.clone();
 
             return clone;
         } catch (CloneNotSupportedException e) {
@@ -165,8 +166,7 @@ public class HaloImpl implements Halo, Cloneable {
             return true;
         }
 
-        if (obj instanceof HaloImpl) {
-            HaloImpl other = (HaloImpl) obj;
+        if (obj instanceof HaloImpl other) {
 
             return Utilities.equals(radius, other.radius) && Utilities.equals(fill, other.fill);
         }
@@ -183,11 +183,11 @@ public class HaloImpl implements Halo, Cloneable {
         int result = 17;
 
         if (radius != null) {
-            result = (result * PRIME) + radius.hashCode();
+            result = result * PRIME + radius.hashCode();
         }
 
         if (fill != null) {
-            result = (result * PRIME) + fill.hashCode();
+            result = result * PRIME + fill.hashCode();
         }
 
         return result;

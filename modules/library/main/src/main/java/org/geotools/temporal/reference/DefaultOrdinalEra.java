@@ -18,9 +18,9 @@ package org.geotools.temporal.reference;
 
 import java.util.Collection;
 import java.util.Date;
+import org.geotools.api.temporal.OrdinalEra;
+import org.geotools.api.util.InternationalString;
 import org.geotools.util.Utilities;
-import org.opengis.temporal.OrdinalEra;
-import org.opengis.util.InternationalString;
 
 /** @author Mehdi Sidhoum (Geomatys) */
 public class DefaultOrdinalEra implements OrdinalEra {
@@ -43,11 +43,7 @@ public class DefaultOrdinalEra implements OrdinalEra {
         this.end = end;
     }
 
-    public DefaultOrdinalEra(
-            InternationalString name,
-            Date beginning,
-            Date end,
-            Collection<OrdinalEra> composition) {
+    public DefaultOrdinalEra(InternationalString name, Date beginning, Date end, Collection<OrdinalEra> composition) {
         this.name = name;
         this.beginning = beginning;
         this.end = end;
@@ -99,8 +95,7 @@ public class DefaultOrdinalEra implements OrdinalEra {
 
     @Override
     public boolean equals(final Object object) {
-        if (object instanceof DefaultOrdinalEra) {
-            final DefaultOrdinalEra that = (DefaultOrdinalEra) object;
+        if (object instanceof DefaultOrdinalEra that) {
 
             return Utilities.equals(this.beginning, that.beginning)
                     && Utilities.equals(this.end, that.end)

@@ -16,12 +16,12 @@
  */
 package org.geotools.feature.visitor;
 
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.memory.MemoryFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Testing MinVisitor
@@ -72,7 +72,7 @@ public class MinVisitorTest {
     }
 
     /** A MinVisitor that set's visited without minvalue being set. */
-    private class PreVisitedMinVisitor extends MinVisitor {
+    private static class PreVisitedMinVisitor extends MinVisitor {
         PreVisitedMinVisitor(String attribute) {
             super(attribute);
             this.visited = true;

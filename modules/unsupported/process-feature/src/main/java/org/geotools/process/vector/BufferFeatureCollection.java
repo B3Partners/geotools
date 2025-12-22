@@ -18,6 +18,9 @@
 package org.geotools.process.vector;
 
 import java.util.NoSuchElementException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
@@ -32,9 +35,6 @@ import org.geotools.process.factory.DescribeResult;
 import org.geotools.util.Converters;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
 
 /**
  * Buffers a feature collection using a certain distance
@@ -53,9 +53,7 @@ public class BufferFeatureCollection implements VectorProcess {
     public SimpleFeatureCollection execute(
             @DescribeParameter(name = "features", description = "Input feature collection")
                     SimpleFeatureCollection features,
-            @DescribeParameter(
-                            name = "distance",
-                            description = "Fixed value to use for the buffer distance")
+            @DescribeParameter(name = "distance", description = "Fixed value to use for the buffer distance")
                     Double distance,
             @DescribeParameter(
                             name = "attributeName",
@@ -98,8 +96,7 @@ public class BufferFeatureCollection implements VectorProcess {
 
         SimpleFeatureCollection delegate;
 
-        public BufferedFeatureCollection(
-                SimpleFeatureCollection delegate, String attribute, Double distance) {
+        public BufferedFeatureCollection(SimpleFeatureCollection delegate, String attribute, Double distance) {
             this.distance = distance;
             this.attribute = attribute;
             this.delegate = delegate;
@@ -107,8 +104,7 @@ public class BufferFeatureCollection implements VectorProcess {
 
         @Override
         public SimpleFeatureIterator features() {
-            return new BufferedFeatureIterator(
-                    delegate, this.attribute, this.distance, getSchema());
+            return new BufferedFeatureIterator(delegate, this.attribute, this.distance, getSchema());
         }
 
         @Override
@@ -130,7 +126,7 @@ public class BufferFeatureCollection implements VectorProcess {
             SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
             for (AttributeDescriptor descriptor : delegate.getSchema().getAttributeDescriptors()) {
                 if (!(descriptor.getType() instanceof GeometryTypeImpl)
-                        || (!delegate.getSchema().getGeometryDescriptor().equals(descriptor))) {
+                        || !delegate.getSchema().getGeometryDescriptor().equals(descriptor)) {
                     tb.add(descriptor);
                 } else {
                     AttributeTypeBuilder builder = new AttributeTypeBuilder();
@@ -172,10 +168,7 @@ public class BufferFeatureCollection implements VectorProcess {
         SimpleFeature next;
 
         public BufferedFeatureIterator(
-                SimpleFeatureCollection delegate,
-                String attribute,
-                Double distance,
-                SimpleFeatureType schema) {
+                SimpleFeatureCollection delegate, String attribute, Double distance, SimpleFeatureType schema) {
             this.delegate = delegate.features();
             this.distance = distance;
             this.collection = delegate;
@@ -193,15 +186,13 @@ public class BufferFeatureCollection implements VectorProcess {
             while (next == null && delegate.hasNext()) {
                 SimpleFeature f = delegate.next();
                 for (Object value : f.getAttributes()) {
-                    if (value instanceof Geometry) {
+                    if (value instanceof Geometry geometry) {
                         Double fDistance = distance;
                         if (this.attribute != null) {
-                            fDistance =
-                                    Converters.convert(
-                                            f.getAttribute(this.attribute), Double.class);
+                            fDistance = Converters.convert(f.getAttribute(this.attribute), Double.class);
                         }
                         if (fDistance != null && fDistance != 0.0) {
-                            value = ((Geometry) value).buffer(fDistance);
+                            value = geometry.buffer(fDistance);
                         }
                     }
                     fb.add(value);

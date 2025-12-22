@@ -16,14 +16,21 @@
  */
 package org.geotools.renderer.style;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
+
 import java.net.URL;
 import javax.swing.Icon;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.data.ows.MockURLChecker;
+import org.geotools.data.ows.URLCheckerException;
+import org.geotools.data.ows.URLCheckers;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.renderer.lite.StreamingRenderer;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.filter.FilterFactory;
 
 public class ImageGraphicFactoryTest {
 
@@ -36,6 +43,11 @@ public class ImageGraphicFactoryTest {
         ff = CommonFactoryFinder.getFilterFactory(null);
     }
 
+    @After
+    public void cleanupCheckers() {
+        URLCheckers.reset();
+    }
+
     /** Check that at least the well known png and jpeg formats are supported */
     @Test
     public void testFormats() throws Exception {
@@ -45,8 +57,7 @@ public class ImageGraphicFactoryTest {
 
     @Test
     public void testInvalidPaths() throws Exception {
-        Assert.assertNull(
-                image.getIcon(null, ff.literal("http://www.nowhere.com"), "image/not!", 20));
+        Assert.assertNull(image.getIcon(null, ff.literal("http://www.nowhere.com"), "image/not!", 20));
         try {
             image.getIcon(null, ff.literal("ThisIsNotAUrl"), "image/png", 20);
             Assert.fail("Should have throw an exception, invalid url");
@@ -74,19 +85,35 @@ public class ImageGraphicFactoryTest {
     }
 
     /**
-     * Tests that a fetched icon is added to the cache, and that the {@link
-     * GraphicCache#clearCache()} method correctly clears the cache.
+     * Tests that a fetched icon is added to the cache, and that the {@link GraphicCache#clearCache()} method correctly
+     * clears the cache.
      */
     @Test
     public void testClearCache() {
         URL u = this.getClass().getResource("test-data/test.png");
         image.getIcon(null, ff.literal(u), "image/png", -1);
 
-        Assert.assertTrue(image.imageCache.containsKey(u));
-        Assert.assertNotNull(image.imageCache.get(u));
+        Assert.assertTrue(ImageGraphicFactory.imageCache.containsKey(u));
+        Assert.assertNotNull(ImageGraphicFactory.imageCache.get(u));
 
-        ((GraphicCache) image).clearCache();
+        image.clearCache();
 
-        Assert.assertTrue(image.imageCache.isEmpty());
+        Assert.assertTrue(ImageGraphicFactory.imageCache.isEmpty());
+    }
+
+    @Test
+    public void testURLCheckerAllowed() throws Exception {
+        URLCheckers.register(new MockURLChecker(u -> u.contains("test.png")));
+
+        URL u = this.getClass().getResource("test-data/test.png");
+        assertNotNull(image.getIcon(null, ff.literal(u), "image/png", -1));
+    }
+
+    @Test
+    public void testURLCheckerDisallowed() throws Exception {
+        URLCheckers.register(new MockURLChecker("nope", u -> false));
+
+        URL u = this.getClass().getResource("test-data/test.png");
+        assertThrows(URLCheckerException.class, () -> image.getIcon(null, ff.literal(u), "image/png", -1));
     }
 }

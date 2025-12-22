@@ -16,27 +16,26 @@
  */
 package org.geotools.coverage.processing.operation;
 
-// JAI dependencies (for javadoc)
+// ImageN dependencies (for javadoc)
 
-import it.geosolutions.jaiext.JAIExt;
-import it.geosolutions.jaiext.algebra.AlgebraDescriptor.Operator;
 import java.awt.image.RenderedImage;
+import java.io.Serial;
 import java.util.Collection;
 import java.util.Map;
-import javax.media.jai.ParameterBlockJAI;
-import javax.media.jai.operator.AddDescriptor;
+import org.eclipse.imagen.ParameterBlockImageN;
+import org.eclipse.imagen.media.algebra.AlgebraDescriptor.Operator;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.BaseMathOperationJAI;
 import org.geotools.util.NumberRange;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.util.InternationalString;
 
 /**
- * Create a new coverage as the sum of two source coverages by doing pixel by pixel addition:
- * result[0][0] = source0[0][0] + source1[0][0] ... ... result[i][j] = source0[i][j] + source1[i][j]
- * ... ... result[n-1][m-1] = source0[n-1][m-1] + source1[n-1][m-1]
+ * Create a new coverage as the sum of two source coverages by doing pixel by pixel addition: result[0][0] =
+ * source0[0][0] + source1[0][0] ... ... result[i][j] = source0[i][j] + source1[i][j] ... ... result[n-1][m-1] =
+ * source0[n-1][m-1] + source1[n-1][m-1]
  *
  * <p>Make sure coverages have same envelope and same resolution before using this operation.
  *
@@ -69,8 +68,8 @@ import org.opengis.util.InternationalString;
  * </table>
  *
  * @since 8.x
- * @see org.geotools.coverage.processing.Operations#add(org.opengis.coverage.Coverage,
- *     org.opengis.coverage.Coverage)
+ * @see org.geotools.coverage.processing.Operations#add(org.geotools.api.coverage.Coverage,
+ *     org.geotools.api.coverage.Coverage)
  * @see Add
  */
 public class Add extends BaseMathOperationJAI {
@@ -78,11 +77,12 @@ public class Add extends BaseMathOperationJAI {
     private static final String ALGEBRIC = "algebric";
     private static final String ADD = "Add";
     /** */
+    @Serial
     private static final long serialVersionUID = -4029879745691129215L;
 
     /** Constructs a default {@code "Add"} operation. */
     public Add() {
-        super(ADD, getOperationDescriptor(JAIExt.getOperationName(ADD)));
+        super(ADD, getOperationDescriptor(ALGEBRIC));
     }
 
     @Override
@@ -112,16 +112,13 @@ public class Add extends BaseMathOperationJAI {
     }
 
     @Override
-    protected void handleJAIEXTParams(
-            ParameterBlockJAI parameters, ParameterValueGroup parameters2) {
-        if (JAIExt.isJAIExtOperation(ALGEBRIC)) {
-            parameters.set(Operator.SUM, 0);
-            @SuppressWarnings("unchecked")
-            Collection<GridCoverage2D> sources =
-                    (Collection<GridCoverage2D>) parameters2.parameter("sources").getValue();
-            for (GridCoverage2D source : sources) {
-                handleROINoDataInternal(parameters, source, ALGEBRIC, 1, 2);
-            }
+    protected void handleJAIEXTParams(ParameterBlockImageN parameters, ParameterValueGroup parameters2) {
+        parameters.set(Operator.SUM, 0);
+        @SuppressWarnings("unchecked")
+        Collection<GridCoverage2D> sources =
+                (Collection<GridCoverage2D>) parameters2.parameter("sources").getValue();
+        for (GridCoverage2D source : sources) {
+            handleROINoDataInternal(parameters, source, ALGEBRIC, 1, 2);
         }
     }
 
@@ -133,7 +130,6 @@ public class Add extends BaseMathOperationJAI {
             MathTransform gridToCRS,
             GridCoverage2D[] sources,
             Parameters parameters) {
-        return handleROINoDataProperties(
-                null, parameters.parameters, sources[0], ALGEBRIC, 1, 2, 3);
+        return handleROINoDataProperties(null, parameters.parameters, sources[0], ALGEBRIC, 1, 2, 3);
     }
 }

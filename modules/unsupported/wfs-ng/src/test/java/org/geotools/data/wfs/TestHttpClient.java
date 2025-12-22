@@ -21,6 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.IOUtils;
 import org.geotools.http.HTTPResponse;
 import org.geotools.http.MockHttpClient;
@@ -50,8 +51,7 @@ public class TestHttpClient extends MockHttpClient {
      * @return mockResponse The response set in the contructor
      */
     @Override
-    public HTTPResponse post(
-            final URL url, final InputStream postContent, final String postContentType)
+    public HTTPResponse post(final URL url, final InputStream postContent, final String postContentType)
             throws IOException {
 
         this.targetUrl = url;
@@ -60,12 +60,11 @@ public class TestHttpClient extends MockHttpClient {
         String strippedPostContent = out.toString().replaceAll("handle=\"(.*?)\"", "");
 
         return super.post(
-                url, new ByteArrayInputStream(strippedPostContent.getBytes()), postContentType);
+                url, new ByteArrayInputStream(strippedPostContent.getBytes(StandardCharsets.UTF_8)), postContentType);
     }
 
     @Override
-    public void expectPost(
-            URL url, String postContent, String postContentType, HTTPResponse response) {
+    public void expectPost(URL url, String postContent, String postContentType, HTTPResponse response) {
         String strippedPostContent = postContent.toString().replaceAll("handle=\"(.*?)\"", "");
         super.expectPost(url, strippedPostContent, postContentType, response);
     }

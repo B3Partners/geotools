@@ -21,19 +21,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.ContrastEnhancement;
+import org.geotools.api.style.ContrastMethod;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.RasterSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.SemanticType;
 import org.geotools.mbstyle.MBStyle;
 import org.geotools.mbstyle.parse.MBFilter;
 import org.geotools.mbstyle.parse.MBObjectParser;
 import org.geotools.measure.Units;
-import org.geotools.styling.ContrastEnhancement;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.RasterSymbolizer;
 import org.geotools.text.Text;
 import org.json.simple.JSONObject;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.ContrastMethod;
-import org.opengis.style.Rule;
-import org.opengis.style.SemanticType;
 
 public class RasterMBLayer extends MBLayer {
 
@@ -219,8 +219,8 @@ public class RasterMBLayer extends MBLayer {
      *   <li>Assumes 3-band RGB
      * </ul>
      *
-     * @param styleContext The MBStyle to which this layer belongs, used as a context for things
-     *     like resolving sprite and glyph names to full urls.
+     * @param styleContext The MBStyle to which this layer belongs, used as a context for things like resolving sprite
+     *     and glyph names to full urls.
      * @return FeatureTypeStyle
      */
     @Override
@@ -229,43 +229,32 @@ public class RasterMBLayer extends MBLayer {
 
         // Use of builder is easier for code examples; but fills in SLD defaults
         // Currently only applies the opacity.
-        RasterSymbolizer symbolizer =
-                sf.rasterSymbolizer(
-                        getId(),
-                        null,
-                        sf.description(Text.text("raster"), null),
-                        Units.PIXEL,
-                        opacity(),
-                        null,
-                        null,
-                        null,
-                        ce,
-                        null,
-                        null);
+        RasterSymbolizer symbolizer = sf.rasterSymbolizer(
+                getId(),
+                null,
+                sf.description(Text.text("raster"), null),
+                Units.PIXEL,
+                opacity(),
+                null,
+                null,
+                null,
+                ce,
+                null,
+                null);
 
         List<Rule> rules = new ArrayList<>();
         MBFilter filter = getFilter();
-        org.geotools.styling.Rule rule =
-                sf.rule(
-                        getId(),
-                        null,
-                        null,
-                        0.0,
-                        Double.MAX_VALUE,
-                        Arrays.asList(symbolizer),
-                        filter.filter());
+        org.geotools.api.style.Rule rule =
+                sf.rule(getId(), null, null, 0.0, Double.MAX_VALUE, Arrays.asList(symbolizer), filter.filter());
         rules.add(rule);
 
-        return Collections.singletonList(
-                sf.featureTypeStyle(
-                        getId(),
-                        sf.description(
-                                Text.text("MBStyle " + getId()),
-                                Text.text("Generated for " + getSourceLayer())),
-                        null,
-                        Collections.emptySet(),
-                        filter.semanticTypeIdentifiers(),
-                        rules));
+        return Collections.singletonList(sf.featureTypeStyle(
+                getId(),
+                sf.description(Text.text("MBStyle " + getId()), Text.text("Generated for " + getSourceLayer())),
+                null,
+                Collections.emptySet(),
+                filter.semanticTypeIdentifiers(),
+                rules));
     }
 
     /**

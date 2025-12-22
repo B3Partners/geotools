@@ -27,6 +27,87 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.MultiValuedFilter.MatchAction;
+import org.geotools.api.filter.NativeFilter;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNil;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.capability.ArithmeticOperators;
+import org.geotools.api.filter.capability.ComparisonOperators;
+import org.geotools.api.filter.capability.FilterCapabilities;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.capability.Functions;
+import org.geotools.api.filter.capability.GeometryOperand;
+import org.geotools.api.filter.capability.IdCapabilities;
+import org.geotools.api.filter.capability.Operator;
+import org.geotools.api.filter.capability.ScalarCapabilities;
+import org.geotools.api.filter.capability.SpatialCapabilities;
+import org.geotools.api.filter.capability.SpatialOperator;
+import org.geotools.api.filter.capability.SpatialOperators;
+import org.geotools.api.filter.capability.TemporalCapabilities;
+import org.geotools.api.filter.capability.TemporalOperator;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.Multiply;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.Subtract;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.filter.identity.GmlObjectId;
+import org.geotools.api.filter.identity.Identifier;
+import org.geotools.api.filter.identity.ResourceId;
+import org.geotools.api.filter.identity.Version;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortOrder;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.BBOX3D;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
+import org.geotools.api.filter.temporal.After;
+import org.geotools.api.filter.temporal.AnyInteracts;
+import org.geotools.api.filter.temporal.Before;
+import org.geotools.api.filter.temporal.Begins;
+import org.geotools.api.filter.temporal.BegunBy;
+import org.geotools.api.filter.temporal.During;
+import org.geotools.api.filter.temporal.EndedBy;
+import org.geotools.api.filter.temporal.Ends;
+import org.geotools.api.filter.temporal.Meets;
+import org.geotools.api.filter.temporal.MetBy;
+import org.geotools.api.filter.temporal.OverlappedBy;
+import org.geotools.api.filter.temporal.TContains;
+import org.geotools.api.filter.temporal.TEquals;
+import org.geotools.api.filter.temporal.TOverlaps;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.geometry.BoundingBox3D;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.parameter.Parameter;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.util.InternationalString;
 import org.geotools.filter.capability.ArithmeticOperatorsImpl;
 import org.geotools.filter.capability.ComparisonOperatorsImpl;
 import org.geotools.filter.capability.FilterCapabilitiesImpl;
@@ -80,88 +161,7 @@ import org.geotools.geometry.jts.ReferencedEnvelope3D;
 import org.geotools.referencing.CRS;
 import org.geotools.util.factory.Factory;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.And;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Id;
-import org.opengis.filter.MultiValuedFilter.MatchAction;
-import org.opengis.filter.NativeFilter;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNil;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.capability.ArithmeticOperators;
-import org.opengis.filter.capability.ComparisonOperators;
-import org.opengis.filter.capability.FilterCapabilities;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.capability.Functions;
-import org.opengis.filter.capability.GeometryOperand;
-import org.opengis.filter.capability.IdCapabilities;
-import org.opengis.filter.capability.Operator;
-import org.opengis.filter.capability.ScalarCapabilities;
-import org.opengis.filter.capability.SpatialCapabilities;
-import org.opengis.filter.capability.SpatialOperator;
-import org.opengis.filter.capability.SpatialOperators;
-import org.opengis.filter.capability.TemporalCapabilities;
-import org.opengis.filter.capability.TemporalOperator;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.Multiply;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.expression.Subtract;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.filter.identity.GmlObjectId;
-import org.opengis.filter.identity.Identifier;
-import org.opengis.filter.identity.ResourceId;
-import org.opengis.filter.identity.Version;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.sort.SortOrder;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.BBOX3D;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
-import org.opengis.filter.temporal.After;
-import org.opengis.filter.temporal.AnyInteracts;
-import org.opengis.filter.temporal.Before;
-import org.opengis.filter.temporal.Begins;
-import org.opengis.filter.temporal.BegunBy;
-import org.opengis.filter.temporal.During;
-import org.opengis.filter.temporal.EndedBy;
-import org.opengis.filter.temporal.Ends;
-import org.opengis.filter.temporal.Meets;
-import org.opengis.filter.temporal.MetBy;
-import org.opengis.filter.temporal.OverlappedBy;
-import org.opengis.filter.temporal.TContains;
-import org.opengis.filter.temporal.TEquals;
-import org.opengis.filter.temporal.TOverlaps;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.geometry.BoundingBox3D;
-import org.opengis.geometry.Geometry;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.parameter.Parameter;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.util.InternationalString;
+import org.locationtech.jts.geom.Geometry;
 import org.xml.sax.helpers.NamespaceSupport;
 
 /**
@@ -170,7 +170,7 @@ import org.xml.sax.helpers.NamespaceSupport;
  * @author Ian Turton, CCG
  * @version $Id$
  */
-public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFactory2 {
+public class FilterFactoryImpl implements Factory, org.geotools.api.filter.FilterFactory {
 
     private FunctionFinder functionFinder;
 
@@ -269,8 +269,7 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
     }
 
     @Override
-    public PropertyIsBetween between(
-            Expression expr, Expression lower, Expression upper, MatchAction matchAction) {
+    public PropertyIsBetween between(Expression expr, Expression lower, Expression upper, MatchAction matchAction) {
         return new IsBetweenImpl(lower, expr, upper, matchAction);
     }
 
@@ -285,8 +284,7 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
     }
 
     @Override
-    public PropertyIsEqualTo equal(
-            Expression expr1, Expression expr2, boolean matchCase, MatchAction matchAction) {
+    public PropertyIsEqualTo equal(Expression expr1, Expression expr2, boolean matchCase, MatchAction matchAction) {
         return new IsEqualsToImpl(expr1, expr2, matchCase, matchAction);
     }
 
@@ -328,8 +326,7 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
     }
 
     @Override
-    public PropertyIsGreaterThanOrEqualTo greaterOrEqual(
-            Expression expr1, Expression expr2, boolean matchCase) {
+    public PropertyIsGreaterThanOrEqualTo greaterOrEqual(Expression expr1, Expression expr2, boolean matchCase) {
         return new IsGreaterThanOrEqualToImpl(expr1, expr2, matchCase);
     }
 
@@ -350,8 +347,7 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
     }
 
     @Override
-    public PropertyIsLessThan less(
-            Expression expr1, Expression expr2, boolean matchCase, MatchAction matchAction) {
+    public PropertyIsLessThan less(Expression expr1, Expression expr2, boolean matchCase, MatchAction matchAction) {
         return new IsLessThenImpl(expr1, expr2, matchCase, matchAction);
     }
 
@@ -361,8 +357,7 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
     }
 
     @Override
-    public PropertyIsLessThanOrEqualTo lessOrEqual(
-            Expression expr1, Expression expr2, boolean matchCase) {
+    public PropertyIsLessThanOrEqualTo lessOrEqual(Expression expr1, Expression expr2, boolean matchCase) {
         return new IsLessThenOrEqualToImpl(expr1, expr2, false);
     }
 
@@ -378,19 +373,13 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
     }
 
     @Override
-    public PropertyIsLike like(
-            Expression expr, String pattern, String wildcard, String singleChar, String escape) {
+    public PropertyIsLike like(Expression expr, String pattern, String wildcard, String singleChar, String escape) {
         return like(expr, pattern, wildcard, singleChar, escape, false);
     }
 
     @Override
     public PropertyIsLike like(
-            Expression expr,
-            String pattern,
-            String wildcard,
-            String singleChar,
-            String escape,
-            boolean matchCase) {
+            Expression expr, String pattern, String wildcard, String singleChar, String escape, boolean matchCase) {
         LikeFilterImpl filter = new LikeFilterImpl();
         filter.setExpression(expr);
 
@@ -443,8 +432,7 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
      * </code>
      */
     @Override
-    public BBOX bbox(
-            String propertyName, double minx, double miny, double maxx, double maxy, String srs) {
+    public BBOX bbox(String propertyName, double minx, double miny, double maxx, double maxy, String srs) {
 
         PropertyName name = property(propertyName);
         return bbox(name, minx, miny, maxx, maxy, srs);
@@ -457,17 +445,15 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
 
     @Override
     public BBOX bbox(Expression geometry, Expression bounds, MatchAction machAction) {
-        if (bounds instanceof Literal) {
-            Object value = ((Literal) bounds).getValue();
-            if (value instanceof BoundingBox3D) {
-                return bbox(geometry, (BoundingBox3D) value, machAction);
-            } else if (value instanceof org.locationtech.jts.geom.Geometry
-                    && geometry instanceof PropertyName) {
-                org.locationtech.jts.geom.Geometry g = (org.locationtech.jts.geom.Geometry) value;
+        if (bounds instanceof Literal literal) {
+            Object value = literal.getValue();
+            if (value instanceof BoundingBox3D box3D) {
+                return bbox(geometry, box3D, machAction);
+            } else if (value instanceof org.locationtech.jts.geom.Geometry g && geometry instanceof PropertyName name) {
                 if (g.getUserData() instanceof CoordinateReferenceSystem) {
                     CoordinateReferenceSystem crs = (CoordinateReferenceSystem) g.getUserData();
                     ReferencedEnvelope3D envelope = (ReferencedEnvelope3D) JTS.bounds(g, crs);
-                    return new BBOX3DImpl((PropertyName) geometry, envelope, this);
+                    return new BBOX3DImpl(name, envelope, this);
                 }
             }
         }
@@ -476,8 +462,8 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
 
     @Override
     public BBOX bbox(Expression geometry, BoundingBox bounds) {
-        if (bounds instanceof BoundingBox3D) {
-            return bbox(geometry, (BoundingBox3D) bounds);
+        if (bounds instanceof BoundingBox3D box3D) {
+            return bbox(geometry, box3D);
         } else {
             return bbox2d(geometry, bounds, MatchAction.ANY);
         }
@@ -485,8 +471,8 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
 
     @Override
     public BBOX bbox(Expression geometry, BoundingBox bounds, MatchAction matchAction) {
-        if (bounds instanceof BoundingBox3D) {
-            return bbox(geometry, (BoundingBox3D) bounds);
+        if (bounds instanceof BoundingBox3D box3D) {
+            return bbox(geometry, box3D);
         } else {
             return bbox2d(geometry, bounds, matchAction);
         }
@@ -494,8 +480,8 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
 
     private BBOXImpl bbox2d(Expression e, BoundingBox bounds, MatchAction matchAction) {
         PropertyName name = null;
-        if (e instanceof PropertyName) {
-            name = (PropertyName) e;
+        if (e instanceof PropertyName propertyName) {
+            name = propertyName;
         } else {
             throw new IllegalArgumentException("BBOX requires PropertyName expression");
         }
@@ -525,20 +511,13 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
     }
 
     @Override
-    public BBOX bbox(
-            Expression geometry, double minx, double miny, double maxx, double maxy, String srs) {
+    public BBOX bbox(Expression geometry, double minx, double miny, double maxx, double maxy, String srs) {
         return bbox(geometry, minx, miny, maxx, maxy, srs, MatchAction.ANY);
     }
 
     @Override
     public BBOX bbox(
-            Expression e,
-            double minx,
-            double miny,
-            double maxx,
-            double maxy,
-            String srs,
-            MatchAction matchAction) {
+            Expression e, double minx, double miny, double maxx, double maxy, String srs, MatchAction matchAction) {
 
         BBOXImpl box = null;
         try {
@@ -580,8 +559,8 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
     @Override
     public BBOX3D bbox(Expression e, BoundingBox3D env, MatchAction matchAction) {
         PropertyName name = null;
-        if (e instanceof PropertyName) {
-            name = (PropertyName) e;
+        if (e instanceof PropertyName propertyName) {
+            name = propertyName;
         } else {
             throw new IllegalArgumentException();
         }
@@ -600,11 +579,7 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
 
     @Override
     public Beyond beyond(
-            String propertyName,
-            Geometry geometry,
-            double distance,
-            String units,
-            MatchAction matchAction) {
+            String propertyName, Geometry geometry, double distance, String units, MatchAction matchAction) {
         PropertyName name = property(propertyName);
         Literal geom = literal(geometry);
 
@@ -612,8 +587,7 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
     }
 
     @Override
-    public Beyond beyond(
-            Expression geometry1, Expression geometry2, double distance, String units) {
+    public Beyond beyond(Expression geometry1, Expression geometry2, double distance, String units) {
 
         BeyondImpl beyond = new BeyondImpl(geometry1, geometry2);
         beyond.setDistance(distance);
@@ -624,11 +598,7 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
 
     @Override
     public Beyond beyond(
-            Expression geometry1,
-            Expression geometry2,
-            double distance,
-            String units,
-            MatchAction matchAction) {
+            Expression geometry1, Expression geometry2, double distance, String units, MatchAction matchAction) {
         BeyondImpl beyond = new BeyondImpl(geometry1, geometry2, matchAction);
         beyond.setDistance(distance);
         beyond.setUnits(units);
@@ -724,11 +694,7 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
 
     @Override
     public DWithin dwithin(
-            String propertyName,
-            Geometry geometry,
-            double distance,
-            String units,
-            MatchAction matchAction) {
+            String propertyName, Geometry geometry, double distance, String units, MatchAction matchAction) {
         PropertyName name = property(propertyName);
         Literal geom = literal(geometry);
 
@@ -737,11 +703,7 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
 
     @Override
     public DWithin dwithin(
-            Expression geometry1,
-            Expression geometry2,
-            double distance,
-            String units,
-            MatchAction matchAction) {
+            Expression geometry1, Expression geometry2, double distance, String units, MatchAction matchAction) {
         DWithinImpl dwithin = new DWithinImpl(geometry1, geometry2, matchAction);
         dwithin.setDistance(distance);
         dwithin.setUnits(units);
@@ -750,8 +712,7 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
     }
 
     @Override
-    public DWithin dwithin(
-            Expression geometry1, Expression geometry2, double distance, String units) {
+    public DWithin dwithin(Expression geometry1, Expression geometry2, double distance, String units) {
         DWithinImpl dwithin = new DWithinImpl(geometry1, geometry2);
         dwithin.setDistance(distance);
         dwithin.setUnits(units);
@@ -807,8 +768,7 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
     }
 
     @Override
-    public Intersects intersects(
-            Expression geometry1, Expression geometry2, MatchAction matchAction) {
+    public Intersects intersects(Expression geometry1, Expression geometry2, MatchAction matchAction) {
         return new IntersectsImpl(geometry1, geometry2, matchAction);
     }
 
@@ -911,7 +871,7 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
     }
 
     @Override
-    public Function function(String name, Expression[] args) {
+    public Function function(String name, Expression... args) {
         Function function = functionFinder.findFunction(name, Arrays.asList(args));
         return function;
     }
@@ -923,21 +883,17 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
     }
 
     public Function function(String name, Expression arg1) {
-        Function function =
-                functionFinder.findFunction(name, Arrays.asList(new Expression[] {arg1}));
+        Function function = functionFinder.findFunction(name, Arrays.asList(new Expression[] {arg1}));
         return function;
     }
 
     public Function function(String name, Expression arg1, Expression arg2) {
-        Function function =
-                functionFinder.findFunction(name, Arrays.asList(new Expression[] {arg1, arg2}));
+        Function function = functionFinder.findFunction(name, Arrays.asList(new Expression[] {arg1, arg2}));
         return function;
     }
 
     public Function function(String name, Expression arg1, Expression arg2, Expression arg3) {
-        Function function =
-                functionFinder.findFunction(
-                        name, Arrays.asList(new Expression[] {arg1, arg2, arg3}));
+        Function function = functionFinder.findFunction(name, Arrays.asList(new Expression[] {arg1, arg2, arg3}));
 
         return function;
     }
@@ -990,9 +946,7 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
 
     @Override
     public Literal literal(boolean b) {
-        return b
-                ? new LiteralExpressionImpl(Boolean.TRUE)
-                : new LiteralExpressionImpl(Boolean.FALSE);
+        return b ? new LiteralExpressionImpl(Boolean.TRUE) : new LiteralExpressionImpl(Boolean.FALSE);
     }
 
     @Override
@@ -1186,7 +1140,7 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
     }
 
     @Override
-    public SpatialOperator spatialOperator(String name, GeometryOperand[] geometryOperands) {
+    public SpatialOperator spatialOperator(String name, GeometryOperand... geometryOperands) {
         return new SpatialOperatorImpl(name, geometryOperands);
     }
 
@@ -1205,9 +1159,9 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
             int minOccurs,
             int maxOccurs,
             T defaultValue) {
-        return new org.geotools.data.Parameter<>(
+        return new org.geotools.api.data.Parameter<>(
                 name, type, title, description, required, minOccurs, maxOccurs, defaultValue, null);
-    };
+    }
 
     @Override
     public FunctionName functionName(String name, int nargs) {
@@ -1240,12 +1194,12 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
     }
 
     @Override
-    public Functions functions(FunctionName[] functionNames) {
+    public Functions functions(FunctionName... functionNames) {
         return new FunctionsImpl(functionNames);
     }
 
     @Override
-    public SpatialOperators spatialOperators(SpatialOperator[] spatialOperators) {
+    public SpatialOperators spatialOperators(SpatialOperator... spatialOperators) {
         return new SpatialOperatorsImpl(spatialOperators);
     }
 
@@ -1255,16 +1209,13 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
     }
 
     @Override
-    public ComparisonOperators comparisonOperators(Operator[] comparisonOperators) {
+    public ComparisonOperators comparisonOperators(Operator... comparisonOperators) {
         return new ComparisonOperatorsImpl(comparisonOperators);
     }
 
     @Override
     public FilterCapabilities capabilities(
-            String version,
-            ScalarCapabilities scalar,
-            SpatialCapabilities spatial,
-            IdCapabilities id) {
+            String version, ScalarCapabilities scalar, SpatialCapabilities spatial, IdCapabilities id) {
         return new FilterCapabilitiesImpl(version, scalar, spatial, id);
     }
 
@@ -1280,15 +1231,12 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
 
     @Override
     public ScalarCapabilities scalarCapabilities(
-            ComparisonOperators comparison,
-            ArithmeticOperators arithmetic,
-            boolean logicalOperators) {
+            ComparisonOperators comparison, ArithmeticOperators arithmetic, boolean logicalOperators) {
         return new ScalarCapabilitiesImpl(comparison, arithmetic, logicalOperators);
     }
 
     @Override
-    public SpatialCapabilities spatialCapabilities(
-            GeometryOperand[] geometryOperands, SpatialOperators spatial) {
+    public SpatialCapabilities spatialCapabilities(GeometryOperand[] geometryOperands, SpatialOperators spatial) {
         return new SpatialCapabiltiesImpl(geometryOperands, spatial);
     }
 
@@ -1298,7 +1246,7 @@ public class FilterFactoryImpl implements Factory, org.opengis.filter.FilterFact
     }
 
     @Override
-    public TemporalCapabilities temporalCapabilities(TemporalOperator[] temporalOperators) {
+    public TemporalCapabilities temporalCapabilities(TemporalOperator... temporalOperators) {
         return new TemporalCapabilitiesImpl(Arrays.asList(temporalOperators));
     }
 

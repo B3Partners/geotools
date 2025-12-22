@@ -34,8 +34,8 @@ import java.util.Arrays;
 import javax.imageio.ImageIO;
 
 /**
- * A shape wrapper that generates a stroked version of the shape without actually holding it all in
- * memory (it is streamed through the path iterator)
+ * A shape wrapper that generates a stroked version of the shape without actually holding it all in memory (it is
+ * streamed through the path iterator)
  *
  * @author Andrea Aime - OpenGeo
  */
@@ -114,7 +114,7 @@ public class DashedShape implements Shape {
      *
      * @author Andrea Aime - OpenGeo
      */
-    public class DashedIterator implements PathIterator {
+    public static class DashedIterator implements PathIterator {
         static final float EPS = 1e-3f;
 
         /** The original iterator */
@@ -263,8 +263,7 @@ public class DashedShape implements Shape {
                 // if the lastType is a line to we need to decide if we're pen down or pen
                 // up depending on what of the dash segments we're in
                 if (lastType == PathIterator.SEG_LINETO) {
-                    dashedType =
-                            dashIndex % 2 == 0 ? PathIterator.SEG_LINETO : PathIterator.SEG_MOVETO;
+                    dashedType = dashIndex % 2 == 0 ? PathIterator.SEG_LINETO : PathIterator.SEG_MOVETO;
                 } else {
                     dashedType = lastType;
                 }

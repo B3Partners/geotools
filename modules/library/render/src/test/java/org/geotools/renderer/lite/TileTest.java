@@ -22,13 +22,13 @@ import static java.awt.RenderingHints.VALUE_ANTIALIAS_ON;
 import java.awt.Font;
 import java.awt.RenderingHints;
 import java.io.File;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.style.Style;
 import org.geotools.data.property.PropertyDataStore;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.FeatureLayer;
 import org.geotools.map.MapContent;
 import org.geotools.renderer.style.FontCache;
-import org.geotools.styling.Style;
 import org.geotools.test.TestData;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,25 +51,21 @@ public class TileTest {
 
     @Before
     public void setUp() throws Exception {
-        File property = new File(TestData.getResource(this, "tilerect.properties").toURI());
+        File property =
+                new File(TestData.getResource(this, "tilerect.properties").toURI());
         PropertyDataStore ds = new PropertyDataStore(property.getParentFile());
         polyfs = ds.getFeatureSource("tilerect");
         property = new File(TestData.getResource(this, "tilelines.properties").toURI());
         ds = new PropertyDataStore(property.getParentFile());
         linefs = ds.getFeatureSource("tilelines");
 
-        leftTileBounds =
-                new ReferencedEnvelope(
-                        0, 10, 0, 10, polyfs.getBounds().getCoordinateReferenceSystem());
+        leftTileBounds = new ReferencedEnvelope(0, 10, 0, 10, polyfs.getBounds().getCoordinateReferenceSystem());
         rightTileBounds =
-                new ReferencedEnvelope(
-                        10, 20, 0, 10, polyfs.getBounds().getCoordinateReferenceSystem());
+                new ReferencedEnvelope(10, 20, 0, 10, polyfs.getBounds().getCoordinateReferenceSystem());
 
         // load font
-        Font f =
-                Font.createFont(
-                        Font.TRUETYPE_FONT,
-                        TestData.getResource(this, "recreate.ttf").openStream());
+        Font f = Font.createFont(
+                Font.TRUETYPE_FONT, TestData.getResource(this, "recreate.ttf").openStream());
         FontCache.getDefaultInstance().registerFont(f);
 
         // System.setProperty("org.geotools.test.interactive", "true");
@@ -86,8 +82,7 @@ public class TileTest {
         renderer.setMapContent(mc);
         renderer.setJava2DHints(new RenderingHints(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON));
 
-        RendererBaseTest.showRender(
-                "FillAlignment", renderer, TIME, leftTileBounds, rightTileBounds);
+        RendererBaseTest.showRender("FillAlignment", renderer, TIME, leftTileBounds, rightTileBounds);
     }
 
     @Test
@@ -101,7 +96,6 @@ public class TileTest {
         renderer.setMapContent(mc);
         renderer.setJava2DHints(new RenderingHints(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON));
 
-        RendererBaseTest.showRender(
-                "StrokeAlignment", renderer, TIME, leftTileBounds, rightTileBounds);
+        RendererBaseTest.showRender("StrokeAlignment", renderer, TIME, leftTileBounds, rightTileBounds);
     }
 }

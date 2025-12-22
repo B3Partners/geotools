@@ -16,19 +16,27 @@
  */
 package org.geotools.process.raster;
 
-import it.geosolutions.jaiext.classbreaks.ClassBreaksDescriptor;
-import it.geosolutions.jaiext.classbreaks.ClassBreaksRIF;
-import it.geosolutions.jaiext.classbreaks.Classification;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import javax.media.jai.JAI;
-import javax.media.jai.ParameterBlockJAI;
-import javax.media.jai.operator.BandSelectDescriptor;
+import org.eclipse.imagen.media.bandselect.BandSelectDescriptor;
+import org.eclipse.imagen.media.classbreaks.ClassBreaksDescriptor;
+import org.eclipse.imagen.media.classbreaks.ClassBreaksRIF;
+import org.eclipse.imagen.media.classbreaks.Classification;
+import org.eclipse.imagen.media.range.Range;
+import org.eclipse.imagen.media.range.RangeFactory;
+import org.eclipse.imagen.media.stats.Statistics;
+import org.eclipse.imagen.media.stats.Statistics.StatsType;
+import org.eclipse.imagen.media.zonal.ZonalStatsDescriptor;
+import org.eclipse.imagen.media.zonal.ZoneGeometry;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.metadata.i18n.ErrorKeys;
 import org.geotools.process.ProcessException;
@@ -37,13 +45,6 @@ import org.geotools.process.classify.ClassificationStats;
 import org.geotools.process.factory.DescribeParameter;
 import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
-import org.geotools.renderer.i18n.Errors;
-import org.jaitools.media.jai.zonalstats.Result;
-import org.jaitools.media.jai.zonalstats.ZonalStats;
-import org.jaitools.media.jai.zonalstats.ZonalStatsDescriptor;
-import org.jaitools.numeric.Range;
-import org.jaitools.numeric.Statistic;
-import org.opengis.util.ProgressListener;
 
 /**
  * Process that classifies vector data into "classes" using one of the following methods:
@@ -56,30 +57,29 @@ import org.opengis.util.ProgressListener;
  */
 @DescribeProcess(
         title = "coverageClassStats",
-        description =
-                "Calculates statistics from coverage" + " values classified into bins/classes.")
+        description = "Calculates statistics from coverage" + " values classified into bins/classes.")
 public class CoverageClassStats implements RasterProcess {
+
+    private GridCoverage2D coverage;
+    private List<StatsType> stats;
+    private Integer band;
+    private Integer classes;
+    private ClassificationMethod method;
+    private Double noData;
+    private ProgressListener progressListener;
 
     @DescribeResult(name = "results", description = "The classified results")
     public Results execute(
-            @DescribeParameter(name = "coverage", description = "The coverage to analyze")
-                    GridCoverage2D coverage,
+            @DescribeParameter(name = "coverage", description = "The coverage to analyze") GridCoverage2D coverage,
             @DescribeParameter(
                             name = "stats",
                             description = "The statistics to calculate for each class",
-                            collectionType = Statistic.class,
+                            collectionType = StatsType.class,
                             min = 0)
-                    Set<Statistic> stats,
-            @DescribeParameter(
-                            name = "band",
-                            description = "The band to calculate breaks/statistics for",
-                            min = 0)
+                    List<StatsType> stats,
+            @DescribeParameter(name = "band", description = "The band to calculate breaks/statistics for", min = 0)
                     Integer band,
-            @DescribeParameter(
-                            name = "classes",
-                            description = "The number of breaks/classes",
-                            min = 0)
-                    Integer classes,
+            @DescribeParameter(name = "classes", description = "The number of breaks/classes", min = 0) Integer classes,
             @DescribeParameter(name = "method", description = "The classification method", min = 0)
                     ClassificationMethod method,
             @DescribeParameter(
@@ -89,12 +89,19 @@ public class CoverageClassStats implements RasterProcess {
                     Double noData,
             ProgressListener progressListener)
             throws ProcessException, IOException {
+        this.coverage = coverage;
+        this.stats = stats;
+        this.band = band;
+        this.classes = classes;
+        this.method = method;
+        this.noData = noData;
+        this.progressListener = progressListener;
 
         //
         // initial checks/defaults
         //
         if (coverage == null) {
-            throw new ProcessException(Errors.format(ErrorKeys.NULL_ARGUMENT_$1, "coverage"));
+            throw new ProcessException(MessageFormat.format(ErrorKeys.NULL_ARGUMENT_$1, "coverage"));
         }
 
         if (classes == null) {
@@ -102,8 +109,7 @@ public class CoverageClassStats implements RasterProcess {
         }
 
         if (classes < 1) {
-            throw new ProcessException(
-                    Errors.format(ErrorKeys.ILLEGAL_ARGUMENT_$2, "classes", classes));
+            throw new ProcessException(MessageFormat.format(ErrorKeys.ILLEGAL_ARGUMENT_$2, "classes", classes));
         }
 
         RenderedImage sourceImage = coverage.getRenderedImage();
@@ -115,7 +121,7 @@ public class CoverageClassStats implements RasterProcess {
 
         final int numBands = sourceImage.getSampleModel().getNumBands();
         if (band < 0 || band >= numBands) {
-            throw new ProcessException(Errors.format(ErrorKeys.ILLEGAL_ARGUMENT_$2, "band", band));
+            throw new ProcessException(MessageFormat.format(ErrorKeys.ILLEGAL_ARGUMENT_$2, "band", band));
         }
 
         if (numBands > 1) {
@@ -127,11 +133,11 @@ public class CoverageClassStats implements RasterProcess {
             method = ClassificationMethod.EQUAL_INTERVAL;
         }
         if (stats == null || stats.isEmpty()) {
-            stats = Collections.singleton(Statistic.MEAN);
+            stats = Collections.singletonList(StatsType.MEAN);
         }
 
         // compute the class breaks
-        // JD: for some reason running this in tomcat via JAI.create does not work, the operation
+        // JD: for some reason running this in tomcat via ImageN.create does not work, the operation
         // descriptor is never registered and it fails, so for now we just invoke the op directly
         // TODO: look into this more
         ParameterBlock pb = new ParameterBlock();
@@ -146,68 +152,83 @@ public class CoverageClassStats implements RasterProcess {
         pb.set(noData, 7);
 
         RenderedImage op = new ClassBreaksRIF().create(pb, null);
-
-        /*ParameterBlockJAI pb = new ParameterBlockJAI(ClassBreaksDescriptor.NAME);
-        pb.setParameter("numClasses", classes);
-        pb.setParameter("method", method);
-        if (noData != null) {
-            pb.setParameter("noData", noData);
-        }
-
-        RenderedOp op = JAI.create(ClassBreaksDescriptor.NAME, pb);*/
-        Classification c =
-                (Classification) op.getProperty(ClassBreaksDescriptor.CLASSIFICATION_PROPERTY);
+        Classification c = (Classification) op.getProperty(ClassBreaksDescriptor.CLASSIFICATION_PROPERTY);
 
         Double[] breaks = (Double[]) c.getBreaks()[0];
 
         // build up the classes/ranges
-        List<Range<Double>> ranges = new ArrayList<>();
+        List<Range> ranges = new ArrayList<>();
         for (int i = 0; i < breaks.length - 1; i++) {
-            ranges.add(Range.create(breaks[i], true, breaks[i + 1], i == breaks.length - 2));
+            ranges.add(createRange(breaks, i, sourceImage.getSampleModel().getDataType()));
         }
 
         // calculate stats for each class
-        ParameterBlockJAI pbj = new ParameterBlockJAI("ZonalStats");
-        pbj.addSource(sourceImage);
-        pbj.setParameter("stats", stats.toArray(new Statistic[stats.size()]));
-        pbj.setParameter("bands", new Integer[] {band});
-        pbj.setParameter("ranges", ranges);
-        pbj.setParameter("rangesType", Range.Type.INCLUDE);
-        pbj.setParameter("rangeLocalStats", true);
-        // "bands",
-        // "roi",
-        // "zoneTransform",
-        // "ranges",
-        // "rangesType",
-        // "rangeLocalStats",
-        // "noDataRanges"
-        op = JAI.create("ZonalStats", pbj);
+        op = ZonalStatsDescriptor.create(
+                sourceImage,
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                new int[] {band},
+                stats.toArray(StatsType[]::new),
+                null,
+                null,
+                null,
+                ranges,
+                true,
+                null);
 
-        ZonalStats zonalStats =
-                (ZonalStats) op.getProperty(ZonalStatsDescriptor.ZONAL_STATS_PROPERTY);
-        return new Results(stats, zonalStats);
+        @SuppressWarnings("unchecked")
+        List<ZoneGeometry> zonalStats = (List<ZoneGeometry>) op.getProperty(ZonalStatsDescriptor.ZS_PROPERTY);
+        if (zonalStats == null || zonalStats.isEmpty()) {
+            throw new ProcessException("No zonal statistics were calculated, check the input coverage and ranges.");
+        }
+        if (zonalStats.size() != 1) {
+            throw new ProcessException("Multiple zonal statistics were calculated, expected only one zone.");
+        }
+        return new Results(stats, zonalStats.get(0), ranges);
     }
 
-    private it.geosolutions.jaiext.classbreaks.ClassificationMethod toJAIExtMethod(
-            ClassificationMethod method) {
+    private static Range createRange(Double[] breaks, int i, int dataType) {
+        switch (dataType) {
+            case java.awt.image.DataBuffer.TYPE_BYTE:
+                return RangeFactory.create(
+                        breaks[i].byteValue(), true, breaks[i + 1].byteValue(), i == breaks.length - 2);
+            case java.awt.image.DataBuffer.TYPE_SHORT:
+                return RangeFactory.create(
+                        breaks[i].shortValue(), true, breaks[i + 1].shortValue(), i == breaks.length - 2);
+            case java.awt.image.DataBuffer.TYPE_INT:
+                return RangeFactory.create(
+                        breaks[i].intValue(), true, breaks[i + 1].intValue(), i == breaks.length - 2);
+            case java.awt.image.DataBuffer.TYPE_FLOAT:
+                return RangeFactory.create(
+                        breaks[i].floatValue(), true, breaks[i + 1].floatValue(), i == breaks.length - 2);
+            case java.awt.image.DataBuffer.TYPE_DOUBLE:
+                return RangeFactory.create(breaks[i], true, breaks[i + 1], i == breaks.length - 2);
+            default:
+                throw new ProcessException(MessageFormat.format(ErrorKeys.ILLEGAL_ARGUMENT_$2, "dataType", dataType));
+        }
+    }
+
+    private org.eclipse.imagen.media.classbreaks.ClassificationMethod toJAIExtMethod(ClassificationMethod method) {
         if (method == null) {
             return null;
         }
-        return it.geosolutions.jaiext.classbreaks.ClassificationMethod.valueOf(method.name());
+        return org.eclipse.imagen.media.classbreaks.ClassificationMethod.valueOf(method.name());
     }
 
     public static class Results implements ClassificationStats {
 
-        Statistic firstStat;
-        Set<Statistic> stats;
-        ZonalStats zonalStats;
-        List<Result> ranges;
+        List<StatsType> stats;
+        ZoneGeometry zonalStats;
+        List<Range> ranges;
 
-        public Results(Set<Statistic> stats, ZonalStats zonalStats) {
+        public Results(List<StatsType> stats, ZoneGeometry zonalStats, List<Range> ranges) {
             this.stats = stats;
             this.zonalStats = zonalStats;
-            this.firstStat = stats.iterator().next();
-            ranges = zonalStats.statistic(firstStat).results();
+            this.ranges = ranges;
         }
 
         @Override
@@ -216,26 +237,38 @@ public class CoverageClassStats implements RasterProcess {
         }
 
         @Override
-        public Set<Statistic> getStats() {
-            return stats;
+        public Set<StatsType> getStats() {
+            return new LinkedHashSet<>(stats);
         }
 
         @Override
         public Range range(int i) {
-            return ranges.get(i).getRanges().iterator().next();
+            return ranges.get(i);
         }
 
         @Override
-        public Double value(int i, Statistic stat) {
-            return zonalStats.statistic(stat).results().get(i).getValue();
+        public Double value(int i, StatsType stat) {
+            int statIdx = stats.indexOf(stat);
+            if (statIdx == -1) {
+                throw new IllegalArgumentException(MessageFormat.format(ErrorKeys.ILLEGAL_ARGUMENT_$2, "stat", stat));
+            }
+
+            // there is no classification raster, so 0 is the index for the only "raster classification value"
+            Map<Range, Statistics[]> rangeMap = zonalStats.getStatsPerBand(0).get(0);
+            Statistics[] zonalStats = rangeMap.get(range(i));
+            return ((Number) zonalStats[statIdx].getResult()).doubleValue();
         }
 
         @Override
         public Long count(int i) {
-            return zonalStats.statistic(firstStat).results().get(i).getNumAccepted();
+            // there is no classification raster, so 0 is the index for the only "raster classification value"
+            Map<Range, Statistics[]> rangeMap = zonalStats.getStatsPerBand(0).get(0);
+            Statistics[] zonalStats = rangeMap.get(range(i));
+
+            return zonalStats[0].getNumSamples();
         }
 
-        ZonalStats getZonalStats() {
+        ZoneGeometry getZonalStats() {
             return zonalStats;
         }
     }

@@ -26,17 +26,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.Name;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.referencing.CRS;
 import org.geotools.util.logging.Logging;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.Name;
 
-/**
- * Builds a feature type based on the attributes defined in the {@link ElasticLayerConfiguration}.
- */
+/** Builds a feature type based on the attributes defined in the {@link ElasticLayerConfiguration}. */
 class ElasticFeatureTypeBuilder extends SimpleFeatureTypeBuilder {
 
     private static final Logger LOGGER = Logging.getLogger(ElasticFeatureTypeBuilder.class);
@@ -69,16 +67,12 @@ class ElasticFeatureTypeBuilder extends SimpleFeatureTypeBuilder {
                                 attributeBuilder.setCRS(CRS.decode("EPSG:" + srid));
                                 attributeBuilder.setName(attributeName);
                                 attributeBuilder.setBinding(attribute.getType());
-                                att =
-                                        attributeBuilder.buildDescriptor(
-                                                attributeName,
-                                                attributeBuilder.buildGeometryType());
+                                att = attributeBuilder.buildDescriptor(
+                                        attributeName, attributeBuilder.buildGeometryType());
 
-                                final ElasticAttribute.ElasticGeometryType geometryType =
-                                        attribute.getGeometryType();
+                                final ElasticAttribute.ElasticGeometryType geometryType = attribute.getGeometryType();
                                 att.getUserData().put(GEOMETRY_TYPE, geometryType);
-                                if (attribute.isDefaultGeometry() != null
-                                        && attribute.isDefaultGeometry()) {
+                                if (attribute.isDefaultGeometry() != null && attribute.isDefaultGeometry()) {
                                     defaultGeometryName = attributeName;
                                 }
                             }
@@ -89,13 +83,9 @@ class ElasticFeatureTypeBuilder extends SimpleFeatureTypeBuilder {
                     } else {
                         attributeBuilder.setName(attributeName);
                         attributeBuilder.setBinding(attribute.getType());
-                        att =
-                                attributeBuilder.buildDescriptor(
-                                        attributeName, attributeBuilder.buildType());
+                        att = attributeBuilder.buildDescriptor(attributeName, attributeBuilder.buildType());
                     }
-                    if (att != null
-                            && (attribute.getValidDateFormats() != null
-                                    || attribute.getDateFormat() != null)) {
+                    if (att != null && (attribute.getValidDateFormats() != null || attribute.getDateFormat() != null)) {
                         if (attribute.getValidDateFormats() == null) {
                             List<String> validFormats = new ArrayList<>();
                             validFormats.add(attribute.getDateFormat());

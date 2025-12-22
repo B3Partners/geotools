@@ -25,6 +25,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import javax.measure.Unit;
 import javax.measure.quantity.Length;
 import javax.xml.parsers.ParserConfigurationException;
@@ -45,8 +46,7 @@ import si.uom.SI;
 
 public class ParsingTest {
 
-    private static final boolean DISABLE =
-            "true".equalsIgnoreCase(System.getProperty("disableTest", "true"));
+    private static final boolean DISABLE = "true".equalsIgnoreCase(System.getProperty("disableTest", "true"));
 
     private static final boolean ONLINE = false; // to do check -o maven option?
 
@@ -68,16 +68,14 @@ public class ParsingTest {
 
         URL url;
         if (ONLINE) {
-            url =
-                    new URL(
-                            "http://schemas.opengis.net/wps/1.0.0/examples/40_wpsDescribeProcess_response.xml");
+            url = new URL("http://schemas.opengis.net/wps/1.0.0/examples/40_wpsDescribeProcess_response.xml");
         } else {
             url = TestData.url(this, "referenceProcessDescriptions.xml");
         }
 
         Configuration config = new WPSConfiguration();
         Parser parser = new Parser(config);
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()))) {
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
             Object object = parser.parse(in);
 
             ProcessDescriptionsType processDesc = (ProcessDescriptionsType) object;
@@ -95,7 +93,7 @@ public class ParsingTest {
 
         Configuration config = new WPSConfiguration();
         Parser parser = new Parser(config);
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()))) {
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
             Object object = parser.parse(in);
 
             assertNotNull("parsed", object);
@@ -115,7 +113,7 @@ public class ParsingTest {
 
         Configuration config = new WPSConfiguration();
         Parser parser = new Parser(config);
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()))) {
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
             Object object = parser.parse(in);
 
             assertNotNull("parsed", object);
@@ -135,7 +133,7 @@ public class ParsingTest {
 
         Configuration config = new WPSConfiguration();
         Parser parser = new Parser(config);
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()))) {
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
             Object object = parser.parse(in);
 
             ProcessDescriptionsType processDesc = (ProcessDescriptionsType) object;
@@ -144,14 +142,13 @@ public class ParsingTest {
     }
 
     @Test
-    public void testExeResponseLiteralDataType()
-            throws IOException, SAXException, ParserConfigurationException {
+    public void testExeResponseLiteralDataType() throws IOException, SAXException, ParserConfigurationException {
         if (DISABLE) {
             return;
         }
 
         File file = TestData.file(this, "LiteralDataTypeTestFile.xml");
-        try (BufferedReader in = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader in = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8))) {
             Configuration config = new WPSConfiguration();
             Parser parser = new Parser(config);
 
@@ -159,8 +156,8 @@ public class ParsingTest {
 
             // try casting the response
             ExecuteResponseType exeResponse = null;
-            if (object instanceof ExecuteResponseType) {
-                exeResponse = (ExecuteResponseType) object;
+            if (object instanceof ExecuteResponseType type) {
+                exeResponse = type;
             }
 
             // try to get the output datatype

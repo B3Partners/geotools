@@ -29,7 +29,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.util.InternationalString;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.NameImpl;
@@ -52,10 +56,6 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.impl.PackedCoordinateSequenceFactory;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.util.InternationalString;
 
 /**
  * Tests some processes that do not require integration with the application context
@@ -68,7 +68,7 @@ public class BeanProcessFactoryTest {
     /** Constant used for absolute reference tests */
     public static final Rectangle DEFAULT_RECTANGLE = new Rectangle(0, 0, 10, 10);
 
-    public class BeanProcessFactory extends AnnotatedBeanProcessFactory {
+    public static class BeanProcessFactory extends AnnotatedBeanProcessFactory {
 
         public BeanProcessFactory() {
             super(
@@ -89,21 +89,20 @@ public class BeanProcessFactoryTest {
 
         // check SPI will see the factory if we register it using an iterator
         // provider
-        GeoTools.addFactoryIteratorProvider(
-                new FactoryIteratorProvider() {
+        GeoTools.addFactoryIteratorProvider(new FactoryIteratorProvider() {
 
-                    @Override
-                    public <T> Iterator<T> iterator(Class<T> category) {
-                        if (ProcessFactory.class.isAssignableFrom(category)) {
-                            @SuppressWarnings("unchecked")
-                            Iterator<T> result =
-                                    (Iterator<T>) Collections.singletonList(factory).iterator();
-                            return result;
-                        } else {
-                            return null;
-                        }
-                    }
-                });
+            @Override
+            public <T> Iterator<T> iterator(Class<T> category) {
+                if (ProcessFactory.class.isAssignableFrom(category)) {
+                    @SuppressWarnings("unchecked")
+                    Iterator<T> result =
+                            (Iterator<T>) Collections.singletonList(factory).iterator();
+                    return result;
+                } else {
+                    return null;
+                }
+            }
+        });
     }
 
     @Test
@@ -118,8 +117,7 @@ public class BeanProcessFactoryTest {
     @Test
     public void testDescribeIdentity() {
         NameImpl name = new NameImpl("bean", "Identity");
-        DescribeProcess describeProcessAnno =
-                IdentityProcess.class.getAnnotation(DescribeProcess.class);
+        DescribeProcess describeProcessAnno = IdentityProcess.class.getAnnotation(DescribeProcess.class);
 
         InternationalString desc = factory.getDescription(name);
         assertEquals(desc.toString(), describeProcessAnno.description());
@@ -169,12 +167,11 @@ public class BeanProcessFactoryTest {
     }
 
     @Test
-    public void testInvertQuery() throws ProcessException {
+    public void testRenderingTransformation() throws ProcessException {
         // prepare a mock feature collection
         SimpleFeatureCollection data = buildTestFeatures();
 
-        org.geotools.process.Process transformation =
-                factory.create(new NameImpl("bean", "VectorIdentityRT"));
+        org.geotools.process.Process transformation = factory.create(new NameImpl("bean", "VectorIdentityRT"));
         Map<String, Object> inputs = new HashMap<>();
         inputs.put("data", data);
         inputs.put("value", 10);
@@ -182,6 +179,7 @@ public class BeanProcessFactoryTest {
         RenderingProcess tx = (RenderingProcess) transformation;
         // just making sure it does not explode?
         tx.invertQuery(inputs, null, null);
+        assertTrue(tx.clipOnRenderingArea(inputs));
 
         Map<String, Object> result = transformation.execute(inputs, null);
 
@@ -213,8 +211,7 @@ public class BeanProcessFactoryTest {
     @Test
     public void testMinMaxAcceptedValues() throws Exception {
         // test that the annotation is correctly generating the parameter metadata
-        Map<String, Parameter<?>> params =
-                factory.getParameterInfo(new NameImpl("bean", "Defaults"));
+        Map<String, Parameter<?>> params = factory.getParameterInfo(new NameImpl("bean", "Defaults"));
         assertEquals(2.0, params.get("int").metadata.get(Parameter.MAX));
         assertEquals(-1.0, params.get("int").metadata.get(Parameter.MIN));
         assertEquals(2.5, params.get("double").metadata.get(Parameter.MAX));

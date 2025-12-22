@@ -18,6 +18,9 @@ package org.geotools.appschema.jdbc;
 
 import java.io.IOException;
 import java.io.Writer;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
 import org.geotools.data.complex.FeatureTypeMapping;
 import org.geotools.data.complex.config.JdbcMultipleValue;
 import org.geotools.data.jdbc.FilterToSQL;
@@ -26,9 +29,6 @@ import org.geotools.filter.visitor.DuplicatingFilterVisitor;
 import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.jdbc.PreparedFilterToSQL;
 import org.geotools.jdbc.PreparedStatementSQLDialect;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
 
 /** Visitor that encode a JDBC multivalued mapping to SQL. */
 public final class JdbcMultipleValueEncoder extends DuplicatingFilterVisitor {
@@ -48,18 +48,16 @@ public final class JdbcMultipleValueEncoder extends DuplicatingFilterVisitor {
         }
         JdbcMultipleValue multipleValue = (JdbcMultipleValue) expression;
         FilterToSQL filterToSql = createFilterToSQL(multipleValue);
-        filterToSql.setFieldEncoder(
-                field -> {
-                    StringBuffer sql = new StringBuffer();
-                    store.dialect.encodeTableName(multipleValue.getId(), sql);
-                    sql.append(".");
-                    sql.append(field);
-                    return sql.toString();
-                });
+        filterToSql.setFieldEncoder(field -> {
+            StringBuffer sql = new StringBuffer();
+            store.dialect.encodeTableName(multipleValue.getId(), sql);
+            sql.append(".");
+            sql.append(field);
+            return sql.toString();
+        });
         try {
             return new MultipleValueExpressionHolder(
-                    output,
-                    filterToSql.encodeToString(((JdbcMultipleValue) expression).getTargetValue()));
+                    output, filterToSql.encodeToString(((JdbcMultipleValue) expression).getTargetValue()));
         } catch (FilterToSQLException exception) {
             throw new RuntimeException(exception);
         }
@@ -92,10 +90,7 @@ public final class JdbcMultipleValueEncoder extends DuplicatingFilterVisitor {
                     output.write(expression);
                 } catch (Exception exception) {
                     throw new RuntimeException(
-                            String.format(
-                                    "Error writing multiple value expression '%s' to output.",
-                                    expression),
-                            exception);
+                            "Error writing multiple value expression '%s' to output.".formatted(expression), exception);
                 }
             }
             return null;

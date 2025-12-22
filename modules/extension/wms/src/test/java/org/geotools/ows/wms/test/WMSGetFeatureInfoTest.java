@@ -2,14 +2,11 @@ package org.geotools.ows.wms.test;
 
 import java.io.IOException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.geotools.geometry.DirectPosition2D;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.geometry.Position2D;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.http.HTTPResponse;
 import org.geotools.http.MockHttpClient;
@@ -17,6 +14,7 @@ import org.geotools.http.MockHttpResponse;
 import org.geotools.ows.ServiceException;
 import org.geotools.ows.wms.CRSEnvelope;
 import org.geotools.ows.wms.Layer;
+import org.geotools.ows.wms.WMSTestUtils;
 import org.geotools.ows.wms.WebMapServer;
 import org.geotools.ows.wms.map.WMSCoverageReader;
 import org.geotools.ows.wms.map.WMSCoverageReaderTest;
@@ -26,7 +24,6 @@ import org.geotools.util.logging.Logging;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.internal.util.collections.Sets;
-import org.opengis.referencing.FactoryException;
 
 public class WMSGetFeatureInfoTest {
 
@@ -41,69 +38,51 @@ public class WMSGetFeatureInfoTest {
     public void testProperTransformationsToGetXYinImageCoordinates()
             throws FactoryException, ServiceException, IOException {
         URL brunar130 = WMSCoverageReaderTest.class.getResource("brunar130.xml");
-        MockHttpClient client =
-                new MockHttpClient() {
+        MockHttpClient client = new MockHttpClient() {
 
-                    @Override
-                    public HTTPResponse get(URL url) throws IOException {
-                        if (url.getQuery().contains("GetCapabilities")) {
-                            return new MockHttpResponse(brunar130, "text/xml");
-                        } else if (url.getQuery().contains("GetFeatureInfo")) {
-                            Map<String, String> params = parseParams(url.getQuery());
+            @Override
+            public HTTPResponse get(URL url) throws IOException {
+                if (url.getQuery().contains("GetCapabilities")) {
+                    return new MockHttpResponse(brunar130, "text/xml");
+                } else if (url.getQuery().contains("GetFeatureInfo")) {
+                    Map<String, String> params = WMSTestUtils.parseParams((url.getQuery()));
 
-                            // Expected position request
-                            if (!Double.valueOf(params.get("I")).equals(Double.valueOf(107))
-                                    || !Double.valueOf(params.get("J")).equals(Double.valueOf(2))) {
-                                // this will cause the test to fail
-                                throw new IllegalArgumentException();
-                            } else {
-                                return new MockHttpResponse(brunar130, "application/vnd.ogc.gml");
-                            }
-                        }
-                        throw new IllegalArgumentException(
-                                "Don't know how to handle a get request over "
-                                        + url.toExternalForm());
+                    // Expected position request
+                    if (!Double.valueOf(params.get("I")).equals(107.0)
+                            || !Double.valueOf(params.get("J")).equals(2.0)) {
+                        // this will cause the test to fail
+                        throw new IllegalArgumentException();
+                    } else {
+                        return new MockHttpResponse(brunar130, "application/vnd.ogc.gml");
                     }
-                };
-        WebMapServer serverWithMockedClient =
-                new WebMapServer(new URL("http://geoserver.org/geoserver/wms"), client);
+                }
+                throw new IllegalArgumentException(
+                        "Don't know how to handle a get request over " + url.toExternalForm());
+            }
+        };
+        WebMapServer serverWithMockedClient = new WebMapServer(new URL("http://geoserver.org/geoserver/wms"), client);
         HashMap<String, CRSEnvelope> BBOXES = new HashMap<>();
         // given the bbox, and i, j params
 
-        CRSEnvelope generalEnvelope =
-                new CRSEnvelope("EPSG:4326", -180, -90, 180, 90); // $NON-NLS-1$
+        CRSEnvelope generalEnvelope = new CRSEnvelope("EPSG:4326", -180, -90, 180, 90); // $NON-NLS-1$
         BBOXES.put("EPSG:4326", generalEnvelope);
-        ReferencedEnvelope requestBBox =
-                new ReferencedEnvelope(
-                        7291710.72,
-                        7294004.4799999995,
-                        832252.7999999999,
-                        834546.5599999999,
-                        CRS.decode("EPSG:3006"));
+        ReferencedEnvelope requestBBox = new ReferencedEnvelope(
+                7291710.72, 7294004.4799999995, 832252.7999999999, 834546.5599999999, CRS.decode("EPSG:3006"));
 
-        DirectPosition2D pointInImage = new DirectPosition2D(107, 2);
+        Position2D pointInImage = new Position2D(107, 2);
         Layer layer = new Layer("CV100Coberta_Terrestre");
         layer.setSrs(Sets.newSet("EPSG:3006"));
         layer.setBoundingBoxes(BBOXES);
         // a random layer to perform the getFeatureInfoRequest
-        WMSLayer wmsCopy =
-                new WMSLayerTest(
-                        new WebMapServer(brunar130),
-                        layer,
-                        new WMSCoverageReader(
-                                serverWithMockedClient,
-                                getLayer(serverWithMockedClient, "GEOS9770")));
+        WMSLayer wmsCopy = new WMSLayerTest(
+                new WebMapServer(brunar130),
+                layer,
+                new WMSCoverageReader(serverWithMockedClient, getLayer(serverWithMockedClient, "GEOS9770")));
 
         // test trigger
         try {
             wmsCopy.getFeatureInfo(
-                    requestBBox,
-                    512,
-                    512,
-                    (int) pointInImage.x,
-                    (int) pointInImage.y,
-                    "application/vnd.ogc.gml",
-                    1);
+                    requestBBox, 512, 512, (int) pointInImage.x, (int) pointInImage.y, "application/vnd.ogc.gml", 1);
         } catch (Exception e) {
             Assert.fail("getFeatureInfo request with wrong I,J reprojected params ");
         }
@@ -121,21 +100,10 @@ public class WMSGetFeatureInfoTest {
     /*
        Test Class Extending WMLayer that allows to create a WMSLayer Object passing a reader
     */
-    class WMSLayerTest extends WMSLayer {
+    static class WMSLayerTest extends WMSLayer {
         public WMSLayerTest(WebMapServer wms, Layer layer, WMSCoverageReader reader) {
             super(wms, layer);
             this.reader = reader;
         }
     }
-
-    Map<String, String> parseParams(String query) {
-
-        List<NameValuePair> params = URLEncodedUtils.parse(query, StandardCharsets.UTF_8);
-        Map<String, String> result = new HashMap<>();
-        for (Object param : params) {
-            NameValuePair pair = (NameValuePair) param;
-            result.put(pair.getName().toUpperCase(), pair.getValue());
-        }
-        return result;
-    };
 }

@@ -18,11 +18,11 @@ package org.geotools.vsi;
 
 import it.geosolutions.imageio.plugins.vrt.VRTImageReaderSpi;
 import java.io.IOException;
+import org.geotools.api.coverage.grid.Format;
+import org.geotools.api.coverage.grid.GridCoverageReader;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverageio.gdal.BaseGDALGridCoverage2DReader;
 import org.geotools.util.factory.Hints;
-import org.opengis.coverage.grid.Format;
-import org.opengis.coverage.grid.GridCoverageReader;
 
 /**
  * This class can read a VSI data source and create a {@link GridCoverage2D} from the data.
@@ -50,11 +50,7 @@ public final class VSIReader extends BaseGDALGridCoverage2DReader implements Gri
      * @throws IOException
      */
     public VSIReader(Object input, Hints hints) throws IOException {
-        super(
-                VSIDataset.fromObject(input).getFile(),
-                hints,
-                WORLD_FILE_EXT,
-                new VRTImageReaderSpi());
+        super(VSIDataset.fromObject(input).getFile(), hints, WORLD_FILE_EXT, new VRTImageReaderSpi());
     }
 
     /**

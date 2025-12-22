@@ -20,8 +20,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import org.opengis.filter.capability.SpatialOperator;
-import org.opengis.filter.capability.SpatialOperators;
+import org.geotools.api.filter.capability.SpatialOperator;
+import org.geotools.api.filter.capability.SpatialOperators;
 
 /**
  * Implementation of the SpatialOperators interface.
@@ -114,7 +114,7 @@ public class SpatialOperatorsImpl implements SpatialOperators {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((operators == null) ? 0 : operators.hashCode());
+        result = prime * result + (operators == null ? 0 : operators.hashCode());
         return result;
     }
 

@@ -16,7 +16,6 @@
  */
 package org.geotools.mbstyle.transform;
 
-import static org.geotools.styling.TextSymbolizer.CONFLICT_RESOLUTION_KEY;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasEntry;
@@ -34,6 +33,25 @@ import java.util.List;
 import java.util.Map;
 import javax.xml.transform.TransformerException;
 import org.geotools.TestData;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.GraphicalSymbol;
+import org.geotools.api.style.LinePlacement;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.PointPlacement;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.RasterSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyledLayerDescriptor;
+import org.geotools.api.style.Symbolizer;
+import org.geotools.api.style.TextSymbolizer;
 import org.geotools.data.property.PropertyDataStore;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.store.ContentFeatureSource;
@@ -57,39 +75,18 @@ import org.geotools.mbstyle.layer.MBLayer;
 import org.geotools.mbstyle.layer.RasterMBLayer;
 import org.geotools.mbstyle.layer.SymbolMBLayer;
 import org.geotools.mbstyle.parse.MBObjectParser;
-import org.geotools.styling.AnchorPoint;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.Fill;
-import org.geotools.styling.Graphic;
-import org.geotools.styling.LinePlacement;
-import org.geotools.styling.LineSymbolizer;
-import org.geotools.styling.Mark;
-import org.geotools.styling.PointPlacement;
-import org.geotools.styling.PointSymbolizer;
-import org.geotools.styling.PolygonSymbolizer;
-import org.geotools.styling.RasterSymbolizer;
-import org.geotools.styling.Rule;
 import org.geotools.styling.SLD;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyledLayerDescriptor;
-import org.geotools.styling.Symbolizer;
-import org.geotools.styling.TextSymbolizer;
-import org.geotools.styling.TextSymbolizer2;
 import org.hamcrest.CoreMatchers;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.GraphicalSymbol;
 
 /** Test parsing and transforming a Mapbox fill layer from json. */
 public class StyleTransformTest {
 
-    static FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+    static FilterFactory ff = CommonFactoryFinder.getFilterFactory();
 
     Map<String, JSONObject> testLayersById = new HashMap<>();
 
@@ -135,11 +132,9 @@ public class StyleTransformTest {
         assertNotNull("displacementX not null", psym.getDisplacement().getDisplacementX());
         assertNotNull("displacementY not null", psym.getDisplacement().getDisplacementY());
         assertEquals(
-                Integer.valueOf(20),
-                psym.getDisplacement().getDisplacementX().evaluate(null, Integer.class));
+                Integer.valueOf(20), psym.getDisplacement().getDisplacementX().evaluate(null, Integer.class));
         assertEquals(
-                Integer.valueOf(20),
-                psym.getDisplacement().getDisplacementY().evaluate(null, Integer.class));
+                Integer.valueOf(20), psym.getDisplacement().getDisplacementY().evaluate(null, Integer.class));
     }
 
     /** Test parsing and generating a MapBox fill extrusion */
@@ -173,18 +168,25 @@ public class StyleTransformTest {
         assertEquals(3, ((FilterFunction_offset) roofGeometry).getParameters().size());
         //        assertEquals("the_geom", ((FilterFunction_offset)
         // roofGeometry).getParameters().get(0).toString());
-        assertEquals("0", ((FilterFunction_offset) roofGeometry).getParameters().get(1).toString());
         assertEquals(
-                "Height", ((FilterFunction_offset) roofGeometry).getParameters().get(2).toString());
+                "0",
+                ((FilterFunction_offset) roofGeometry).getParameters().get(1).toString());
+        assertEquals(
+                "Height",
+                ((FilterFunction_offset) roofGeometry).getParameters().get(2).toString());
 
         Expression sidesGeometry = sides.getGeometry();
         assertEquals("isometric", ((FilterFunction_isometric) sidesGeometry).getName());
-        assertEquals(2, ((FilterFunction_isometric) sidesGeometry).getParameters().size());
+        assertEquals(
+                2, ((FilterFunction_isometric) sidesGeometry).getParameters().size());
         //        assertEquals("the_geom", ((FilterFunction_isometric)
         // sidesGeometry).getParameters().get(0).toString());
         assertEquals(
                 "Height",
-                ((FilterFunction_isometric) sidesGeometry).getParameters().get(1).toString());
+                ((FilterFunction_isometric) sidesGeometry)
+                        .getParameters()
+                        .get(1)
+                        .toString());
 
         Expression expr = psym.getFill().getColor();
         assertNotNull("fillColor set", expr);
@@ -264,15 +266,12 @@ public class StyleTransformTest {
         assertTrue(symbolizer instanceof LineSymbolizer);
         LineSymbolizer lsym = (LineSymbolizer) symbolizer;
 
-        assertEquals(
-                new Color(0, 153, 255), lsym.getStroke().getColor().evaluate(null, Color.class));
+        assertEquals(new Color(0, 153, 255), lsym.getStroke().getColor().evaluate(null, Color.class));
         assertEquals("square", lsym.getStroke().getLineCap().evaluate(null, String.class));
         assertEquals("round", lsym.getStroke().getLineJoin().evaluate(null, String.class));
         assertEquals(.5d, lsym.getStroke().getOpacity().evaluate(null, Double.class), .0001);
-        assertEquals(
-                Integer.valueOf(10), lsym.getStroke().getWidth().evaluate(null, Integer.class));
-        assertEquals(
-                Integer.valueOf(4), lsym.getPerpendicularOffset().evaluate(null, Integer.class));
+        assertEquals(Integer.valueOf(10), lsym.getStroke().getWidth().evaluate(null, Integer.class));
+        assertEquals(Integer.valueOf(4), lsym.getPerpendicularOffset().evaluate(null, Integer.class));
 
         List<Integer> expectedDashes = Arrays.asList(50, 50); // 5 times 10, the line width
         assertEquals(expectedDashes.size(), lsym.getStroke().dashArray().size());
@@ -303,20 +302,16 @@ public class StyleTransformTest {
         assertTrue(symbolizer instanceof LineSymbolizer);
         LineSymbolizer lsym = (LineSymbolizer) symbolizer;
 
-        assertEquals(
-                new Color(0, 153, 255), lsym.getStroke().getColor().evaluate(null, Color.class));
+        assertEquals(new Color(0, 153, 255), lsym.getStroke().getColor().evaluate(null, Color.class));
         assertEquals("square", lsym.getStroke().getLineCap().evaluate(null, String.class));
         assertEquals("round", lsym.getStroke().getLineJoin().evaluate(null, String.class));
         assertEquals(.5d, lsym.getStroke().getOpacity().evaluate(null, Double.class), .0001);
-        assertEquals(
-                Integer.valueOf(10), lsym.getStroke().getWidth().evaluate(null, Integer.class));
-        assertEquals(
-                Integer.valueOf(-5), lsym.getPerpendicularOffset().evaluate(null, Integer.class));
+        assertEquals(Integer.valueOf(10), lsym.getStroke().getWidth().evaluate(null, Integer.class));
+        assertEquals(Integer.valueOf(-5), lsym.getPerpendicularOffset().evaluate(null, Integer.class));
     }
 
     @Test
-    public void testLineGapStopWidth()
-            throws IOException, ParseException, TransformerException, CQLException {
+    public void testLineGapStopWidth() throws IOException, ParseException, TransformerException, CQLException {
         JSONObject jsonObject = parseTestStyle("lineStyleGapStopsTest.json");
 
         // Find the LineMBLayer and assert it contains the correct FeatureTypeStyle.
@@ -335,21 +330,17 @@ public class StyleTransformTest {
         Rule r0 = fts.get(0).rules().get(0);
         assertEquals(2, r0.symbolizers().size());
         LineSymbolizer s_0_0 = (LineSymbolizer) r0.symbolizers().get(0);
-        assertEquals(
-                Integer.valueOf(10), s_0_0.getStroke().getWidth().evaluate(null, Integer.class));
+        assertEquals(Integer.valueOf(10), s_0_0.getStroke().getWidth().evaluate(null, Integer.class));
         Expression exected_po_0_0 =
-                CQL.toExpression(
-                        "8 - (Interpolate(zoomLevel(env('wms_scale_denominator'), 'EPSG:3857'), 12, 0, 20, 6, "
-                                + "'numeric') + 10) / 2");
+                CQL.toExpression("8 - (Interpolate(zoomLevel(env('wms_scale_denominator'), 'EPSG:3857'), 12, 0, 20, 6, "
+                        + "'numeric') + 10) / 2");
         assertEquals(exected_po_0_0, s_0_0.getPerpendicularOffset());
 
         LineSymbolizer s_0_1 = (LineSymbolizer) r0.symbolizers().get(1);
-        assertEquals(
-                Integer.valueOf(10), s_0_1.getStroke().getWidth().evaluate(null, Integer.class));
+        assertEquals(Integer.valueOf(10), s_0_1.getStroke().getWidth().evaluate(null, Integer.class));
         Expression exected_po_0_1 =
-                CQL.toExpression(
-                        "8 + (Interpolate(zoomLevel(env('wms_scale_denominator'), 'EPSG:3857'), 12, 0, 20, 6, "
-                                + "'numeric') + 10) / 2");
+                CQL.toExpression("8 + (Interpolate(zoomLevel(env('wms_scale_denominator'), 'EPSG:3857'), 12, 0, 20, 6, "
+                        + "'numeric') + 10) / 2");
         assertEquals(exected_po_0_1, s_0_1.getPerpendicularOffset());
     }
 
@@ -377,11 +368,9 @@ public class StyleTransformTest {
         assertEquals(Color.BLACK, lsym.getStroke().getColor().evaluate(null, Color.class));
         assertEquals("butt", lsym.getStroke().getLineCap().evaluate(null, String.class));
         assertEquals("mitre", lsym.getStroke().getLineJoin().evaluate(null, String.class));
-        assertEquals(
-                Integer.valueOf(1), lsym.getStroke().getOpacity().evaluate(null, Integer.class));
+        assertEquals(Integer.valueOf(1), lsym.getStroke().getOpacity().evaluate(null, Integer.class));
         assertEquals(Integer.valueOf(1), lsym.getStroke().getWidth().evaluate(null, Integer.class));
-        assertEquals(
-                Integer.valueOf(0), lsym.getPerpendicularOffset().evaluate(null, Integer.class));
+        assertEquals(Integer.valueOf(0), lsym.getPerpendicularOffset().evaluate(null, Integer.class));
         assertNull(lsym.getStroke().dashArray());
     }
 
@@ -408,22 +397,15 @@ public class StyleTransformTest {
 
         assertNotNull(psym.getGraphic());
 
-        assertEquals(
-                Integer.valueOf(30), psym.getGraphic().getSize().evaluate(null, Integer.class));
+        assertEquals(Integer.valueOf(30), psym.getGraphic().getSize().evaluate(null, Integer.class));
 
         assertNotNull(psym.getGraphic().getDisplacement());
         assertEquals(
                 Integer.valueOf(10),
-                psym.getGraphic()
-                        .getDisplacement()
-                        .getDisplacementX()
-                        .evaluate(null, Integer.class));
+                psym.getGraphic().getDisplacement().getDisplacementX().evaluate(null, Integer.class));
         assertEquals(
                 Integer.valueOf(10),
-                psym.getGraphic()
-                        .getDisplacement()
-                        .getDisplacementY()
-                        .evaluate(null, Integer.class));
+                psym.getGraphic().getDisplacement().getDisplacementY().evaluate(null, Integer.class));
 
         assertEquals(1, psym.getGraphic().graphicalSymbols().size());
 
@@ -464,22 +446,15 @@ public class StyleTransformTest {
 
         assertNotNull(psym.getGraphic());
 
-        assertEquals(
-                Integer.valueOf(10), psym.getGraphic().getSize().evaluate(null, Integer.class));
+        assertEquals(Integer.valueOf(10), psym.getGraphic().getSize().evaluate(null, Integer.class));
 
         if (psym.getGraphic().getDisplacement() != null) {
             assertEquals(
                     Integer.valueOf(0),
-                    psym.getGraphic()
-                            .getDisplacement()
-                            .getDisplacementX()
-                            .evaluate(null, Integer.class));
+                    psym.getGraphic().getDisplacement().getDisplacementX().evaluate(null, Integer.class));
             assertEquals(
                     Integer.valueOf(0),
-                    psym.getGraphic()
-                            .getDisplacement()
-                            .getDisplacementY()
-                            .evaluate(null, Integer.class));
+                    psym.getGraphic().getDisplacement().getDisplacementY().evaluate(null, Integer.class));
         }
 
         assertEquals(1, psym.getGraphic().graphicalSymbols().size());
@@ -564,10 +539,8 @@ public class StyleTransformTest {
         List<Expression> family1 = tsym.fonts().get(1).getFamily();
         assertEquals(1, family1.size());
 
-        assertEquals(
-                ff.function("fontAlternatives", ff.literal("Bitstream Vera Sans")), family0.get(0));
-        assertEquals(
-                ff.function("fontAlternatives", ff.literal("Other Test Font")), family1.get(0));
+        assertEquals(ff.function("fontAlternatives", ff.literal("Bitstream Vera Sans")), family0.get(0));
+        assertEquals(ff.function("fontAlternatives", ff.literal("Other Test Font")), family1.get(0));
     }
 
     @Test
@@ -580,10 +553,10 @@ public class StyleTransformTest {
         // only one symbolizer
         List<Symbolizer> symbolizers = r.symbolizers();
         assertEquals(1, symbolizers.size());
-        TextSymbolizer2 ts = (TextSymbolizer2) symbolizers.get(0);
+        TextSymbolizer ts = (TextSymbolizer) symbolizers.get(0);
         assertEquals("false", ts.getOptions().get("partials"));
-        assertEquals("INDEPENDENT", ts.getOptions().get(TextSymbolizer.GRAPHIC_PLACEMENT_KEY));
-        assertEquals("false", ts.getOptions().get(PointSymbolizer.FALLBACK_ON_DEFAULT_MARK));
+        assertEquals("INDEPENDENT", ts.getOptions().get(org.geotools.api.style.TextSymbolizer.GRAPHIC_PLACEMENT_KEY));
+        assertEquals("false", ts.getOptions().get(org.geotools.api.style.PointSymbolizer.FALLBACK_ON_DEFAULT_MARK));
         assertNotNull(ts.getGraphic());
     }
 
@@ -653,7 +626,8 @@ public class StyleTransformTest {
         Rule r = fts.get(0).rules().get(0);
         Symbolizer symbolizer = r.symbolizers().get(0);
         // no way to have only partial conflict resolution atm
-        assertEquals("true", symbolizer.getOptions().get(CONFLICT_RESOLUTION_KEY));
+        assertEquals(
+                "true", symbolizer.getOptions().get(org.geotools.api.style.TextSymbolizer.CONFLICT_RESOLUTION_KEY));
     }
 
     @Test
@@ -671,7 +645,8 @@ public class StyleTransformTest {
         Rule r = fts.get(0).rules().get(0);
         Symbolizer symbolizer = r.symbolizers().get(0);
         // no way to have only partial conflict resolution right now
-        assertEquals("true", symbolizer.getOptions().get(CONFLICT_RESOLUTION_KEY));
+        assertEquals(
+                "true", symbolizer.getOptions().get(org.geotools.api.style.TextSymbolizer.CONFLICT_RESOLUTION_KEY));
     }
 
     @Test
@@ -687,13 +662,13 @@ public class StyleTransformTest {
         List<MBLayer> layers = mbStyle.layers("testsource");
         List<FeatureTypeStyle> fts = layers.get(0).transform(mbStyle);
         Rule r = fts.get(0).rules().get(0);
-        TextSymbolizer2 symbolizer = (TextSymbolizer2) r.symbolizers().get(0);
-        assertEquals("true", symbolizer.getOptions().get(CONFLICT_RESOLUTION_KEY));
+        TextSymbolizer symbolizer = (TextSymbolizer) r.symbolizers().get(0);
+        assertEquals(
+                "true", symbolizer.getOptions().get(org.geotools.api.style.TextSymbolizer.CONFLICT_RESOLUTION_KEY));
     }
 
     @Test
-    public void testSymbolTextIgnorePlacementTrue()
-            throws IOException, ParseException, TransformerException {
+    public void testSymbolTextIgnorePlacementTrue() throws IOException, ParseException, TransformerException {
         JSONObject jsonObject = parseTestStyle("symbolStyleTest3.json");
         JSONArray jsonLayers = (JSONArray) jsonObject.get("layers");
         JSONObject jsonLayer = (JSONObject) jsonLayers.get(0);
@@ -717,12 +692,12 @@ public class StyleTransformTest {
     @Test
     public void testMapboxTokenValues() throws Exception {
 
-        File property = new File(TestData.getResource(this, "testpoints.properties").toURI());
+        File property =
+                new File(TestData.getResource(this, "testpoints.properties").toURI());
         PropertyDataStore ds = new PropertyDataStore(property.getParentFile());
         ContentFeatureSource pointFS = ds.getFeatureSource("testpoints");
 
-        MBStyleTransformer transformer =
-                new MBStyleTransformer(new MBObjectParser(SymbolMBLayer.class));
+        MBStyleTransformer transformer = new MBStyleTransformer(new MBObjectParser(SymbolMBLayer.class));
         Expression e = transformer.cqlExpressionFromTokens("Replace text here: \"{text}\"");
 
         try (SimpleFeatureIterator sfi = pointFS.getFeatures().features()) {
@@ -757,7 +732,7 @@ public class StyleTransformTest {
         FontAlternativesFunction family =
                 (FontAlternativesFunction) tsym.fonts().get(0).getFamily().get(0);
         MapBoxFontBaseNameFunction familyBaseName =
-                (MapBoxFontBaseNameFunction) (family.getParameters()).get(0);
+                (MapBoxFontBaseNameFunction) family.getParameters().get(0);
         assertEquals(
                 "Apple-Chancery",
                 ((CategorizeFunction) familyBaseName.getParameters().get(0))
@@ -784,7 +759,7 @@ public class StyleTransformTest {
         FeatureTypeStyle ft = style.featureTypeStyles().get(0);
         TextSymbolizer ts = (TextSymbolizer) ft.rules().get(0).symbolizers().get(0);
         PointPlacement pp = (PointPlacement) ts.getLabelPlacement();
-        AnchorPoint ap = pp.getAnchorPoint();
+        org.geotools.api.style.AnchorPoint ap = pp.getAnchorPoint();
         assertEquals(
                 ECQL.toExpression(
                         "mbAnchor(Categorize(zoomLevel(env('wms_scale_denominator'), 'EPSG:3857'), 'left', 0, 'left', 8, 'center', 'succeeding'), 'x')"),
@@ -801,23 +776,20 @@ public class StyleTransformTest {
         MBStyle mbStyle = new MBStyle(jsonObject);
         StyledLayerDescriptor sld = mbStyle.transform();
         Style style = MapboxTestUtils.getStyle(sld, 0);
-        TextSymbolizer ts =
-                (TextSymbolizer)
-                        style.featureTypeStyles().get(0).rules().get(0).symbolizers().get(0);
+        TextSymbolizer ts = (TextSymbolizer)
+                style.featureTypeStyles().get(0).rules().get(0).symbolizers().get(0);
         // no halo, the halo color was not specified and it defaults to "fully transparent"
         assertNull(ts.getHalo());
     }
 
     @Test
     public void testTextOffsetEmsLinePlacement() throws Exception {
-        JSONObject jsonObject =
-                parseTestStyle("symbolStyleSimpleIconAndTextLinePlacementTest.json");
+        JSONObject jsonObject = parseTestStyle("symbolStyleSimpleIconAndTextLinePlacementTest.json");
         MBStyle mbStyle = new MBStyle(jsonObject);
         StyledLayerDescriptor sld = mbStyle.transform();
         Style style = MapboxTestUtils.getStyle(sld, 0);
-        TextSymbolizer ts =
-                (TextSymbolizer)
-                        style.featureTypeStyles().get(0).rules().get(0).symbolizers().get(0);
+        TextSymbolizer ts = (TextSymbolizer)
+                style.featureTypeStyles().get(0).rules().get(0).symbolizers().get(0);
         LinePlacement lp = (LinePlacement) ts.getLabelPlacement();
         // text-offset: [0, 0.5] as ems, with text-size set to 20, and opposite y direction
         assertEquals(-10, lp.getPerpendicularOffset().evaluate(null, Double.class), 0d);
@@ -834,14 +806,12 @@ public class StyleTransformTest {
 
     @Test
     public void testTextOffsetEmsPointPlacement() throws Exception {
-        JSONObject jsonObject =
-                parseTestStyle("symbolStyleSimpleIconAndTextPointPlacementOffsetTest.json");
+        JSONObject jsonObject = parseTestStyle("symbolStyleSimpleIconAndTextPointPlacementOffsetTest.json");
         MBStyle mbStyle = new MBStyle(jsonObject);
         StyledLayerDescriptor sld = mbStyle.transform();
         Style style = MapboxTestUtils.getStyle(sld, 0);
-        TextSymbolizer ts =
-                (TextSymbolizer)
-                        style.featureTypeStyles().get(0).rules().get(0).symbolizers().get(0);
+        TextSymbolizer ts = (TextSymbolizer)
+                style.featureTypeStyles().get(0).rules().get(0).symbolizers().get(0);
         PointPlacement pp = (PointPlacement) ts.getLabelPlacement();
         // text-offset: [1, 0.5] as ems, with text-size set to 12, and opposite y direction
         assertEquals(12, pp.getDisplacement().getDisplacementX().evaluate(null, Double.class), 0d);

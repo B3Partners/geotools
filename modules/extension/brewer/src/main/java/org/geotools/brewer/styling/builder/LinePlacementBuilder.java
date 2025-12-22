@@ -16,8 +16,8 @@
  */
 package org.geotools.brewer.styling.builder;
 
-import org.geotools.styling.LinePlacement;
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.LinePlacement;
 
 public class LinePlacementBuilder extends AbstractStyleBuilder<LinePlacement> {
     private Expression offset;
@@ -81,8 +81,7 @@ public class LinePlacementBuilder extends AbstractStyleBuilder<LinePlacement> {
         if (unset) {
             return null;
         }
-        LinePlacement linePlacement =
-                sf.linePlacement(offset, initialGap, gap, repeated, aligned, generalizedLine);
+        LinePlacement linePlacement = sf.linePlacement(offset, initialGap, gap, repeated, aligned, generalizedLine);
         if (parent == null) {
             reset();
         }

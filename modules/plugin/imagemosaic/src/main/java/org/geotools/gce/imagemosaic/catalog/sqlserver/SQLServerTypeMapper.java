@@ -16,14 +16,14 @@
  */
 package org.geotools.gce.imagemosaic.catalog.sqlserver;
 
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.gce.imagemosaic.catalog.oracle.AbstractFeatureTypeMapper;
 import org.geotools.gce.imagemosaic.catalog.oracle.DataStoreWrapper;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
- * Specific SQLServer implementation for a {@link DataStoreWrapper} By default, SQLServer
- * identifiers can't be longer than 128 chars. See <a
+ * Specific SQLServer implementation for a {@link DataStoreWrapper} By default, SQLServer identifiers can't be longer
+ * than 128 chars. See <a
  * href="https://docs.microsoft.com/en-us/sql/relational-databases/databases/database-identifiers?view=sql-server-ver15">SQL
  * Syntax identifiers</a>
  */

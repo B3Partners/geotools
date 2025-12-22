@@ -21,6 +21,12 @@ import java.awt.geom.Point2D;
 import javax.measure.Unit;
 import javax.measure.UnitConverter;
 import javax.measure.quantity.Length;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.GeographicCRS;
+import org.geotools.api.referencing.cs.AxisDirection;
+import org.geotools.api.referencing.cs.CoordinateSystem;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -35,40 +41,29 @@ import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.GeographicCRS;
-import org.opengis.referencing.cs.AxisDirection;
-import org.opengis.referencing.cs.CoordinateSystem;
-import org.opengis.util.ProgressListener;
 import si.uom.SI;
 import tech.units.indriya.function.AbstractConverter;
 
 /**
- * Generates a set of polygons, each representing the set of points within a given distance from the
- * central point The data layer must be a point layer, the reference layer must be a polygonal one"
+ * Generates a set of polygons, each representing the set of points within a given distance from the central point The
+ * data layer must be a point layer, the reference layer must be a polygonal one"
  */
 @DescribeProcess(
         title = "Point Buffers",
-        description =
-                "Returns a collection of circular buffer polygons with specified radii centered on a given point")
+        description = "Returns a collection of circular buffer polygons with specified radii centered on a given point")
 public class PointBuffers implements VectorProcess {
 
     @DescribeResult(
             name = "buffers",
-            description =
-                    "Features for the circular buffer polygons around the point, with attributes geom and radius")
+            description = "Features for the circular buffer polygons around the point, with attributes geom and radius")
     public SimpleFeatureCollection execute(
             @DescribeParameter(name = "center", description = "Input point") Point center,
             @DescribeParameter(
                             name = "crs",
-                            description =
-                                    "Coordinate reference system of the point and the generated buffer polygons",
+                            description = "Coordinate reference system of the point and the generated buffer polygons",
                             min = 0)
                     CoordinateReferenceSystem crs,
-            @DescribeParameter(
-                            name = "distances",
-                            description = "Buffer radius distance, in meters")
+            @DescribeParameter(name = "distances", description = "Buffer radius distance, in meters")
                     double[] distances,
             @DescribeParameter(
                             name = "quadrantSegments",
@@ -96,7 +91,8 @@ public class PointBuffers implements VectorProcess {
                 generator = new GeographicGenerator(center, quadrantSegments, crs);
             } else {
                 @SuppressWarnings("unchecked")
-                Unit<Length> unit = (Unit<Length>) hor.getCoordinateSystem().getAxis(0).getUnit();
+                Unit<Length> unit =
+                        (Unit<Length>) hor.getCoordinateSystem().getAxis(0).getUnit();
                 UnitConverter converter = SI.METRE.getConverterTo(unit);
                 generator = new MetricGenerator(center, quadrantSegments, converter);
             }
@@ -130,7 +126,7 @@ public class PointBuffers implements VectorProcess {
     }
 
     /** A generator that uses JTS buffer to create the buffer polygons */
-    public class MetricGenerator extends BufferGenerator {
+    public static class MetricGenerator extends BufferGenerator {
         UnitConverter converter;
 
         public MetricGenerator(Point center, Integer quadrantSegments, UnitConverter converter) {
@@ -150,8 +146,7 @@ public class PointBuffers implements VectorProcess {
     }
 
     /**
-     * Builds the appropriate buffer polygons sampling the actual buffer shape with the
-     * GeodeticCalculator
+     * Builds the appropriate buffer polygons sampling the actual buffer shape with the GeodeticCalculator
      *
      * @author Andrea Aime - GeoSolutions
      */
@@ -162,8 +157,7 @@ public class PointBuffers implements VectorProcess {
 
         boolean latLon;
 
-        public GeographicGenerator(
-                Point center, int quadrantSegments, CoordinateReferenceSystem crs) {
+        public GeographicGenerator(Point center, int quadrantSegments, CoordinateReferenceSystem crs) {
             this.quadrantSegments = quadrantSegments;
             this.center = center;
             this.calculator = new GeodeticCalculator(crs);
@@ -179,7 +173,7 @@ public class PointBuffers implements VectorProcess {
         public Polygon getBuffer(double distance) {
             CoordinateSequence cs = new LiteCoordinateSequence(quadrantSegments * 4 + 1, 2);
 
-            for (int i = 0; i < (cs.size() - 1); i++) {
+            for (int i = 0; i < cs.size() - 1; i++) {
                 double azimuth = 360.0 * i / cs.size() - 180;
                 calculator.setDirection(azimuth, distance);
                 Point2D dp = calculator.getDestinationGeographicPoint();
@@ -215,7 +209,7 @@ public class PointBuffers implements VectorProcess {
             }
         }
 
-        if ((longitudeDim >= 0) && (latitudeDim >= 0)) {
+        if (longitudeDim >= 0 && latitudeDim >= 0) {
             if (longitudeDim > latitudeDim) {
                 return true;
             }

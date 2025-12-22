@@ -6,8 +6,6 @@
  */
 package net.opengis.gml.impl;
 
-import java.math.BigInteger;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -28,7 +26,7 @@ import org.eclipse.emf.ecore.util.Diagnostician;
 
 import org.eclipse.emf.ecore.xml.type.XMLTypeFactory;
 import org.eclipse.emf.ecore.xml.type.XMLTypePackage;
-import org.opengis.coverage.grid.GridEnvelope;
+import org.geotools.api.coverage.grid.GridEnvelope;
 
 /**
  * <!-- begin-user-doc -->
@@ -423,7 +421,7 @@ public class GmlFactoryImpl extends EFactoryImpl implements GmlFactory {
 		List result = new ArrayList();
 		for (StringTokenizer stringTokenizer = new StringTokenizer(initialValue); stringTokenizer.hasMoreTokens(); ) {
 			String item = stringTokenizer.nextToken();
-			result.add((Double)XMLTypeFactory.eINSTANCE.createFromString(XMLTypePackage.Literals.DOUBLE, item));
+			result.add(XMLTypeFactory.eINSTANCE.createFromString(XMLTypePackage.Literals.DOUBLE, item));
 		}
 		return result;
 	}
@@ -455,7 +453,7 @@ public class GmlFactoryImpl extends EFactoryImpl implements GmlFactory {
 		List result = new ArrayList();
 		for (StringTokenizer stringTokenizer = new StringTokenizer(initialValue); stringTokenizer.hasMoreTokens(); ) {
 			String item = stringTokenizer.nextToken();
-			result.add((BigInteger)XMLTypeFactory.eINSTANCE.createFromString(XMLTypePackage.Literals.INTEGER, item));
+			result.add(XMLTypeFactory.eINSTANCE.createFromString(XMLTypePackage.Literals.INTEGER, item));
 		}
 		return result;
 	}
@@ -487,7 +485,7 @@ public class GmlFactoryImpl extends EFactoryImpl implements GmlFactory {
 		List result = new ArrayList();
 		for (StringTokenizer stringTokenizer = new StringTokenizer(initialValue); stringTokenizer.hasMoreTokens(); ) {
 			String item = stringTokenizer.nextToken();
-			result.add((String)XMLTypeFactory.eINSTANCE.createFromString(XMLTypePackage.Literals.NAME, item));
+			result.add(XMLTypeFactory.eINSTANCE.createFromString(XMLTypePackage.Literals.NAME, item));
 		}
 		return result;
 	}

@@ -22,17 +22,25 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.QueryCapabilities;
+import org.geotools.api.data.SimpleFeatureReader;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortOrder;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureReader;
 import org.geotools.data.MaxFeatureReader;
-import org.geotools.data.Query;
-import org.geotools.data.QueryCapabilities;
 import org.geotools.data.ReTypeFeatureReader;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.geojson.PagingFeatureCollection;
 import org.geotools.data.simple.FilteringSimpleFeatureReader;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureReader;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureCollection;
 import org.geotools.data.store.ContentFeatureSource;
@@ -44,18 +52,10 @@ import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.stac.client.STACClient;
 import org.geotools.stac.client.SearchQuery;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.sort.SortOrder;
 
 public class STACFeatureSource extends ContentFeatureSource {
 
-    static final FilterFactory2 FF = CommonFactoryFinder.getFilterFactory2();
+    static final FilterFactory FF = CommonFactoryFinder.getFilterFactory();
     static final String ASSETS = "assets";
 
     private final STACClient client;
@@ -129,8 +129,8 @@ public class STACFeatureSource extends ContentFeatureSource {
         // try to get the "matched" header from the GeoJSON collection, if available
         SimpleFeatureCollection fc = client.search(searchQuery, getDataStore().getSearchMode());
         // if there was a "next" link, the reader returns a paging collection
-        if (fc instanceof PagingFeatureCollection) {
-            return Optional.ofNullable(((PagingFeatureCollection) fc).getMatched()).orElse(-1);
+        if (fc instanceof PagingFeatureCollection collection) {
+            return Optional.ofNullable(collection.getMatched()).orElse(-1);
         }
         // otherwise everything is in memory
         if (fc instanceof ListFeatureCollection) {
@@ -151,8 +151,7 @@ public class STACFeatureSource extends ContentFeatureSource {
         SimpleFeatureCollection fc = client.search(sq, getDataStore().getSearchMode());
         SimpleFeatureType rawSchema = fc.getSchema();
 
-        SimpleFeatureTypeBuilder tb =
-                new SimpleFeatureTypeBuilder(new STACFeatureTypeFactoryImpl());
+        SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder(new STACFeatureTypeFactoryImpl());
         tb.init(rawSchema);
         tb.add(ASSETS, ObjectNode.class);
         tb.setName(entry.getTypeName());
@@ -164,29 +163,27 @@ public class STACFeatureSource extends ContentFeatureSource {
     }
 
     @Override
-    protected boolean canFilter() {
+    protected boolean canFilter(Query query) {
         return true;
     }
 
     @Override
-    protected boolean canSort() {
+    protected boolean canSort(Query query) {
         return true;
     }
 
     @Override
-    protected boolean canRetype() {
+    protected boolean canRetype(Query query) {
         return true;
     }
 
     @Override
-    protected boolean canLimit() {
+    protected boolean canLimit(Query query) {
         return true;
     }
 
     @Override
-    @SuppressWarnings("PMD.CloseResource")
-    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query)
-            throws IOException {
+    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query) throws IOException {
         Pair<SearchQuery, Filter> pair = queryBuilder.toSearchQuery(query, false);
         SearchQuery sq;
         Filter postFilter;
@@ -213,8 +210,7 @@ public class STACFeatureSource extends ContentFeatureSource {
         }
 
         // handle post filtering, if the full filter could not be encoded
-        if (!Filter.INCLUDE.equals(postFilter))
-            result = new FilteringSimpleFeatureReader(result, query.getFilter());
+        if (!Filter.INCLUDE.equals(postFilter)) result = new FilteringSimpleFeatureReader(result, query.getFilter());
 
         // handle property selection, if it was not fully encoded in the query, or a post
         // filter required more properties than strictly necessary.
@@ -222,15 +218,13 @@ public class STACFeatureSource extends ContentFeatureSource {
                 && !query.getProperties().isEmpty()
                 && (sq.getFields() == null || !Filter.INCLUDE.equals(postFilter))) {
             SimpleFeatureType targetType =
-                    SimpleFeatureTypeBuilder.retype(
-                            getSchema(), Arrays.asList(query.getPropertyNames()));
+                    SimpleFeatureTypeBuilder.retype(getSchema(), Arrays.asList(query.getPropertyNames()));
             result = DataUtilities.simple(new ReTypeFeatureReader(result, targetType, false));
         }
 
         // handle max feature from the query
         int max = query.getMaxFeatures();
-        if (max < Query.DEFAULT_MAX)
-            result = DataUtilities.simple(new MaxFeatureReader<>(result, max));
+        if (max < Query.DEFAULT_MAX) result = DataUtilities.simple(new MaxFeatureReader<>(result, max));
 
         return result;
     }
@@ -241,15 +235,15 @@ public class STACFeatureSource extends ContentFeatureSource {
 
     @Override
     protected boolean handleVisitor(Query query, FeatureVisitor visitor) throws IOException {
-        if (visitor instanceof MinVisitor
+        if (visitor instanceof MinVisitor minVisitor
                 && ((MinVisitor) visitor).getExpression() instanceof PropertyName) {
-            String pn = ((PropertyName) ((MinVisitor) visitor).getExpression()).getPropertyName();
-            ((MinVisitor) visitor).setValue(getExtremeValue(query, pn, SortOrder.ASCENDING));
+            String pn = ((PropertyName) minVisitor.getExpression()).getPropertyName();
+            minVisitor.setValue(getExtremeValue(query, pn, SortOrder.ASCENDING));
             return true;
-        } else if (visitor instanceof MaxVisitor
+        } else if (visitor instanceof MaxVisitor maxVisitor
                 && ((MaxVisitor) visitor).getExpression() instanceof PropertyName) {
-            String pn = ((PropertyName) ((MaxVisitor) visitor).getExpression()).getPropertyName();
-            ((MaxVisitor) visitor).setValue(getExtremeValue(query, pn, SortOrder.DESCENDING));
+            String pn = ((PropertyName) maxVisitor.getExpression()).getPropertyName();
+            maxVisitor.setValue(getExtremeValue(query, pn, SortOrder.DESCENDING));
             return true;
         }
 

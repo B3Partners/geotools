@@ -20,7 +20,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.opengis.parameter.Parameter;
+import org.geotools.api.parameter.Parameter;
 
 /**
  * DescribeProcess information for publication by DEMProcessFactory.
@@ -36,8 +36,8 @@ public @interface DescribeResult {
     String name() default "result";
 
     /**
-     * The type of the result, needed only when there are multiple ones (since it cannot be desumed
-     * from the process Map return type
+     * The type of the result, needed only when there are multiple ones (since it cannot be desumed from the process Map
+     * return type
      */
     Class<?> type() default Object.class;
 
@@ -48,9 +48,8 @@ public @interface DescribeResult {
     boolean primary() default false;
 
     /**
-     * Extra metadata values for this parameter which will be added into the {@link Parameter}
-     * metadata map. Each string should be in the key=value form, if not, the string will be taken
-     * as the key and the value will be null.
+     * Extra metadata values for this parameter which will be added into the {@link Parameter} metadata map. Each string
+     * should be in the key=value form, if not, the string will be taken as the key and the value will be null.
      */
     String[] meta() default {};
 }

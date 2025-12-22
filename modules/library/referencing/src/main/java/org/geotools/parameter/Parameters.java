@@ -17,6 +17,7 @@
 package org.geotools.parameter;
 
 import java.lang.reflect.Array;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -27,53 +28,49 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import javax.measure.Unit;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.InvalidParameterTypeException;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.parameter.ParameterValueGroup;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.referencing.AbstractIdentifiedObject;
 import org.geotools.util.Classes;
 import org.geotools.util.logging.Logging;
-import org.opengis.parameter.GeneralParameterDescriptor;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.InvalidParameterTypeException;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.parameter.ParameterValueGroup;
 
 /**
- * Utility class for methods helping implementing, and working with the parameter API from {@link
- * org.opengis.parameter} package.
+ * Utility class for methods helping implementing, and working with the parameter API from
+ * {@link org.geotools.api.parameter} package.
  *
  * <p>
  *
  * <h3>Design note</h3>
  *
- * This class contains some methods working on a specific parameter in a group (e.g. {@linkplain
- * #search searching}, {@linkplain #ensureSet setting a value}, <cite>etc.</cite>). Parameters are
- * identified by their {@linkplain ParameterDescriptor#getName name} instead of their full
- * {@linkplain ParameterDescriptor descriptor} object, because:
+ * This class contains some methods working on a specific parameter in a group (e.g. {@linkplain #search searching},
+ * {@linkplain #ensureSet setting a value}, <cite>etc.</cite>). Parameters are identified by their
+ * {@linkplain ParameterDescriptor#getName name} instead of their full {@linkplain ParameterDescriptor descriptor}
+ * object, because:
  *
  * <ul>
- *   <li>The parameter descriptor may not be always available. For example a user may looks for the
- *       {@code "semi_major"} axis length (because it is documented in OGC specification under that
- *       name) but doesn't know and doesn't care about who is providing the implementation. In such
- *       case, he doesn't have the parameter's descriptor. He only have the parameter's name, and
- *       creating a descriptor from that name (a descriptor independent of any implementation) is
- *       tedious..
- *   <li>Parameter descriptors are implementation-dependent. For example if a user searchs for the
- *       above-cited {@code "semi_major"} axis length using the {@linkplain
- *       org.geotools.referencing.operation.projection.MapProjection.AbstractProvider#SEMI_MAJOR
- *       Geotools's descriptor} for this parameter, we will fail to find this parameter in any
- *       alternative {@link ParameterValueGroup} implementations. This is against GeoAPI's
- *       inter-operability goal.
+ *   <li>The parameter descriptor may not be always available. For example a user may looks for the {@code "semi_major"}
+ *       axis length (because it is documented in OGC specification under that name) but doesn't know and doesn't care
+ *       about who is providing the implementation. In such case, he doesn't have the parameter's descriptor. He only
+ *       have the parameter's name, and creating a descriptor from that name (a descriptor independent of any
+ *       implementation) is tedious..
+ *   <li>Parameter descriptors are implementation-dependent. For example if a user searchs for the above-cited
+ *       {@code "semi_major"} axis length using the
+ *       {@linkplain org.geotools.referencing.operation.projection.MapProjection.AbstractProvider#SEMI_MAJOR Geotools's
+ *       descriptor} for this parameter, we will fail to find this parameter in any alternative
+ *       {@link ParameterValueGroup} implementations. This is against GeoAPI's inter-operability goal.
  * </ul>
  *
- * <p>The above doesn't mean that parameter's descriptor should not be used. They are used for
- * inspecting meta-data about parameters, not as a key for searching parameters in a group. Since
- * each parameter's name should be unique in a given parameter group (because {@linkplain
- * ParameterDescriptor#getMaximumOccurs maximum occurs} is always 1 for single parameter), the
- * parameter name is a suffisient key.
+ * <p>The above doesn't mean that parameter's descriptor should not be used. They are used for inspecting meta-data
+ * about parameters, not as a key for searching parameters in a group. Since each parameter's name should be unique in a
+ * given parameter group (because {@linkplain ParameterDescriptor#getMaximumOccurs maximum occurs} is always 1 for
+ * single parameter), the parameter name is a suffisient key.
  *
  * @since 2.1
  * @version $Id$
@@ -85,18 +82,16 @@ public final class Parameters {
     private static final double EPS = 1E-8;
 
     /** An empty parameter group. This group contains no parameters. */
-    public static ParameterDescriptorGroup EMPTY_GROUP =
-            new DefaultParameterDescriptorGroup(
-                    "empty", // TODO: localize
-                    new GeneralParameterDescriptor[0]);
+    public static ParameterDescriptorGroup EMPTY_GROUP = new DefaultParameterDescriptorGroup(
+            "empty", // TODO: localize
+            new GeneralParameterDescriptor[0]);
 
     /** Do not allows instantiation of this utility class. */
     private Parameters() {}
 
     /**
-     * Casts the given parameter descriptor to the given type. An exception is thrown immediately if
-     * the parameter does not have the expected value class. This is a helper method for type safety
-     * when using Java 5 parameterized types.
+     * Casts the given parameter descriptor to the given type. An exception is thrown immediately if the parameter does
+     * not have the expected value class. This is a helper method for type safety when using Java 5 parameterized types.
      *
      * @param <T> The expected value class.
      * @param descriptor The descriptor to cast.
@@ -113,20 +108,16 @@ public final class Parameters {
             // We require a strict equality - not type.isAssignableFrom(actual) - because in
             // the later case we could have (to be strict) to return a <? extends T> type.
             if (!type.equals(actual)) {
-                throw new ClassCastException(
-                        Errors.format(
-                                ErrorKeys.BAD_PARAMETER_TYPE_$2,
-                                descriptor.getName().getCode(),
-                                actual));
+                final Object arg0 = descriptor.getName().getCode();
+                throw new ClassCastException(MessageFormat.format(ErrorKeys.BAD_PARAMETER_TYPE_$2, arg0, actual));
             }
         }
         return (ParameterDescriptor) descriptor;
     }
 
     /**
-     * Casts the given parameter value to the given type. An exception is thrown immediately if the
-     * parameter does not have the expected value class. This is a helper method for type safety
-     * when using Java 5 parameterized types.
+     * Casts the given parameter value to the given type. An exception is thrown immediately if the parameter does not
+     * have the expected value class. This is a helper method for type safety when using Java 5 parameterized types.
      *
      * @param <T> The expected value class.
      * @param value The value to cast.
@@ -142,26 +133,22 @@ public final class Parameters {
             final ParameterDescriptor descriptor = value.getDescriptor();
             final Class<?> actual = descriptor.getValueClass();
             if (!type.equals(actual)) { // Same comment than cast(ParameterDescriptor)...
-                throw new ClassCastException(
-                        Errors.format(
-                                ErrorKeys.BAD_PARAMETER_TYPE_$2,
-                                descriptor.getName().getCode(),
-                                actual));
+                final Object arg0 = descriptor.getName().getCode();
+                throw new ClassCastException(MessageFormat.format(ErrorKeys.BAD_PARAMETER_TYPE_$2, arg0, actual));
             }
         }
         return (ParameterValue) value;
     }
 
     /**
-     * Checks a parameter value against its {@linkplain ParameterDescriptor parameter descriptor}.
-     * This method takes care of handling checking arrays and collections against parameter
-     * descriptor.
+     * Checks a parameter value against its {@linkplain ParameterDescriptor parameter descriptor}. This method takes
+     * care of handling checking arrays and collections against parameter descriptor.
      *
-     * <p>When the {@linkplain ParameterDescriptor#getValueClass value class} is an array (like
-     * {@code double[].class}) or a {@linkplain Collection collection} (like {@code List.class}),
-     * the descriptor {@linkplain ParameterDescriptor#getMinimumValue minimum value}, {@linkplain
-     * ParameterDescriptor#getMaximumValue maximum value} and {@linkplain
-     * ParameterDescriptor#getValidValues valid values} will be used to check the elements.
+     * <p>When the {@linkplain ParameterDescriptor#getValueClass value class} is an array (like {@code double[].class})
+     * or a {@linkplain Collection collection} (like {@code List.class}), the descriptor
+     * {@linkplain ParameterDescriptor#getMinimumValue minimum value}, {@linkplain ParameterDescriptor#getMaximumValue
+     * maximum value} and {@linkplain ParameterDescriptor#getValidValues valid values} will be used to check the
+     * elements.
      *
      * @param parameter The parameter to test.
      * @return true if parameter is valid.
@@ -188,9 +175,9 @@ public final class Parameters {
                     return false;
                 }
             }
-        } else if (value instanceof Collection) {
+        } else if (value instanceof Collection collection) {
             // handle checking elements in a collection
-            for (final Object element : (Collection) value) {
+            for (final Object element : collection) {
                 if (!isValidValue(element, descriptor)) {
                     return false;
                 }
@@ -204,18 +191,17 @@ public final class Parameters {
     }
 
     /**
-     * Called on a single {@linkplain ParameterValue parameter value}, or on elements of a parameter
-     * value. This method ensures that {@linkplain ParameterDescriptor#getMinimumValue minimum
-     * value}, {@linkplain ParameterDescriptor#getMaximumValue maximum value} and {@linkplain
-     * ParameterDescriptor#getValidValues valid values} all think the provided value is okay.
+     * Called on a single {@linkplain ParameterValue parameter value}, or on elements of a parameter value. This method
+     * ensures that {@linkplain ParameterDescriptor#getMinimumValue minimum value},
+     * {@linkplain ParameterDescriptor#getMaximumValue maximum value} and {@linkplain ParameterDescriptor#getValidValues
+     * valid values} all think the provided value is okay.
      *
      * @param value The value to test.
      * @param descriptor The descriptor for the value.
      * @return true if parameter is valid.
      * @see Parameter#ensureValidValue
      */
-    private static boolean isValidValue(
-            final Object value, final ParameterDescriptor<?> descriptor) {
+    private static boolean isValidValue(final Object value, final ParameterDescriptor<?> descriptor) {
         final Set<?> validValues = descriptor.getValidValues();
         if (validValues != null && !validValues.contains(value)) {
             return false;
@@ -234,34 +220,30 @@ public final class Parameters {
     }
 
     /**
-     * Searchs all parameters with the specified name. The given {@code name} is compared against
-     * parameter {@link GeneralParameterDescriptor#getName name} and {@link
-     * GeneralParameterDescriptor#getAlias alias}. This method search recursively in subgroups up to
-     * the specified depth:
+     * Searchs all parameters with the specified name. The given {@code name} is compared against parameter
+     * {@link GeneralParameterDescriptor#getName name} and {@link GeneralParameterDescriptor#getAlias alias}. This
+     * method search recursively in subgroups up to the specified depth:
      *
      * <p>
      *
      * <ul>
-     *   <li>If {@code maxDepth} is equals to 0, then this method returns {@code param} if and only
-     *       if it matches the specified name.
-     *   <li>If {@code maxDepth} is equals to 1 and {@code param} is an instance of {@link
-     *       ParameterDescriptorGroup}, then this method checks all elements in this group but not
-     *       in subgroups.
+     *   <li>If {@code maxDepth} is equals to 0, then this method returns {@code param} if and only if it matches the
+     *       specified name.
+     *   <li>If {@code maxDepth} is equals to 1 and {@code param} is an instance of {@link ParameterDescriptorGroup},
+     *       then this method checks all elements in this group but not in subgroups.
      *   <li>...
-     *   <li>If {@code maxDepth} is a high number (e.g. 100), then this method checks all elements
-     *       in all subgroups up to the specified depth, which is likely to be never reached. In
-     *       this case, {@code maxDepth} can be seen as a safeguard against never ending loops, for
-     *       example if parameters graph contains cyclic entries.
+     *   <li>If {@code maxDepth} is a high number (e.g. 100), then this method checks all elements in all subgroups up
+     *       to the specified depth, which is likely to be never reached. In this case, {@code maxDepth} can be seen as
+     *       a safeguard against never ending loops, for example if parameters graph contains cyclic entries.
      * </ul>
      *
      * @param param The parameter to inspect.
-     * @param name The name of the parameter to search for. See the class javadoc for a rational
-     *     about the usage of name as a key instead of {@linkplain ParameterDescriptor descriptor}.
+     * @param name The name of the parameter to search for. See the class javadoc for a rational about the usage of name
+     *     as a key instead of {@linkplain ParameterDescriptor descriptor}.
      * @param maxDepth The maximal depth while descending down the parameter tree.
      * @return The set (possibly empty) of parameters with the given name.
      */
-    public static List<Object> search(
-            final GeneralParameterValue param, final String name, int maxDepth) {
+    public static List<Object> search(final GeneralParameterValue param, final String name, int maxDepth) {
         final List<Object> list = new ArrayList<>();
         search(param, name, maxDepth, list);
         return list;
@@ -269,16 +251,13 @@ public final class Parameters {
 
     /** Implementation of the search algorithm. The result is stored in the supplied set. */
     private static void search(
-            final GeneralParameterValue param,
-            final String name,
-            final int maxDepth,
-            final Collection<Object> list) {
+            final GeneralParameterValue param, final String name, final int maxDepth, final Collection<Object> list) {
         if (maxDepth >= 0) {
             if (AbstractIdentifiedObject.nameMatches(param.getDescriptor(), name)) {
                 list.add(param);
             }
-            if ((maxDepth != 0) && (param instanceof ParameterValueGroup)) {
-                for (final GeneralParameterValue value : ((ParameterValueGroup) param).values()) {
+            if (maxDepth != 0 && param instanceof ParameterValueGroup group) {
+                for (final GeneralParameterValue value : group.values()) {
                     search(value, name, maxDepth - 1, list);
                 }
             }
@@ -286,10 +265,9 @@ public final class Parameters {
     }
 
     /**
-     * Copies all parameter values from {@code source} to {@code target}. A typical usage of this
-     * method is for transfering values from an arbitrary implementation to some specific
-     * implementation (e.g. a parameter group implementation backed by a {@link
-     * java.awt.image.renderable.ParameterBlock} for image processing operations).
+     * Copies all parameter values from {@code source} to {@code target}. A typical usage of this method is for
+     * transfering values from an arbitrary implementation to some specific implementation (e.g. a parameter group
+     * implementation backed by a {@link java.awt.image.renderable.ParameterBlock} for image processing operations).
      *
      * @param source The parameters to copy.
      * @param target Where to copy the source parameters.
@@ -298,8 +276,8 @@ public final class Parameters {
     public static void copy(final ParameterValueGroup source, final ParameterValueGroup target) {
         for (final GeneralParameterValue param : source.values()) {
             final String name = param.getDescriptor().getName().getCode();
-            if (param instanceof ParameterValueGroup) {
-                copy((ParameterValueGroup) param, target.addGroup(name));
+            if (param instanceof ParameterValueGroup group) {
+                copy(group, target.addGroup(name));
             } else {
                 target.parameter(name).setValue(((ParameterValue) param).getValue());
             }
@@ -307,11 +285,10 @@ public final class Parameters {
     }
 
     /**
-     * Gets a flat view of {@linkplain ParameterDescriptor#getName name}-{@linkplain
-     * ParameterValue#getValue value} pairs. This method copies all parameter values into the
-     * supplied {@code destination} map. Keys are parameter names as {@link String} objects, and
-     * values are parameter values as arbitrary objects. All subgroups (if any) are extracted
-     * recursively.
+     * Gets a flat view of {@linkplain ParameterDescriptor#getName name}-{@linkplain ParameterValue#getValue value}
+     * pairs. This method copies all parameter values into the supplied {@code destination} map. Keys are parameter
+     * names as {@link String} objects, and values are parameter values as arbitrary objects. All subgroups (if any) are
+     * extracted recursively.
      *
      * @param parameters The parameters to extract values from.
      * @param destination The destination map, or {@code null} for a default one.
@@ -322,8 +299,7 @@ public final class Parameters {
         if (destination == null) {
             destination = new LinkedHashMap<>();
         }
-        if (parameters instanceof ParameterValue) {
-            final ParameterValue param = (ParameterValue) parameters;
+        if (parameters instanceof ParameterValue param) {
             final Object value = param.getValue();
             final Object old = destination.put(param.getDescriptor().getName().getCode(), value);
             if (old != null && !old.equals(value)) {
@@ -332,8 +308,7 @@ public final class Parameters {
                 throw new IllegalArgumentException("Inconsistent value"); // TODO: localize.
             }
         }
-        if (parameters instanceof ParameterValueGroup) {
-            final ParameterValueGroup group = (ParameterValueGroup) parameters;
+        if (parameters instanceof ParameterValueGroup group) {
             for (final GeneralParameterValue value : group.values()) {
                 destination = toNameValueMap(value, destination);
             }
@@ -342,23 +317,20 @@ public final class Parameters {
     }
 
     /**
-     * Ensures that the specified parameter is set. The {@code value} is set if and only if no value
-     * were already set by the user for the given {@code name}.
+     * Ensures that the specified parameter is set. The {@code value} is set if and only if no value were already set by
+     * the user for the given {@code name}.
      *
-     * <p>The {@code force} argument said what to do if the named parameter is already set. If the
-     * value matches, nothing is done in all case. If there is a mismatch and {@code force} is
-     * {@code true}, then the parameter is overridden with the specified {@code value}. Otherwise,
-     * the parameter is left unchanged but a warning is logged with the {@link Level#FINE FINE}
-     * level.
+     * <p>The {@code force} argument said what to do if the named parameter is already set. If the value matches,
+     * nothing is done in all case. If there is a mismatch and {@code force} is {@code true}, then the parameter is
+     * overridden with the specified {@code value}. Otherwise, the parameter is left unchanged but a warning is logged
+     * with the {@link Level#FINE FINE} level.
      *
      * @param parameters The set of projection parameters.
      * @param name The parameter name to set.
      * @param value The value to set, or to expect if the parameter is already set.
      * @param unit The value unit.
-     * @param force {@code true} for forcing the parameter to the specified {@code value} is case of
-     *     mismatch.
-     * @return {@code true} if the were a mismatch, or {@code false} if the parameters can be used
-     *     with no change.
+     * @param force {@code true} for forcing the parameter to the specified {@code value} is case of mismatch.
+     * @return {@code true} if the were a mismatch, or {@code false} if the parameters can be used with no change.
      */
     public static boolean ensureSet(
             final ParameterValueGroup parameters,

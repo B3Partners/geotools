@@ -19,12 +19,12 @@ package org.geotools.filter.v1_0.capabilities;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.capability.SpatialOperator;
+import org.geotools.api.filter.capability.SpatialOperators;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.capability.SpatialOperator;
-import org.opengis.filter.capability.SpatialOperators;
 
 /**
  * Binding object for the type http://www.opengis.net/ogc:Spatial_OperatorsType.
@@ -91,7 +91,7 @@ public class Spatial_OperatorsTypeBinding extends AbstractComplexBinding {
         List<SpatialOperator> ops = new ArrayList<>();
 
         for (Node child : node.getChildren()) {
-            ops.add(factory.spatialOperator(child.getComponent().getName(), null));
+            ops.add(factory.spatialOperator(child.getComponent().getName()));
         }
 
         return factory.spatialOperators(ops.toArray(new SpatialOperator[ops.size()]));

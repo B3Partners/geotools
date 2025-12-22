@@ -21,8 +21,7 @@ import org.geotools.graph.structure.Node;
 import org.geotools.graph.structure.line.BasicXYNode;
 
 /**
- * An implementation of GraphBuilder extended from BasicGraphBuilder used to build graphs
- * representing line networks.
+ * An implementation of GraphBuilder extended from BasicGraphBuilder used to build graphs representing line networks.
  *
  * @author Justin Deoliveira, Refractions Research Inc, jdeolive@refractions.net
  */
@@ -36,6 +35,6 @@ public class BasicLineGraphBuilder extends BasicGraphBuilder {
      */
     @Override
     public Node buildNode() {
-        return (new BasicXYNode());
+        return new BasicXYNode();
     }
 }

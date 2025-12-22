@@ -16,21 +16,23 @@
  */
 package org.geotools.http;
 
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.jetty.http.HttpHeader;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.AbstractHandler;
+import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.geotools.util.URLs;
 import org.geotools.util.logging.Logging;
@@ -50,72 +52,67 @@ final class HttpStaticServer {
         connector = new ServerConnector(server);
         connector.setPort(0);
         server.setConnectors(new Connector[] {connector});
-        server.setHandler(
-                new AbstractHandler() {
-                    @Override
-                    public void handle(
-                            String target,
-                            Request baseRequest,
-                            HttpServletRequest request,
-                            HttpServletResponse response) {
-                        for (Map.Entry<String, String> resource : resources.entrySet()) {
-                            if (target != null
-                                    && target.equalsIgnoreCase("/" + resource.getKey())) {
-                                // we found the resource we where looking for
-                                response.setContentType("text/xml");
-                                response.setStatus(HttpServletResponse.SC_OK);
-                                baseRequest.setHandled(true);
-                                try (InputStream input =
-                                        new ByteArrayInputStream(resource.getValue().getBytes())) {
-                                    // write the resource content to the HTTP response output stream
-                                    IOUtils.copy(input, response.getOutputStream());
-                                    // we are done
-                                    return;
-                                } catch (Exception exception) {
-                                    throw new RuntimeException(
-                                            "Error writing HTTP response.", exception);
-                                }
-                            }
+        server.setHandler(new Handler.Abstract() {
+            @Override
+            public boolean handle(Request request, Response response, Callback callback) throws Exception {
+                try {
+                    String path = request.getHttpURI().getPath();
+                    for (Map.Entry<String, String> resource : resources.entrySet()) {
+                        String expected = "/" + resource.getKey();
+                        if (path != null && path.equalsIgnoreCase(expected)) {
+                            // Found the resource: set headers and status on the Response
+                            response.getHeaders().put(HttpHeader.CONTENT_TYPE, "text/xml");
+                            response.setStatus(HttpStatus.OK_200);
+
+                            // Write the resource body to the response OutputStream
+                            byte[] bytes = resource.getValue().getBytes(StandardCharsets.UTF_8);
+                            ByteBuffer buffer = ByteBuffer.wrap(bytes);
+                            response.write(true, buffer, callback);
+                            return true;
                         }
-                        // request not handled
-                        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                        baseRequest.setHandled(true);
                     }
-                });
+
+                    // Not found: you can return false to let a downstream DefaultHandler send 404,
+                    // or set it yourself and return true. This mirrors your Jetty 9 behavior:
+                    response.setStatus(404);
+                    callback.succeeded();
+                    return true;
+                } catch (Exception e) {
+                    // Signal failure via the callback in Jetty 10
+                    callback.failed(e);
+                    return true; // we took ownership of the request
+                }
+            }
+        });
     }
 
     /**
-     * Adds a static resource that should be published by the static HTTP server. The resource will
-     * be read from the classpath and it will be available at: http://{host}:{port}/{resourceName}
-     * Placeholders {host} and {port} will be replace with this server values.
+     * Adds a static resource that should be published by the static HTTP server. The resource will be read from the
+     * classpath and it will be available at: http://{host}:{port}/{resourceName} Placeholders {host} and {port} will be
+     * replace with this server values.
      */
     void putResource(String resourceName, String resourcePath) {
         try (InputStream input = this.getClass().getResourceAsStream(resourcePath)) {
             if (input == null) {
                 // we could not find the resource int he classpath
                 throw new RuntimeException(
-                        String.format(
-                                "Resource '%s' with path '%s' not found.",
-                                resourceName, resourcePath));
+                        "Resource '%s' with path '%s' not found.".formatted(resourceName, resourcePath));
             }
             // read the resource from the classpath
             String resource = IOUtils.toString(input, StandardCharsets.UTF_8);
             // substitute host and port place holders
-            String relativePath =
-                    URLs.urlToFile(URLs.getParentUrl(this.getClass().getResource(resourcePath)))
-                            .getPath();
+            String relativePath = URLs.urlToFile(
+                            URLs.getParentUrl(this.getClass().getResource(resourcePath)))
+                    .getPath();
             resource = resource.replace("{relative}", relativePath);
             resource = resource.replace("{host}", getHost());
             resource = resource.replace("{port}", String.valueOf(getPort()));
             // register the resource
             resources.put(resourceName, resource);
-            LOGGER.info(String.format("Resource %s added.", buildUrl(resourceName)));
+            LOGGER.info("Resource %s added.".formatted(buildUrl(resourceName)));
         } catch (Exception exception) {
             throw new RuntimeException(
-                    String.format(
-                            "Error registering resource '%s' with path '%s'.",
-                            resourceName, resourcePath),
-                    exception);
+                    "Error registering resource '%s' with path '%s'.".formatted(resourceName, resourcePath), exception);
         }
     }
 
@@ -123,7 +120,7 @@ final class HttpStaticServer {
     void start() {
         try {
             server.start();
-            LOGGER.info(String.format("HTTP static server started '%s:%d'.", getHost(), getPort()));
+            LOGGER.info("HTTP static server started '%s:%d'.".formatted(getHost(), getPort()));
         } catch (Exception exception) {
             throw new RuntimeException("Error starting the HTTP server.", exception);
         }
@@ -156,8 +153,8 @@ final class HttpStaticServer {
     }
 
     /**
-     * Gets the port on which the static HTTP static server is listen on. This method will throw an
-     * exception if invoked before the server was start or after the server has been stopped.
+     * Gets the port on which the static HTTP static server is listen on. This method will throw an exception if invoked
+     * before the server was start or after the server has been stopped.
      */
     int getPort() {
         int port = connector.getLocalPort();
@@ -169,16 +166,14 @@ final class HttpStaticServer {
     }
 
     /**
-     * Helper method that build the URL that can be used to request from this HTTP static server the
-     * static resource associated with the provided resource name.
+     * Helper method that build the URL that can be used to request from this HTTP static server the static resource
+     * associated with the provided resource name.
      */
     String buildUrl(String resourceName) {
-        return String.format("http://%s:%d/%s", getHost(), getPort(), resourceName);
+        return "http://%s:%d/%s".formatted(getHost(), getPort(), resourceName);
     }
 
-    /**
-     * Helper method to let the HTTP static server run in the background, this useful for debugging.
-     */
+    /** Helper method to let the HTTP static server run in the background, this useful for debugging. */
     void join() {
         try {
             server.join();

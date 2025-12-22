@@ -30,9 +30,14 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import javax.measure.MetricPrefix;
-import org.geotools.geometry.DirectPosition2D;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.GeographicCRS;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.geometry.Position2D;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.referencing.cs.DefaultCoordinateSystemAxis;
 import org.geotools.referencing.cs.DefaultEllipsoidalCS;
@@ -41,10 +46,6 @@ import org.geotools.referencing.datum.DefaultGeodeticDatum;
 import org.geotools.test.TestData;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.GeographicCRS;
-import org.opengis.referencing.operation.TransformException;
 import si.uom.SI;
 
 /**
@@ -72,8 +73,7 @@ public final class GeodeticCalculatorTest {
 
     /**
      * Test path on the 45th parallel. Data for this test come from the <A
-     * HREF="http://www.univ-lemans.fr/~hainry/articles/loxonavi.html">Orthodromie et loxodromie</A>
-     * page.
+     * HREF="http://www.univ-lemans.fr/~hainry/articles/loxonavi.html">Orthodromie et loxodromie</A> page.
      */
     @Test
     @SuppressWarnings("fallthrough")
@@ -82,14 +82,13 @@ public final class GeodeticCalculatorTest {
         // Column 2: Orthodromic distance in kilometers
         // Column 3: Loxodromic  distance in kilometers
         final double[] DATA = {
-            0.00, 0, 0, 11.25, 883, 884, 22.50, 1762, 1768, 33.75, 2632, 2652, 45.00, 3489, 3536,
-            56.25, 4327, 4419, 67.50, 5140, 5303, 78.75, 5923, 6187, 90.00, 6667, 7071, 101.25,
-            7363, 7955, 112.50, 8002, 8839, 123.75, 8573, 9723, 135.00, 9064, 10607, 146.25, 9463,
-            11490, 157.50, 9758, 12374, 168.75, 9939, 13258, 180.00, 10000, 14142
+            0.00, 0, 0, 11.25, 883, 884, 22.50, 1762, 1768, 33.75, 2632, 2652, 45.00, 3489, 3536, 56.25, 4327, 4419,
+            67.50, 5140, 5303, 78.75, 5923, 6187, 90.00, 6667, 7071, 101.25, 7363, 7955, 112.50, 8002, 8839, 123.75,
+            8573, 9723, 135.00, 9064, 10607, 146.25, 9463, 11490, 157.50, 9758, 12374, 168.75, 9939, 13258, 180.00,
+            10000, 14142
         };
         final double R = 20000 / Math.PI;
-        final DefaultEllipsoid ellipsoid =
-                DefaultEllipsoid.createEllipsoid("Test", R, R, MetricPrefix.KILO(SI.METRE));
+        final DefaultEllipsoid ellipsoid = DefaultEllipsoid.createEllipsoid("Test", R, R, MetricPrefix.KILO(SI.METRE));
         final GeodeticCalculator calculator = new GeodeticCalculator(ellipsoid);
         calculator.setStartingGeographicPoint(0, 45);
         for (int i = 0; i < DATA.length; i += 3) {
@@ -108,24 +107,19 @@ public final class GeodeticCalculatorTest {
             final double[] buffer = new double[6];
             while (!iterator.isDone()) {
                 switch (iterator.currentSegment(buffer)) {
-                    case PathIterator.SEG_LINETO:
-                        {
-                            count++;
-                            length +=
-                                    ellipsoid.orthodromicDistance(
-                                            lastX, lastY, buffer[0], buffer[1]);
-                            // Fall through
-                        }
-                    case PathIterator.SEG_MOVETO:
-                        {
-                            lastX = buffer[0];
-                            lastY = buffer[1];
-                            break;
-                        }
-                    default:
-                        {
-                            throw new IllegalPathStateException();
-                        }
+                    case PathIterator.SEG_LINETO: {
+                        count++;
+                        length += ellipsoid.orthodromicDistance(lastX, lastY, buffer[0], buffer[1]);
+                        // Fall through
+                    }
+                    case PathIterator.SEG_MOVETO: {
+                        lastX = buffer[0];
+                        lastY = buffer[1];
+                        break;
+                    }
+                    default: {
+                        throw new IllegalPathStateException();
+                    }
                 }
                 iterator.next();
             }
@@ -136,40 +130,36 @@ public final class GeodeticCalculatorTest {
     }
 
     /**
-     * Tests geodetic calculator involving a coordinate operation. Our test uses a simple geographic
-     * CRS with only the axis order interchanged.
+     * Tests geodetic calculator involving a coordinate operation. Our test uses a simple geographic CRS with only the
+     * axis order interchanged.
      */
     @Test
     public void testUsingTransform() throws FactoryException, TransformException {
-        final GeographicCRS crs =
-                new DefaultGeographicCRS(
-                        "Test",
-                        DefaultGeodeticDatum.WGS84,
-                        new DefaultEllipsoidalCS(
-                                "Test",
-                                DefaultCoordinateSystemAxis.LATITUDE,
-                                DefaultCoordinateSystemAxis.LONGITUDE));
+        final GeographicCRS crs = new DefaultGeographicCRS(
+                "Test",
+                DefaultGeodeticDatum.WGS84,
+                new DefaultEllipsoidalCS(
+                        "Test", DefaultCoordinateSystemAxis.LATITUDE, DefaultCoordinateSystemAxis.LONGITUDE));
         final GeodeticCalculator calculator = new GeodeticCalculator(crs);
         assertSame(crs, calculator.getCoordinateReferenceSystem());
 
         final double x = 45;
         final double y = 30;
-        calculator.setStartingPosition(new DirectPosition2D(x, y));
+        calculator.setStartingPosition(new Position2D(x, y));
         Point2D point = calculator.getStartingGeographicPoint();
         assertEquals(y, point.getX(), 1E-5);
         assertEquals(x, point.getY(), 1E-5);
 
         calculator.setDirection(10, 100);
-        DirectPosition position = calculator.getDestinationPosition();
+        Position position = calculator.getDestinationPosition();
         point = calculator.getDestinationGeographicPoint();
         assertEquals(point.getX(), position.getOrdinate(1), 1E-5);
         assertEquals(point.getY(), position.getOrdinate(0), 1E-5);
     }
 
     /**
-     * Tests orthrodromic distance on the equator. The main purpose of this method is actually to
-     * get Java assertions to be run, which will compare the Geodetic Calculator results with the
-     * Default Ellipsoid computations.
+     * Tests orthrodromic distance on the equator. The main purpose of this method is actually to get Java assertions to
+     * be run, which will compare the Geodetic Calculator results with the Default Ellipsoid computations.
      */
     @Test
     public void testEquator() {
@@ -185,10 +175,8 @@ public final class GeodeticCalculatorTest {
              */
             assertTrue(
                     x == 0
-                            ? (distance == 0)
-                            : (x < 179.5
-                                    ? (Math.abs(distance - last - 13.914936) < 2E-6)
-                                    : (distance - last < 13)));
+                            ? distance == 0
+                            : x < 179.5 ? Math.abs(distance - last - 13.914936) < 2E-6 : distance - last < 13);
             last = distance;
         }
     }
@@ -300,7 +288,7 @@ public final class GeodeticCalculatorTest {
         // taken from Wikipedia Talk page.
         // https://en.wikipedia.org/wiki/Talk:Geodesics_on_an_ellipsoid#Computations
         try (InputStream in = TestData.openStream(this, "vincenty.csv");
-                BufferedReader reader = new BufferedReader(new InputStreamReader(in)); ) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
             CsvReader creader = new CsvReader(reader);
             creader.setComment('#');
             creader.setUseComments(true);

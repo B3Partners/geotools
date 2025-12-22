@@ -18,21 +18,21 @@
 
 package org.geotools.brewer.styling.filter.expression;
 
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.Multiply;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.Subtract;
 import org.geotools.brewer.styling.builder.Builder;
 import org.geotools.factory.CommonFactoryFinder;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.Multiply;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.expression.Subtract;
 
 /** ExpressionBuilder acting as a simple wrapper around an Expression. */
 public class ExpressionBuilder implements Builder<Expression> {
-    protected FilterFactory ff = CommonFactoryFinder.getFilterFactory2(null);
+    protected FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
     protected boolean unset = false;
     protected Builder<? extends Expression> delegate = new NilBuilder();
 
@@ -131,20 +131,20 @@ public class ExpressionBuilder implements Builder<Expression> {
             return unset();
         }
         this.unset = false;
-        if (original instanceof Literal) {
-            delegate = new LiteralBuilder((Literal) original);
-        } else if (original instanceof PropertyName) {
-            delegate = new PropertyNameBuilder((PropertyName) original);
-        } else if (original instanceof Function) {
-            delegate = new FunctionBuilder((Function) original);
-        } else if (original instanceof Add) {
-            delegate = new AddBuilder((Add) original);
-        } else if (original instanceof Divide) {
-            delegate = new DivideBuilder((Divide) original);
-        } else if (original instanceof Multiply) {
-            delegate = new MultiplyBuilder((Multiply) original);
-        } else if (original instanceof Subtract) {
-            delegate = new SubtractBuilder((Subtract) original);
+        if (original instanceof Literal literal) {
+            delegate = new LiteralBuilder(literal);
+        } else if (original instanceof PropertyName name) {
+            delegate = new PropertyNameBuilder(name);
+        } else if (original instanceof Function function) {
+            delegate = new FunctionBuilder(function);
+        } else if (original instanceof Add add) {
+            delegate = new AddBuilder(add);
+        } else if (original instanceof Divide divide) {
+            delegate = new DivideBuilder(divide);
+        } else if (original instanceof Multiply multiply) {
+            delegate = new MultiplyBuilder(multiply);
+        } else if (original instanceof Subtract subtract) {
+            delegate = new SubtractBuilder(subtract);
         } else {
             this.delegate = new NilBuilder();
         }

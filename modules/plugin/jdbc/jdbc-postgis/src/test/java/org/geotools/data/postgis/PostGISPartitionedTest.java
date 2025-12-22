@@ -21,20 +21,20 @@ import static org.junit.Assert.assertEquals;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.util.List;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.filter.sort.SortOrder;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.jdbc.JDBCTestSetup;
 import org.geotools.jdbc.JDBCTestSupport;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.filter.sort.SortOrder;
 
 public class PostGISPartitionedTest extends JDBCTestSupport {
 
@@ -90,11 +90,9 @@ public class PostGISPartitionedTest extends JDBCTestSupport {
         SimpleFeatureSource others = dataStore.getFeatureSource(tname("cust_others"));
         assertEquals(2, others.getCount(Query.ALL));
 
-        SimpleFeatureStore customers =
-                (SimpleFeatureStore) dataStore.getFeatureSource(tname("customers"));
+        SimpleFeatureStore customers = (SimpleFeatureStore) dataStore.getFeatureSource(tname("customers"));
         SimpleFeature feature =
-                SimpleFeatureBuilder.build(
-                        customers.getSchema(), new Object[] {5, "NEWTYPE", 12345}, null);
+                SimpleFeatureBuilder.build(customers.getSchema(), new Object[] {5, "NEWTYPE", 12345}, null);
         List<FeatureId> ids = customers.addFeatures(DataUtilities.collection(feature));
         assertEquals(1, ids.size());
 

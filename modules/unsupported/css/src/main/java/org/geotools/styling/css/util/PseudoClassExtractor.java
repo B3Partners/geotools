@@ -28,6 +28,7 @@ import org.geotools.styling.css.selector.Reject;
 import org.geotools.styling.css.selector.ScaleRange;
 import org.geotools.styling.css.selector.Selector;
 import org.geotools.styling.css.selector.TypeName;
+import org.geotools.styling.css.selector.ZoomRange;
 
 /**
  * Takes a {@link Selector} and collects all available pseudo classes in it
@@ -75,6 +76,12 @@ public class PseudoClassExtractor extends AbstractSelectorVisitor {
     }
 
     @Override
+    public Object visit(ZoomRange scaleRange) {
+        getPseudoClasses().add(PseudoClass.ROOT);
+        return null;
+    }
+
+    @Override
     public Object visit(PseudoClass pseudoClass) {
         getPseudoClasses().add(pseudoClass);
         return null;
@@ -84,9 +91,9 @@ public class PseudoClassExtractor extends AbstractSelectorVisitor {
     public Object visit(And and) {
         boolean found = false;
         for (Selector s : and.getChildren()) {
-            if (s instanceof PseudoClass) {
+            if (s instanceof PseudoClass class1) {
                 found = true;
-                getPseudoClasses().add((PseudoClass) s);
+                getPseudoClasses().add(class1);
             }
         }
         if (!found) {

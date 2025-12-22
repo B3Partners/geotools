@@ -18,6 +18,10 @@ package org.geotools.filter.v1_0;
 
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.gml2.GML;
 import org.geotools.xsd.Node;
@@ -26,10 +30,6 @@ import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
 
 /**
  * Filter parsing / encoding utility class.
@@ -38,8 +38,7 @@ import org.opengis.filter.expression.PropertyName;
  */
 public class OGCUtils {
     /**
-     * Implementation of getProperty for {@link BinarySpatialOpTypeBinding} and {@link
-     * DistanceBufferTypeBinding}
+     * Implementation of getProperty for {@link BinarySpatialOpTypeBinding} and {@link DistanceBufferTypeBinding}
      *
      * @param e1 First expression
      * @param e2 Second expression
@@ -56,14 +55,12 @@ public class OGCUtils {
         }
 
         if (new QName(GML.NAMESPACE, "_Geometry").equals(name)) {
-            if (e1 instanceof Literal) {
-                Literal literal = (Literal) e1;
+            if (e1 instanceof Literal literal) {
 
                 if (literal.getValue() instanceof Geometry) {
                     return literal.getValue();
                 }
-            } else if (e2 instanceof Literal) {
-                Literal literal = (Literal) e2;
+            } else if (e2 instanceof Literal literal) {
 
                 if (literal.getValue() instanceof Geometry) {
                     return literal.getValue();
@@ -73,14 +70,12 @@ public class OGCUtils {
 
         if (new QName(GML.NAMESPACE, "Box").equals(name) /*filter 1.0*/
                 || new QName(GML.NAMESPACE, "Envelope").equals(name) /*filter 1.1*/) {
-            if (e1 instanceof Literal) {
-                Literal literal = (Literal) e1;
+            if (e1 instanceof Literal literal) {
 
                 if (literal.getValue() instanceof Envelope) {
                     return literal.getValue();
                 }
-            } else if (e2 instanceof Literal) {
-                Literal literal = (Literal) e2;
+            } else if (e2 instanceof Literal literal) {
 
                 if (literal.getValue() instanceof Envelope) {
                     return literal.getValue();
@@ -97,7 +92,7 @@ public class OGCUtils {
      * @param node The parse tree.
      * @return A two element array of expressions for a BinarySpatialOp type.
      */
-    static Expression[] spatial(Node node, FilterFactory2 ff, GeometryFactory gf) {
+    static Expression[] spatial(Node node, FilterFactory ff, GeometryFactory gf) {
         List names = node.getChildValues(PropertyName.class);
         if (names.size() == 2) {
             // join
@@ -113,20 +108,18 @@ public class OGCUtils {
             // JD: creating an envelope here would break a lot of our code, for instance alot of
             // code that encodes a filter into sql will choke on this
             Envelope envelope = node.getChildValue(Envelope.class);
-            Polygon polygon =
-                    gf.createPolygon(
-                            gf.createLinearRing(
-                                    new Coordinate[] {
-                                        new Coordinate(envelope.getMinX(), envelope.getMinY()),
-                                        new Coordinate(envelope.getMaxX(), envelope.getMinY()),
-                                        new Coordinate(envelope.getMaxX(), envelope.getMaxY()),
-                                        new Coordinate(envelope.getMinX(), envelope.getMaxY()),
-                                        new Coordinate(envelope.getMinX(), envelope.getMinY())
-                                    }),
-                            null);
+            Polygon polygon = gf.createPolygon(
+                    gf.createLinearRing(new Coordinate[] {
+                        new Coordinate(envelope.getMinX(), envelope.getMinY()),
+                        new Coordinate(envelope.getMaxX(), envelope.getMinY()),
+                        new Coordinate(envelope.getMaxX(), envelope.getMaxY()),
+                        new Coordinate(envelope.getMinX(), envelope.getMaxY()),
+                        new Coordinate(envelope.getMinX(), envelope.getMinY())
+                    }),
+                    null);
 
-            if (envelope instanceof ReferencedEnvelope) {
-                polygon.setUserData(((ReferencedEnvelope) envelope).getCoordinateReferenceSystem());
+            if (envelope instanceof ReferencedEnvelope referencedEnvelope) {
+                polygon.setUserData(referencedEnvelope.getCoordinateReferenceSystem());
             }
 
             spatial = ff.literal(polygon);

@@ -90,14 +90,14 @@ public class MapLayerEvent extends EventObject {
         super(source);
         this.reason = reason;
 
-        if ((reason <= 0) || (reason > PRE_DISPOSE)) {
+        if (reason <= 0 || reason > PRE_DISPOSE) {
             throw new IllegalArgumentException("Invalid value for reason argument: " + reason);
         }
     }
 
     /**
-     * Returns the reason why this event is fired. It is one of {@link #VISIBILITY_CHANGED} or
-     * {@link #TITLE_CHANGED} constants.
+     * Returns the reason why this event is fired. It is one of {@link #VISIBILITY_CHANGED} or {@link #TITLE_CHANGED}
+     * constants.
      */
     public int getReason() {
         return reason;

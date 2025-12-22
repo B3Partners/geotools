@@ -16,7 +16,9 @@
  */
 package org.geotools.http;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import org.geotools.http.CustomHTTPClientFactory.CustomHttpClient;
@@ -44,8 +46,7 @@ public class HTTPClientFinderTest {
     @Test
     public void findingCustomHttpClientTestByHints() throws Exception {
 
-        HTTPClient client =
-                HTTPClientFinder.createClient(new Hints(Hints.HTTP_CLIENT, CustomHttpClient.class));
+        HTTPClient client = HTTPClientFinder.createClient(new Hints(Hints.HTTP_CLIENT, CustomHttpClient.class));
 
         assertTrue(client instanceof CustomHttpClient);
     }
@@ -67,8 +68,7 @@ public class HTTPClientFinderTest {
         Hints.putSystemDefault(Hints.HTTP_LOGGING, "True");
         try {
 
-            HTTPClient client =
-                    HTTPClientFinder.createClient(new Hints(Hints.HTTP_LOGGING, "False"));
+            HTTPClient client = HTTPClientFinder.createClient(new Hints(Hints.HTTP_LOGGING, "False"));
             assertTrue(client instanceof SimpleHttpClient);
         } finally {
             Hints.removeSystemDefault(Hints.HTTP_LOGGING);
@@ -97,19 +97,15 @@ public class HTTPClientFinderTest {
 
     @Test
     public void askingForNonExistingBehavior() throws Exception {
-        try {
-            HTTPClientFinder.createClient(HTTPConnectionPooling.class);
-        } catch (RuntimeException ex) {
-            Assert.assertEquals(
-                    "Exception message when asking for non existing behavior.",
-                    "Couldn't create HTTP client.\nBehaviors:HTTPConnectionPooling",
-                    ex.getMessage());
-        }
+        RuntimeException ex =
+                assertThrows(RuntimeException.class, () -> HTTPClientFinder.createClient(HTTPConnectionPooling.class));
+        assertEquals(
+                "Exception message when asking for non existing behavior.",
+                "Couldn't create HTTP client.\nBehaviors:HTTPConnectionPooling",
+                ex.getMessage());
     }
 
-    /**
-     * Test that a HTTPProxy behavior is added when http.proxyhost is set. In support of GEOT-6850.
-     */
+    /** Test that a HTTPProxy behavior is added when http.proxyhost is set. In support of GEOT-6850. */
     @Test
     public void createClientWithSystemProxyHost() throws Exception {
         final boolean nullInitially = System.getProperty("http.proxyHost") == null;

@@ -16,13 +16,13 @@
  */
 package org.geotools.coverage.processing.operation;
 
-import javax.media.jai.operator.MedianFilterDescriptor;
-import javax.media.jai.operator.MedianFilterShape;
+import java.io.Serial;
+import org.eclipse.imagen.operator.MedianFilterDescriptor;
+import org.eclipse.imagen.operator.MedianFilterShape;
 import org.geotools.coverage.processing.OperationJAI;
 
 /**
- * For each position of the mask, replaces the center pixel by the median of the pixel values
- * covered by the mask.
+ * For each position of the mask, replaces the center pixel by the median of the pixel values covered by the mask.
  *
  * <p><STRONG>Name:</STRONG>&nbsp;<CODE>"MedianFilter"</CODE><br>
  * <STRONG>JAI operator:</STRONG>&nbsp;<CODE>"{@linkplain MedianFilterDescriptor MedianFilter}"
@@ -66,6 +66,7 @@ import org.geotools.coverage.processing.OperationJAI;
  */
 public class MedianFilter extends OperationJAI {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -8604321975842276962L;
 
     /** Constructs a default {@code "MedianFilter"} operation. */

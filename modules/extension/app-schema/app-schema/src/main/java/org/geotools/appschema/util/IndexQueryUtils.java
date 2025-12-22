@@ -24,18 +24,17 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
+import org.geotools.api.data.Query;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.Query;
 import org.geotools.data.complex.AttributeMapping;
 import org.geotools.data.complex.FeatureTypeMapping;
 import org.geotools.data.complex.NestedAttributeMapping;
 import org.geotools.data.complex.filter.XPath;
 import org.geotools.data.complex.util.XPathUtil.StepList;
 import org.geotools.factory.CommonFactoryFinder;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
 
 /** @author Fernando Miño - Geosolutions */
 public final class IndexQueryUtils {
@@ -74,15 +73,13 @@ public final class IndexQueryUtils {
 
     /** Checks if property name is equals to source/identifier expression in attribute mapping */
     public static boolean equalsProperty(AttributeMapping mapping, String propertyName) {
-        return (equalsPropertyExpression(mapping.getSourceExpression(), propertyName)
-                || equalsPropertyExpression(mapping.getIdentifierExpression(), propertyName));
+        return equalsPropertyExpression(mapping.getSourceExpression(), propertyName)
+                || equalsPropertyExpression(mapping.getIdentifierExpression(), propertyName);
     }
 
     /** Compare if mapping-xpath == attMapping */
-    public static boolean equalsXpath(
-            FeatureTypeMapping mapping, AttributeMapping attMapping, String xpath) {
-        StepList simplifiedSteps =
-                XPath.steps(mapping.getTargetFeature(), xpath, mapping.getNamespaces());
+    public static boolean equalsXpath(FeatureTypeMapping mapping, AttributeMapping attMapping, String xpath) {
+        StepList simplifiedSteps = XPath.steps(mapping.getTargetFeature(), xpath, mapping.getNamespaces());
         return Objects.equals(attMapping.getTargetXPath(), simplifiedSteps);
     }
 
@@ -106,8 +103,7 @@ public final class IndexQueryUtils {
     //    }
 
     /** Checks if all properties are indexed in mapping */
-    public static boolean checkAllPropertiesIndexed(
-            List<String> properties, FeatureTypeMapping mapping) {
+    public static boolean checkAllPropertiesIndexed(List<String> properties, FeatureTypeMapping mapping) {
         return !properties.stream().anyMatch(p -> mapping.getIndexAttributeName(p) == null);
     }
 
@@ -120,14 +116,10 @@ public final class IndexQueryUtils {
         FilterFactory ff = CommonFactoryFinder.getFilterFactory();
 
         List<Filter> idFilters = new ArrayList<>();
-        ids.forEach(
-                idStr -> {
-                    idFilters.add(
-                            ff.equals(
-                                    ff.property(
-                                            mapping.getTargetFeature().getName().getLocalPart()),
-                                    ff.literal(idStr)));
-                });
+        ids.forEach(idStr -> {
+            idFilters.add(
+                    ff.equals(ff.property(mapping.getTargetFeature().getName().getLocalPart()), ff.literal(idStr)));
+        });
 
         return ff.or(idFilters);
     }
@@ -138,21 +130,18 @@ public final class IndexQueryUtils {
      * @return Filter IN function
      */
     public static Filter buildIdInExpressionFunction(List<String> ids, FeatureTypeMapping mapping) {
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
         List<Expression> idExpressions = new ArrayList<>();
-        String rootXpath =
-                XPath.rootElementSteps(mapping.getTargetFeature(), mapping.getNamespaces())
-                        .toString();
+        String rootXpath = XPath.rootElementSteps(mapping.getTargetFeature(), mapping.getNamespaces())
+                .toString();
         // add id field name
         idExpressions.add(ff.property(rootXpath));
         // add values
-        ids.forEach(
-                idStr -> {
-                    idExpressions.add(ff.literal(idStr));
-                });
+        ids.forEach(idStr -> {
+            idExpressions.add(ff.literal(idStr));
+        });
         // create Filter = id IN (val1, val2, .... valn)
-        return ff.equals(
-                ff.function("in", idExpressions.toArray(new Expression[] {})), ff.literal(true));
+        return ff.equals(ff.function("in", idExpressions.toArray(new Expression[] {})), ff.literal(true));
     }
 
     /**

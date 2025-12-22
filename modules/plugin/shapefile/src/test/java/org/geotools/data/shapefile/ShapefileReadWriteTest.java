@@ -27,14 +27,14 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import org.geotools.TestData;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * @version $Id$
@@ -90,44 +90,43 @@ public class ShapefileReadWriteTest extends TestCaseSupport {
         System.runFinalization(); // If some streams are still open, it may
         // help to close them.
         final File file = getTempFile();
-        Runnable reader =
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        int cutoff = 0;
+        Runnable reader = new Runnable() {
+            @Override
+            public void run() {
+                int cutoff = 0;
 
-                        try (FileInputStream fr = new FileInputStream(file)) {
+                try (FileInputStream fr = new FileInputStream(file)) {
+                    try {
+                        fr.read();
+                    } catch (IOException e1) {
+                        exception = e1;
+                        return;
+                    }
+                    // if (verbose) {
+                    // System.out.println("locked");
+                    // }
+                    readStarted = true;
+                    while (cutoff < 10) {
+                        synchronized (this) {
                             try {
-                                fr.read();
-                            } catch (IOException e1) {
-                                exception = e1;
-                                return;
-                            }
-                            // if (verbose) {
-                            // System.out.println("locked");
-                            // }
-                            readStarted = true;
-                            while (cutoff < 10) {
-                                synchronized (this) {
-                                    try {
-                                        try {
-                                            fr.read();
-                                        } catch (IOException e) {
-                                            exception = e;
-                                            return;
-                                        }
-                                        wait(500);
-                                        cutoff++;
-                                    } catch (InterruptedException e) {
-                                        cutoff = 10;
-                                    }
+                                try {
+                                    fr.read();
+                                } catch (IOException e) {
+                                    exception = e;
+                                    return;
                                 }
+                                wait(500);
+                                cutoff++;
+                            } catch (InterruptedException e) {
+                                cutoff = 10;
                             }
-                        } catch (Exception e) {
-                            fail();
                         }
                     }
-                };
+                } catch (Exception e) {
+                    fail();
+                }
+            }
+        };
         Thread readThread = new Thread(reader);
         readThread.start();
         while (!readStarted) {
@@ -236,9 +235,7 @@ public class ShapefileReadWriteTest extends TestCaseSupport {
         for (int i = 0; i < f1.getAttributeCount(); i++) {
             Object att1 = f1.getAttribute(i);
             Object att2 = f2.getAttribute(i);
-            if (att1 instanceof Geometry && att2 instanceof Geometry) {
-                Geometry g1 = ((Geometry) att1);
-                Geometry g2 = ((Geometry) att2);
+            if (att1 instanceof Geometry g1 && att2 instanceof Geometry g2) {
                 g1.normalize();
                 g2.normalize();
                 if (!g1.equalsExact(g2)) {
@@ -246,8 +243,7 @@ public class ShapefileReadWriteTest extends TestCaseSupport {
                 }
             } else {
                 if (!att1.equals(att2)) {
-                    throw new Exception(
-                            "Different attribute (" + i + "): [" + att1 + "] - [" + att2 + "]");
+                    throw new Exception("Different attribute (" + i + "): [" + att1 + "] - [" + att2 + "]");
                 }
             }
         }

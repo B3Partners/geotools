@@ -5,9 +5,9 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.Map;
-import org.geotools.data.FeatureStore;
-import org.geotools.data.Query;
-import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.api.data.FeatureStore;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
 import org.geotools.jdbc.JDBCTestSetup;
 import org.geotools.jdbc.JDBCTestSupport;
 import org.geotools.jdbc.VirtualTable;
@@ -38,11 +38,9 @@ public class HanaVirtualTableHintOnlineTest extends JDBCTestSupport {
             fail("Expected exception");
         } catch (IOException e) {
             boolean foundMessage = false;
-            for (Throwable t = e; (t != null) && !foundMessage; t = t.getCause()) {
+            for (Throwable t = e; t != null && !foundMessage; t = t.getCause()) {
                 String msg = e.getMessage();
-                foundMessage =
-                        (msg != null)
-                                && msg.contains("statement execution blocked by THROW_ERROR hint");
+                foundMessage = msg != null && msg.contains("statement execution blocked by THROW_ERROR hint");
             }
         }
     }

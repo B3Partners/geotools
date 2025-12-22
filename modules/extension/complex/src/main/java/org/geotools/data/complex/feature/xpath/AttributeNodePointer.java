@@ -17,6 +17,7 @@
 
 package org.geotools.data.complex.feature.xpath;
 
+import java.io.Serial;
 import org.apache.commons.jxpath.ri.Compiler;
 import org.apache.commons.jxpath.ri.QName;
 import org.apache.commons.jxpath.ri.compiler.NodeNameTest;
@@ -24,10 +25,10 @@ import org.apache.commons.jxpath.ri.compiler.NodeTest;
 import org.apache.commons.jxpath.ri.compiler.NodeTypeTest;
 import org.apache.commons.jxpath.ri.model.NodeIterator;
 import org.apache.commons.jxpath.ri.model.NodePointer;
+import org.geotools.api.feature.Attribute;
+import org.geotools.api.feature.ComplexAttribute;
 import org.geotools.data.complex.util.ComplexFeatureConstants;
 import org.geotools.feature.type.Types;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.ComplexAttribute;
 
 /**
  * Special node pointer for {@link org.geotools.feature.Feature}.
@@ -38,6 +39,7 @@ import org.opengis.feature.ComplexAttribute;
 public class AttributeNodePointer extends NodePointer {
 
     /** */
+    @Serial
     private static final long serialVersionUID = -5637103253645991273L;
 
     /** The name of hte node. */
@@ -99,8 +101,7 @@ public class AttributeNodePointer extends NodePointer {
 
     @Override
     public NodeIterator childIterator(NodeTest test, boolean reverse, NodePointer startWith) {
-        if (test instanceof NodeNameTest) {
-            NodeNameTest nodeNameTest = (NodeNameTest) test;
+        if (test instanceof NodeNameTest nodeNameTest) {
 
             if (!nodeNameTest.isWildcard()) {
                 String localName = nodeNameTest.getNodeName().getName();
@@ -113,8 +114,7 @@ public class AttributeNodePointer extends NodePointer {
             }
         }
 
-        if (test instanceof NodeTypeTest) {
-            NodeTypeTest nodeTypeTest = (NodeTypeTest) test;
+        if (test instanceof NodeTypeTest nodeTypeTest) {
             if (nodeTypeTest.getNodeType() == Compiler.NODE_TYPE_NODE) {
                 return new AttributeNodeIterator(this);
             }
@@ -126,9 +126,6 @@ public class AttributeNodePointer extends NodePointer {
     @Override
     public NodeIterator attributeIterator(QName qname) {
         return new XmlAttributeNodeIterator(
-                this,
-                Types.typeName(
-                        getNamespaceResolver().getNamespaceURI(qname.getPrefix()),
-                        qname.getName()));
+                this, Types.typeName(getNamespaceResolver().getNamespaceURI(qname.getPrefix()), qname.getName()));
     }
 }

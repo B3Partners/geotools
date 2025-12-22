@@ -18,10 +18,14 @@ package org.geotools.gce.imagemosaic.properties.string;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 
 import java.io.File;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Set;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
 import org.geotools.feature.SchemaException;
 import org.geotools.gce.imagemosaic.properties.PropertiesCollector;
@@ -29,8 +33,6 @@ import org.geotools.gce.imagemosaic.properties.PropertiesCollectorFinder;
 import org.geotools.gce.imagemosaic.properties.PropertiesCollectorSPI;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class StringFileNameExtractorTest {
 
@@ -55,10 +57,22 @@ public class StringFileNameExtractorTest {
     }
 
     @Test
+    public void testFailedExtraction() {
+        PropertiesCollectorSPI spi = getStringFileNameSpi();
+        PropertiesCollector collector = spi.create("regex=_([0-9]{8}T[0-9]{6})_", Arrays.asList("seq"));
+        File file = new File("polyphemus_20130301_.nc");
+        collector.collect(file);
+        IllegalArgumentException ex =
+                assertThrows(IllegalArgumentException.class, () -> collector.setProperties(feature));
+        assertEquals(
+                "No matches found for: StringFileNameExtractor{pattern=_([0-9]{8}T[0-9]{6})_, fullPath=false}",
+                ex.getMessage());
+    }
+
+    @Test
     public void testGroupExtraction() {
         PropertiesCollectorSPI spi = getStringFileNameSpi();
-        PropertiesCollector collector =
-                spi.create("regex=_([0-9]{8}T[0-9]{6})_", Arrays.asList("seq"));
+        PropertiesCollector collector = spi.create("regex=_([0-9]{8}T[0-9]{6})_", Arrays.asList("seq"));
         File file = new File("polyphemus_20130301T000000_.nc");
         collector.collect(file);
         collector.setProperties(feature);
@@ -70,14 +84,25 @@ public class StringFileNameExtractorTest {
     @Test
     public void testMultipleGroupExtraction() {
         PropertiesCollectorSPI spi = getStringFileNameSpi();
-        PropertiesCollector collector =
-                spi.create("regex=_([0-9]{8})T([0-9]{6})_", Arrays.asList("seq"));
+        PropertiesCollector collector = spi.create("regex=_([0-9]{8})T([0-9]{6})_", Arrays.asList("seq"));
         File file = new File("polyphemus_20130301T000000_.nc");
         collector.collect(file);
         collector.setProperties(feature);
         String seq = (String) feature.getAttribute("seq");
         assertNotNull(seq);
         assertEquals("20130301000000", seq);
+    }
+
+    @Test
+    public void testFullPath() throws Exception {
+        PropertiesCollectorSPI spi = getStringFileNameSpi();
+        PropertiesCollector collector =
+                spi.create("regex=(?<=\\/)([sS]\\d+)(?=\\/),fullPath=true", Arrays.asList("seq"));
+        collector.collect(new URI("/var/data/s10/raster.tiff"));
+        collector.setProperties(feature);
+        String seq = (String) feature.getAttribute("seq");
+        assertNotNull(seq);
+        assertEquals("s10", seq);
     }
 
     private PropertiesCollectorSPI getStringFileNameSpi() {

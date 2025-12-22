@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -48,8 +49,8 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.xpath.XPathFactory;
 
 /**
- * CommandLine Utility to be used in order to create an ImageMosaic indexer.xml as well as the
- * related NetCDF low-level indexer (_auxiliary.xml) for a prototype NetCDF.
+ * CommandLine Utility to be used in order to create an ImageMosaic indexer.xml as well as the related NetCDF low-level
+ * indexer (_auxiliary.xml) for a prototype NetCDF.
  *
  * <p>Arguments to be provided are, in the following order: " /path/to/sampleFile.nc " " -p
  * /path/to/netcdfprojectionsfile" " [/path/to/optional/outputFolder]"
@@ -71,11 +72,15 @@ public class CreateIndexer {
     public static void main(String[] args) throws JDOMException, IOException, TransformerException {
         if (args.length < 1) {
             System.out.println(
-                    "Usage: java -jar CreateIndexer"
-                            + " /path/to/sampleFile.nc "
-                            + "[-P /path/to/netcdfprojectionsfile]\n "
-                            + "[-cd [=create sample_datastore.properties]]\n "
-                            + "[/path/to/optional/outputFolder]\n");
+                    """
+                    Usage: java -jar CreateIndexer\
+                     /path/to/sampleFile.nc \
+                    [-P /path/to/netcdfprojectionsfile]
+                     \
+                    [-cd [=create sample_datastore.properties]]
+                     \
+                    [/path/to/optional/outputFolder]
+                    """);
             System.exit(1);
         }
 
@@ -111,11 +116,11 @@ public class CreateIndexer {
 
         File sampleFile = new File(sampleFilePath);
         File temp = File.createTempFile("XML", "NC");
-        if (!(temp.delete())) {
+        if (!temp.delete()) {
             throw new IOException("Could not delete temp file: " + temp.getAbsolutePath());
         }
 
-        if (!(temp.mkdir())) {
+        if (!temp.mkdir()) {
             throw new IOException("Could not create temp directory: " + temp.getAbsolutePath());
         }
 
@@ -149,8 +154,7 @@ public class CreateIndexer {
         Set<String> timeAttributes = new HashSet<>();
         Set<String> elevationAttributes = new HashSet<>();
         getAttributes(timeAttributes, elevationAttributes, root);
-        final StringBuilder builder =
-                new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+        final StringBuilder builder = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         builder.append("<Indexer>\n");
         setDomains(timeAttributes, elevationAttributes, builder);
         boolean longNameFound = setCoverages(root, builder);
@@ -158,7 +162,7 @@ public class CreateIndexer {
 
         writeIndexer(builder.toString(), indexerFilePath);
         System.out.println("Deleting temporary folder");
-        if (!(FileUtils.deleteQuietly(temp))) {
+        if (!FileUtils.deleteQuietly(temp)) {
             System.out.println("Unable to delete folder: " + temp);
         }
         if (createDatastoreProperties) {
@@ -170,7 +174,7 @@ public class CreateIndexer {
     @SuppressWarnings("PMD.SystemPrintln")
     private static void writeDatastorePropertyFile(String datastorePath) throws IOException {
         System.out.println("Writing the sample datastore.properties: " + datastorePath);
-        try (PrintWriter out = new PrintWriter(new File(datastorePath))) {
+        try (PrintWriter out = new PrintWriter(new File(datastorePath), StandardCharsets.UTF_8)) {
             out.write("SPI=org.geotools.data.postgis.PostgisNGDataStoreFactory\n");
             out.write("host=localhost\n");
             out.write("port=5432\n");
@@ -205,10 +209,9 @@ public class CreateIndexer {
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
-    private static void writeIndexer(String xml, String indexerFilePath)
-            throws FileNotFoundException {
+    private static void writeIndexer(String xml, String indexerFilePath) throws IOException {
         System.out.println("Writing the indexer.xml: " + indexerFilePath);
-        try (PrintWriter out = new PrintWriter(indexerFilePath)) {
+        try (PrintWriter out = new PrintWriter(indexerFilePath, StandardCharsets.UTF_8)) {
             out.println(xml);
             out.flush();
         }
@@ -223,7 +226,7 @@ public class CreateIndexer {
         // initialize StreamResult with File object to save to file
         StreamResult result = new StreamResult(new StringWriter());
         try (InputStream is = new FileInputStream(auxiliaryFile);
-                PrintWriter out = new PrintWriter(finalAuxFile); ) {
+                PrintWriter out = new PrintWriter(finalAuxFile, StandardCharsets.UTF_8)) {
 
             transformer.transform(new StreamSource(is), result);
             String xmlString = result.getWriter().toString();
@@ -236,11 +239,9 @@ public class CreateIndexer {
         }
     }
 
-    private static void setParameters(
-            String auxiliaryFilePath, StringBuilder builder, boolean longNameFound) {
+    private static void setParameters(String auxiliaryFilePath, StringBuilder builder, boolean longNameFound) {
         builder.append("  <parameters>\n");
-        builder.append(
-                "    <parameter name=\"AuxiliaryFile\" value=\"" + auxiliaryFilePath + "\" />\n");
+        builder.append("    <parameter name=\"AuxiliaryFile\" value=\"" + auxiliaryFilePath + "\" />\n");
         builder.append("    <parameter name=\"AbsolutePath\" value=\"true\" />\n");
         if (longNameFound) {
             builder.append("    <parameter name=\"WrapStore\" value=\"true\" />\n");
@@ -251,11 +252,12 @@ public class CreateIndexer {
 
     private static boolean setCoverages(Element root, StringBuilder builder) throws JDOMException {
         builder.append("  <coverages>\n");
-        List<?> coverages = XPathFactory.instance().compile("coverages/coverage").evaluate(root);
+        List<?> coverages =
+                XPathFactory.instance().compile("coverages/coverage").evaluate(root);
         boolean longName = false;
         for (Object cov : coverages) {
-            if (cov instanceof Element) {
-                if (setCoverage(((Element) cov), builder)) {
+            if (cov instanceof Element element) {
+                if (setCoverage(element, builder)) {
                     longName = true;
                 }
             }
@@ -276,8 +278,7 @@ public class CreateIndexer {
         Element schemaAttributesElement =
                 (Element) XPathFactory.instance().compile("attributes").evaluateFirst(schema);
         String schemaAttribs = schemaAttributesElement.getText();
-        schemaAttribs =
-                schemaAttribs.replace("imageindex:Integer", "imageindex:Integer,location:String");
+        schemaAttribs = schemaAttribs.replace("imageindex:Integer", "imageindex:Integer,location:String");
         builder.append("        <attributes>" + schemaAttribs + "</attributes>\n");
         builder.append("      </schema>\n");
 
@@ -294,8 +295,7 @@ public class CreateIndexer {
                 String[] nameTypePair = schemaAttr.split(":");
                 domains.add(nameTypePair[0]);
             }
-            if (schemaAttr.contains(ELEVATION_ATTRIB_TYPE_FLOAT)
-                    || schemaAttr.contains(ELEVATION_ATTRIB_TYPE_DOUBLE)) {
+            if (schemaAttr.contains(ELEVATION_ATTRIB_TYPE_FLOAT) || schemaAttr.contains(ELEVATION_ATTRIB_TYPE_DOUBLE)) {
                 String[] nameTypePair = schemaAttr.split(":");
                 domains.add(nameTypePair[0]);
             }
@@ -310,17 +310,15 @@ public class CreateIndexer {
         }
     }
 
-    private static void getAttributes(
-            Set<String> timeAttributes, Set<String> elevationAttributes, Element root)
+    private static void getAttributes(Set<String> timeAttributes, Set<String> elevationAttributes, Element root)
             throws JDOMException {
-        List<?> schemaAttributes =
-                XPathFactory.instance()
-                        .compile("coverages/coverage/schema/attributes")
-                        .evaluate(root);
+        List<?> schemaAttributes = XPathFactory.instance()
+                .compile("coverages/coverage/schema/attributes")
+                .evaluate(root);
 
         for (Object e : schemaAttributes) {
-            if (e instanceof Element) {
-                String attributes = ((Element) e).getText();
+            if (e instanceof Element element) {
+                String attributes = element.getText();
                 String[] attribs = attributes.split(",");
                 for (String attrib : attribs) {
                     if (attrib.contains(TIME_ATTRIB_TYPE)) {
@@ -343,8 +341,7 @@ public class CreateIndexer {
         }
     }
 
-    private static void setDomains(
-            Set<String> timeAttributes, Set<String> elevationAttributes, StringBuilder builder) {
+    private static void setDomains(Set<String> timeAttributes, Set<String> elevationAttributes, StringBuilder builder) {
         builder.append("  <domains>\n");
         for (String timeDomain : timeAttributes) {
             setDomain(builder, timeDomain);

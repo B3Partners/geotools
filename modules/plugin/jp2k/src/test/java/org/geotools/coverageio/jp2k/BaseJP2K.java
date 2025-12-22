@@ -18,10 +18,11 @@ package org.geotools.coverageio.jp2k;
 
 import java.io.IOException;
 import java.util.logging.Logger;
-import javax.media.jai.ImageLayout;
-import javax.media.jai.PlanarImage;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
+import org.eclipse.imagen.ImageLayout;
+import org.eclipse.imagen.PlanarImage;
+import org.eclipse.imagen.media.viewer.ImageViewer;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
 import org.geotools.test.TestData;
@@ -30,21 +31,16 @@ import org.junit.Assert;
 /**
  * @author Daniele Romagnoli, GeoSolutions
  * @author Simone Giannecchini (simboss), GeoSolutions
- *     <p>Base testing class initializing JAI properties to be used during tests.
+ *     <p>Base testing class initializing ImageN properties to be used during tests.
  */
-@SuppressWarnings("deprecation")
 public class BaseJP2K {
 
     protected static final double DELTA = 1.0E-6;
 
-    /**
-     * The {@code GridFormatFactorySpi} provided by the specific subclass to handle a specific
-     * format.
-     */
+    /** The {@code GridFormatFactorySpi} provided by the specific subclass to handle a specific format. */
     protected static final JP2KFormatFactory factorySpi = new JP2KFormatFactory();
 
-    protected static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(BaseJP2K.class);
+    protected static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(BaseJP2K.class);
 
     protected static void forceDataLoading(final GridCoverage2D gc) {
         Assert.assertNotNull(gc);
@@ -52,10 +48,10 @@ public class BaseJP2K {
         if (TestData.isInteractiveTest()) {
             final JFrame frame = new JFrame();
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.getContentPane()
-                    .add(
-                            new javax.media.jai.widget.ScrollingImagePanel(
-                                    gc.getRenderedImage(), 800, 800));
+            ImageViewer viewer = new ImageViewer();
+            viewer.setImage(gc.getRenderedImage());
+            viewer.setSize(800, 800);
+            frame.getContentPane().add(viewer);
             frame.pack();
             SwingUtilities.invokeLater(() -> frame.setVisible(true));
         } else {

@@ -22,66 +22,65 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Stack;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.BinaryLogicOperator;
+import org.geotools.api.filter.ExcludeFilter;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.IncludeFilter;
+import org.geotools.api.filter.NativeFilter;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNil;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.filter.identity.Identifier;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.DistanceBufferOperator;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
+import org.geotools.api.filter.temporal.After;
+import org.geotools.api.filter.temporal.AnyInteracts;
+import org.geotools.api.filter.temporal.Before;
+import org.geotools.api.filter.temporal.Begins;
+import org.geotools.api.filter.temporal.BegunBy;
+import org.geotools.api.filter.temporal.BinaryTemporalOperator;
+import org.geotools.api.filter.temporal.During;
+import org.geotools.api.filter.temporal.EndedBy;
+import org.geotools.api.filter.temporal.Ends;
+import org.geotools.api.filter.temporal.Meets;
+import org.geotools.api.filter.temporal.MetBy;
+import org.geotools.api.filter.temporal.OverlappedBy;
+import org.geotools.api.filter.temporal.TContains;
+import org.geotools.api.filter.temporal.TEquals;
+import org.geotools.api.filter.temporal.TOverlaps;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.FilterType;
 import org.geotools.filter.IllegalFilterException;
 import org.geotools.xml.XMLHandlerHints;
-import org.opengis.filter.And;
-import org.opengis.filter.BinaryLogicOperator;
-import org.opengis.filter.ExcludeFilter;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.Id;
-import org.opengis.filter.IncludeFilter;
-import org.opengis.filter.NativeFilter;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNil;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.filter.identity.Identifier;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.DistanceBufferOperator;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
-import org.opengis.filter.temporal.After;
-import org.opengis.filter.temporal.AnyInteracts;
-import org.opengis.filter.temporal.Before;
-import org.opengis.filter.temporal.Begins;
-import org.opengis.filter.temporal.BegunBy;
-import org.opengis.filter.temporal.BinaryTemporalOperator;
-import org.opengis.filter.temporal.During;
-import org.opengis.filter.temporal.EndedBy;
-import org.opengis.filter.temporal.Ends;
-import org.opengis.filter.temporal.Meets;
-import org.opengis.filter.temporal.MetBy;
-import org.opengis.filter.temporal.OverlappedBy;
-import org.opengis.filter.temporal.TContains;
-import org.opengis.filter.temporal.TEquals;
-import org.opengis.filter.temporal.TOverlaps;
 
 /**
- * Prepares a filter for xml encoded for interoperability with another system. It will behave
- * differently depeding on the compliance level chosen. A new request will have to be made and the
- * features will have to be tested again on the client side if there are any FidFilters in the
- * filter. Consider the following to understand why:
+ * Prepares a filter for xml encoded for interoperability with another system. It will behave differently depeding on
+ * the compliance level chosen. A new request will have to be made and the features will have to be tested again on the
+ * client side if there are any FidFilters in the filter. Consider the following to understand why:
  *
  * <pre>
  * and {
@@ -93,8 +92,7 @@ import org.opengis.filter.temporal.TOverlaps;
  * }
  * </pre>
  *
- * for strict it would throw an exception, for low it would be left alone, but for Medium it would
- * end up as:
+ * for strict it would throw an exception, for low it would be left alone, but for Medium it would end up as:
  *
  * <pre>
  * and{
@@ -105,16 +103,14 @@ import org.opengis.filter.temporal.TOverlaps;
  *
  * and getFids() would return the fids in the fidFilter.
  *
- * <p>So the final filter would (this is not standard but a common implementation) return the
- * results of the and filter as well as all the features that match the fids. Which is more than the
- * original filter would accept.
+ * <p>So the final filter would (this is not standard but a common implementation) return the results of the and filter
+ * as well as all the features that match the fids. Which is more than the original filter would accept.
  *
- * <p>The XML Document writer can operate at different levels of compliance. The geotools level is
- * extremely flexible and forgiving.
+ * <p>The XML Document writer can operate at different levels of compliance. The geotools level is extremely flexible
+ * and forgiving.
  *
- * <p>All NOT(FidFilter) are changed to Filter.INCLUDE. So make sure that the filter is processed
- * again on the client with the original filter For a description of the difference Compliance
- * levels that can be used see
+ * <p>All NOT(FidFilter) are changed to Filter.INCLUDE. So make sure that the filter is processed again on the client
+ * with the original filter For a description of the difference Compliance levels that can be used see
  *
  * <ul>
  *   <li>{@link XMLHandlerHints#VALUE_FILTER_COMPLIANCE_LOW}
@@ -137,12 +133,12 @@ public class FilterCompliancePreProcessor implements FilterVisitor {
     /** Data collected during traversal */
     private Stack<Data> current = new Stack<>();
 
-    FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
     private boolean requiresPostProcessing = false;
 
     public FilterCompliancePreProcessor(Integer complianceLevel) {
-        if ((complianceLevel != LOW) && (complianceLevel != MEDIUM) && (complianceLevel != HIGH)) {
+        if (complianceLevel != LOW && complianceLevel != MEDIUM && complianceLevel != HIGH) {
             throw new IllegalArgumentException(
                     "compliance level must be one of: XMLHandlerHints.VALUE_FILTER_COMPLIANCE_LOOSE "
                             + "XMLHandlerHints.VALUE_FILTER_COMPLIANCE_MEDIUM or "
@@ -180,7 +176,7 @@ public class FilterCompliancePreProcessor implements FilterVisitor {
      *
      * @return the filter that can be encoded.
      */
-    public org.opengis.filter.Filter getFilter() {
+    public org.geotools.api.filter.Filter getFilter() {
         if (current.isEmpty()) {
             return Filter.EXCLUDE;
         }
@@ -324,8 +320,7 @@ public class FilterCompliancePreProcessor implements FilterVisitor {
                     for (Filter child : filter.getChildren()) {
                         extraData = child.accept(this, extraData);
                     }
-                    Data mediumFilter =
-                            createMediumLevelLogicFilter(FilterType.LOGIC_AND, startSize);
+                    Data mediumFilter = createMediumLevelLogicFilter(FilterType.LOGIC_AND, startSize);
                     current.push(mediumFilter);
                     break;
 
@@ -342,8 +337,8 @@ public class FilterCompliancePreProcessor implements FilterVisitor {
                     break;
             }
         } catch (Exception e) {
-            if (e instanceof UnsupportedFilterException) {
-                throw (UnsupportedFilterException) e;
+            if (e instanceof UnsupportedFilterException exception) {
+                throw exception;
             }
             throw new UnsupportedFilterException("Exception creating filter", e);
         }
@@ -363,8 +358,7 @@ public class FilterCompliancePreProcessor implements FilterVisitor {
                     for (Filter child : filter.getChildren()) {
                         extraData = child.accept(this, extraData);
                     }
-                    Data mediumFilter =
-                            createMediumLevelLogicFilter(FilterType.LOGIC_OR, startSize);
+                    Data mediumFilter = createMediumLevelLogicFilter(FilterType.LOGIC_OR, startSize);
                     current.push(mediumFilter);
                     break;
 
@@ -381,8 +375,8 @@ public class FilterCompliancePreProcessor implements FilterVisitor {
                     break;
             }
         } catch (Exception e) {
-            if (e instanceof UnsupportedFilterException) {
-                throw (UnsupportedFilterException) e;
+            if (e instanceof UnsupportedFilterException exception) {
+                throw exception;
             }
             throw new UnsupportedFilterException("Exception creating filter", e);
         }
@@ -403,8 +397,7 @@ public class FilterCompliancePreProcessor implements FilterVisitor {
                     child = filter.getFilter();
                     extraData = child.accept(this, extraData);
 
-                    Data mediumFilter =
-                            createMediumLevelLogicFilter(FilterType.LOGIC_NOT, startSize);
+                    Data mediumFilter = createMediumLevelLogicFilter(FilterType.LOGIC_NOT, startSize);
                     current.push(mediumFilter);
                     break;
 
@@ -421,37 +414,33 @@ public class FilterCompliancePreProcessor implements FilterVisitor {
                     break;
             }
         } catch (Exception e) {
-            if (e instanceof UnsupportedFilterException) {
-                throw (UnsupportedFilterException) e;
+            if (e instanceof UnsupportedFilterException exception) {
+                throw exception;
             }
             throw new UnsupportedFilterException("Exception creating filter", e);
         }
         return extraData;
-    };
+    }
 
-    private Data createMediumLevelLogicFilter(short filterType, int startOfFilterStack)
-            throws IllegalFilterException {
+    private Data createMediumLevelLogicFilter(short filterType, int startOfFilterStack) throws IllegalFilterException {
         Data resultingFilter;
 
         switch (filterType) {
-            case FilterType.LOGIC_AND:
-                {
-                    Set<String> fids = andFids(startOfFilterStack);
-                    resultingFilter = buildFilter(filterType, startOfFilterStack);
-                    resultingFilter.fids.addAll(fids);
+            case FilterType.LOGIC_AND: {
+                Set<String> fids = andFids(startOfFilterStack);
+                resultingFilter = buildFilter(filterType, startOfFilterStack);
+                resultingFilter.fids.addAll(fids);
 
-                    if (resultingFilter.filter != Filter.EXCLUDE && !fids.isEmpty())
-                        requiresPostProcessing = true;
-                    break;
-                }
+                if (resultingFilter.filter != Filter.EXCLUDE && !fids.isEmpty()) requiresPostProcessing = true;
+                break;
+            }
 
-            case FilterType.LOGIC_OR:
-                {
-                    Set<String> fids = orFids(startOfFilterStack);
-                    resultingFilter = buildFilter(filterType, startOfFilterStack);
-                    resultingFilter.fids.addAll(fids);
-                    break;
-                }
+            case FilterType.LOGIC_OR: {
+                Set<String> fids = orFids(startOfFilterStack);
+                resultingFilter = buildFilter(filterType, startOfFilterStack);
+                resultingFilter.fids.addAll(fids);
+                break;
+            }
 
             case FilterType.LOGIC_NOT:
                 resultingFilter = buildFilter(filterType, startOfFilterStack);
@@ -540,8 +529,7 @@ public class FilterCompliancePreProcessor implements FilterVisitor {
      * @param filterType LOGIC_NOT, LOGIC_AND or LOGIC_OR
      * @return Data Stack data representing the genrated filter
      */
-    private Data buildFilter(short filterType, int startOfFilterStack)
-            throws IllegalFilterException {
+    private Data buildFilter(short filterType, int startOfFilterStack) throws IllegalFilterException {
         if (current.isEmpty()) {
             return Data.ALL;
         }
@@ -550,7 +538,7 @@ public class FilterCompliancePreProcessor implements FilterVisitor {
             return buildNotFilter(startOfFilterStack);
         }
 
-        if (current.size() == (startOfFilterStack + 1)) {
+        if (current.size() == startOfFilterStack + 1) {
             return current.pop();
         }
 
@@ -578,7 +566,7 @@ public class FilterCompliancePreProcessor implements FilterVisitor {
     private Filter compressFilter(short filterType, Filter f) throws IllegalFilterException {
         Filter result;
         int added = 0;
-        List<org.opengis.filter.Filter> resultList = new ArrayList<>();
+        List<org.geotools.api.filter.Filter> resultList = new ArrayList<>();
 
         switch (filterType) {
             case FilterType.LOGIC_AND:
@@ -587,7 +575,7 @@ public class FilterCompliancePreProcessor implements FilterVisitor {
                 }
 
                 for (Filter item : ((And) f).getChildren()) {
-                    org.opengis.filter.Filter filter = item;
+                    org.geotools.api.filter.Filter filter = item;
                     if (filter == Filter.INCLUDE) {
                         continue;
                     }
@@ -608,8 +596,8 @@ public class FilterCompliancePreProcessor implements FilterVisitor {
                 }
 
                 for (Object item : ((Or) f).getChildren()) {
-                    org.opengis.filter.Filter filter = (org.opengis.filter.Filter) item;
-                    if (filter == org.opengis.filter.Filter.EXCLUDE) {
+                    org.geotools.api.filter.Filter filter = (org.geotools.api.filter.Filter) item;
+                    if (filter == org.geotools.api.filter.Filter.EXCLUDE) {
                         continue;
                     }
                     added++;
@@ -633,8 +621,8 @@ public class FilterCompliancePreProcessor implements FilterVisitor {
                 return Filter.EXCLUDE;
 
             case 1:
-                if (result instanceof Not) {
-                    return ((Not) result).getFilter();
+                if (result instanceof Not not) {
+                    return not.getFilter();
                 } else {
                     return ((BinaryLogicOperator) result).getChildren().get(0);
                 }
@@ -643,7 +631,7 @@ public class FilterCompliancePreProcessor implements FilterVisitor {
         }
     }
 
-    private boolean contains(BinaryLogicOperator f, org.opengis.filter.Filter toFind) {
+    private boolean contains(BinaryLogicOperator f, org.geotools.api.filter.Filter toFind) {
         for (Filter filter : f.getChildren()) {
             if (toFind.equals(filter)) {
                 return true;
@@ -653,7 +641,7 @@ public class FilterCompliancePreProcessor implements FilterVisitor {
     }
 
     private Data buildNotFilter(int startOfFilterStack) {
-        if (current.size() > (startOfFilterStack + 1)) {
+        if (current.size() > startOfFilterStack + 1) {
             throw new UnsupportedFilterException("A not filter cannot have more than one filter");
         } else {
             Data tmp = current.pop();
@@ -670,8 +658,7 @@ public class FilterCompliancePreProcessor implements FilterVisitor {
         }
     }
 
-    private Data createHighLevelLogicFilter(short filterType, int startOfFilterStack)
-            throws IllegalFilterException {
+    private Data createHighLevelLogicFilter(short filterType, int startOfFilterStack) throws IllegalFilterException {
         if (hasFidFilter(startOfFilterStack)) {
             Set<String> fids;
 
@@ -684,22 +671,21 @@ public class FilterCompliancePreProcessor implements FilterVisitor {
 
                     return filter;
 
-                case FilterType.LOGIC_OR:
-                    {
-                        if (hasNonFidFilter(startOfFilterStack)) {
-                            throw new UnsupportedFilterException(
-                                    "Maximum compliance does not allow Logic filters to contain FidFilters");
-                        }
-
-                        fids = orFids(startOfFilterStack);
-
-                        pop(startOfFilterStack);
-
-                        Data data = new Data();
-                        data.fids.addAll(fids);
-
-                        return data;
+                case FilterType.LOGIC_OR: {
+                    if (hasNonFidFilter(startOfFilterStack)) {
+                        throw new UnsupportedFilterException(
+                                "Maximum compliance does not allow Logic filters to contain FidFilters");
                     }
+
+                    fids = orFids(startOfFilterStack);
+
+                    pop(startOfFilterStack);
+
+                    Data data = new Data();
+                    data.fids.addAll(fids);
+
+                    return data;
+                }
 
                 case FilterType.LOGIC_NOT:
                     return buildFilter(filterType, startOfFilterStack);
@@ -745,8 +731,7 @@ public class FilterCompliancePreProcessor implements FilterVisitor {
     public Object visit(PropertyIsNull filter, Object extraData) {
         current.push(new Data(filter));
         return extraData;
-    };
-
+    }
     // NilFilter
     @Override
     public Object visit(PropertyIsNil filter, Object extraData) {
@@ -867,7 +852,7 @@ public class FilterCompliancePreProcessor implements FilterVisitor {
 
         final Set<String> fids = new HashSet<>();
 
-        org.opengis.filter.Filter filter;
+        org.geotools.api.filter.Filter filter;
 
         public Data() {
             this(Filter.EXCLUDE);
@@ -884,12 +869,10 @@ public class FilterCompliancePreProcessor implements FilterVisitor {
     }
 
     /**
-     * Returns true if the filter was one where the request to the server is more general than the
-     * actual filter. See {@link XMLHandlerHints#VALUE_FILTER_COMPLIANCE_MEDIUM} and example of when
-     * this can happen.
+     * Returns true if the filter was one where the request to the server is more general than the actual filter. See
+     * {@link XMLHandlerHints#VALUE_FILTER_COMPLIANCE_MEDIUM} and example of when this can happen.
      *
-     * @return true if the filter was one where the request to the server is more general than the
-     *     actual filter.
+     * @return true if the filter was one where the request to the server is more general than the actual filter.
      */
     public boolean requiresPostProcessing() {
         return requiresPostProcessing;

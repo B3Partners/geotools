@@ -18,17 +18,18 @@ package org.geotools.coverage.io.netcdf;
 
 import java.io.IOException;
 import java.util.List;
+import org.geotools.api.referencing.crs.TemporalCRS;
+import org.geotools.api.referencing.crs.VerticalCRS;
 import org.geotools.imageio.netcdf.utilities.NetCDFCRSUtilities;
 import org.geotools.referencing.crs.DefaultTemporalCRS;
 import org.geotools.referencing.crs.DefaultVerticalCRS;
 import org.geotools.test.TestData;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.referencing.crs.TemporalCRS;
-import org.opengis.referencing.crs.VerticalCRS;
 import ucar.nc2.constants.AxisType;
 import ucar.nc2.dataset.CoordinateAxis;
 import ucar.nc2.dataset.NetcdfDataset;
+import ucar.nc2.dataset.NetcdfDatasets;
 
 /** Test UnidataTimeUtilities */
 public final class NetCDFCRSUtilitiesTest extends Assert {
@@ -36,7 +37,7 @@ public final class NetCDFCRSUtilitiesTest extends Assert {
     public void testBuildVerticalCRS() throws IOException {
         final String url = TestData.url(this, "O3-NO2.nc").toExternalForm();
 
-        try (NetcdfDataset dataset = NetcdfDataset.openDataset(url)) {
+        try (NetcdfDataset dataset = NetcdfDatasets.openDataset(url)) {
             assertNotNull(dataset);
             final List<CoordinateAxis> cvs = dataset.getCoordinateAxes();
             assertNotNull(cvs);

@@ -20,17 +20,16 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.LineString;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_endAngle extends FunctionExpressionImpl {
 
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "endAngle", Double.class, parameter("linestring", LineString.class));
+            new FunctionNameImpl("endAngle", Double.class, parameter("linestring", LineString.class));
 
     public FilterFunction_endAngle() {
         super(NAME);
@@ -53,8 +52,8 @@ public class FilterFunction_endAngle extends FunctionExpressionImpl {
 
         CoordinateSequence cs = ls.getCoordinateSequence();
 
-        double dx = (cs.getX(cs.size() - 1) - cs.getX(cs.size() - 2));
-        double dy = (cs.getY(cs.size() - 1) - cs.getY(cs.size() - 2));
+        double dx = cs.getX(cs.size() - 1) - cs.getX(cs.size() - 2);
+        double dy = cs.getY(cs.size() - 1) - cs.getY(cs.size() - 2);
         return -Math.toDegrees(Math.atan2(dy, dx));
     }
 }

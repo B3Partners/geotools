@@ -60,11 +60,11 @@ public class ApplicationSchemaXSD extends XSD {
     }
 
     /**
-     * Uses the <code>schema.getSchemaLocation()</code>'s parent folder as the base folder to
-     * resolve <code>location</code> as a relative URI of.
+     * Uses the <code>schema.getSchemaLocation()</code>'s parent folder as the base folder to resolve <code>location
+     * </code> as a relative URI of.
      *
-     * <p>This way, application schemas splitted over multiple files can be resolved based on the
-     * relative location of a given import or include.
+     * <p>This way, application schemas splitted over multiple files can be resolved based on the relative location of a
+     * given import or include.
      *
      * @return a file: style uri with the resolved schema location for the given one, or <code>null
      *     </code> if <code>location</code> can't be resolved as a relative path of the <code>schema
@@ -85,7 +85,7 @@ public class ApplicationSchemaXSD extends XSD {
 
                 String locationUri = null;
 
-                if ((null != schemaLocation) && !("".equals(schemaLocation))) {
+                if (null != schemaLocation && !"".equals(schemaLocation)) {
                     String schemaLocationFolder = schemaLocation;
                     int lastSlash = schemaLocation.lastIndexOf('/');
 
@@ -95,8 +95,8 @@ public class ApplicationSchemaXSD extends XSD {
 
                     if (schemaLocationFolder.startsWith("file:")) {
                         try {
-                            schemaLocationFolder =
-                                    URLs.urlToFile(new URL(schemaLocationFolder)).getPath();
+                            schemaLocationFolder = URLs.urlToFile(new URL(schemaLocationFolder))
+                                    .getPath();
                         } catch (MalformedURLException e) {
                             // this can't be a good outcome, but try anyway
                             schemaLocationFolder = schemaLocationFolder.substring("file:".length());
@@ -109,15 +109,13 @@ public class ApplicationSchemaXSD extends XSD {
                         locationUri = locationFile.toURI().toString();
                     }
 
-                    if (locationUri == null
-                            && location != null
-                            && schemaLocationFolder.startsWith("jar:file:")) {
+                    if (locationUri == null && location != null && schemaLocationFolder.startsWith("jar:file:")) {
                         // handle schemas included in a JAR file
                         locationUri = schemaLocationFolder + "/" + location;
                     }
                 }
 
-                if ((locationUri == null) && (location != null) && location.startsWith("http:")) {
+                if (locationUri == null && location != null && location.startsWith("http:")) {
                     locationUri = location;
                 }
 

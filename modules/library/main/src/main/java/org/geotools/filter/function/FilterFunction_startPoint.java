@@ -20,19 +20,16 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_startPoint extends FunctionExpressionImpl {
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "startPoint",
-                    parameter("point", Point.class),
-                    parameter("linestring", LineString.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "startPoint", parameter("point", Point.class), parameter("linestring", LineString.class));
 
     public FilterFunction_startPoint() {
         super(NAME);
@@ -50,6 +47,6 @@ public class FilterFunction_startPoint extends FunctionExpressionImpl {
                     "Filter Function problem for function startPoint argument #0 - expected type Geometry");
         }
 
-        return (StaticGeometry.startPoint(arg0));
+        return StaticGeometry.startPoint(arg0);
     }
 }

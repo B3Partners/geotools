@@ -21,60 +21,60 @@ package org.geotools.referencing.factory;
 
 import java.util.Set;
 import javax.measure.Unit;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.referencing.AuthorityFactory;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.IdentifiedObject;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CompoundCRS;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.DerivedCRS;
+import org.geotools.api.referencing.crs.EngineeringCRS;
+import org.geotools.api.referencing.crs.GeocentricCRS;
+import org.geotools.api.referencing.crs.GeographicCRS;
+import org.geotools.api.referencing.crs.ImageCRS;
+import org.geotools.api.referencing.crs.ProjectedCRS;
+import org.geotools.api.referencing.crs.TemporalCRS;
+import org.geotools.api.referencing.crs.VerticalCRS;
+import org.geotools.api.referencing.cs.CSAuthorityFactory;
+import org.geotools.api.referencing.cs.CartesianCS;
+import org.geotools.api.referencing.cs.CoordinateSystem;
+import org.geotools.api.referencing.cs.CoordinateSystemAxis;
+import org.geotools.api.referencing.cs.CylindricalCS;
+import org.geotools.api.referencing.cs.EllipsoidalCS;
+import org.geotools.api.referencing.cs.PolarCS;
+import org.geotools.api.referencing.cs.SphericalCS;
+import org.geotools.api.referencing.cs.TimeCS;
+import org.geotools.api.referencing.cs.VerticalCS;
+import org.geotools.api.referencing.datum.Datum;
+import org.geotools.api.referencing.datum.DatumAuthorityFactory;
+import org.geotools.api.referencing.datum.Ellipsoid;
+import org.geotools.api.referencing.datum.EngineeringDatum;
+import org.geotools.api.referencing.datum.GeodeticDatum;
+import org.geotools.api.referencing.datum.ImageDatum;
+import org.geotools.api.referencing.datum.PrimeMeridian;
+import org.geotools.api.referencing.datum.TemporalDatum;
+import org.geotools.api.referencing.datum.VerticalDatum;
+import org.geotools.api.referencing.operation.CoordinateOperation;
+import org.geotools.api.referencing.operation.CoordinateOperationAuthorityFactory;
+import org.geotools.api.util.GenericName;
+import org.geotools.api.util.InternationalString;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.util.NameFactory;
 import org.geotools.util.ObjectCache;
 import org.geotools.util.ObjectCaches;
 import org.geotools.util.factory.BufferedFactory;
 import org.geotools.util.factory.Hints;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.referencing.AuthorityFactory;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.IdentifiedObject;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CompoundCRS;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.DerivedCRS;
-import org.opengis.referencing.crs.EngineeringCRS;
-import org.opengis.referencing.crs.GeocentricCRS;
-import org.opengis.referencing.crs.GeographicCRS;
-import org.opengis.referencing.crs.ImageCRS;
-import org.opengis.referencing.crs.ProjectedCRS;
-import org.opengis.referencing.crs.TemporalCRS;
-import org.opengis.referencing.crs.VerticalCRS;
-import org.opengis.referencing.cs.CSAuthorityFactory;
-import org.opengis.referencing.cs.CartesianCS;
-import org.opengis.referencing.cs.CoordinateSystem;
-import org.opengis.referencing.cs.CoordinateSystemAxis;
-import org.opengis.referencing.cs.CylindricalCS;
-import org.opengis.referencing.cs.EllipsoidalCS;
-import org.opengis.referencing.cs.PolarCS;
-import org.opengis.referencing.cs.SphericalCS;
-import org.opengis.referencing.cs.TimeCS;
-import org.opengis.referencing.cs.VerticalCS;
-import org.opengis.referencing.datum.Datum;
-import org.opengis.referencing.datum.DatumAuthorityFactory;
-import org.opengis.referencing.datum.Ellipsoid;
-import org.opengis.referencing.datum.EngineeringDatum;
-import org.opengis.referencing.datum.GeodeticDatum;
-import org.opengis.referencing.datum.ImageDatum;
-import org.opengis.referencing.datum.PrimeMeridian;
-import org.opengis.referencing.datum.TemporalDatum;
-import org.opengis.referencing.datum.VerticalDatum;
-import org.opengis.referencing.operation.CoordinateOperation;
-import org.opengis.referencing.operation.CoordinateOperationAuthorityFactory;
-import org.opengis.util.GenericName;
-import org.opengis.util.InternationalString;
 
 /**
- * An authority factory that consults (a possibly shared) cache before generating content itself.
- * The behavior of the {@code createFoo(String)} methods first looks if a previously created object
- * exists for the given code. If such an object exists, it is returned directly. The testing of the
- * cache is synchronized and may block if the referencing object is under construction.
+ * An authority factory that consults (a possibly shared) cache before generating content itself. The behavior of the
+ * {@code createFoo(String)} methods first looks if a previously created object exists for the given code. If such an
+ * object exists, it is returned directly. The testing of the cache is synchronized and may block if the referencing
+ * object is under construction.
  *
- * <p>If the object is not yet created, the definition is delegated to the appropriate the {@code
- * generateFoo} method and the result is cached for next time.
+ * <p>If the object is not yet created, the definition is delegated to the appropriate the {@code generateFoo} method
+ * and the result is cached for next time.
  *
  * <p>This object is responsible for using a provided {{ReferencingObjectCache}}.
  *
@@ -91,21 +91,19 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
                 BufferedFactory {
 
     /**
-     * Cache to be used for referencing objects defined by this authority. Please note that this
-     * cache may be shared!
+     * Cache to be used for referencing objects defined by this authority. Please note that this cache may be shared!
      *
-     * <p>Your cache may grow to considerable size during actual use; in addition to storing
-     * CoordinateReferenceSystems (by code); it will also store all the component parts (each under
-     * its own code), along with MathTransformations between two CoordinateReferenceSystems. So even
-     * if you are only planning on working with 50 CoordinateReferenceSystems please keep in mind
-     * that you will need larger cache size in order to prevent a bottleneck.
+     * <p>Your cache may grow to considerable size during actual use; in addition to storing CoordinateReferenceSystems
+     * (by code); it will also store all the component parts (each under its own code), along with MathTransformations
+     * between two CoordinateReferenceSystems. So even if you are only planning on working with 50
+     * CoordinateReferenceSystems please keep in mind that you will need larger cache size in order to prevent a
+     * bottleneck.
      */
     protected ObjectCache<Object, Object> cache;
 
     /**
-     * The findCache is used to store search results; often match a "raw" CoordinateReferenceSystem
-     * created from WKT (as the key) with a "real" CoordinateReferenceSystem as defined by this
-     * authority.
+     * The findCache is used to store search results; often match a "raw" CoordinateReferenceSystem created from WKT (as
+     * the key) with a "real" CoordinateReferenceSystem as defined by this authority.
      */
     ObjectCache<Object, Object> findCache;
 
@@ -115,8 +113,8 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
     /**
      * Constructs an instance making use of the default cache.
      *
-     * @param priority The priority for this factory, as a number between {@link #MINIMUM_PRIORITY *
-     *     MINIMUM_PRIORITY} and {@link #MAXIMUM_PRIORITY MAXIMUM_PRIORITY} inclusive.
+     * @param priority The priority for this factory, as a number between {@link #MINIMUM_PRIORITY * MINIMUM_PRIORITY}
+     *     and {@link #MAXIMUM_PRIORITY MAXIMUM_PRIORITY} inclusive.
      */
     protected AbstractCachedAuthorityFactory(int priority) {
         this(priority, ObjectCaches.create("weak", 50), ReferencingFactoryContainer.instance(null));
@@ -125,8 +123,8 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
     /**
      * Constructs an instance making use of the default cache.
      *
-     * @param priority The priority for this factory, as a number between {@link * #MINIMUM_PRIORITY
-     *     MINIMUM_PRIORITY} and {@link #MAXIMUM_PRIORITY MAXIMUM_PRIORITY} * inclusive.
+     * @param priority The priority for this factory, as a number between {@link * #MINIMUM_PRIORITY MINIMUM_PRIORITY}
+     *     and {@link #MAXIMUM_PRIORITY MAXIMUM_PRIORITY} * inclusive.
      */
     protected AbstractCachedAuthorityFactory(int priority, Hints hints) {
         this(priority, ObjectCaches.create(hints), ReferencingFactoryContainer.instance(hints));
@@ -135,18 +133,16 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
     /**
      * Constructs an instance making use of the indicated cache.
      *
-     * <p>This constructor is protected because subclasses must declare which of the {@link
-     * DatumAuthorityFactory}, {@link CSAuthorityFactory}, {@link CRSAuthorityFactory} and {@link
-     * CoordinateOperationAuthorityFactory} interfaces they choose to implement.
+     * <p>This constructor is protected because subclasses must declare which of the {@link DatumAuthorityFactory},
+     * {@link CSAuthorityFactory}, {@link CRSAuthorityFactory} and {@link CoordinateOperationAuthorityFactory}
+     * interfaces they choose to implement.
      *
-     * @param priority The priority for this factory, as a number between {@link * #MINIMUM_PRIORITY
-     *     MINIMUM_PRIORITY} and {@link #MAXIMUM_PRIORITY MAXIMUM_PRIORITY} * inclusive.
+     * @param priority The priority for this factory, as a number between {@link * #MINIMUM_PRIORITY MINIMUM_PRIORITY}
+     *     and {@link #MAXIMUM_PRIORITY MAXIMUM_PRIORITY} * inclusive.
      * @param cache The cache to use
      */
     protected AbstractCachedAuthorityFactory(
-            int priority,
-            ObjectCache<Object, Object> cache,
-            ReferencingFactoryContainer container) {
+            int priority, ObjectCache<Object, Object> cache, ReferencingFactoryContainer container) {
         super(priority);
         this.factories = container;
         this.cache = cache;
@@ -168,9 +164,9 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
     }
 
     /**
-     * Trims the authority scope, if present. For example if this factory is an EPSG authority
-     * factory and the specified code start with the "EPSG:" prefix, then the prefix is removed.
-     * Otherwise, the string is returned unchanged (except for leading and trailing spaces).
+     * Trims the authority scope, if present. For example if this factory is an EPSG authority factory and the specified
+     * code start with the "EPSG:" prefix, then the prefix is removed. Otherwise, the string is returned unchanged
+     * (except for leading and trailing spaces).
      *
      * @param code The code to trim.
      * @return The code without the authority scope.
@@ -195,11 +191,10 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
     }
 
     /**
-     * Creates an exception for an unknown authority code. This convenience method is provided for
-     * implementation of {@code createXXX} methods.
+     * Creates an exception for an unknown authority code. This convenience method is provided for implementation of
+     * {@code createXXX} methods.
      *
-     * @param type The GeoAPI interface that was to be created (e.g. {@code
-     *     CoordinateReferenceSystem.class}).
+     * @param type The GeoAPI interface that was to be created (e.g. {@code CoordinateReferenceSystem.class}).
      * @param code The unknown authority code.
      * @param cause The cause of this error, or {@code null}.
      * @return An exception initialized with an error message built from the specified informations.
@@ -284,8 +279,7 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
     }
 
     @Override
-    public CoordinateReferenceSystem createCoordinateReferenceSystem(String code)
-            throws FactoryException {
+    public CoordinateReferenceSystem createCoordinateReferenceSystem(String code) throws FactoryException {
         final String key = toKey(code);
         CoordinateReferenceSystem crs = (CoordinateReferenceSystem) cache.get(key);
         if (crs == null) {
@@ -303,8 +297,7 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
         return crs;
     }
 
-    protected abstract CoordinateReferenceSystem generateCoordinateReferenceSystem(String code)
-            throws FactoryException;
+    protected abstract CoordinateReferenceSystem generateCoordinateReferenceSystem(String code) throws FactoryException;
 
     @Override
     public DerivedCRS createDerivedCRS(final String code) throws FactoryException {
@@ -426,8 +419,7 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
         return cs;
     }
 
-    protected abstract CoordinateSystem generateCoordinateSystem(String code)
-            throws FactoryException;
+    protected abstract CoordinateSystem generateCoordinateSystem(String code) throws FactoryException;
 
     // sample implemenation with get/test
     @Override
@@ -449,8 +441,7 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
         return axis;
     }
 
-    protected abstract CoordinateSystemAxis generateCoordinateSystemAxis(String code)
-            throws FactoryException;
+    protected abstract CoordinateSystemAxis generateCoordinateSystemAxis(String code) throws FactoryException;
 
     /**
      * The default implementation invokes <code>
@@ -676,8 +667,7 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
         return operation;
     }
 
-    protected abstract CoordinateOperation generateCoordinateOperation(String code)
-            throws FactoryException;
+    protected abstract CoordinateOperation generateCoordinateOperation(String code) throws FactoryException;
 
     @Override
     @SuppressWarnings("unchecked")
@@ -704,8 +694,8 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
         return operations;
     }
 
-    protected abstract Set generateFromCoordinateReferenceSystemCodes(
-            String sourceCode, String targetCode) throws FactoryException;
+    protected abstract Set generateFromCoordinateReferenceSystemCodes(String sourceCode, String targetCode)
+            throws FactoryException;
 
     /** We will clear out our cache and factories reference */
     @Override
@@ -715,29 +705,28 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
     }
 
     /**
-     * Returns a finder which can be used for looking up unidentified objects. The default
-     * implementation delegates lookup to the underlying backing store and caches the result.
+     * Returns a finder which can be used for looking up unidentified objects. The default implementation delegates
+     * lookup to the underlying backing store and caches the result.
      *
      * @since 2.4
      */
     @Override
-    public synchronized IdentifiedObjectFinder getIdentifiedObjectFinder(
-            final Class<? extends IdentifiedObject> type) throws FactoryException {
+    public synchronized IdentifiedObjectFinder getIdentifiedObjectFinder(final Class<? extends IdentifiedObject> type)
+            throws FactoryException {
         return new CachedFinder(type);
     }
 
     /**
-     * An implementation of {@link IdentifiedObjectFinder} which delegates the work to the
-     * underlying backing store and caches the result.
+     * An implementation of {@link IdentifiedObjectFinder} which delegates the work to the underlying backing store and
+     * caches the result.
      *
-     * <p>A separate ObjectCache, findCache, is used to store the values created over the course of
-     * finding. The findCache is set up as a "chain" allowing it to use our cache to prevent
-     * duplication of effort. In the future this findCache may be shared between instances.
+     * <p>A separate ObjectCache, findCache, is used to store the values created over the course of finding. The
+     * findCache is set up as a "chain" allowing it to use our cache to prevent duplication of effort. In the future
+     * this findCache may be shared between instances.
      *
-     * <p><b>Implementation note:</b> we will create objects using directly the underlying backing
-     * store, not using the cache. This is because hundred of objects may be created during a scan
-     * while only one will be typically retained. We don't want to overload the cache with every
-     * false candidates that we encounter during the scan.
+     * <p><b>Implementation note:</b> we will create objects using directly the underlying backing store, not using the
+     * cache. This is because hundred of objects may be created during a scan while only one will be typically retained.
+     * We don't want to overload the cache with every false candidates that we encounter during the scan.
      */
     private final class CachedFinder extends IdentifiedObjectFinder {
         /** Creates a finder for the underlying backing store. */
@@ -746,9 +735,8 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
         }
 
         /**
-         * Looks up an object from this authority factory which is equals, ignoring metadata, to the
-         * specified object. The default implementation performs the same lookup than the backing
-         * store and caches the result.
+         * Looks up an object from this authority factory which is equals, ignoring metadata, to the specified object.
+         * The default implementation performs the same lookup than the backing store and caches the result.
          */
         @Override
         public IdentifiedObject find(final IdentifiedObject object) throws FactoryException {

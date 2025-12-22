@@ -16,31 +16,26 @@
  */
 package org.geotools.filter.function;
 
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.GeometryAttribute;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.VolatileFunction;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.Feature;
-import org.opengis.feature.GeometryAttribute;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.VolatileFunction;
 
 /**
- * Function the returns the default geometry of a feature, or null if there is none, or it's not a
- * JTS geometry
+ * Function the returns the default geometry of a feature, or null if there is none, or it's not a JTS geometry
  *
  * @author Andrea Aime - GeoSolutions
  */
 public class GeometryFunction extends FunctionExpressionImpl implements VolatileFunction {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "geometry",
-                    FunctionNameImpl.parameter(
-                            "geometry",
-                            Boolean.class,
-                            "Default Geometry",
-                            "Default geometry, or null if there is none."));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "geometry",
+            FunctionNameImpl.parameter(
+                    "geometry", Boolean.class, "Default Geometry", "Default geometry, or null if there is none."));
 
     public GeometryFunction() {
         super(NAME);
@@ -49,8 +44,7 @@ public class GeometryFunction extends FunctionExpressionImpl implements Volatile
     public Object evaluate(Feature feature) {
         if (feature == null) {
             return null;
-        } else if (feature instanceof SimpleFeature) {
-            SimpleFeature sf = (SimpleFeature) feature;
+        } else if (feature instanceof SimpleFeature sf) {
             return geometry(sf.getDefaultGeometry());
         } else {
             GeometryAttribute ga = feature.getDefaultGeometryProperty();
@@ -72,8 +66,8 @@ public class GeometryFunction extends FunctionExpressionImpl implements Volatile
 
     @Override
     public Object evaluate(Object object) {
-        if (object instanceof Feature) {
-            return evaluate((Feature) object);
+        if (object instanceof Feature feature) {
+            return evaluate(feature);
         } else {
             return null;
         }

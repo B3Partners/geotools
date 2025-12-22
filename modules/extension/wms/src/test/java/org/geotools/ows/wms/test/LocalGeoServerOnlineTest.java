@@ -16,28 +16,34 @@
  */
 package org.geotools.ows.wms.test;
 
+import jakarta.mail.internet.ContentType;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import javax.imageio.ImageIO;
-import javax.mail.internet.ContentType;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.StringBuilderWriter;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.data.ServiceInfo;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.style.NamedLayer;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.style.StyledLayerDescriptor;
 import org.geotools.brewer.styling.builder.NamedLayerBuilder;
 import org.geotools.brewer.styling.builder.StyleBuilder;
 import org.geotools.brewer.styling.builder.StyledLayerDescriptorBuilder;
-import org.geotools.data.ResourceInfo;
-import org.geotools.data.ServiceInfo;
 import org.geotools.data.ows.OperationType;
 import org.geotools.data.ows.Specification;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.http.HTTPClientFinder;
 import org.geotools.http.commons.MultithreadedHttpClient;
@@ -55,18 +61,13 @@ import org.geotools.ows.wms.response.GetStylesResponse;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.CRS.AxisOrder;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.geotools.styling.NamedLayer;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyleFactory;
 import org.geotools.styling.StyleFactoryImpl;
-import org.geotools.styling.StyledLayerDescriptor;
 import org.geotools.util.factory.Hints;
 import org.geotools.xml.styling.SLDParser;
 import org.geotools.xml.styling.SLDTransformer;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * This test case assume you have a default GeoServer 2.2 installed on 127.0.0.1 (ie localhost).
@@ -130,13 +131,9 @@ public class LocalGeoServerOnlineTest extends WMSOnlineTestSupport {
             // do setup once!
             if (serverURL != null) {
                 try {
-                    wms =
-                            new WebMapServer(
-                                    serverURL,
-                                    HTTPClientFinder.createClient(
-                                            new Hints(
-                                                    Hints.HTTP_CLIENT,
-                                                    MultithreadedHttpClient.class)));
+                    wms = new WebMapServer(
+                            serverURL,
+                            HTTPClientFinder.createClient(new Hints(Hints.HTTP_CLIENT, MultithreadedHttpClient.class)));
                     capabilities = wms.getCapabilities();
                 } catch (Exception eek) {
                     serverURL = null;
@@ -321,8 +318,7 @@ public class LocalGeoServerOnlineTest extends WMSOnlineTestSupport {
      *
      * <p>Attempt is made to request the entire image.
      */
-    private void checkGetMap(WebMapServer wms, Layer layer, CoordinateReferenceSystem crs)
-            throws Exception {
+    private void checkGetMap(WebMapServer wms, Layer layer, CoordinateReferenceSystem crs) throws Exception {
 
         GetMapRequest getMap = generateGetMap(wms, layer, crs);
         GetMapResponse response = wms.issueRequest(getMap);
@@ -351,10 +347,9 @@ public class LocalGeoServerOnlineTest extends WMSOnlineTestSupport {
      * @param crs
      * @return
      */
-    private GetMapRequest generateGetMap(
-            WebMapServer wms2, Layer layer, CoordinateReferenceSystem crs) {
+    private GetMapRequest generateGetMap(WebMapServer wms2, Layer layer, CoordinateReferenceSystem crs) {
         layer.clearCache();
-        GeneralEnvelope envelope = wms2.getEnvelope(layer, crs);
+        GeneralBounds envelope = wms2.getEnvelope(layer, crs);
         Assert.assertFalse(envelope.isEmpty() || envelope.isNull() || envelope.isInfinite());
         Assert.assertNotNull("Envelope " + CRS.toSRS(crs), envelope);
 
@@ -392,8 +387,7 @@ public class LocalGeoServerOnlineTest extends WMSOnlineTestSupport {
      *
      * <p>Attempt is made to request the entire image.
      */
-    private void checkGetFeatureInfo(WebMapServer wms, Layer layer, CoordinateReferenceSystem crs)
-            throws Exception {
+    private void checkGetFeatureInfo(WebMapServer wms, Layer layer, CoordinateReferenceSystem crs) throws Exception {
 
         GetMapRequest getMap = generateGetMap(wms, layer, crs);
         GetFeatureInfoRequest getFeatureInfo = wms.createGetFeatureInfoRequest(getMap);
@@ -427,15 +421,14 @@ public class LocalGeoServerOnlineTest extends WMSOnlineTestSupport {
 
         StyleFactory styleFactory = new StyleFactoryImpl();
 
-        WebMapServer server =
-                new WebMapServer(url) {
-                    // GetStyle is only implemented in WMS 1.1.1
-                    @Override
-                    protected void setupSpecifications() {
-                        specs = new Specification[1];
-                        specs[0] = new WMS1_1_1();
-                    }
-                };
+        WebMapServer server = new WebMapServer(url) {
+            // GetStyle is only implemented in WMS 1.1.1
+            @Override
+            protected void setupSpecifications() {
+                specs = new Specification[1];
+                specs[0] = new WMS1_1_1();
+            }
+        };
 
         GetStylesRequest wmsRequest = server.createGetStylesRequest();
         wmsRequest.setLayers(layers);
@@ -460,7 +453,7 @@ public class LocalGeoServerOnlineTest extends WMSOnlineTestSupport {
         ContentType contentType = new ContentType(wmsResponse.getContentType());
         try (InputStreamReader stream = getInputStreamReader(wmsResponse, contentType)) {
 
-            Style[] styles = (new SLDParser(styleFactory, stream)).readXML();
+            Style[] styles = new SLDParser(styleFactory, stream).readXML();
 
             assert styles.length > 0;
 
@@ -480,22 +473,19 @@ public class LocalGeoServerOnlineTest extends WMSOnlineTestSupport {
 
             for (Style style : styles) namedLayer.addStyle(style);
 
-            StyledLayerDescriptor sld = (new StyledLayerDescriptorBuilder()).build();
+            StyledLayerDescriptor sld = new StyledLayerDescriptorBuilder().build();
             sld.addStyledLayer(namedLayer);
             String xml = styleTransform.transform(sld);
             assert xml.length() > 300;
         }
     }
 
-    private InputStreamReader getInputStreamReader(
-            GetStylesResponse wmsResponse, ContentType contentType)
+    private InputStreamReader getInputStreamReader(GetStylesResponse wmsResponse, ContentType contentType)
             throws UnsupportedEncodingException {
         InputStreamReader stream;
         if (contentType.getParameter("charset") != null)
-            stream =
-                    new InputStreamReader(
-                            wmsResponse.getInputStream(), contentType.getParameter("charset"));
-        else stream = new InputStreamReader(wmsResponse.getInputStream());
+            stream = new InputStreamReader(wmsResponse.getInputStream(), contentType.getParameter("charset"));
+        else stream = new InputStreamReader(wmsResponse.getInputStream(), StandardCharsets.UTF_8);
         return stream;
     }
 }

@@ -10,11 +10,11 @@
 package org.geotools.feature;
 
 import org.geotools.ExceptionChecker;
+import org.geotools.api.feature.Attribute;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.Attribute;
 
 public class AttributeBuilderTest {
 
@@ -54,13 +54,10 @@ public class AttributeBuilderTest {
         builder.setType(FakeTypes.Mine.MINENAMETYPE_TYPE);
 
         // Act
-        Attribute mineName =
-                builder.add("test_id", "Sharlston Colliery", FakeTypes.Mine.NAME_mineName);
+        Attribute mineName = builder.add("test_id", "Sharlston Colliery", FakeTypes.Mine.NAME_mineName);
 
         // Assert
-        Assert.assertEquals(
-                "AttributeImpl:mineName<string id=test_id>=Sharlston Colliery",
-                mineName.toString());
+        Assert.assertEquals("AttributeImpl:mineName<string id=test_id>=Sharlston Colliery", mineName.toString());
     }
 
     @Test
@@ -69,8 +66,7 @@ public class AttributeBuilderTest {
         builder.setType(FakeTypes.Mine.MINENAMETYPE_TYPE);
 
         // Act
-        Attribute mineName =
-                builder.add("test_id", "Sharlston Colliery", FakeTypes.Mine.NAME_mineName);
+        Attribute mineName = builder.add("test_id", "Sharlston Colliery", FakeTypes.Mine.NAME_mineName);
 
         // Assert
         Assert.assertTrue(builder.getProperties().contains(mineName));

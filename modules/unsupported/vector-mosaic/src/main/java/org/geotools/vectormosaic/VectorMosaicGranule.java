@@ -16,34 +16,50 @@
  */
 package org.geotools.vectormosaic;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.Properties;
-import org.geotools.data.DataStore;
-import org.opengis.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.Filter;
+import org.geotools.filter.text.cql2.CQLException;
+import org.geotools.filter.text.ecql.ECQL;
 
 /** Configuration for a vector mosaic. */
-public class VectorMosaicGranule implements Serializable, Closeable {
+public class VectorMosaicGranule implements Serializable {
 
     public static final String CONNECTION_PARAMETERS_DELEGATE_FIELD_DEFAULT = "params";
     public static final String GRANULE_TYPE_NAME = "type";
+
+    public static final String GRANULE_FILTER = "filter";
     public static final String GRANULE_ID_FIELD = "id";
+
+    public static final String[] GRANULE_CONFIG_FIELDS = {
+        CONNECTION_PARAMETERS_DELEGATE_FIELD_DEFAULT, GRANULE_FILTER, GRANULE_TYPE_NAME
+    };
 
     /** The feature type name */
     String name;
 
     String granuleTypeName;
     String params;
-    DataStore dataStore;
     Properties connProperties;
+
+    String storeName;
+
+    Filter filter;
 
     public static VectorMosaicGranule fromDelegateFeature(SimpleFeature delegateFeature) {
         VectorMosaicGranule config = new VectorMosaicGranule();
-        config.params =
-                (String) delegateFeature.getAttribute(CONNECTION_PARAMETERS_DELEGATE_FIELD_DEFAULT);
+        config.params = (String) delegateFeature.getAttribute(CONNECTION_PARAMETERS_DELEGATE_FIELD_DEFAULT);
         if (delegateFeature.getAttribute(GRANULE_TYPE_NAME) != null) {
             config.granuleTypeName = (String) delegateFeature.getAttribute(GRANULE_TYPE_NAME);
+        }
+        String filterAttribute = (String) delegateFeature.getAttribute(GRANULE_FILTER);
+        if (filterAttribute != null && !filterAttribute.isEmpty()) {
+            try {
+                config.filter = ECQL.toFilter(filterAttribute);
+            } catch (CQLException e) {
+                throw new IllegalArgumentException("Failed to parse filter: " + filterAttribute);
+            }
         }
         return config;
     }
@@ -72,14 +88,6 @@ public class VectorMosaicGranule implements Serializable, Closeable {
         this.params = params;
     }
 
-    public DataStore getDataStore() {
-        return dataStore;
-    }
-
-    public void setDataStore(DataStore dataStore) {
-        this.dataStore = dataStore;
-    }
-
     public Properties getConnProperties() {
         return connProperties;
     }
@@ -88,10 +96,19 @@ public class VectorMosaicGranule implements Serializable, Closeable {
         this.connProperties = connProperties;
     }
 
-    @Override
-    public void close() throws IOException {
-        if (dataStore != null) {
-            dataStore.dispose();
-        }
+    public Filter getFilter() {
+        return filter;
+    }
+
+    public void setFilter(Filter filter) {
+        this.filter = filter;
+    }
+
+    public String getStoreName() {
+        return storeName;
+    }
+
+    public void setStoreName(String storeName) {
+        this.storeName = storeName;
     }
 }

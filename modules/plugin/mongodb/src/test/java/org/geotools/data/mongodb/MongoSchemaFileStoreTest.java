@@ -35,13 +35,14 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.apache.commons.io.IOUtils;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.mongodb.data.SchemaStoreDirectory;
 import org.geotools.data.mongodb.data.SchemaStoreDirectoryProvider;
 import org.geotools.feature.NameImpl;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /** @author tkunicki@boundlessgeo.com */
 public class MongoSchemaFileStoreTest extends MongoSchemaStoreTest<MongoSchemaFileStore> {
@@ -70,7 +71,8 @@ public class MongoSchemaFileStoreTest extends MongoSchemaStoreTest<MongoSchemaFi
 
     static File createUniqueTempDirectory() {
         return new File(
-                new File(System.getProperty("java.io.tmpdir")), UUID.randomUUID().toString());
+                new File(System.getProperty("java.io.tmpdir")),
+                UUID.randomUUID().toString());
     }
 
     private static void resursiveDelete(File f) {
@@ -114,26 +116,24 @@ public class MongoSchemaFileStoreTest extends MongoSchemaStoreTest<MongoSchemaFi
         final String mockFileURL = "https://mock.url.com/stations.json";
 
         MockHTTPClient mockHttpClient = new MockHTTPClient();
-        byte[] responseBytes =
-                IOUtils.toByteArray(getClass().getResourceAsStream("stations-schema.json"));
+        byte[] responseBytes = IOUtils.toByteArray(getClass().getResourceAsStream("stations-schema.json"));
         MockHttpResponse mockResponse = new MockHttpResponse(responseBytes, "text/json");
         mockHttpClient.expectGet(mockFileURL, mockResponse);
         SchemaStoreDirectory directory = SchemaStoreDirectoryProvider.getLowestPriority();
 
         File downloadedFile =
-                MongoUtil.downloadSchemaFile(
-                        "mockshema", new URL(mockFileURL), mockHttpClient, directory);
+                MongoUtil.downloadSchemaFile("mockshema", new URL(mockFileURL), mockHttpClient, directory);
 
-        MongoSchemaStore mss = new MongoSchemaFileStore(downloadedFile.getParentFile().toURI());
+        MongoSchemaStore mss =
+                new MongoSchemaFileStore(downloadedFile.getParentFile().toURI());
         assertEquals(1, mss.typeNames().size());
         SimpleFeatureType type = mss.retrieveSchema(new NameImpl("stations"));
         assertNotNull(type);
         mss.deleteSchema(new NameImpl("stations"));
         // cleanup
-        Files.walk(new File(directory.getDirectory(), "mockshema").toPath())
-                .sorted(Comparator.reverseOrder())
-                .map(Path::toFile)
-                .forEach(File::delete);
+        try (Stream<Path> walk = Files.walk(new File(directory.getDirectory(), "mockshema").toPath())) {
+            walk.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+        }
     }
 
     @Test
@@ -146,10 +146,8 @@ public class MongoSchemaFileStoreTest extends MongoSchemaStoreTest<MongoSchemaFi
         mockHttpClient.expectGet(mockFileURL, mockResponse);
         SchemaStoreDirectory directory = SchemaStoreDirectoryProvider.getLowestPriority();
         File downloadedFile =
-                MongoUtil.downloadSchemaFile(
-                        "mockshema", new URL(mockFileURL), mockHttpClient, directory);
-        File extractedLocation =
-                MongoUtil.extractZipFile(downloadedFile.getParentFile(), downloadedFile);
+                MongoUtil.downloadSchemaFile("mockshema", new URL(mockFileURL), mockHttpClient, directory);
+        File extractedLocation = MongoUtil.extractZipFile(downloadedFile.getParentFile(), downloadedFile);
 
         MongoSchemaStore mss = new MongoSchemaFileStore(extractedLocation.toURI());
         // retreive test
@@ -167,10 +165,9 @@ public class MongoSchemaFileStoreTest extends MongoSchemaStoreTest<MongoSchemaFi
         mss.storeSchema(type2);
         assertEquals(2, mss.typeNames().size());
         // cleanup
-        Files.walk(new File(directory.getDirectory(), "mockshema").toPath())
-                .sorted(Comparator.reverseOrder())
-                .map(Path::toFile)
-                .forEach(File::delete);
+        try (Stream<Path> walk = Files.walk(new File(directory.getDirectory(), "mockshema").toPath())) {
+            walk.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+        }
     }
 
     @Test
@@ -178,16 +175,13 @@ public class MongoSchemaFileStoreTest extends MongoSchemaStoreTest<MongoSchemaFi
         final String mockFileURL = "https://mock.url.com/schemasdir.zip";
 
         MockHTTPClient mockHttpClient = new MockHTTPClient();
-        byte[] responseBytes =
-                IOUtils.toByteArray(getClass().getResourceAsStream("schemas_dir.zip"));
+        byte[] responseBytes = IOUtils.toByteArray(getClass().getResourceAsStream("schemas_dir.zip"));
         MockHttpResponse mockResponse = new MockHttpResponse(responseBytes, "application/zip");
         mockHttpClient.expectGet(mockFileURL, mockResponse);
         SchemaStoreDirectory directory = SchemaStoreDirectoryProvider.getLowestPriority();
         File downloadedFile =
-                MongoUtil.downloadSchemaFile(
-                        "mockshema", new URL(mockFileURL), mockHttpClient, directory);
-        File extractedLocation =
-                MongoUtil.extractZipFile(downloadedFile.getParentFile(), downloadedFile);
+                MongoUtil.downloadSchemaFile("mockshema", new URL(mockFileURL), mockHttpClient, directory);
+        File extractedLocation = MongoUtil.extractZipFile(downloadedFile.getParentFile(), downloadedFile);
 
         MongoSchemaStore mss = new MongoSchemaFileStore(extractedLocation.toURI());
         // retreive test
@@ -206,10 +200,9 @@ public class MongoSchemaFileStoreTest extends MongoSchemaStoreTest<MongoSchemaFi
         assertEquals(2, mss.typeNames().size());
 
         // cleanup
-        Files.walk(new File(directory.getDirectory(), "mockshema").toPath())
-                .sorted(Comparator.reverseOrder())
-                .map(Path::toFile)
-                .forEach(File::delete);
+        try (Stream<Path> walk = Files.walk(new File(directory.getDirectory(), "mockshema").toPath())) {
+            walk.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+        }
     }
 
     @Test
@@ -230,8 +223,7 @@ public class MongoSchemaFileStoreTest extends MongoSchemaStoreTest<MongoSchemaFi
         assertThat(typeName(new File("testMe.json")), is(equalTo("testMe")));
         assertThat(typeName(new File("c:/testMe.json")), is(equalTo("testMe")));
         assertThat(
-                typeName(
-                        new File("/opt/tomcat/webapps/data/mongodb-schemas/teststore/testMe.json")),
+                typeName(new File("/opt/tomcat/webapps/data/mongodb-schemas/teststore/testMe.json")),
                 is(equalTo("testMe")));
     }
 

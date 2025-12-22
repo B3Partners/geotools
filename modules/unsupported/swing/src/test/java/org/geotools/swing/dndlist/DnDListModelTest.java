@@ -31,7 +31,7 @@ import org.geotools.swing.control.DnDListModel;
 import org.junit.Test;
 
 public class DnDListModelTest {
-    class Watcher implements ListDataListener {
+    static class Watcher implements ListDataListener {
         int changed = 0;
 
         int added = 0;
@@ -107,9 +107,7 @@ public class DnDListModelTest {
         model.addItem("one");
         model.addItem("two");
 
-        assertEquals(
-                Arrays.asList(new String[] {"one", "two", "one"}),
-                model.getElementsAt(new int[] {0, 1, 0}));
+        assertEquals(Arrays.asList(new String[] {"one", "two", "one"}), model.getElementsAt(new int[] {0, 1, 0}));
     }
 
     @Test
@@ -123,8 +121,7 @@ public class DnDListModelTest {
         indexs.add(1);
         indexs.add(0);
 
-        assertEquals(
-                Arrays.asList(new String[] {"one", "two", "one"}), model.getElementsAt(indexs));
+        assertEquals(Arrays.asList(new String[] {"one", "two", "one"}), model.getElementsAt(indexs));
     }
 
     @Test

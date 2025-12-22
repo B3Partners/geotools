@@ -21,13 +21,18 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.FileDataStore;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.FileDataStore;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.geojson.GeoJSONReader;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.store.ContentDataStore;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
@@ -35,11 +40,6 @@ import org.geotools.feature.NameImpl;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.util.URLs;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class GeoJSONDataStore extends ContentDataStore implements FileDataStore {
 
@@ -113,6 +113,10 @@ public class GeoJSONDataStore extends ContentDataStore implements FileDataStore 
         return schema;
     }
 
+    protected SimpleFeatureType getCurrentSchema() throws IOException {
+        return schema;
+    }
+
     @Override
     public void updateSchema(SimpleFeatureType featureType) throws IOException {
         schema = featureType;
@@ -151,8 +155,8 @@ public class GeoJSONDataStore extends ContentDataStore implements FileDataStore 
     }
 
     @Override
-    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriter(
-            Filter filter, Transaction transaction) throws IOException {
+    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriter(Filter filter, Transaction transaction)
+            throws IOException {
         return null;
     }
 
@@ -163,8 +167,8 @@ public class GeoJSONDataStore extends ContentDataStore implements FileDataStore 
     }
 
     @Override
-    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriterAppend(
-            Transaction transaction) throws IOException {
+    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriterAppend(Transaction transaction)
+            throws IOException {
         return null;
     }
 

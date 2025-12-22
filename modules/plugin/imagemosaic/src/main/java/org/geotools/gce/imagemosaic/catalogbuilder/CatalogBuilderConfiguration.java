@@ -31,8 +31,7 @@ import org.geotools.util.Utilities;
 import org.geotools.util.factory.Hints;
 
 /**
- * Simple bean that conveys the information needed by the CatalogBuilder to create a catalogue of
- * granules
+ * Simple bean that conveys the information needed by the CatalogBuilder to create a catalogue of granules
  *
  * @author Simone Giannecchini, GeoSolutions SAS
  */
@@ -143,6 +142,7 @@ public class CatalogBuilderConfiguration implements Cloneable {
 
         if (!equalsParameter(this, that, Prop.CACHING)) return false;
         if (!equalsParameter(this, that, Prop.RECURSIVE)) return false;
+        if (!equalsParameter(this, that, Prop.COLLECT_RAT)) return false;
         if (!equalsParameter(this, that, Prop.COG)) return false;
         if (!equalsParameter(this, that, Prop.FOOTPRINT_MANAGEMENT)) return false;
         if (!equalsParameter(this, that, Prop.INDEX_NAME)) return false;
@@ -152,9 +152,7 @@ public class CatalogBuilderConfiguration implements Cloneable {
     }
 
     private static boolean equalsParameter(
-            CatalogBuilderConfiguration thisConfig,
-            CatalogBuilderConfiguration thatConfig,
-            String parameterName) {
+            CatalogBuilderConfiguration thisConfig, CatalogBuilderConfiguration thatConfig, String parameterName) {
         String thisValue = thisConfig.getParameter(parameterName);
         String thatValue = thatConfig.getParameter(parameterName);
         if (!(thisValue == null && thatValue == null) && !Objects.equals(thisValue, thatValue)) {
@@ -168,6 +166,7 @@ public class CatalogBuilderConfiguration implements Cloneable {
         int seed = 37;
         seed = Utilities.hash(Boolean.parseBoolean(getParameter(Prop.ABSOLUTE_PATH)), seed);
         seed = Utilities.hash(Boolean.parseBoolean(getParameter(Prop.RECURSIVE)), seed);
+        seed = Utilities.hash(Boolean.parseBoolean(getParameter(Prop.COLLECT_RAT)), seed);
         seed = Utilities.hash(Boolean.parseBoolean(getParameter(Prop.COG)), seed);
         seed = Utilities.hash(Boolean.parseBoolean(getParameter(Prop.CACHING)), seed);
         seed = Utilities.hash(Boolean.parseBoolean(getParameter(Prop.FOOTPRINT_MANAGEMENT)), seed);
@@ -182,7 +181,9 @@ public class CatalogBuilderConfiguration implements Cloneable {
     public String toString() {
         final StringBuilder builder = new StringBuilder();
         builder.append("CatalogBuilderConfiguration").append("\n");
-        builder.append("wildcardString:\t\t\t").append(getParameter(Prop.WILDCARD)).append("\n");
+        builder.append("wildcardString:\t\t\t")
+                .append(getParameter(Prop.WILDCARD))
+                .append("\n");
         builder.append("indexName:\t\t\t").append(getParameter(Prop.INDEX_NAME)).append("\n");
         builder.append("absolute:\t\t\t")
                 .append(Boolean.parseBoolean(getParameter(Prop.ABSOLUTE_PATH)))
@@ -192,6 +193,9 @@ public class CatalogBuilderConfiguration implements Cloneable {
                 .append("\n");
         builder.append("recursive:\t\t\t")
                 .append(Boolean.parseBoolean(getParameter(Prop.RECURSIVE)))
+                .append("\n");
+        builder.append("collectAttributeTables:\t\t\t")
+                .append(Boolean.parseBoolean(getParameter(Prop.COLLECT_RAT)))
                 .append("\n");
         builder.append("footprintManagement:\t\t\t")
                 .append(Boolean.parseBoolean(getParameter(Prop.FOOTPRINT_MANAGEMENT)))
@@ -228,8 +232,7 @@ public class CatalogBuilderConfiguration implements Cloneable {
             // indexingDirectories = directories;
         }
         String indexName = getParameter(Prop.INDEX_NAME);
-        if (indexName == null || indexName.length() == 0)
-            throw new IllegalStateException("Index name cannot be empty");
+        if (indexName == null || indexName.length() == 0) throw new IllegalStateException("Index name cannot be empty");
 
         // Check the root mosaic directory
         String rootMosaicDirectory = getParameter(Prop.ROOT_MOSAIC_DIR);

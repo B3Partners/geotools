@@ -97,9 +97,9 @@ public class XSAnyTypeBinding extends AbstractComplexBinding {
      * <!-- begin-user-doc -->
      * A quick approx of the available content:
      *
-     * <p>This method returns a {@link Map} in which the names of children and attributes are keys,
-     * and the parsed children and attributes are the values. If the element being parsed contains
-     * child text, it is available under the <code>nulll</code> key.
+     * <p>This method returns a {@link Map} in which the names of children and attributes are keys, and the parsed
+     * children and attributes are the values. If the element being parsed contains child text, it is available under
+     * the <code>nulll</code> key.
      *
      * @return Map,
      *     <!-- end-user-doc -->
@@ -109,8 +109,8 @@ public class XSAnyTypeBinding extends AbstractComplexBinding {
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         String text = null;
 
-        if ((value != null) && value instanceof String) {
-            text = ((String) value);
+        if (value != null && value instanceof String string) {
+            text = string;
 
             if ("".equals(text.trim())) {
                 text = null;
@@ -118,17 +118,17 @@ public class XSAnyTypeBinding extends AbstractComplexBinding {
         }
 
         // if there is just some text, return it
-        if (node.getChildren().isEmpty() && node.getAttributes().isEmpty() && (text != null)) {
+        if (node.getChildren().isEmpty() && node.getAttributes().isEmpty() && text != null) {
             return text;
         }
 
         // if there is only a single child, return it
-        if ((node.getChildren().size() == 1) && node.getAttributes().isEmpty() && (text == null)) {
+        if (node.getChildren().size() == 1 && node.getAttributes().isEmpty() && text == null) {
             return node.getChildValue(0);
         }
 
         // if there is a single attribute, return it
-        if ((node.getAttributes().size() == 1) && node.getChildren().isEmpty() && (text == null)) {
+        if (node.getAttributes().size() == 1 && node.getChildren().isEmpty() && text == null) {
             return node.getAttributes().get(0).getValue();
         }
 
@@ -139,7 +139,7 @@ public class XSAnyTypeBinding extends AbstractComplexBinding {
         mapBinding(map, attributes);
         mapBinding(map, children);
 
-        if ((text != null) && !"".equals(text.trim())) {
+        if (text != null && !"".equals(text.trim())) {
             map.put(null, text);
         }
 

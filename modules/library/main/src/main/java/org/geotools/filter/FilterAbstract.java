@@ -19,16 +19,16 @@ package org.geotools.filter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.feature.NameImpl;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * Abstract implementation for Filter.
  *
  * @author Jody Garnett
  */
-public abstract class FilterAbstract implements org.opengis.filter.Filter {
+public abstract class FilterAbstract implements org.geotools.api.filter.Filter {
 
     protected FilterAbstract() {}
 
@@ -51,10 +51,8 @@ public abstract class FilterAbstract implements org.opengis.filter.Filter {
     /** Unpacks a value from an attribute container */
     private Object unpack(Object value) {
 
-        if (value instanceof org.opengis.feature.ComplexAttribute) {
-            Property simpleContent =
-                    ((org.opengis.feature.ComplexAttribute) value)
-                            .getProperty(new NameImpl("simpleContent"));
+        if (value instanceof org.geotools.api.feature.ComplexAttribute attribute) {
+            Property simpleContent = attribute.getProperty(new NameImpl("simpleContent"));
             if (simpleContent == null) {
                 return null;
             } else {
@@ -62,21 +60,21 @@ public abstract class FilterAbstract implements org.opengis.filter.Filter {
             }
         }
 
-        if (value instanceof org.opengis.feature.Attribute) {
-            return ((org.opengis.feature.Attribute) value).getValue();
+        if (value instanceof org.geotools.api.feature.Attribute attribute) {
+            return attribute.getValue();
         }
 
         return value;
     }
 
     /**
-     * Helper method for subclasses to reduce null checks and automatically unpack values from
-     * attributes and collections
+     * Helper method for subclasses to reduce null checks and automatically unpack values from attributes and
+     * collections
      *
      * @return value or null
      */
     @SuppressWarnings("unchecked")
-    protected Object eval(org.opengis.filter.expression.Expression expression, Object object) {
+    protected Object eval(org.geotools.api.filter.expression.Expression expression, Object object) {
         if (expression == null) return null;
         Object value = expression.evaluate(object);
 
@@ -96,8 +94,7 @@ public abstract class FilterAbstract implements org.opengis.filter.Filter {
      *
      * @return value or null
      */
-    protected Object eval(
-            org.opengis.filter.expression.Expression expression, Object object, Class<?> context) {
+    protected Object eval(org.geotools.api.filter.expression.Expression expression, Object object, Class<?> context) {
         if (expression == null) return null;
         return expression.evaluate(object, context);
     }

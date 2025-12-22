@@ -24,25 +24,25 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
+import org.geotools.api.filter.BinaryComparisonOperator;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.DWithin;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.BinaryComparisonOperator;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.Id;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.DWithin;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -58,11 +58,10 @@ import org.w3c.dom.NodeList;
  */
 public final class FilterDOMParser {
     /** The logger for the filter module. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(FilterDOMParser.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(FilterDOMParser.class);
 
     /** Factory to create filters. */
-    private static final FilterFactory2 FILTER_FACT = CommonFactoryFinder.getFilterFactory2(null);
+    private static final FilterFactory FILTER_FACT = CommonFactoryFinder.getFilterFactory(null);
 
     /** Number of children in a between filter. */
     private static final int NUM_BETWEEN_CHILDREN = 3;
@@ -80,12 +79,9 @@ public final class FilterDOMParser {
         comparisons.put("PropertyIsEqualTo", Integer.valueOf(FilterType.COMPARE_EQUALS));
         comparisons.put("PropertyIsNotEqualTo", Integer.valueOf(FilterType.COMPARE_NOT_EQUALS));
         comparisons.put("PropertyIsGreaterThan", Integer.valueOf(FilterType.COMPARE_GREATER_THAN));
-        comparisons.put(
-                "PropertyIsGreaterThanOrEqualTo",
-                Integer.valueOf(FilterType.COMPARE_GREATER_THAN_EQUAL));
+        comparisons.put("PropertyIsGreaterThanOrEqualTo", Integer.valueOf(FilterType.COMPARE_GREATER_THAN_EQUAL));
         comparisons.put("PropertyIsLessThan", Integer.valueOf(FilterType.COMPARE_LESS_THAN));
-        comparisons.put(
-                "PropertyIsLessThanOrEqualTo", Integer.valueOf(FilterType.COMPARE_LESS_THAN_EQUAL));
+        comparisons.put("PropertyIsLessThanOrEqualTo", Integer.valueOf(FilterType.COMPARE_LESS_THAN_EQUAL));
         comparisons.put("PropertyIsLike", Integer.valueOf(AbstractFilter.LIKE));
         comparisons.put("PropertyIsNull", Integer.valueOf(AbstractFilter.NULL));
         comparisons.put("PropertyIsBetween", Integer.valueOf(FilterType.BETWEEN));
@@ -119,11 +115,11 @@ public final class FilterDOMParser {
      * @param root a dom node containing FILTER as the root element.
      * @task TODO: split up this insanely long method.
      */
-    public static org.opengis.filter.Filter parseFilter(Node root) {
+    public static org.geotools.api.filter.Filter parseFilter(Node root) {
 
         // NodeList children = root.getChildNodes();
         // LOGGER.finest("children "+children);
-        if ((root == null) || (root.getNodeType() != Node.ELEMENT_NODE)) {
+        if (root == null || root.getNodeType() != Node.ELEMENT_NODE) {
             LOGGER.finest("bad node input ");
 
             return null;
@@ -194,7 +190,7 @@ public final class FilterDOMParser {
             for (int i = 0; i < map.getLength(); i++) {
                 Node kid = map.item(i);
 
-                if ((kid == null) || (kid.getNodeType() != Node.ELEMENT_NODE)) {
+                if (kid == null || kid.getNodeType() != Node.ELEMENT_NODE) {
                     continue;
                 }
 
@@ -210,8 +206,7 @@ public final class FilterDOMParser {
                             "Filter negation can be " + "applied to one and only one child filter");
                 return FILTER_FACT.not(children.get(0));
             } else {
-                throw new RuntimeException(
-                        "Logical filter, but not And, Or, Not? " + "This should not happen");
+                throw new RuntimeException("Logical filter, but not And, Or, Not? " + "This should not happen");
             }
         } catch (IllegalFilterException ife) {
             LOGGER.warning("Unable to build filter: " + ife);
@@ -298,8 +293,7 @@ public final class FilterDOMParser {
         return FILTER_FACT.id(ids);
     }
 
-    private static PropertyIsLike parseLikeFilter(
-            ExpressionDOMParser expressionDOMParser, Node child) {
+    private static PropertyIsLike parseLikeFilter(ExpressionDOMParser expressionDOMParser, Node child) {
         String wildcard = null;
         String single = null;
         String escape = null;
@@ -311,11 +305,11 @@ public final class FilterDOMParser {
         for (int i = 0; i < map.getLength(); i++) {
             Node kid = map.item(i);
 
-            if ((kid == null) || (kid.getNodeType() != Node.ELEMENT_NODE)) {
+            if (kid == null || kid.getNodeType() != Node.ELEMENT_NODE) {
                 continue;
             }
 
-            String res = (kid.getLocalName() != null) ? kid.getLocalName() : kid.getNodeName();
+            String res = kid.getLocalName() != null ? kid.getLocalName() : kid.getNodeName();
             if (res.indexOf(':') != -1) {
                 // the DOM parser wasnt properly set to handle namespaces...
                 res = res.substring(res.indexOf(':') + 1);
@@ -336,7 +330,7 @@ public final class FilterDOMParser {
             Node kid = kids.item(i);
 
             // if(kid == null || kid.getNodeType() != Node.ELEMENT_NODE) continue;
-            String res = (kid.getLocalName() != null) ? kid.getLocalName() : kid.getNodeName();
+            String res = kid.getLocalName() != null ? kid.getLocalName() : kid.getNodeName();
             if (res.indexOf(':') != -1) {
                 // the DOM parser wasnt properly set to handle namespaces...
                 res = res.substring(res.indexOf(':') + 1);
@@ -354,48 +348,37 @@ public final class FilterDOMParser {
             }
         }
 
-        if (!((wildcard == null) || (single == null) || (escape == null) || (pattern == null))) {
+        if (!(wildcard == null || single == null || escape == null || pattern == null)) {
             // LikeFilter lfilter = FILTER_FACT.createLikeFilter();
-            LOGGER.finer(
-                    "Building like filter "
-                            + value.toString()
-                            + "\n"
-                            + pattern
-                            + " "
-                            + wildcard
-                            + " "
-                            + single
-                            + " "
-                            + escape);
+            LOGGER.finer("Building like filter "
+                    + value.toString()
+                    + "\n"
+                    + pattern
+                    + " "
+                    + wildcard
+                    + " "
+                    + single
+                    + " "
+                    + escape);
             // lfilter.setValue(value);
             // lfilter.setPattern(pattern, wildcard, single, escape);
 
             return FILTER_FACT.like(value, pattern, wildcard, single, escape);
         }
 
-        LOGGER.finer(
-                "Problem building like filter\n"
-                        + pattern
-                        + " "
-                        + wildcard
-                        + " "
-                        + single
-                        + " "
-                        + escape);
+        LOGGER.finer("Problem building like filter\n" + pattern + " " + wildcard + " " + single + " " + escape);
 
         return null;
     }
 
-    private static PropertyIsBetween parseBetweenFilter(
-            ExpressionDOMParser expressionDOMParser, Node child) {
+    private static PropertyIsBetween parseBetweenFilter(ExpressionDOMParser expressionDOMParser, Node child) {
         // BetweenFilter bfilter = FILTER_FACT.createBetweenFilter();
 
         NodeList kids = child.getChildNodes();
 
         if (kids.getLength() < NUM_BETWEEN_CHILDREN) {
             throw new IllegalFilterException(
-                    "wrong number of children in Between filter: expected 3 got "
-                            + kids.getLength());
+                    "wrong number of children in Between filter: expected 3 got " + kids.getLength());
         }
 
         Node value = child.getFirstChild();
@@ -416,7 +399,7 @@ public final class FilterDOMParser {
         for (int i = 0; i < kids.getLength(); i++) {
             Node kid = kids.item(i);
 
-            String kidName = (kid.getLocalName() != null) ? kid.getLocalName() : kid.getNodeName();
+            String kidName = kid.getLocalName() != null ? kid.getLocalName() : kid.getNodeName();
             if (kidName.indexOf(':') != -1) {
                 // the DOM parser wasnt properly set to handle namespaces...
                 kidName = kidName.substring(kidName.indexOf(':') + 1);
@@ -494,8 +477,7 @@ public final class FilterDOMParser {
 
             LOGGER.finest("add right value -> " + value + "<-");
 
-            String valueName =
-                    (value.getLocalName() != null) ? value.getLocalName() : value.getNodeName();
+            String valueName = value.getLocalName() != null ? value.getLocalName() : value.getNodeName();
             if (valueName.indexOf(':') != -1) {
                 // the DOM parser was not properly set to handle namespaces...
                 valueName = valueName.substring(valueName.indexOf(':') + 1);
@@ -505,8 +487,7 @@ public final class FilterDOMParser {
             // ruin the DOM hierarchy
             Node nextNode = value.getNextSibling();
             Expression right;
-            if (!(valueName.equalsIgnoreCase("Literal")
-                    || valueName.equalsIgnoreCase("propertyname"))) {
+            if (!(valueName.equalsIgnoreCase("Literal") || valueName.equalsIgnoreCase("propertyname"))) {
                 Element literal = value.getOwnerDocument().createElement("literal");
 
                 literal.appendChild(value);
@@ -565,19 +546,18 @@ public final class FilterDOMParser {
         Literal literal = right;
         Object obj = literal.getValue();
         ReferencedEnvelope bbox = null;
-        if (obj instanceof Geometry) {
-            bbox = JTS.toEnvelope((Geometry) obj);
-        } else if (obj instanceof ReferencedEnvelope) {
-            bbox = (ReferencedEnvelope) obj;
-        } else if (obj instanceof Envelope) {
+        if (obj instanceof Geometry geometry) {
+            bbox = JTS.toEnvelope(geometry);
+        } else if (obj instanceof ReferencedEnvelope envelope1) {
+            bbox = envelope1;
+        } else if (obj instanceof Envelope envelope) {
             // no clue about CRS / srsName so we should guess
-            bbox = new ReferencedEnvelope((Envelope) obj, null);
+            bbox = new ReferencedEnvelope(envelope, null);
         }
         return FILTER_FACT.bbox(left, bbox);
     }
 
-    private static Beyond parseBeyondFilter(
-            Expression left, Node nextNode, Expression right, String units) {
+    private static Beyond parseBeyondFilter(Expression left, Node nextNode, Expression right, String units) {
         double distance;
         String nodeName;
         Node value;
@@ -594,8 +574,7 @@ public final class FilterDOMParser {
         }
         if (!"Distance".equals(nodeName)) {
             throw new IllegalFilterException(
-                    "Parsing Beyond, was expecting to find Distance but found "
-                            + value.getLocalName());
+                    "Parsing Beyond, was expecting to find Distance but found " + value.getLocalName());
         }
         distance = Double.parseDouble(value.getTextContent());
         if (value.getAttributes().getNamedItem("units") != null)
@@ -603,8 +582,7 @@ public final class FilterDOMParser {
         return FILTER_FACT.beyond(left, right, distance, units);
     }
 
-    private static DWithin parseWithinFilter(
-            Expression left, Node nextNode, Expression right, String units) {
+    private static DWithin parseWithinFilter(Expression left, Node nextNode, Expression right, String units) {
         double distance;
         String nodeName;
         Node value;
@@ -622,8 +600,7 @@ public final class FilterDOMParser {
         }
         if (!"Distance".equals(nodeName)) {
             throw new IllegalFilterException(
-                    "Parsing DWithin, was expecting to find Distance but found "
-                            + value.getLocalName());
+                    "Parsing DWithin, was expecting to find Distance but found " + value.getLocalName());
         }
         distance = Double.parseDouble(value.getTextContent());
         if (value.getAttributes().getNamedItem("units") != null)

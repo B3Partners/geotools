@@ -21,11 +21,11 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.NoSuchIdentifierException;
+import org.geotools.api.referencing.operation.TransformException;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.NoSuchIdentifierException;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * Unit tests for {@link NTv2Transform} public methods
@@ -52,28 +52,19 @@ public class NTv2TransformTest {
         transform = new NTv2Transform(new URI(TEST_GRID));
     }
 
-    /**
-     * Test method for {@link
-     * org.geotools.referencing.operation.transform.NTv2Transform#getSourceDimensions()}.
-     */
+    /** Test method for {@link org.geotools.referencing.operation.transform.NTv2Transform#getSourceDimensions()}. */
     @Test
     public void testGetSourceDimensions() {
         assertEquals(transform.getSourceDimensions(), 2);
     }
 
-    /**
-     * Test method for {@link
-     * org.geotools.referencing.operation.transform.NTv2Transform#getTargetDimensions()}.
-     */
+    /** Test method for {@link org.geotools.referencing.operation.transform.NTv2Transform#getTargetDimensions()}. */
     @Test
     public void testGetTargetDimensions() {
         assertEquals(transform.getTargetDimensions(), 2);
     }
 
-    /**
-     * Test method for {@link
-     * org.geotools.referencing.operation.transform.NTv2Transform#getParameterValues()}.
-     */
+    /** Test method for {@link org.geotools.referencing.operation.transform.NTv2Transform#getParameterValues()}. */
     @Test
     public void testGetParameterValues() {
         ParameterValueGroup pvg = transform.getParameterValues();
@@ -95,8 +86,7 @@ public class NTv2TransformTest {
     }
 
     /**
-     * Test method for {@link
-     * org.geotools.referencing.operation.transform.NTv2Transform#NTv2Transform(java.net.URI)}.
+     * Test method for {@link org.geotools.referencing.operation.transform.NTv2Transform#NTv2Transform(java.net.URI)}.
      */
     @Test
     public void testNTv2Transform() throws Exception {
@@ -116,13 +106,11 @@ public class NTv2TransformTest {
         try {
             new NTv2Transform(new URI(INEXISTENT_GRID));
         } catch (NoSuchIdentifierException e) {
-            return;
+            // ignore and move on
         }
     }
 
-    /**
-     * Test method for {@link org.geotools.referencing.operation.transform.NTv2Transform#inverse()}.
-     */
+    /** Test method for {@link org.geotools.referencing.operation.transform.NTv2Transform#inverse()}. */
     @Test
     public void testInverse() throws TransformException {
         assertSame(transform, transform.inverse().inverse());
@@ -137,9 +125,8 @@ public class NTv2TransformTest {
     }
 
     /**
-     * Test method for {@link
-     * org.geotools.referencing.operation.transform.NTv2Transform#transform(double[], int, double[],
-     * int, int)}.
+     * Test method for {@link org.geotools.referencing.operation.transform.NTv2Transform#transform(double[], int,
+     * double[], int, int)}.
      */
     @Test
     public void testTransform() throws TransformException {
@@ -164,8 +151,7 @@ public class NTv2TransformTest {
     }
 
     /**
-     * Test method for {@link
-     * org.geotools.referencing.operation.transform.NTv2Transform#inverseTransform(double[], int,
+     * Test method for {@link org.geotools.referencing.operation.transform.NTv2Transform#inverseTransform(double[], int,
      * double[], int, int)}.
      */
     @Test

@@ -21,17 +21,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import org.geotools.data.CloseableIterator;
+import org.geotools.api.data.CloseableIterator;
 import org.geotools.data.shapefile.index.Data;
 import org.geotools.data.shapefile.index.DataDefinition;
 import org.geotools.data.shapefile.shp.IndexFile;
 import org.locationtech.jts.geom.Envelope;
 
 /**
- * Iterator that search the quad tree depth first. 32000 indices are cached at a time and each time
- * a node is visited the indices are removed from the node so that the memory footprint is kept
- * small. Note that if other iterators operate on the same tree then they can interfere with each
- * other.
+ * Iterator that search the quad tree depth first. 32000 indices are cached at a time and each time a node is visited
+ * the indices are removed from the node so that the memory footprint is kept small. Note that if other iterators
+ * operate on the same tree then they can interfere with each other.
  *
  * @author Jesse
  */
@@ -168,7 +167,7 @@ public class LazySearchIterator implements CloseableIterator<Data> {
     }
 
     /** An efficient wrapper around an array of integers */
-    class Indices {
+    static class Indices {
         /** The current coordinate */
         int curr;
 
@@ -188,7 +187,7 @@ public class LazySearchIterator implements CloseableIterator<Data> {
         /** Adds a coordinate to this list */
         void add(int index) {
             curr++;
-            if ((curr * 2 + 1) >= indices.length) {
+            if (curr * 2 + 1 >= indices.length) {
                 int newSize = indices.length * 3 / 2;
                 if (newSize < 10) {
                     newSize = 10;

@@ -53,11 +53,7 @@ public class ParseExecutor implements Visitor {
     /** final parsed result */
     private Object result;
 
-    public ParseExecutor(
-            InstanceComponent instance,
-            Node node,
-            MutablePicoContainer context,
-            ParserHandler parser) {
+    public ParseExecutor(InstanceComponent instance, Node node, MutablePicoContainer context, ParserHandler parser) {
         this.instance = instance;
         this.node = node;
         this.context = context;
@@ -82,16 +78,13 @@ public class ParseExecutor implements Visitor {
 
                 binding = parser.getBindingLoader().loadBinding(bindingTarget, context);
                 if (binding == null) {
-                    binding =
-                            parser.getBindingLoader()
-                                    .loadBinding(bindingTarget, bindingClass, context);
+                    binding = parser.getBindingLoader().loadBinding(bindingTarget, bindingClass, context);
                 }
                 if (binding.getClass() != bindingClass) {
-                    throw new IllegalStateException(
-                            "Reloaded binding resulted in different type, from "
-                                    + bindingClass
-                                    + " to "
-                                    + binding.getClass());
+                    throw new IllegalStateException("Reloaded binding resulted in different type, from "
+                            + bindingClass
+                            + " to "
+                            + binding.getClass());
                 }
             }
         }
@@ -109,9 +102,7 @@ public class ParseExecutor implements Visitor {
                     type = instance.getTypeDefinition();
                 } else {
                     // type binding
-                    type =
-                            Schemas.getBaseTypeDefinition(
-                                    instance.getTypeDefinition(), binding.getTarget());
+                    type = Schemas.getBaseTypeDefinition(instance.getTypeDefinition(), binding.getTarget());
                 }
 
                 if (value == null) {
@@ -122,12 +113,12 @@ public class ParseExecutor implements Visitor {
                     // if the type is simple or complex and mixed, use the
                     // text as is, other wise trim it, turning to null if the
                     // result is empty
-                    if ((type != null)
+                    if (type != null
                             && (type instanceof XSDSimpleTypeDefinition
                                     || ((XSDComplexTypeDefinition) type).isMixed())) {
                         result = value;
-                    } else if ((value != null) && value instanceof String) {
-                        if ("".equals(((String) value).trim())) {
+                    } else if (value != null && value instanceof String string) {
+                        if ("".equals(string.trim())) {
                             result = null;
                         } else {
                             result = value;
@@ -138,8 +129,8 @@ public class ParseExecutor implements Visitor {
                 }
             }
 
-            if (binding instanceof SimpleBinding) {
-                result = ((SimpleBinding) binding).parse(instance, result);
+            if (binding instanceof SimpleBinding simpleBinding) {
+                result = simpleBinding.parse(instance, result);
             } else {
                 result = ((ComplexBinding) binding).parse((ElementInstance) instance, node, result);
             }
@@ -170,8 +161,7 @@ public class ParseExecutor implements Visitor {
         if (instance.getTypeDefinition() instanceof XSDSimpleTypeDefinition) {
             type = (XSDSimpleTypeDefinition) instance.getTypeDefinition();
         } else {
-            XSDComplexTypeDefinition complexType =
-                    (XSDComplexTypeDefinition) instance.getTypeDefinition();
+            XSDComplexTypeDefinition complexType = (XSDComplexTypeDefinition) instance.getTypeDefinition();
 
             if (complexType.getContentType() instanceof XSDSimpleTypeDefinition) {
                 type = (XSDSimpleTypeDefinition) complexType.getContentType();
@@ -246,8 +236,7 @@ public class ParseExecutor implements Visitor {
                 List<Object> parsed = new ArrayList<>();
 
                 // create a pseudo declaration
-                final XSDElementDeclaration element =
-                        XSDFactory.eINSTANCE.createXSDElementDeclaration();
+                final XSDElementDeclaration element = XSDFactory.eINSTANCE.createXSDElementDeclaration();
                 element.setTypeDefinition(itemType);
 
                 if (instance.getName() != null) {
@@ -259,18 +248,17 @@ public class ParseExecutor implements Visitor {
                 }
 
                 // create a new instance of the specified type
-                InstanceComponentImpl theInstance =
-                        new InstanceComponentImpl() {
-                            @Override
-                            public XSDTypeDefinition getTypeDefinition() {
-                                return itemType;
-                            }
+                InstanceComponentImpl theInstance = new InstanceComponentImpl() {
+                    @Override
+                    public XSDTypeDefinition getTypeDefinition() {
+                        return itemType;
+                    }
 
-                            @Override
-                            public XSDNamedComponent getDeclaration() {
-                                return element;
-                            };
-                        };
+                    @Override
+                    public XSDNamedComponent getDeclaration() {
+                        return element;
+                    }
+                };
 
                 for (String s : list) {
                     theInstance.setText(s);
@@ -291,11 +279,9 @@ public class ParseExecutor implements Visitor {
                 // atomic
 
                 // walk through the facets and preparse as necessary
-                for (org.eclipse.xsd.XSDConstrainingFacet xsdConstrainingFacet : type.getFacets()) {
-                    XSDFacet facet = (XSDFacet) xsdConstrainingFacet;
+                for (org.eclipse.xsd.XSDConstrainingFacet facet : type.getFacets()) {
 
-                    if (facet instanceof XSDWhiteSpaceFacet && !parser.isCDATA()) {
-                        XSDWhiteSpaceFacet whitespace = (XSDWhiteSpaceFacet) facet;
+                    if (facet instanceof XSDWhiteSpaceFacet whitespace && !parser.isCDATA()) {
 
                         if (whitespace.getValue() == XSDWhiteSpace.REPLACE_LITERAL) {
                             text = Whitespace.REPLACE.preparse(text);
@@ -343,8 +329,7 @@ public class ParseExecutor implements Visitor {
         String value = instance.getText();
 
         while (type != null) {
-            if (type instanceof XSDSimpleTypeDefinition) {
-                XSDSimpleTypeDefinition simpleType = (XSDSimpleTypeDefinition) type;
+            if (type instanceof XSDSimpleTypeDefinition simpleType) {
                 List facets = simpleType.getFacets();
 
                 for (Object o : facets) {

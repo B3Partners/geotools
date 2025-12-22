@@ -18,7 +18,6 @@ package org.geotools.stac.store;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.geotools.stac.store.STACDataStoreFactory.CONNECTION_TIMEOUT;
 import static org.geotools.stac.store.STACDataStoreFactory.DBTYPE;
@@ -35,49 +34,47 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.io.IOUtils;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFinder;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFinder;
 import org.geotools.http.HTTPClient;
 import org.geotools.http.HTTPConnectionPooling;
 import org.hamcrest.Matchers;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
 public class STACDataStoreFactoryTest {
 
+    @ClassRule
+    public static WireMockClassRule classRule =
+            new WireMockClassRule(WireMockConfiguration.options().dynamicPort());
+
     @Rule
-    public WireMockRule wireMockRule =
-            new WireMockRule(WireMockConfiguration.options().dynamicPort());
+    public WireMockClassRule service = classRule;
 
     private static final String NS_URI = "http://www.geotools.org";
 
     @Test
     @SuppressWarnings("PMD.CloseResource") // pooling HTTP client closed via store
     public void testConnect() throws IOException {
-        stubFor(
-                get(urlEqualTo("/stac"))
-                        .willReturn(
-                                aResponse()
-                                        .withStatus(200)
-                                        .withHeader("Content-Type", "application/json")
-                                        .withHeader("Authentication", "dXNlcjpwYXNzd29yZA==")
-                                        .withBody(
-                                                IOUtils.toString(
-                                                        getClass()
-                                                                .getResourceAsStream(
-                                                                        "../landingPage.json"),
-                                                        StandardCharsets.UTF_8))));
+        service.stubFor(get(urlEqualTo("/stac"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withHeader("Authentication", "dXNlcjpwYXNzd29yZA==")
+                        .withBody(IOUtils.toString(
+                                getClass().getResourceAsStream("../landingPage.json"), StandardCharsets.UTF_8))));
 
         Map<String, Object> params = new HashMap<>();
         params.put(DBTYPE.key, DBTYPE.sample);
-        params.put(LANDING_PAGE.key, new URL("http://localhost:" + wireMockRule.port() + "/stac"));
+        params.put(LANDING_PAGE.key, new URL("http://localhost:" + service.port() + "/stac"));
         params.put(NAMESPACE.key, NS_URI);
         params.put(USE_CONNECTION_POOLING.key, true);
         params.put(MAX_CONNECTIONS.key, 10);

@@ -20,12 +20,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.gml3.GML;
 import org.geotools.gml3.GML3TestSupport;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Point;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.w3c.dom.Document;
 
 public class PointTypeBindingTest extends GML3TestSupport {
@@ -57,10 +57,11 @@ public class PointTypeBindingTest extends GML3TestSupport {
         Document dom = encode(p, GML.Point);
 
         assertEquals(
-                1, dom.getElementsByTagNameNS(GML.NAMESPACE, GML.pos.getLocalPart()).getLength());
+                1,
+                dom.getElementsByTagNameNS(GML.NAMESPACE, GML.pos.getLocalPart())
+                        .getLength());
         // assertEquals("urn:x-ogc:def:crs:EPSG:6.11.2:4326",
-        assertEquals(
-                "urn:x-ogc:def:crs:EPSG:4326", dom.getDocumentElement().getAttribute("srsName"));
+        assertEquals("urn:x-ogc:def:crs:EPSG:4326", dom.getDocumentElement().getAttribute("srsName"));
     }
 
     @Test

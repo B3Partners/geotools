@@ -22,6 +22,11 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.coverage.grid.io.DimensionDescriptor;
 import org.geotools.coverage.io.CoverageCapabilities;
 import org.geotools.coverage.io.CoverageSource;
@@ -29,11 +34,6 @@ import org.geotools.coverage.io.CoverageSourceDescriptor;
 import org.geotools.coverage.io.RasterLayout;
 import org.geotools.coverage.io.metadata.MetadataNode;
 import org.geotools.coverage.io.range.RangeType;
-import org.geotools.data.Parameter;
-import org.geotools.data.ResourceInfo;
-import org.opengis.feature.type.Name;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.util.ProgressListener;
 
 /**
  * Default implementation of {@link CoverageSource}.
@@ -45,12 +45,11 @@ public abstract class DefaultCoverageSource implements CoverageSource {
     protected static final EnumSet<CoverageCapabilities> CAPABILITIES;
 
     static {
-        CAPABILITIES =
-                EnumSet.of(
-                        CoverageCapabilities.READ_HORIZONTAL_DOMAIN_SUBSAMBLING,
-                        CoverageCapabilities.READ_RANGE_SUBSETTING,
-                        CoverageCapabilities.READ_REPROJECTION,
-                        CoverageCapabilities.READ_SUBSAMPLING);
+        CAPABILITIES = EnumSet.of(
+                CoverageCapabilities.READ_HORIZONTAL_DOMAIN_SUBSAMBLING,
+                CoverageCapabilities.READ_RANGE_SUBSETTING,
+                CoverageCapabilities.READ_REPROJECTION,
+                CoverageCapabilities.READ_SUBSAMPLING);
     }
 
     protected final Name name;
@@ -81,8 +80,7 @@ public abstract class DefaultCoverageSource implements CoverageSource {
     }
 
     @Override
-    public List<? extends RasterLayout> getOverviewsLayouts(ProgressListener listener)
-            throws IOException {
+    public List<? extends RasterLayout> getOverviewsLayouts(ProgressListener listener) throws IOException {
         return Collections.emptyList();
     }
 

@@ -27,7 +27,7 @@ import net.opengis.ows11.OnlineResourceType;
 import net.opengis.ows11.ServiceIdentificationType;
 import net.opengis.ows11.ServiceProviderType;
 import net.opengis.wfs20.WFSCapabilitiesType;
-import org.geotools.data.ServiceInfo;
+import org.geotools.api.data.ServiceInfo;
 import org.geotools.data.wfs.WFSServiceInfo;
 
 /**
@@ -44,8 +44,7 @@ public final class Capabilities200ServiceInfo implements WFSServiceInfo {
 
     private final URI getCapsUrl;
 
-    public Capabilities200ServiceInfo(
-            String schemaUri, URL getCapsUrl, WFSCapabilitiesType capabilities) {
+    public Capabilities200ServiceInfo(String schemaUri, URL getCapsUrl, WFSCapabilitiesType capabilities) {
         try {
             this.getCapsUrl = getCapsUrl.toURI();
             this.schemaUri = new URI(schemaUri);
@@ -70,8 +69,8 @@ public final class Capabilities200ServiceInfo implements WFSServiceInfo {
         // The Abstract is of Type LanguageStringType, not String.
         StringBuilder sb = new StringBuilder();
         for (Object line : serviceIdentification.getAbstract()) {
-            if (line instanceof LanguageStringType) {
-                sb.append(((LanguageStringType) line).getValue());
+            if (line instanceof LanguageStringType type) {
+                sb.append(type.getValue());
             } else {
                 sb.append(line);
             }

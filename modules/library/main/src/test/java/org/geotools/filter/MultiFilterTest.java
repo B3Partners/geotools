@@ -22,6 +22,11 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.MultiValuedFilter;
+import org.geotools.api.filter.MultiValuedFilter.MatchAction;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.junit.Test;
@@ -31,11 +36,6 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.PrecisionModel;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.MultiValuedFilter;
-import org.opengis.filter.MultiValuedFilter.MatchAction;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Test whether filters are compatible with multi-valued properties.
@@ -44,7 +44,7 @@ import org.opengis.filter.expression.Expression;
  */
 public class MultiFilterTest {
 
-    private FilterFactory2 fac = CommonFactoryFinder.getFilterFactory2(null);
+    private FilterFactory fac = CommonFactoryFinder.getFilterFactory(null);
 
     @Test
     public void testFactoryAndGetter() {
@@ -150,7 +150,7 @@ public class MultiFilterTest {
 
         Expression e = new LiteralExpressionImpl(list);
 
-        Expression empty = new LiteralExpressionImpl(new ArrayList<String>());
+        Expression empty = new LiteralExpressionImpl(new ArrayList<>());
 
         Filter filter = fac.equals(e, new LiteralExpressionImpl("foo-2"));
         assertTrue(filter.evaluate(null));
@@ -321,7 +321,7 @@ public class MultiFilterTest {
 
         Expression e = new LiteralExpressionImpl(list);
 
-        Expression empty = new LiteralExpressionImpl(new ArrayList<String>());
+        Expression empty = new LiteralExpressionImpl(new ArrayList<>());
 
         Filter filter = fac.equals(e, new LiteralExpressionImpl(201.7));
         assertTrue(filter.evaluate(null));
@@ -490,20 +490,10 @@ public class MultiFilterTest {
         filter = fac.lessOrEqual(new LiteralExpressionImpl(201.7), e1, false, MatchAction.ALL);
         assertFalse(filter.evaluate(null));
 
-        filter =
-                fac.between(
-                        e1,
-                        new LiteralExpressionImpl(34),
-                        new LiteralExpressionImpl(300),
-                        MatchAction.ALL);
+        filter = fac.between(e1, new LiteralExpressionImpl(34), new LiteralExpressionImpl(300), MatchAction.ALL);
         assertFalse(filter.evaluate(null));
 
-        filter =
-                fac.between(
-                        e1,
-                        new LiteralExpressionImpl(34),
-                        new LiteralExpressionImpl(10000000),
-                        MatchAction.ALL);
+        filter = fac.between(e1, new LiteralExpressionImpl(34), new LiteralExpressionImpl(10000000), MatchAction.ALL);
         assertTrue(filter.evaluate(null));
     }
 
@@ -583,20 +573,10 @@ public class MultiFilterTest {
         filter = fac.lessOrEqual(new LiteralExpressionImpl(201.7), e1, false, MatchAction.ONE);
         assertFalse(filter.evaluate(null));
 
-        filter =
-                fac.between(
-                        e1,
-                        new LiteralExpressionImpl(34),
-                        new LiteralExpressionImpl(300),
-                        MatchAction.ONE);
+        filter = fac.between(e1, new LiteralExpressionImpl(34), new LiteralExpressionImpl(300), MatchAction.ONE);
         assertFalse(filter.evaluate(null));
 
-        filter =
-                fac.between(
-                        e1,
-                        new LiteralExpressionImpl(34),
-                        new LiteralExpressionImpl(36),
-                        MatchAction.ONE);
+        filter = fac.between(e1, new LiteralExpressionImpl(34), new LiteralExpressionImpl(36), MatchAction.ONE);
         assertTrue(filter.evaluate(null));
     }
 
@@ -605,20 +585,12 @@ public class MultiFilterTest {
         GeometryFactory gf = new GeometryFactory(new PrecisionModel());
 
         Coordinate[] coords1 = {
-            new Coordinate(0, 0),
-            new Coordinate(6, 0),
-            new Coordinate(6, 7),
-            new Coordinate(0, 7),
-            new Coordinate(0, 0)
+            new Coordinate(0, 0), new Coordinate(6, 0), new Coordinate(6, 7), new Coordinate(0, 7), new Coordinate(0, 0)
         };
         Polygon geom1 = gf.createPolygon(gf.createLinearRing(coords1), new LinearRing[0]);
 
         Coordinate[] coords2 = {
-            new Coordinate(2, 2),
-            new Coordinate(6, 0),
-            new Coordinate(6, 7),
-            new Coordinate(0, 7),
-            new Coordinate(2, 2)
+            new Coordinate(2, 2), new Coordinate(6, 0), new Coordinate(6, 7), new Coordinate(0, 7), new Coordinate(2, 2)
         };
         Polygon geom2 = gf.createPolygon(gf.createLinearRing(coords2), new LinearRing[0]);
 
@@ -643,8 +615,7 @@ public class MultiFilterTest {
         List<Geometry> list = new ArrayList<>();
         list.add(geom4);
 
-        Filter filter =
-                fac.overlaps(new LiteralExpressionImpl(list), new LiteralExpressionImpl(geom1));
+        Filter filter = fac.overlaps(new LiteralExpressionImpl(list), new LiteralExpressionImpl(geom1));
         assertFalse(filter.evaluate(null));
         filter = fac.overlaps(new LiteralExpressionImpl(geom1), new LiteralExpressionImpl(list));
         assertFalse(filter.evaluate(null));
@@ -691,20 +662,12 @@ public class MultiFilterTest {
         GeometryFactory gf = new GeometryFactory(new PrecisionModel());
 
         Coordinate[] coords1 = {
-            new Coordinate(0, 0),
-            new Coordinate(6, 0),
-            new Coordinate(6, 7),
-            new Coordinate(0, 7),
-            new Coordinate(0, 0)
+            new Coordinate(0, 0), new Coordinate(6, 0), new Coordinate(6, 7), new Coordinate(0, 7), new Coordinate(0, 0)
         };
         Polygon geom1 = gf.createPolygon(gf.createLinearRing(coords1), new LinearRing[0]);
 
         Coordinate[] coords2 = {
-            new Coordinate(2, 2),
-            new Coordinate(6, 0),
-            new Coordinate(6, 7),
-            new Coordinate(0, 7),
-            new Coordinate(2, 2)
+            new Coordinate(2, 2), new Coordinate(6, 0), new Coordinate(6, 7), new Coordinate(0, 7), new Coordinate(2, 2)
         };
         Polygon geom2 = gf.createPolygon(gf.createLinearRing(coords2), new LinearRing[0]);
 
@@ -729,77 +692,37 @@ public class MultiFilterTest {
         List<Geometry> list = new ArrayList<>();
         list.add(geom4);
 
-        Filter filter =
-                fac.equal(
-                        new LiteralExpressionImpl(list),
-                        new LiteralExpressionImpl(geom4),
-                        MatchAction.ONE);
+        Filter filter = fac.equal(new LiteralExpressionImpl(list), new LiteralExpressionImpl(geom4), MatchAction.ONE);
         assertTrue(filter.evaluate(null));
 
-        filter =
-                fac.overlaps(
-                        new LiteralExpressionImpl(list),
-                        new LiteralExpressionImpl(geom1),
-                        MatchAction.ONE);
+        filter = fac.overlaps(new LiteralExpressionImpl(list), new LiteralExpressionImpl(geom1), MatchAction.ONE);
         assertFalse(filter.evaluate(null));
-        filter =
-                fac.disjoint(
-                        new LiteralExpressionImpl(geom1),
-                        new LiteralExpressionImpl(list),
-                        MatchAction.ONE);
+        filter = fac.disjoint(new LiteralExpressionImpl(geom1), new LiteralExpressionImpl(list), MatchAction.ONE);
         assertTrue(filter.evaluate(null));
 
         list.add(geom3);
 
-        filter =
-                fac.equal(
-                        new LiteralExpressionImpl(list),
-                        new LiteralExpressionImpl(geom4),
-                        MatchAction.ONE);
+        filter = fac.equal(new LiteralExpressionImpl(list), new LiteralExpressionImpl(geom4), MatchAction.ONE);
         assertTrue(filter.evaluate(null));
 
-        filter =
-                fac.overlaps(
-                        new LiteralExpressionImpl(list),
-                        new LiteralExpressionImpl(geom1),
-                        MatchAction.ONE);
+        filter = fac.overlaps(new LiteralExpressionImpl(list), new LiteralExpressionImpl(geom1), MatchAction.ONE);
         assertTrue(filter.evaluate(null));
 
-        filter =
-                fac.within(
-                        new LiteralExpressionImpl(list),
-                        new LiteralExpressionImpl(geom1),
-                        MatchAction.ONE);
+        filter = fac.within(new LiteralExpressionImpl(list), new LiteralExpressionImpl(geom1), MatchAction.ONE);
         assertFalse(filter.evaluate(null));
 
         list.add(geom2);
-        filter =
-                fac.within(
-                        new LiteralExpressionImpl(list),
-                        new LiteralExpressionImpl(geom1),
-                        MatchAction.ONE);
+        filter = fac.within(new LiteralExpressionImpl(list), new LiteralExpressionImpl(geom1), MatchAction.ONE);
         assertTrue(filter.evaluate(null));
 
-        filter =
-                fac.overlaps(
-                        new LiteralExpressionImpl(list),
-                        new LiteralExpressionImpl(geom1),
-                        MatchAction.ONE);
+        filter = fac.overlaps(new LiteralExpressionImpl(list), new LiteralExpressionImpl(geom1), MatchAction.ONE);
         assertTrue(filter.evaluate(null));
 
-        filter =
-                fac.equal(
-                        new LiteralExpressionImpl(list),
-                        new LiteralExpressionImpl(geom1),
-                        MatchAction.ONE);
+        filter = fac.equal(new LiteralExpressionImpl(list), new LiteralExpressionImpl(geom1), MatchAction.ONE);
         assertFalse(filter.evaluate(null));
 
         list.add(geom1);
-        filter =
-                fac.equal(
-                        new LiteralExpressionImpl(list),
-                        new LiteralExpressionImpl(geom1),
-                        MatchAction.ONE);
+        filter = fac.equal(new LiteralExpressionImpl(list), new LiteralExpressionImpl(geom1), MatchAction.ONE);
         assertTrue(filter.evaluate(null));
     }
 
@@ -808,20 +731,12 @@ public class MultiFilterTest {
         GeometryFactory gf = new GeometryFactory(new PrecisionModel());
 
         Coordinate[] coords1 = {
-            new Coordinate(0, 0),
-            new Coordinate(6, 0),
-            new Coordinate(6, 7),
-            new Coordinate(0, 7),
-            new Coordinate(0, 0)
+            new Coordinate(0, 0), new Coordinate(6, 0), new Coordinate(6, 7), new Coordinate(0, 7), new Coordinate(0, 0)
         };
         Polygon geom1 = gf.createPolygon(gf.createLinearRing(coords1), new LinearRing[0]);
 
         Coordinate[] coords2 = {
-            new Coordinate(2, 2),
-            new Coordinate(6, 0),
-            new Coordinate(6, 7),
-            new Coordinate(0, 7),
-            new Coordinate(2, 2)
+            new Coordinate(2, 2), new Coordinate(6, 0), new Coordinate(6, 7), new Coordinate(0, 7), new Coordinate(2, 2)
         };
         Polygon geom2 = gf.createPolygon(gf.createLinearRing(coords2), new LinearRing[0]);
 
@@ -846,57 +761,29 @@ public class MultiFilterTest {
         List<Geometry> list = new ArrayList<>();
         list.add(geom4);
 
-        Filter filter =
-                fac.equal(
-                        new LiteralExpressionImpl(list),
-                        new LiteralExpressionImpl(geom4),
-                        MatchAction.ALL);
+        Filter filter = fac.equal(new LiteralExpressionImpl(list), new LiteralExpressionImpl(geom4), MatchAction.ALL);
         assertTrue(filter.evaluate(null));
 
-        filter =
-                fac.overlaps(
-                        new LiteralExpressionImpl(list),
-                        new LiteralExpressionImpl(geom1),
-                        MatchAction.ALL);
+        filter = fac.overlaps(new LiteralExpressionImpl(list), new LiteralExpressionImpl(geom1), MatchAction.ALL);
         assertFalse(filter.evaluate(null));
-        filter =
-                fac.disjoint(
-                        new LiteralExpressionImpl(geom1),
-                        new LiteralExpressionImpl(list),
-                        MatchAction.ALL);
+        filter = fac.disjoint(new LiteralExpressionImpl(geom1), new LiteralExpressionImpl(list), MatchAction.ALL);
         assertTrue(filter.evaluate(null));
 
         list.add(geom3);
 
-        filter =
-                fac.equal(
-                        new LiteralExpressionImpl(list),
-                        new LiteralExpressionImpl(geom4),
-                        MatchAction.ALL);
+        filter = fac.equal(new LiteralExpressionImpl(list), new LiteralExpressionImpl(geom4), MatchAction.ALL);
         assertFalse(filter.evaluate(null));
 
-        filter =
-                fac.overlaps(
-                        new LiteralExpressionImpl(list),
-                        new LiteralExpressionImpl(geom1),
-                        MatchAction.ALL);
+        filter = fac.overlaps(new LiteralExpressionImpl(list), new LiteralExpressionImpl(geom1), MatchAction.ALL);
         assertFalse(filter.evaluate(null));
 
-        filter =
-                fac.within(
-                        new LiteralExpressionImpl(list),
-                        new LiteralExpressionImpl(geom1),
-                        MatchAction.ALL);
+        filter = fac.within(new LiteralExpressionImpl(list), new LiteralExpressionImpl(geom1), MatchAction.ALL);
         assertFalse(filter.evaluate(null));
 
         list.remove(geom4);
         list.add(geom2);
 
-        filter =
-                fac.intersects(
-                        new LiteralExpressionImpl(geom1),
-                        new LiteralExpressionImpl(list),
-                        MatchAction.ALL);
+        filter = fac.intersects(new LiteralExpressionImpl(geom1), new LiteralExpressionImpl(list), MatchAction.ALL);
         assertTrue(filter.evaluate(null));
     }
 }

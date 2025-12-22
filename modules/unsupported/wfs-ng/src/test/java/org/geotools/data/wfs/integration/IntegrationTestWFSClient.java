@@ -35,10 +35,16 @@ import net.opengis.wfs.WfsFactory;
 import net.opengis.wfs20.CreatedOrModifiedFeatureType;
 import net.opengis.wfs20.Wfs20Factory;
 import org.eclipse.xsd.util.XSDSchemaLocationResolver;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.identity.FeatureId;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.Diff;
 import org.geotools.data.DiffFeatureReader;
-import org.geotools.data.FeatureReader;
 import org.geotools.data.ows.Request;
 import org.geotools.data.ows.Response;
 import org.geotools.data.wfs.TestHttpResponse;
@@ -54,6 +60,7 @@ import org.geotools.data.wfs.internal.TransactionRequest.Delete;
 import org.geotools.data.wfs.internal.TransactionRequest.Insert;
 import org.geotools.data.wfs.internal.TransactionRequest.TransactionElement;
 import org.geotools.data.wfs.internal.TransactionRequest.Update;
+import org.geotools.data.wfs.internal.Versions;
 import org.geotools.data.wfs.internal.WFSClient;
 import org.geotools.data.wfs.internal.WFSConfig;
 import org.geotools.data.wfs.internal.WFSResponse;
@@ -68,12 +75,6 @@ import org.geotools.xml.XMLHandlerHints;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.Encoder;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.identity.FeatureId;
 import org.xml.sax.EntityResolver;
 
 public class IntegrationTestWFSClient extends WFSClient {
@@ -85,8 +86,7 @@ public class IntegrationTestWFSClient extends WFSClient {
 
     private Map<QName, SimpleFeatureType> featureTypes = new HashMap<>();
 
-    public IntegrationTestWFSClient(final String baseDirectory, WFSConfig config)
-            throws ServiceException, IOException {
+    public IntegrationTestWFSClient(final String baseDirectory, WFSConfig config) throws ServiceException, IOException {
 
         super(url(baseDirectory + "/GetCapabilities.xml"), HTTPClientFinder.createClient(), config);
 
@@ -99,17 +99,17 @@ public class IntegrationTestWFSClient extends WFSClient {
             if (request instanceof GetCapabilitiesRequest) {
                 return mockCapabilities(request);
             }
-            if (request instanceof DescribeFeatureTypeRequest) {
-                return mockDFT((DescribeFeatureTypeRequest) request);
+            if (request instanceof DescribeFeatureTypeRequest typeRequest) {
+                return mockDFT(typeRequest);
             }
-            if (request instanceof GetFeatureRequest) {
-                return mockGetFeature((GetFeatureRequest) request);
+            if (request instanceof GetFeatureRequest featureRequest) {
+                return mockGetFeature(featureRequest);
             }
-            if (request instanceof TransactionRequest) {
+            if (request instanceof TransactionRequest transactionRequest) {
                 if (failOnTransaction) {
-                    return mockTransactionFailure((TransactionRequest) request);
+                    return mockTransactionFailure(transactionRequest);
                 } else {
-                    return mockTransactionSuccess((TransactionRequest) request);
+                    return mockTransactionSuccess(transactionRequest);
                 }
             }
         } catch (ServiceException e) {
@@ -129,8 +129,7 @@ public class IntegrationTestWFSClient extends WFSClient {
         return new GetCapabilitiesResponse(httpResp, resolver);
     }
 
-    protected Response mockDFT(DescribeFeatureTypeRequest request)
-            throws ServiceException, IOException {
+    protected Response mockDFT(DescribeFeatureTypeRequest request) throws ServiceException, IOException {
 
         QName typeName = request.getTypeName();
 
@@ -147,7 +146,7 @@ public class IntegrationTestWFSClient extends WFSClient {
     }
 
     @SuppressWarnings("PMD.CloseResource") // readers are wrapped and returned in the response
-    protected Response mockGetFeature(GetFeatureRequest request) throws IOException {
+    protected Response mockGetFeature(GetFeatureRequest request) throws ServiceException, IOException {
 
         final QName typeName = request.getTypeName();
 
@@ -168,32 +167,21 @@ public class IntegrationTestWFSClient extends WFSClient {
         final GetParser<SimpleFeature> allFeatures = gfr.getFeatures();
 
         // register custom scheme
-        if (allFeatures instanceof PullParserFeatureReader) {
-            ((PullParserFeatureReader) allFeatures)
-                    .setContextCustomizer(
-                            context -> {
-                                QName key =
-                                        new QName(
-                                                "http://www.openplans.org/spearfish",
-                                                "schemaLocationResolver");
-                                context.registerComponentInstance(
-                                        key,
-                                        (XSDSchemaLocationResolver)
-                                                (xsdSchema, namespaceURI, schemaLocationURI) -> {
-                                                    if (schemaLocationURI.startsWith(
-                                                            "DescribeFeatureType")) {
-                                                        try {
-                                                            return new URL(
-                                                                            baseDirectory,
-                                                                            schemaLocationURI)
-                                                                    .toString();
-                                                        } catch (MalformedURLException e) {
-                                                            return null;
-                                                        }
-                                                    }
-                                                    return schemaLocationURI;
-                                                });
-                            });
+        if (allFeatures instanceof PullParserFeatureReader reader) {
+            reader.setContextCustomizer(context -> {
+                QName key = new QName("http://www.openplans.org/spearfish", "schemaLocationResolver");
+                context.registerComponentInstance(
+                        key, (XSDSchemaLocationResolver) (xsdSchema, namespaceURI, schemaLocationURI) -> {
+                            if (schemaLocationURI.startsWith("DescribeFeatureType")) {
+                                try {
+                                    return new URL(baseDirectory, schemaLocationURI).toString();
+                                } catch (MalformedURLException e) {
+                                    return null;
+                                }
+                            }
+                            return schemaLocationURI;
+                        });
+            });
         }
 
         final List<SimpleFeature> originalFeatures = new ArrayList<>();
@@ -223,63 +211,60 @@ public class IntegrationTestWFSClient extends WFSClient {
 
         final DiffFeatureReader<SimpleFeatureType, SimpleFeature> serverFilteredReader =
                 new DiffFeatureReader<>(allFeaturesReader, diff, serverFiler);
-        final GetParser<SimpleFeature> filteredParser =
-                new GetParser<SimpleFeature>() {
+        final GetParser<SimpleFeature> filteredParser = new GetParser<>() {
 
-                    @Override
-                    public void setGeometryFactory(GeometryFactory geometryFactory) {
-                        // TODO Auto-generated method stub
-                    }
+            @Override
+            public void setGeometryFactory(GeometryFactory geometryFactory) {
+                // TODO Auto-generated method stub
+            }
 
-                    @Override
-                    public SimpleFeature parse() throws IOException {
-                        if (!serverFilteredReader.hasNext()) {
-                            return null;
+            @Override
+            public SimpleFeature parse() throws IOException {
+                if (!serverFilteredReader.hasNext()) {
+                    return null;
+                }
+                return serverFilteredReader.next();
+            }
+
+            @Override
+            public int getNumberOfFeatures() {
+                if (-1 != allFeatures.getNumberOfFeatures()) {
+                    // only if the original response included number of features (i.e. the
+                    // server
+                    // does advertise it)
+
+                    FeatureReader<SimpleFeatureType, SimpleFeature> all = null;
+                    try {
+                        if (!originalFeatures.isEmpty()) {
+                            all = DataUtilities.reader(originalFeatures);
                         }
-                        return serverFilteredReader.next();
-                    }
-
-                    @Override
-                    @SuppressWarnings("PMD.CloseResource") // reaaders are from memory lists
-                    public int getNumberOfFeatures() {
-                        if (-1 != allFeatures.getNumberOfFeatures()) {
-                            // only if the original response included number of features (i.e. the
-                            // server
-                            // does advertise it)
-
-                            FeatureReader<SimpleFeatureType, SimpleFeature> all = null;
-                            try {
-                                if (!originalFeatures.isEmpty()) {
-                                    all = DataUtilities.reader(originalFeatures);
-                                }
-                                try (DiffFeatureReader<SimpleFeatureType, SimpleFeature>
-                                        serverFiltered = new DiffFeatureReader<>(all, diff)) {
-                                    int count = 0;
-                                    while (serverFiltered.hasNext()) {
-                                        serverFiltered.next();
-                                        count++;
-                                    }
-                                    return count;
-                                }
-                            } catch (Exception e) {
-                                java.util.logging.Logger.getGlobal()
-                                        .log(java.util.logging.Level.INFO, "", e);
-                                throw new RuntimeException(e);
+                        try (DiffFeatureReader<SimpleFeatureType, SimpleFeature> serverFiltered =
+                                new DiffFeatureReader<>(all, diff)) {
+                            int count = 0;
+                            while (serverFiltered.hasNext()) {
+                                serverFiltered.next();
+                                count++;
                             }
+                            return count;
                         }
-                        return -1;
+                    } catch (Exception e) {
+                        java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
+                        throw new RuntimeException(e);
                     }
+                }
+                return -1;
+            }
 
-                    @Override
-                    public FeatureType getFeatureType() {
-                        return allFeatures.getFeatureType();
-                    }
+            @Override
+            public FeatureType getFeatureType() {
+                return allFeatures.getFeatureType();
+            }
 
-                    @Override
-                    public void close() throws IOException {
-                        serverFilteredReader.close();
-                    }
-                };
+            @Override
+            public void close() throws IOException {
+                serverFilteredReader.close();
+            }
+        };
 
         try {
             return new GetFeatureResponse(request, httpResponse, filteredParser);
@@ -288,24 +273,24 @@ public class IntegrationTestWFSClient extends WFSClient {
         }
     }
 
-    protected Response mockTransactionSuccess(TransactionRequest request) throws IOException {
+    protected Response mockTransactionSuccess(TransactionRequest request) throws ServiceException, IOException {
 
         List<String> added = new ArrayList<>();
         int deleted = 0, updated = 0;
 
         for (TransactionElement e : request.getTransactionElements()) {
             QName typeName = e.getTypeName();
-            if (e instanceof Insert) {
+            if (e instanceof Insert insert) {
                 Diff diff = diff(typeName);
-                for (SimpleFeature f : ((Insert) e).getFeatures()) {
+                for (SimpleFeature f : insert.getFeatures()) {
                     // String newId = "wfs-generated-" + idseq.incrementAndGet();
                     diff.add(f.getID(), f);
                     added.add(f.getID());
                 }
             }
-            if (e instanceof Delete) {
+            if (e instanceof Delete delete) {
                 Diff diff = diff(typeName);
-                Filter filter = ((Delete) e).getFilter();
+                Filter filter = delete.getFilter();
                 List<SimpleFeature> features = features(typeName);
                 for (SimpleFeature f : features) {
                     if (filter.evaluate(f)) {
@@ -314,9 +299,8 @@ public class IntegrationTestWFSClient extends WFSClient {
                     }
                 }
             }
-            if (e instanceof Update) {
+            if (e instanceof Update u) {
                 Diff diff = diff(typeName);
-                Update u = (Update) e;
                 Filter filter = u.getFilter();
                 List<SimpleFeature> features = features(typeName);
                 List<QName> propertyNames = u.getPropertyNames();
@@ -345,7 +329,7 @@ public class IntegrationTestWFSClient extends WFSClient {
         return request.createResponse(httpResponse);
     }
 
-    protected Response mockTransactionFailure(TransactionRequest request) throws IOException {
+    protected Response mockTransactionFailure(TransactionRequest request) throws ServiceException, IOException {
         final QName typeName = request.getTypeNames().iterator().next();
 
         String resource = "TransactionFailure_" + typeName.getLocalPart() + ".xml";
@@ -369,7 +353,7 @@ public class IntegrationTestWFSClient extends WFSClient {
         return diff;
     }
 
-    private List<SimpleFeature> features(QName typeName) throws IOException {
+    private List<SimpleFeature> features(QName typeName) throws ServiceException, IOException {
 
         GetFeatureRequest gf = createGetFeatureRequest();
         gf.setTypeName(typeName);
@@ -393,8 +377,7 @@ public class IntegrationTestWFSClient extends WFSClient {
     }
 
     @SuppressWarnings("unchecked")
-    private String createTransactionResponseXml(List<String> added, int updated, int deleted)
-            throws IOException {
+    private String createTransactionResponseXml(List<String> added, int updated, int deleted) throws IOException {
 
         if ("2.0.0".equals(getStrategy().getVersion())) {
 
@@ -411,9 +394,8 @@ public class IntegrationTestWFSClient extends WFSClient {
             tr.setUpdateResults(factory.createActionResultsType());
 
             if (!added.isEmpty()) {
-                FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
-                CreatedOrModifiedFeatureType inserted =
-                        factory.createCreatedOrModifiedFeatureType();
+                FilterFactory ff = CommonFactoryFinder.getFilterFactory();
+                CreatedOrModifiedFeatureType inserted = factory.createCreatedOrModifiedFeatureType();
                 for (String addedId : added) {
                     FeatureId featureId = ff.featureId(addedId);
                     inserted.getResourceId().add(featureId);
@@ -427,8 +409,7 @@ public class IntegrationTestWFSClient extends WFSClient {
             enc.setIndenting(true);
             enc.setIndentSize(1);
 
-            String encodedTransactionResponse =
-                    enc.encodeAsString(tr, org.geotools.wfs.v2_0.WFS.TransactionResponse);
+            String encodedTransactionResponse = enc.encodeAsString(tr, org.geotools.wfs.v2_0.WFS.TransactionResponse);
             return encodedTransactionResponse;
 
         } else {
@@ -445,7 +426,7 @@ public class IntegrationTestWFSClient extends WFSClient {
             tr.setInsertResults(factory.createInsertResultsType());
 
             if (!added.isEmpty()) {
-                FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+                FilterFactory ff = CommonFactoryFinder.getFilterFactory();
                 InsertedFeatureType inserted = factory.createInsertedFeatureType();
                 tr.getInsertResults().getFeature().add(inserted);
                 for (String addedId : added) {
@@ -460,17 +441,22 @@ public class IntegrationTestWFSClient extends WFSClient {
             enc.setIndenting(true);
             enc.setIndentSize(1);
 
-            String encodedTransactionResponse =
-                    enc.encodeAsString(
-                            tr,
-                            "1.0.0".equals(getStrategy().getVersion())
-                                    ? org.geotools.wfs.v1_0.WFS.WFS_TransactionResponse
-                                    : WFS.TransactionResponse);
+            String encodedTransactionResponse = enc.encodeAsString(
+                    tr,
+                    "1.0.0".equals(getStrategy().getVersion())
+                            ? org.geotools.wfs.v1_0.WFS.WFS_TransactionResponse
+                            : WFS.TransactionResponse);
             return encodedTransactionResponse;
         }
     }
 
     public void setFailOnTransaction(boolean failOnTransaction) {
         this.failOnTransaction = failOnTransaction;
+    }
+
+    @Override
+    public boolean isUseProvidedFIDSupported() {
+        WFSStrategy strategy = getStrategy();
+        return Versions.v1_1_0.equals(strategy.getServiceVersion());
     }
 }

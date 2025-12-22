@@ -24,7 +24,20 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.DataStore;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.style.ExternalGraphic;
+import org.geotools.api.style.FeatureTypeConstraint;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.style.StyledLayer;
+import org.geotools.api.style.StyledLayerDescriptor;
+import org.geotools.api.style.UserLayer;
 import org.geotools.data.DataUtilities;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.DefaultFeatureCollection;
@@ -32,17 +45,7 @@ import org.geotools.feature.NameImpl;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.referencing.CRS;
-import org.geotools.styling.ExternalGraphic;
-import org.geotools.styling.FeatureTypeConstraint;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.Graphic;
-import org.geotools.styling.PointSymbolizer;
-import org.geotools.styling.Style;
 import org.geotools.styling.StyleBuilder;
-import org.geotools.styling.StyleFactory;
-import org.geotools.styling.StyledLayer;
-import org.geotools.styling.StyledLayerDescriptor;
-import org.geotools.styling.UserLayer;
 import org.geotools.test.TestData;
 import org.geotools.util.factory.GeoTools;
 import org.junit.Assert;
@@ -51,22 +54,18 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class UserLayerTest {
 
-    private static final String CRS_WKT =
-            "GEOGCS[\"WGS 84\", "
-                    + "  DATUM[\"WGS_1984\","
-                    + "    SPHEROID[\"WGS 84\", 6378137.0, 298.257223563, AUTHORITY[\"EPSG\",\"7030\"]],"
-                    + "    AUTHORITY[\"EPSG\",\"6326\"]],"
-                    + "  PRIMEM[\"Greenwich\", 0.0, AUTHORITY[\"EPSG\",\"8901\"]],"
-                    + "  UNIT[\"degree\", 0.017453292519943295],"
-                    + "  AXIS[\"Lon\", EAST],"
-                    + "  AXIS[\"Lat\", NORTH],"
-                    + "  AUTHORITY[\"EPSG\",\"4326\"]]";
+    private static final String CRS_WKT = "GEOGCS[\"WGS 84\", "
+            + "  DATUM[\"WGS_1984\","
+            + "    SPHEROID[\"WGS 84\", 6378137.0, 298.257223563, AUTHORITY[\"EPSG\",\"7030\"]],"
+            + "    AUTHORITY[\"EPSG\",\"6326\"]],"
+            + "  PRIMEM[\"Greenwich\", 0.0, AUTHORITY[\"EPSG\",\"8901\"]],"
+            + "  UNIT[\"degree\", 0.017453292519943295],"
+            + "  AXIS[\"Lon\", EAST],"
+            + "  AXIS[\"Lat\", NORTH],"
+            + "  AUTHORITY[\"EPSG\",\"4326\"]]";
 
     private static final int SRID = 4326;
 
@@ -134,15 +133,11 @@ public class UserLayerTest {
 
         // create 1st point
         final Point g1 = jtsFactory.createPoint(new Coordinate(X_1, Y_1));
-        fc.add(
-                SimpleFeatureBuilder.build(
-                        schema, new Object[] {Integer.valueOf(1), g1, LABEL_1}, ID_1));
+        fc.add(SimpleFeatureBuilder.build(schema, new Object[] {1, g1, LABEL_1}, ID_1));
 
         // create 2nd point
         final Point g2 = jtsFactory.createPoint(new Coordinate(X_2, Y_2));
-        fc.add(
-                SimpleFeatureBuilder.build(
-                        schema, new Object[] {Integer.valueOf(2), g2, LABEL_2}, ID_2));
+        fc.add(SimpleFeatureBuilder.build(schema, new Object[] {2, g2, LABEL_2}, ID_2));
 
         final DataStore ds = DataUtilities.dataStore(fc);
 
@@ -191,9 +186,7 @@ public class UserLayerTest {
         Assert.assertEquals("Styled layers array MUST be 1-element long", 1, layers.length);
         final StyledLayer sLayer = layers[0];
         Assert.assertNotNull("Single styled layer MUST NOT be null", sLayer);
-        Assert.assertTrue(
-                "Single layer MUST be a UserLayer",
-                UserLayer.class.isAssignableFrom(sLayer.getClass()));
+        Assert.assertTrue("Single layer MUST be a UserLayer", UserLayer.class.isAssignableFrom(sLayer.getClass()));
         final UserLayer uLayer = (UserLayer) sLayer;
         final String lName = uLayer.getName();
         Assert.assertEquals("Read layer name MUST match", LAYER_NAME, lName);
@@ -201,8 +194,7 @@ public class UserLayerTest {
         Assert.assertNotNull("Unmarshalled feature type MUST NOT be null", ft);
         final String fName = ft.getTypeName();
         Assert.assertEquals("Read feature type name MUST match", MY_FEATURE, fName);
-        Assert.assertEquals(
-                CRS.decode("EPSG:4326"), ft.getGeometryDescriptor().getCoordinateReferenceSystem());
+        Assert.assertEquals(CRS.decode("EPSG:4326"), ft.getGeometryDescriptor().getCoordinateReferenceSystem());
     }
 
     @Test

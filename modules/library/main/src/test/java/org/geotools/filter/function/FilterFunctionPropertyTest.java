@@ -8,13 +8,13 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Function;
 import org.geotools.data.DataTestCase;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.FunctionFinder;
 import org.junit.After;
 import org.junit.Test;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Function;
 
 /**
  * Tests the property function
@@ -24,7 +24,7 @@ import org.opengis.filter.expression.Function;
 public class FilterFunctionPropertyTest extends DataTestCase {
 
     private static final int LOOPS = 5000;
-    static FilterFactory2 FF = CommonFactoryFinder.getFilterFactory2();
+    static FilterFactory FF = CommonFactoryFinder.getFilterFactory();
 
     @After
     public void teardown() {
@@ -70,39 +70,37 @@ public class FilterFunctionPropertyTest extends DataTestCase {
         // we add this one since the property caches the last PropertyName used as
         // an optimization
         final Function f = FF.function("property", FF.function("env", FF.literal("pname")));
-        Callable<Void> nameEvaluator =
-                () -> {
-                    try {
-                        EnvFunction.setLocalValue("pname", "name");
+        Callable<Void> nameEvaluator = () -> {
+            try {
+                EnvFunction.setLocalValue("pname", "name");
 
-                        for (int i = 0; i < 1000; i++) {
-                            String result = f.evaluate(roadFeatures[0], String.class);
-                            assertEquals("r1", result);
-                        }
+                for (int i = 0; i < 1000; i++) {
+                    String result = f.evaluate(roadFeatures[0], String.class);
+                    assertEquals("r1", result);
+                }
 
-                    } finally {
-                        EnvFunction.clearLocalValues();
-                    }
+            } finally {
+                EnvFunction.clearLocalValues();
+            }
 
-                    return null;
-                };
+            return null;
+        };
 
-        Callable<Void> geomEvaluator =
-                () -> {
-                    try {
-                        EnvFunction.setLocalValue("pname", "geom");
+        Callable<Void> geomEvaluator = () -> {
+            try {
+                EnvFunction.setLocalValue("pname", "geom");
 
-                        for (int i = 0; i < LOOPS; i++) {
-                            String result = f.evaluate(roadFeatures[0], String.class);
-                            assertEquals("LINESTRING (1 1, 2 2, 4 2, 5 1)", result);
-                        }
+                for (int i = 0; i < LOOPS; i++) {
+                    String result = f.evaluate(roadFeatures[0], String.class);
+                    assertEquals("LINESTRING (1 1, 2 2, 4 2, 5 1)", result);
+                }
 
-                    } finally {
-                        EnvFunction.clearLocalValues();
-                    }
+            } finally {
+                EnvFunction.clearLocalValues();
+            }
 
-                    return null;
-                };
+            return null;
+        };
 
         ExecutorService es = Executors.newCachedThreadPool();
         try {

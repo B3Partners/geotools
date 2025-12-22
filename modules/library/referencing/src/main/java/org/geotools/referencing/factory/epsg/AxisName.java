@@ -47,10 +47,8 @@ final class AxisName {
     /** Compare this name with the specified object for equality. */
     @Override
     public boolean equals(final Object object) {
-        if (object instanceof AxisName) {
-            final AxisName that = (AxisName) object;
-            return Utilities.equals(this.name, that.name)
-                    && Utilities.equals(this.description, that.description);
+        if (object instanceof AxisName that) {
+            return Utilities.equals(this.name, that.name) && Utilities.equals(this.description, that.description);
         }
         return false;
     }

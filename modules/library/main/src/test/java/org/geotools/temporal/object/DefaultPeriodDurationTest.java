@@ -19,12 +19,12 @@ package org.geotools.temporal.object;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
+import org.geotools.api.temporal.PeriodDuration;
+import org.geotools.api.util.InternationalString;
 import org.geotools.util.SimpleInternationalString;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.temporal.PeriodDuration;
-import org.opengis.util.InternationalString;
 
 /** @author Mehdi Sidhoum (Geomatys) */
 public class DefaultPeriodDurationTest {
@@ -34,15 +34,14 @@ public class DefaultPeriodDurationTest {
 
     @Before
     public void setUp() {
-        periodDuration1 =
-                new DefaultPeriodDuration(
-                        new SimpleInternationalString("5"),
-                        new SimpleInternationalString("2"),
-                        new SimpleInternationalString("1"),
-                        new SimpleInternationalString("12"),
-                        new SimpleInternationalString("15"),
-                        new SimpleInternationalString("5"),
-                        new SimpleInternationalString("23"));
+        periodDuration1 = new DefaultPeriodDuration(
+                new SimpleInternationalString("5"),
+                new SimpleInternationalString("2"),
+                new SimpleInternationalString("1"),
+                new SimpleInternationalString("12"),
+                new SimpleInternationalString("15"),
+                new SimpleInternationalString("5"),
+                new SimpleInternationalString("23"));
         periodDuration2 = new DefaultPeriodDuration(1535148449548L);
     }
 

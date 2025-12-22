@@ -18,6 +18,8 @@
  */
 package org.geotools.filter;
 
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.junit.Assert;
@@ -25,8 +27,6 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.PrecisionModel;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Tests for Attribute Expressions
@@ -46,27 +46,12 @@ public class AttributeTest {
 
         GeometryFactory gf = new GeometryFactory(new PrecisionModel());
         SimpleFeature[] f = new SimpleFeature[3];
-        f[0] =
-                SimpleFeatureBuilder.build(
-                        schema,
-                        new Object[] {
-                            Integer.valueOf(12), gf.createGeometryCollection(null), "first"
-                        },
-                        null);
-        f[1] =
-                SimpleFeatureBuilder.build(
-                        schema,
-                        new Object[] {
-                            Integer.valueOf(3), gf.createGeometryCollection(null), "second"
-                        },
-                        null);
-        f[2] =
-                SimpleFeatureBuilder.build(
-                        schema,
-                        new Object[] {
-                            Integer.valueOf(15), gf.createGeometryCollection(null), "third"
-                        },
-                        null);
+        f[0] = SimpleFeatureBuilder.build(
+                schema, new Object[] {Integer.valueOf(12), gf.createGeometryCollection(null), "first"}, null);
+        f[1] = SimpleFeatureBuilder.build(
+                schema, new Object[] {Integer.valueOf(3), gf.createGeometryCollection(null), "second"}, null);
+        f[2] = SimpleFeatureBuilder.build(
+                schema, new Object[] {Integer.valueOf(15), gf.createGeometryCollection(null), "third"}, null);
 
         return f;
     }

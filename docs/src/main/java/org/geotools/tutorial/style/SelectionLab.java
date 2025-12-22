@@ -20,27 +20,33 @@ import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JToolBar;
-import org.geotools.data.FileDataStore;
-import org.geotools.data.FileDataStoreFinder;
+import org.geotools.api.data.FileDataStore;
+import org.geotools.api.data.FileDataStoreFinder;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.Stroke;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.style.Symbolizer;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.FeatureLayer;
 import org.geotools.map.Layer;
 import org.geotools.map.MapContent;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.Fill;
-import org.geotools.styling.Graphic;
-import org.geotools.styling.Mark;
-import org.geotools.styling.Rule;
-import org.geotools.styling.Stroke;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyleFactory;
-import org.geotools.styling.Symbolizer;
 import org.geotools.swing.JMapFrame;
 import org.geotools.swing.data.JFileDataStoreChooser;
 import org.geotools.swing.event.MapMouseEvent;
@@ -49,23 +55,20 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.MultiLineString;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.identity.FeatureId;
 
 /**
- * In this example we create a map tool to select a feature clicked with the mouse. The selected
- * feature will be painted yellow.
+ * In this example we create a map tool to select a feature clicked with the mouse. The selected feature will be painted
+ * yellow.
  */
 public class SelectionLab {
+
+    private static final Logger LOGGER = Logger.getLogger(SelectionLab.class.getName());
 
     /*
      * Factories that we will use to create style and filter objects
      */
     private StyleFactory sf = CommonFactoryFinder.getStyleFactory();
-    private FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+    private FilterFactory ff = CommonFactoryFinder.getFilterFactory();
 
     /*
      * Convenient constants for the type of feature geometry in the shapefile
@@ -109,9 +112,8 @@ public class SelectionLab {
 
     // docs start display shapefile
     /**
-     * This method connects to the shapefile; retrieves information about its features; creates a
-     * map frame to display the shapefile and adds a custom feature selection tool to the toolbar of
-     * the map frame.
+     * This method connects to the shapefile; retrieves information about its features; creates a map frame to display
+     * the shapefile and adds a custom feature selection tool to the toolbar of the map frame.
      */
     public void displayShapefile(File file) throws Exception {
         FileDataStore store = FileDataStoreFinder.getDataStore(file);
@@ -148,17 +150,13 @@ public class SelectionLab {
          * we can just create our tool as an anonymous sub-class
          * of CursorTool.
          */
-        btn.addActionListener(
-                e ->
-                        mapFrame.getMapPane()
-                                .setCursorTool(
-                                        new CursorTool() {
+        btn.addActionListener(e -> mapFrame.getMapPane().setCursorTool(new CursorTool() {
 
-                                            @Override
-                                            public void onMouseClicked(MapMouseEvent ev) {
-                                                selectFeatures(ev);
-                                            }
-                                        }));
+            @Override
+            public void onMouseClicked(MapMouseEvent ev) {
+                selectFeatures(ev);
+            }
+        }));
 
         /** Finally, we display the map frame. When it is closed this application will exit. */
         mapFrame.setSize(600, 600);
@@ -190,8 +188,7 @@ public class SelectionLab {
         AffineTransform screenToWorld = mapFrame.getMapPane().getScreenToWorldTransform();
         Rectangle2D worldRect = screenToWorld.createTransformedShape(screenRect).getBounds2D();
         ReferencedEnvelope bbox =
-                new ReferencedEnvelope(
-                        worldRect, mapFrame.getMapContent().getCoordinateReferenceSystem());
+                new ReferencedEnvelope(worldRect, mapFrame.getMapContent().getCoordinateReferenceSystem());
 
         /*
          * Create a Filter to select features that intersect with
@@ -222,15 +219,14 @@ public class SelectionLab {
             displaySelectedFeatures(IDs);
 
         } catch (Exception ex) {
-            ex.printStackTrace();
+            LOGGER.severe("Error selecting features: " + ex.getMessage());
         }
     }
     // docs end select features
 
     // docs start display selected
     /**
-     * Sets the display to paint selected features yellow and unselected features in the default
-     * style.
+     * Sets the display to paint selected features yellow and unselected features in the default style.
      *
      * @param IDs identifiers of currently selected features
      */
@@ -266,8 +262,8 @@ public class SelectionLab {
 
     // docs start selected style
     /**
-     * Create a Style where features with given IDs are painted yellow, while others are painted
-     * with the default colors.
+     * Create a Style where features with given IDs are painted yellow, while others are painted with the default
+     * colors.
      */
     private Style createSelectedStyle(Set<FeatureId> IDs) {
         Rule selectedRule = createRule(SELECTED_COLOUR, SELECTED_COLOUR);
@@ -288,8 +284,8 @@ public class SelectionLab {
 
     // docs start create rule
     /**
-     * Helper for createXXXStyle methods. Creates a new Rule containing a Symbolizer tailored to the
-     * geometry type of the features that we are displaying.
+     * Helper for createXXXStyle methods. Creates a new Rule containing a Symbolizer tailored to the geometry type of
+     * the features that we are displaying.
      */
     private Rule createRule(Color outlineColor, Color fillColor) {
         Symbolizer symbolizer = null;
@@ -338,8 +334,7 @@ public class SelectionLab {
         if (Polygon.class.isAssignableFrom(clazz) || MultiPolygon.class.isAssignableFrom(clazz)) {
             geometryType = GeomType.POLYGON;
 
-        } else if (LineString.class.isAssignableFrom(clazz)
-                || MultiLineString.class.isAssignableFrom(clazz)) {
+        } else if (LineString.class.isAssignableFrom(clazz) || MultiLineString.class.isAssignableFrom(clazz)) {
 
             geometryType = GeomType.LINE;
 

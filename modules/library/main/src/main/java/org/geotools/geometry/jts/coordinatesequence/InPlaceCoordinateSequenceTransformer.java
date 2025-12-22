@@ -16,14 +16,14 @@
  */
 package org.geotools.geometry.jts.coordinatesequence;
 
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.geometry.jts.CoordinateSequenceTransformer;
 import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.impl.PackedCoordinateSequence;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * A JTS CoordinateSequenceTransformer which transforms the values in place.
@@ -52,23 +52,21 @@ public class InPlaceCoordinateSequenceTransformer implements CoordinateSequenceT
     /**
      * @see
      *     org.geotools.geometry.jts.CoordinateSequenceTransformer#transform(org.locationtech.jts.geom.CoordinateSequence,
-     *     org.opengis.referencing.operation.MathTransform)
+     *     org.geotools.api.referencing.operation.MathTransform)
      */
     @Override
-    public CoordinateSequence transform(CoordinateSequence cs, MathTransform transform)
-            throws TransformException {
-        if (cs instanceof PackedCoordinateSequence) {
-            return transformInternal((PackedCoordinateSequence) cs, transform);
+    public CoordinateSequence transform(CoordinateSequence cs, MathTransform transform) throws TransformException {
+        if (cs instanceof PackedCoordinateSequence sequence) {
+            return transformInternal(sequence, transform);
         }
         throw new TransformException(
-                cs.getClass().getName()
-                        + " is not a implementation that is known to be transformable in place");
+                cs.getClass().getName() + " is not a implementation that is known to be transformable in place");
     }
 
     FlyWeightDirectPosition start = new FlyWeightDirectPosition(2);
 
-    private CoordinateSequence transformInternal(
-            PackedCoordinateSequence sequence, MathTransform transform) throws TransformException {
+    private CoordinateSequence transformInternal(PackedCoordinateSequence sequence, MathTransform transform)
+            throws TransformException {
 
         start.setSequence(sequence);
         for (int i = 0; i < sequence.size(); i++) {
@@ -82,7 +80,7 @@ public class InPlaceCoordinateSequenceTransformer implements CoordinateSequenceT
         return sequence;
     }
 
-    private class FlyWeightDirectPosition implements DirectPosition {
+    private static class FlyWeightDirectPosition implements Position {
         PackedCoordinateSequence sequence;
         int offset = 0;
         private int dimension;
@@ -102,55 +100,48 @@ public class InPlaceCoordinateSequenceTransformer implements CoordinateSequenceT
             this.sequence = sequence;
         }
 
-        /** @see org.opengis.geometry.coordinate.DirectPosition#getDimension() */
+        /** @see org.geotools.api.geometry.coordinate.DirectPosition#getDimension() */
         @Override
         public int getDimension() {
             return dimension;
         }
 
-        /** @see org.opengis.geometry.coordinate.DirectPosition#getCoordinate() */
+        /** @see org.geotools.api.geometry.coordinate.DirectPosition#getCoordinate() */
         @Override
         public double[] getCoordinate() {
             return new double[] {
-                sequence.getX(offset),
-                sequence.getY(offset),
-                sequence.getOrdinate(offset, CoordinateSequence.Z)
+                sequence.getX(offset), sequence.getY(offset), sequence.getOrdinate(offset, CoordinateSequence.Z)
             };
         }
 
-        /** @see org.opengis.geometry.coordinate.DirectPosition#getOrdinate(int) */
+        /** @see org.geotools.api.geometry.coordinate.DirectPosition#getOrdinate(int) */
         @Override
         public double getOrdinate(int arg0) throws IndexOutOfBoundsException {
             return sequence.getOrdinate(offset, arg0);
         }
 
-        /** @see org.opengis.geometry.coordinate.DirectPosition#setOrdinate(int, double) */
+        /** @see org.geotools.api.geometry.coordinate.DirectPosition#setOrdinate(int, double) */
         @Override
         public void setOrdinate(int arg0, double arg1) throws IndexOutOfBoundsException {
             sequence.setOrdinate(offset, arg0, arg1);
         }
 
-        /** @see org.opengis.geometry.coordinate.DirectPosition#getCoordinateReferenceSystem() */
+        /** @see org.geotools.api.geometry.coordinate.DirectPosition#getCoordinateReferenceSystem() */
         @Override
         public CoordinateReferenceSystem getCoordinateReferenceSystem() {
             // TODO implement method body
             throw new UnsupportedOperationException();
         }
 
-        /** @see org.opengis.geometry.coordinate.DirectPosition#clone() */
+        /** @see org.geotools.api.geometry.coordinate.DirectPosition#clone() */
         @Override
         public FlyWeightDirectPosition clone() {
             throw new UnsupportedOperationException();
         }
 
-        /** @see org.opengis.geometry.coordinate.Position#getPosition() */
-        public DirectPosition getPosition() {
-            return this;
-        }
-
-        /** @see org.opengis.geometry.coordinate.Position#getDirectPosition() */
+        /** @see Position */
         @Override
-        public DirectPosition getDirectPosition() {
+        public Position getDirectPosition() {
             return this;
         }
     }

@@ -23,6 +23,7 @@ import java.util.logging.Level;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import org.geotools.TestData;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.xml.gml.GMLFeatureCollection;
@@ -31,7 +32,6 @@ import org.geotools.xml.schema.Schema;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
 
 /** @author dzwiers www.refractions.net */
 public class GMLParserTest {
@@ -253,8 +253,7 @@ public class GMLParserTest {
             TestData.copy(this, "xml/wfs/WFS-basic.xsd");
 
             GMLFeatureCollection doc =
-                    (GMLFeatureCollection)
-                            DocumentFactory.getInstance(f.toURI(), null, Level.WARNING);
+                    (GMLFeatureCollection) DocumentFactory.getInstance(f.toURI(), null, Level.WARNING);
             Assert.assertNotNull("Document missing", doc);
 
             Schema s = SchemaFactory.getInstance(new URI("http://www.openplans.org/topp"));
@@ -291,8 +290,7 @@ public class GMLParserTest {
             TestData.copy(this, "xml/wfs/WFS-basic.xsd");
 
             GMLFeatureCollection doc =
-                    (GMLFeatureCollection)
-                            DocumentFactory.getInstance(f.toURI(), null, Level.WARNING);
+                    (GMLFeatureCollection) DocumentFactory.getInstance(f.toURI(), null, Level.WARNING);
             Assert.assertNotNull("Document missing", doc);
 
             Schema s = SchemaFactory.getInstance(new URI("http://www.openplans.org/topp"));

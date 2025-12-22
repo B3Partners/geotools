@@ -13,14 +13,15 @@ package org.geotools.cql;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.temporal.After;
+import org.geotools.api.filter.temporal.Before;
+import org.geotools.api.filter.temporal.During;
 import org.geotools.filter.text.cql2.CQL;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.Filter;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.temporal.After;
-import org.opengis.filter.temporal.Before;
-import org.opengis.filter.temporal.During;
 
 /**
  * This class gathers up the CQL examples shown in the sphinx documentation.
@@ -36,7 +37,7 @@ public class CQLExamples {
     public static void main(String[] args) {
 
         try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
             for (; ; ) {
 
                 System.out.println("Select the CQL Example:");
@@ -46,12 +47,9 @@ public class CQLExamples {
                 System.out.println(" 4 - Between: population Between 10000 and 20000");
                 System.out.println(
                         " 5 - Spatial Operation using the contains DE-9IM: RELATE(geometry, LINESTRING (-134.921387 58.687767, -135.303391 59.092838), T*****FF*)"); // FIXME
-                System.out.println(
-                        " 6 - Temporal After: lastEarthQuake AFTER 2006-11-30T01:30:00Z");
-                System.out.println(
-                        " 7 - Temporal After: lastEarthQuake AFTER 2006-11-30T01:30:00+03:00");
-                System.out.println(
-                        " 8 - Temporal Before: lastEarthQuake BEFORE 2006-11-30T01:30:00Z");
+                System.out.println(" 6 - Temporal After: lastEarthQuake AFTER 2006-11-30T01:30:00Z");
+                System.out.println(" 7 - Temporal After: lastEarthQuake AFTER 2006-11-30T01:30:00+03:00");
+                System.out.println(" 8 - Temporal Before: lastEarthQuake BEFORE 2006-11-30T01:30:00Z");
                 System.out.println(
                         " 9 - Temporal During: lastEarthQuake DURING 2006-11-30T00:30:00Z/2006-11-30T01:30:00Z ");
 
@@ -157,10 +155,7 @@ public class CQLExamples {
     private static void duringPredicate() throws Exception {
 
         // cql_duringPredicate start
-        During filter =
-                (During)
-                        CQL.toFilter(
-                                "lastEarthQuake DURING 1700-01-01T00:00:00/2011-01-01T00:00:00");
+        During filter = (During) CQL.toFilter("lastEarthQuake DURING 1700-01-01T00:00:00/2011-01-01T00:00:00");
         // cql_duringPredicate end
         Utility.prittyPrintFilter(filter);
 
@@ -179,8 +174,7 @@ public class CQLExamples {
 
         // cql relatePattern start
         Filter filter =
-                CQL.toFilter(
-                        "RELATE(geometry, LINESTRING (-134.921387 58.687767, -135.303391 59.092838), T*****FF*)");
+                CQL.toFilter("RELATE(geometry, LINESTRING (-134.921387 58.687767, -135.303391 59.092838), T*****FF*)");
         // cql relatePattern end
         Utility.prittyPrintFilter(filter);
 

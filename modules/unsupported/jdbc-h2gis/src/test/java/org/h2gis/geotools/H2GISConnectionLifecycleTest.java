@@ -21,8 +21,8 @@ import static org.junit.Assert.assertEquals;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import org.geotools.data.Query;
-import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
 import org.geotools.jdbc.ConnectionLifecycleListener;
 import org.geotools.jdbc.JDBCConnectionLifecycleOnlineTest;
 import org.geotools.jdbc.JDBCDataStore;
@@ -72,9 +72,7 @@ public class H2GISConnectionLifecycleTest extends JDBCConnectionLifecycleOnlineT
     public void testVariableListener() throws Exception {
         // setup a virtual table using the user variable
         VirtualTable vt =
-                new VirtualTable(
-                        "ft1var",
-                        "select * from  \"geotools\".\"ft1\" where \"doubleProperty\" > @MYVAR");
+                new VirtualTable("ft1var", "select * from  \"geotools\".\"ft1\" where \"doubleProperty\" > @MYVAR");
         dataStore.createVirtualTable(vt);
 
         // setup a listener that uses said variable

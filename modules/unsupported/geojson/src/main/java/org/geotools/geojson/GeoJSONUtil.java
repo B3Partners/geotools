@@ -31,16 +31,21 @@ import java.io.StringReader;
 import java.io.Writer;
 import java.lang.reflect.Array;
 import java.lang.reflect.Proxy;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.geotools.geojson.geom.GeometryHandler;
 import org.geotools.util.Converters;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.ContentHandler;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
 
 public class GeoJSONUtil {
 
@@ -49,8 +54,7 @@ public class GeoJSONUtil {
 
     public static final TimeZone TIME_ZONE = TimeZone.getTimeZone("GMT");
 
-    public static final FastDateFormat dateFormatter =
-            FastDateFormat.getInstance(DATE_FORMAT, TIME_ZONE);
+    public static final FastDateFormat dateFormatter = FastDateFormat.getInstance(DATE_FORMAT, TIME_ZONE);
 
     //
     // io
@@ -74,24 +78,24 @@ public class GeoJSONUtil {
      * @return A reader.
      */
     public static Reader toReader(Object input) throws IOException {
-        if (input instanceof BufferedReader) {
-            return (BufferedReader) input;
+        if (input instanceof BufferedReader reader) {
+            return reader;
         }
 
-        if (input instanceof Reader) {
-            return new BufferedReader((Reader) input);
+        if (input instanceof Reader reader) {
+            return new BufferedReader(reader);
         }
 
-        if (input instanceof InputStream) {
-            return new BufferedReader(new InputStreamReader((InputStream) input));
+        if (input instanceof InputStream stream) {
+            return new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
         }
 
-        if (input instanceof File) {
-            return new BufferedReader(new FileReader((File) input));
+        if (input instanceof File file) {
+            return new BufferedReader(new FileReader(file, StandardCharsets.UTF_8));
         }
 
-        if (input instanceof String) {
-            return new StringReader((String) input);
+        if (input instanceof String string) {
+            return new StringReader(string);
         }
 
         throw new IllegalArgumentException("Unable to turn " + input + " into a reader");
@@ -114,11 +118,12 @@ public class GeoJSONUtil {
      * @param output The output object.
      * @return A writer.
      */
+    @SuppressWarnings("PMD.CloseResource")
     public static Writer toWriter(Object output) throws IOException {
         // If the user passed in an OutputStreamWriter, we'll trust them to close it themselves.
-        if (output instanceof OutputStreamWriter) {
+        if (output instanceof OutputStreamWriter streamWriter) {
             return new Writer() {
-                Writer writer = new BufferedWriter((Writer) output);
+                Writer writer = new BufferedWriter(streamWriter);
 
                 @Override
                 public void write(char[] cbuf, int off, int len) throws IOException {
@@ -135,24 +140,24 @@ public class GeoJSONUtil {
             };
         }
 
-        if (output instanceof BufferedWriter) {
-            return (BufferedWriter) output;
+        if (output instanceof BufferedWriter writer) {
+            return writer;
         }
 
-        if (output instanceof Writer) {
-            return new BufferedWriter((Writer) output);
+        if (output instanceof Writer writer) {
+            return new BufferedWriter(writer);
         }
 
-        if (output instanceof OutputStream) {
-            return new BufferedWriter(new OutputStreamWriter((OutputStream) output));
+        if (output instanceof OutputStream stream) {
+            return new BufferedWriter(new OutputStreamWriter(stream, StandardCharsets.UTF_8));
         }
 
-        if (output instanceof File) {
-            return new BufferedWriter(new FileWriter((File) output));
+        if (output instanceof File file) {
+            return new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8));
         }
 
-        if (output instanceof String) {
-            return new BufferedWriter(new FileWriter((String) output));
+        if (output instanceof String string) {
+            return new BufferedWriter(new FileWriter(string, StandardCharsets.UTF_8));
         }
 
         throw new IllegalArgumentException("Unable to turn " + output + " into a writer");
@@ -177,6 +182,31 @@ public class GeoJSONUtil {
     private static void value(Object value, StringBuilder sb) {
         if (value == null) {
             nul(sb);
+        } else if (value instanceof List list) {
+            sb.append('[');
+            boolean firstValue = true;
+            for (Object member : list) {
+                if (firstValue) {
+                    firstValue = false;
+                } else {
+                    sb.append(',');
+                }
+
+                value(member, sb);
+            }
+            sb.append(']');
+        } else if (value instanceof Map<?, ?> map) {
+            sb.append('{');
+            boolean firstEntry = true;
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                if (firstEntry) {
+                    firstEntry = false;
+                } else {
+                    sb.append(',');
+                }
+                entry(entry.getKey().toString(), entry.getValue(), sb);
+            }
+            sb.append('}');
         } else if (value.getClass().isArray()) {
             array(value, sb);
         } else if (value instanceof Number || value instanceof Boolean || value instanceof Date) {
@@ -205,8 +235,8 @@ public class GeoJSONUtil {
 
     static StringBuilder literal(Object value, StringBuilder sb) {
         // handle date as special case special case
-        if (value instanceof Date) {
-            return string(dateFormatter.format((Date) value), sb);
+        if (value instanceof Date date) {
+            return string(dateFormatter.format(date), sb);
         }
 
         return sb.append(value);
@@ -226,11 +256,8 @@ public class GeoJSONUtil {
     //
     @SuppressWarnings("unchecked")
     public static <T> T trace(T handler, Class<T> clazz) {
-        return (T)
-                Proxy.newProxyInstance(
-                        handler.getClass().getClassLoader(),
-                        new Class[] {clazz},
-                        new TracingHandler(handler));
+        return (T) Proxy.newProxyInstance(
+                handler.getClass().getClassLoader(), new Class[] {clazz}, new TracingHandler(handler));
     }
 
     public static boolean addOrdinate(List<Object> ordinates, Object value) {
@@ -245,8 +272,7 @@ public class GeoJSONUtil {
         Coordinate c = new Coordinate();
         if (ordinates.size() <= 1) {
             throw new ParseException(
-                    ParseException.ERROR_UNEXPECTED_EXCEPTION,
-                    "Too few ordinates to create coordinate");
+                    ParseException.ERROR_UNEXPECTED_EXCEPTION, "Too few ordinates to create coordinate");
         }
         if (ordinates.size() > 1) {
             c.x = ((Number) ordinates.get(0)).doubleValue();
@@ -263,16 +289,13 @@ public class GeoJSONUtil {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T parse(IContentHandler<T> handler, Object input, boolean trace)
-            throws IOException {
+    public static <T> T parse(IContentHandler<T> handler, Object input, boolean trace) throws IOException {
         try (Reader reader = toReader(input)) {
             if (trace) {
-                handler =
-                        (IContentHandler<T>)
-                                Proxy.newProxyInstance(
-                                        handler.getClass().getClassLoader(),
-                                        new Class[] {IContentHandler.class},
-                                        new TracingHandler(handler));
+                handler = (IContentHandler<T>) Proxy.newProxyInstance(
+                        handler.getClass().getClassLoader(),
+                        new Class[] {IContentHandler.class},
+                        new TracingHandler(handler));
             }
 
             JSONParser parser = new JSONParser();
@@ -297,5 +320,52 @@ public class GeoJSONUtil {
             JSONObject.writeJSONString(obj, w);
             w.flush();
         }
+    }
+
+    public static Object replaceGeometry(Object justAdded) throws ParseException, IOException {
+        if (justAdded instanceof Map map) {
+            if (map.size() == 2
+                    && map.containsKey("type")
+                    && (map.containsKey("coordinates") || map.containsKey("geometries"))) {
+                return reparseMapToGeography(map);
+            }
+        }
+
+        return justAdded;
+    }
+
+    private static Geometry reparseMapToGeography(Map map) throws ParseException, IOException {
+        GeometryHandler geomHandler = new GeometryHandler(new GeometryFactory());
+
+        replayMap(map, geomHandler);
+        return geomHandler.getValue();
+    }
+
+    static void replayMap(Map map, ContentHandler handler) throws ParseException, IOException {
+        handler.startObject();
+        for (Object key : map.keySet()) {
+            handler.startObjectEntry((String) key);
+            replayObject(map.get(key), handler);
+            handler.endObjectEntry();
+        }
+        handler.endObject();
+    }
+
+    private static void replayObject(Object object, ContentHandler handler) throws ParseException, IOException {
+        if (object instanceof Map map) {
+            replayMap(map, handler);
+        } else if (object instanceof List list) {
+            replayList(list, handler);
+        } else {
+            handler.primitive(object);
+        }
+    }
+
+    private static void replayList(List list, ContentHandler handler) throws ParseException, IOException {
+        handler.startArray();
+        for (Object o : list) {
+            replayObject(o, handler);
+        }
+        handler.endArray();
     }
 }

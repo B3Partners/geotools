@@ -18,8 +18,8 @@ package org.geotools.styling;
 
 import java.util.Arrays;
 import java.util.List;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.ContrastMethod;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.ContrastMethod;
 
 /** @author iant */
 public class NormalizeContrastMethodStrategy extends AbstractContrastMethodStrategy {
@@ -43,8 +43,7 @@ public class NormalizeContrastMethodStrategy extends AbstractContrastMethodStrat
         if (name != null) {
             String algorithm = name.evaluate(null, String.class);
             if (algorithm != null && !ALGORITHM_NAMES.contains(algorithm)) {
-                throw new IllegalArgumentException(
-                        "Unsupported Algorithm has been specified: " + algorithm);
+                throw new IllegalArgumentException("Unsupported Algorithm has been specified: " + algorithm);
             }
         }
         super.setAlgorithm(name);

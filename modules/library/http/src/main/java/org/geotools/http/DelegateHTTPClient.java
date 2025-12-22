@@ -30,9 +30,14 @@ public class DelegateHTTPClient implements HTTPClient {
     }
 
     @Override
-    public HTTPResponse post(URL url, InputStream postContent, String postContentType)
-            throws IOException {
+    public HTTPResponse post(URL url, InputStream postContent, String postContentType) throws IOException {
         return delegate.post(url, postContent, postContentType);
+    }
+
+    @Override
+    public HTTPResponse post(URL url, InputStream postContent, String postContentType, Map<String, String> headers)
+            throws IOException {
+        return delegate.post(url, postContent, postContentType, headers);
     }
 
     @Override
@@ -63,6 +68,16 @@ public class DelegateHTTPClient implements HTTPClient {
     @Override
     public void setPassword(String password) {
         delegate.setPassword(password);
+    }
+
+    @Override
+    public Map<String, String> getExtraParams() {
+        return delegate.getExtraParams();
+    }
+
+    @Override
+    public void setExtraParams(Map<String, String> extraParams) {
+        delegate.setExtraParams(extraParams);
     }
 
     @Override

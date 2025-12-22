@@ -26,16 +26,18 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import javax.xml.namespace.QName;
+import org.geotools.api.feature.GeometryAttribute;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.NameImpl;
 import org.geotools.http.HTTPResponse;
+import org.geotools.ows.ServiceException;
 import org.geotools.referencing.CRS;
-import org.opengis.feature.GeometryAttribute;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.util.factory.Hints;
 
 public class TransactionRequest extends WFSRequest {
 
@@ -70,11 +72,7 @@ public class TransactionRequest extends WFSRequest {
         return new Insert(typeName);
     }
 
-    public Update createUpdate(
-            QName typeName,
-            List<QName> propertyNames,
-            List<Object> newValues,
-            Filter updateFilter) {
+    public Update createUpdate(QName typeName, List<QName> propertyNames, List<Object> newValues, Filter updateFilter) {
         return new Update(typeName, propertyNames, newValues, updateFilter);
     }
 
@@ -83,7 +81,7 @@ public class TransactionRequest extends WFSRequest {
     }
 
     @Override
-    public WFSResponse createResponse(HTTPResponse response) throws IOException {
+    public WFSResponse createResponse(HTTPResponse response) throws ServiceException, IOException {
         return super.createResponse(response);
     }
 
@@ -102,6 +100,7 @@ public class TransactionRequest extends WFSRequest {
     }
 
     public class Insert extends TransactionElement {
+        private boolean isUseExisting = false;
 
         private List<SimpleFeature> added;
 
@@ -116,10 +115,7 @@ public class TransactionRequest extends WFSRequest {
 
             if (!new NameImpl(typeName).equals(name)) {
                 throw new IllegalArgumentException(
-                        "Type name does not match. Expected "
-                                + new NameImpl(typeName)
-                                + ", but got "
-                                + name);
+                        "Type name does not match. Expected " + new NameImpl(typeName) + ", but got " + name);
             }
 
             WFSStrategy strategy = getStrategy();
@@ -129,22 +125,26 @@ public class TransactionRequest extends WFSRequest {
                 if (!(property instanceof GeometryAttribute)) {
                     continue;
                 }
-                CoordinateReferenceSystem attCrs =
-                        ((GeometryType) property.getType()).getCoordinateReferenceSystem();
+                CoordinateReferenceSystem attCrs = ((GeometryType) property.getType()).getCoordinateReferenceSystem();
                 if (!CRS.equalsIgnoreMetadata(crs, attCrs)) {
-                    throw new IllegalArgumentException(
-                            "Added Features shall match the native CRS: "
-                                    + typeInfo.getDefaultSRS()
-                                    + ". Got "
-                                    + attCrs);
+                    throw new IllegalArgumentException("Added Features shall match the native CRS: "
+                            + typeInfo.getDefaultSRS()
+                            + ". Got "
+                            + attCrs);
                 }
             }
+
+            isUseExisting = Boolean.TRUE.equals(feature.getUserData().get(Hints.USE_PROVIDED_FID));
 
             added.add(feature);
         }
 
         public List<SimpleFeature> getFeatures() {
             return Collections.unmodifiableList(new ArrayList<>(added));
+        }
+
+        public boolean isUseExisting() {
+            return isUseExisting;
         }
     }
 
@@ -156,11 +156,7 @@ public class TransactionRequest extends WFSRequest {
 
         private final Filter filter;
 
-        Update(
-                QName typeName,
-                List<QName> propertyNames,
-                List<Object> newValues,
-                Filter updateFilter) {
+        Update(QName typeName, List<QName> propertyNames, List<Object> newValues, Filter updateFilter) {
             super(typeName);
             this.propertyNames = Collections.unmodifiableList(new ArrayList<>(propertyNames));
             this.newValues = Collections.unmodifiableList(new ArrayList<>(newValues));

@@ -16,9 +16,9 @@
  */
 package org.geotools.mbstyle.expression;
 
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.mbstyle.parse.MBFormatException;
 import org.json.simple.JSONArray;
-import org.opengis.filter.expression.Expression;
 
 /** This class is here to get zoom level properties from a map */
 public class MBZoom extends MBExpression {
@@ -27,8 +27,8 @@ public class MBZoom extends MBExpression {
     }
 
     /**
-     * Gets the current zoom level. Note that in style layout and paint properties, ["zoom"] may
-     * only appear as the input to a top-level "step" or "interpolate" expression.
+     * Gets the current zoom level. Note that in style layout and paint properties, ["zoom"] may only appear as the
+     * input to a top-level "step" or "interpolate" expression.
      *
      * <p>Example: ["zoom]: number
      *
@@ -36,9 +36,7 @@ public class MBZoom extends MBExpression {
      */
     private Expression mbZoom() {
         return ff.function(
-                "zoomLevel",
-                ff.function("env", ff.literal("wms_scale_denominator")),
-                ff.literal("EPSG:3857"));
+                "zoomLevel", ff.function("env", ff.literal("wms_scale_denominator")), ff.literal("EPSG:3857"));
     }
 
     @Override

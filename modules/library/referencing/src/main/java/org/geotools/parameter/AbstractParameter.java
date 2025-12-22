@@ -20,19 +20,20 @@
 package org.geotools.parameter;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.io.Serializable;
 import java.io.Writer;
 import java.lang.reflect.Array;
+import java.text.MessageFormat;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.parameter.ParameterValueGroup;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.referencing.wkt.Formattable;
 import org.geotools.referencing.wkt.Formatter;
 import org.geotools.util.TableWriter;
 import org.geotools.util.Utilities;
-import org.opengis.parameter.GeneralParameterDescriptor;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.parameter.ParameterValueGroup;
 
 /**
  * Abstract parameter value or group of parameter values.
@@ -42,9 +43,9 @@ import org.opengis.parameter.ParameterValueGroup;
  * @author Martin Desruisseaux (IRD)
  * @see AbstractParameterDescriptor
  */
-public abstract class AbstractParameter extends Formattable
-        implements GeneralParameterValue, Serializable {
+public abstract class AbstractParameter extends Formattable implements GeneralParameterValue, Serializable {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 8458179223988766398L;
 
     /** The abstract definition of this parameter or group of parameters. */
@@ -67,25 +68,23 @@ public abstract class AbstractParameter extends Formattable
     }
 
     /**
-     * Makes sure that an argument is non-null. This method was already defined in {@link
-     * org.geotools.referencing.AbstractIdentifiedObject}, but is defined here again in order to get
-     * a more appropriate stack trace, and for access by class which do not inherit from {@link
-     * org.geotools.referencing.AbstractIdentifiedObject}.
+     * Makes sure that an argument is non-null. This method was already defined in
+     * {@link org.geotools.referencing.AbstractIdentifiedObject}, but is defined here again in order to get a more
+     * appropriate stack trace, and for access by class which do not inherit from
+     * {@link org.geotools.referencing.AbstractIdentifiedObject}.
      *
      * @param name Argument name.
      * @param object User argument.
      * @throws IllegalArgumentException if {@code object} is null.
      */
-    static void ensureNonNull(final String name, final Object object)
-            throws IllegalArgumentException {
+    static void ensureNonNull(final String name, final Object object) throws IllegalArgumentException {
         if (object == null) {
-            throw new IllegalArgumentException(Errors.format(ErrorKeys.NULL_ARGUMENT_$1, name));
+            throw new IllegalArgumentException(MessageFormat.format(ErrorKeys.NULL_ARGUMENT_$1, name));
         }
     }
 
     /**
-     * Makes sure an array element is non-null. This is a convenience method for subclass
-     * constructors.
+     * Makes sure an array element is non-null. This is a convenience method for subclass constructors.
      *
      * @param name Argument name.
      * @param array The array to look at.
@@ -96,7 +95,7 @@ public abstract class AbstractParameter extends Formattable
             throws IllegalArgumentException {
         if (array[index] == null) {
             throw new IllegalArgumentException(
-                    Errors.format(ErrorKeys.NULL_ARGUMENT_$1, name + '[' + index + ']'));
+                    MessageFormat.format(ErrorKeys.NULL_ARGUMENT_$1, name + '[' + index + ']'));
         }
     }
 
@@ -107,30 +106,25 @@ public abstract class AbstractParameter extends Formattable
      * @param value The expected value, or {@code null}.
      * @throws IllegalArgumentException if {@code value} is non-null and has a non-assignable class.
      */
-    static <T> void ensureValidClass(final Class<?> expectedClass, final Object value)
-            throws IllegalArgumentException {
+    static void ensureValidClass(final Class<?> expectedClass, final Object value) throws IllegalArgumentException {
         if (value != null) {
             final Class<?> valueClass = value.getClass();
             if (!expectedClass.isAssignableFrom(valueClass)) {
                 throw new IllegalArgumentException(
-                        Errors.format(ErrorKeys.ILLEGAL_CLASS_$2, valueClass, expectedClass));
+                        MessageFormat.format(ErrorKeys.ILLEGAL_CLASS_$2, valueClass, expectedClass));
             }
         }
     }
 
-    /**
-     * Returns an exception initialized with a "Unitless parameter" error message for the specified
-     * descriptor.
-     */
+    /** Returns an exception initialized with a "Unitless parameter" error message for the specified descriptor. */
     static IllegalStateException unitlessParameter(final GeneralParameterDescriptor descriptor) {
-        return new IllegalStateException(
-                Errors.format(ErrorKeys.UNITLESS_PARAMETER_$1, getName(descriptor)));
+        final Object arg0 = getName(descriptor);
+        return new IllegalStateException(MessageFormat.format(ErrorKeys.UNITLESS_PARAMETER_$1, arg0));
     }
 
     /**
-     * Convenience method returning the name of the specified descriptor. This method is used mostly
-     * for output to be read by human, not for processing. Consequently, we may consider to returns
-     * a localized name in a future version.
+     * Convenience method returning the name of the specified descriptor. This method is used mostly for output to be
+     * read by human, not for processing. Consequently, we may consider to returns a localized name in a future version.
      */
     static String getName(final GeneralParameterDescriptor descriptor) {
         return descriptor.getName().getCode();
@@ -163,8 +157,8 @@ public abstract class AbstractParameter extends Formattable
     }
 
     /**
-     * Returns a hash value for this parameter. This value doesn't need to be the same in past or
-     * future versions of this class.
+     * Returns a hash value for this parameter. This value doesn't need to be the same in past or future versions of
+     * this class.
      */
     @Override
     public int hashCode() {
@@ -172,8 +166,8 @@ public abstract class AbstractParameter extends Formattable
     }
 
     /**
-     * Returns a string representation of this parameter. The default implementation delegates the
-     * work to {@link #write}, which should be overridden by subclasses.
+     * Returns a string representation of this parameter. The default implementation delegates the work to
+     * {@link #write}, which should be overridden by subclasses.
      */
     @Override
     public final String toString() {
@@ -192,9 +186,8 @@ public abstract class AbstractParameter extends Formattable
     }
 
     /**
-     * Write the content of this parameter to the specified table. This method make it easier to
-     * align values properly than overriding the {@link #toString} method. The table's columns are
-     * defined as below:
+     * Write the content of this parameter to the specified table. This method make it easier to align values properly
+     * than overriding the {@link #toString} method. The table's columns are defined as below:
      *
      * <ol>
      *   <li>The parameter name
@@ -202,8 +195,8 @@ public abstract class AbstractParameter extends Formattable
      *   <li>The parameter value
      * </ol>
      *
-     * <p>The default implementation is suitable for most cases. However, subclasses are free to
-     * override this method with the following idiom:
+     * <p>The default implementation is suitable for most cases. However, subclasses are free to override this method
+     * with the following idiom:
      *
      * <blockquote>
      *
@@ -225,7 +218,7 @@ public abstract class AbstractParameter extends Formattable
     protected void write(final TableWriter table) throws IOException {
         table.write(getName(descriptor));
         table.nextColumn();
-        if (this instanceof ParameterValue) {
+        if (this instanceof ParameterValue value1) {
             /*
              * Provides a default implementation for parameter value. This implementation doesn't
              * need to be a Geotools's one. Putting a default implementation here avoid duplication
@@ -233,8 +226,8 @@ public abstract class AbstractParameter extends Formattable
              */
             table.write('=');
             table.nextColumn();
-            append(table, ((ParameterValue) this).getValue());
-        } else if (this instanceof ParameterValueGroup) {
+            append(table, value1.getValue());
+        } else if (this instanceof ParameterValueGroup group) {
             /*
              * Provides a default implementation for parameter value group, for the same reasons
              * then the previous block. Reminder: the above 'instanceof' check for interface, not
@@ -243,12 +236,12 @@ public abstract class AbstractParameter extends Formattable
             table.write(':');
             table.nextColumn();
             TableWriter inner = null;
-            for (final GeneralParameterValue value : ((ParameterValueGroup) this).values()) {
-                if (value instanceof AbstractParameter) {
+            for (final GeneralParameterValue value : group.values()) {
+                if (value instanceof AbstractParameter parameter) {
                     if (inner == null) {
                         inner = new TableWriter(table, 1);
                     }
-                    ((AbstractParameter) value).write(inner);
+                    parameter.write(inner);
                 } else {
                     // Unknow implementation. It will break the formatting. Too bad...
                     if (inner != null) {
@@ -267,8 +260,8 @@ public abstract class AbstractParameter extends Formattable
     }
 
     /**
-     * Append the specified value to a stream. If the value is an array, then the array element are
-     * appended recursively (i.e. the array may contains sub-array).
+     * Append the specified value to a stream. If the value is an array, then the array element are appended recursively
+     * (i.e. the array may contains sub-array).
      */
     private static void append(final Writer buffer, final Object value) throws IOException {
         if (value == null) {
@@ -288,7 +281,7 @@ public abstract class AbstractParameter extends Formattable
             }
             buffer.write('}');
         } else {
-            final boolean isNumeric = (value instanceof Number);
+            final boolean isNumeric = value instanceof Number;
             if (!isNumeric) {
                 buffer.write('"');
             }
@@ -301,9 +294,9 @@ public abstract class AbstractParameter extends Formattable
 
     /**
      * Format the inner part of this parameter as <A
-     * HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html"><cite>Well
-     * Known Text</cite> (WKT)</A>. This method doesn't need to be overridden, since the formatter
-     * already know how to {@linkplain Formatter#append(GeneralParameterValue) format parameters}.
+     * HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html"><cite>Well Known
+     * Text</cite> (WKT)</A>. This method doesn't need to be overridden, since the formatter already know how to
+     * {@linkplain Formatter#append(GeneralParameterValue) format parameters}.
      */
     @Override
     protected final String formatWKT(final Formatter formatter) {

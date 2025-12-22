@@ -5,7 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.util.InternationalString;
 import org.geotools.feature.NameImpl;
 import org.geotools.process.ProcessException;
 import org.geotools.process.ProcessFactory;
@@ -16,8 +18,6 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTReader;
 import org.locationtech.jts.operation.buffer.BufferParameters;
-import org.opengis.feature.type.Name;
-import org.opengis.util.InternationalString;
 
 public class GeometryProcessFactoryTest {
 
@@ -68,7 +68,6 @@ public class GeometryProcessFactoryTest {
     }
 
     @Test
-    @SuppressWarnings("PMD.SimplifiableTestAssertion")
     public void testExecuteBuffer() throws Exception {
         org.geotools.process.Process buffer = factory.create(new NameImpl("geo", "Buffer"));
 
@@ -131,7 +130,6 @@ public class GeometryProcessFactoryTest {
     }
 
     @Test
-    @SuppressWarnings("PMD.SimplifiableTestAssertion")
     public void testExecuteUnion() throws Exception {
         org.geotools.process.Process union = factory.create(new NameImpl("geo", "union"));
 
@@ -168,7 +166,6 @@ public class GeometryProcessFactoryTest {
     }
 
     @Test
-    @SuppressWarnings("PMD.SimplifiableTestAssertion")
     public void testExecuteHull() throws Exception {
         NameImpl hullName = new NameImpl("geo", "convexHull");
         org.geotools.process.Process hull = factory.create(hullName);
@@ -181,10 +178,8 @@ public class GeometryProcessFactoryTest {
         Assert.assertEquals(1, output.size());
         // there is no output annotation, check there is consistency between what is declared
         // and what is returned
-        Geometry result =
-                (Geometry)
-                        output.get(
-                                factory.getResultInfo(hullName, null).keySet().iterator().next());
+        Geometry result = (Geometry) output.get(
+                factory.getResultInfo(hullName, null).keySet().iterator().next());
         Assert.assertTrue(result.equals(geom.convexHull()));
     }
 }

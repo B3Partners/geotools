@@ -18,7 +18,12 @@ package org.geotools.referencing.factory.epsg.hsql;
 
 import java.util.Set;
 import org.geotools.TestData;
-import org.geotools.geometry.DirectPosition2D;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.IdentifiedObject;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.geometry.Position2D;
 import org.geotools.referencing.AbstractIdentifiedObject;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.factory.IdentifiedObjectFinder;
@@ -26,11 +31,6 @@ import org.geotools.util.factory.Hints;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.IdentifiedObject;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 
 public class DialectEpsgMediatorTest {
 
@@ -65,7 +65,7 @@ public class DialectEpsgMediatorTest {
 
         // reproject
         MathTransform transform = CRS.findMathTransform(crs1, crs2, true);
-        DirectPosition pos = new DirectPosition2D(48.417, 123.35);
+        Position pos = new Position2D(48.417, 123.35);
         transform.transform(pos, null);
     }
 
@@ -82,13 +82,14 @@ public class DialectEpsgMediatorTest {
             return;
         }
         String wkt =
-                "GEOGCS[\"WGS 84\",\n"
-                        + "  DATUM[\"World Geodetic System 1984\",\n"
-                        + "    SPHEROID[\"WGS 84\", 6378137.0, 298.257223563]],\n"
-                        + "  PRIMEM[\"Greenwich\", 0.0],\n"
-                        + "  UNIT[\"degree\", 0.017453292519943295],\n"
-                        + "  AXIS[\"Geodetic latitude\", NORTH],\n"
-                        + "  AXIS[\"Geodetic longitude\", EAST]]";
+                """
+                GEOGCS["WGS 84",
+                  DATUM["World Geodetic System 1984",
+                    SPHEROID["WGS 84", 6378137.0, 298.257223563]],
+                  PRIMEM["Greenwich", 0.0],
+                  UNIT["degree", 0.017453292519943295],
+                  AXIS["Geodetic latitude", NORTH],
+                  AXIS["Geodetic longitude", EAST]]""";
 
         CoordinateReferenceSystem crs = CRS.parseWKT(wkt);
         finder.setFullScanAllowed(false);
@@ -107,8 +108,8 @@ public class DialectEpsgMediatorTest {
         Assert.assertTrue(
                 "Should found an object equals (ignoring metadata) to the requested one.",
                 CRS.equalsIgnoreMetadata(crs, find));
-        String code =
-                AbstractIdentifiedObject.getIdentifier(find, factory.getAuthority()).getCode();
+        String code = AbstractIdentifiedObject.getIdentifier(find, factory.getAuthority())
+                .getCode();
         Assert.assertTrue("4326".equals(code) || "63266405".equals(code));
 
         finder.setFullScanAllowed(false);
@@ -126,23 +127,24 @@ public class DialectEpsgMediatorTest {
          * find it by name, but we want to test the scan).
          */
         String wkt =
-                "PROJCS[\"Beijing 1954\",\n"
-                        + "   GEOGCS[\"Beijing 1954\",\n"
-                        + "     DATUM[\"Beijing 1954\",\n"
-                        + "       SPHEROID[\"Krassowsky 1940\", 6378245.0, 298.3]],\n"
-                        + "     PRIMEM[\"Greenwich\", 0.0],\n"
-                        + "     UNIT[\"degree\", 0.017453292519943295],\n"
-                        + "     AXIS[\"Geodetic latitude\", NORTH],\n"
-                        + "     AXIS[\"Geodetic longitude\", EAST]],\n"
-                        + "   PROJECTION[\"Transverse Mercator\"],\n"
-                        + "   PARAMETER[\"central_meridian\", 135.0],\n"
-                        + "   PARAMETER[\"latitude_of_origin\", 0.0],\n"
-                        + "   PARAMETER[\"scale_factor\", 1.0],\n"
-                        + "   PARAMETER[\"false_easting\", 500000.0],\n"
-                        + "   PARAMETER[\"false_northing\", 0.0],\n"
-                        + "   UNIT[\"m\", 1.0],\n"
-                        + "   AXIS[\"Northing\", NORTH],\n"
-                        + "   AXIS[\"Easting\", EAST]]";
+                """
+                PROJCS["Beijing 1954",
+                   GEOGCS["Beijing 1954",
+                     DATUM["Beijing 1954",
+                       SPHEROID["Krassowsky 1940", 6378245.0, 298.3]],
+                     PRIMEM["Greenwich", 0.0],
+                     UNIT["degree", 0.017453292519943295],
+                     AXIS["Geodetic latitude", NORTH],
+                     AXIS["Geodetic longitude", EAST]],
+                   PROJECTION["Transverse Mercator"],
+                   PARAMETER["central_meridian", 135.0],
+                   PARAMETER["latitude_of_origin", 0.0],
+                   PARAMETER["scale_factor", 1.0],
+                   PARAMETER["false_easting", 500000.0],
+                   PARAMETER["false_northing", 0.0],
+                   UNIT["m", 1.0],
+                   AXIS["Northing", NORTH],
+                   AXIS["Easting", EAST]]""";
         CoordinateReferenceSystem crs = CRS.parseWKT(wkt);
 
         finder.setFullScanAllowed(false);
@@ -155,12 +157,11 @@ public class DialectEpsgMediatorTest {
         Assert.assertTrue(
                 "Should found an object equals (ignoring metadata) to the requested one.",
                 CRS.equalsIgnoreMetadata(crs, find));
-        String code =
-                AbstractIdentifiedObject.getIdentifier(find, factory.getAuthority()).getCode();
+        String code = AbstractIdentifiedObject.getIdentifier(find, factory.getAuthority())
+                .getCode();
         Assert.assertEquals("2442", code);
 
         finder.setFullScanAllowed(false);
-        Assert.assertEquals(
-                "The CRS should still in the cache.", "EPSG:2442", finder.findIdentifier(crs));
+        Assert.assertEquals("The CRS should still in the cache.", "EPSG:2442", finder.findIdentifier(crs));
     }
 }

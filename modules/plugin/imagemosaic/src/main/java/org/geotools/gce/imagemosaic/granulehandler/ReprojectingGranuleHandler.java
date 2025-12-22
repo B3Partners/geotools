@@ -17,21 +17,21 @@
 
 package org.geotools.gce.imagemosaic.granulehandler;
 
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
 import org.geotools.coverage.grid.io.StructuredGridCoverage2DReader;
 import org.geotools.gce.imagemosaic.MosaicConfigurationBean;
 import org.geotools.gce.imagemosaic.Utils;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.TransformException;
 
 /** Granule handler that reprojects envelopes of non-structured grid coverages */
 public class ReprojectingGranuleHandler implements GranuleHandler {
@@ -58,7 +58,7 @@ public class ReprojectingGranuleHandler implements GranuleHandler {
                     inputFeatureType,
                     mosaicConfiguration);
         } else {
-            GeneralEnvelope coverageEnvelope = inputReader.getOriginalEnvelope();
+            GeneralBounds coverageEnvelope = inputReader.getOriginalEnvelope();
             CoordinateReferenceSystem coverageCRS = inputReader.getCoordinateReferenceSystem();
             ReferencedEnvelope finalEnvelope = new ReferencedEnvelope(coverageEnvelope);
             Geometry geometry = null;
@@ -67,8 +67,7 @@ public class ReprojectingGranuleHandler implements GranuleHandler {
                     geometry = Utils.reprojectEnvelopeToGeometry(finalEnvelope, targetCRS, null);
                     if (geometry == null) {
                         throw new GranuleHandlingException(
-                                "Reprojection of source envelope failed, got back a null one "
-                                        + finalEnvelope);
+                                "Reprojection of source envelope failed, got back a null one " + finalEnvelope);
                     } else if (geometry instanceof GeometryCollection) {
                         // in case of wrapping only pick the first footprint
                         geometry = geometry.getGeometryN(0);
@@ -83,8 +82,7 @@ public class ReprojectingGranuleHandler implements GranuleHandler {
                 geometry = JTS.toGeometry(finalEnvelope);
             }
 
-            targetFeature.setAttribute(
-                    targetFeatureType.getGeometryDescriptor().getName(), geometry);
+            targetFeature.setAttribute(targetFeatureType.getGeometryDescriptor().getName(), geometry);
         }
     }
 }

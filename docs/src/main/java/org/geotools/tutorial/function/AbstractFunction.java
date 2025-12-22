@@ -13,12 +13,12 @@ package org.geotools.tutorial.function;
 
 import java.util.Collections;
 import java.util.List;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.util.Converters;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
 
 public abstract class AbstractFunction implements Function {
     protected final FunctionName name;
@@ -31,29 +31,36 @@ public abstract class AbstractFunction implements Function {
         this.fallback = fallback;
     }
 
+    @Override
     public abstract Object evaluate(Object object);
 
+    @Override
     public <T> T evaluate(Object object, Class<T> context) {
         Object value = evaluate(object);
         return Converters.convert(value, context);
     }
 
+    @Override
     public Object accept(ExpressionVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }
 
+    @Override
     public String getName() {
         return name.getName();
     }
 
+    @Override
     public FunctionName getFunctionName() {
         return name;
     }
 
+    @Override
     public List<Expression> getParameters() {
         return Collections.unmodifiableList(params);
     }
 
+    @Override
     public Literal getFallbackValue() {
         return fallback;
     }

@@ -16,31 +16,33 @@
  */
 package org.geotools.image;
 
-import com.sun.media.jai.util.PropertyGeneratorImpl;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
-import javax.media.jai.GeometricOpImage;
-import javax.media.jai.ImageLayout;
-import javax.media.jai.Interpolation;
-import javax.media.jai.JAI;
-import javax.media.jai.OperationRegistry;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.ROI;
-import javax.media.jai.ROIShape;
-import javax.media.jai.RenderedOp;
+import java.io.Serial;
+import org.eclipse.imagen.GeometricOpImage;
+import org.eclipse.imagen.ImageLayout;
+import org.eclipse.imagen.ImageN;
+import org.eclipse.imagen.Interpolation;
+import org.eclipse.imagen.OperationRegistry;
+import org.eclipse.imagen.PlanarImage;
+import org.eclipse.imagen.ROI;
+import org.eclipse.imagen.ROIShape;
+import org.eclipse.imagen.RenderedOp;
+import org.eclipse.imagen.media.util.PropertyGeneratorImpl;
 import org.geotools.util.factory.Hints;
 
 /**
- * A property generator for the Affine operation that builds a ROI with a sane image layout even
- * with large upscale factors
+ * A property generator for the Affine operation that builds a ROI with a sane image layout even with large upscale
+ * factors
  *
  * @author Andrea Aime - GeoSolutions
  * @author Daniele Romagnoli - GeoSolutions
  */
 public class GTAffinePropertyGenerator extends PropertyGeneratorImpl {
+    @Serial
     private static final long serialVersionUID = 6622489670499745306L;
 
     /** Constructor. */
@@ -52,7 +54,7 @@ public class GTAffinePropertyGenerator extends PropertyGeneratorImpl {
 
     public static synchronized void register(boolean force) {
         if (!registered || force) {
-            OperationRegistry registry = JAI.getDefaultInstance().getOperationRegistry();
+            OperationRegistry registry = ImageN.getDefaultInstance().getOperationRegistry();
             registry.addPropertyGenerator("rendered", "Affine", new GTAffinePropertyGenerator());
             registered = true;
         }
@@ -68,17 +70,14 @@ public class GTAffinePropertyGenerator extends PropertyGeneratorImpl {
     public Object getProperty(String name, Object opNode) {
         validate(name, opNode);
 
-        if (opNode instanceof RenderedOp && name.equalsIgnoreCase("roi")) {
-            RenderedOp op = (RenderedOp) opNode;
+        if (opNode instanceof RenderedOp op && name.equalsIgnoreCase("roi")) {
 
             ParameterBlock pb = op.getParameterBlock();
 
             // Retrieve the rendered source image and its ROI.
             RenderedImage src = pb.getRenderedSource(0);
             Object property = src.getProperty("ROI");
-            if (property == null
-                    || property.equals(java.awt.Image.UndefinedProperty)
-                    || !(property instanceof ROI)) {
+            if (property == null || property.equals(java.awt.Image.UndefinedProperty) || !(property instanceof ROI)) {
                 // Check on the parameterBlock
                 if (pb.getNumParameters() >= 4 && pb.getObjectParameter(3) != null) {
                     property = pb.getObjectParameter(3);
@@ -94,18 +93,14 @@ public class GTAffinePropertyGenerator extends PropertyGeneratorImpl {
             // Determine the effective source bounds.
             Rectangle srcBounds = null;
             PlanarImage dst = op.getRendering();
-            if (dst instanceof GeometricOpImage
-                    && ((GeometricOpImage) dst).getBorderExtender() == null) {
-                srcBounds =
-                        new Rectangle(
-                                src.getMinX() + interp.getLeftPadding(),
-                                src.getMinY() + interp.getTopPadding(),
-                                src.getWidth() - interp.getWidth() + 1,
-                                src.getHeight() - interp.getHeight() + 1);
+            if (dst instanceof GeometricOpImage image && image.getBorderExtender() == null) {
+                srcBounds = new Rectangle(
+                        src.getMinX() + interp.getLeftPadding(),
+                        src.getMinY() + interp.getTopPadding(),
+                        src.getWidth() - interp.getWidth() + 1,
+                        src.getHeight() - interp.getHeight() + 1);
             } else {
-                srcBounds =
-                        new Rectangle(
-                                src.getMinX(), src.getMinY(), src.getWidth(), src.getHeight());
+                srcBounds = new Rectangle(src.getMinX(), src.getMinY(), src.getWidth(), src.getHeight());
             }
 
             // If necessary, clip the ROI to the effective source bounds.
@@ -126,7 +121,7 @@ public class GTAffinePropertyGenerator extends PropertyGeneratorImpl {
                 paramBlock.add(transform);
                 paramBlock.add(Interpolation.getInstance(Interpolation.INTERP_NEAREST));
                 Hints localHints = new Hints(op.getRenderingHints());
-                localHints.remove(JAI.KEY_IMAGE_LAYOUT);
+                localHints.remove(ImageN.KEY_IMAGE_LAYOUT);
                 ImageLayout il = new ImageLayout();
                 Rectangle dstBounds = op.getBounds();
                 il.setMinX(dstBounds.x);
@@ -135,7 +130,7 @@ public class GTAffinePropertyGenerator extends PropertyGeneratorImpl {
                 il.setHeight(dstBounds.height);
                 il.setTileWidth(op.getTileWidth());
                 il.setTileWidth(op.getTileHeight());
-                localHints.add(new RenderingHints(JAI.KEY_IMAGE_LAYOUT, il));
+                localHints.add(new RenderingHints(ImageN.KEY_IMAGE_LAYOUT, il));
 
                 dstROI = srcROI.performImageOp("Affine", paramBlock, 0, localHints);
             } else {

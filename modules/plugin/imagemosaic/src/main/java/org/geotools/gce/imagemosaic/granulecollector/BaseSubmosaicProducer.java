@@ -17,8 +17,6 @@
 
 package org.geotools.gce.imagemosaic.granulecollector;
 
-import it.geosolutions.jaiext.JAIExt;
-import it.geosolutions.jaiext.vectorbin.ROIGeometry;
 import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.image.ColorModel;
@@ -37,10 +35,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.media.jai.Histogram;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.ROI;
 import org.apache.commons.io.FilenameUtils;
+import org.eclipse.imagen.Histogram;
+import org.eclipse.imagen.PlanarImage;
+import org.eclipse.imagen.ROI;
+import org.eclipse.imagen.media.vectorbin.ROIGeometry;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.coverage.util.CoverageUtilities;
 import org.geotools.gce.imagemosaic.GranuleDescriptor;
 import org.geotools.gce.imagemosaic.GranuleDescriptor.GranuleLoadingResult;
@@ -56,17 +56,14 @@ import org.geotools.image.ImageWorker;
 import org.geotools.util.URLs;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
 
 /** Basic submosaic producer. Accepts all granules and mosaics without any real special handling */
 public class BaseSubmosaicProducer implements SubmosaicProducer {
 
-    static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(DefaultSubmosaicProducer.class);
+    static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(DefaultSubmosaicProducer.class);
 
     /** The final lists for granules to be computed, splitted per dimension value. */
-    protected final List<Future<GranuleDescriptor.GranuleLoadingResult>> granulesFutures =
-            new ArrayList<>();
+    protected final List<Future<GranuleDescriptor.GranuleLoadingResult>> granulesFutures = new ArrayList<>();
 
     protected final boolean dryRun;
 
@@ -83,20 +80,17 @@ public class BaseSubmosaicProducer implements SubmosaicProducer {
 
     protected Color inputTransparentColor;
 
-    // boolean forceFootprints = JAIExt.;
-
     public BaseSubmosaicProducer(RasterLayerResponse rasterLayerResponse, boolean dryRun) {
         this.rasterLayerResponse = rasterLayerResponse;
         this.dryRun = dryRun;
         inputTransparentColor = rasterLayerResponse.getRequest().getInputTransparentColor();
-        doInputTransparency =
-                inputTransparentColor != null
-                        && !rasterLayerResponse.getFootprintBehavior().handleFootprints();
+        doInputTransparency = inputTransparentColor != null
+                && !rasterLayerResponse.getFootprintBehavior().handleFootprints();
     }
 
     /**
-     * This methods collects the granules from their eventual multithreaded processing and turn them
-     * into a {@link MosaicInputs} object.
+     * This methods collects the granules from their eventual multithreaded processing and turn them into a
+     * {@link MosaicInputs} object.
      *
      * @return a {@link MosaicInputs} ready to be mosaicked.
      */
@@ -175,13 +169,12 @@ public class BaseSubmosaicProducer implements SubmosaicProducer {
                     // for data type other than byte and ushort. With float and double
                     // it can cut off a large par of the dynamic.
                     //
-                    sourceThreshold =
-                            new double[][] {
-                                {
-                                    CoverageUtilities.getMosaicThreshold(
-                                            loadedImage.getSampleModel().getDataType())
-                                }
-                            };
+                    sourceThreshold = new double[][] {
+                        {
+                            CoverageUtilities.getMosaicThreshold(
+                                    loadedImage.getSampleModel().getDataType())
+                        }
+                    };
                 }
 
                 // moving on
@@ -212,23 +205,19 @@ public class BaseSubmosaicProducer implements SubmosaicProducer {
 
                 // add to the mosaic collection, with preprocessing
                 // TODO pluggable mechanism for processing (artifacts,etc...)
-                MosaicElement input =
-                        preProcessGranuleRaster(loadedImage, result, fileCanonicalPath);
+                MosaicElement input = preProcessGranuleRaster(loadedImage, result, fileCanonicalPath);
                 returnValues.add(input);
 
             } catch (Exception e) {
                 if (LOGGER.isLoggable(Level.INFO)) {
-                    LOGGER.info(
-                            "Adding to mosaic failed, original request was "
-                                    + rasterLayerResponse.getRequest());
+                    LOGGER.info("Adding to mosaic failed, original request was " + rasterLayerResponse.getRequest());
                 }
                 throw new IOException(e);
             }
         }
 
         // collect paths
-        rasterLayerResponse.addGranulePaths(
-                paths.length() > 1 ? paths.substring(0, paths.length() - 1) : "");
+        rasterLayerResponse.addGranulePaths(paths.length() > 1 ? paths.substring(0, paths.length() - 1) : "");
         rasterLayerResponse.setSourceUrl(sourceUrl);
 
         if (returnValues == null || returnValues.isEmpty()) {
@@ -240,9 +229,7 @@ public class BaseSubmosaicProducer implements SubmosaicProducer {
     }
 
     private MosaicElement preProcessGranuleRaster(
-            RenderedImage granule,
-            final GranuleDescriptor.GranuleLoadingResult result,
-            String canonicalPath) {
+            RenderedImage granule, final GranuleDescriptor.GranuleLoadingResult result, String canonicalPath) {
 
         //
         // INDEX COLOR MODEL EXPANSION
@@ -252,7 +239,7 @@ public class BaseSubmosaicProducer implements SubmosaicProducer {
         //
         // If the original color model is an index color model an expansion
         // might be requested in case the different palettes are not all the
-        // same. In this case the mosaic operator from JAI would provide wrong
+        // same. In this case the mosaic operator from ImageN would provide wrong
         // results since it would take the first palette and use that one for
         // all the other images.
         //
@@ -267,8 +254,7 @@ public class BaseSubmosaicProducer implements SubmosaicProducer {
         // alpha information to them.
         //
         //
-        if (rasterLayerResponse.getRasterManager().isExpandMe()
-                && granule.getColorModel() instanceof IndexColorModel) {
+        if (rasterLayerResponse.getRasterManager().isExpandMe() && granule.getColorModel() instanceof IndexColorModel) {
             granule = new ImageWorker(granule).forceComponentColorModel().getRenderedImage();
         }
 
@@ -281,19 +267,17 @@ public class BaseSubmosaicProducer implements SubmosaicProducer {
                 LOGGER.fine("Support for alpha on input granule " + result.getGranuleUrl());
             }
             if (doInputTransparency)
-                granule =
-                        new ImageWorker(granule)
-                                .makeColorTransparent(inputTransparentColor)
-                                .getRenderedImage();
+                granule = new ImageWorker(granule)
+                        .makeColorTransparent(inputTransparentColor)
+                        .getRenderedImage();
             granuleHasAlpha = granule.getColorModel().hasAlpha();
             if (!granule.getColorModel().hasAlpha()) {
                 // if the resulting image has no transparency (can happen with IndexColorModel then
                 // we need to try component color model
-                granule =
-                        new ImageWorker(granule)
-                                .forceComponentColorModel(true)
-                                .makeColorTransparent(inputTransparentColor)
-                                .getRenderedImage();
+                granule = new ImageWorker(granule)
+                        .forceComponentColorModel(true)
+                        .makeColorTransparent(inputTransparentColor)
+                        .getRenderedImage();
                 granuleHasAlpha = granule.getColorModel().hasAlpha();
             }
             assert granuleHasAlpha;
@@ -329,17 +313,10 @@ public class BaseSubmosaicProducer implements SubmosaicProducer {
         //
         // we need to add its roi in order to avoid problems with the mosaics sources overlapping
         ROI imageROI = null;
-        if (rasterLayerResponse.getFootprintBehavior().handleFootprints()
-                || rasterLayerResponse.isHeterogeneousCRS()
-                || !JAIExt.isJAIExtOperation("Mosaic")) {
+        if (rasterLayerResponse.getFootprintBehavior().handleFootprints() || rasterLayerResponse.isHeterogeneousCRS()) {
             final Rectangle bounds = PlanarImage.wrapRenderedImage(granule).getBounds();
-            Geometry mask =
-                    JTS.toGeometry(
-                            new Envelope(
-                                    bounds.getMinX(),
-                                    bounds.getMaxX(),
-                                    bounds.getMinY(),
-                                    bounds.getMaxY()));
+            Geometry mask = JTS.toGeometry(
+                    new Envelope(bounds.getMinX(), bounds.getMaxX(), bounds.getMinY(), bounds.getMaxY()));
             imageROI = new ROIGeometry(mask);
 
             // get the real footprint
@@ -370,8 +347,7 @@ public class BaseSubmosaicProducer implements SubmosaicProducer {
                         final Histogram histogram = Utils.getHistogram(histogramPath);
                         if (histogram != null) {
                             final double[] p =
-                                    histogram.getPTileThreshold(
-                                            rasterLayerResponse.getArtifactsFilterPTileThreshold());
+                                    histogram.getPTileThreshold(rasterLayerResponse.getArtifactsFilterPTileThreshold());
                             artifactThreshold = (int) p[0];
                         }
                     }
@@ -379,10 +355,9 @@ public class BaseSubmosaicProducer implements SubmosaicProducer {
                 if (LOGGER.isLoggable(Level.FINE)) {
                     LOGGER.log(Level.FINE, "Filtering granules artifacts");
                 }
-                ImageWorker w =
-                        new ImageWorker(granule)
-                                .setRenderingHints(rasterLayerResponse.getHints())
-                                .setROI(imageROI);
+                ImageWorker w = new ImageWorker(granule)
+                        .setRenderingHints(rasterLayerResponse.getHints())
+                        .setROI(imageROI);
                 w.setBackground(new double[] {0});
                 w.artifactsFilter(artifactThreshold, 3);
                 granule = w.getRenderedImage();
@@ -395,12 +370,11 @@ public class BaseSubmosaicProducer implements SubmosaicProducer {
 
     @Override
     public List<MosaicElement> createMosaic() throws IOException {
-        final MosaicElement mosaic =
-                (new Mosaicker(
-                                this.rasterLayerResponse,
-                                collectGranules(),
-                                rasterLayerResponse.getRequest().getMergeBehavior()))
-                        .createMosaic();
+        final MosaicElement mosaic = new Mosaicker(
+                        this.rasterLayerResponse,
+                        collectGranules(),
+                        rasterLayerResponse.getRequest().getMergeBehavior())
+                .createMosaic();
         if (mosaic == null) {
             return Collections.emptyList();
         } else {
@@ -417,34 +391,29 @@ public class BaseSubmosaicProducer implements SubmosaicProducer {
         SimpleFeature originator = granuleDescriptor.getOriginator();
         Object imageIndex = originator != null ? originator.getAttribute("imageindex") : null;
 
-        if (imageIndex != null && imageIndex instanceof Integer) {
-            rasterLayerResponse.setImageChoice((Integer) imageIndex);
+        if (imageIndex != null && imageIndex instanceof Integer integer) {
+            rasterLayerResponse.setImageChoice(integer);
         }
 
-        final GranuleLoader loader =
-                new GranuleLoader(
-                        rasterLayerResponse.getBaseReadParameters(),
-                        rasterLayerResponse.getImageChoice(),
-                        rasterLayerResponse.getMosaicBBox(),
-                        rasterLayerResponse.getFinalWorldToGridCorner(),
-                        granuleDescriptor,
-                        rasterLayerResponse.getRequest(),
-                        rasterLayerResponse.getHints());
+        final GranuleLoader loader = new GranuleLoader(
+                rasterLayerResponse.getBaseReadParameters(),
+                rasterLayerResponse.getImageChoice(),
+                rasterLayerResponse.getMosaicBBox(),
+                rasterLayerResponse.getFinalWorldToGridCorner(),
+                granuleDescriptor,
+                rasterLayerResponse.getRequest(),
+                rasterLayerResponse.getHints());
         if (!dryRun) {
             final boolean multiThreadedLoading = isMultithreadedLoadingEnabled();
             if (multiThreadedLoading) {
                 // MULTITHREADED EXECUTION submitting the task
                 final ExecutorService mtLoader =
-                        rasterLayerResponse
-                                .getRasterManager()
-                                .getParentReader()
-                                .getMultiThreadedLoader();
+                        rasterLayerResponse.getRasterManager().getParentReader().getMultiThreadedLoader();
                 granulesFutures.add(mtLoader.submit(loader));
             } else {
                 // SINGLE THREADED Execution, we defer the execution to when we have done the
                 // loading
-                final FutureTask<GranuleDescriptor.GranuleLoadingResult> task =
-                        new FutureTask<>(loader);
+                final FutureTask<GranuleDescriptor.GranuleLoadingResult> task = new FutureTask<>(loader);
                 task.run(); // run in current thread
 
                 // perform excess granule removal, as it makes sense in single threaded mode to
@@ -476,8 +445,7 @@ public class BaseSubmosaicProducer implements SubmosaicProducer {
     private boolean isMultithreadedLoadingEnabled() {
         final ExecutorService mtLoader =
                 rasterLayerResponse.getRasterManager().getParentReader().getMultiThreadedLoader();
-        final boolean multiThreadedLoading =
-                rasterLayerResponse.isMultithreadingAllowed() && mtLoader != null;
+        final boolean multiThreadedLoading = rasterLayerResponse.isMultithreadingAllowed() && mtLoader != null;
         return multiThreadedLoading;
     }
 

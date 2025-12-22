@@ -41,6 +41,27 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 import org.apache.commons.collections4.IteratorUtils;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortOrder;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.style.ExternalGraphic;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Font;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.Stroke;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.style.TextSymbolizer;
 import org.geotools.data.DataUtilities;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -53,20 +74,7 @@ import org.geotools.renderer.RenderListener;
 import org.geotools.renderer.lite.RendererUtilities;
 import org.geotools.renderer.lite.StreamingRenderer;
 import org.geotools.renderer.style.SLDStyleFactory.SymbolizerKey;
-import org.geotools.styling.ExternalGraphic;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.Fill;
-import org.geotools.styling.Font;
-import org.geotools.styling.Graphic;
-import org.geotools.styling.LineSymbolizer;
-import org.geotools.styling.Mark;
-import org.geotools.styling.PointSymbolizer;
-import org.geotools.styling.PolygonSymbolizer;
-import org.geotools.styling.Stroke;
-import org.geotools.styling.Style;
 import org.geotools.styling.StyleBuilder;
-import org.geotools.styling.StyleFactory;
-import org.geotools.styling.TextSymbolizer;
 import org.geotools.util.NumberRange;
 import org.geotools.util.factory.Hints;
 import org.hamcrest.CoreMatchers;
@@ -81,14 +89,6 @@ import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.sort.SortOrder;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /** @author jamesm */
 public class SLDStyleFactoryTest {
@@ -194,8 +194,7 @@ public class SLDStyleFactoryTest {
         // make sure the style has been recognized as dynamic
         SymbolizerKey key = new SymbolizerKey(symb, range);
         Assert.assertTrue(sld.dynamicSymbolizers.containsKey(key));
-        Shape expected =
-                new TTFMarkFactory().getShape(null, ff.literal("ttf://Serif#0xF054"), feature);
+        Shape expected = new TTFMarkFactory().getShape(null, ff.literal("ttf://Serif#0xF054"), feature);
 
         // no general path equality implemented, we have to check manually
         PathIterator piExpected = expected.getPathIterator(new AffineTransform());
@@ -228,8 +227,7 @@ public class SLDStyleFactoryTest {
         Assert.assertTrue(sld.dynamicSymbolizers.containsKey(key));
 
         BufferedImage img = gs.getImage();
-        BufferedImage expected =
-                ImageIO.read(StreamingRenderer.class.getResource("test-data/draw.png"));
+        BufferedImage expected = ImageIO.read(StreamingRenderer.class.getResource("test-data/draw.png"));
         Assert.assertEquals(expected.getHeight(), img.getHeight());
         Assert.assertEquals(expected.getWidth(), img.getWidth());
         // the two images are equal, but they have different color models due to the
@@ -249,8 +247,7 @@ public class SLDStyleFactoryTest {
         SymbolizerKey key = new SymbolizerKey(symb, range);
         Assert.assertTrue(sld.dynamicSymbolizers.containsKey(key));
 
-        BufferedImage expected =
-                ImageIO.read(StreamingRenderer.class.getResource("test-data/draw.png"));
+        BufferedImage expected = ImageIO.read(StreamingRenderer.class.getResource("test-data/draw.png"));
         Assert.assertEquals(expected.getHeight(), gs.getImage().getHeight());
         Assert.assertEquals(expected.getWidth(), gs.getImage().getWidth());
     }
@@ -282,8 +279,7 @@ public class SLDStyleFactoryTest {
         Assert.assertTrue(sld.dynamicSymbolizers.containsKey(key));
 
         BufferedImage img = gs.getImage();
-        BufferedImage expected =
-                ImageIO.read(StreamingRenderer.class.getResource("test-data/draw.png"));
+        BufferedImage expected = ImageIO.read(StreamingRenderer.class.getResource("test-data/draw.png"));
         Assert.assertEquals(expected.getHeight(), img.getHeight());
         Assert.assertEquals(expected.getWidth(), img.getWidth());
         // the two images are equal, but they have different color models due to the
@@ -324,7 +320,7 @@ public class SLDStyleFactoryTest {
         PointSymbolizer symb = sf.createPointSymbolizer();
         ExternalGraphic eg = sf.createExternalGraphic(url + "iAmNotThere.png", "image/png");
         symb.getGraphic().graphicalSymbols().add(eg);
-        symb.getOptions().put(PointSymbolizer.FALLBACK_ON_DEFAULT_MARK, "false");
+        symb.getOptions().put(org.geotools.api.style.PointSymbolizer.FALLBACK_ON_DEFAULT_MARK, "false");
 
         // fallback has been disabled
         Assert.assertNull(sld.createPointStyle(feature, symb, range));
@@ -335,9 +331,7 @@ public class SLDStyleFactoryTest {
         URL url = StreamingRenderer.class.getResource("test-data/");
         PolygonSymbolizer symb = sf.createPolygonSymbolizer();
         ExternalGraphic eg = sf.createExternalGraphic(url + "icon64.png", "image/png");
-        Graphic g =
-                sf.createGraphic(
-                        new ExternalGraphic[] {eg}, null, null, null, ff.literal(20), null);
+        Graphic g = sf.createGraphic(new ExternalGraphic[] {eg}, null, null, null, ff.literal(20), null);
         Fill fill = sf.createFill(null, null, null, g);
         symb.setFill(fill);
 
@@ -379,8 +373,7 @@ public class SLDStyleFactoryTest {
         Style2D s = sld.createLineStyle(feature, symb, range);
         Assert.assertNotNull(s);
 
-        DynamicLineStyle2D s2 =
-                (DynamicLineStyle2D) sld.createDynamicLineStyle(feature, symb, range);
+        DynamicLineStyle2D s2 = (DynamicLineStyle2D) sld.createDynamicLineStyle(feature, symb, range);
         Assert.assertNotNull(s2);
         Assert.assertEquals(Color.BLUE, s2.getContour());
         Assert.assertNotNull(s2.getStroke());
@@ -392,7 +385,7 @@ public class SLDStyleFactoryTest {
         PolygonSymbolizer symb = sf.createPolygonSymbolizer();
         Mark myMark = sf.createMark();
         myMark.setWellKnownName(ff.literal("square"));
-        org.geotools.styling.Fill fill = sf.createFill(null);
+        org.geotools.api.style.Fill fill = sf.createFill(null);
         fill.setGraphicFill(sf.createGraphic(null, new Mark[] {myMark}, null, null, null, null));
         symb.setFill(fill);
 
@@ -405,16 +398,13 @@ public class SLDStyleFactoryTest {
         TextSymbolizer ts = sf.createTextSymbolizer();
         ts.setFill(sf.createFill(null));
         Font font =
-                sf.createFont(
-                        ff.literal("notExistingFont"),
-                        ff.literal("italic"),
-                        ff.literal("bold"),
-                        ff.literal(20));
+                sf.createFont(ff.literal("notExistingFont"), ff.literal("italic"), ff.literal("bold"), ff.literal(20));
         ts.setFont(font);
 
         TextStyle2D tsd = (TextStyle2D) sld.createTextStyle(feature, ts, range);
         Assert.assertEquals(20, tsd.getFont().getSize());
-        Assert.assertEquals(java.awt.Font.ITALIC | java.awt.Font.BOLD, tsd.getFont().getStyle());
+        Assert.assertEquals(
+                java.awt.Font.ITALIC | java.awt.Font.BOLD, tsd.getFont().getStyle());
         Assert.assertEquals("Serif", tsd.getFont().getName());
 
         Assert.assertEquals(0.0, tsd.getAnchorX(), 0.0);
@@ -465,8 +455,7 @@ public class SLDStyleFactoryTest {
     @Test
     public void testFallbackGraphicMark() throws Exception {
         PointSymbolizer symb = sf.createPointSymbolizer();
-        ExternalGraphic eg =
-                sf.createExternalGraphic("http://foo.com/invalid_or_missing_image_url", null);
+        ExternalGraphic eg = sf.createExternalGraphic("http://foo.com/invalid_or_missing_image_url", null);
         symb.getGraphic().graphicalSymbols().add(eg);
 
         Style2D icon = sld.createPointStyle(feature, symb, range);
@@ -480,10 +469,7 @@ public class SLDStyleFactoryTest {
 
     @Test
     public void testSortByTwoPropertiesAscending() throws Exception {
-        checkSortByParsing(
-                "cat ,    name",
-                ff.sort("cat", SortOrder.ASCENDING),
-                ff.sort("name", SortOrder.ASCENDING));
+        checkSortByParsing("cat ,    name", ff.sort("cat", SortOrder.ASCENDING), ff.sort("name", SortOrder.ASCENDING));
     }
 
     @Test
@@ -511,12 +497,7 @@ public class SLDStyleFactoryTest {
     public void testKerningOnByDefault() throws Exception {
         TextSymbolizer ts = sf.createTextSymbolizer();
         ts.setFill(sf.createFill(null));
-        Font font =
-                sf.createFont(
-                        ff.literal("Serif"),
-                        ff.literal("italic"),
-                        ff.literal("bold"),
-                        ff.literal(20));
+        Font font = sf.createFont(ff.literal("Serif"), ff.literal("italic"), ff.literal("bold"), ff.literal(20));
         ts.setFont(font);
 
         TextStyle2D tsd = (TextStyle2D) sld.createTextStyle(feature, ts, range);
@@ -530,14 +511,9 @@ public class SLDStyleFactoryTest {
     public void testKerningOffByDefault() throws Exception {
         TextSymbolizer ts = sf.createTextSymbolizer();
         ts.setFill(sf.createFill(null));
-        Font font =
-                sf.createFont(
-                        ff.literal("Serif"),
-                        ff.literal("italic"),
-                        ff.literal("bold"),
-                        ff.literal(20));
+        Font font = sf.createFont(ff.literal("Serif"), ff.literal("italic"), ff.literal("bold"), ff.literal(20));
         ts.setFont(font);
-        ts.getOptions().put(TextSymbolizer.KERNING_KEY, "false");
+        ts.getOptions().put(org.geotools.api.style.TextSymbolizer.KERNING_KEY, "false");
 
         TextStyle2D tsd = (TextStyle2D) sld.createTextStyle(feature, ts, range);
         Assert.assertEquals(20, tsd.getFont().getSize());
@@ -547,8 +523,8 @@ public class SLDStyleFactoryTest {
     }
 
     /**
-     * A very large symbol can cause an Integer overflow in the renderer. The SLDFactory should give
-     * a warning instead and try again with out meta tiling.
+     * A very large symbol can cause an Integer overflow in the renderer. The SLDFactory should give a warning instead
+     * and try again with out meta tiling.
      */
     @Test
     public void testGEOT5878() {
@@ -584,10 +560,7 @@ public class SLDStyleFactoryTest {
             features.add(fb.buildFeature(null));
         }
         StyleBuilder sb = new StyleBuilder();
-        Mark mark =
-                sb.createMark(
-                        "wkt://LINESTRING(0 0, ${sin(Nagib) * 20000} ${cos(Nagib) * 20000} )",
-                        Color.red);
+        Mark mark = sb.createMark("wkt://LINESTRING(0 0, ${sin(Nagib) * 20000} ${cos(Nagib) * 20000} )", Color.red);
         Graphic graphic = sb.createGraphic(null, mark, null);
         graphic.setSize(ff.literal("40px"));
         Fill fill = sf.createFill(null, null, null, graphic);
@@ -600,20 +573,19 @@ public class SLDStyleFactoryTest {
         MapContent content = new MapContent();
         content.addLayer(layer);
         StreamingRenderer renderer = new StreamingRenderer();
-        renderer.addRenderListener(
-                new RenderListener() {
+        renderer.addRenderListener(new RenderListener() {
 
-                    @Override
-                    public void featureRenderer(SimpleFeature feature) {
-                        // TODO Auto-generated method stub
+            @Override
+            public void featureRenderer(SimpleFeature feature) {
+                // TODO Auto-generated method stub
 
-                    }
+            }
 
-                    @Override
-                    public void errorOccurred(Exception e) {
-                        Assert.fail("an error occured");
-                    }
-                });
+            @Override
+            public void errorOccurred(Exception e) {
+                Assert.fail("an error occured");
+            }
+        });
         renderer.setMapContent(content);
         BufferedImage img = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB);
         Rectangle paintArea = new Rectangle(0, 0, 100, 100);
@@ -650,13 +622,10 @@ public class SLDStyleFactoryTest {
 
         Hints hints = new Hints(map);
 
-        List<MarkFactory> factories =
-                IteratorUtils.toList(DynamicSymbolFactoryFinder.getMarkFactories(hints));
+        List<MarkFactory> factories = IteratorUtils.toList(DynamicSymbolFactoryFinder.getMarkFactories(hints));
         assertEquals(2, factories.size());
         List<String> result =
-                factories.stream()
-                        .map(mf -> mf.getClass().getSimpleName())
-                        .collect(Collectors.toList());
+                factories.stream().map(mf -> mf.getClass().getSimpleName()).collect(Collectors.toList());
         assertEquals(list, result);
     }
 }

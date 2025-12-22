@@ -19,13 +19,14 @@
  */
 package org.geotools.parameter;
 
+import java.io.Serial;
+import java.text.MessageFormat;
 import java.util.Map;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
+import org.geotools.api.parameter.GeneralParameterValue;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.referencing.AbstractIdentifiedObject;
 import org.geotools.referencing.wkt.Formatter;
-import org.opengis.parameter.GeneralParameterDescriptor;
-import org.opengis.parameter.GeneralParameterValue;
 
 /**
  * Abstract definition of a parameter or group of parameters used by an operation method.
@@ -38,16 +39,15 @@ import org.opengis.parameter.GeneralParameterValue;
 public abstract class AbstractParameterDescriptor extends AbstractIdentifiedObject
         implements GeneralParameterDescriptor {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -2630644278783845276L;
 
-    /**
-     * The minimum number of times that values for this parameter group or parameter are required.
-     */
+    /** The minimum number of times that values for this parameter group or parameter are required. */
     private final int minimumOccurs;
 
     /**
-     * Constructs a descriptor with the same values than the specified one. This copy constructor
-     * may be used in order to wraps an arbitrary implementation into a Geotools one.
+     * Constructs a descriptor with the same values than the specified one. This copy constructor may be used in order
+     * to wraps an arbitrary implementation into a Geotools one.
      *
      * @since 2.2
      */
@@ -61,11 +61,11 @@ public abstract class AbstractParameterDescriptor extends AbstractIdentifiedObje
      * {@linkplain AbstractIdentifiedObject#AbstractIdentifiedObject(Map) super-class constructor}.
      *
      * @param properties Set of properties. Should contains at least {@code "name"}.
-     * @param minimumOccurs The {@linkplain #getMinimumOccurs minimum number of times} that values
-     *     for this parameter group or parameter are required.
-     * @param maximumOccurs The {@linkplain #getMaximumOccurs maximum number of times} that values
-     *     for this parameter group or parameter are required. This value is used in order to check
-     *     the range. For {@link org.opengis.parameter.ParameterValue}, it should always be 1.
+     * @param minimumOccurs The {@linkplain #getMinimumOccurs minimum number of times} that values for this parameter
+     *     group or parameter are required.
+     * @param maximumOccurs The {@linkplain #getMaximumOccurs maximum number of times} that values for this parameter
+     *     group or parameter are required. This value is used in order to check the range. For
+     *     {@link org.geotools.api.parameter.ParameterValue}, it should always be 1.
      */
     protected AbstractParameterDescriptor(
             final Map<String, ?> properties, final int minimumOccurs, final int maximumOccurs) {
@@ -73,15 +73,15 @@ public abstract class AbstractParameterDescriptor extends AbstractIdentifiedObje
         this.minimumOccurs = minimumOccurs;
         if (minimumOccurs < 0 || maximumOccurs < minimumOccurs) {
             throw new IllegalArgumentException(
-                    Errors.format(ErrorKeys.BAD_RANGE_$2, minimumOccurs, maximumOccurs));
+                    MessageFormat.format(ErrorKeys.BAD_RANGE_$2, minimumOccurs, maximumOccurs));
         }
     }
 
     /**
-     * Creates a new instance of {@linkplain AbstractParameter parameter value or group} initialized
-     * with the {@linkplain DefaultParameterDescriptor#getDefaultValue default value(s)}. The
-     * {@linkplain AbstractParameter#getDescriptor parameter value descriptor} for the created
-     * parameter value(s) will be {@code this} object.
+     * Creates a new instance of {@linkplain AbstractParameter parameter value or group} initialized with the
+     * {@linkplain DefaultParameterDescriptor#getDefaultValue default value(s)}. The
+     * {@linkplain AbstractParameter#getDescriptor parameter value descriptor} for the created parameter value(s) will
+     * be {@code this} object.
      *
      * <p>Example implementation:
      *
@@ -93,8 +93,8 @@ public abstract class AbstractParameterDescriptor extends AbstractIdentifiedObje
     public abstract GeneralParameterValue createValue();
 
     /**
-     * The minimum number of times that values for this parameter group or parameter are required.
-     * The default value is one. A value of 0 means an optional parameter.
+     * The minimum number of times that values for this parameter group or parameter are required. The default value is
+     * one. A value of 0 means an optional parameter.
      *
      * @see #getMaximumOccurs
      */
@@ -104,9 +104,9 @@ public abstract class AbstractParameterDescriptor extends AbstractIdentifiedObje
     }
 
     /**
-     * The maximum number of times that values for this parameter group or parameter can be
-     * included. For a {@linkplain DefaultParameterDescriptor single parameter}, the value is always
-     * 1. For a {@linkplain DefaultParameterDescriptorGroup parameter group}, it may vary.
+     * The maximum number of times that values for this parameter group or parameter can be included. For a
+     * {@linkplain DefaultParameterDescriptor single parameter}, the value is always 1. For a
+     * {@linkplain DefaultParameterDescriptorGroup parameter group}, it may vary.
      *
      * @see #getMinimumOccurs
      */
@@ -117,8 +117,8 @@ public abstract class AbstractParameterDescriptor extends AbstractIdentifiedObje
      * Compares the specified object with this parameter for equality.
      *
      * @param object The object to compare to {@code this}.
-     * @param compareMetadata {@code true} for performing a strict comparaison, or {@code false} for
-     *     comparing only properties relevant to transformations.
+     * @param compareMetadata {@code true} for performing a strict comparaison, or {@code false} for comparing only
+     *     properties relevant to transformations.
      * @return {@code true} if both objects are equal.
      */
     @Override
@@ -133,8 +133,7 @@ public abstract class AbstractParameterDescriptor extends AbstractIdentifiedObje
     /**
      * Returns a hash value for this parameter.
      *
-     * @return The hash code value. This value doesn't need to be the same in past or future
-     *     versions of this class.
+     * @return The hash code value. This value doesn't need to be the same in past or future versions of this class.
      */
     @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
@@ -144,9 +143,9 @@ public abstract class AbstractParameterDescriptor extends AbstractIdentifiedObje
 
     /**
      * Format the inner part of a <A
-     * HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html"><cite>Well
-     * Known Text</cite> (WKT)</A> element. Note that WKT is not yet defined for parameter
-     * descriptor. Current implementation print only the name.
+     * HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html"><cite>Well Known
+     * Text</cite> (WKT)</A> element. Note that WKT is not yet defined for parameter descriptor. Current implementation
+     * print only the name.
      *
      * @param formatter The formatter to use.
      * @return The WKT element name, which is "PARAMETER"

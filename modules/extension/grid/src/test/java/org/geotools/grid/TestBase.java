@@ -19,12 +19,12 @@ package org.geotools.grid;
 
 import static org.junit.Assert.assertEquals;
 
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Base class for vector grid unit tests.
@@ -38,7 +38,7 @@ public class TestBase {
     protected static final double TOL = 1.0E-8d;
 
     protected void assertEnvelope(Envelope expected, Envelope actual) {
-        assertEquals((expected == null), (actual == null));
+        assertEquals(expected == null, actual == null);
         if (expected != null) {
             assertEquals(expected.getMinX(), actual.getMinX(), TOL);
             assertEquals(expected.getMinY(), actual.getMinY(), TOL);
@@ -48,7 +48,7 @@ public class TestBase {
     }
 
     protected void assertCoordinate(Coordinate expected, Coordinate actual) {
-        assertEquals((expected == null), (actual == null));
+        assertEquals(expected == null, actual == null);
         if (expected != null) {
             assertEquals(expected.x, actual.x, TOL);
             assertEquals(expected.y, actual.y, TOL);

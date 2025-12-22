@@ -19,7 +19,6 @@ package org.geotools.data.postgis;
 import org.geotools.jdbc.JDBCDelegatingTestSetup;
 import org.geotools.jdbc.JDBCTestSetup;
 
-@SuppressWarnings("PMD.JUnit4TestShouldUseAfterAnnotation") // not a test by itself
 public class PostgisPreserveTopologyTestSetup extends JDBCDelegatingTestSetup {
     public PostgisPreserveTopologyTestSetup(JDBCTestSetup delegate) {
         super(delegate);
@@ -39,10 +38,9 @@ public class PostgisPreserveTopologyTestSetup extends JDBCDelegatingTestSetup {
     }
 
     protected void createSimplifyPolygonTable() throws Exception {
-        run(
-                "CREATE TABLE \"simplify_polygon_topology\" AS SELECT ST_GeomFromText('POLYGON(("
-                        + "-10 -10, 10 -10, 10 10, -10 10, -10 -10), (-1 -1, 1 -1, 1 1, -1 1, -1 -1))'"
-                        + ",4326) as \"geom\"");
+        run("CREATE TABLE \"simplify_polygon_topology\" AS SELECT ST_GeomFromText('POLYGON(("
+                + "-10 -10, 10 -10, 10 10, -10 10, -10 -10), (-1 -1, 1 -1, 1 1, -1 1, -1 -1))'"
+                + ",4326) as \"geom\"");
     }
 
     protected void dropSimplifyPolygonTable() {

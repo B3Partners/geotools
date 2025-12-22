@@ -22,13 +22,13 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import org.apache.commons.io.IOUtils;
+import org.geotools.api.style.Style;
 import org.geotools.gce.imagemosaic.ImageMosaicReader;
 import org.geotools.gce.imagemosaic.ImageMosaicReaderTest;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.image.test.ImageAssert;
 import org.geotools.map.GridReaderLayer;
 import org.geotools.map.MapContent;
-import org.geotools.styling.Style;
 import org.geotools.test.TestData;
 import org.junit.Test;
 
@@ -55,9 +55,7 @@ public class FootprintsRenderingTest {
         ReferencedEnvelope bounds = mc.getViewport().getBounds();
         bounds.expandBy(bounds.getWidth() * 0.1);
         BufferedImage image = RendererBaseTest.renderImage(renderer, bounds, null);
-        File expected =
-                new File(
-                        "src/test/resources/org/geotools/renderer/lite/test-data/footprintstx.png");
+        File expected = new File("src/test/resources/org/geotools/renderer/lite/test-data/footprintstx.png");
         ImageAssert.assertEquals(expected, image, 100);
     }
 }

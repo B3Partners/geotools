@@ -16,9 +16,9 @@
  */
 package org.geotools.mbstyle.expression;
 
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.mbstyle.parse.MBFormatException;
 import org.json.simple.JSONArray;
-import org.opengis.filter.expression.Expression;
 
 public class MBHeatmap extends MBExpression {
 
@@ -29,9 +29,9 @@ public class MBHeatmap extends MBExpression {
     // TODO The MBHeatmap layer needs to be implemented
 
     /**
-     * Gets the kernel density estimation of a pixel in a heatmap layer, which is a relative measure
-     * of how many data points are crowded around a particular pixel. Can only be used in the
-     * heatmap-color property. Example: ["heatmap-density"]: number
+     * Gets the kernel density estimation of a pixel in a heatmap layer, which is a relative measure of how many data
+     * points are crowded around a particular pixel. Can only be used in the heatmap-color property. Example:
+     * ["heatmap-density"]: number
      *
      * @return heat map density expression
      */

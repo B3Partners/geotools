@@ -16,9 +16,9 @@
  */
 package org.geotools.filter.expression;
 
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.type.Name;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.Property;
-import org.opengis.feature.type.Name;
 
 /**
  * This class will *directly* access a Property with the name equal to xpath.
@@ -30,8 +30,7 @@ public class DirectPropertyAccessorFactory implements PropertyAccessorFactory {
     static PropertyAccessor DIRECT = new DirectPropertyAccessor();
 
     @Override
-    public PropertyAccessor createPropertyAccessor(
-            Class type, String xpath, Class target, Hints hints) {
+    public PropertyAccessor createPropertyAccessor(Class type, String xpath, Class target, Hints hints) {
         return DIRECT;
     }
 
@@ -47,8 +46,7 @@ public class DirectPropertyAccessorFactory implements PropertyAccessorFactory {
         /** We can handle *one* case and one case only */
         @Override
         public boolean canHandle(Object object, String xpath, Class target) {
-            if (object instanceof Property) {
-                Property property = (Property) object;
+            if (object instanceof Property property) {
                 final Name name = property.getName();
                 if (name != null) {
                     return name.getLocalPart().equals(xpath);
@@ -62,16 +60,14 @@ public class DirectPropertyAccessorFactory implements PropertyAccessorFactory {
         }
 
         @Override
-        public <T> T get(Object object, String xpath, Class<T> target)
-                throws IllegalArgumentException {
+        public <T> T get(Object object, String xpath, Class<T> target) throws IllegalArgumentException {
             @SuppressWarnings("unchecked")
             T cast = (T) ((Property) object).getValue();
             return cast;
         }
 
         @Override
-        public <T> void set(Object object, String xpath, T value, Class<T> target)
-                throws IllegalArgumentException {
+        public <T> void set(Object object, String xpath, T value, Class<T> target) throws IllegalArgumentException {
             ((Property) object).setValue(value);
         }
     }

@@ -17,13 +17,13 @@
 package org.geotools.temporal.reference;
 
 import java.util.Collection;
+import org.geotools.api.metadata.extent.Extent;
+import org.geotools.api.referencing.ReferenceIdentifier;
+import org.geotools.api.temporal.Calendar;
+import org.geotools.api.temporal.Clock;
+import org.geotools.api.temporal.ClockTime;
+import org.geotools.api.util.InternationalString;
 import org.geotools.util.Utilities;
-import org.opengis.metadata.extent.Extent;
-import org.opengis.referencing.ReferenceIdentifier;
-import org.opengis.temporal.Calendar;
-import org.opengis.temporal.Clock;
-import org.opengis.temporal.ClockTime;
-import org.opengis.util.InternationalString;
 
 /** @author Mehdi Sidhoum (Geomatys) */
 public class DefaultClock extends DefaultTemporalReferenceSystem implements Clock {
@@ -31,8 +31,8 @@ public class DefaultClock extends DefaultTemporalReferenceSystem implements Cloc
     /** Provide the name or description of an event, such as solar noon or sunrise. */
     private InternationalString referenceEvent;
     /**
-     * Provide the time of day associated with the reference event expressed as a time of day in the
-     * given clock, the reference time is usually the origin of the clock scale.
+     * Provide the time of day associated with the reference event expressed as a time of day in the given clock, the
+     * reference time is usually the origin of the clock scale.
      */
     private ClockTime referenceTime;
     /** This is the 24-hour local or UTC time that corresponds to the reference time. */
@@ -66,8 +66,8 @@ public class DefaultClock extends DefaultTemporalReferenceSystem implements Cloc
     }
 
     /**
-     * Takes a 24-hour local or UTC time and return the equivalent time of day expressed in terms of
-     * the specified clock.
+     * Takes a 24-hour local or UTC time and return the equivalent time of day expressed in terms of the specified
+     * clock.
      */
     @Override
     public ClockTime clkTrans(ClockTime uTime) {
@@ -75,8 +75,8 @@ public class DefaultClock extends DefaultTemporalReferenceSystem implements Cloc
     }
 
     /**
-     * Takes a time of day expressed in terms of the specified clock and return the equivalent time
-     * of day in 24-hour local or UTC time.
+     * Takes a time of day expressed in terms of the specified clock and return the equivalent time of day in 24-hour
+     * local or UTC time.
      */
     @Override
     public ClockTime utcTrans(ClockTime clkTime) {
@@ -106,8 +106,8 @@ public class DefaultClock extends DefaultTemporalReferenceSystem implements Cloc
         }
         if (super.equals(object)) {
             final DefaultClock that;
-            if (object instanceof DefaultClock) {
-                that = (DefaultClock) object;
+            if (object instanceof DefaultClock clock) {
+                that = clock;
 
                 return Utilities.equals(this.referenceEvent, that.referenceEvent)
                         && Utilities.equals(this.referenceTime, that.referenceTime)

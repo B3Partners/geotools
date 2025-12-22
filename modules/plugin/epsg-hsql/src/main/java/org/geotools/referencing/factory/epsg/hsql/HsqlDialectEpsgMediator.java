@@ -17,11 +17,11 @@
 package org.geotools.referencing.factory.epsg.hsql;
 
 import javax.sql.DataSource;
+import org.geotools.api.referencing.FactoryException;
 import org.geotools.referencing.factory.AbstractCachedAuthorityFactory;
 import org.geotools.referencing.factory.AbstractEpsgMediator;
 import org.geotools.util.factory.GeoTools;
 import org.geotools.util.factory.Hints;
-import org.opengis.referencing.FactoryException;
 
 /**
  * Mediator which delegates the creation of referencing objects to the HsqlDialectEpsgFactory.
@@ -38,9 +38,9 @@ public class HsqlDialectEpsgMediator extends AbstractEpsgMediator {
     }
 
     /**
-     * Creates a new instance of this data source using the specified hints. The priority is set to
-     * a lower value than the {@linkplain FactoryOnAccess}'s one in order to give precedence to the
-     * Access-backed database, if presents. Priorities are set that way because:
+     * Creates a new instance of this data source using the specified hints. The priority is set to a lower value than
+     * the {@linkplain FactoryOnAccess}'s one in order to give precedence to the Access-backed database, if presents.
+     * Priorities are set that way because:
      *
      * <ul>
      *   <li>The MS-Access format is the primary EPSG database format.

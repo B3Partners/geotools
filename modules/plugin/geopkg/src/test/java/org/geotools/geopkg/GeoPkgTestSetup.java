@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -33,6 +34,8 @@ import org.geotools.jdbc.util.SqlUtil;
 import org.locationtech.jts.geom.Geometry;
 
 public class GeoPkgTestSetup extends JDBCTestSetup {
+
+    static SQLScriptCache SCRIPT_CACHE = new SQLScriptCache();
 
     @Override
     protected JDBCDataStoreFactory createDataStoreFactory() {
@@ -89,22 +92,37 @@ public class GeoPkgTestSetup extends JDBCTestSetup {
         sql = "INSERT INTO gpkg_geometry_columns VALUES ('ft1', 'geometry', 'POINT', 4326, 0, 0)";
         run(sql);
 
-        sql =
-                "INSERT INTO gpkg_contents (table_name, data_type, identifier, srs_id) VALUES "
-                        + "('ft1', 'features', 'ft1', 4326)";
+        sql = "INSERT INTO gpkg_contents (table_name, data_type, identifier, srs_id) VALUES "
+                + "('ft1', 'features', 'ft1', 4326)";
         run(sql);
     }
 
-    /** @param tableName */
     void removeTable(String tableName) {
         // drop old data
-        runSafe("DROP TABLE IF EXISTS " + tableName);
-        runSafe("DROP VIEW  IF EXISTS " + tableName);
-        runSafe("DELETE FROM gpkg_geometry_columns where table_name ='" + tableName + "'");
-        runSafe("DELETE FROM gpkg_contents where table_name ='" + tableName + "'");
-        runSafe("DELETE FROM gpkg_data_columns where table_name ='" + tableName + "'");
-        runSafe("DELETE FROM gpkg_extensions where table_name ='" + tableName + "'");
-        runSafe("DELETE FROM gt_pk_metadata where table_name ='" + tableName + "'");
+        try (Connection cx = getConnection();
+                Statement st = cx.createStatement()) {
+            cx.setAutoCommit(false);
+            runSafe(st, "DROP TABLE IF EXISTS " + tableName);
+            runSafe(st, "DROP VIEW IF EXISTS " + tableName);
+            runSafe(st, "DELETE FROM gpkg_geometry_columns where table_name ='" + tableName + "'");
+            runSafe(st, "DELETE FROM gpkg_contents where table_name ='" + tableName + "'");
+            runSafe(st, "DELETE FROM gpkg_data_columns where table_name ='" + tableName + "'");
+            runSafe(st, "DELETE FROM gpkg_extensions where table_name ='" + tableName + "'");
+            runSafe(st, "DELETE FROM gt_pk_metadata where table_name ='" + tableName + "'");
+            cx.commit();
+            cx.setAutoCommit(true);
+        } catch (SQLException | IOException e) {
+            // none of those should fail
+            throw new RuntimeException(e);
+        }
+    }
+
+    void runSafe(Statement st, String sql) {
+        try {
+            st.execute(sql);
+        } catch (SQLException ignore) {
+            // ignore.printStackTrace(System.out);
+        }
     }
 
     String toString(Geometry g) throws IOException {
@@ -113,9 +131,7 @@ public class GeoPkgTestSetup extends JDBCTestSetup {
     }
 
     public static String toHexString(byte[] bytes) {
-        final char[] hexArray = {
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
-        };
+        final char[] hexArray = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
         char[] hexChars = new char[bytes.length * 2];
         int v;
         for (int j = 0; j < bytes.length; j++) {
@@ -134,18 +150,19 @@ public class GeoPkgTestSetup extends JDBCTestSetup {
         return fixture;
     }
 
-    protected void createSpatialIndex(
-            String tableName, String geometryColumn, String primaryKeyColumn)
+    protected void createSpatialIndex(String tableName, String geometryColumn, String primaryKeyColumn)
             throws SQLException, IOException {
         Map<String, String> properties = new HashMap<>();
         properties.put("t", tableName);
         properties.put("c", geometryColumn);
         properties.put("i", primaryKeyColumn);
 
-        try (InputStream is =
-                        GeoPackage.class.getResourceAsStream(GeoPackage.SPATIAL_INDEX + ".sql");
+        try (InputStream is = SCRIPT_CACHE.getScriptStream(GeoPackage.SPATIAL_INDEX + ".sql");
                 Connection cx = getConnection()) {
             SqlUtil.runScript(is, cx, properties);
         }
     }
+
+    @Override
+    public void setUp() throws Exception {}
 }

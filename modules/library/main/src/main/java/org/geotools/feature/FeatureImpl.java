@@ -17,15 +17,15 @@
 package org.geotools.feature;
 
 import java.util.Collection;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.GeometryAttribute;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.geometry.BoundingBox;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.Feature;
-import org.opengis.feature.GeometryAttribute;
-import org.opengis.feature.Property;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.geometry.BoundingBox;
 
 /**
  * Temptative implementation of Feature.
@@ -72,22 +72,20 @@ public class FeatureImpl extends ComplexAttributeImpl implements Feature {
         return (FeatureId) this.id;
     }
     /**
-     * Get the total bounds of this feature which is calculated by doing a union of the bounds of
-     * each geometry this feature is associated with.
+     * Get the total bounds of this feature which is calculated by doing a union of the bounds of each geometry this
+     * feature is associated with.
      *
      * @return An Envelope containing the total bounds of this Feature.
-     * @task REVISIT: what to return if there are no geometries in the feature? For now we'll return
-     *     a null envelope, make this part of interface? (IanS - by OGC standards, all Feature must
-     *     have geom)
+     * @task REVISIT: what to return if there are no geometries in the feature? For now we'll return a null envelope,
+     *     make this part of interface? (IanS - by OGC standards, all Feature must have geom)
      */
     @Override
     public BoundingBox getBounds() {
 
-        ReferencedEnvelope bounds =
-                new ReferencedEnvelope(getType().getCoordinateReferenceSystem());
+        ReferencedEnvelope bounds = new ReferencedEnvelope(getType().getCoordinateReferenceSystem());
         for (Property property : getValue()) {
-            if (property instanceof GeometryAttribute) {
-                bounds.include(((GeometryAttribute) property).getBounds());
+            if (property instanceof GeometryAttribute attribute) {
+                bounds.include(attribute.getBounds());
             }
         }
 
@@ -111,9 +109,9 @@ public class FeatureImpl extends ComplexAttributeImpl implements Feature {
 
                 if (geometryType != null) {
                     for (Property property : getValue()) {
-                        if (property instanceof GeometryAttribute) {
+                        if (property instanceof GeometryAttribute attribute) {
                             if (property.getType().equals(geometryType)) {
-                                defaultGeometry = (GeometryAttribute) property;
+                                defaultGeometry = attribute;
                                 break;
                             }
                         }

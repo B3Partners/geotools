@@ -20,14 +20,13 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_isNull extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl("isNull", Boolean.class, parameter("object", Object.class));
+    public static FunctionName NAME = new FunctionNameImpl("isNull", Boolean.class, parameter("object", Object.class));
 
     public FilterFunction_isNull() {
         super(NAME);

@@ -27,6 +27,13 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Set;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.ReferenceIdentifier;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.ProjectedCRS;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.CRS;
@@ -37,13 +44,6 @@ import org.geotools.util.factory.Hints;
 import org.junit.Before;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.ReferenceIdentifier;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.ProjectedCRS;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
  * Tests {@link UnnamedExtension}.
@@ -60,11 +60,8 @@ public class UnnamedExtensionTest {
     @Before
     public void setUp() throws Exception {
 
-        factory =
-                (UnnamedExtension)
-                        ReferencingFactoryFinder.getCRSAuthorityFactory(
-                                "EPSG",
-                                new Hints(Hints.CRS_AUTHORITY_FACTORY, UnnamedExtension.class));
+        factory = (UnnamedExtension) ReferencingFactoryFinder.getCRSAuthorityFactory(
+                "EPSG", new Hints(Hints.CRS_AUTHORITY_FACTORY, UnnamedExtension.class));
     }
 
     /** Tests the authority code. */
@@ -120,7 +117,7 @@ public class UnnamedExtensionTest {
     @Test
     public void test42102() throws FactoryException {
         final Hints hints = new Hints(Hints.CRS_AUTHORITY_FACTORY, UnnamedExtension.class);
-        final CRSAuthorityFactory factory = new OrderedAxisAuthorityFactory("EPSG", hints, null);
+        final CRSAuthorityFactory factory = new OrderedAxisAuthorityFactory("EPSG", hints);
         final CoordinateReferenceSystem crs = factory.createCoordinateReferenceSystem("EPSG:42102");
         assertNotNull(crs);
         assertNotNull(crs.getIdentifiers());
@@ -150,8 +147,7 @@ public class UnnamedExtensionTest {
     /**
      * Test for Google's Projection under its unofficial code (EPSG:900913).
      *
-     * <p>The official supported code for that projection is EPSG:3857, and both should be
-     * equivalent.
+     * <p>The official supported code for that projection is EPSG:3857, and both should be equivalent.
      */
     @Test
     public void test900913() {

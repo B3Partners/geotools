@@ -93,18 +93,18 @@ public class ColorRule {
         // }
         else if (diff > range) {
             return new byte[] {
-                (byte) ((int) (rmul * range) + (int) catColor[0]),
-                (byte) ((int) (gmul * range) + (int) catColor[1]),
-                (byte) ((int) (bmul * range) + (int) catColor[2]),
+                (byte) ((int) (rmul * range) + catColor[0]),
+                (byte) ((int) (gmul * range) + catColor[1]),
+                (byte) ((int) (bmul * range) + catColor[2]),
                 catColor[3]
             };
         }
 
         /* Calculate the color from the gradient */
         return new byte[] {
-            (byte) ((int) (rmul * diff) + (int) catColor[0]),
-            (byte) ((int) (gmul * diff) + (int) catColor[1]),
-            (byte) ((int) (bmul * diff) + (int) catColor[2]),
+            (byte) ((int) (rmul * diff) + catColor[0]),
+            (byte) ((int) (gmul * diff) + catColor[1]),
+            (byte) ((int) (bmul * diff) + catColor[2]),
             catColor[3]
         };
     }
@@ -146,11 +146,11 @@ public class ColorRule {
                     + ","
                     + (catColor[3] & 0xff)
                     + "]-["
-                    + ((int) (rmul * range) + (int) catColor[0])
+                    + ((int) (rmul * range) + catColor[0])
                     + ","
-                    + ((int) (gmul * range) + (int) catColor[1])
+                    + ((int) (gmul * range) + catColor[1])
                     + ","
-                    + ((int) (bmul * range) + (int) catColor[2])
+                    + ((int) (bmul * range) + catColor[2])
                     + ","
                     + (catColor[3] & 0xff)
                     + "]";
@@ -174,18 +174,16 @@ public class ColorRule {
         String[] rgba1 = col1.split(","); // $NON-NLS-1$
         String[] rgba2 = col2.split(","); // $NON-NLS-1$
 
-        Color color1 =
-                new Color(
-                        Integer.parseInt(rgba1[0]),
-                        Integer.parseInt(rgba1[1]),
-                        Integer.parseInt(rgba1[2]),
-                        Integer.parseInt(rgba1[3]));
-        Color color2 =
-                new Color(
-                        Integer.parseInt(rgba2[0]),
-                        Integer.parseInt(rgba2[1]),
-                        Integer.parseInt(rgba2[2]),
-                        Integer.parseInt(rgba2[3]));
+        Color color1 = new Color(
+                Integer.parseInt(rgba1[0]),
+                Integer.parseInt(rgba1[1]),
+                Integer.parseInt(rgba1[2]),
+                Integer.parseInt(rgba1[3]));
+        Color color2 = new Color(
+                Integer.parseInt(rgba2[0]),
+                Integer.parseInt(rgba2[1]),
+                Integer.parseInt(rgba2[2]),
+                Integer.parseInt(rgba2[3]));
 
         colors.add(color1);
         colors.add(color2);

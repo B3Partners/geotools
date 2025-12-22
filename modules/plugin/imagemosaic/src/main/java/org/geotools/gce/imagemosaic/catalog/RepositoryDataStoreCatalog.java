@@ -21,16 +21,16 @@ import java.net.MalformedURLException;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
-import org.geotools.data.DataAccess;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFactorySpi;
-import org.geotools.data.Repository;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFactorySpi;
+import org.geotools.api.data.Repository;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.feature.NameImpl;
 import org.geotools.util.Utilities;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
 
 /**
  * A catalog fetching the backing GeoTools data store from a {@link Repository} on demand
@@ -114,8 +114,7 @@ public class RepositoryDataStoreCatalog extends AbstractGTDataStoreGranuleCatalo
         if (dataStore == null) {
             // see if we can fall back on a data access exposing simple feature types
             @SuppressWarnings("unchecked")
-            DataAccess<FeatureType, Feature> access =
-                    (DataAccess<FeatureType, Feature>) repository.access(storeName);
+            DataAccess<FeatureType, Feature> access = (DataAccess<FeatureType, Feature>) repository.access(storeName);
             if (access != null) {
                 if (cachedWrapped != null && cachedWrapped.wraps(access)) {
                     return cachedWrapped;
@@ -125,8 +124,7 @@ public class RepositoryDataStoreCatalog extends AbstractGTDataStoreGranuleCatalo
                     dataStore = wrapper;
                 }
             } else {
-                throw new IllegalStateException(
-                        "Could not find a data store with name " + flatStoreName);
+                throw new IllegalStateException("Could not find a data store with name " + flatStoreName);
             }
         }
 

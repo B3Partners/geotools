@@ -16,10 +16,12 @@
  */
 package org.geotools.data;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
+import org.geotools.api.data.ServiceInfo;
 
 /**
  * Implementation of DefaultServiceInfo as a java bean.
@@ -27,6 +29,7 @@ import java.util.Set;
  * @author Jody Garnett (Refractions Research)
  */
 public class DefaultServiceInfo implements ServiceInfo, Serializable {
+    @Serial
     private static final long serialVersionUID = 7975308744804800859L;
 
     protected String description;

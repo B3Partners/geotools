@@ -21,22 +21,19 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.transform.Definition;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.ecql.ECQL;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.feature.type.Name;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
-/**
- * An abstract class which groups common attributes and methods to remap original FeatureType onto
- * the new one
- */
+/** An abstract class which groups common attributes and methods to remap original FeatureType onto the new one */
 public abstract class AbstractFeatureTypeMapper implements FeatureTypeMapper {
 
     /** The original typeName */
@@ -65,8 +62,7 @@ public abstract class AbstractFeatureTypeMapper implements FeatureTypeMapper {
 
     protected int maxLength;
 
-    protected AbstractFeatureTypeMapper(SimpleFeatureType featureType, int maxLength)
-            throws CQLException {
+    protected AbstractFeatureTypeMapper(SimpleFeatureType featureType, int maxLength) throws CQLException {
         wrappedFeatureType = featureType;
         this.maxLength = maxLength;
         originalName = featureType.getName();
@@ -83,8 +79,7 @@ public abstract class AbstractFeatureTypeMapper implements FeatureTypeMapper {
             String attributeName = remap(originalAttribute);
 
             // Create the definition to map the original attribute to the Oracle specific one
-            final Definition definition =
-                    new Definition(originalAttribute, ECQL.toExpression(attributeName), binding);
+            final Definition definition = new Definition(originalAttribute, ECQL.toExpression(attributeName), binding);
             definitions.add(definition);
             definitionsMapping.put(attribute.getName(), definition);
         }
@@ -132,8 +127,7 @@ public abstract class AbstractFeatureTypeMapper implements FeatureTypeMapper {
 
     protected String remap(String name, int maxLength) {
         String mappedName = name;
-        mappedName =
-                mappedName.length() >= maxLength ? mappedName.substring(0, maxLength) : mappedName;
+        mappedName = mappedName.length() >= maxLength ? mappedName.substring(0, maxLength) : mappedName;
         return mappedName;
     }
 
@@ -142,8 +136,7 @@ public abstract class AbstractFeatureTypeMapper implements FeatureTypeMapper {
     }
 
     /**
-     * Remap the original featureType on top of the available definitions to create the database
-     * specific featureType
+     * Remap the original featureType on top of the available definitions to create the database specific featureType
      */
     protected void remapFeatureType() {
         final SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
@@ -157,8 +150,8 @@ public abstract class AbstractFeatureTypeMapper implements FeatureTypeMapper {
             Name name = descriptor.getName();
             Definition definition = definitionsMapping.get(name);
             AttributeType type = descriptor.getType();
-            if (type instanceof GeometryType) {
-                coordinateReferenceSystem = ((GeometryType) type).getCoordinateReferenceSystem();
+            if (type instanceof GeometryType geometryType) {
+                coordinateReferenceSystem = geometryType.getCoordinateReferenceSystem();
                 remapGeometryAttribute(tb, definition, descriptor, type);
             } else {
                 tb.add(definition.getExpression().toString(), definition.getBinding());
@@ -168,17 +161,10 @@ public abstract class AbstractFeatureTypeMapper implements FeatureTypeMapper {
     }
 
     /**
-     * Remap the original GeomtryType on top of the available definitions to create the database
-     * specific featureType
+     * Remap the original GeomtryType on top of the available definitions to create the database specific featureType
      */
     protected void remapGeometryAttribute(
-            SimpleFeatureTypeBuilder tb,
-            Definition definition,
-            AttributeDescriptor descriptor,
-            AttributeType type) {
-        tb.add(
-                definition.getExpression().toString(),
-                definition.getBinding(),
-                coordinateReferenceSystem);
+            SimpleFeatureTypeBuilder tb, Definition definition, AttributeDescriptor descriptor, AttributeType type) {
+        tb.add(definition.getExpression().toString(), definition.getBinding(), coordinateReferenceSystem);
     }
 }

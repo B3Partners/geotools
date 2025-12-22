@@ -19,6 +19,8 @@ package org.geotools.data.teradata;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.store.ContentFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -30,8 +32,6 @@ import org.geotools.jdbc.NonIncrementingPrimaryKeyColumn;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class TeradataPrimaryKeyOnlineTest extends JDBCPrimaryKeyOnlineTest {
 
@@ -42,12 +42,10 @@ public class TeradataPrimaryKeyOnlineTest extends JDBCPrimaryKeyOnlineTest {
 
     @Test
     public void testUniqueGeneratedPrimaryKey() throws Exception {
-        JDBCFeatureStore fs =
-                (JDBCFeatureStore) dataStore.getFeatureSource(tname("uniquetablenotgenerated"));
+        JDBCFeatureStore fs = (JDBCFeatureStore) dataStore.getFeatureSource(tname("uniquetablenotgenerated"));
 
         assertEquals(1, fs.getPrimaryKey().getColumns().size());
-        assertTrue(
-                fs.getPrimaryKey().getColumns().get(0) instanceof NonIncrementingPrimaryKeyColumn);
+        assertTrue(fs.getPrimaryKey().getColumns().get(0) instanceof NonIncrementingPrimaryKeyColumn);
 
         ContentFeatureCollection features = fs.getFeatures();
         assertPrimaryKeyValues(features, 3);
@@ -61,9 +59,7 @@ public class TeradataPrimaryKeyOnlineTest extends JDBCPrimaryKeyOnlineTest {
         fs.addFeatures(DataUtilities.collection(f));
 
         // pattern match to handle the multi primary key case
-        assertTrue(
-                ((String) f.getUserData().get("fid"))
-                        .matches(tname(featureType.getTypeName()) + ".4(\\..*)?"));
+        assertTrue(((String) f.getUserData().get("fid")).matches(tname(featureType.getTypeName()) + ".4(\\..*)?"));
 
         assertPrimaryKeyValues(features, 4);
     }

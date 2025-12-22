@@ -20,31 +20,22 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_contains extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "contains",
-                    parameter(
-                            "contains",
-                            Boolean.class,
-                            "Contains",
-                            "True, if the Geometry 1 contains Geometry 2"),
-                    parameter(
-                            "geometry1",
-                            Geometry.class,
-                            "Geometry 1",
-                            "The containing Geometry parameter"),
-                    parameter(
-                            "geometry2",
-                            Geometry.class,
-                            "Geometry 2",
-                            "The Geometry that will be compared to Geometry 1 for containment"));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "contains",
+            parameter("contains", Boolean.class, "Contains", "True, if the Geometry 1 contains Geometry 2"),
+            parameter("geometry1", Geometry.class, "Geometry 1", "The containing Geometry parameter"),
+            parameter(
+                    "geometry2",
+                    Geometry.class,
+                    "Geometry 2",
+                    "The Geometry that will be compared to Geometry 1 for containment"));
 
     public FilterFunction_contains() {
         super(NAME);

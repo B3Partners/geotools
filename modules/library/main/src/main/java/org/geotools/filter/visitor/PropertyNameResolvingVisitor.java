@@ -16,16 +16,16 @@
  */
 package org.geotools.filter.visitor;
 
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.filter.expression.PropertyName;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.filter.expression.PropertyName;
 
 /**
  * Resolves all property name references in a filter against a particular feature type.
  *
- * <p>This visitor is used to handle property accesses such as "gml:name", "//foo" etc.. Each such
- * reference is resolved against the feature type and replaced with the actual name of the
- * attribute, ie "gml:name" => "name", "//foo" => "foo".
+ * <p>This visitor is used to handle property accesses such as "gml:name", "//foo" etc.. Each such reference is resolved
+ * against the feature type and replaced with the actual name of the attribute, ie "gml:name" => "name", "//foo" =>
+ * "foo".
  *
  * @author Justin Deoliveira, OpenGEO
  * @since 2.6
@@ -49,8 +49,8 @@ public class PropertyNameResolvingVisitor extends DuplicatingFilterVisitor {
             return super.visit(expression, extraData);
         }
         Object att = expression.evaluate(featureType, null);
-        if (att instanceof AttributeDescriptor) {
-            return getFactory(extraData).property(((AttributeDescriptor) att).getLocalName());
+        if (att instanceof AttributeDescriptor descriptor) {
+            return getFactory(extraData).property(descriptor.getLocalName());
         }
         return super.visit(expression, extraData);
     }

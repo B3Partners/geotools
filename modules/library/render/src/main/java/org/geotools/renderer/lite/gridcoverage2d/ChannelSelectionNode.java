@@ -17,29 +17,29 @@
 package org.geotools.renderer.lite.gridcoverage2d;
 
 import java.awt.image.RenderedImage;
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.style.ChannelSelection;
+import org.geotools.api.style.SelectedChannelType;
+import org.geotools.api.style.StyleVisitor;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.image.ImageWorker;
 import org.geotools.renderer.i18n.ErrorKeys;
-import org.geotools.renderer.i18n.Errors;
 import org.geotools.renderer.i18n.Vocabulary;
 import org.geotools.renderer.i18n.VocabularyKeys;
-import org.geotools.styling.ChannelSelection;
-import org.geotools.styling.SelectedChannelType;
-import org.geotools.styling.StyleVisitor;
 import org.geotools.util.SimpleInternationalString;
 import org.geotools.util.factory.Hints;
-import org.opengis.util.InternationalString;
 
 /**
- * {@link CoverageProcessingNode} that actually implement a {@link ChannelSelection} operation as
- * stated in SLD 1.0 spec from OGC.
+ * {@link CoverageProcessingNode} that actually implement a {@link ChannelSelection} operation as stated in SLD 1.0 spec
+ * from OGC.
  *
- * <p>This node internally creates a small chain that does all that�'s needed to satisfy a {@link
- * ChannelSelection} element.
+ * <p>This node internally creates a small chain that does all that�'s needed to satisfy a {@link ChannelSelection}
+ * element.
  *
  * @author Simone Giannecchini, GeoSolutions
  */
@@ -72,14 +72,13 @@ class ChannelSelectionNode extends SubchainStyleVisitorCoverageProcessingAdapter
                 3,
                 hints,
                 SimpleInternationalString.wrap("ChannelSelectionNode"),
-                SimpleInternationalString.wrap(
-                        "Node which applies a ChannelSelection following SLD 1.0 spec."));
+                SimpleInternationalString.wrap("Node which applies a ChannelSelection following SLD 1.0 spec."));
     }
 
     /*
      * (non-Javadoc)
      *
-     * @see org.geotools.renderer.lite.gridcoverage2d.StyleVisitorAdapter#visit(org.geotools.styling.ChannelSelection)
+     * @see org.geotools.renderer.lite.gridcoverage2d.StyleVisitorAdapter#visit(org.geotools.api.style.ChannelSelection)
      */
     @Override
     public void visit(final ChannelSelection cs) {
@@ -93,7 +92,7 @@ class ChannelSelectionNode extends SubchainStyleVisitorCoverageProcessingAdapter
         final int length = localSources.size();
         if (length == 0)
             throw new IllegalArgumentException(
-                    Errors.format(ErrorKeys.SOURCE_CANT_BE_NULL_$1, "ChannelSelectionNode"));
+                    MessageFormat.format(ErrorKeys.SOURCE_CANT_BE_NULL_$1, "ChannelSelectionNode"));
         final GridCoverage2D source = (GridCoverage2D) getSource(0).getOutput();
         GridCoverageRendererUtilities.ensureSourceNotNull(source, this.getName().toString());
 
@@ -109,17 +108,15 @@ class ChannelSelectionNode extends SubchainStyleVisitorCoverageProcessingAdapter
         RenderedImage sourceImage = source.getRenderedImage();
 
         // save the alpha channel (if any) for future restore
-        boolean hasAlpha =
-                sourceImage != null
-                        && sourceImage.getColorModel() != null
-                        && sourceImage.getColorModel().hasAlpha();
+        boolean hasAlpha = sourceImage != null
+                && sourceImage.getColorModel() != null
+                && sourceImage.getColorModel().hasAlpha();
         RenderedImage alpha = null;
         if (hasAlpha) {
-            alpha =
-                    new ImageWorker(sourceImage)
-                            .setRenderingHints(getHints())
-                            .retainLastBand()
-                            .getRenderedImage();
+            alpha = new ImageWorker(sourceImage)
+                    .setRenderingHints(getHints())
+                    .retainLastBand()
+                    .getRenderedImage();
             subChainSink.setAlpha(alpha);
         }
         // anchoring the chain for later disposal
@@ -129,12 +126,9 @@ class ChannelSelectionNode extends SubchainStyleVisitorCoverageProcessingAdapter
             final SelectedChannelType[] rgb = cs.getRGBChannels();
             final SelectedChannelType gray = cs.getGrayChannel();
             // both of them are set?
-            if ((rgb != null && rgb[0] != null && rgb[1] != null && rgb[2] != null)
-                    && (gray != null))
-                throw new IllegalArgumentException(
-                        Errors.format(
-                                ErrorKeys.ILLEGAL_ARGUMENT_$1,
-                                "Both gray and rgb channel selection are valid!"));
+            if (rgb != null && rgb[0] != null && rgb[1] != null && rgb[2] != null && gray != null)
+                throw new IllegalArgumentException(MessageFormat.format(
+                        ErrorKeys.ILLEGAL_ARGUMENT_$1, "Both gray and rgb channel selection are valid!"));
             final SelectedChannelType[] sc = gray == null ? rgb : new SelectedChannelType[] {gray};
 
             // If we do not really select any bands from the original coverage, we try to entirely
@@ -143,21 +137,19 @@ class ChannelSelectionNode extends SubchainStyleVisitorCoverageProcessingAdapter
             // bands
             // Notice that we also try to be as resilient as possible since
             if (sc != null
-                    && ((sc.length == 1 && sc[0] != null)
-                            || (sc.length == 3
-                                    && (sc[0] != null || sc[1] != null || sc[2] != null)))) {
+                    && (sc.length == 1 && sc[0] != null
+                            || sc.length == 3 && (sc[0] != null || sc[1] != null || sc[2] != null))) {
                 for (int i = 0; i < sc.length; i++) {
 
                     // get the channel element
                     final SelectedChannelType channel = sc[i];
                     if (LOGGER.isLoggable(Level.FINE))
-                        LOGGER.fine(
-                                "Channel "
-                                        + i
-                                        + " was "
-                                        + Optional.ofNullable(channel)
-                                                .map(c -> c.getChannelName())
-                                                .orElse(null));
+                        LOGGER.fine("Channel "
+                                + i
+                                + " was "
+                                + Optional.ofNullable(channel)
+                                        .map(c -> c.getChannelName())
+                                        .orElse(null));
 
                     if (channel == null) {
                         ZeroImageNode zero = new ZeroImageNode(getHints());
@@ -181,12 +173,10 @@ class ChannelSelectionNode extends SubchainStyleVisitorCoverageProcessingAdapter
                         // CONTRAST ENHANCEMENT
                         //
                         // //
-                        final ContrastEnhancementNode contrastenhancementNode =
-                                new ContrastEnhancementNode();
+                        final ContrastEnhancementNode contrastenhancementNode = new ContrastEnhancementNode();
                         contrastenhancementNode.addSource(bandSelectionNode);
                         bandSelectionNode.addSink(contrastenhancementNode);
-                        contrastenhancementNode.visit(
-                                channel != null ? channel.getContrastEnhancement() : null);
+                        contrastenhancementNode.visit(channel != null ? channel.getContrastEnhancement() : null);
 
                         // //
                         //

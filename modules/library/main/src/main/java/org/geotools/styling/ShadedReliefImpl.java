@@ -18,12 +18,14 @@
  */
 package org.geotools.styling;
 
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.ShadedRelief;
+import org.geotools.api.style.StyleVisitor;
+import org.geotools.api.style.TraversingStyleVisitor;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.util.Utilities;
 import org.geotools.util.factory.GeoTools;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.StyleVisitor;
 
 /**
  * Default implementation of ShadedRelief.
@@ -45,9 +47,8 @@ public class ShadedReliefImpl implements ShadedRelief {
     }
 
     /**
-     * The ReliefFactor gives the amount of exaggeration to use for the height of the ?hills.? A
-     * value of around 55 (times) gives reasonable results for Earth-based DEMs. The default value
-     * is system-dependent.
+     * The ReliefFactor gives the amount of exaggeration to use for the height of the ?hills.? A value of around 55
+     * (times) gives reasonable results for Earth-based DEMs. The default value is system-dependent.
      *
      * @return an expression which evaluates to a double.
      */
@@ -77,9 +78,8 @@ public class ShadedReliefImpl implements ShadedRelief {
     }
 
     /**
-     * The ReliefFactor gives the amount of exaggeration to use for the height of the ?hills.? A
-     * value of around 55 (times) gives reasonable results for Earth-based DEMs. The default value
-     * is system-dependent.
+     * The ReliefFactor gives the amount of exaggeration to use for the height of the ?hills.? A value of around 55
+     * (times) gives reasonable results for Earth-based DEMs. The default value is system-dependent.
      *
      * @param reliefFactor an expression which evaluates to a double.
      */
@@ -89,12 +89,12 @@ public class ShadedReliefImpl implements ShadedRelief {
     }
 
     @Override
-    public Object accept(StyleVisitor visitor, Object data) {
+    public Object accept(TraversingStyleVisitor visitor, Object data) {
         return visitor.visit(this, data);
     }
 
     @Override
-    public void accept(org.geotools.styling.StyleVisitor visitor) {
+    public void accept(StyleVisitor visitor) {
         visitor.visit(this);
     }
 
@@ -104,10 +104,10 @@ public class ShadedReliefImpl implements ShadedRelief {
         int result = 0;
 
         if (reliefFactor != null) {
-            result = (PRIME * result) + reliefFactor.hashCode();
+            result = PRIME * result + reliefFactor.hashCode();
         }
 
-        result = (PRIME * result) + (brightness ? 1 : 0);
+        result = PRIME * result + (brightness ? 1 : 0);
 
         return result;
     }
@@ -118,21 +118,19 @@ public class ShadedReliefImpl implements ShadedRelief {
             return true;
         }
 
-        if (obj instanceof ShadedReliefImpl) {
-            ShadedReliefImpl other = (ShadedReliefImpl) obj;
+        if (obj instanceof ShadedReliefImpl other) {
 
-            return Utilities.equals(reliefFactor, other.reliefFactor)
-                    && Utilities.equals(brightness, other.brightness);
+            return Utilities.equals(reliefFactor, other.reliefFactor) && Utilities.equals(brightness, other.brightness);
         }
 
         return false;
     }
 
-    static ShadedReliefImpl cast(org.opengis.style.ShadedRelief shadedRelief) {
+    static ShadedReliefImpl cast(org.geotools.api.style.ShadedRelief shadedRelief) {
         if (shadedRelief == null) {
             return null;
-        } else if (shadedRelief instanceof ShadedReliefImpl) {
-            return (ShadedReliefImpl) shadedRelief;
+        } else if (shadedRelief instanceof ShadedReliefImpl impl) {
+            return impl;
         } else {
             ShadedReliefImpl copy = new ShadedReliefImpl();
             copy.setBrightnessOnly(shadedRelief.isBrightnessOnly());

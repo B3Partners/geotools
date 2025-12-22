@@ -27,6 +27,12 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.NameImpl;
 import org.geotools.filter.FunctionFactory;
@@ -37,12 +43,6 @@ import org.geotools.util.factory.GeoTools;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
 
 public class FunctionFactoryTest {
 
@@ -50,56 +50,45 @@ public class FunctionFactoryTest {
 
     @BeforeClass
     public static void setUpClass() {
-        ffIteratorProvider =
-                new FactoryIteratorProvider() {
+        ffIteratorProvider = new FactoryIteratorProvider() {
 
-                    @Override
-                    public <T> Iterator<T> iterator(Class<T> category) {
+            @Override
+            public <T> Iterator<T> iterator(Class<T> category) {
 
-                        if (FunctionFactory.class == category) {
-                            List<FunctionFactory> l = new ArrayList<>();
-                            l.add(
-                                    new FunctionFactory() {
+                if (FunctionFactory.class == category) {
+                    List<FunctionFactory> l = new ArrayList<>();
+                    l.add(new FunctionFactory() {
 
-                                        @Override
-                                        public List<FunctionName> getFunctionNames() {
-                                            return Arrays.asList(
-                                                    new FunctionNameImpl(
-                                                            "foo", new String[] {"bar", "baz"}));
-                                        }
-
-                                        @Override
-                                        public Function function(
-                                                String name,
-                                                List<Expression> args,
-                                                Literal fallback) {
-                                            return function(new NameImpl(name), args, fallback);
-                                        }
-
-                                        @Override
-                                        public Function function(
-                                                Name name,
-                                                List<Expression> args,
-                                                Literal fallback) {
-                                            if ("foo".equals(name.getLocalPart())) {
-                                                return new FunctionImpl() {
-                                                    @Override
-                                                    public <T> T evaluate(
-                                                            Object object, Class<T> context) {
-                                                        return context.cast("theResult");
-                                                    }
-                                                };
-                                            }
-                                            return null;
-                                        }
-                                    });
-                            @SuppressWarnings("unchecked")
-                            Iterator<T> cast = (Iterator<T>) (l.iterator());
-                            return cast;
+                        @Override
+                        public List<FunctionName> getFunctionNames() {
+                            return Arrays.asList(new FunctionNameImpl("foo", new String[] {"bar", "baz"}));
                         }
-                        return null;
-                    }
-                };
+
+                        @Override
+                        public Function function(String name, List<Expression> args, Literal fallback) {
+                            return function(new NameImpl(name), args, fallback);
+                        }
+
+                        @Override
+                        public Function function(Name name, List<Expression> args, Literal fallback) {
+                            if ("foo".equals(name.getLocalPart())) {
+                                return new FunctionImpl() {
+                                    @Override
+                                    public <T> T evaluate(Object object, Class<T> context) {
+                                        return context.cast("theResult");
+                                    }
+                                };
+                            }
+                            return null;
+                        }
+                    });
+                    @SuppressWarnings("unchecked")
+                    Iterator<T> cast = (Iterator<T>) l.iterator();
+                    return cast;
+                }
+                return null;
+            }
+        };
         GeoTools.addFactoryIteratorProvider(ffIteratorProvider);
         CommonFactoryFinder.reset();
     }
@@ -135,16 +124,14 @@ public class FunctionFactoryTest {
         ExecutorService es = Executors.newCachedThreadPool();
         List<Future<Exception>> tests = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
-            Future<Exception> f =
-                    es.submit(
-                            () -> {
-                                try {
-                                    ff.function("Length", ff.property("."));
-                                    return null;
-                                } catch (Exception e) {
-                                    return e;
-                                }
-                            });
+            Future<Exception> f = es.submit(() -> {
+                try {
+                    ff.function("Length", ff.property("."));
+                    return null;
+                } catch (Exception e) {
+                    return e;
+                }
+            });
             tests.add(f);
         }
         for (Future<Exception> future : tests) {

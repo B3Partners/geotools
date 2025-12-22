@@ -20,18 +20,15 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.LineString;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_startAngle extends FunctionExpressionImpl {
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "startAngle",
-                    parameter("degrees", Double.class),
-                    parameter("linestring", LineString.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "startAngle", parameter("degrees", Double.class), parameter("linestring", LineString.class));
 
     public FilterFunction_startAngle() {
         super(NAME);
@@ -54,8 +51,8 @@ public class FilterFunction_startAngle extends FunctionExpressionImpl {
 
         CoordinateSequence cs = ls.getCoordinateSequence();
 
-        double dx = (cs.getX(1) - cs.getX(0));
-        double dy = (cs.getY(1) - cs.getY(0));
+        double dx = cs.getX(1) - cs.getX(0);
+        double dy = cs.getY(1) - cs.getY(0);
         return -Math.toDegrees(Math.atan2(dy, dx));
     }
 }

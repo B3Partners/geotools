@@ -18,11 +18,13 @@ package org.geotools.gml3.bindings;
 
 import static org.junit.Assert.assertEquals;
 
+import org.geotools.geometry.jts.MultiSurface;
 import org.geotools.gml3.GML;
 import org.geotools.gml3.GML3TestSupport;
+import org.geotools.gml3.GMLSchema;
+import org.junit.Assert;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.MultiPolygon;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
@@ -34,7 +36,8 @@ public class MultiSurfaceTypeBindingTest extends GML3TestSupport {
         Document dom = encode(geometry, GML.MultiSurface);
         // print(dom);
         assertEquals("geometry", getID(dom.getDocumentElement()));
-        assertEquals(2, dom.getElementsByTagNameNS(GML.NAMESPACE, "surfaceMember").getLength());
+        assertEquals(
+                2, dom.getElementsByTagNameNS(GML.NAMESPACE, "surfaceMember").getLength());
         NodeList children = dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Polygon.getLocalPart());
         assertEquals(2, children.getLength());
         assertEquals("geometry.1", getID(children.item(0)));
@@ -44,7 +47,7 @@ public class MultiSurfaceTypeBindingTest extends GML3TestSupport {
     @Test
     public void testParseWithSurfaceMember() throws Exception {
         GML3MockData.multiSurface(document, document);
-        MultiPolygon mpoly = (MultiPolygon) parse();
+        MultiSurface mpoly = (MultiSurface) parse();
 
         assertEquals(2, mpoly.getNumGeometries());
     }
@@ -52,8 +55,13 @@ public class MultiSurfaceTypeBindingTest extends GML3TestSupport {
     @Test
     public void testParseWithSurfaceMembers() throws Exception {
         GML3MockData.multiSurface(document, document, false);
-        MultiPolygon mpoly = (MultiPolygon) parse();
+        MultiSurface mpoly = (MultiSurface) parse();
 
         assertEquals(2, mpoly.getNumGeometries());
+    }
+
+    @Test
+    public void testMultiSurfaceTypeAssignable() {
+        Assert.assertTrue(GMLSchema.MULTISURFACETYPE_TYPE.getBinding().isAssignableFrom(MultiSurface.class));
     }
 }

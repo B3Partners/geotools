@@ -16,25 +16,26 @@
  */
 package org.geotools.coverage.processing;
 
+import java.io.Serial;
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
+import org.geotools.api.parameter.InvalidParameterValueException;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.IdentifiedObject;
 import org.geotools.coverage.CoverageFactoryFinder;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.parameter.DefaultParameterDescriptor;
 import org.geotools.referencing.NamedIdentifier;
 import org.geotools.util.Classes;
 import org.geotools.util.Utilities;
 import org.geotools.util.factory.Hints;
-import org.opengis.parameter.InvalidParameterValueException;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.IdentifiedObject;
 
 /**
  * An operation working on {@link GridCoverage2D} sources.
@@ -45,40 +46,38 @@ import org.opengis.referencing.IdentifiedObject;
  */
 public abstract class Operation2D extends AbstractOperation {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 574096338873406394L;
 
     /**
-     * Index of the source {@link GridCoverage2D} to use as a model. The destination grid coverage
-     * will reuse the same coordinate reference system, envelope and qualitative categories than
-     * this primary source.
+     * Index of the source {@link GridCoverage2D} to use as a model. The destination grid coverage will reuse the same
+     * coordinate reference system, envelope and qualitative categories than this primary source.
      *
-     * <p>For operations expecting only one source, there is no ambiguity. But for operations
-     * expecting more than one source, the choice of a primary source is somewhat arbitrary. This
-     * constant is used merely as a flag for spotting those places in the code.
+     * <p>For operations expecting only one source, there is no ambiguity. But for operations expecting more than one
+     * source, the choice of a primary source is somewhat arbitrary. This constant is used merely as a flag for spotting
+     * those places in the code.
      *
      * @since 2.4
      */
     protected static final int PRIMARY_SOURCE_INDEX = 0;
 
     /**
-     * Convenience constant for the first source {@link GridCoverage2D}. The parameter name is
-     * {@code "Source"} (as specified in OGC implementation specification) and the alias is {@code
-     * "source0"} (for compatibility with <cite>Java Advanced Imaging</cite>).
+     * Convenience constant for the first source {@link GridCoverage2D}. The parameter name is {@code "Source"} (as
+     * specified in OGC implementation specification) and the alias is {@code "source0"} (for compatibility with
+     * <cite>Java Advanced Imaging</cite>).
      */
     public static final ParameterDescriptor<GridCoverage2D> SOURCE_0;
 
     static {
         final Map<String, Object> properties = new HashMap<>(4);
         properties.put(IdentifiedObject.NAME_KEY, new NamedIdentifier(Citations.OGC, "Source"));
-        properties.put(IdentifiedObject.ALIAS_KEY, new NamedIdentifier(Citations.JAI, "source0"));
+        properties.put(IdentifiedObject.ALIAS_KEY, new NamedIdentifier(Citations.IMAGEN, "source0"));
         SOURCE_0 =
-                new DefaultParameterDescriptor<>(
-                        properties, GridCoverage2D.class, null, null, null, null, null, true);
+                new DefaultParameterDescriptor<>(properties, GridCoverage2D.class, null, null, null, null, null, true);
     }
 
     /**
-     * Constructs an operation. The operation name will be the same than the parameter descriptor
-     * name.
+     * Constructs an operation. The operation name will be the same than the parameter descriptor name.
      *
      * @param descriptor The parameters descriptor.
      */
@@ -93,25 +92,22 @@ public abstract class Operation2D extends AbstractOperation {
      *
      * @param parameters Parameters that will control this operation.
      * @param sourceNames Names of the sources to extract from {@link ParameterValueGroup}.
-     * @param sources On input, an array with the same length than {@code sourceNames}. On output,
-     *     the {@link GridCoverage2D} to be used as sources for this operation.
-     * @throws IllegalArgumentException if an argument is {@code null}, or if {@code sources} and
-     *     {@code sourceNames} doesn't have length.
+     * @param sources On input, an array with the same length than {@code sourceNames}. On output, the
+     *     {@link GridCoverage2D} to be used as sources for this operation.
+     * @throws IllegalArgumentException if an argument is {@code null}, or if {@code sources} and {@code sourceNames}
+     *     doesn't have length.
      * @throws ParameterNotFoundException if a required source has not been found.
-     * @throws InvalidParameterValueException if a source doesn't contain a value of type {@link
-     *     GridCoverage2D}.
+     * @throws InvalidParameterValueException if a source doesn't contain a value of type {@link GridCoverage2D}.
      * @since 2.4
      */
     protected void extractSources(
-            final ParameterValueGroup parameters,
-            final String[] sourceNames,
-            final GridCoverage2D[] sources)
+            final ParameterValueGroup parameters, final String[] sourceNames, final GridCoverage2D[] sources)
             throws ParameterNotFoundException, InvalidParameterValueException {
         Utilities.ensureNonNull("parameters", parameters);
         Utilities.ensureNonNull("sourceNames", sourceNames);
         Utilities.ensureNonNull("sources", sources);
         if (sources.length != sourceNames.length) {
-            throw new IllegalArgumentException(Errors.format(ErrorKeys.MISMATCHED_ARRAY_LENGTH));
+            throw new IllegalArgumentException(ErrorKeys.MISMATCHED_ARRAY_LENGTH);
         }
         for (int i = 0; i < sourceNames.length; i++) {
             Object candidate = parameters.parameter(sourceNames[i]).getValue();
@@ -121,10 +117,8 @@ public abstract class Operation2D extends AbstractOperation {
             }
             if (!(candidate instanceof GridCoverage2D)) {
                 throw new InvalidParameterValueException(
-                        Errors.format(
-                                ErrorKeys.ILLEGAL_CLASS_$2,
-                                Classes.getClass(candidate),
-                                GridCoverage2D.class),
+                        MessageFormat.format(
+                                ErrorKeys.ILLEGAL_CLASS_$2, Classes.getClass(candidate), GridCoverage2D.class),
                         sourceNames[i],
                         candidate);
             }

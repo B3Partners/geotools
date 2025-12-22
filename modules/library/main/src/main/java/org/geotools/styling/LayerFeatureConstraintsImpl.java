@@ -17,6 +17,8 @@
 package org.geotools.styling;
 
 import java.util.Arrays;
+import org.geotools.api.style.FeatureTypeConstraint;
+import org.geotools.api.style.LayerFeatureConstraints;
 
 public class LayerFeatureConstraintsImpl implements LayerFeatureConstraints {
 
@@ -28,7 +30,7 @@ public class LayerFeatureConstraintsImpl implements LayerFeatureConstraints {
     }
 
     @Override
-    public void setFeatureTypeConstraints(FeatureTypeConstraint[] constraints) {
+    public void setFeatureTypeConstraints(FeatureTypeConstraint... constraints) {
         this.constraints = constraints;
     }
 
@@ -38,8 +40,7 @@ public class LayerFeatureConstraintsImpl implements LayerFeatureConstraints {
             return true;
         }
 
-        if (obj instanceof LayerFeatureConstraintsImpl) {
-            LayerFeatureConstraintsImpl other = (LayerFeatureConstraintsImpl) obj;
+        if (obj instanceof LayerFeatureConstraintsImpl other) {
             return Arrays.equals(constraints, other.constraints);
         }
 
@@ -52,7 +53,7 @@ public class LayerFeatureConstraintsImpl implements LayerFeatureConstraints {
         int result = 0;
 
         if (constraints != null) {
-            result = (PRIME * result) + Arrays.hashCode(constraints);
+            result = PRIME * result + Arrays.hashCode(constraints);
         }
 
         return result;

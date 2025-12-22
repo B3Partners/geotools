@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
@@ -32,12 +34,8 @@ import org.geotools.test.TestData;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
-/**
- * Testing the external files (prjs, masks, overviews) aren't retrieved when the skip flag is on.
- */
+/** Testing the external files (prjs, masks, overviews) aren't retrieved when the skip flag is on. */
 public class GeoTiffSkipExternalTest extends org.junit.Assert {
 
     private static void setStaticField(Class<?> clazz, String fieldName, Object value)
@@ -73,12 +71,11 @@ public class GeoTiffSkipExternalTest extends org.junit.Assert {
 
         final File prj = TestData.file(GeoTiffSkipExternalTest.class, "override/sample.prj");
         try (FileInputStream fis = new FileInputStream(prj)) {
-            CoordinateReferenceSystem crs_ =
-                    new PrjFileReader(fis.getChannel()).getCoordinateReferenceSystem();
+            CoordinateReferenceSystem crs_ = new PrjFileReader(fis.getChannel()).getCoordinateReferenceSystem();
 
             // Check External PRJ isn't found due to SKIP external files flag
             assertFalse(CRS.equalsIgnoreMetadata(crs, crs_));
-            GridCoverage2D coverage = reader.read(null);
+            GridCoverage2D coverage = reader.read();
             assertFalse(CRS.equalsIgnoreMetadata(coverage.getCoordinateReferenceSystem(), crs_));
             coverage.dispose(true);
         }

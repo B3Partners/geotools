@@ -19,12 +19,12 @@ package org.geotools.filter.function;
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
 import java.util.Arrays;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.text.Text;
 import org.geotools.util.KVP;
-import org.opengis.filter.capability.FunctionName;
 
 /**
  * Filter function implementing the Symbology Encoding "StringPosition" function.
@@ -44,26 +44,22 @@ public class FilterFunction_strPosition extends FunctionExpressionImpl {
     public static FunctionName NAME;
 
     static {
-        Parameter<String> method =
-                new Parameter<>(
-                        "method",
-                        String.class,
-                        Text.text("direction"),
-                        Text.text("direction to search"),
-                        true,
-                        1,
-                        1,
-                        "forward",
-                        new KVP(
-                                Parameter.OPTIONS,
-                                Arrays.asList(new String[] {"forward", "backToFront"})));
-        NAME =
-                new FunctionNameImpl(
-                        "strPosition",
-                        parameter("string", String.class),
-                        parameter("string", String.class),
-                        parameter("lookup", String.class),
-                        method);
+        Parameter<String> method = new Parameter<>(
+                "method",
+                String.class,
+                Text.text("direction"),
+                Text.text("direction to search"),
+                true,
+                1,
+                1,
+                "forward",
+                new KVP(Parameter.OPTIONS, Arrays.asList(new String[] {"forward", "backToFront"})));
+        NAME = new FunctionNameImpl(
+                "strPosition",
+                parameter("string", String.class),
+                parameter("string", String.class),
+                parameter("lookup", String.class),
+                method);
     }
 
     public FilterFunction_strPosition() {

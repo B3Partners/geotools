@@ -19,12 +19,13 @@
  */
 package org.geotools.metadata.iso.quality;
 
+import java.io.Serial;
+import org.geotools.api.metadata.quality.EvaluationMethodType;
+import org.geotools.api.metadata.quality.PositionalAccuracy;
+import org.geotools.api.metadata.quality.Result;
+import org.geotools.api.util.InternationalString;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.util.SimpleInternationalString;
-import org.opengis.metadata.quality.EvaluationMethodType;
-import org.opengis.metadata.quality.PositionalAccuracy;
-import org.opengis.metadata.quality.Result;
-import org.opengis.util.InternationalString;
 
 /**
  * Accuracy of the position of features.
@@ -34,32 +35,33 @@ import org.opengis.util.InternationalString;
  * @author Touraïvane
  * @since 2.1
  */
+@SuppressWarnings("ClassInitializationDeadlock") // Static initialization of subclass instances
 public class PositionalAccuracyImpl extends ElementImpl implements PositionalAccuracy {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 6043381860937480828L;
 
     /**
-     * Indicates that a {@linkplain org.opengis.referencing.operation.Transformation transformation}
-     * requires a datum shift and some method has been applied. Datum shift methods often use
-     * {@linkplain org.geotools.referencing.datum.BursaWolfParameters Bursa Wolf parameters}, but
-     * other kind of method may have been applied as well.
+     * Indicates that a {@linkplain org.geotools.api.referencing.operation.Transformation transformation} requires a
+     * datum shift and some method has been applied. Datum shift methods often use
+     * {@linkplain org.geotools.referencing.datum.BursaWolfParameters Bursa Wolf parameters}, but other kind of method
+     * may have been applied as well.
      *
-     * @see org.opengis.referencing.operation.Transformation#getPositionalAccuracy
+     * @see org.geotools.api.referencing.operation.Transformation#getPositionalAccuracy
      * @see org.geotools.referencing.operation.AbstractCoordinateOperationFactory#DATUM_SHIFT
      */
     public static final PositionalAccuracy DATUM_SHIFT_APPLIED;
 
     /**
-     * Indicates that a {@linkplain org.opengis.referencing.operation.Transformation transformation}
-     * requires a datum shift, but no method has been found applicable. This usually means that no
-     * {@linkplain org.geotools.referencing.datum.BursaWolfParameters Bursa Wolf parameters} have
-     * been found. Such datum shifts are approximative and may have 1 kilometer error. This
-     * pseudo-transformation is allowed by {@linkplain
-     * org.geotools.referencing.operation.DefaultCoordinateOperationFactory coordinate operation
-     * factory} only if it was created with {@link
-     * org.geotools.util.factory.Hints#LENIENT_DATUM_SHIFT} set to {@link Boolean#TRUE}.
+     * Indicates that a {@linkplain org.geotools.api.referencing.operation.Transformation transformation} requires a
+     * datum shift, but no method has been found applicable. This usually means that no
+     * {@linkplain org.geotools.referencing.datum.BursaWolfParameters Bursa Wolf parameters} have been found. Such datum
+     * shifts are approximative and may have 1 kilometer error. This pseudo-transformation is allowed by
+     * {@linkplain org.geotools.referencing.operation.DefaultCoordinateOperationFactory coordinate operation factory}
+     * only if it was created with {@link org.geotools.util.factory.Hints#LENIENT_DATUM_SHIFT} set to
+     * {@link Boolean#TRUE}.
      *
-     * @see org.opengis.referencing.operation.Transformation#getPositionalAccuracy
+     * @see org.geotools.api.referencing.operation.Transformation#getPositionalAccuracy
      * @see org.geotools.referencing.operation.AbstractCoordinateOperationFactory#ELLIPSOID_SHIFT
      */
     public static final PositionalAccuracy DATUM_SHIFT_OMITTED;
@@ -67,12 +69,9 @@ public class PositionalAccuracyImpl extends ElementImpl implements PositionalAcc
     static {
         // TODO: localize.
         final InternationalString desc = new SimpleInternationalString("Transformation accuracy");
-        final InternationalString eval =
-                new SimpleInternationalString("Is a datum shift method applied?");
-        final ConformanceResultImpl pass =
-                new ConformanceResultImpl(Citations.GEOTOOLS, eval, true);
-        final ConformanceResultImpl fail =
-                new ConformanceResultImpl(Citations.GEOTOOLS, eval, false);
+        final InternationalString eval = new SimpleInternationalString("Is a datum shift method applied?");
+        final ConformanceResultImpl pass = new ConformanceResultImpl(Citations.GEOTOOLS, eval, true);
+        final ConformanceResultImpl fail = new ConformanceResultImpl(Citations.GEOTOOLS, eval, false);
         pass.freeze();
         fail.freeze();
         final PositionalAccuracyImpl APPLIED, OMITTED;

@@ -19,12 +19,12 @@ package org.geotools.xsd.impl;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.eclipse.xsd.XSDElementDeclaration;
+import org.geotools.api.feature.ComplexAttribute;
 import org.geotools.util.Converters;
 import org.geotools.xs.XS;
 import org.geotools.xsd.Binding;
 import org.geotools.xsd.ComplexBinding;
 import org.geotools.xsd.SimpleBinding;
-import org.opengis.feature.ComplexAttribute;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -117,16 +117,14 @@ public class ElementEncodeExecutor implements BindingWalker.Visitor {
                 if (logger.isLoggable(Level.FINE)) {
                     // do not log the object, may be a multi-megabyte feature collection
                     // that can trigger an OOM toStringing itself
-                    logger.fine(
-                            "[ " + object.getClass() + " ] is not of type " + binding.getType());
+                    logger.fine("[ " + object.getClass() + " ] is not of type " + binding.getType());
                 }
 
                 return;
             }
         }
 
-        if (binding instanceof ComplexBinding) {
-            ComplexBinding complex = (ComplexBinding) binding;
+        if (binding instanceof ComplexBinding complex) {
 
             try {
                 Element element = complex.encode(object, document, encoding);
@@ -135,11 +133,7 @@ public class ElementEncodeExecutor implements BindingWalker.Visitor {
                     encoding = element;
                 }
             } catch (Throwable t) {
-                String msg =
-                        "Encode failed for "
-                                + element.getName()
-                                + ". Cause: "
-                                + t.getLocalizedMessage();
+                String msg = "Encode failed for " + element.getName() + ". Cause: " + t.getLocalizedMessage();
                 throw new RuntimeException(msg, t);
             }
         } else {
@@ -151,8 +145,8 @@ public class ElementEncodeExecutor implements BindingWalker.Visitor {
             for (int i = 0; i < encoding.getChildNodes().getLength(); i++) {
                 Node node = encoding.getChildNodes().item(i);
 
-                if (node instanceof Text) {
-                    text = (Text) node;
+                if (node instanceof Text text1) {
+                    text = text1;
 
                     break;
                 }
@@ -160,7 +154,7 @@ public class ElementEncodeExecutor implements BindingWalker.Visitor {
 
             try {
                 if (object != null) {
-                    String value = simple.encode(object, (text != null) ? text.getData() : null);
+                    String value = simple.encode(object, text != null ? text.getData() : null);
 
                     if (value != null) {
                         // set the text of the node
@@ -182,11 +176,7 @@ public class ElementEncodeExecutor implements BindingWalker.Visitor {
                     encoding.setAttribute(prefix + ":nil", "true");
                 }
             } catch (Throwable t) {
-                String msg =
-                        "Encode failed for "
-                                + element.getName()
-                                + ". Cause: "
-                                + t.getLocalizedMessage();
+                String msg = "Encode failed for " + element.getName() + ". Cause: " + t.getLocalizedMessage();
                 throw new RuntimeException(msg, t);
             }
         }

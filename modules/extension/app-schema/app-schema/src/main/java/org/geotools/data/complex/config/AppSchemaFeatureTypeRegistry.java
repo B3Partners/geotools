@@ -18,22 +18,21 @@ package org.geotools.data.complex.config;
 
 import org.eclipse.xsd.XSDElementDeclaration;
 import org.eclipse.xsd.XSDTypeDefinition;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
 import org.geotools.data.complex.feature.type.ComplexFeatureTypeFactoryImpl;
 import org.geotools.data.complex.feature.type.FeatureTypeRegistry;
 import org.geotools.data.complex.util.EmfComplexFeatureReader;
 import org.geotools.gml3.complex.GmlFeatureTypeRegistryConfiguration;
 import org.geotools.xsd.SchemaIndex;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
 import org.xml.sax.helpers.NamespaceSupport;
 
 /**
- * A registry of GeoTools {@link AttributeType} and {@link AttributeDescriptor} lazily parsed from
- * the EMF {@link XSDTypeDefinition} and {@link XSDElementDeclaration} added through {@link
- * #addSchemas(SchemaIndex)}.
+ * A registry of GeoTools {@link AttributeType} and {@link AttributeDescriptor} lazily parsed from the EMF
+ * {@link XSDTypeDefinition} and {@link XSDElementDeclaration} added through {@link #addSchemas(SchemaIndex)}.
  *
- * <p>This class is meant to be used in conjunction with {@link EmfComplexFeatureReader}. See {@link
- * AppSchemaDataAccessConfigurator}
+ * <p>This class is meant to be used in conjunction with {@link EmfComplexFeatureReader}. See
+ * {@link AppSchemaDataAccessConfigurator}
  *
  * <p>Usage:
  *
@@ -64,7 +63,6 @@ public class AppSchemaFeatureTypeRegistry extends FeatureTypeRegistry {
     public AppSchemaFeatureTypeRegistry(NamespaceSupport namespaces) {
         super(
                 new ComplexFeatureTypeFactoryImpl(),
-                new GmlFeatureTypeRegistryConfiguration(
-                        namespaces == null ? null : namespaces.getURI("gml")));
+                new GmlFeatureTypeRegistryConfiguration(namespaces == null ? null : namespaces.getURI("gml")));
     }
 }

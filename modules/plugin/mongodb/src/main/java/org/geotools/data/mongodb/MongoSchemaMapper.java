@@ -19,10 +19,10 @@ package org.geotools.data.mongodb;
 
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.Name;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.Name;
 
 /** @author tkunicki@boundlessgeo.com */
 public class MongoSchemaMapper extends AbstractCollectionMapper {
@@ -44,9 +44,7 @@ public class MongoSchemaMapper extends AbstractCollectionMapper {
     @Override
     public String getPropertyPath(String property) {
         AttributeDescriptor descriptor = schema.getDescriptor(property);
-        return descriptor == null
-                ? null
-                : (String) descriptor.getUserData().get(MongoDataStore.KEY_mapping);
+        return descriptor == null ? null : (String) descriptor.getUserData().get(MongoDataStore.KEY_mapping);
     }
 
     @Override

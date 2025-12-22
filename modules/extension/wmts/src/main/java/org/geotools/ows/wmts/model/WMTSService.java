@@ -47,12 +47,10 @@ public class WMTSService extends Service {
             return;
         }
 
-        ResponsiblePartyImpl contactInfo =
-                new ResponsiblePartyImpl(serviceProvider.getServiceContact());
+        ResponsiblePartyImpl contactInfo = new ResponsiblePartyImpl(serviceProvider.getServiceContact());
 
         if (serviceProvider.getProviderName() != null) {
-            contactInfo.setOrganisationName(
-                    new SimpleInternationalString(serviceProvider.getProviderName()));
+            contactInfo.setOrganisationName(new SimpleInternationalString(serviceProvider.getProviderName()));
         }
 
         setContactInformation(contactInfo);
@@ -78,18 +76,17 @@ public class WMTSService extends Service {
             return;
         }
 
-        String title =
-                serviceType.getTitle().isEmpty()
-                        ? "N/A"
-                        : ((LanguageStringType) serviceType.getTitle().get(0)).getValue();
+        String title = serviceType.getTitle().isEmpty()
+                ? "N/A"
+                : ((LanguageStringType) serviceType.getTitle().get(0)).getValue();
         setTitle(title);
         setName(serviceType.getServiceType().getValue());
 
         // The Abstract is of Type LanguageStringType, not String.
         StringBuilder sb = new StringBuilder();
         for (Object line : serviceType.getAbstract()) {
-            if (line instanceof LanguageStringType) {
-                sb.append(((LanguageStringType) line).getValue());
+            if (line instanceof LanguageStringType type) {
+                sb.append(type.getValue());
             } else {
                 sb.append(line);
             }

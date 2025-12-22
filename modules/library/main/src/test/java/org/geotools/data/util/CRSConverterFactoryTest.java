@@ -25,13 +25,13 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Set;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.referencing.CRS;
 import org.geotools.util.ConverterFactory;
 import org.geotools.util.Converters;
 import org.junit.Test;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Test class for the {@link CRSConverterFactory} class.
@@ -41,8 +41,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 public class CRSConverterFactoryTest {
 
     /** CRS class */
-    private static final Class<CoordinateReferenceSystem> CRS_CLASS =
-            CoordinateReferenceSystem.class;
+    private static final Class<CoordinateReferenceSystem> CRS_CLASS = CoordinateReferenceSystem.class;
 
     /** String class */
     private static final Class<String> STRING_CLASS = String.class;
@@ -79,17 +78,16 @@ public class CRSConverterFactoryTest {
         assertTrue(CRS_CLASS.isAssignableFrom(result.getClass()));
 
         // Test by parsing a WKT
-        String wkt =
-                "GEOGCS[\"WGS 84\", "
-                        + "DATUM[\"WGS_1984\", "
-                        + "SPHEROID[\"WGS 84\",6378137,298.257223563, "
-                        + "AUTHORITY[\"EPSG\",\"7030\"]], "
-                        + "AUTHORITY[\"EPSG\",\"6326\"]], "
-                        + "PRIMEM[\"Greenwich\",0, "
-                        + "AUTHORITY[\"EPSG\",\"8901\"]], "
-                        + "UNIT[\"degree\",0.01745329251994328, "
-                        + "AUTHORITY[\"EPSG\",\"9122\"]], "
-                        + "AUTHORITY[\"EPSG\",\"4326\"]]";
+        String wkt = "GEOGCS[\"WGS 84\", "
+                + "DATUM[\"WGS_1984\", "
+                + "SPHEROID[\"WGS 84\",6378137,298.257223563, "
+                + "AUTHORITY[\"EPSG\",\"7030\"]], "
+                + "AUTHORITY[\"EPSG\",\"6326\"]], "
+                + "PRIMEM[\"Greenwich\",0, "
+                + "AUTHORITY[\"EPSG\",\"8901\"]], "
+                + "UNIT[\"degree\",0.01745329251994328, "
+                + "AUTHORITY[\"EPSG\",\"9122\"]], "
+                + "AUTHORITY[\"EPSG\",\"4326\"]]";
 
         CoordinateReferenceSystem result1 = Converters.convert(wkt, CRS_CLASS);
         assertNotNull(result1);

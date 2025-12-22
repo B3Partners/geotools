@@ -21,22 +21,22 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.filter.Filter;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.util.InternationalString;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.util.InternationalString;
 
 /**
- * A VPF feature type. Note that feature classes may contain one or more feature types. However, all
- * of the feature types of a feature class share the same schema. A feature type will therefore
- * delegate its schema related operations to its feature class.
+ * A VPF feature type. Note that feature classes may contain one or more feature types. However, all of the feature
+ * types of a feature class share the same schema. A feature type will therefore delegate its schema related operations
+ * to its feature class.
  *
  * @author <a href="mailto:jeff@ionicenterprise.com">Jeff Yutzler</a>
  * @source $URL$
@@ -91,8 +91,8 @@ public class VPFFeatureType implements SimpleFeatureType {
      * Constructor
      *
      * @param cFeatureClass The owning feature class
-     * @param cFeature A <code>Feature</code> from the CHAR.VDT file with more detailed information
-     *     for this feature type
+     * @param cFeature A <code>Feature</code> from the CHAR.VDT file with more detailed information for this feature
+     *     type
      */
     public VPFFeatureType(VPFFeatureClass cFeatureClass, SimpleFeature cFeature) {
         featureClass = cFeatureClass;
@@ -104,7 +104,8 @@ public class VPFFeatureType implements SimpleFeatureType {
         // This block helps us give tables a distinguishing suffix
         try {
             int index = mainTableFileName.lastIndexOf(".") + 1;
-            String dimensionality = mainTableFileName.substring(index, index + 1).toLowerCase();
+            String dimensionality =
+                    mainTableFileName.substring(index, index + 1).toLowerCase();
             if (dimensionality.equals("a")) {
                 tempTypeName = tempTypeName.concat(" Area");
             } else if (dimensionality.equals("l")) {
@@ -173,9 +174,8 @@ public class VPFFeatureType implements SimpleFeatureType {
         return featureClass.getFileList();
     }
     /**
-     * @return A <code>List</code> containing the <code>ColumnPair</code> objects which identify the
-     *     file joins for the <code>VPFFeatureClass</code> that this <code>FeatureType</code>
-     *     belongs to.
+     * @return A <code>List</code> containing the <code>ColumnPair</code> objects which identify the file joins for the
+     *     <code>VPFFeatureClass</code> that this <code>FeatureType</code> belongs to.
      */
     /*
     public List getJoinList() {
@@ -210,8 +210,8 @@ public class VPFFeatureType implements SimpleFeatureType {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof VPFFeatureType) {
-            return Objects.equals(featureClass, ((VPFFeatureType) obj).featureClass);
+        if (obj instanceof VPFFeatureType type) {
+            return Objects.equals(featureClass, type.featureClass);
         }
         return false;
     }
@@ -242,17 +242,17 @@ public class VPFFeatureType implements SimpleFeatureType {
     }
 
     @Override
-    public org.opengis.feature.type.AttributeType getType(Name name) {
+    public org.geotools.api.feature.type.AttributeType getType(Name name) {
         return featureClass.getType(name);
     }
 
     @Override
-    public org.opengis.feature.type.AttributeType getType(String name) {
+    public org.geotools.api.feature.type.AttributeType getType(String name) {
         return featureClass.getType(name);
     }
 
     @Override
-    public org.opengis.feature.type.AttributeType getType(int index) {
+    public org.geotools.api.feature.type.AttributeType getType(int index) {
         return featureClass.getType(index);
     }
 
@@ -292,7 +292,7 @@ public class VPFFeatureType implements SimpleFeatureType {
     }
 
     @Override
-    public org.opengis.feature.type.AttributeType getSuper() {
+    public org.geotools.api.feature.type.AttributeType getSuper() {
         return featureClass.getSuper();
     }
 

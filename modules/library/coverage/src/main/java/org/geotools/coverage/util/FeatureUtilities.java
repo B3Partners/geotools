@@ -18,8 +18,24 @@ package org.geotools.coverage.util;
 
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.logging.Logger;
+import org.geotools.api.coverage.grid.GridCoverage;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.FeatureFactory;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.FeatureTypeFactory;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
 import org.geotools.data.simple.SimpleFeatureCollection;
@@ -29,10 +45,9 @@ import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.feature.type.FeatureTypeFactoryImpl;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.referencing.CRS;
 import org.geotools.util.Utilities;
 import org.geotools.util.factory.FactoryRegistryException;
@@ -44,24 +59,10 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.PrecisionModel;
-import org.opengis.coverage.grid.GridCoverage;
-import org.opengis.feature.Feature;
-import org.opengis.feature.FeatureFactory;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.FeatureTypeFactory;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 
 /**
- * A set of utilities methods for interactions between {@link GridCoverage} and {@link Feature}.
- * Those methods are not really rigorous; must of them should be seen as temporary implementations.
+ * A set of utilities methods for interactions between {@link GridCoverage} and {@link Feature}. Those methods are not
+ * really rigorous; must of them should be seen as temporary implementations.
  *
  * @since 2.4
  * @version $Id$
@@ -71,22 +72,19 @@ public final class FeatureUtilities {
 
     static FeatureTypeFactory typeFactory;
     static FeatureFactory featureFactory;
-    public static final FilterFactory2 DEFAULT_FILTER_FACTORY =
-            CommonFactoryFinder.getFilterFactory2(GeoTools.getDefaultHints());
+    public static final FilterFactory DEFAULT_FILTER_FACTORY =
+            CommonFactoryFinder.getFilterFactory(GeoTools.getDefaultHints());
     public static final PropertyName GRID_PROPERTY_NAME = DEFAULT_FILTER_FACTORY.property("grid");
-    public static final PropertyName PARAMS_PROPERTY_NAME =
-            DEFAULT_FILTER_FACTORY.property("params");
+    public static final PropertyName PARAMS_PROPERTY_NAME = DEFAULT_FILTER_FACTORY.property("params");
 
-    static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(FeatureUtilities.class);
+    static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(FeatureUtilities.class);
 
     /** Do not allows instantiation of this class. */
     private FeatureUtilities() {}
 
     private static FeatureTypeFactory getTypeFactory() {
         if (typeFactory == null)
-            typeFactory =
-                    new FeatureTypeFactoryImpl(); // CommonFactoryFinder.getFeatureTypeFactory(null);
+            typeFactory = new FeatureTypeFactoryImpl(); // CommonFactoryFinder.getFeatureTypeFactory(null);
         return typeFactory;
     }
 
@@ -95,18 +93,22 @@ public final class FeatureUtilities {
         return featureFactory;
     }
 
-    /**
-     * Returns the polygon surrounding the specified rectangle. Code lifted from ArcGridDataSource
-     * (temporary).
-     */
-    private static Polygon getPolygon(final Rectangle2D rect) {
-        return getPolygon(rect, 0);
+    /** Returns the polygon surrounding the specified rectangle. Code lifted from ArcGridDataSource (temporary). */
+    private static Polygon getPolygon(final BoundingBox bounds) {
+        final PrecisionModel pm = new PrecisionModel();
+        final GeometryFactory gf = new GeometryFactory(pm, 0);
+        final Coordinate[] coord = {
+            new Coordinate(bounds.getMinX(), bounds.getMinY()),
+            new Coordinate(bounds.getMaxX(), bounds.getMinY()),
+            new Coordinate(bounds.getMaxX(), bounds.getMaxY()),
+            new Coordinate(bounds.getMinX(), bounds.getMaxY()),
+            new Coordinate(bounds.getMinX(), bounds.getMinY())
+        };
+        final LinearRing ring = gf.createLinearRing(coord);
+        return new Polygon(ring, null, gf);
     }
 
-    /**
-     * Returns the polygon surrounding the specified rectangle. Code lifted from ArcGridDataSource
-     * (temporary).
-     */
+    /** Returns the polygon surrounding the specified rectangle. Code lifted from ArcGridDataSource (temporary). */
     public static Polygon getPolygon(final Rectangle2D rect, final int srid) {
         final PrecisionModel pm = new PrecisionModel();
         final GeometryFactory gf = new GeometryFactory(pm, srid);
@@ -125,8 +127,8 @@ public final class FeatureUtilities {
      * Wraps a grid coverage into a Feature. Code lifted from ArcGridDataSource (temporary).
      *
      * @param coverage the grid coverage.
-     * @return a feature with the grid coverage envelope as the geometry and the grid coverage
-     *     itself in the "grid" attribute.
+     * @return a feature with the grid coverage envelope as the geometry and the grid coverage itself in the "grid"
+     *     attribute.
      */
     public static SimpleFeatureCollection wrapGridCoverage(final GridCoverage2D coverage)
             throws TransformException, SchemaException {
@@ -157,8 +159,8 @@ public final class FeatureUtilities {
         if (featureType.getAttributeCount() != 2) return false;
 
         AttributeDescriptor polyDescriptor = featureType.getDescriptor("geom");
-        if (polyDescriptor == null || !Polygon.class.equals(polyDescriptor.getType().getBinding()))
-            return false;
+        if (polyDescriptor == null
+                || !Polygon.class.equals(polyDescriptor.getType().getBinding())) return false;
 
         AttributeDescriptor gridDescriptor = featureType.getDescriptor("grid");
         if (gridDescriptor == null
@@ -171,8 +173,8 @@ public final class FeatureUtilities {
      * Wraps a grid coverage into a Feature. Code lifted from ArcGridDataSource (temporary).
      *
      * @param gridCoverageReader the grid coverage reader.
-     * @return a feature with the grid coverage envelope as the geometry and the grid coverage
-     *     itself in the "grid" attribute.
+     * @return a feature with the grid coverage envelope as the geometry and the grid coverage itself in the "grid"
+     *     attribute.
      */
     public static SimpleFeatureCollection wrapGridCoverageReader(
             final GridCoverage2DReader gridCoverageReader, GeneralParameterValue[] params)
@@ -184,11 +186,10 @@ public final class FeatureUtilities {
         final Rectangle2D rect = gridCoverageReader.getOriginalEnvelope().toRectangle2D();
         final CoordinateReferenceSystem sourceCrs =
                 CRS.getHorizontalCRS(gridCoverageReader.getCoordinateReferenceSystem());
-        if (sourceCrs == null)
-            throw new UnsupportedOperationException(
-                    Errors.format(
-                            ErrorKeys.CANT_SEPARATE_CRS_$1,
-                            gridCoverageReader.getCoordinateReferenceSystem()));
+        if (sourceCrs == null) {
+            final Object arg0 = gridCoverageReader.getCoordinateReferenceSystem();
+            throw new UnsupportedOperationException(MessageFormat.format(ErrorKeys.CANT_SEPARATE_CRS_$1, arg0));
+        }
 
         final Coordinate[] coord = new Coordinate[5];
         coord[0] = new Coordinate(rect.getMinX(), rect.getMinY());
@@ -227,39 +228,38 @@ public final class FeatureUtilities {
         if (featureType.getAttributeCount() != 3) return false;
 
         AttributeDescriptor polyDescriptor = featureType.getDescriptor("geom");
-        if (polyDescriptor == null || !Polygon.class.equals(polyDescriptor.getType().getBinding()))
-            return false;
+        if (polyDescriptor == null
+                || !Polygon.class.equals(polyDescriptor.getType().getBinding())) return false;
 
         AttributeDescriptor gridDescriptor = featureType.getDescriptor("grid");
         if (gridDescriptor == null
-                || !GridCoverage2DReader.class.equals(gridDescriptor.getType().getBinding()))
-            return false;
+                || !GridCoverage2DReader.class.equals(gridDescriptor.getType().getBinding())) return false;
 
         AttributeDescriptor paramDescriptor = featureType.getDescriptor("params");
         if (paramDescriptor == null
-                || !GeneralParameterValue[].class.equals(paramDescriptor.getType().getBinding()))
-            return false;
+                || !GeneralParameterValue[]
+                        .class.equals(paramDescriptor.getType().getBinding())) return false;
 
         return true;
     }
 
     /**
-     * Converts a JTS {@link Polygon}, which represents a ROI, int an AWT {@link java.awt.Polygon}
-     * by means of the provided {@link MathTransform}.
+     * Converts a JTS {@link Polygon}, which represents a ROI, int an AWT {@link java.awt.Polygon} by means of the
+     * provided {@link MathTransform}.
      *
      * @param roiInput the input ROI as a JTS {@link Polygon}.
      * @param worldToGridTransform the {@link MathTransform} to apply to the input ROI.
      * @return an AWT {@link java.awt.Polygon}.
      * @throws TransformException in case the provided {@link MathTransform} chokes.
      */
-    public static java.awt.Polygon convertPolygon(
-            final Polygon roiInput, MathTransform worldToGridTransform) throws TransformException {
+    public static java.awt.Polygon convertPolygon(final Polygon roiInput, MathTransform worldToGridTransform)
+            throws TransformException {
         return convertPolygonToPointArray(roiInput, worldToGridTransform, null);
     }
 
     /**
-     * Converts a JTS {@link Polygon}, which represents a ROI, int an AWT {@link java.awt.Polygon}
-     * by means of the provided {@link MathTransform}.
+     * Converts a JTS {@link Polygon}, which represents a ROI, int an AWT {@link java.awt.Polygon} by means of the
+     * provided {@link MathTransform}.
      *
      * <p>It also stores the points for this polygon into the provided {@link List}.
      *
@@ -300,10 +300,10 @@ public final class FeatureUtilities {
     }
 
     /**
-     * Convert the crop envelope into a polygon and the use the world-to-grid transform to get a ROI
-     * for the source coverage.
+     * Convert the crop envelope into a polygon and the use the world-to-grid transform to get a ROI for the source
+     * coverage.
      */
-    public static Polygon getPolygon(final GeneralEnvelope env, final GeometryFactory gf)
+    public static Polygon getPolygon(final GeneralBounds env, final GeometryFactory gf)
             throws IllegalStateException, MismatchedDimensionException {
         final Rectangle2D rect = env.toRectangle2D();
         final Coordinate[] coord = {
@@ -340,6 +340,6 @@ public final class FeatureUtilities {
             area -= polyPoints[j].getX() * polyPoints[i].getY();
         }
         area /= 2.0;
-        return (area);
+        return area;
     }
 }

@@ -20,20 +20,16 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.operation.distance3d.Distance3DOp;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_disjoint3D extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "disjoint3D",
-                    Double.class,
-                    parameter("geometry1", Geometry.class),
-                    parameter("geometry2", Geometry.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "disjoint3D", Double.class, parameter("geometry1", Geometry.class), parameter("geometry2", Geometry.class));
 
     public FilterFunction_disjoint3D() {
         super(NAME);
@@ -60,9 +56,8 @@ public class FilterFunction_disjoint3D extends FunctionExpressionImpl {
                     "Filter Function problem for function disjoint3D argument #1 - expected type Geometry");
         }
 
-        /**
-         * Use the fact that two geometries are disjoint if and only if the distance between them is
-         * greated than zero.
+        /*
+         * Use the fact that two geometries are disjoint if and only if the distance between them is greated than zero.
          */
         return Boolean.valueOf(Distance3DOp.distance(arg0, arg1) > 0.0);
     }

@@ -21,21 +21,19 @@ import java.awt.image.ColorModel;
 import java.awt.image.SampleModel;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.util.logging.Logging;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /** Simple image metadata for NetCDF */
 public class NetCDFImageMetadata extends CoreCommonImageMetadata {
 
     static final Logger LOGGER = Logging.getLogger(NetCDFImageMetadata.class);
 
-    public static final String nativeMetadataFormatName =
-            "it_geosolutions_imageioimpl_plugins_netcdf_image_1.0";
+    public static final String nativeMetadataFormatName = "it_geosolutions_imageioimpl_plugins_netcdf_image_1.0";
 
     public static final String nativeMetadataFormatClassName = NetCDFImageMetadata.class.getName();
 
-    public NetCDFImageMetadata(
-            String variableName, SampleModel sm, ColorModel cm, CoordinateReferenceSystem crs) {
+    public NetCDFImageMetadata(String variableName, SampleModel sm, ColorModel cm, CoordinateReferenceSystem crs) {
         super(true, nativeMetadataFormatName, nativeMetadataFormatClassName, null, null);
         setDatasetName(variableName);
         // width and height, tile structure assuming row based

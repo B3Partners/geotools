@@ -20,31 +20,33 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
+import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.util.logging.Logging;
 
 /**
- * A {@linkplain FactoryRegistry factory registry} capable to creates factories if no appropriate
- * instance was found in the registry.
+ * A {@linkplain FactoryRegistry factory registry} capable to creates factories if no appropriate instance was found in
+ * the registry.
  *
- * <p>This class maintains a cache of previously created factories, as {@linkplain WeakReference
- * weak references}. Calls to {@link #getFactory(Class, Predicate, Hints, Hints.Key)}} first check
- * if a previously created factory can fit.
+ * <p>This class maintains a cache of previously created factories, as {@linkplain WeakReference weak references}. Calls
+ * to {@link #getFactory(Class, Predicate, Hints, Hints.Key)}} first check if a previously created factory can fit.
  *
  * @since 2.1
  * @version $Id$
  * @author Martin Desruisseaux
  * @author Jody Garnett
  */
+@SuppressWarnings({"UnusedVariable", "JdkObsolete", "StreamToIterable", "Finally"})
 public class FactoryCreator extends FactoryRegistry {
     /** The array of classes for searching the one-argument constructor. */
     private static final Class<?>[] HINTS_ARGUMENT = {Hints.class};
@@ -53,8 +55,8 @@ public class FactoryCreator extends FactoryRegistry {
     private final Map<Class<?>, List<Reference<?>>> cache = new HashMap<>();
 
     /**
-     * Objects under construction for each implementation class. Used by {@link #safeCreate} as a
-     * guard against infinite recursivity.
+     * Objects under construction for each implementation class. Used by {@link #safeCreate} as a guard against infinite
+     * recursivity.
      */
     private final Set<Class<?>> underConstruction = new HashSet<>();
 
@@ -110,28 +112,23 @@ public class FactoryCreator extends FactoryRegistry {
     }
 
     /**
-     * Factory for the specified category, using the specified map of hints (if any). If a provider
-     * matching the requirements is found in the registry, it is returned. Otherwise, a new provider
-     * is created and returned. This creation step is the only difference between this method and
-     * the {@linkplain FactoryRegistry#getFactory(Class, Predicate, Hints, Hints.Key)} super-class
-     * method}.
+     * Factory for the specified category, using the specified map of hints (if any). If a provider matching the
+     * requirements is found in the registry, it is returned. Otherwise, a new provider is created and returned. This
+     * creation step is the only difference between this method and the {@linkplain FactoryRegistry#getFactory(Class,
+     * Predicate, Hints, Hints.Key)} super-class method}.
      *
      * @param category The category to look for.
      * @param filter Optional predicate, or {@code null} if none.
      * @param hints A {@linkplain Hints map of hints}, or {@code null} if none.
-     * @param key The key to use for looking for a user-provided instance in the hints, or {@code
-     *     null} if none.
+     * @param key The key to use for looking for a user-provided instance in the hints, or {@code null} if none.
      * @return A factory for the specified category and hints (never {@code null}).
-     * @throws FactoryNotFoundException if no factory was found, and the specified hints don't
-     *     provide suffisient information for creating a new factory.
+     * @throws FactoryNotFoundException if no factory was found, and the specified hints don't provide suffisient
+     *     information for creating a new factory.
      * @throws FactoryRegistryException if the factory can't be created for some other reason.
      */
     @Override
     public <T> T getFactory(
-            final Class<T> category,
-            final Predicate<? super T> filter,
-            final Hints hints,
-            final Hints.Key key)
+            final Class<T> category, final Predicate<? super T> filter, final Hints hints, final Hints.Key key)
             throws FactoryRegistryException {
         final FactoryNotFoundException notFound;
         try {
@@ -152,8 +149,8 @@ public class FactoryCreator extends FactoryRegistry {
             if (hint == null) {
                 types = null;
             } else {
-                if (hint instanceof Class<?>[]) {
-                    types = (Class<?>[]) hint;
+                if (hint instanceof Class<?>[] class1s) {
+                    types = class1s;
                 } else {
                     types = new Class<?>[] {(Class<?>) hint};
                     // Should not fails, since non-class argument should
@@ -234,15 +231,13 @@ public class FactoryCreator extends FactoryRegistry {
     }
 
     /**
-     * Invokes {@link #createFactory(Class, Class, Hints)}, but checks against recursive calls. If
-     * the specified implementation is already under construction, returns {@code null} in order to
-     * tell to {@link #getFactory} that it need to search for an other implementation. This is
-     * needed for avoiding infinite recursivity when a factory is a wrapper around an ther factory
-     * of the same category. For example this is the case of {@link
-     * org.geotools.referencing.operation.BufferedCoordinateOperationFactory}.
+     * Invokes {@link #createFactory(Class, Class, Hints)}, but checks against recursive calls. If the specified
+     * implementation is already under construction, returns {@code null} in order to tell to {@link #getFactory} that
+     * it need to search for an other implementation. This is needed for avoiding infinite recursivity when a factory is
+     * a wrapper around an ther factory of the same category. For example this is the case of
+     * {@link org.geotools.referencing.operation.BufferedCoordinateOperationFactory}.
      */
-    private <T> T createSafe(
-            final Class<T> category, final Class<?> implementation, final Hints hints) {
+    private <T> T createSafe(final Class<T> category, final Class<?> implementation, final Hints hints) {
         if (!underConstruction.add(implementation)) {
             return null;
         }
@@ -256,9 +251,35 @@ public class FactoryCreator extends FactoryRegistry {
     }
 
     /**
-     * Creates a new instance of the specified factory using the specified hints. The default
-     * implementation tries to instantiate the given implementation class using the first of the
-     * following constructor found:
+     * A {@link #createSafe(Class, Class, Hints)} alternative tolerant to the lack of the desired constructor, will
+     * return null in that case.
+     */
+    private <T> T tryCreateSafe(Class<T> category, Hints hints, Class<?> implementation) {
+        final T candidate;
+        try {
+            candidate = createSafe(category, implementation, hints);
+        } catch (FactoryNotFoundException exception) {
+            // The factory has a dependency which has not been found.
+            // Be tolerant to that kind of error.
+            Logging.recoverableException(LOGGER, FactoryCreator.class, "getFactory", exception);
+            return null;
+        } catch (FactoryRegistryException exception) {
+            if (exception.getCause() instanceof NoSuchMethodException) {
+                // No public constructor with the expected argument.
+                // Try an other implementation.
+                return null;
+            } else {
+                // Other kind of error, probably unexpected.
+                // Let the exception propagates.
+                throw exception;
+            }
+        }
+        return candidate;
+    }
+
+    /**
+     * Creates a new instance of the specified factory using the specified hints. The default implementation tries to
+     * instantiate the given implementation class using the first of the following constructor found:
      *
      * <p>
      *
@@ -273,16 +294,13 @@ public class FactoryCreator extends FactoryRegistry {
      * @return The factory.
      * @throws FactoryRegistryException if the factory creation failed.
      */
-    protected <T> T createFactory(
-            final Class<T> category, final Class<?> implementation, final Hints hints)
+    protected <T> T createFactory(final Class<T> category, final Class<?> implementation, final Hints hints)
             throws FactoryRegistryException {
         Throwable cause;
         try {
             try {
                 return category.cast(
-                        implementation
-                                .getConstructor(HINTS_ARGUMENT)
-                                .newInstance(new Object[] {hints}));
+                        implementation.getConstructor(HINTS_ARGUMENT).newInstance(hints));
             } catch (NoSuchMethodException exception) {
                 // Constructor do not exists or is not public. We will fallback on the no-arg one.
                 cause = exception;
@@ -298,17 +316,55 @@ public class FactoryCreator extends FactoryRegistry {
         } // The class is abstract
         catch (InvocationTargetException exception) {
             cause = exception.getCause(); // Exception in constructor
-            if (cause instanceof FactoryRegistryException) {
-                throw (FactoryRegistryException) cause;
+            if (cause instanceof FactoryRegistryException registryException) {
+                throw registryException;
             }
         }
         throw new FactoryRegistryException(
-                Errors.format(ErrorKeys.CANT_CREATE_FACTORY_$1, implementation), cause);
+                MessageFormat.format(ErrorKeys.CANT_CREATE_FACTORY_$1, implementation), cause);
     }
 
     /**
-     * Dispose the specified factory after. This method is invoked when a factory has been created,
-     * and then {@code FactoryCreator} determined that the factory doesn't meet user's requirements.
+     * Returns a stream of factories for the specified category. If the {@link Hints#CREATE_FACTORIES_WITH_HINTS} hint
+     * is set to {@link Boolean#TRUE}, factories will be re-created with the specified hints if they don't match user's
+     * requirements.
+     *
+     * @param category The category to look for. Usually an interface class (not the actual implementation class).
+     * @param filter The optional filter predicate, or {@code null}.
+     * @param hints The optional user requirements, or {@code null}.
+     * @return A stream of factories for the specified category, filters and hints.
+     * @param <T>
+     */
+    @Override
+    public <T> Stream<T> getFactories(final Class<T> category, final Predicate<? super T> filter, final Hints hints) {
+        // Delegate to super class if not re-creating factories with hints
+        if (hints == null || !Boolean.TRUE.equals(hints.get(Hints.CREATE_FACTORIES_WITH_HINTS)))
+            return super.getFactories(category, filter, hints);
+
+        // Get the factories, if they are not supporting the hints already, re-create them with hints
+        Hints cleanedHints = new Hints(hints);
+        cleanedHints.remove(Hints.CREATE_FACTORIES_WITH_HINTS);
+        Predicate<T> isAcceptable = factory -> isAcceptable(category.cast(factory), category, cleanedHints, filter);
+        return getUnfilteredFactories(category)
+                .map(candidate -> {
+                    if (!isAcceptable.test(candidate) && candidate instanceof Factory) {
+                        candidate = tryCreateSafe(category, cleanedHints, candidate.getClass());
+                        if (candidate != null && isAcceptable.test(candidate)) {
+                            cache(category, candidate);
+                        } else {
+                            dispose(candidate);
+                            return null;
+                        }
+                    }
+                    return candidate;
+                })
+                .filter(Objects::nonNull)
+                .filter(isAcceptable);
+    }
+
+    /**
+     * Dispose the specified factory after. This method is invoked when a factory has been created, and then
+     * {@code FactoryCreator} determined that the factory doesn't meet user's requirements.
      */
     private static void dispose(final Object factory) {
         // Empty for now. This method is merely a reminder for disposal in future Geotools versions.

@@ -47,8 +47,8 @@ public class BasicDirectedNode extends BasicGraphable implements DirectedNode {
     }
 
     /**
-     * Unsupported operation. Directed nodes classify edges as <B>in</B> and <B>out</B>. addIn(Edge)
-     * and addOut(Edge) should be used instead of this method.
+     * Unsupported operation. Directed nodes classify edges as <B>in</B> and <B>out</B>. addIn(Edge) and addOut(Edge)
+     * should be used instead of this method.
      *
      * @see DirectedNode#addIn(DirectedEdge)
      * @see DirectedNode#addOut(DirectedEdge)
@@ -59,9 +59,9 @@ public class BasicDirectedNode extends BasicGraphable implements DirectedNode {
     }
 
     /**
-     * Adds an edge to the <B>in</B> adjacency list of the node which is an underlying List
-     * implementation. No checking is done on the edge (duplication, looping...), it is simply added
-     * to the list. It is also assumed that the edge being added has the node as its out node.
+     * Adds an edge to the <B>in</B> adjacency list of the node which is an underlying List implementation. No checking
+     * is done on the edge (duplication, looping...), it is simply added to the list. It is also assumed that the edge
+     * being added has the node as its out node.
      *
      * @see DirectedNode#addIn(DirectedEdge)
      * @see DirectedEdge#getOutNode()
@@ -72,9 +72,9 @@ public class BasicDirectedNode extends BasicGraphable implements DirectedNode {
     }
 
     /**
-     * Adds an edge to the <B>ou</B> adjacency list of the node which is an underlying List
-     * implementation. No checking is done on the edge (duplication, looping...), it is simply added
-     * to the list. It is also assumed that the edge being added has the node as its in node.
+     * Adds an edge to the <B>ou</B> adjacency list of the node which is an underlying List implementation. No checking
+     * is done on the edge (duplication, looping...), it is simply added to the list. It is also assumed that the edge
+     * being added has the node as its in node.
      *
      * @see DirectedNode#addOut(DirectedEdge)
      * @see DirectedEdge#getInNode()
@@ -108,16 +108,16 @@ public class BasicDirectedNode extends BasicGraphable implements DirectedNode {
     }
 
     /**
-     * First searches for an in edge with an out node == this, and in node == other. If none is
-     * found an edge with out node == other, and in node == this is searched for.
+     * First searches for an in edge with an out node == this, and in node == other. If none is found an edge with out
+     * node == other, and in node == this is searched for.
      *
      * @see Node#remove(Edge)
      */
     @Override
     public Edge getEdge(Node other) {
         Edge e = getInEdge((DirectedNode) other);
-        if (e != null) return (e);
-        return (getOutEdge((DirectedNode) other));
+        if (e != null) return e;
+        return getOutEdge((DirectedNode) other);
     }
 
     /** @see DirectedNode#getInEdge(DirectedNode) */
@@ -126,9 +126,9 @@ public class BasicDirectedNode extends BasicGraphable implements DirectedNode {
         // must explicitly check that the edge has node other, and one node this,
         // just checking other is not good enough because of loops
         for (DirectedEdge edge : m_in) {
-            if (edge.getInNode().equals(other) && edge.getOutNode().equals(this)) return (edge);
+            if (edge.getInNode().equals(other) && edge.getOutNode().equals(this)) return edge;
         }
-        return (null);
+        return null;
     }
 
     /** @see DirectedNode#getOutEdge(DirectedNode) */
@@ -137,9 +137,9 @@ public class BasicDirectedNode extends BasicGraphable implements DirectedNode {
         // must explicitly check that the edge has node other, and one node this,
         // just checking other is not good enough because of loops
         for (DirectedEdge edge : m_out) {
-            if (edge.getOutNode().equals(other) && edge.getInNode().equals(this)) return (edge);
+            if (edge.getOutNode().equals(other) && edge.getInNode().equals(this)) return edge;
         }
-        return (null);
+        return null;
     }
 
     /** Returns the combination of both the in and out adjacency lists. */
@@ -148,19 +148,19 @@ public class BasicDirectedNode extends BasicGraphable implements DirectedNode {
         ArrayList<DirectedEdge> edges = new ArrayList<>();
         edges.addAll(m_in);
         edges.addAll(m_out);
-        return (edges);
+        return edges;
     }
 
     /** @see DirectedNode#getInEdges() */
     @Override
     public List<DirectedEdge> getInEdges() {
-        return (m_in);
+        return m_in;
     }
 
     /** @see DirectedNode#getOutEdges() */
     @Override
     public List<DirectedEdge> getOutEdges() {
-        return (m_out);
+        return m_out;
     }
 
     /**
@@ -174,7 +174,7 @@ public class BasicDirectedNode extends BasicGraphable implements DirectedNode {
     public List<DirectedEdge> getEdges(Node other) {
         List<DirectedEdge> edges = getInEdges((DirectedNode) other);
         edges.addAll(getOutEdges((DirectedNode) other));
-        return (edges);
+        return edges;
     }
 
     /** @see DirectedNode#getInEdges(DirectedNode) */
@@ -184,7 +184,7 @@ public class BasicDirectedNode extends BasicGraphable implements DirectedNode {
         for (DirectedEdge edge : m_in) {
             if (edge.getInNode().equals(other)) edges.add(edge);
         }
-        return (edges);
+        return edges;
     }
 
     /** @see DirectedNode#getOutEdges(DirectedNode) */
@@ -194,7 +194,7 @@ public class BasicDirectedNode extends BasicGraphable implements DirectedNode {
         for (DirectedEdge edge : m_out) {
             if (edge.getOutNode().equals(other)) edges.add(edge);
         }
-        return (edges);
+        return edges;
     }
 
     /**
@@ -204,19 +204,19 @@ public class BasicDirectedNode extends BasicGraphable implements DirectedNode {
      */
     @Override
     public int getDegree() {
-        return (m_in.size() + m_out.size());
+        return m_in.size() + m_out.size();
     }
 
     /** @see DirectedNode#getInDegree() */
     @Override
     public int getInDegree() {
-        return (m_in.size());
+        return m_in.size();
     }
 
     /** @see DirectedNode#getOutDegree() */
     @Override
     public int getOutDegree() {
-        return (m_out.size());
+        return m_out.size();
     }
 
     /**
@@ -234,7 +234,7 @@ public class BasicDirectedNode extends BasicGraphable implements DirectedNode {
         for (DirectedEdge e : m_out) {
             related.add(e.getOutNode());
         }
-        return (related.iterator());
+        return related.iterator();
     }
 
     /**
@@ -249,7 +249,7 @@ public class BasicDirectedNode extends BasicGraphable implements DirectedNode {
             related.add(e.getInNode());
         }
 
-        return (related.iterator());
+        return related.iterator();
     }
 
     /**
@@ -263,13 +263,12 @@ public class BasicDirectedNode extends BasicGraphable implements DirectedNode {
         for (DirectedEdge e : m_out) {
             related.add(e.getOutNode());
         }
-        return (related.iterator());
+        return related.iterator();
     }
 
     /**
-     * Overides the default deserialization operation. The edge adjacency lists of a
-     * BasicDirectedNode is not written out when the node is serialized so they must be recreated
-     * upon deserialization.
+     * Overides the default deserialization operation. The edge adjacency lists of a BasicDirectedNode is not written
+     * out when the node is serialized so they must be recreated upon deserialization.
      *
      * @param in Object input stream containing serialized object.
      */

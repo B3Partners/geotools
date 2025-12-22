@@ -16,11 +16,11 @@
  */
 package org.geotools.feature.visitor;
 
-import org.opengis.feature.FeatureVisitor;
+import org.geotools.api.feature.FeatureVisitor;
 
 /**
- * A visitor that can limit the features that can be visited (for example to implement startOffset,
- * maxFeatures pagination).
+ * A visitor that can limit the features that can be visited (for example to implement startOffset, maxFeatures
+ * pagination).
  *
  * @author Mauro Bartolomeoli (mauro.bartolomeoli at geo-solutions.it)
  * @see FeatureVisitor

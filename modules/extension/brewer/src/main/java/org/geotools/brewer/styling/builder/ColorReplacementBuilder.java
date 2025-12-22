@@ -18,8 +18,8 @@ package org.geotools.brewer.styling.builder;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.geotools.styling.ColorReplacement;
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.ColorReplacement;
 
 public class ColorReplacementBuilder extends AbstractStyleBuilder<ColorReplacement> {
     private Expression propertyName;
@@ -57,17 +57,13 @@ public class ColorReplacementBuilder extends AbstractStyleBuilder<ColorReplaceme
     }
 
     @Override
-    public ColorReplacementBuilder reset(ColorReplacement original) {
-        return reset((org.opengis.style.ColorReplacement) original);
-    }
-
-    public ColorReplacementBuilder reset(org.opengis.style.ColorReplacement replacement) {
+    public ColorReplacementBuilder reset(org.geotools.api.style.ColorReplacement replacement) {
         if (replacement == null) {
             return unset();
         }
         mapping.clear();
         if (replacement.getRecoding() != null
-                && replacement.getRecoding().getParameters().size() > 0) {
+                && !replacement.getRecoding().getParameters().isEmpty()) {
             List<Expression> params = replacement.getRecoding().getParameters();
             propertyName = params.get(0);
             for (Expression param : params) {

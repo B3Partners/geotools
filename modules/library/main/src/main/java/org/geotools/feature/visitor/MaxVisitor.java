@@ -19,13 +19,13 @@ package org.geotools.feature.visitor;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.IllegalFilterException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Calculates the maximum value of an attribute.
@@ -45,8 +45,7 @@ public class MaxVisitor implements FeatureCalc, FeatureAttributeVisitor {
         expr = factory.property(attributeTypeName);
     }
 
-    public MaxVisitor(int attributeTypeIndex, SimpleFeatureType type)
-            throws IllegalFilterException {
+    public MaxVisitor(int attributeTypeIndex, SimpleFeatureType type) throws IllegalFilterException {
         FilterFactory factory = CommonFactoryFinder.getFilterFactory(null);
         expr = factory.property(type.getDescriptor(attributeTypeIndex).getLocalName());
     }
@@ -80,11 +79,11 @@ public class MaxVisitor implements FeatureCalc, FeatureAttributeVisitor {
      * @param feature the feature to be visited
      */
     public void visit(SimpleFeature feature) {
-        visit((org.opengis.feature.Feature) feature);
+        visit((org.geotools.api.feature.Feature) feature);
     }
 
     @Override
-    public void visit(org.opengis.feature.Feature feature) {
+    public void visit(org.geotools.api.feature.Feature feature) {
         Object attribValue = expr.evaluate(feature);
 
         if (attribValue == null) {
@@ -92,8 +91,8 @@ public class MaxVisitor implements FeatureCalc, FeatureAttributeVisitor {
             return;
         }
 
-        if (attribValue instanceof Double) {
-            double doubleVal = ((Double) attribValue).doubleValue();
+        if (attribValue instanceof Double double1) {
+            double doubleVal = double1.doubleValue();
             if (Double.isNaN(doubleVal) || Double.isInfinite(doubleVal)) {
                 countNaN++; // increment the NaN count, but don't store NaN as the max
                 return;
@@ -142,7 +141,7 @@ public class MaxVisitor implements FeatureCalc, FeatureAttributeVisitor {
     }
 
     public void reset() {
-        /** Reset the count and current maximum */
+        /* Reset the count and current maximum */
         this.visited = false;
         this.maxvalue = null;
         this.countNaN = 0;
@@ -163,8 +162,8 @@ public class MaxVisitor implements FeatureCalc, FeatureAttributeVisitor {
     }
 
     /**
-     * Overwrites the result stored by the visitor. This should only be used by optimizations which
-     * will tell the visitor the answer rather than visiting all features.
+     * Overwrites the result stored by the visitor. This should only be used by optimizations which will tell the
+     * visitor the answer rather than visiting all features.
      *
      * <p>For 'max', the value stored is of type 'Comparable'.
      */
@@ -213,13 +212,10 @@ public class MaxVisitor implements FeatureCalc, FeatureAttributeVisitor {
                 Comparable toAdd = (Comparable) resultsToAdd.getValue();
                 Comparable newMax = maxValue;
 
-                if (newMax.getClass()
-                        != toAdd.getClass()) { // 2 different data types, therefore convert
+                if (newMax.getClass() != toAdd.getClass()) { // 2 different data types, therefore convert
                     Class bestClass = CalcUtil.bestClass(toAdd, newMax);
-                    if (bestClass != toAdd.getClass())
-                        toAdd = (Comparable) CalcUtil.convert(toAdd, bestClass);
-                    if (bestClass != newMax.getClass())
-                        newMax = (Comparable) CalcUtil.convert(newMax, bestClass);
+                    if (bestClass != toAdd.getClass()) toAdd = (Comparable) CalcUtil.convert(toAdd, bestClass);
+                    if (bestClass != newMax.getClass()) newMax = (Comparable) CalcUtil.convert(newMax, bestClass);
                 }
                 if (newMax.compareTo(toAdd) < 0) {
                     newMax = toAdd;

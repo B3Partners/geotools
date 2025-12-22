@@ -16,6 +16,12 @@
  */
 package org.geotools.referencing.factory.epsg;
 
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.cs.CSAuthorityFactory;
+import org.geotools.api.referencing.datum.DatumAuthorityFactory;
+import org.geotools.api.referencing.operation.CoordinateOperationAuthorityFactory;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.referencing.factory.AbstractAuthorityFactory;
@@ -25,20 +31,13 @@ import org.geotools.util.factory.FactoryNotFoundException;
 import org.geotools.util.factory.FactoryRegistryException;
 import org.geotools.util.factory.GeoTools;
 import org.geotools.util.factory.Hints;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.cs.CSAuthorityFactory;
-import org.opengis.referencing.datum.DatumAuthorityFactory;
-import org.opengis.referencing.operation.CoordinateOperationAuthorityFactory;
 
 /**
- * An EPSG authority factory using (<var>longitude</var>, <var>latitude</var>) axis order. This
- * factory wraps a {@link ThreadedEpsgFactory} into an {@link OrderedAxisAuthorityFactory} when
- * first needed.
+ * An EPSG authority factory using (<var>longitude</var>, <var>latitude</var>) axis order. This factory wraps a
+ * {@link ThreadedEpsgFactory} into an {@link OrderedAxisAuthorityFactory} when first needed.
  *
- * <p>Users don't need to create explicitly an instance of this class. Instead, one can get an
- * instance using the following code:
+ * <p>Users don't need to create explicitly an instance of this class. Instead, one can get an instance using the
+ * following code:
  *
  * <blockquote>
  *
@@ -55,10 +54,7 @@ import org.opengis.referencing.operation.CoordinateOperationAuthorityFactory;
  * @see Hints#FORCE_LONGITUDE_FIRST_AXIS_ORDER
  */
 public class LongitudeFirstFactory extends DeferredAuthorityFactory
-        implements CRSAuthorityFactory,
-                CSAuthorityFactory,
-                CoordinateOperationAuthorityFactory,
-                DatumAuthorityFactory {
+        implements CRSAuthorityFactory, CSAuthorityFactory, CoordinateOperationAuthorityFactory, DatumAuthorityFactory {
     /*
      * Implementation note: in theory the DatumAuthorityFactory interface is useless here, since
      * "axis order" doesn't make any sense for them. However if we do not register this class for
@@ -67,12 +63,11 @@ public class LongitudeFirstFactory extends DeferredAuthorityFactory
      */
 
     /**
-     * Creates a default factory. The {@link Hints#FORCE_LONGITUDE_FIRST_AXIS_ORDER
-     * FORCE_LONGITUDE_FIRST_AXIS_ORDER} hint is always set to {@link Boolean#TRUE TRUE}. The {@link
-     * Hints#FORCE_STANDARD_AXIS_DIRECTIONS FORCE_STANDARD_AXIS_DIRECTIONS} and {@link
-     * Hints#FORCE_STANDARD_AXIS_UNITS FORCE_STANDARD_AXIS_UNITS} hints are set to {@link
-     * Boolean#FALSE FALSE} by default. A different value for those two hints can be specified using
-     * the {@linkplain LongitudeFirstFactory(Hints) constructor below}.
+     * Creates a default factory. The {@link Hints#FORCE_LONGITUDE_FIRST_AXIS_ORDER FORCE_LONGITUDE_FIRST_AXIS_ORDER}
+     * hint is always set to {@link Boolean#TRUE TRUE}. The {@link Hints#FORCE_STANDARD_AXIS_DIRECTIONS
+     * FORCE_STANDARD_AXIS_DIRECTIONS} and {@link Hints#FORCE_STANDARD_AXIS_UNITS FORCE_STANDARD_AXIS_UNITS} hints are
+     * set to {@link Boolean#FALSE FALSE} by default. A different value for those two hints can be specified using the
+     * {@linkplain LongitudeFirstFactory(Hints) constructor below}.
      */
     public LongitudeFirstFactory() {
         this(null);
@@ -104,10 +99,9 @@ public class LongitudeFirstFactory extends DeferredAuthorityFactory
     }
 
     /**
-     * Returns the priority to use relative to the {@link ThreadedEpsgFactory} priority. The default
-     * priority should be lower, except if the <code>
-     * {@value GeoTools#FORCE_LONGITUDE_FIRST_AXIS_ORDER}</code> system property is set to {@code
-     * true}.
+     * Returns the priority to use relative to the {@link ThreadedEpsgFactory} priority. The default priority should be
+     * lower, except if the <code>
+     * {@value GeoTools#FORCE_LONGITUDE_FIRST_AXIS_ORDER}</code> system property is set to {@code true}.
      */
     private static int relativePriority() {
         try {
@@ -121,19 +115,18 @@ public class LongitudeFirstFactory extends DeferredAuthorityFactory
     }
 
     /**
-     * Returns the authority for this EPSG database. This authority will contains the database
-     * version in the {@linkplain Citation#getEdition edition} attribute, together with the
-     * {@linkplain Citation#getEditionDate edition date}.
+     * Returns the authority for this EPSG database. This authority will contains the database version in the
+     * {@linkplain Citation#getEdition edition} attribute, together with the {@linkplain Citation#getEditionDate edition
+     * date}.
      */
     @Override
     public Citation getAuthority() {
         final Citation authority = super.getAuthority();
-        return (authority != null) ? authority : Citations.EPSG;
+        return authority != null ? authority : Citations.EPSG;
     }
 
     /**
-     * Returns the factory instance (usually {@link ThreadedEpsgFactory}) to be used as the backing
-     * store.
+     * Returns the factory instance (usually {@link ThreadedEpsgFactory}) to be used as the backing store.
      *
      * @throws FactoryException If no suitable factory instance was found.
      */
@@ -153,22 +146,19 @@ public class LongitudeFirstFactory extends DeferredAuthorityFactory
          * false since forcing axis directions / units is handled by OrderedAxisAuthorityFactory
          * and we don't want the backing store to interfer with that.
          */
-        final Hints backingStoreHints =
-                new Hints(Hints.CRS_AUTHORITY_FACTORY, ThreadedEpsgFactory.class);
+        final Hints backingStoreHints = new Hints(Hints.CRS_AUTHORITY_FACTORY, ThreadedEpsgFactory.class);
         backingStoreHints.put(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER, Boolean.FALSE);
         backingStoreHints.put(Hints.FORCE_STANDARD_AXIS_DIRECTIONS, Boolean.FALSE);
         backingStoreHints.put(Hints.FORCE_STANDARD_AXIS_UNITS, Boolean.FALSE);
         final AbstractAuthorityFactory factory;
         try {
-            factory =
-                    (AbstractAuthorityFactory)
-                            ReferencingFactoryFinder.getCRSAuthorityFactory(
-                                    "EPSG", backingStoreHints);
+            factory = (AbstractAuthorityFactory)
+                    ReferencingFactoryFinder.getCRSAuthorityFactory("EPSG", backingStoreHints);
         } catch (FactoryNotFoundException exception) {
             throw new org.geotools.referencing.factory.FactoryNotFoundException(exception);
         } catch (FactoryRegistryException exception) {
             throw new FactoryException(exception);
         }
-        return new OrderedAxisAuthorityFactory(factory, new Hints(hints), null);
+        return new OrderedAxisAuthorityFactory(factory, new Hints(hints));
     }
 }

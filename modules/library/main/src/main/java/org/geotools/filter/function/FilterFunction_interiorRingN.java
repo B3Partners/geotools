@@ -20,20 +20,16 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LinearRing;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_interiorRingN extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "interiorRingN",
-                    LinearRing.class,
-                    parameter("geometry", Geometry.class),
-                    parameter("n", Integer.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "interiorRingN", LinearRing.class, parameter("geometry", Geometry.class), parameter("n", Integer.class));
 
     public FilterFunction_interiorRingN() {
         super(NAME);
@@ -53,13 +49,13 @@ public class FilterFunction_interiorRingN extends FunctionExpressionImpl {
         }
 
         try { // attempt to get value and perform conversion
-            arg1 = (getExpression(1).evaluate(feature, Integer.class)).intValue();
+            arg1 = getExpression(1).evaluate(feature, Integer.class).intValue();
         } catch (Exception e) // probably a type error
         {
             throw new IllegalArgumentException(
                     "Filter Function problem for function interiorRingN argument #1 - expected type int");
         }
 
-        return (StaticGeometry.interiorRingN(arg0, arg1));
+        return StaticGeometry.interiorRingN(arg0, arg1);
     }
 }

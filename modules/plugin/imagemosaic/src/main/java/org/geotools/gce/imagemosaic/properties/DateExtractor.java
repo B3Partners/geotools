@@ -23,9 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.simple.SimpleFeature;
 
 /** @author Niels Charlier */
 class DateExtractor extends PropertiesCollector {
@@ -38,10 +38,9 @@ class DateExtractor extends PropertiesCollector {
 
     @Override
     public PropertiesCollector collect(final GridCoverage2DReader gridCoverageReader) {
-        String value =
-                ((org.geotools.gce.geotiff.GeoTiffReader) gridCoverageReader)
-                        .getMetadata()
-                        .getAsciiTIFFTag("306");
+        String value = ((org.geotools.gce.geotiff.GeoTiffReader) gridCoverageReader)
+                .getMetadata()
+                .getAsciiTIFFTag("306");
         if (value != null) {
             addMatch("" + value);
         } else {
@@ -50,11 +49,13 @@ class DateExtractor extends PropertiesCollector {
         return this;
     }
 
+    @SuppressWarnings("DuplicateDateFormatField") // we're not reusing SimpleDateFormat, errorprone complains though
     private Date getDate() {
         String dateStr = !getMatches().isEmpty() ? getMatches().get(0) : null;
         if (dateStr != null && !dateStr.isEmpty()) {
             try {
-                return new SimpleDateFormat("yyyy:mm:dd hh:mm:ss").parse(getMatches().get(0));
+                return new SimpleDateFormat("yyyy:mm:dd hh:mm:ss")
+                        .parse(getMatches().get(0));
             } catch (ParseException e) {
                 LOGGER.log(Level.WARNING, "Failed to parse date: " + dateStr, e);
             }

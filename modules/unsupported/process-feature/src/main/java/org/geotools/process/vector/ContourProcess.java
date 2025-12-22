@@ -16,6 +16,8 @@
  */
 package org.geotools.process.vector;
 
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.FeatureCollection;
@@ -23,8 +25,6 @@ import org.geotools.process.ProcessException;
 import org.geotools.process.factory.DescribeParameter;
 import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.util.ProgressListener;
 
 /** @author ian */
 @DescribeProcess(title = "Contours", description = "Computes contours over the point features.")
@@ -34,16 +34,12 @@ public class ContourProcess implements VectorProcess {
     public SimpleFeatureCollection execute(
             @DescribeParameter(name = "features", description = "Input point feature collection")
                     FeatureCollection features,
-            @DescribeParameter(name = "propertyName", description = "PropertyName to be contoured")
-                    String propertyName,
-            @DescribeParameter(
-                            name = "levels",
-                            description = "Values of levels at which to generate contours")
+            @DescribeParameter(name = "propertyName", description = "PropertyName to be contoured") String propertyName,
+            @DescribeParameter(name = "levels", description = "Values of levels at which to generate contours")
                     double[] levels,
             @DescribeParameter(
                             name = "interval",
-                            description =
-                                    "Interval between contour values (ignored if levels parameter is supplied)",
+                            description = "Interval between contour values (ignored if levels parameter is supplied)",
                             min = 0,
                             minValue = 0)
                     Double interval,
@@ -56,8 +52,7 @@ public class ContourProcess implements VectorProcess {
                     Boolean simplify,
             @DescribeParameter(
                             name = "smooth",
-                            description =
-                                    "Indicates whether contour lines are smoothed using Bezier smoothing",
+                            description = "Indicates whether contour lines are smoothed using Bezier smoothing",
                             min = 0)
                     Boolean smooth,
             // @DescribeParameter(name = "roi", description = "Geometry delineating the region of
@@ -81,7 +76,7 @@ public class ContourProcess implements VectorProcess {
             double max = Double.NEGATIVE_INFINITY;
             try (SimpleFeatureIterator it = (SimpleFeatureIterator) features.features()) {
                 while (it.hasNext()) {
-                    SimpleFeature feature = (SimpleFeature) it.next();
+                    SimpleFeature feature = it.next();
                     double value = (Double) feature.getAttribute(propertyName);
                     min = Math.min(min, value);
                     max = Math.max(max, value);

@@ -18,22 +18,22 @@ package org.geotools.data.crs;
 
 import java.io.IOException;
 import java.util.Iterator;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.store.ReprojectingFeatureCollection;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureTypes;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.collection.AbstractFeatureCollection;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * ForceCoordinateSystemFeatureResults provides a CoordinateReferenceSystem for FeatureTypes.
  *
- * <p>ForceCoordinateSystemFeatureReader is a wrapper used to force GeometryAttributes to a user
- * supplied CoordinateReferenceSystem rather then the default supplied by the DataStore.
+ * <p>ForceCoordinateSystemFeatureReader is a wrapper used to force GeometryAttributes to a user supplied
+ * CoordinateReferenceSystem rather then the default supplied by the DataStore.
  *
  * <p>Example Use:
  *
@@ -58,8 +58,7 @@ public class ForceCoordinateSystemFeatureResults extends AbstractFeatureCollecti
     FeatureCollection<SimpleFeatureType, SimpleFeature> results;
 
     public ForceCoordinateSystemFeatureResults(
-            FeatureCollection<SimpleFeatureType, SimpleFeature> results,
-            CoordinateReferenceSystem forcedCS)
+            FeatureCollection<SimpleFeatureType, SimpleFeature> results, CoordinateReferenceSystem forcedCS)
             throws IOException, SchemaException {
         this(results, forcedCS, false);
     }
@@ -74,14 +73,13 @@ public class ForceCoordinateSystemFeatureResults extends AbstractFeatureCollecti
         this.results = results;
     }
 
-    private static SimpleFeatureType origionalType(
-            FeatureCollection<SimpleFeatureType, SimpleFeature> results) {
+    private static SimpleFeatureType origionalType(FeatureCollection<SimpleFeatureType, SimpleFeature> results) {
         while (true) {
-            if (results instanceof ReprojectFeatureResults) {
-                results = ((ReprojectFeatureResults) results).getOrigin();
+            if (results instanceof ReprojectFeatureResults featureResults) {
+                results = featureResults.getOrigin();
             }
-            if (results instanceof ForceCoordinateSystemFeatureResults) {
-                results = ((ForceCoordinateSystemFeatureResults) results).getOrigin();
+            if (results instanceof ForceCoordinateSystemFeatureResults featureResults) {
+                results = featureResults.getOrigin();
             }
             break;
         }
@@ -95,9 +93,7 @@ public class ForceCoordinateSystemFeatureResults extends AbstractFeatureCollecti
 
     @SuppressWarnings("PMD.CloseResource")
     public void closeIterator(Iterator close) {
-        if (close == null) return;
-        if (close instanceof ForceCoordinateSystemIterator) {
-            ForceCoordinateSystemIterator iterator = (ForceCoordinateSystemIterator) close;
+        if (close instanceof ForceCoordinateSystemIterator iterator) {
             iterator.close();
         }
     }
@@ -108,17 +104,14 @@ public class ForceCoordinateSystemFeatureResults extends AbstractFeatureCollecti
     }
 
     private static SimpleFeatureType forceType(
-            SimpleFeatureType startingType,
-            CoordinateReferenceSystem forcedCS,
-            boolean forceOnlyMissing)
+            SimpleFeatureType startingType, CoordinateReferenceSystem forcedCS, boolean forceOnlyMissing)
             throws SchemaException {
         if (forcedCS == null) {
             throw new NullPointerException("CoordinateSystem required");
         }
-        CoordinateReferenceSystem originalCs =
-                startingType.getGeometryDescriptor() != null
-                        ? startingType.getGeometryDescriptor().getCoordinateReferenceSystem()
-                        : null;
+        CoordinateReferenceSystem originalCs = startingType.getGeometryDescriptor() != null
+                ? startingType.getGeometryDescriptor().getCoordinateReferenceSystem()
+                : null;
 
         if (forcedCS.equals(originalCs)) {
             return startingType;
@@ -164,7 +157,7 @@ public class ForceCoordinateSystemFeatureResults extends AbstractFeatureCollecti
 
     @Override
     public void accepts(
-            org.opengis.feature.FeatureVisitor visitor, org.opengis.util.ProgressListener progress)
+            org.geotools.api.feature.FeatureVisitor visitor, org.geotools.api.util.ProgressListener progress)
             throws IOException {
         if (canDelegate(visitor)) {
             results.accepts(visitor, progress);

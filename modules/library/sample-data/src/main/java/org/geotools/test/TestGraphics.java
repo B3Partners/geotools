@@ -28,7 +28,6 @@ import java.awt.Paint;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
-import java.awt.RenderingHints.Key;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.font.FontRenderContext;
@@ -46,13 +45,13 @@ import java.util.Map;
 /**
  * Utility class you can use in test cases to ensure a renderer is doing what you expected.
  *
- * <p>Originally made to check up on SLD settings; adding to support data in case it is of general
- * utility. Please be advised it is very hard to write cross platform tests for things
+ * <p>Originally made to check up on SLD settings; adding to support data in case it is of general utility. Please be
+ * advised it is very hard to write cross platform tests for things
  *
  * @author Jody Garnett
  */
 public class TestGraphics extends Graphics2D {
-    public Map<Key, ?> hints;
+    public Map<RenderingHints.Key, ?> hints;
     public Shape clip;
     public Shape draw;
     public GlyphVector glyphs;
@@ -135,7 +134,7 @@ public class TestGraphics extends Graphics2D {
 
     @Override
     public void drawString(AttributedCharacterIterator iterator, int x, int y) {
-        StringBuffer build = new StringBuffer();
+        StringBuilder build = new StringBuilder();
         char c;
         while ((c = iterator.next()) != iterator.DONE) {
             build.append(c);
@@ -147,7 +146,7 @@ public class TestGraphics extends Graphics2D {
 
     @Override
     public void drawString(AttributedCharacterIterator iterator, float x, float y) {
-        StringBuffer build = new StringBuffer();
+        StringBuilder build = new StringBuilder();
         char c;
         while ((c = iterator.next()) != iterator.DONE) {
             build.append(c);
@@ -189,7 +188,7 @@ public class TestGraphics extends Graphics2D {
     }
 
     @Override
-    public Object getRenderingHint(Key hintKey) {
+    public Object getRenderingHint(RenderingHints.Key hintKey) {
         return hints.get(hintKey);
     }
 
@@ -253,7 +252,7 @@ public class TestGraphics extends Graphics2D {
     }
 
     @Override
-    public void setRenderingHint(Key hintKey, Object hintValue) {
+    public void setRenderingHint(RenderingHints.Key hintKey, Object hintValue) {
         // TODO Auto-generated method stub
 
     }
@@ -261,7 +260,7 @@ public class TestGraphics extends Graphics2D {
     @Override
     @SuppressWarnings("unchecked")
     public void setRenderingHints(Map<?, ?> hints) {
-        this.hints = (Map<Key, ?>) hints;
+        this.hints = (Map<RenderingHints.Key, ?>) hints;
     }
 
     @Override
@@ -349,31 +348,20 @@ public class TestGraphics extends Graphics2D {
     }
 
     @Override
-    public boolean drawImage(
-            Image img, int x, int y, int width, int height, ImageObserver observer) {
+    public boolean drawImage(Image img, int x, int y, int width, int height, ImageObserver observer) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean drawImage(Image img, int x, int y, int width, int height, Color bgcolor, ImageObserver observer) {
         // TODO Auto-generated method stub
         return false;
     }
 
     @Override
     public boolean drawImage(
-            Image img, int x, int y, int width, int height, Color bgcolor, ImageObserver observer) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public boolean drawImage(
-            Image img,
-            int dx1,
-            int dy1,
-            int dx2,
-            int dy2,
-            int sx1,
-            int sy1,
-            int sx2,
-            int sy2,
-            ImageObserver observer) {
+            Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2, ImageObserver observer) {
         // TODO Auto-generated method stub
         return false;
     }

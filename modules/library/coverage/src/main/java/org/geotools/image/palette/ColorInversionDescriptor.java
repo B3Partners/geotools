@@ -22,11 +22,13 @@ import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
-import javax.media.jai.OperationDescriptorImpl;
-import javax.media.jai.registry.RenderedRegistryMode;
+import java.io.Serial;
+import org.eclipse.imagen.OperationDescriptorImpl;
+import org.eclipse.imagen.registry.RenderedRegistryMode;
 
 public class ColorInversionDescriptor extends OperationDescriptorImpl {
     /** */
+    @Serial
     private static final long serialVersionUID = -8859576263333814317L;
 
     /** Builds the internet safe paletteInverter */
@@ -43,7 +45,7 @@ public class ColorInversionDescriptor extends OperationDescriptorImpl {
         for (int r = 0; r < 256; r += 51) {
             for (int g = 0; g < 256; g += 51) {
                 for (int b = 0; b < 256; b += 51) {
-                    cmap[i] = opaqueAlpha | (r << 16) | (g << 8) | b;
+                    cmap[i] = opaqueAlpha | r << 16 | g << 8 | b;
                     i++;
                 }
             }
@@ -51,15 +53,15 @@ public class ColorInversionDescriptor extends OperationDescriptorImpl {
 
         // The gray scale. Make sure we end up with gray == 255
         int grayIncr = 256 / (255 - i);
-        int gray = 255 - ((255 - i - 1) * grayIncr);
+        int gray = 255 - (255 - i - 1) * grayIncr;
 
         for (; i < 255; i++) {
-            cmap[i] = opaqueAlpha | (gray << 16) | (gray << 8) | gray;
+            cmap[i] = opaqueAlpha | gray << 16 | gray << 8 | gray;
             gray += grayIncr;
         }
 
         // setup the transparent color (alpha == 0)
-        cmap[255] = (255 << 16) | (255 << 8) | 255;
+        cmap[255] = 255 << 16 | 255 << 8 | 255;
 
         // create the color model
         return new IndexColorModel(8, 256, cmap, 0, true, 255, DataBuffer.TYPE_BYTE);
@@ -75,10 +77,7 @@ public class ColorInversionDescriptor extends OperationDescriptorImpl {
                     {"GlobalName", OPERATION_NAME},
                     {"LocalName", OPERATION_NAME},
                     {"Vendor", "it.geosolutions"},
-                    {
-                        "Description",
-                        "Produce a paletted imge from an RGB or RGBA image using a provided palette."
-                    },
+                    {"Description", "Produce a paletted imge from an RGB or RGBA image using a provided palette."},
                     {"DocURL", "http://www.geo-solutions.it/"}, // TODO:
                     // provides more
                     // accurate URL
@@ -90,9 +89,7 @@ public class ColorInversionDescriptor extends OperationDescriptorImpl {
                 new String[] {RenderedRegistryMode.MODE_NAME},
                 0, // Supported
                 // modes
-                new String[] {
-                    "IndexColorModel", "quantizationColors", "alphaThreshold"
-                }, // Parameter
+                new String[] {"IndexColorModel", "quantizationColors", "alphaThreshold"}, // Parameter
                 // names
                 new Class[] {
                     IndexColorModel.class, Integer.class, Integer.class,
@@ -109,16 +106,15 @@ public class ColorInversionDescriptor extends OperationDescriptorImpl {
     }
 
     /**
-     * Returns {@code true} if this operation supports the specified mode, and is capable of
-     * handling the given input source(s) for the specified mode.
+     * Returns {@code true} if this operation supports the specified mode, and is capable of handling the given input
+     * source(s) for the specified mode.
      *
      * @param modeName The mode name (usually "Rendered").
      * @param param The parameter block for the operation to performs.
      * @param message A buffer for formatting an error message if any.
      */
     @Override
-    protected boolean validateSources(
-            final String modeName, final ParameterBlock param, final StringBuffer message) {
+    protected boolean validateSources(final String modeName, final ParameterBlock param, final StringBuffer message) {
         if (super.validateSources(modeName, param, message)) {
             for (int i = param.getNumSources(); --i >= 0; ) {
                 final Object source = param.getSource(i);
@@ -132,8 +128,8 @@ public class ColorInversionDescriptor extends OperationDescriptorImpl {
     }
 
     /**
-     * Returns {@code true} if the parameters are valids. This implementation check that the number
-     * of bands in the source src1 is equals to the number of bands of source src2.
+     * Returns {@code true} if the parameters are valids. This implementation check that the number of bands in the
+     * source src1 is equals to the number of bands of source src2.
      *
      * @param modeName The mode name (usually "Rendered").
      * @param param The parameter block for the operation to performs.
@@ -149,7 +145,7 @@ public class ColorInversionDescriptor extends OperationDescriptorImpl {
         final int numColors = ((Integer) param.getObjectParameter(1)).intValue();
         final int alphaThreashold = ((Integer) param.getObjectParameter(2)).intValue();
         if (alphaThreashold < 0 || alphaThreashold > 255) return false;
-        if (numColors <= 0 || (numColors > 256)) return false;
+        if (numColors <= 0 || numColors > 256) return false;
         return true;
     }
 }

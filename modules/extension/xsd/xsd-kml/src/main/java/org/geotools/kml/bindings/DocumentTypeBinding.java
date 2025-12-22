@@ -22,6 +22,10 @@ import java.util.Iterator;
 import java.util.List;
 import javax.xml.namespace.QName;
 import org.eclipse.xsd.XSDElementDeclaration;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.FeatureType;
 import org.geotools.data.DataUtilities;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -31,10 +35,6 @@ import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.Binding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.FeatureType;
 
 /**
  * Binding object for the type http://earth.google.com/kml/2.1:DocumentType.
@@ -122,8 +122,7 @@ public class DocumentTypeBinding extends AbstractComplexBinding {
     }
 
     @Override
-    public List<Object[]> getProperties(Object object, XSDElementDeclaration element)
-            throws Exception {
+    public List<Object[]> getProperties(Object object, XSDElementDeclaration element) throws Exception {
         Object[] prop = new Object[2];
         prop[0] = getPlacemarkName();
         if (object instanceof FeatureCollection) {
@@ -133,10 +132,9 @@ public class DocumentTypeBinding extends AbstractComplexBinding {
             Iterator<Feature> iterator = DataUtilities.iterator(fc.features());
 
             prop[1] = iterator;
-        } else if (object instanceof Collection) {
-            prop[1] = ((Collection) object).iterator();
-        } else if (object instanceof SimpleFeature) {
-            SimpleFeature feature = (SimpleFeature) object;
+        } else if (object instanceof Collection collection) {
+            prop[1] = collection.iterator();
+        } else if (object instanceof SimpleFeature feature) {
             prop[1] = feature.getAttribute("Feature");
         }
         List<Object[]> l = new ArrayList<>();

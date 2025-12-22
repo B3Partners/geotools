@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.DataStore;
+import org.geotools.api.data.DataStore;
 import org.geotools.data.jdbc.datasource.ManageableDataSource;
 import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.jdbc.JDBCDataStoreFactory;
@@ -45,7 +45,7 @@ public class H2GISDataStoreFactoryTest {
         factory = new H2GISDataStoreFactory();
         params = new HashMap<>();
         params.put(JDBCDataStoreFactory.NAMESPACE.key, "http://www.geotools.org/test");
-        params.put(JDBCDataStoreFactory.DATABASE.key, "geotools");
+        params.put(JDBCDataStoreFactory.DATABASE.key, "target/geotools-factory-test");
         params.put(JDBCDataStoreFactory.DBTYPE.key, "h2gis");
     }
 

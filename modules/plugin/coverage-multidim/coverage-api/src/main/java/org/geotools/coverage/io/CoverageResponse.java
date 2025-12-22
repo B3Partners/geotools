@@ -20,10 +20,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import org.geotools.api.coverage.Coverage;
+import org.geotools.api.coverage.grid.GridCoverage;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.data.util.NullProgressListener;
-import org.opengis.coverage.Coverage;
-import org.opengis.coverage.grid.GridCoverage;
-import org.opengis.util.ProgressListener;
 
 /** @author Simone Giannecchini, GeoSolutions */
 public class CoverageResponse {
@@ -65,9 +65,8 @@ public class CoverageResponse {
     }
 
     /**
-     * The handle attribute is included to allow a client to associate a mnemonic name to the Query
-     * request. The purpose of the handle attribute is to provide an error handling mechanism for
-     * locating a statement that might fail.
+     * The handle attribute is included to allow a client to associate a mnemonic name to the Query request. The purpose
+     * of the handle attribute is to provide an error handling mechanism for locating a statement that might fail.
      *
      * @return the mnemonic name of the query request.
      */
@@ -117,8 +116,7 @@ public class CoverageResponse {
     }
 
     /**
-     * Get the status of this coverage response. It should always be checked before assuming any
-     * data is available.
+     * Get the status of this coverage response. It should always be checked before assuming any data is available.
      *
      * @return the {@linkplain Status status} of this coverage response.
      */

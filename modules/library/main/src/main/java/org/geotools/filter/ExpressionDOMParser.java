@@ -23,6 +23,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.StringTokenizer;
 import java.util.logging.Logger;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Coordinate;
@@ -33,10 +37,6 @@ import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.TopologyException;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -44,19 +44,18 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.helpers.NamespaceSupport;
 
 /**
- * parses short sections of gml for use in expressions and filters. Hopefully we can get away
- * without a full parser here.
+ * parses short sections of gml for use in expressions and filters. Hopefully we can get away without a full parser
+ * here.
  *
  * @author iant
  * @author Niels Charlier
  */
 public final class ExpressionDOMParser {
     /** The logger for the filter module. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(ExpressionDOMParser.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(ExpressionDOMParser.class);
 
     /** Factory for creating filters. */
-    private FilterFactory2 ff;
+    private FilterFactory ff;
 
     /** Factory for creating geometry objects */
     private static GeometryFactory gfac = new GeometryFactory();
@@ -65,26 +64,26 @@ public final class ExpressionDOMParser {
     private static final int NUM_BOX_COORDS = 5;
 
     /**
-     * @param filterFactory The FilterFactory2 to create literals and expressions with.
+     * @param filterFactory The FilterFactory to create literals and expressions with.
      * @throws NullPointerException in case of filterFactory is null.
      */
-    public ExpressionDOMParser(FilterFactory2 filterFactory) {
+    public ExpressionDOMParser(FilterFactory filterFactory) {
         Objects.requireNonNull(filterFactory);
         this.ff = filterFactory;
     }
 
     /** Constructor injection */
     public ExpressionDOMParser() {
-        this(CommonFactoryFinder.getFilterFactory2(null));
+        this(CommonFactoryFinder.getFilterFactory(null));
     }
 
     /**
      * Setter injection
      *
-     * @param filterFactory The FilterFactory2 to create literals and expressions with.
+     * @param filterFactory The FilterFactory to create literals and expressions with.
      * @throws NullPointerException in case of filterFactory is null.
      */
-    public void setFilterFactory(FilterFactory2 filterFactory) {
+    public void setFilterFactory(FilterFactory filterFactory) {
         Objects.requireNonNull(filterFactory);
         ff = filterFactory;
     }
@@ -121,7 +120,7 @@ public final class ExpressionDOMParser {
     public Expression expression(Node root) {
         // NodeList children = root.getChildNodes();
         // LOGGER.finest("children "+children);
-        if ((root == null) || (root.getNodeType() != Node.ELEMENT_NODE)) {
+        if (root == null || root.getNodeType() != Node.ELEMENT_NODE) {
             LOGGER.finer("bad node input ");
 
             return null;
@@ -131,8 +130,7 @@ public final class ExpressionDOMParser {
 
         Node child = root;
 
-        String childName =
-                (child.getLocalName() != null) ? child.getLocalName() : child.getNodeName();
+        String childName = child.getLocalName() != null ? child.getLocalName() : child.getNodeName();
 
         if (childName.indexOf(':') != -1) {
             // the DOM parser wasnt properly set to handle namespaces...
@@ -160,8 +158,7 @@ public final class ExpressionDOMParser {
                      * a geometry this is a bit tricky since our standard
                      * gml parser is SAX based and we're a DOM here.
                      */
-                    LOGGER.finer(
-                            "node " + kid.getNodeValue() + " namespace " + kid.getNamespaceURI());
+                    LOGGER.finer("node " + kid.getNodeValue() + " namespace " + kid.getNamespaceURI());
                     LOGGER.fine("a literal gml string?");
 
                     try {
@@ -481,8 +478,7 @@ public final class ExpressionDOMParser {
         }
 
         if (childName.equalsIgnoreCase("gml:box")) {
-            coordList =
-                    new ExpressionDOMParser(CommonFactoryFinder.getFilterFactory2()).coords(child);
+            coordList = new ExpressionDOMParser(CommonFactoryFinder.getFilterFactory()).coords(child);
 
             org.locationtech.jts.geom.Envelope env = new org.locationtech.jts.geom.Envelope();
 
@@ -564,8 +560,7 @@ public final class ExpressionDOMParser {
             }
         }
 
-        if (childName.equalsIgnoreCase("gml:outerBoundaryIs")
-                || childName.equalsIgnoreCase("gml:innerBoundaryIs")) {
+        if (childName.equalsIgnoreCase("gml:outerBoundaryIs") || childName.equalsIgnoreCase("gml:innerBoundaryIs")) {
             LOGGER.finer("Boundary layer");
 
             NodeList kids = ((Element) child).getElementsByTagName("gml:LinearRing");
@@ -575,8 +570,7 @@ public final class ExpressionDOMParser {
 
         if (childName.equalsIgnoreCase("gml:linearRing")) {
             LOGGER.finer("LinearRing");
-            coordList =
-                    new ExpressionDOMParser(CommonFactoryFinder.getFilterFactory2()).coords(child);
+            coordList = new ExpressionDOMParser(CommonFactoryFinder.getFilterFactory()).coords(child);
 
             org.locationtech.jts.geom.LinearRing ring = null;
 
@@ -593,8 +587,7 @@ public final class ExpressionDOMParser {
 
         if (childName.equalsIgnoreCase("gml:linestring")) {
             LOGGER.finer("linestring");
-            coordList =
-                    new ExpressionDOMParser(CommonFactoryFinder.getFilterFactory2()).coords(child);
+            coordList = new ExpressionDOMParser(CommonFactoryFinder.getFilterFactory()).coords(child);
 
             LineString line = gfac.createLineString(coordList.toArray(new Coordinate[] {}));
 
@@ -603,8 +596,7 @@ public final class ExpressionDOMParser {
 
         if (childName.equalsIgnoreCase("gml:point")) {
             LOGGER.finer("point");
-            coordList =
-                    new ExpressionDOMParser(CommonFactoryFinder.getFilterFactory2()).coords(child);
+            coordList = new ExpressionDOMParser(CommonFactoryFinder.getFilterFactory()).coords(child);
 
             Point point = gfac.createPoint(coordList.get(0));
 
@@ -678,21 +670,26 @@ public final class ExpressionDOMParser {
                     Node grandChild = grandChildren.item(t);
                     String grandChildName = grandChild.getNodeName();
                     if (grandChildName == null) grandChildName = grandChild.getLocalName();
-                    if (!grandChildName.startsWith("gml:"))
-                        grandChildName = "gml:" + grandChildName;
+                    if (!grandChildName.startsWith("gml:")) grandChildName = "gml:" + grandChildName;
 
                     if (grandChildName.equalsIgnoreCase("gml:x")) {
-                        c.x =
-                                Double.parseDouble(
-                                        grandChild.getChildNodes().item(0).getNodeValue().trim());
+                        c.x = Double.parseDouble(grandChild
+                                .getChildNodes()
+                                .item(0)
+                                .getNodeValue()
+                                .trim());
                     } else if (grandChildName.equalsIgnoreCase("gml:y")) {
-                        c.y =
-                                Double.parseDouble(
-                                        grandChild.getChildNodes().item(0).getNodeValue().trim());
+                        c.y = Double.parseDouble(grandChild
+                                .getChildNodes()
+                                .item(0)
+                                .getNodeValue()
+                                .trim());
                     } else if (grandChildName.equalsIgnoreCase("gml:z")) {
-                        c.setZ(
-                                Double.parseDouble(
-                                        grandChild.getChildNodes().item(0).getNodeValue().trim()));
+                        c.setZ(Double.parseDouble(grandChild
+                                .getChildNodes()
+                                .item(0)
+                                .getNodeValue()
+                                .trim()));
                     }
                 }
                 clist.add(c);

@@ -19,24 +19,27 @@ package org.geotools.data.complex.feature.type;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.eclipse.xsd.XSDComplexTypeDefinition;
 import org.eclipse.xsd.XSDTypeDefinition;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.Schema;
 import org.geotools.feature.NameImpl;
 import org.geotools.gml3.complex.GmlFeatureTypeRegistryConfiguration;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.complex.FeatureTypeRegistryConfiguration;
 import org.junit.Test;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.Schema;
 
 public class FeatureTypeRegistryTest {
-    private static final Name PolygonPropertyType =
-            new NameImpl("http://www.opengis.net/gml", "PolygonPropertyType");
+    private static final Name PolygonPropertyType = new NameImpl("http://www.opengis.net/gml", "PolygonPropertyType");
 
-    private class EmptyFeatureTypeRegistryConfiguration
-            implements FeatureTypeRegistryConfiguration {
+    private static class EmptyFeatureTypeRegistryConfiguration implements FeatureTypeRegistryConfiguration {
 
         @Override
         public Collection<Schema> getSchemas() {
@@ -67,17 +70,14 @@ public class FeatureTypeRegistryTest {
     @Test
     public void testMultiple() {
 
-        FeatureTypeRegistry registry1 =
-                new FeatureTypeRegistry(
-                        new ComplexFeatureTypeFactoryImpl(),
-                        new GmlFeatureTypeRegistryConfiguration("http://www.opengis.net/gml"));
+        FeatureTypeRegistry registry1 = new FeatureTypeRegistry(
+                new ComplexFeatureTypeFactoryImpl(),
+                new GmlFeatureTypeRegistryConfiguration("http://www.opengis.net/gml"));
 
         assertNotNull(registry1.getAttributeType(PolygonPropertyType));
 
-        FeatureTypeRegistry registry2 =
-                new FeatureTypeRegistry(
-                        new ComplexFeatureTypeFactoryImpl(),
-                        new EmptyFeatureTypeRegistryConfiguration());
+        FeatureTypeRegistry registry2 = new FeatureTypeRegistry(
+                new ComplexFeatureTypeFactoryImpl(), new EmptyFeatureTypeRegistryConfiguration());
 
         boolean exception;
         try {
@@ -87,5 +87,24 @@ public class FeatureTypeRegistryTest {
             exception = true;
         }
         assertTrue(exception);
+    }
+
+    @Test
+    public void testTypeRegistryThreadSafe() throws Exception {
+        ExecutorService executor = Executors.newFixedThreadPool(5);
+        List<Future<FeatureTypeRegistry>> futures = new ArrayList<>();
+
+        for (int i = 0; i < 5; i++) {
+            futures.add(executor.submit(() -> {
+                return new FeatureTypeRegistry(
+                        new ComplexFeatureTypeFactoryImpl(), new GmlFeatureTypeRegistryConfiguration(null));
+            }));
+        }
+
+        for (Future<FeatureTypeRegistry> future : futures) {
+            assertNotNull(future.get());
+        }
+
+        executor.shutdown();
     }
 }

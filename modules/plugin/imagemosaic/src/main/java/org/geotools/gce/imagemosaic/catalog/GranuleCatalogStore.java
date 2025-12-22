@@ -18,19 +18,19 @@ package org.geotools.gce.imagemosaic.catalog;
 
 import java.io.IOException;
 import java.util.logging.Logger;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.coverage.grid.io.GranuleStore;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.gce.imagemosaic.RasterManager;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
 
 /**
  * A {@link GranuleStore} implementation wrapping a {@link GranuleCatalog}.
@@ -41,15 +41,12 @@ public class GranuleCatalogStore extends GranuleCatalogSource implements Granule
 
     static final Logger LOGGER = Logging.getLogger(GranuleCatalogStore.class);
 
-    static final FilterFactory2 FF = CommonFactoryFinder.getFilterFactory2();
+    static final FilterFactory FF = CommonFactoryFinder.getFilterFactory();
 
     private Transaction transaction;
 
     public GranuleCatalogStore(
-            RasterManager manager,
-            GranuleCatalog catalog,
-            final String typeName,
-            final Hints hints) {
+            RasterManager manager, GranuleCatalog catalog, final String typeName, final Hints hints) {
         super(manager, catalog, typeName, hints);
     }
 
@@ -67,8 +64,7 @@ public class GranuleCatalogStore extends GranuleCatalogSource implements Granule
                 try {
                     catalog.addGranule(typeName, feature, transaction);
                 } catch (IOException e) {
-                    throw new RuntimeException(
-                            "Exception occurred while adding granules to the catalog", e);
+                    throw new RuntimeException("Exception occurred while adding granules to the catalog", e);
                 }
             }
         }
@@ -81,8 +77,7 @@ public class GranuleCatalogStore extends GranuleCatalogSource implements Granule
     }
 
     /**
-     * Check whether the specified feature has the same schema of the catalog where we are adding
-     * that feature.
+     * Check whether the specified feature has the same schema of the catalog where we are adding that feature.
      *
      * @param feature a sample SimpleFeature for compatibility check
      */
@@ -93,8 +88,7 @@ public class GranuleCatalogStore extends GranuleCatalogSource implements Granule
                         "The schema of the provided collection is not the same of the underlying catalog");
             }
         } catch (IOException e) {
-            throw new RuntimeException(
-                    "Exception occurred while getting the underlying catalog schema");
+            throw new RuntimeException("Exception occurred while getting the underlying catalog schema");
         }
     }
 

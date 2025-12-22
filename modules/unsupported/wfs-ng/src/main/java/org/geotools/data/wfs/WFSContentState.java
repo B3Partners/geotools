@@ -16,7 +16,7 @@
  */
 package org.geotools.data.wfs;
 
-import org.geotools.data.Transaction;
+import org.geotools.api.data.Transaction;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentState;
 
@@ -50,8 +50,7 @@ public class WFSContentState extends ContentState {
             synchronized (WFSRemoteTransactionState.class) {
                 WFSDataStore dataStore = (WFSDataStore) entry.getDataStore();
 
-                WFSRemoteTransactionState remoteStateKeeper =
-                        (WFSRemoteTransactionState) tx.getState(dataStore);
+                WFSRemoteTransactionState remoteStateKeeper = (WFSRemoteTransactionState) tx.getState(dataStore);
                 if (remoteStateKeeper == null) {
                     remoteStateKeeper = new WFSRemoteTransactionState(dataStore);
                     tx.putState(dataStore, remoteStateKeeper);

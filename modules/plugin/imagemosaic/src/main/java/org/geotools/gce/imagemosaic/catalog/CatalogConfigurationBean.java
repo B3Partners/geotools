@@ -16,8 +16,11 @@
  */
 package org.geotools.gce.imagemosaic.catalog;
 
+import it.geosolutions.imageio.utilities.ImageIOUtilities;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
+import java.util.Objects;
+import java.util.logging.Logger;
 import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ImageInputStreamSpi;
 import javax.imageio.spi.ImageReaderSpi;
@@ -27,9 +30,12 @@ import org.geotools.gce.imagemosaic.PathType;
 import org.geotools.gce.imagemosaic.SourceSPIProviderFactory;
 import org.geotools.gce.imagemosaic.Utils;
 import org.geotools.util.Utilities;
+import org.geotools.util.logging.Logging;
 
 /** Catalog configuration. */
 public class CatalogConfigurationBean {
+
+    private static final Logger LOGGER = Logging.getLogger(CatalogConfigurationBean.class);
 
     /** The typename to use for the mosaic index */
     private String typeName;
@@ -54,11 +60,11 @@ public class CatalogConfigurationBean {
 
     private SourceSPIProviderFactory urlSourceSPIProvider;
 
-    private boolean skipExternalOverviews;
+    private Boolean skipExternalOverviews;
 
     /**
-     * Whether the specified store should be wrapped. Only PostGis stores support this parameter.
-     * (Oracle stores are wrapped by default).
+     * Whether the specified store should be wrapped. Only PostGis stores support this parameter. (Oracle stores are
+     * wrapped by default).
      */
     private boolean wrapStore = false;
 
@@ -119,16 +125,21 @@ public class CatalogConfigurationBean {
 
     public ImageReaderSpi suggestedSPI() {
         if (suggestedSPI == null) return null;
-        if (resolvedSuggestedSPI == null) resolvedSuggestedSPI = getImageReaderSpi(suggestedSPI);
+        if (resolvedSuggestedSPI == null) {
+            resolvedSuggestedSPI = lookupImageReaderSpi(suggestedSPI);
+            if (resolvedSuggestedSPI == null) {
+                LOGGER.info("The suggested imageReaderSPI: " + suggestedSPI + " wasn't found at the classpath.");
+            }
+        }
         return resolvedSuggestedSPI;
     }
 
-    static ImageReaderSpi getImageReaderSpi(String className) {
-        Iterator<ImageReaderSpi> serviceProviders =
-                IIORegistry.lookupProviders(ImageReaderSpi.class);
+    static ImageReaderSpi lookupImageReaderSpi(String className) {
+        Objects.requireNonNull(className);
+        Iterator<ImageReaderSpi> serviceProviders = IIORegistry.lookupProviders(ImageReaderSpi.class);
         while (serviceProviders.hasNext()) {
             ImageReaderSpi serviceProvider = serviceProviders.next();
-            if (serviceProvider.getClass().getName() == className) {
+            if (className.equals(serviceProvider.getClass().getName())) {
                 return serviceProvider;
             }
         }
@@ -183,9 +194,10 @@ public class CatalogConfigurationBean {
     public AbstractGridFormat suggestedFormat() throws ReflectiveOperationException {
         if (suggestedFormat == null) return null;
         if (resolvedFormat == null) {
-            resolvedFormat =
-                    (AbstractGridFormat)
-                            Class.forName(suggestedFormat).getDeclaredConstructor().newInstance();
+            resolvedFormat = Class.forName(suggestedFormat)
+                    .asSubclass(AbstractGridFormat.class)
+                    .getDeclaredConstructor()
+                    .newInstance();
         }
         return resolvedFormat;
     }
@@ -197,9 +209,10 @@ public class CatalogConfigurationBean {
     public ImageInputStreamSpi suggestedIsSPI() throws ReflectiveOperationException {
         if (suggestedIsSPI == null) return null;
         if (resolvedIsSPI == null) {
-            resolvedIsSPI =
-                    (ImageInputStreamSpi)
-                            Class.forName(suggestedIsSPI).getDeclaredConstructor().newInstance();
+            resolvedIsSPI = Class.forName(suggestedIsSPI)
+                    .asSubclass(ImageInputStreamSpi.class)
+                    .getDeclaredConstructor()
+                    .newInstance();
         }
         return resolvedIsSPI;
     }
@@ -216,11 +229,15 @@ public class CatalogConfigurationBean {
         this.urlSourceSPIProvider = urlSourceSPIProvider;
     }
 
-    public boolean isSkipExternalOverviews() {
+    public Boolean getSkipExternalOverviews() {
         return skipExternalOverviews;
     }
 
-    public void setSkipExternalOverviews(boolean skipExternalOverviews) {
+    public boolean isSkipExternalOverviews() {
+        return skipExternalOverviews == null ? ImageIOUtilities.isSkipExternalFilesLookup() : skipExternalOverviews;
+    }
+
+    public void setSkipExternalOverviews(Boolean skipExternalOverviews) {
         this.skipExternalOverviews = skipExternalOverviews;
     }
 

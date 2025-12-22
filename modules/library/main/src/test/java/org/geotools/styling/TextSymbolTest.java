@@ -18,6 +18,10 @@
  */
 package org.geotools.styling;
 
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Mark;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -25,8 +29,6 @@ import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Test for text symbols.
@@ -75,14 +77,11 @@ public class TextSymbolTest {
 
         for (int j = 0; j < rows; j++) {
             for (int i = 0; i < symbol.length; i++) {
-                point = makeSamplePoint(geomFac, ((double) i * 5.0) + 5.0, 5.0 + (j * 5));
-                pointFeature =
-                        SimpleFeatureBuilder.build(
-                                pointType,
-                                new Object[] {
-                                    point, Double.valueOf(size), Double.valueOf(rotation), symbol[i]
-                                },
-                                null);
+                point = makeSamplePoint(geomFac, i * 5.0 + 5.0, 5.0 + j * 5);
+                pointFeature = SimpleFeatureBuilder.build(
+                        pointType,
+                        new Object[] {point, Double.valueOf(size), Double.valueOf(rotation), symbol[i]},
+                        null);
                 data.add(pointFeature);
             }
 
@@ -108,7 +107,7 @@ public class TextSymbolTest {
         RuleImpl rule = new RuleImpl();
         rule.symbolizers().add(pointsym);
 
-        FeatureTypeStyleImpl fts = new FeatureTypeStyleImpl();
+        FeatureTypeStyle fts = new FeatureTypeStyleImpl();
         fts.rules().add(rule);
         fts.featureTypeNames().add(new NameImpl("testPoint"));
 

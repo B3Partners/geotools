@@ -17,17 +17,17 @@
 
 package org.geotools.filter.text.ecql;
 
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
 import org.geotools.filter.LikeFilterImpl;
 import org.geotools.filter.text.commons.Language;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.cql2.CQLLikePredicateTest;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Not;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
 
 /**
  * Test for like predicate
@@ -67,8 +67,7 @@ public class ECQLLikePredicateTest extends CQLLikePredicateTest {
         Assert.assertTrue(resultFilter instanceof PropertyIsLike);
 
         PropertyIsLike expected =
-                (PropertyIsLike)
-                        FilterECQLSample.getSample(FilterECQLSample.FUNCTION_LIKE_ECQL_PATTERN);
+                (PropertyIsLike) FilterECQLSample.getSample(FilterECQLSample.FUNCTION_LIKE_ECQL_PATTERN);
 
         Assert.assertEquals("like filter was expected", expected, resultFilter);
 
@@ -162,8 +161,7 @@ public class ECQLLikePredicateTest extends CQLLikePredicateTest {
         Assert.assertTrue(resultFilter instanceof PropertyIsLike);
 
         PropertyIsLike expected =
-                (PropertyIsLike)
-                        FilterECQLSample.getSample(FilterECQLSample.LITERAL_LIKE_ECQL_PATTERN);
+                (PropertyIsLike) FilterECQLSample.getSample(FilterECQLSample.LITERAL_LIKE_ECQL_PATTERN);
 
         Assert.assertEquals("like filter was expected", expected, resultFilter);
     }
@@ -177,8 +175,7 @@ public class ECQLLikePredicateTest extends CQLLikePredicateTest {
 
         Assert.assertTrue(resultFilter instanceof Not);
 
-        Not expected =
-                (Not) FilterECQLSample.getSample(FilterECQLSample.LITERAL_NOT_LIKE_ECQL_PATTERN);
+        Not expected = (Not) FilterECQLSample.getSample(FilterECQLSample.LITERAL_NOT_LIKE_ECQL_PATTERN);
 
         Assert.assertTrue(expected.getFilter() instanceof PropertyIsLike);
 

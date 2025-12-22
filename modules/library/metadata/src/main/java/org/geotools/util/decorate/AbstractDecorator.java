@@ -23,8 +23,7 @@ import java.io.Serializable;
  *
  * <ul>
  *   <li>null check for the delegate object
- *   <li>direct forwarding of {@link #equals(Object)}, {@link #hashCode()} and {@link #toString()}
- *       to the delegate
+ *   <li>direct forwarding of {@link #equals(Object)}, {@link #hashCode()} and {@link #toString()} to the delegate
  *   <li>implements the Wrapper interface for programmatic extraction
  * </ul>
  */
@@ -41,7 +40,7 @@ public class AbstractDecorator<D> implements Wrapper, Serializable {
     public boolean isWrapperFor(Class<?> iface) {
         // first drill down to the latest wrapper, then check if the last delegate actually
         // implements the required interface
-        if (delegate instanceof Wrapper) return ((Wrapper) delegate).isWrapperFor(iface);
+        if (delegate instanceof Wrapper wrapper) return wrapper.isWrapperFor(iface);
         else if (iface.isInstance(delegate)) return true;
         else return false;
     }
@@ -51,10 +50,9 @@ public class AbstractDecorator<D> implements Wrapper, Serializable {
     public <T> T unwrap(Class<T> iface) throws IllegalArgumentException {
         // first drill down to the latest wrapper, then check if the last delegate actually
         // implements the required interface and return it
-        if (delegate instanceof Wrapper) return ((Wrapper) delegate).unwrap(iface);
+        if (delegate instanceof Wrapper wrapper) return wrapper.unwrap(iface);
         else if (iface.isInstance(delegate)) return (T) delegate;
-        else
-            throw new IllegalArgumentException("Cannot unwrap to the requested interface " + iface);
+        else throw new IllegalArgumentException("Cannot unwrap to the requested interface " + iface);
     }
 
     @Override
@@ -69,10 +67,6 @@ public class AbstractDecorator<D> implements Wrapper, Serializable {
 
     @Override
     public String toString() {
-        return new StringBuilder(getClass().getSimpleName())
-                .append('[')
-                .append(delegate)
-                .append(']')
-                .toString();
+        return getClass().getSimpleName() + '[' + delegate + ']';
     }
 }

@@ -18,30 +18,29 @@ package org.geotools.util.logging;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.util.Classes;
 import org.geotools.util.SuppressFBWarnings;
 import org.geotools.util.XArray;
 
 /**
- * Utility class for configuring logging in GeoTools. <strong>All GeoTools code should fetch their
- * logger through a call to {@link #getLogger(String)}</strong>, not java util logging {@link
- * Logger#getLogger(String)}. This is necessary in order to give GeoTools a chance to redirect log
- * events to other logging frameworks, for example <A
+ * Utility class for configuring logging in GeoTools. <strong>All GeoTools code should fetch their logger through a call
+ * to {@link #getLogger(String)}</strong>, not java util logging {@link Logger#getLogger(String)}. This is necessary in
+ * order to give GeoTools a chance to redirect log events to other logging frameworks, for example <A
  * HREF="https://logging.apache.org/log4j/2.x/">LOG4J</A>, or </A><A
  * HREF="https://commons.apache.org/proper/commons-logging/">commons-logging</A>.
  *
- * <p><b>Example:</b> In order to redirect every GeoTools log events to commons-logging, invoke the
- * following once at application startup:
+ * <p><b>Example:</b> In order to redirect every GeoTools log events to commons-logging, invoke the following once at
+ * application startup:
  *
  * <pre>
- * <code>Logging.GEOTOOLS.setLoggerFactory}("org.geotools.util.logging.CommonsLoggerFactory");</code>
+ * <code>Logging.GEOTOOLS.setLoggerFactory("org.geotools.util.logging.CommonsLoggerFactory");</code>
  * </pre>
  *
  * @since 2.4
@@ -52,14 +51,14 @@ import org.geotools.util.XArray;
 public final class Logging {
 
     /**
-     * The logging level for fatal error resulting in application shutdown. This level is equals or
-     * slightly higher than than {@link Level#SEVERE}.
+     * The logging level for fatal error resulting in application shutdown. This level is equals or slightly higher than
+     * than {@link Level#SEVERE}.
      */
     public static final Level FATAL = new LogLevel("FATAL", 1100);
 
     /**
-     * The logging level for reporting coverage operations. This level is equals or slightly lower
-     * than {@link Level#INFO}.
+     * The logging level for reporting coverage operations. This level is equals or slightly lower than
+     * {@link Level#INFO}.
      */
     public static final Level OPERATION = new LogLevel("OPERATION", 780);
 
@@ -73,12 +72,11 @@ public final class Logging {
     }
 
     /** Compares {@link Logging} or {@link String} objects for alphabetical order. */
-    private static final Comparator<Object> COMPARATOR =
-            (o1, o2) -> {
-                final String n1 = (o1 instanceof Logging) ? ((Logging) o1).name : o1.toString();
-                final String n2 = (o2 instanceof Logging) ? ((Logging) o2).name : o2.toString();
-                return n1.compareTo(n2);
-            };
+    private static final Comparator<Object> COMPARATOR = (o1, o2) -> {
+        final String n1 = o1 instanceof Logging l ? l.name : o1.toString();
+        final String n2 = o2 instanceof Logging l ? l.name : o2.toString();
+        return n1.compareTo(n2);
+    };
 
     /** An empty array of logging. Also used for locks. */
     private static final Logging[] EMPTY = new Logging[0];
@@ -93,12 +91,15 @@ public final class Logging {
     /** Logging configuration that apply only to GeoTools packages. */
     public static final Logging GEOTOOLS = getLogging("org.geotools");
 
+    /** Logging configuration that apply only to org.eclipse packages */
+    public static final Logging ECLIPSE = getLogging("org.eclipse");
+
     /**
-     * Logging configuration that apply only to javax.media.jai packages.
+     * Logging configuration that apply only to org.eclipse.imagen packages.
      *
-     * <p>Used by {@link LoggingImagingListener} to route errors reported from JAI framework.
+     * <p>Used by {@link LoggingImagingListener} to route errors reported from ImageN framework.
      */
-    public static final Logging JAI = getLogging("javax.media.jai");
+    public static final Logging IMAGEN = getLogging("org.eclipse.imagen");
 
     /** The name of the base package. */
     final String name;
@@ -106,10 +107,9 @@ public final class Logging {
     /**
      * The children {@link Logging} objects.
      *
-     * <p>The plain array used here is inefficient for adding new items (an {@code ArrayList} would
-     * be more efficient), but we assume that very few new items will be added. Furthermore, a plain
-     * array is efficient for reading, which is more common and more performance sensitive than
-     * adding.
+     * <p>The plain array used here is inefficient for adding new items (an {@code ArrayList} would be more efficient),
+     * but we assume that very few new items will be added. Furthermore, a plain array is efficient for reading, which
+     * is more common and more performance sensitive than adding.
      */
     private Logging[] children = EMPTY;
 
@@ -121,58 +121,55 @@ public final class Logging {
     private LoggerFactory<?> factory;
 
     /**
-     * {@code true} if every {@link Logging} instances use the same {@link LoggerFactory}. This is
-     * an optimization for a very common case.
+     * {@code true} if every {@link Logging} instances use the same {@link LoggerFactory}. This is an optimization for a
+     * very common case.
      */
     private static boolean sameLoggerFactory = true;
 
-    // Register LoggingImagingListener if JAI is available
+    // Register LoggingImagingListener if ImageN is available
     static {
         final boolean LOGGING_TRACE = Boolean.getBoolean("LOGGING_TRACE");
         try {
-            final Class<?> JAI = Class.forName("javax.media.jai.JAI");
-            final Class<?> IMAGING_LISTENER = Class.forName("javax.media.jai.util.ImagingListener");
-            Method getDefaultInstance = JAI.getMethod("getDefaultInstance");
-            Method getImagingListener = JAI.getMethod("getImagingListener");
-            Method setImagingListener = JAI.getMethod("setImagingListener", IMAGING_LISTENER);
+            final Class<?> ImageN = Class.forName("org.eclipse.imagen.ImageN");
+            final Class<?> IMAGING_LISTENER = Class.forName("org.eclipse.imagen.util.ImagingListener");
+            Method getDefaultInstance = ImageN.getMethod("getDefaultInstance");
+            Method getImagingListener = ImageN.getMethod("getImagingListener");
+            Method setImagingListener = ImageN.getMethod("setImagingListener", IMAGING_LISTENER);
 
-            Object jai = getDefaultInstance.invoke(null, null);
-            Object imagingListener = getImagingListener.invoke(jai, null);
+            Object imagen = getDefaultInstance.invoke(null);
+            Object imagingListener = getImagingListener.invoke(imagen);
 
-            if (imagingListener == null
-                    || imagingListener.getClass().getName().contains("ImagingListenerImpl")) {
+            if (imagingListener == null || imagingListener.getClass().getName().contains("ImagingListenerImpl")) {
                 // Client code has not provided an ImagingListener so we can use our own
                 // Custom GeoTools ImagingListener used to ignore common warnings
-                setImagingListener.invoke(jai, new LoggingImagingListener());
+                setImagingListener.invoke(imagen, new LoggingImagingListener());
                 if (LOGGING_TRACE) {
-                    System.out.println("Logging JAI messages: javax.media.jai logger redirected");
+                    System.out.println("Logging ImageN messages: org.eclipse.imagen logger redirected");
                 }
             } else {
                 if (LOGGING_TRACE) {
-                    System.out.println(
-                            "Logging JAI messages: ImagingListener already in use: "
-                                    + imagingListener);
+                    System.out.println("Logging ImageN messages: ImagingListener already in use: " + imagingListener);
                 }
             }
         } catch (Throwable ignore) {
-            // JAI not available so no need to redirect logging messages
+            // ImageN not available so no need to redirect logging messages
             if (LOGGING_TRACE) {
-                System.out.println("Logging JAI messages: Unable to redirect to javax.media.jai");
+                System.out.println("Logging ImageN messages: Unable to redirect to org.eclipse.imagen");
             }
         }
     }
 
     /**
-     * Creates an instance for the root logger. This constructor should not be used for anything
-     * else than {@link #ALL} construction; use {@link #getLogging} instead.
+     * Creates an instance for the root logger. This constructor should not be used for anything else than {@link #ALL}
+     * construction; use {@link #getLogging} instead.
      */
     private Logging() {
         name = "";
     }
 
     /**
-     * Creates an instance for the specified base logger. This constructor should not be public; use
-     * {@link #getLogging} instead.
+     * Creates an instance for the specified base logger. This constructor should not be public; use {@link #getLogging}
+     * instead.
      *
      * @param parent The parent {@code Logging} instance.
      * @param name The logger name for the new instance.
@@ -184,8 +181,8 @@ public final class Logging {
     }
 
     /**
-     * Returns a logger for the specified class. This convenience method invokes {@link
-     * #getLogger(String)} with the package name as the logger name.
+     * Returns a logger for the specified class. This convenience method invokes {@link #getLogger(String)} with the
+     * package name as the logger name.
      *
      * @param classe The class for which to obtain a logger.
      * @return A logger for the specified class.
@@ -194,19 +191,18 @@ public final class Logging {
     public static Logger getLogger(final Class<?> classe) {
         String name = classe.getName();
         final int separator = name.lastIndexOf('.');
-        name = (separator >= 1) ? name.substring(0, separator) : "";
+        name = separator >= 1 ? name.substring(0, separator) : "";
         return getLogger(name);
     }
 
     /**
-     * Returns a logger for the specified name. If a {@linkplain LoggerFactory logger factory} has
-     * been set, then this method first {@linkplain LoggerFactory#getLogger ask to the factory}. It
-     * gives GeoTools a chance to redirect logging events to <A
-     * HREF="http://jakarta.apache.org/commons/logging/">commons-logging</A> or some equivalent
+     * Returns a logger for the specified name. If a {@linkplain LoggerFactory logger factory} has been set, then this
+     * method first {@linkplain LoggerFactory#getLogger ask to the factory}. It gives GeoTools a chance to redirect
+     * logging events to <A HREF="http://jakarta.apache.org/commons/logging/">commons-logging</A> or some equivalent
      * framework.
      *
-     * <p>If no factory was found or if the factory choose to not redirect the loggings, then this
-     * method returns the usual <code>{@linkplain Logger#getLogger Logger.getLogger}(name)</code>.
+     * <p>If no factory was found or if the factory choose to not redirect the loggings, then this method returns the
+     * usual <code>{@linkplain Logger#getLogger Logger.getLogger}(name)</code>.
      *
      * @param name The logger name.
      * @return A logger for the specified name.
@@ -229,13 +225,12 @@ public final class Logging {
     }
 
     /**
-     * Returns a {@code Logging} instance for the specified base logger. This instance is used for
-     * controlling logging configuration in GeoTools. For example methods like {@link
-     * #forceMonolineConsoleOutput} are invoked on a {@code Logging} instance.
+     * Returns a {@code Logging} instance for the specified base logger. This instance is used for controlling logging
+     * configuration in GeoTools. For example methods like {@link #forceMonolineConsoleOutput} are invoked on a
+     * {@code Logging} instance.
      *
-     * <p>{@code Logging} instances follow the same hierarchy than {@link Logger}, i.e. {@code
-     * "org.geotools"} is the parent of {@code "org.geotools.referencing"}, {@code
-     * "org.geotools.metadata"}, <cite>etc</cite>.
+     * <p>{@code Logging} instances follow the same hierarchy than {@link Logger}, i.e. {@code "org.geotools"} is the
+     * parent of {@code "org.geotools.referencing"}, {@code "org.geotools.metadata"}, <cite>etc</cite>.
      *
      * @param name The base logger name.
      */
@@ -246,9 +241,8 @@ public final class Logging {
     }
 
     /**
-     * Returns a logging instance for the specified base logger. If no instance if found for the
-     * specified name and {@code create} is {@code true}, then a new instance will be created.
-     * Otherwise the nearest parent is returned.
+     * Returns a logging instance for the specified base logger. If no instance if found for the specified name and
+     * {@code create} is {@code true}, then a new instance will be created. Otherwise the nearest parent is returned.
      *
      * @param base The root logger name.
      * @param create {@code true} if this method is allowed to create new {@code Logging} instance.
@@ -261,7 +255,7 @@ public final class Logging {
             do {
                 Logging[] children = logging.children;
                 offset = base.indexOf('.', offset);
-                final String name = (offset >= 0) ? base.substring(0, offset) : base;
+                final String name = offset >= 0 ? base.substring(0, offset) : base;
                 int i = Arrays.binarySearch(children, name, COMPARATOR);
                 if (i < 0) {
                     // No exact match found.
@@ -289,9 +283,8 @@ public final class Logging {
     }
 
     /**
-     * Returns the logger factory, or {@code null} if none. This method returns the logger set by
-     * the last call to {@link #setLoggerFactory} on this {@code Logging} instance or on one of its
-     * parent.
+     * Returns the logger factory, or {@code null} if none. This method returns the logger set by the last call to
+     * {@link #setLoggerFactory} on this {@code Logging} instance or on one of its parent.
      */
     public LoggerFactory<?> getLoggerFactory() {
         synchronized (EMPTY) {
@@ -300,9 +293,9 @@ public final class Logging {
     }
 
     /**
-     * Sets a new logger factory for this {@code Logging} instance and every children. The specified
-     * factory will be used by <code>{@linkplain #getLogger(String) getLogger}(name)</code> when
-     * {@code name} is this {@code Logging} name or one of its children.
+     * Sets a new logger factory for this {@code Logging} instance and every children. The specified factory will be
+     * used by <code>{@linkplain #getLogger(String) getLogger}(name)</code> when {@code name} is this {@code Logging}
+     * name or one of its children.
      */
     public void setLoggerFactory(final LoggerFactory<?> factory) {
         synchronized (EMPTY) {
@@ -315,11 +308,10 @@ public final class Logging {
     }
 
     /**
-     * Returns {@code true} if all children use the specified factory. Used in order to detect a
-     * possible optimization for this very common case.
+     * Returns {@code true} if all children use the specified factory. Used in order to detect a possible optimization
+     * for this very common case.
      */
-    private static boolean sameLoggerFactory(
-            final Logging[] children, final LoggerFactory<?> factory) {
+    private static boolean sameLoggerFactory(final Logging[] children, final LoggerFactory<?> factory) {
         assert Thread.holdsLock(EMPTY);
         for (final Logging logging : children) {
             if (logging.factory != factory || !sameLoggerFactory(logging.children, factory)) {
@@ -330,18 +322,16 @@ public final class Logging {
     }
 
     /**
-     * Sets a new logger factory from a fully qualified class name. This method should be preferred
-     * to {@link #setLoggerFactory(LoggerFactory)} when the underlying logging framework is not
-     * guaranteed to be on the classpath.
+     * Sets a new logger factory from a fully qualified class name. This method should be preferred to
+     * {@link #setLoggerFactory(LoggerFactory)} when the underlying logging framework is not guaranteed to be on the
+     * classpath.
      *
      * @param className The fully qualified factory class name.
      * @throws ClassNotFoundException if the specified class was not found.
-     * @throws IllegalArgumentException if the specified class is not a subclass of {@link
-     *     LoggerFactory}, or if no public static {@code getInstance()} method has been found or can
-     *     be executed.
+     * @throws IllegalArgumentException if the specified class is not a subclass of {@link LoggerFactory}, or if no
+     *     public static {@code getInstance()} method has been found or can be executed.
      */
-    public void setLoggerFactory(final String className)
-            throws ClassNotFoundException, IllegalArgumentException {
+    public void setLoggerFactory(final String className) throws ClassNotFoundException, IllegalArgumentException {
         final LoggerFactory<?> factory;
         if (className == null) {
             factory = DefaultLoggerFactory.getInstance();
@@ -354,8 +344,7 @@ public final class Logging {
             }
             if (!LoggerFactory.class.isAssignableFrom(factoryClass)) {
                 throw new IllegalArgumentException(
-                        Errors.format(
-                                ErrorKeys.ILLEGAL_CLASS_$2, factoryClass, LoggerFactory.class));
+                        MessageFormat.format(ErrorKeys.ILLEGAL_CLASS_$2, factoryClass, LoggerFactory.class));
             }
             try {
                 final Method method = factoryClass.getMethod("getInstance", (Class[]) null);
@@ -374,46 +363,40 @@ public final class Logging {
                 if (cause instanceof ClassNotFoundException) {
                     throw (ClassNotFoundException) e;
                 }
-                if (cause instanceof NoClassDefFoundError) {
-                    throw factoryNotFound(className, (NoClassDefFoundError) cause);
+                if (cause instanceof NoClassDefFoundError error) {
+                    throw factoryNotFound(className, error);
                 }
                 throw new IllegalArgumentException(
-                        Errors.format(ErrorKeys.CANT_CREATE_FACTORY_$1, className, cause));
+                        MessageFormat.format(ErrorKeys.CANT_CREATE_FACTORY_$1, className, cause));
             }
         }
         setLoggerFactory(factory);
     }
 
-    /**
-     * Wraps a unchecked {@link NoClassDefFoundError} into a checked {@link ClassNotFoundException}.
-     */
+    /** Wraps a unchecked {@link NoClassDefFoundError} into a checked {@link ClassNotFoundException}. */
     private static ClassNotFoundException factoryNotFound(String name, NoClassDefFoundError error) {
-        return new ClassNotFoundException(
-                Errors.format(ErrorKeys.FACTORY_NOT_FOUND_$1, name), error);
+        return new ClassNotFoundException(MessageFormat.format(ErrorKeys.FACTORY_NOT_FOUND_$1, name), error);
     }
 
     /**
-     * Configures the default {@linkplain java.util.logging.ConsoleHandler console handler} in order
-     * to log records on a single line instead of two lines. More specifically, for each {@link
-     * java.util.logging.ConsoleHandler} using a {@link java.util.logging.SimpleFormatter}, this
-     * method replaces the simple formatter by an instance of {@link MonolineFormatter}. If no
-     * {@code ConsoleHandler} are found, then a new one is created.
+     * Configures the default {@linkplain java.util.logging.ConsoleHandler console handler} in order to log records on a
+     * single line instead of two lines. More specifically, for each {@link java.util.logging.ConsoleHandler} using a
+     * {@link java.util.logging.SimpleFormatter}, this method replaces the simple formatter by an instance of
+     * {@link MonolineFormatter}. If no {@code ConsoleHandler} are found, then a new one is created.
      *
-     * <p><b>Note:</b> this method may have no effect if the loggings are redirected to an other
-     * logging framework.
+     * <p><b>Note:</b> this method may have no effect if the loggings are redirected to an other logging framework.
      */
     public void forceMonolineConsoleOutput() {
         forceMonolineConsoleOutput(null);
     }
 
     /**
-     * Same as {@link #forceMonolineConsoleOutput()}, but additionnaly set an optional logging
-     * level. If the specified level is non-null, then all {@link java.util.logging.Handler}s using
-     * the monoline formatter will be set to the specified level.
+     * Same as {@link #forceMonolineConsoleOutput()}, but additionnaly set an optional logging level. If the specified
+     * level is non-null, then all {@link java.util.logging.Handler}s using the monoline formatter will be set to the
+     * specified level.
      *
-     * <p><b>Note:</b> Avoid this method as much as possible, since it overrides user's level
-     * setting. A user trying to configure his logging properties may find confusing to see his
-     * setting ignored.
+     * <p><b>Note:</b> Avoid this method as much as possible, since it overrides user's level setting. A user trying to
+     * configure his logging properties may find confusing to see his setting ignored.
      *
      * @see org.geotools.util.factory.GeoTools#init
      */
@@ -439,8 +422,8 @@ public final class Logging {
     }
 
     /**
-     * Checks the {@link LoggerFactory#lookupConfiguration()} information, or reports back on {@code
-     * java.util.logging} configuration if no factory is used.
+     * Checks the {@link LoggerFactory#lookupConfiguration()} information, or reports back on {@code java.util.logging}
+     * configuration if no factory is used.
      *
      * <p>The details returned are suitable for troubleshooting.
      *
@@ -455,70 +438,64 @@ public final class Logging {
     }
 
     /**
-     * Invoked when an unexpected error occurs. This method logs a message at the {@link
-     * Level#WARNING WARNING} level to the specified logger. The originating class name and method
-     * name are inferred from the error stack trace, using the first {@linkplain StackTraceElement
-     * stack trace element} for which the class name is inside a package or sub-package of the
-     * logger name. For example if the logger name is {@code "org.geotools.image"}, then this method
+     * Invoked when an unexpected error occurs. This method logs a message at the {@link Level#WARNING WARNING} level to
+     * the specified logger. The originating class name and method name are inferred from the error stack trace, using
+     * the first {@linkplain StackTraceElement stack trace element} for which the class name is inside a package or
+     * sub-package of the logger name. For example if the logger name is {@code "org.geotools.image"}, then this method
      * will uses the first stack trace element where the fully qualified class name starts with
-     * {@code "org.geotools.image"} or {@code "org.geotools.image.io"}, but not {@code
-     * "org.geotools.imageio"}.
+     * {@code "org.geotools.image"} or {@code "org.geotools.image.io"}, but not {@code "org.geotools.imageio"}.
      *
      * @param logger Where to log the error.
      * @param error The error that occured.
-     * @return {@code true} if the error has been logged, or {@code false} if the logger doesn't log
-     *     anything at the {@link Level#WARNING WARNING} level.
+     * @return {@code true} if the error has been logged, or {@code false} if the logger doesn't log anything at the
+     *     {@link Level#WARNING WARNING} level.
      */
     public static boolean unexpectedException(final Logger logger, final Throwable error) {
         return unexpectedException(logger, null, null, error, Level.WARNING);
     }
 
     /**
-     * Invoked when an unexpected error occurs. This method logs a message at the {@link
-     * Level#WARNING WARNING} level to the specified logger. The originating class name and method
-     * name can optionnaly be specified. If any of them is {@code null}, then it will be inferred
-     * from the error stack trace as in {@link #unexpectedException(Logger, Throwable)}.
+     * Invoked when an unexpected error occurs. This method logs a message at the {@link Level#WARNING WARNING} level to
+     * the specified logger. The originating class name and method name can optionnaly be specified. If any of them is
+     * {@code null}, then it will be inferred from the error stack trace as in {@link #unexpectedException(Logger,
+     * Throwable)}.
      *
-     * <p>Explicit value for class and method names are sometime preferred to automatic inference
-     * for the following reasons:
+     * <p>Explicit value for class and method names are sometime preferred to automatic inference for the following
+     * reasons:
      *
      * <ul>
      *   <li>
-     *       <p>Automatic inference is not 100% reliable, since the Java Virtual Machine is free to
-     *       omit stack frame in optimized code.
+     *       <p>Automatic inference is not 100% reliable, since the Java Virtual Machine is free to omit stack frame in
+     *       optimized code.
      *   <li>
-     *       <p>When an exception occured in a private method used internally by a public method, we
-     *       sometime want to log the warning for the public method instead, since the user is not
-     *       expected to know anything about the existence of the private method. If a developper
-     *       really want to know about the private method, the stack trace is still available
-     *       anyway.
+     *       <p>When an exception occured in a private method used internally by a public method, we sometime want to
+     *       log the warning for the public method instead, since the user is not expected to know anything about the
+     *       existence of the private method. If a developper really want to know about the private method, the stack
+     *       trace is still available anyway.
      * </ul>
      *
      * @param logger Where to log the error.
      * @param classe The class where the error occurred, or {@code null}.
      * @param method The method where the error occurred, or {@code null}.
      * @param error The error.
-     * @return {@code true} if the error has been logged, or {@code false} if the logger doesn't log
-     *     anything at the {@link Level#WARNING WARNING} level.
+     * @return {@code true} if the error has been logged, or {@code false} if the logger doesn't log anything at the
+     *     {@link Level#WARNING WARNING} level.
      */
     public static boolean unexpectedException(
-            final Logger logger,
-            final Class<?> classe,
-            final String method,
-            final Throwable error) {
-        final String classname = (classe != null) ? classe.getName() : null;
+            final Logger logger, final Class<?> classe, final String method, final Throwable error) {
+        final String classname = classe != null ? classe.getName() : null;
         return unexpectedException(logger, classname, method, error, Level.WARNING);
     }
 
     /**
-     * Invoked when an unexpected error occurs. This method logs a message at the {@link
-     * Level#WARNING WARNING} level to a logger inferred from the given class.
+     * Invoked when an unexpected error occurs. This method logs a message at the {@link Level#WARNING WARNING} level to
+     * a logger inferred from the given class.
      *
      * @param classe The class where the error occurred.
      * @param method The method where the error occurred, or {@code null}.
      * @param error The error.
-     * @return {@code true} if the error has been logged, or {@code false} if the logger doesn't log
-     *     anything at the {@link Level#WARNING WARNING} level.
+     * @return {@code true} if the error has been logged, or {@code false} if the logger doesn't log anything at the
+     *     {@link Level#WARNING WARNING} level.
      * @since 2.5
      */
     public static boolean unexpectedException(Class<?> classe, String method, Throwable error) {
@@ -533,8 +510,8 @@ public final class Logging {
      * @param method The method where the error occurred, or {@code null}.
      * @param error The error.
      * @param level The logging level.
-     * @return {@code true} if the error has been logged, or {@code false} if the logger doesn't log
-     *     anything at the specified level.
+     * @return {@code true} if the error has been logged, or {@code false} if the logger doesn't log anything at the
+     *     specified level.
      */
     private static boolean unexpectedException(
             Logger logger, String classe, String method, final Throwable error, final Level level) {
@@ -546,7 +523,7 @@ public final class Logging {
         }
         if (logger == null && classe != null) {
             final int separator = classe.lastIndexOf('.');
-            final String packageName = (separator >= 1) ? classe.substring(0, separator - 1) : "";
+            final String packageName = separator >= 1 ? classe.substring(0, separator - 1) : "";
             logger = getLogger(packageName);
         }
         if (logger != null && !logger.isLoggable(level)) {
@@ -556,7 +533,7 @@ public final class Logging {
          * Loggeable, so complete the null argument from the stack trace if we can.
          */
         if (logger == null || classe == null || method == null) {
-            String packageName = (logger != null) ? logger.getName() : null;
+            String packageName = logger != null ? logger.getName() : null;
             final StackTraceElement[] elements = error.getStackTrace();
             for (final StackTraceElement element : elements) {
                 /*
@@ -595,7 +572,7 @@ public final class Logging {
                  */
                 if (packageName == null) {
                     final int separator = classname.lastIndexOf('.');
-                    packageName = (separator >= 1) ? classname.substring(0, separator - 1) : "";
+                    packageName = separator >= 1 ? classname.substring(0, separator - 1) : "";
                     logger = getLogger(packageName);
                     if (!logger.isLoggable(level)) {
                         return false;
@@ -646,41 +623,37 @@ public final class Logging {
     }
 
     /**
-     * Invoked when a recoverable error occurs. This method is similar to {@link
-     * #unexpectedException(Logger,Class,String,Throwable) unexpectedException} except that it
-     * doesn't log the stack trace and uses a lower logging level.
+     * Invoked when a recoverable error occurs. This method is similar to
+     * {@link #unexpectedException(Logger,Class,String,Throwable) unexpectedException} except that it doesn't log the
+     * stack trace and uses a lower logging level.
      *
      * @param logger Where to log the error.
      * @param classe The class where the error occurred.
      * @param method The method name where the error occurred.
      * @param error The error.
-     * @return {@code true} if the error has been logged, or {@code false} if the logger doesn't log
-     *     anything at the specified level.
+     * @return {@code true} if the error has been logged, or {@code false} if the logger doesn't log anything at the
+     *     specified level.
      * @since 2.5
      */
     public static boolean recoverableException(
-            final Logger logger,
-            final Class<?> classe,
-            final String method,
-            final Throwable error) {
-        final String classname = (classe != null) ? classe.getName() : null;
+            final Logger logger, final Class<?> classe, final String method, final Throwable error) {
+        final String classname = classe != null ? classe.getName() : null;
         return unexpectedException(logger, classname, method, error, Level.FINE);
     }
 
     /**
-     * Invoked when a recoverable error occurs. This method is similar to {@link
-     * #unexpectedException(Class,String,Throwable) unexpectedException} except that it doesn't log
-     * the stack trace and uses a lower logging level.
+     * Invoked when a recoverable error occurs. This method is similar to
+     * {@link #unexpectedException(Class,String,Throwable) unexpectedException} except that it doesn't log the stack
+     * trace and uses a lower logging level.
      *
      * @param classe The class where the error occurred.
      * @param method The method name where the error occurred.
      * @param error The error.
-     * @return {@code true} if the error has been logged, or {@code false} if the logger doesn't log
-     *     anything at the specified level.
+     * @return {@code true} if the error has been logged, or {@code false} if the logger doesn't log anything at the
+     *     specified level.
      * @since 2.5
      */
-    public static boolean recoverableException(
-            final Class<?> classe, final String method, final Throwable error) {
+    public static boolean recoverableException(final Class<?> classe, final String method, final Throwable error) {
         return recoverableException(null, classe, method, error);
     }
 

@@ -16,10 +16,11 @@
  */
 package org.geotools.map;
 
+import java.io.Serial;
 import java.util.EnumSet;
 import java.util.EventObject;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Event object for MapContext area of interest and coordinate system changes.
@@ -27,6 +28,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  * @author wolf
  */
 public class MapBoundsEvent extends EventObject {
+    @Serial
     private static final long serialVersionUID = -2063712912599101999L;
 
     /** Area of interest changed, mask used by {@link Type#BOUNDS} */
@@ -69,17 +71,14 @@ public class MapBoundsEvent extends EventObject {
      * Creates a new instance of BoundsEvent
      *
      * @param source the map context reporting the change
-     * @param type the type of change indicated by one or both of the bit masks {@linkplain
-     *     #AREA_OF_INTEREST_MASK} and {@linkplain #COORDINATE_SYSTEM_MASK}
+     * @param type the type of change indicated by one or both of the bit masks {@linkplain #AREA_OF_INTEREST_MASK} and
+     *     {@linkplain #COORDINATE_SYSTEM_MASK}
      * @param oldAreaOfInterest the context's previous area of interest
      * @param newAreaOfInterest the context's new area of interest
      * @throws IllegalArgumentException if type is invalid
      */
     public MapBoundsEvent(
-            MapContent source,
-            int type,
-            ReferencedEnvelope oldAreaOfInterest,
-            ReferencedEnvelope newAreaOfInterest) {
+            MapContent source, int type, ReferencedEnvelope oldAreaOfInterest, ReferencedEnvelope newAreaOfInterest) {
         super(source);
 
         this.type = EnumSet.noneOf(Type.class);
@@ -89,10 +88,7 @@ public class MapBoundsEvent extends EventObject {
             this.type.add(Type.CRS);
         } else {
             throw new IllegalArgumentException(
-                    "Type is not acceptable, maximum value is "
-                            + (NEXT_FLAG - 1)
-                            + ", passed value is "
-                            + type);
+                    "Type is not acceptable, maximum value is " + (NEXT_FLAG - 1) + ", passed value is " + type);
         }
         this.oldAreaOfInterest = oldAreaOfInterest;
         this.newAreaOfInterest = newAreaOfInterest;
@@ -113,11 +109,7 @@ public class MapBoundsEvent extends EventObject {
      * @param newBounds the context's new area of interest
      * @throws IllegalArgumentException if type is invalid
      */
-    public MapBoundsEvent(
-            MapViewport source,
-            Type type,
-            ReferencedEnvelope oldBounds,
-            ReferencedEnvelope newBounds) {
+    public MapBoundsEvent(MapViewport source, Type type, ReferencedEnvelope oldBounds, ReferencedEnvelope newBounds) {
         this(source, EnumSet.of(type), oldBounds, newBounds);
     }
 
@@ -131,17 +123,14 @@ public class MapBoundsEvent extends EventObject {
      * </pre>
      *
      * @param source map viewport reporting the change
-     * @param type EnumSet flagging one or both of the following {@linkplain #AREA_OF_INTEREST_MASK}
-     *     and {@linkplain #COORDINATE_SYSTEM_MASK}
+     * @param type EnumSet flagging one or both of the following {@linkplain #AREA_OF_INTEREST_MASK} and
+     *     {@linkplain #COORDINATE_SYSTEM_MASK}
      * @param oldBounds the context's previous area of interest
      * @param newBounds the context's new area of interest
      * @throws IllegalArgumentException if type is invalid
      */
     public MapBoundsEvent(
-            MapViewport source,
-            EnumSet<Type> type,
-            ReferencedEnvelope oldBounds,
-            ReferencedEnvelope newBounds) {
+            MapViewport source, EnumSet<Type> type, ReferencedEnvelope oldBounds, ReferencedEnvelope newBounds) {
         super(source);
         this.type = type;
         this.oldAreaOfInterest = oldBounds;

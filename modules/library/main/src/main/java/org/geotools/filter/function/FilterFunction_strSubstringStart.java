@@ -20,18 +20,17 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_strSubstringStart extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "strSubstringStart",
-                    parameter("substring", String.class),
-                    parameter("string", String.class),
-                    parameter("beginIndex", Integer.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "strSubstringStart",
+            parameter("substring", String.class),
+            parameter("string", String.class),
+            parameter("beginIndex", Integer.class));
 
     public FilterFunction_strSubstringStart() {
         super("strSubstringStart");
@@ -59,6 +58,6 @@ public class FilterFunction_strSubstringStart extends FunctionExpressionImpl {
                     "Filter Function problem for function strSubstringStart argument #1 - expected type int");
         }
 
-        return (StaticGeometry.strSubstringStart(arg0, arg1));
+        return StaticGeometry.strSubstringStart(arg0, arg1);
     }
 }

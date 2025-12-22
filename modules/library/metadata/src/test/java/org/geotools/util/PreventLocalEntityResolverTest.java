@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
+@SuppressWarnings("BadImport")
 public class PreventLocalEntityResolverTest {
 
     @Test
@@ -45,6 +46,14 @@ public class PreventLocalEntityResolverTest {
     @Test
     public void testValidAbsoluteSystemIdWithoutBaseVFS() throws Exception {
         assertNull(INSTANCE.resolveEntity(null, "vfs:/xyz/foo.jar/bar/a.xsd"));
+    }
+
+    @Test
+    public void testValidAbsoluteSystemIdNested() throws Exception {
+        assertNull(
+                INSTANCE.resolveEntity(
+                        null,
+                        "jar:nested:/home/spring/tailormap-api.jar/!BOOT-INF/lib/gt-xsd-gml3-33.1.jar!/org/geotools/gml3/gml.xsd"));
     }
 
     @Test

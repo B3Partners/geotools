@@ -31,16 +31,16 @@ import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.ParameterValue;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.ParameterValue;
 
 /** Testing {@link GeoTiffReader} with COG data */
 public class GeoTiffReaderCogOnlineTest extends Assert {
@@ -49,14 +49,12 @@ public class GeoTiffReaderCogOnlineTest extends Assert {
         String url =
                 "https://s3-us-west-2.amazonaws.com/sentinel-cogs/sentinel-s2-l2a-cogs/5/C/MK/2018/10/S2B_5CMK_20181020_0_L2A/B01.tif";
         BasicAuthURI cogUri = new BasicAuthURI(url, false);
-        HttpRangeReader rangeReader =
-                new HttpRangeReader(cogUri.getUri(), CogImageReadParam.DEFAULT_HEADER_LENGTH);
-        CogSourceSPIProvider input =
-                new CogSourceSPIProvider(
-                        cogUri,
-                        new CogImageReaderSpi(),
-                        new CogImageInputStreamSpi(),
-                        rangeReader.getClass().getName());
+        HttpRangeReader rangeReader = new HttpRangeReader(cogUri.getUri(), CogImageReadParam.DEFAULT_HEADER_LENGTH);
+        CogSourceSPIProvider input = new CogSourceSPIProvider(
+                cogUri,
+                new CogImageReaderSpi(),
+                new CogImageInputStreamSpi(),
+                rangeReader.getClass().getName());
         return input;
     }
 
@@ -64,7 +62,7 @@ public class GeoTiffReaderCogOnlineTest extends Assert {
     public void testCogRead() throws URISyntaxException, IOException {
         GeoTiffReader reader = new GeoTiffReader(getInputProvider());
         assertEquals("B01", reader.getGridCoverageNames()[0]);
-        GridCoverage2D coverage = reader.read(null);
+        GridCoverage2D coverage = reader.read();
         assertNotNull(coverage);
         RenderedImage image = coverage.getRenderedImage();
         int numTileX = image.getNumXTiles();
@@ -97,14 +95,13 @@ public class GeoTiffReaderCogOnlineTest extends Assert {
 
         GeneralParameterValue[] params = new GeneralParameterValue[1];
         // Define a GridGeometry in order to reduce the output
-        final ParameterValue<GridGeometry2D> gg =
-                AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
-        final GeneralEnvelope envelope = reader.getOriginalEnvelope();
+        final ParameterValue<GridGeometry2D> gg = AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
+        final GeneralBounds envelope = reader.getOriginalEnvelope();
         final Dimension dim = new Dimension();
         dim.setSize(
                 reader.getOriginalGridRange().getSpan(0) / 24,
                 reader.getOriginalGridRange().getSpan(1) / 24);
-        final Rectangle rasterArea = ((GridEnvelope2D) reader.getOriginalGridRange());
+        final Rectangle rasterArea = (GridEnvelope2D) reader.getOriginalGridRange();
         rasterArea.setSize(dim);
         final GridEnvelope2D range = new GridEnvelope2D(rasterArea);
         gg.setValue(new GridGeometry2D(range, envelope));
@@ -116,7 +113,7 @@ public class GeoTiffReaderCogOnlineTest extends Assert {
         int numTileX = image.getNumXTiles();
         int numTileY = image.getNumYTiles();
 
-        CogImageReader imageReader = (CogImageReader) image.getProperty("JAI.ImageReader");
+        CogImageReader imageReader = (CogImageReader) image.getProperty("ImageN.ImageReader");
         Object input = imageReader.getInput();
         assertTrue(input instanceof DefaultCogImageInputStream);
         @SuppressWarnings("PMD.CloseResource") // closed elsewhere

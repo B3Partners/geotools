@@ -18,6 +18,9 @@ package org.geotools.gml2.bindings;
 
 import java.util.Date;
 import javax.xml.namespace.QName;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.gml2.GML;
@@ -36,9 +39,6 @@ import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.impl.CoordinateArraySequence;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -72,8 +72,7 @@ public class GML2MockData {
     }
 
     static CoordinateSequence coordinates() {
-        return new CoordinateArraySequence(
-                new Coordinate[] {new Coordinate(1, 2), new Coordinate(3, 4)});
+        return new CoordinateArraySequence(new Coordinate[] {new Coordinate(1, 2), new Coordinate(3, 4)});
     }
 
     static Element coordinates(Document document, Node parent) {
@@ -146,11 +145,7 @@ public class GML2MockData {
 
     static LinearRing linearRing() {
         return gf.createLinearRing(
-                new Coordinate[] {
-                    new Coordinate(1, 1),
-                    new Coordinate(2, 2),
-                    new Coordinate(3, 3),
-                    new Coordinate(1, 1)
+                new Coordinate[] {new Coordinate(1, 1), new Coordinate(2, 2), new Coordinate(3, 3), new Coordinate(1, 1)
                 });
     }
 
@@ -193,13 +188,8 @@ public class GML2MockData {
     }
 
     static MultiPoint multiPoint() {
-        return setCRS(
-                gf.createMultiPoint(
-                        new CoordinateArraySequence(
-                                new CoordinateArraySequence(
-                                        new Coordinate[] {
-                                            new Coordinate(1, 1), new Coordinate(2, 2)
-                                        }))));
+        return setCRS(gf.createMultiPoint(new CoordinateArraySequence(
+                new CoordinateArraySequence(new Coordinate[] {new Coordinate(1, 1), new Coordinate(2, 2)}))));
     }
 
     static Element multiPoint(Document document, Node parent) {

@@ -25,15 +25,20 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
-import org.geotools.data.DataStore;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
 import org.geotools.data.h2.H2DataStoreFactory;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.visitor.CountVisitor;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -45,18 +50,13 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.PrecisionModel;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
 
 /** @author Simone Giannecchini, GeoSolutions SAS */
 public class CatalogSliceTest extends Assert {
 
     private H2DataStoreFactory INTERNAL_STORE_SPI = new H2DataStoreFactory();
 
-    private final FilterFactory ff = CommonFactoryFinder.getFilterFactory2();
+    private final FilterFactory ff = CommonFactoryFinder.getFilterFactory();
 
     static final PrecisionModel PRECISION_MODEL = new PrecisionModel(PrecisionModel.FLOATING);
 
@@ -85,8 +85,7 @@ public class CatalogSliceTest extends Assert {
             assertNull(typeNames);
 
             // create new schema 1
-            final String schemaDef1 =
-                    "the_geom:Polygon,coverage:String,imageindex:Integer,cloud_formations:Integer";
+            final String schemaDef1 = "the_geom:Polygon,coverage:String,imageindex:Integer,cloud_formations:Integer";
             sliceCat.createType("1", schemaDef1);
             typeNames = sliceCat.getTypeNames();
             assertNotNull(typeNames);
@@ -119,8 +118,7 @@ public class CatalogSliceTest extends Assert {
             assertEquals(2, cv.getCount());
 
             // create new schema 2
-            final String schemaDef2 =
-                    "the_geom:Polygon,coverage:String,imageindex:Integer,new:Double";
+            final String schemaDef2 = "the_geom:Polygon,coverage:String,imageindex:Integer,new:Double";
             sliceCat.createType("2", schemaDef2);
             typeNames = sliceCat.getTypeNames();
             assertNotNull(typeNames);
@@ -175,21 +173,17 @@ public class CatalogSliceTest extends Assert {
             cv.reset();
             coll.accepts(cv, null);
             assertEquals(3, cv.getCount());
-            assertTrue(
-                    src.getBounds(q)
-                            .contains(
-                                    referencedEnvelope.toBounds(
-                                            referencedEnvelope.getCoordinateReferenceSystem())));
+            assertTrue(src.getBounds(q)
+                    .contains(referencedEnvelope.toBounds(referencedEnvelope.getCoordinateReferenceSystem())));
             assertEquals(src.getSchema().getType("coverage"), schema.getType("coverage"));
             assertEquals(src.getSchema().getType("imageindex"), schema.getType("imageindex"));
-            assertEquals(
-                    src.getSchema().getType("cloud_formations"),
-                    schema.getType("cloud_formations"));
+            assertEquals(src.getSchema().getType("cloud_formations"), schema.getType("cloud_formations"));
             // type not equal because source schema has a column comment that gets assigned to the
             // description
             assertNotEquals(src.getSchema().getType("the_geom"), schema.getType("the_geom"));
             assertEquals(
-                    "POLYGON", src.getSchema().getType("the_geom").getDescription().toString());
+                    "POLYGON",
+                    src.getSchema().getType("the_geom").getDescription().toString());
 
             // remove
             sliceCat.removeGranules("1", Filter.INCLUDE, t);
@@ -236,8 +230,7 @@ public class CatalogSliceTest extends Assert {
             assertNull(typeNames);
 
             // create new schema 1
-            final String schemaDef1 =
-                    "the_geom:Polygon,coverage:String,imageindex:Integer,cloud_formations:Integer";
+            final String schemaDef1 = "the_geom:Polygon,coverage:String,imageindex:Integer,cloud_formations:Integer";
             sliceCat.createType("test", schemaDef1);
             typeNames = sliceCat.getTypeNames();
             assertNotNull(typeNames);
@@ -273,8 +266,7 @@ public class CatalogSliceTest extends Assert {
             for (int i = 0; i < numGranules; i++) {
                 CoverageSlice slice = granules.get(i);
                 SimpleFeature feature = slice.getOriginator();
-                List<AttributeDescriptor> attributes =
-                        feature.getFeatureType().getAttributeDescriptors();
+                List<AttributeDescriptor> attributes = feature.getFeatureType().getAttributeDescriptors();
 
                 // Check we are only getting the cloud_formations attribute due to propertyNames
                 assertEquals(1, attributes.size());
@@ -308,12 +300,7 @@ public class CatalogSliceTest extends Assert {
         params.put("ScanTypeNames", Boolean.TRUE);
         // H2 database URLs must not be percent-encoded: see GEOT-4504
         final URL url =
-                new URL(
-                        "file:"
-                                + URLs.urlToFile(
-                                        TestData.url(
-                                                this,
-                                                ".IASI_C_EUMP_20121120062959_31590_eps_o_l2")));
+                new URL("file:" + URLs.urlToFile(TestData.url(this, ".IASI_C_EUMP_20121120062959_31590_eps_o_l2")));
         params.put("ParentLocation", url);
         params.put("database", url + "/IASI_C_EUMP_20121120062959_31590_eps_o_l2");
         params.put("dbtype", "h2");

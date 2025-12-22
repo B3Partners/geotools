@@ -20,20 +20,19 @@ package org.geotools.filter.function.math;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.util.Converters;
 import org.geotools.util.factory.Hints;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_pow extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "pow",
-                    parameter("power", Double.class),
-                    parameter("base", Number.class),
-                    parameter("exponent", Number.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "pow",
+            parameter("power", Double.class),
+            parameter("base", Number.class),
+            parameter("exponent", Number.class));
 
     public FilterFunction_pow() {
         super("pow");
@@ -61,6 +60,6 @@ public class FilterFunction_pow extends FunctionExpressionImpl {
                     "Filter Function problem for function pow argument #1 - expected type double");
         }
 
-        return (Math.pow((Double) arg0, (Double) arg1));
+        return Math.pow((Double) arg0, (Double) arg1);
     }
 }

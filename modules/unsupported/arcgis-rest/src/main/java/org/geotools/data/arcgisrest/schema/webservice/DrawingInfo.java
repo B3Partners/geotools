@@ -1,7 +1,26 @@
+/*
+ *    GeoTools - The Open Source Java GIS Toolkit
+ *    http://geotools.org
+ *
+ *    (C) 2018, Open Source Geospatial Foundation (OSGeo)
+ *
+ *    This library is free software; you can redistribute it and/or
+ *    modify it under the terms of the GNU Lesser General Public
+ *    License as published by the Free Software Foundation;
+ *    version 2.1 of the License.
+ *
+ *    This library is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    Lesser General Public License for more details.
+ *
+ */
+
 package org.geotools.data.arcgisrest.schema.webservice;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import java.util.Objects;
 
 public class DrawingInfo {
 
@@ -74,10 +93,6 @@ public class DrawingInfo {
             return false;
         }
         DrawingInfo rhs = ((DrawingInfo) other);
-        return (((this.renderer == rhs.renderer)
-                        || ((this.renderer != null) && this.renderer.equals(rhs.renderer)))
-                && ((this.transparency == rhs.transparency)
-                        || ((this.transparency != null)
-                                && this.transparency.equals(rhs.transparency))));
+        return Objects.equals(this.renderer, rhs.renderer) && Objects.equals(this.transparency, rhs.transparency);
     }
 }

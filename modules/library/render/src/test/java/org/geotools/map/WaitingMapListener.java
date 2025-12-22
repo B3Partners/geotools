@@ -21,8 +21,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A listener for map bounds and layer list events which can be set to wait for specific events to
- * be received.
+ * A listener for map bounds and layer list events which can be set to wait for specific events to be received.
  *
  * @author Michael Bedward
  * @since 2.7
@@ -36,7 +35,7 @@ class WaitingMapListener extends MapAdapter {
         CHANGED,
         MOVED,
         PRE_DISPOSE,
-        BOUNDS_CHANGED;
+        BOUNDS_CHANGED
     }
 
     private static final int N = Type.values().length;

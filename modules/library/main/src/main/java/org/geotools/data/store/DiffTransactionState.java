@@ -17,28 +17,26 @@
 package org.geotools.data.store;
 
 import java.io.IOException;
-import org.geotools.data.DataSourceException;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
 import org.geotools.data.Diff;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Transaction;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
 
 /** Transaction state responsible for holding an in memory {@link Diff} of any modifications. */
 public class DiffTransactionState implements Transaction.State {
-    protected Diff diff;
+    protected final Diff diff;
 
     /** The transaction (ie session) associated with this state */
     protected Transaction transaction;
 
-    /**
-     * ContentState for this transaction used to hold information for FeatureReader implementations
-     */
+    /** ContentState for this transaction used to hold information for FeatureReader implementations */
     protected ContentState state;
 
     /**
@@ -70,12 +68,11 @@ public class DiffTransactionState implements Transaction.State {
         return this.diff;
     }
 
-    @Override
-
     /**
-     * We are already holding onto our transaction from ContentState; however this method does check
-     * that the transaction is correct.
+     * We are already holding onto our transaction from ContentState; however this method does check that the
+     * transaction is correct.
      */
+    @Override
     public synchronized void setTransaction(Transaction transaction) {
         if (this.transaction != null && transaction == null) {
             // clear ContentEntry transaction to fix GEOT-3315
@@ -84,13 +81,11 @@ public class DiffTransactionState implements Transaction.State {
         this.transaction = transaction;
     }
 
-    @Override
-
     /**
      * Will apply differences to store.
      *
-     * <p>The provided diff will be modified as the differences are applied, If the operations are
-     * all successful diff will be empty at the end of this process.
+     * <p>The provided diff will be modified as the differences are applied, If the operations are all successful diff
+     * will be empty at the end of this process.
      *
      * <p>diff can be used to represent the following operations:
      *
@@ -100,12 +95,11 @@ public class DiffTransactionState implements Transaction.State {
      *   <li>fid|feature: where fid does not exist, represents feature being modified
      * </ul>
      *
-     * @param typeName typeName being updated
-     * @param diff differences to apply to FeatureWriter
      * @throws IOException If the entire diff cannot be writen out
-     * @t
-     * @see org.geotools.data.Transaction.State#commit()
+     * @see Transaction.State#commit()
      */
+    @Override
+    @SuppressWarnings("Finally") // throws from within a finally block
     public synchronized void commit() throws IOException {
         if (diff.isEmpty()) {
             return; // nothing to do
@@ -118,8 +112,7 @@ public class DiffTransactionState implements Transaction.State {
         SimpleFeature update;
 
         Throwable cause = null;
-        try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
-                getWriter(name, dataStore, source)) {
+        try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer = getWriter(name, dataStore, source)) {
             while (writer.hasNext()) {
                 feature = writer.next();
                 String fid = feature.getID();
@@ -164,9 +157,7 @@ public class DiffTransactionState implements Transaction.State {
                                         (String) addedFeature.getUserData().get(Hints.PROVIDED_FID);
                                 nextFeature.getUserData().put(Hints.PROVIDED_FID, providedFid);
                             } else {
-                                nextFeature
-                                        .getUserData()
-                                        .put(Hints.PROVIDED_FID, addedFeature.getID());
+                                nextFeature.getUserData().put(Hints.PROVIDED_FID, addedFeature.getID());
                             }
                             // }
                             writer.write();
@@ -207,16 +198,15 @@ public class DiffTransactionState implements Transaction.State {
         return writer;
     }
 
+    /** @see Transaction.State#rollback() */
     @Override
-    /** @see org.geotools.data.Transaction.State#rollback() */
     public synchronized void rollback() throws IOException {
         diff.clear(); // rollback differences
         state.fireBatchFeatureEvent(false);
     }
 
+    /** @see Transaction.State#addAuthorization(java.lang.String) */
     @Override
-
-    /** @see org.geotools.data.Transaction.State#addAuthorization(java.lang.String) */
     public synchronized void addAuthorization(String AuthID) throws IOException {
         // not required for TransactionStateDiff
     }
@@ -229,8 +219,7 @@ public class DiffTransactionState implements Transaction.State {
      * @return FeatureWriter with diff support
      */
     public FeatureWriter<SimpleFeatureType, SimpleFeature> diffWriter(
-            ContentFeatureStore contentFeatureStore,
-            FeatureReader<SimpleFeatureType, SimpleFeature> reader) {
+            ContentFeatureStore contentFeatureStore, FeatureReader<SimpleFeatureType, SimpleFeature> reader) {
 
         return new DiffContentFeatureWriter(contentFeatureStore, diff, reader);
     }

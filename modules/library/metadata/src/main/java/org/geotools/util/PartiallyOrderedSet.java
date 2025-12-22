@@ -88,14 +88,12 @@ public class PartiallyOrderedSet<E> extends AbstractSet<E> {
 
     // TODO: document that returns true if this establishes new ordering
     private boolean createDirectedEdge(DirectedGraphNode source, DirectedGraphNode target) {
-        removeDirectedEdge(target, source);
+        removeDirectedEdge(/* source= */ target, /* target= */ source);
         boolean sourceNew = source.outgoings.add(target);
         boolean targetNew = target.ingoings.add(source);
         if (sourceNew != targetNew) {
-            String message =
-                    MessageFormat.format(
-                            "Inconsistent edge encountered from [source: {0}] to [target: {1}]:",
-                            source, target);
+            String message = MessageFormat.format(
+                    "Inconsistent edge encountered from [source: {0}] to [target: {1}]:", source, target);
             throw new IllegalStateException(message);
         }
         return targetNew;
@@ -119,10 +117,8 @@ public class PartiallyOrderedSet<E> extends AbstractSet<E> {
         boolean sourceExisted = source.outgoings.remove(target);
         boolean targetExisted = target.ingoings.remove(source);
         if (sourceExisted != targetExisted) {
-            String message =
-                    MessageFormat.format(
-                            "Inconsistent edge encountered from [source: {0}] to [target: {1}]:",
-                            source, target);
+            String message = MessageFormat.format(
+                    "Inconsistent edge encountered from [source: {0}] to [target: {1}]:", source, target);
             throw new IllegalStateException(message);
         }
         return targetExisted;
@@ -190,13 +186,15 @@ public class PartiallyOrderedSet<E> extends AbstractSet<E> {
     }
 
     /**
-     * An iterator returning elements based on the partial order relationship we have in the
-     * directed nodes, starting from the sources and moving towards the sinks
+     * An iterator returning elements based on the partial order relationship we have in the directed nodes, starting
+     * from the sources and moving towards the sinks
      */
     class TopologicalSortIterator implements Iterator<E> {
 
         // lists of nodes with zero residual inDegrees (aka sources)
+        @SuppressWarnings("JdkObsolete") // LinkedList used for specific graph traversal ordering
         private final LinkedList<DirectedGraphNode> sources = new LinkedList<>();
+
         private final Map<DirectedGraphNode, Countdown> residualInDegrees = new LinkedHashMap<>();
 
         public TopologicalSortIterator() {
@@ -215,9 +213,7 @@ public class PartiallyOrderedSet<E> extends AbstractSet<E> {
 
         private void maybeThrowLoopException() {
             if (throwOnCycle) {
-                String message =
-                        "Some of the partial order relationship form a loop: "
-                                + residualInDegrees.keySet();
+                String message = "Some of the partial order relationship form a loop: " + residualInDegrees.keySet();
                 throw new IllegalStateException(message);
             }
         }

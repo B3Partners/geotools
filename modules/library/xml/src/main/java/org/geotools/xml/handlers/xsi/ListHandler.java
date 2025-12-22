@@ -42,9 +42,7 @@ public class ListHandler extends XSIElementHandler {
     @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
     public int hashCode() {
-        return LOCALNAME.hashCode()
-                * ((id == null) ? 1 : id.hashCode())
-                * ((itemType == null) ? 1 : itemType.hashCode());
+        return LOCALNAME.hashCode() * (id == null ? 1 : id.hashCode()) * (itemType == null ? 1 : itemType.hashCode());
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandler(java.lang.String, java.lang.String) */
@@ -61,10 +59,7 @@ public class ListHandler extends XSIElementHandler {
                     simpleType = sth;
                 } else {
                     throw new SAXNotRecognizedException(
-                            getLocalName()
-                                    + " may only have one '"
-                                    + AllHandler.LOCALNAME
-                                    + "' declaration.");
+                            getLocalName() + " may only have one '" + AllHandler.LOCALNAME + "' declaration.");
                 }
 
                 return sth;
@@ -75,8 +70,7 @@ public class ListHandler extends XSIElementHandler {
     }
 
     /**
-     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String,
-     *     org.xml.sax.Attributes)
+     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
     public void startElement(String namespaceURI, String localName, Attributes atts) {

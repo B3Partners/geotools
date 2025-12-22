@@ -23,14 +23,14 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.awt.geom.AffineTransform;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.MathTransformFactory;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.referencing.operation.TransformTestBase;
 import org.geotools.referencing.operation.matrix.GeneralMatrix;
 import org.junit.Test;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.MathTransformFactory;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * Tests the following transforms:
@@ -46,14 +46,12 @@ import org.opengis.referencing.operation.TransformException;
  */
 public final class PassthroughTransformTest extends TransformTestBase {
     /**
-     * Test the pass through transform using an affine transform. The "passthrough" of such
-     * transform are optimized in a special way.
+     * Test the pass through transform using an affine transform. The "passthrough" of such transform are optimized in a
+     * special way.
      */
     @Test
     public void testLinear() throws FactoryException, TransformException {
-        runTest(
-                mtFactory.createAffineTransform(
-                        new GeneralMatrix(AffineTransform.getScaleInstance(4, 2))));
+        runTest(mtFactory.createAffineTransform(new GeneralMatrix(AffineTransform.getScaleInstance(4, 2))));
     }
 
     /** Test the general passthrough transform. */
@@ -100,11 +98,13 @@ public final class PassthroughTransformTest extends TransformTestBase {
          */
         final DimensionFilter filter = new DimensionFilter(mtFactory);
         filter.addSourceDimensionRange(0, subLower);
-        assertTrue("Expected an identity transform", filter.separate(passthrough).isIdentity());
+        assertTrue(
+                "Expected an identity transform", filter.separate(passthrough).isIdentity());
 
         filter.clear();
         filter.addSourceDimensionRange(subUpper, passthrough.getSourceDimensions());
-        assertTrue("Expected an identity transform", filter.separate(passthrough).isIdentity());
+        assertTrue(
+                "Expected an identity transform", filter.separate(passthrough).isIdentity());
 
         filter.clear();
         filter.addSourceDimensionRange(subLower, subUpper);
@@ -113,8 +113,7 @@ public final class PassthroughTransformTest extends TransformTestBase {
         for (int i = 0; i < expectedDimensions.length; i++) {
             expectedDimensions[i] = subLower + i;
         }
-        assertArrayEquals(
-                "Unexpected output dimensions", expectedDimensions, filter.getTargetDimensions());
+        assertArrayEquals("Unexpected output dimensions", expectedDimensions, filter.getTargetDimensions());
     }
 
     /**
@@ -155,11 +154,7 @@ public final class PassthroughTransformTest extends TransformTestBase {
                 } else {
                     expected = atData[j * atDimension + i - subOffset];
                 }
-                assertEquals(
-                        "A transformed value is wrong",
-                        expected,
-                        mtData[j * mtDimension + i],
-                        1E-6);
+                assertEquals("A transformed value is wrong", expected, mtData[j * mtDimension + i], 1E-6);
             }
         }
     }

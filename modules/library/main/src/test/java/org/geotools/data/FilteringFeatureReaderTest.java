@@ -23,12 +23,14 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
 import org.junit.After;
 import org.junit.Test;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
 
 /**
  * Test FilteredFeatureReader for conformance.
@@ -84,8 +86,7 @@ public class FilteringFeatureReaderTest extends DataTestCase {
             assertTrue(reader.hasNext());
         }
 
-        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
-                DataUtilities.reader(roadFeatures)) {
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader = DataUtilities.reader(roadFeatures)) {
             assertEquals(roadFeatures.length, count(reader));
         }
 
@@ -100,14 +101,13 @@ public class FilteringFeatureReaderTest extends DataTestCase {
         }
     }
 
-    void assertContents(
-            SimpleFeature[] expected, FeatureReader<SimpleFeatureType, SimpleFeature> reader)
+    void assertContents(SimpleFeature[] expected, FeatureReader<SimpleFeatureType, SimpleFeature> reader)
             throws IOException {
         assertNotNull(reader);
         assertNotNull(expected);
         SimpleFeature feature;
         int count = 0;
-        try {
+        try (reader) {
             for (SimpleFeature simpleFeature : expected) {
                 assertTrue(reader.hasNext());
                 feature = reader.next();
@@ -121,8 +121,6 @@ public class FilteringFeatureReaderTest extends DataTestCase {
             throw new DataSourceException("hasNext() lied to me at:" + count, e);
         } catch (IllegalAttributeException e) {
             throw new DataSourceException("next() could not understand feature at:" + count, e);
-        } finally {
-            reader.close();
         }
     }
 }

@@ -20,28 +20,31 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import org.geotools.data.DataStore;
-import org.geotools.data.Repository;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.Repository;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.store.ContentDataStore;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
+import org.geotools.data.store.ContentState;
 import org.geotools.feature.NameImpl;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.feature.type.Name;
 
 /** {@link DataStore} for a vector mosaic. */
 public class VectorMosaicStore extends ContentDataStore {
     static final Logger LOGGER = Logging.getLogger(VectorMosaicStore.class);
 
-    @SuppressWarnings("PMD.UnusedPrivateField") // field is used in constructor
     private final Repository repository;
 
     private final String delegateStoreName;
+
+    private Properties commonParameters;
 
     private String preferredSPI;
 
@@ -82,8 +85,8 @@ public class VectorMosaicStore extends ContentDataStore {
     /**
      * Creates a new instance of VectorMosaicStore
      *
-     * @param delegateStoreName the name of the delegate store. Delegate store must be registered in
-     *     the repository and must point to vector featuretypes with identical attributes.
+     * @param delegateStoreName the name of the delegate store. Delegate store must be registered in the repository and
+     *     must point to vector featuretypes with identical attributes.
      * @param repository the repository to use for lookup of the delegate store.
      */
     public VectorMosaicStore(String delegateStoreName, Repository repository) {
@@ -99,11 +102,8 @@ public class VectorMosaicStore extends ContentDataStore {
      * @param delegateSchema the schema of the type to validate.
      * @return true if the schema is valid.
      */
-    private boolean validateSchema(
-            String delegateStoreName, String typeName, SimpleFeatureType delegateSchema) {
-        if (delegateSchema.getDescriptor(
-                        VectorMosaicGranule.CONNECTION_PARAMETERS_DELEGATE_FIELD_DEFAULT)
-                == null) {
+    private boolean validateSchema(String delegateStoreName, String typeName, SimpleFeatureType delegateSchema) {
+        if (delegateSchema.getDescriptor(VectorMosaicGranule.CONNECTION_PARAMETERS_DELEGATE_FIELD_DEFAULT) == null) {
             LOGGER.log(
                     Level.INFO,
                     "Delegate store "
@@ -129,8 +129,7 @@ public class VectorMosaicStore extends ContentDataStore {
                 && geometryType.getBinding() != null
                 && !geometryType.getBinding().isAssignableFrom(GeometryType.class)) {
             String geometryTypeName = geometryType.getBinding().getName();
-            if (!geometryTypeName.equals(POLYGON_TYPE_NAME)
-                    && !geometryTypeName.equals(MULTI_POLYGON_TYPE_NAME)) {
+            if (!geometryTypeName.equals(POLYGON_TYPE_NAME) && !geometryTypeName.equals(MULTI_POLYGON_TYPE_NAME)) {
                 LOGGER.log(
                         Level.INFO,
                         "Delegate store "
@@ -154,9 +153,17 @@ public class VectorMosaicStore extends ContentDataStore {
         return true;
     }
 
+    public Properties getCommonParameters() {
+        return commonParameters;
+    }
+
+    public void setCommonParameters(Properties commonParameters) {
+        this.commonParameters = commonParameters;
+    }
+
     /**
-     * Builds a qualified name from a name containing the ":" separator, otherwise the given name
-     * will be used as the local part
+     * Builds a qualified name from a name containing the ":" separator, otherwise the given name will be used as the
+     * local part
      *
      * @param name the name to build a qualified name from
      * @return the qualified name
@@ -182,30 +189,21 @@ public class VectorMosaicStore extends ContentDataStore {
         }
         List<String> delegateTypes = null;
         try {
-            delegateTypes =
-                    Arrays.stream(delegateDataStore.getTypeNames())
-                            .filter(
-                                    t -> {
-                                        try {
-                                            return validateSchema(
-                                                    delegateStoreName,
-                                                    t,
-                                                    delegateDataStore.getSchema(t));
-                                        } catch (IOException e) {
-                                            LOGGER.log(
-                                                    Level.WARNING,
-                                                    "Failed to validate schema for type " + t,
-                                                    e);
-                                            return false;
-                                        }
-                                    })
-                            .collect(Collectors.toList());
+            delegateTypes = Arrays.stream(delegateDataStore.getTypeNames())
+                    .filter(t -> {
+                        try {
+                            return validateSchema(delegateStoreName, t, delegateDataStore.getSchema(t));
+                        } catch (IOException e) {
+                            LOGGER.log(Level.WARNING, "Failed to validate schema for type " + t, e);
+                            return false;
+                        }
+                    })
+                    .collect(Collectors.toList());
 
         } catch (IOException e) {
             LOGGER.log(
                     Level.WARNING,
-                    "Failed to get type names for vector mosaic delegate data store "
-                            + delegateStoreName,
+                    "Failed to get type names for vector mosaic delegate data store " + delegateStoreName,
                     e);
         }
         List<Name> result = new ArrayList<>();
@@ -224,5 +222,10 @@ public class VectorMosaicStore extends ContentDataStore {
             throw new IOException("No Vector Mosaic configuration found for type " + name);
         }
         return new VectorMosaicFeatureSource(entry, this);
+    }
+
+    @Override
+    protected ContentState createContentState(ContentEntry entry) {
+        return new VectorMosaicState(entry);
     }
 }

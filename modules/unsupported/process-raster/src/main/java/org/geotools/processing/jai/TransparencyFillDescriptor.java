@@ -16,16 +16,16 @@
  */
 package org.geotools.processing.jai;
 
-import com.sun.media.jai.util.AreaOpPropertyGenerator;
 import java.awt.RenderingHints;
 import java.awt.image.RenderedImage;
-import javax.media.jai.EnumeratedParameter;
-import javax.media.jai.JAI;
-import javax.media.jai.OperationDescriptorImpl;
-import javax.media.jai.ParameterBlockJAI;
-import javax.media.jai.PropertyGenerator;
-import javax.media.jai.RenderedOp;
-import javax.media.jai.registry.RenderedRegistryMode;
+import org.eclipse.imagen.EnumeratedParameter;
+import org.eclipse.imagen.ImageN;
+import org.eclipse.imagen.OperationDescriptorImpl;
+import org.eclipse.imagen.ParameterBlockImageN;
+import org.eclipse.imagen.PropertyGenerator;
+import org.eclipse.imagen.RenderedOp;
+import org.eclipse.imagen.media.util.AreaOpPropertyGenerator;
+import org.eclipse.imagen.registry.RenderedRegistryMode;
 
 @SuppressWarnings({"serial", "deprecation"})
 public class TransparencyFillDescriptor extends OperationDescriptorImpl {
@@ -47,13 +47,13 @@ public class TransparencyFillDescriptor extends OperationDescriptorImpl {
     }
 
     /**
-     * The resource strings that provide the general documentation and specify the parameter list
-     * for a TransparencyFill operation.
+     * The resource strings that provide the general documentation and specify the parameter list for a TransparencyFill
+     * operation.
      */
     private static final String[][] resources = {
         {"GlobalName", "TransparencyFill"},
         {"LocalName", "TransparencyFill"},
-        {"Vendor", "it.geosolutions.jaiext"},
+        {"Vendor", "org.eclipse.imagen.media"},
         {"Description", "Transparency pixels Filler"},
         {"DocURL", ""},
         {"Version", "1.0"},
@@ -75,8 +75,8 @@ public class TransparencyFillDescriptor extends OperationDescriptorImpl {
     }
 
     /**
-     * Returns an array of <code>PropertyGenerators</code> implementing property inheritance for the
-     * "TransparencyFill" operation.
+     * Returns an array of <code>PropertyGenerators</code> implementing property inheritance for the "TransparencyFill"
+     * operation.
      *
      * @return An array of property generators.
      */
@@ -88,18 +88,13 @@ public class TransparencyFillDescriptor extends OperationDescriptorImpl {
     }
 
     public static RenderedOp create(
-            RenderedImage source0,
-            FillType type,
-            RenderingHints hints,
-            Number noData,
-            Integer width) {
-        ParameterBlockJAI pb =
-                new ParameterBlockJAI("TransparencyFill", RenderedRegistryMode.MODE_NAME);
+            RenderedImage source0, FillType type, RenderingHints hints, Number noData, Integer width) {
+        ParameterBlockImageN pb = new ParameterBlockImageN("TransparencyFill", RenderedRegistryMode.MODE_NAME);
 
         pb.setSource("source0", source0);
         pb.setParameter("type", type);
         pb.setParameter("noData", noData);
         pb.setParameter("width", width);
-        return JAI.create("TransparencyFill", pb, hints);
+        return ImageN.create("TransparencyFill", pb, hints);
     }
 }

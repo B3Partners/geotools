@@ -18,27 +18,28 @@ package org.geotools.data;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.data.DelegatingFeatureReader;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.Filter;
 import org.geotools.filter.visitor.BindingFilterVisitor;
-import org.opengis.feature.Feature;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.Filter;
 
 /**
- * Basic support for a FeatureReader<SimpleFeatureType, SimpleFeature> that does filtering. I think
- * that filtering should perhaps be done in the AttributeReader. I'm still having a bit of trouble
- * with the split between attributeReader and featureReader as to where the hooks for advanced
- * processing like filtering should take place. See my note on hasNext(), as the method is currently
- * broken and there are more optimizations that could take place if we had a
- * FilteringAttributeReader. So this class may go, but I thought I'd put the ideas into code.
+ * Basic support for a FeatureReader<SimpleFeatureType, SimpleFeature> that does filtering. I think that filtering
+ * should perhaps be done in the AttributeReader. I'm still having a bit of trouble with the split between
+ * attributeReader and featureReader as to where the hooks for advanced processing like filtering should take place. See
+ * my note on hasNext(), as the method is currently broken and there are more optimizations that could take place if we
+ * had a FilteringAttributeReader. So this class may go, but I thought I'd put the ideas into code.
  *
  * <p>Jody here - changed hasNext() to peek as required.
  *
  * @author Chris Holmes
  * @version $Id$
  */
-public class FilteringFeatureReader<T extends FeatureType, F extends Feature>
-        implements DelegatingFeatureReader<T, F> {
+public class FilteringFeatureReader<T extends FeatureType, F extends Feature> implements DelegatingFeatureReader<T, F> {
     protected final FeatureReader<T, F> featureReader;
     protected final Filter filter;
     protected F next;
@@ -46,18 +47,15 @@ public class FilteringFeatureReader<T extends FeatureType, F extends Feature>
     /**
      * Creates a new instance of AbstractFeatureReader
      *
-     * <p>Please don't call this method with Filter.INCLUDE or Filter.EXCLUDE (consider not
-     * filtering and EmptyFeatureReader instead)
+     * <p>Please don't call this method with Filter.INCLUDE or Filter.EXCLUDE (consider not filtering and
+     * EmptyFeatureReader instead)
      *
      * @param featureReader FeatureReader<SimpleFeatureType, SimpleFeature> being filtered
      * @param filter Filter used to limit the results of featureReader
      */
     public FilteringFeatureReader(FeatureReader<T, F> featureReader, Filter filter) {
         this.featureReader = featureReader;
-        this.filter =
-                (Filter)
-                        filter.accept(
-                                new BindingFilterVisitor(featureReader.getFeatureType()), null);
+        this.filter = (Filter) filter.accept(new BindingFilterVisitor(featureReader.getFeatureType()), null);
         next = null;
     }
 
@@ -98,9 +96,9 @@ public class FilteringFeatureReader<T extends FeatureType, F extends Feature>
      * <p>This class will peek ahead to see if there is additional content.
      *
      * <p>Chris has pointed out that we could make use of AttributeReader based filtering:<br>
-     * <i>"Also doing things in the Attribute Reader would allow us to do the smart filtering, only
-     * looking at the attributes needed for comparison, whereas doing filtering here means we have
-     * to create an entire feature each time."</i>
+     * <i>"Also doing things in the Attribute Reader would allow us to do the smart filtering, only looking at the
+     * attributes needed for comparison, whereas doing filtering here means we have to create an entire feature each
+     * time."</i>
      *
      * @return <code>true</code> if we have additional content
      * @throws IOException If the reader we are filtering encounters a problem

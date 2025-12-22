@@ -18,27 +18,26 @@ public class EncoderTest {
     @Test
     @Ignore // needs a string comparison ignoring newlines...
     public void testIndent() throws Exception {
-        Mail ml =
-                new Mail(
-                        BigInteger.valueOf(10),
-                        "hi",
-                        new Envelope(
-                                "me@me.org", "you@you.org", Calendar.getInstance(), "hey", null),
-                        null);
+        Mail ml = new Mail(
+                BigInteger.valueOf(10),
+                "hi",
+                new Envelope("me@me.org", "you@you.org", Calendar.getInstance(), "hey", null),
+                null);
         Encoder e = new Encoder(new MLConfiguration());
         e.setIndenting(true);
         e.setIndentSize(4);
 
         String mail = e.encodeAsString(ml, new QName(ML.NAMESPACE, "mails"));
         String expected =
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?><ml:mails xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:ml=\"http://mails/refractions/net\">\n"
-                        + "    <ml:mail>\n"
-                        + "        <ml:envelope From=\"me@me.org\">\n"
-                        + "            <ml:From>me@me.org</ml:From>\n"
-                        + "            <ml:To>you@you.org</ml:To>\n"
-                        + "        </ml:envelope>\n"
-                        + "    </ml:mail>\n"
-                        + "</ml:mails>";
+                """
+                <?xml version="1.0" encoding="UTF-8"?><ml:mails xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ml="http://mails/refractions/net">
+                    <ml:mail>
+                        <ml:envelope From="me@me.org">
+                            <ml:From>me@me.org</ml:From>
+                            <ml:To>you@you.org</ml:To>
+                        </ml:envelope>
+                    </ml:mail>
+                </ml:mails>""";
         assertEquals(expected, mail);
     }
 

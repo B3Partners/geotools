@@ -17,16 +17,16 @@
 package org.geotools.renderer;
 
 import java.awt.Graphics;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.style.Style;
 import org.geotools.feature.FeatureCollection;
-import org.geotools.styling.Style;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
 
 /**
- * Base interface for renderer. This is very much work in progress. <strong>Note: this interface
- * will changes in future versions.</strong>
+ * Base interface for renderer. This is very much work in progress. <strong>Note: this interface will changes in future
+ * versions.</strong>
  *
  * @version $Id$
  * @author James Macgill
@@ -34,18 +34,14 @@ import org.opengis.feature.type.FeatureType;
 public interface Renderer {
 
     /**
-     * Renders the provided features using the specified style. The features should fill the
-     * viewport but may well extend beyond it. Features should be cropped (if appropriate) to the
-     * specified viewport.
+     * Renders the provided features using the specified style. The features should fill the viewport but may well
+     * extend beyond it. Features should be cropped (if appropriate) to the specified viewport.
      *
      * @param fc The feature collection to render
      * @param viewport The visible extent to be rendered
      * @param style The style definition to apply to each feature
      */
-    void render(
-            FeatureCollection<? extends FeatureType, ? extends Feature> fc,
-            Envelope viewport,
-            Style style);
+    void render(FeatureCollection<? extends FeatureType, ? extends Feature> fc, Envelope viewport, Style style);
 
     /**
      * Getter for property interactive.

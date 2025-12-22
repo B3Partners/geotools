@@ -15,16 +15,16 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.URL;
 import java.util.HashMap;
-import org.geotools.data.FeatureSource;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.feature.ComplexAttribute;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.wfs.WFSDataStoreFactory;
 import org.geotools.data.wfs.impl.WFSContentDataAccess;
 import org.geotools.data.wfs.impl.WFSDataAccessFactory;
 import org.geotools.feature.FeatureIterator;
-import org.opengis.feature.ComplexAttribute;
-import org.opengis.feature.Feature;
-import org.opengis.feature.Property;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
 
 /**
  * Read the contents of a WFS with complex structure.
@@ -98,17 +98,16 @@ public class ReadWFSKommuner {
             throw new RuntimeException("WFS didn't return a Kommune feature.");
         }
 
-        FeatureSource<FeatureType, Feature> kommuneSource =
-                complexDataAccess.getFeatureSource(featureName);
+        FeatureSource<FeatureType, Feature> kommuneSource = complexDataAccess.getFeatureSource(featureName);
 
         try (FeatureIterator<Feature> features = kommuneSource.getFeatures().features()) {
 
             while (features.hasNext()) {
                 Feature nextFeature = features.next();
-                String kommunenr = (String) nextFeature.getProperty("kommunenummer").getValue();
+                String kommunenr =
+                        (String) nextFeature.getProperty("kommunenummer").getValue();
                 String kommunenavn = "Uten norsk navn";
-                ComplexAttribute kommunenavnAttribute =
-                        (ComplexAttribute) nextFeature.getProperty("kommunenavn");
+                ComplexAttribute kommunenavnAttribute = (ComplexAttribute) nextFeature.getProperty("kommunenavn");
                 for (Property administrativEnhetNavn : kommunenavnAttribute.getProperties()) {
                     ComplexAttribute innerElement = innerComplex(administrativEnhetNavn);
                     if ("nor".equals(innerElement.getProperty("språk").getValue())) {
@@ -127,7 +126,8 @@ public class ReadWFSKommuner {
     }
 
     private static ComplexAttribute innerComplex(Property complex) {
-        return (ComplexAttribute) ((ComplexAttribute) complex).getProperties().iterator().next();
+        return (ComplexAttribute)
+                ((ComplexAttribute) complex).getProperties().iterator().next();
     }
 
     /** Call read */

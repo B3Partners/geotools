@@ -21,11 +21,11 @@ import javax.imageio.ImageReader;
 import javax.imageio.event.IIOReadProgressListener;
 import javax.imageio.event.IIOReadUpdateListener;
 import javax.imageio.event.IIOReadWarningListener;
-import org.opengis.util.ProgressListener;
+import org.geotools.api.util.ProgressListener;
 
 /**
- * This class provide a means to wrap a GeoTools {@link ProgressListener} and have it control an
- * {@link ImageReader} while it is actually doing a {@link ImageReader#read(int)} operation.
+ * This class provide a means to wrap a GeoTools {@link ProgressListener} and have it control an {@link ImageReader}
+ * while it is actually doing a {@link ImageReader#read(int)} operation.
  *
  * <p>We also give user the ability to cancel the reading process
  *
@@ -44,8 +44,7 @@ public class GridCoverageReaderProgressAdapter extends BaseGridCoverageProgressA
 
     @Override
     public void warningOccurred(ImageReader source, String warning) {
-        monitor.warningOccurred(
-                source.getInput().toString(), "Warning writing image:" + lastImageIndex, warning);
+        monitor.warningOccurred(source.getInput().toString(), "Warning writing image:" + lastImageIndex, warning);
     }
 
     @Override
@@ -169,7 +168,7 @@ public class GridCoverageReaderProgressAdapter extends BaseGridCoverageProgressA
         reportProgress(progress, source);
 
         // are we done?
-        if (lastImageIndex == (numImages - 1)) monitor.complete();
+        if (lastImageIndex == numImages - 1) monitor.complete();
     }
 
     @Override

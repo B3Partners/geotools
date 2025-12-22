@@ -19,12 +19,12 @@ package org.geotools.sld.bindings;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 import org.geotools.xsd.Text;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -101,9 +101,9 @@ public class SLDParameterValueTypeBinding extends AbstractComplexBinding {
     /**
      *
      * <!-- begin-user-doc -->
-     * Even though the spec allows an instance of ParamterValueType to have multiple expressions as
-     * children, it is more often that there is only one. Therefore this binding returns the first
-     * expression it finds or null. If a subtype needs multiple expressions they should ovveride.
+     * Even though the spec allows an instance of ParamterValueType to have multiple expressions as children, it is more
+     * often that there is only one. Therefore this binding returns the first expression it finds or null. If a subtype
+     * needs multiple expressions they should ovveride.
      * <!-- end-user-doc -->
      *
      * @generated modifiable

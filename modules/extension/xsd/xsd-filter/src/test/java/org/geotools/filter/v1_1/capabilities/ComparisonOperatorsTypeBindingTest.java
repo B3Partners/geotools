@@ -21,10 +21,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.capability.ComparisonOperators;
 import org.geotools.filter.v1_1.OGC;
 import org.geotools.xsd.Binding;
 import org.junit.Test;
-import org.opengis.filter.capability.ComparisonOperators;
 import org.w3c.dom.Document;
 
 /**
@@ -48,7 +48,8 @@ import org.w3c.dom.Document;
 public class ComparisonOperatorsTypeBindingTest extends OGCTestSupport {
     @Test
     public void testType() {
-        assertEquals(ComparisonOperators.class, binding(OGC.ComparisonOperatorsType).getType());
+        assertEquals(
+                ComparisonOperators.class, binding(OGC.ComparisonOperatorsType).getType());
     }
 
     @Test
@@ -92,11 +93,10 @@ public class ComparisonOperatorsTypeBindingTest extends OGCTestSupport {
 
     @Test
     public void testEncode() throws Exception {
-        Document dom =
-                encode(
-                        FilterMockData.comparison(),
-                        new QName(OGC.NAMESPACE, "Comparison_Operators"),
-                        OGC.ComparisonOperatorsType);
+        Document dom = encode(
+                FilterMockData.comparison(),
+                new QName(OGC.NAMESPACE, "Comparison_Operators"),
+                OGC.ComparisonOperatorsType);
 
         assertEquals(
                 9,

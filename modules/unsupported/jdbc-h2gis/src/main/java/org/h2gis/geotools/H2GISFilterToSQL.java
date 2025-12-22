@@ -18,18 +18,17 @@
 package org.h2gis.geotools;
 
 import java.io.IOException;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
 import org.geotools.data.jdbc.FilterToSQL;
 import org.geotools.filter.FilterCapabilities;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BinarySpatialOperator;
 
 /**
- * jdbc-h2gis is an extension to connect H2GIS a spatial library that brings spatial support to the
- * H2 Java database.
+ * jdbc-h2gis is an extension to connect H2GIS a spatial library that brings spatial support to the H2 Java database.
  *
  * <p>H2GIS filter wrapper for H2GIS database.
  *
@@ -68,14 +67,9 @@ public class H2GISFilterToSQL extends FilterToSQL {
 
     @Override
     protected Object visitBinarySpatialOperator(
-            BinarySpatialOperator filter,
-            PropertyName property,
-            Literal geometry,
-            boolean swapped,
-            Object extraData) {
+            BinarySpatialOperator filter, PropertyName property, Literal geometry, boolean swapped, Object extraData) {
         h2GISFilterToSQLHelper.out = out;
-        return h2GISFilterToSQLHelper.visitBinarySpatialOperator(
-                filter, property, geometry, swapped, extraData);
+        return h2GISFilterToSQLHelper.visitBinarySpatialOperator(filter, property, geometry, swapped, extraData);
     }
 
     @Override

@@ -16,13 +16,14 @@
  */
 package org.geotools.util;
 
+import java.io.Serial;
+import java.text.MessageFormat;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 
 /**
- * Throws when an operation can't use arbitrary implementation of an interface, and a given instance
- * doesn't meet the requirement. For example this exception may be thrown when an operation requires
- * a Geotools implementation of a <A HREF="http://geoapi.sourceforge.net">GeoAPI</A> interface.
+ * Throws when an operation can't use arbitrary implementation of an interface, and a given instance doesn't meet the
+ * requirement. For example this exception may be thrown when an operation requires a Geotools implementation of a <A
+ * HREF="http://geoapi.sourceforge.net">GeoAPI</A> interface.
  *
  * @since 2.0
  * @version $Id$
@@ -30,6 +31,7 @@ import org.geotools.metadata.i18n.Errors;
  */
 public class UnsupportedImplementationException extends UnsupportedOperationException {
     /** For cross-version compatibility. */
+    @Serial
     private static final long serialVersionUID = -649050339146622730L;
 
     /**
@@ -47,7 +49,7 @@ public class UnsupportedImplementationException extends UnsupportedOperationExce
      * @param classe The unexpected implementation class.
      */
     public UnsupportedImplementationException(final Class<?> classe) {
-        super(Errors.format(ErrorKeys.UNKNOW_TYPE_$1, classe));
+        super(MessageFormat.format(ErrorKeys.UNKNOW_TYPE_$1, classe));
     }
 
     /**
@@ -57,6 +59,6 @@ public class UnsupportedImplementationException extends UnsupportedOperationExce
      * @param cause The cause for the exception.
      */
     public UnsupportedImplementationException(final Class<?> classe, final Exception cause) {
-        super(Errors.format(ErrorKeys.UNKNOW_TYPE_$1, classe), cause);
+        super(MessageFormat.format(ErrorKeys.UNKNOW_TYPE_$1, classe), cause);
     }
 }

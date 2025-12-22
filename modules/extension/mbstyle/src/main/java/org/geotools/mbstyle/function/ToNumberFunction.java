@@ -18,18 +18,17 @@ package org.geotools.mbstyle.function;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
 
 /**
- * Converts the input value to a number, if possible. If the input is null or false, the result is
- * 0. If the input is true, the result is 1. If the input is a string, it is converted to a number
- * as specified by the "ToNumber Applied to the String Type" algorithm of the ECMAScript Language
- * Specification. If multiple values are provided, each one is evaluated in order until the first
- * successful conversion is obtained. If none of the inputs can be converted, the expression is an
- * error.
+ * Converts the input value to a number, if possible. If the input is null or false, the result is 0. If the input is
+ * true, the result is 1. If the input is a string, it is converted to a number as specified by the "ToNumber Applied to
+ * the String Type" algorithm of the ECMAScript Language Specification. If multiple values are provided, each one is
+ * evaluated in order until the first successful conversion is obtained. If none of the inputs can be converted, the
+ * expression is an error.
  */
 class ToNumberFunction extends FunctionExpressionImpl {
 
@@ -61,9 +60,9 @@ class ToNumberFunction extends FunctionExpressionImpl {
                     return 1L;
                 }
             }
-            if (evaluation instanceof String) {
+            if (evaluation instanceof String string) {
                 try {
-                    return Double.valueOf((String) evaluation);
+                    return Double.valueOf(string);
                 } catch (Exception e) {
                     // skip to next
                 }
@@ -72,7 +71,6 @@ class ToNumberFunction extends FunctionExpressionImpl {
                 return evaluation;
             }
         }
-        throw new IllegalArgumentException(
-                "No arguments provided can be converted to a Number value");
+        throw new IllegalArgumentException("No arguments provided can be converted to a Number value");
     }
 }

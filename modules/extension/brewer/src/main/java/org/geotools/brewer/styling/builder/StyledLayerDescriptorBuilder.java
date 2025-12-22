@@ -18,10 +18,10 @@ package org.geotools.brewer.styling.builder;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.geotools.styling.NamedLayer;
-import org.geotools.styling.StyledLayer;
-import org.geotools.styling.StyledLayerDescriptor;
-import org.geotools.styling.UserLayer;
+import org.geotools.api.style.NamedLayer;
+import org.geotools.api.style.StyledLayer;
+import org.geotools.api.style.StyledLayerDescriptor;
+import org.geotools.api.style.UserLayer;
 
 public class StyledLayerDescriptorBuilder extends AbstractSLDBuilder<StyledLayerDescriptor> {
 
@@ -92,10 +92,10 @@ public class StyledLayerDescriptorBuilder extends AbstractSLDBuilder<StyledLayer
         this.sldAbstract = other.getAbstract();
         this.layers.clear();
         for (StyledLayer layer : other.getStyledLayers()) {
-            if (layer instanceof UserLayer) {
-                layers.add(new UserLayerBuilder().reset((UserLayer) layer));
-            } else if (layer instanceof NamedLayer) {
-                layers.add(new NamedLayerBuilder().reset((NamedLayer) layer));
+            if (layer instanceof UserLayer userLayer) {
+                layers.add(new UserLayerBuilder().reset(userLayer));
+            } else if (layer instanceof NamedLayer namedLayer) {
+                layers.add(new NamedLayerBuilder().reset(namedLayer));
             }
         }
 

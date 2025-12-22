@@ -1,9 +1,28 @@
+/*
+ *    GeoTools - The Open Source Java GIS Toolkit
+ *    http://geotools.org
+ *
+ *    (C) 2018, Open Source Geospatial Foundation (OSGeo)
+ *
+ *    This library is free software; you can redistribute it and/or
+ *    modify it under the terms of the GNU Lesser General Public
+ *    License as published by the Free Software Foundation;
+ *    version 2.1 of the License.
+ *
+ *    This library is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    Lesser General Public License for more details.
+ *
+ */
+
 package org.geotools.data.arcgisrest.schema.catalog;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Project Open Data ContactPoint vCard
@@ -136,18 +155,16 @@ public class Vcard {
             return false;
         }
         Vcard rhs = ((Vcard) other);
-        return ((((this.fn == rhs.fn) || ((this.fn != null) && this.fn.equals(rhs.fn)))
-                        && ((this.hasEmail == rhs.hasEmail)
-                                || ((this.hasEmail != null) && this.hasEmail.equals(rhs.hasEmail))))
-                && ((this.type == rhs.type)
-                        || ((this.type != null) && this.type.equals(rhs.type))));
+        return Objects.equals(this.fn, rhs.fn)
+                && Objects.equals(this.hasEmail, rhs.hasEmail)
+                && Objects.equals(this.type, rhs.type);
     }
 
     public enum Type {
         @SerializedName("vcard:Contact")
         VCARD_CONTACT("vcard:Contact");
         private final String value;
-        private static final Map<String, Vcard.Type> CONSTANTS = new HashMap<String, Vcard.Type>();
+        private static final Map<String, Vcard.Type> CONSTANTS = new HashMap<>();
 
         static {
             for (Vcard.Type c : values()) {

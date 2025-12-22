@@ -23,6 +23,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.xml.namespace.QName;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.style.FeatureTypeStyle;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
@@ -30,17 +35,12 @@ import org.geotools.kml.FolderStack;
 import org.geotools.kml.KML;
 import org.geotools.kml.StyleMap;
 import org.geotools.kml.v22.SchemaRegistry;
-import org.geotools.styling.FeatureTypeStyle;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.Name;
 
 /**
  * Binding object for the type http://earth.google.com/kml/2.1:FeatureType.
@@ -117,8 +117,7 @@ public class FeatureTypeBinding extends AbstractComplexBinding {
         FeatureType = tb.buildFeatureType();
     }
 
-    public FeatureTypeBinding(
-            StyleMap styleMap, FolderStack folderStack, SchemaRegistry schemaRegistry) {
+    public FeatureTypeBinding(StyleMap styleMap, FolderStack folderStack, SchemaRegistry schemaRegistry) {
         this.styleMap = styleMap;
         this.folderStack = folderStack;
         this.schemaRegistry = schemaRegistry;
@@ -142,8 +141,7 @@ public class FeatureTypeBinding extends AbstractComplexBinding {
         return SimpleFeature.class;
     }
 
-    private SimpleFeatureType appendAttributes(
-            SimpleFeatureType acc, SimpleFeatureType typeToAppend) {
+    private SimpleFeatureType appendAttributes(SimpleFeatureType acc, SimpleFeatureType typeToAppend) {
         if (typeToAppend == null) {
             return acc;
         }
@@ -276,14 +274,12 @@ public class FeatureTypeBinding extends AbstractComplexBinding {
 
     @Override
     public Object getProperty(Object object, QName name) throws Exception {
-        if (object instanceof FeatureCollection) {
-            FeatureCollection features = (FeatureCollection) object;
+        if (object instanceof FeatureCollection features) {
             if ("id".equals(name.getLocalPart())) {
                 return features.getID();
             }
         }
-        if (object instanceof SimpleFeature) {
-            SimpleFeature feature = (SimpleFeature) object;
+        if (object instanceof SimpleFeature feature) {
 
             if ("id".equals(name.getLocalPart())) {
                 return feature.getID();
@@ -327,8 +323,7 @@ public class FeatureTypeBinding extends AbstractComplexBinding {
                 for (AttributeDescriptor ad : t.getAttributeDescriptors()) {
                     Object obj = feature.getAttribute(ad.getName());
                     // do not include geographic attributes
-                    if (!(obj instanceof Geometry))
-                        attributes.add(new AbstractMap.SimpleEntry<>(ad.getName(), obj));
+                    if (!(obj instanceof Geometry)) attributes.add(new AbstractMap.SimpleEntry<>(ad.getName(), obj));
                 }
                 return attributes;
             }

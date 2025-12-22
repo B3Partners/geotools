@@ -17,13 +17,13 @@
 package org.geotools.data.complex;
 
 import java.util.List;
-import org.geotools.data.FeatureSource;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.FeatureType;
 import org.geotools.data.complex.config.MultipleValue;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.FeatureType;
 import org.xml.sax.helpers.NamespaceSupport;
 
 /**
@@ -44,29 +44,18 @@ public class FeatureTypeMappingFactory {
             boolean isDenormalised) {
         FeatureTypeMapping featureTypeMapping;
         if (isXmlDataStore) {
-            featureTypeMapping =
-                    new XmlFeatureTypeMapping(source, target, mappings, namespaces, itemXpath);
+            featureTypeMapping = new XmlFeatureTypeMapping(source, target, mappings, namespaces, itemXpath);
         } else {
-            featureTypeMapping =
-                    new FeatureTypeMapping(
-                            source,
-                            indexSource,
-                            target,
-                            defaultGeometryXPath,
-                            mappings,
-                            namespaces,
-                            isDenormalised);
+            featureTypeMapping = new FeatureTypeMapping(
+                    source, indexSource, target, defaultGeometryXPath, mappings, namespaces, isDenormalised);
         }
-        featureTypeMapping
-                .getAttributeMappings()
-                .forEach(
-                        attributeMapping -> {
-                            MultipleValue multipleValue = attributeMapping.getMultipleValue();
-                            if (multipleValue != null) {
-                                multipleValue.setFeatureTypeMapping(featureTypeMapping);
-                                multipleValue.setAttributeMapping(attributeMapping);
-                            }
-                        });
+        featureTypeMapping.getAttributeMappings().forEach(attributeMapping -> {
+            MultipleValue multipleValue = attributeMapping.getMultipleValue();
+            if (multipleValue != null) {
+                multipleValue.setFeatureTypeMapping(featureTypeMapping);
+                multipleValue.setAttributeMapping(attributeMapping);
+            }
+        });
         return featureTypeMapping;
     }
 
@@ -81,17 +70,16 @@ public class FeatureTypeMappingFactory {
             boolean isXmlDataStore,
             boolean isDenormalised,
             String sourceDatastoreId) {
-        FeatureTypeMapping featureTypeMapping =
-                getInstance(
-                        source,
-                        indexSource,
-                        target,
-                        defaultGeometryXPath,
-                        mappings,
-                        namespaces,
-                        itemXpath,
-                        isXmlDataStore,
-                        isDenormalised);
+        FeatureTypeMapping featureTypeMapping = getInstance(
+                source,
+                indexSource,
+                target,
+                defaultGeometryXPath,
+                mappings,
+                namespaces,
+                itemXpath,
+                isXmlDataStore,
+                isDenormalised);
         featureTypeMapping.setSourceDatastoreId(sourceDatastoreId);
         return featureTypeMapping;
     }

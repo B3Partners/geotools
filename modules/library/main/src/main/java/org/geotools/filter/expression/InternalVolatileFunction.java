@@ -16,21 +16,19 @@
  */
 package org.geotools.filter.expression;
 
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.InternalFunction;
+import org.geotools.api.filter.expression.VolatileFunction;
 import org.geotools.filter.FunctionImpl;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.InternalFunction;
-import org.opengis.filter.expression.VolatileFunction;
 
 /**
- * A base class functions (i.e. anonymous inner classes) that are both {@link VolatileFunction
- * volatile} (i.e. explicitly stating evaluation needs to happen for each object in the collection
- * being traversed) and {@link InternalFunction internal} (i.e. are not subject of SPI lookup, such
- * as anonymous inner classes).
+ * A base class functions (i.e. anonymous inner classes) that are both {@link VolatileFunction volatile} (i.e.
+ * explicitly stating evaluation needs to happen for each object in the collection being traversed) and
+ * {@link InternalFunction internal} (i.e. are not subject of SPI lookup, such as anonymous inner classes).
  *
  * @since 9.0
  */
-public abstract class InternalVolatileFunction extends FunctionImpl
-        implements InternalFunction, VolatileFunction {
+public abstract class InternalVolatileFunction extends FunctionImpl implements InternalFunction, VolatileFunction {
 
     public InternalVolatileFunction() {
         this("InternalFunctionImpl");
@@ -41,15 +39,14 @@ public abstract class InternalVolatileFunction extends FunctionImpl
     }
 
     /**
-     * This default implementation just returns {@code this} if the number of expected parameters is
-     * zero, otherwise throws an {@link IllegalArgumentException}.
+     * This default implementation just returns {@code this} if the number of expected parameters is zero, otherwise
+     * throws an {@link IllegalArgumentException}.
      *
-     * <p>A subclass that do expect {@link Expression} parameters shall override this method and
-     * return a new instance of the same kind of InternalFunction configured to work against the
-     * given {@code parameters}.
+     * <p>A subclass that do expect {@link Expression} parameters shall override this method and return a new instance
+     * of the same kind of InternalFunction configured to work against the given {@code parameters}.
      *
      * @see
-     *     org.opengis.filter.expression.InternalFunction#duplicate(org.opengis.filter.expression.Expression[])
+     *     org.geotools.api.filter.expression.InternalFunction#duplicate(org.geotools.api.filter.expression.Expression[])
      */
     @Override
     public InternalFunction duplicate(Expression... parameters) {

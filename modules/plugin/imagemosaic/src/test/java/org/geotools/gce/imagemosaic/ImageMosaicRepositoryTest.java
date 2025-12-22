@@ -32,13 +32,22 @@ import java.util.Properties;
 import java.util.function.BiFunction;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.ServiceInfo;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.ParameterValue;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
-import org.geotools.data.DataAccess;
-import org.geotools.data.DataStore;
 import org.geotools.data.DefaultRepository;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.ServiceInfo;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
 import org.geotools.factory.CommonFactoryFinder;
@@ -51,15 +60,6 @@ import org.geotools.util.factory.Hints;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.feature.type.Name;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.ParameterValue;
 
 public class ImageMosaicRepositoryTest {
 
@@ -68,12 +68,13 @@ public class ImageMosaicRepositoryTest {
     static final ImageMosaicFormat FORMAT = new ImageMosaicFormat();
 
     static {
-        final ParameterValue<Boolean> useJai = AbstractGridFormat.USE_JAI_IMAGEREAD.createValue();
+        final ParameterValue<Boolean> useJai = AbstractGridFormat.USE_IMAGEN_IMAGEREAD.createValue();
         useJai.setValue(false);
         NO_DEFERRED_LOAD = new GeneralParameterValue[] {useJai};
     }
 
-    @Rule public TemporaryFolder crsMosaicFolder = new TemporaryFolder();
+    @Rule
+    public TemporaryFolder crsMosaicFolder = new TemporaryFolder();
 
     @Test
     public void createFromExistingStore() throws Exception {
@@ -95,8 +96,7 @@ public class ImageMosaicRepositoryTest {
         // clean up and rename all shapefiles to make sure the store is not overwriting it by
         // accident
         removeSupportFiles(testDirectory);
-        for (File f :
-                testDirectory.listFiles(f -> f.getName().startsWith(testDirectory.getName()))) {
+        for (File f : testDirectory.listFiles(f -> f.getName().startsWith(testDirectory.getName()))) {
             String extension = FilenameUtils.getExtension(f.getName());
             f.renameTo(new File(testDirectory, "test." + extension));
         }
@@ -104,21 +104,18 @@ public class ImageMosaicRepositoryTest {
         // signal the intention to use a store name using both datastore.properties and indexer
         Properties properties = new Properties();
         properties.put(Utils.Prop.STORE_NAME, "test");
-        try (FileOutputStream fos =
-                new FileOutputStream(new File(testDirectory, "datastore.properties"))) {
+        try (FileOutputStream fos = new FileOutputStream(new File(testDirectory, "datastore.properties"))) {
             properties.store(fos, null);
         }
         properties = new Properties();
         properties.put(Utils.Prop.USE_EXISTING_SCHEMA, "true");
         properties.put(Utils.Prop.TYPENAME, "test");
-        try (FileOutputStream fos =
-                new FileOutputStream(new File(testDirectory, "indexer.properties"))) {
+        try (FileOutputStream fos = new FileOutputStream(new File(testDirectory, "indexer.properties"))) {
             properties.store(fos, null);
         }
 
         DefaultRepository repository = new DefaultRepository();
-        ShapefileDataStore ds =
-                new ShapefileDataStore(URLs.fileToUrl(new File(testDirectory, "test.shp")));
+        ShapefileDataStore ds = new ShapefileDataStore(URLs.fileToUrl(new File(testDirectory, "test.shp")));
         repository.register("test", ds);
 
         // now re-init from the existing shapefile data store
@@ -138,20 +135,19 @@ public class ImageMosaicRepositoryTest {
 
     @Test
     public void createFromExistingDataAccessWithComplex() throws Exception {
-        createFromExistingDataAccess(
-                (ds, name) -> {
-                    try {
-                        SimpleFeatureType schema = ds.getSchema(name);
-                        FeatureType featureType = buildComplexTypeFromSimple(schema);
-                        return new TestDataAccessWithComplex(name, featureType, ds);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+        createFromExistingDataAccess((ds, name) -> {
+            try {
+                SimpleFeatureType schema = ds.getSchema(name);
+                FeatureType featureType = buildComplexTypeFromSimple(schema);
+                return new TestDataAccessWithComplex(name, featureType, ds);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
-    public void createFromExistingDataAccess(
-            BiFunction<DataStore, Name, DataAccess> dataAccessProvider) throws Exception {
+    public void createFromExistingDataAccess(BiFunction<DataStore, Name, DataAccess> dataAccessProvider)
+            throws Exception {
         // setup mosaic
         URL storeUrl = TestData.url(this, "rgba");
         File testDataFolder = new File(storeUrl.toURI());
@@ -170,8 +166,7 @@ public class ImageMosaicRepositoryTest {
         // clean up and rename all shapefiles to make sure the store is not overwriting it by
         // accident
         removeSupportFiles(testDirectory);
-        for (File f :
-                testDirectory.listFiles(f -> f.getName().startsWith(testDirectory.getName()))) {
+        for (File f : testDirectory.listFiles(f -> f.getName().startsWith(testDirectory.getName()))) {
             String extension = FilenameUtils.getExtension(f.getName());
             f.renameTo(new File(testDirectory, "test." + extension));
         }
@@ -179,21 +174,18 @@ public class ImageMosaicRepositoryTest {
         // signal the intention to use a store name using both datastore.properties and indexer
         Properties properties = new Properties();
         properties.put(Utils.Prop.STORE_NAME, "foo:test");
-        try (FileOutputStream fos =
-                new FileOutputStream(new File(testDirectory, "datastore.properties"))) {
+        try (FileOutputStream fos = new FileOutputStream(new File(testDirectory, "datastore.properties"))) {
             properties.store(fos, null);
         }
         properties = new Properties();
         properties.put(Utils.Prop.USE_EXISTING_SCHEMA, "true");
         properties.put(Utils.Prop.TYPENAME, "test");
-        try (FileOutputStream fos =
-                new FileOutputStream(new File(testDirectory, "indexer.properties"))) {
+        try (FileOutputStream fos = new FileOutputStream(new File(testDirectory, "indexer.properties"))) {
             properties.store(fos, null);
         }
 
         DefaultRepository repository = new DefaultRepository();
-        ShapefileDataStore ds =
-                new ShapefileDataStore(URLs.fileToUrl(new File(testDirectory, "test.shp")));
+        ShapefileDataStore ds = new ShapefileDataStore(URLs.fileToUrl(new File(testDirectory, "test.shp")));
         Name name = new NameImpl("foo", "test");
         DataAccess dataAccess = dataAccessProvider.apply(ds, name);
         repository.register(name, dataAccess);
@@ -224,22 +216,19 @@ public class ImageMosaicRepositoryTest {
         // signal the intention to use a store name using both datastore.properties and indexer
         Properties properties = new Properties();
         properties.put(Utils.Prop.STORE_NAME, "test");
-        try (FileOutputStream fos =
-                new FileOutputStream(new File(testDirectory, "datastore.properties"))) {
+        try (FileOutputStream fos = new FileOutputStream(new File(testDirectory, "datastore.properties"))) {
             properties.store(fos, null);
         }
         properties = new Properties();
         properties.put(Utils.Prop.TYPENAME, "abcd");
-        try (FileOutputStream fos =
-                new FileOutputStream(new File(testDirectory, "indexer.properties"))) {
+        try (FileOutputStream fos = new FileOutputStream(new File(testDirectory, "indexer.properties"))) {
             properties.store(fos, null);
         }
 
         // setup a directory data store of shapefiles
         DefaultRepository repository = new DefaultRepository();
         final Map<String, Serializable> params =
-                Collections.singletonMap(
-                        ShapefileDataStoreFactory.URLP.key, URLs.fileToUrl(testDirectory));
+                Collections.singletonMap(ShapefileDataStoreFactory.URLP.key, URLs.fileToUrl(testDirectory));
         DataStore ds = new ShapefileDataStoreFactory().createDataStore(params);
         assertNotNull(ds);
         repository.register("test", ds);
@@ -248,9 +237,7 @@ public class ImageMosaicRepositoryTest {
         Hints hints = new Hints(Hints.REPOSITORY, repository);
         ImageMosaicReader reader = FORMAT.getReader(testDirectory, hints);
         final File expectedIndexFile = new File(testDirectory, "abcd.shp");
-        assertTrue(
-                expectedIndexFile.getAbsolutePath() + " does not exist",
-                expectedIndexFile.exists());
+        assertTrue(expectedIndexFile.getAbsolutePath() + " does not exist", expectedIndexFile.exists());
         assertNotNull(reader);
         GridCoverage2D coverage = reader.read(NO_DEFERRED_LOAD);
         assertNotNull(coverage);
@@ -372,16 +359,12 @@ public class ImageMosaicRepositoryTest {
         }
     }
 
-    /**
-     * A DataAccess that actually has a complex source. Won't return a FeatureSource, but it's
-     * enough to test
-     */
+    /** A DataAccess that actually has a complex source. Won't return a FeatureSource, but it's enough to test */
     private static class TestDataAccessWithComplex extends TestDataAccess {
 
         private final FeatureType complexType;
 
-        public TestDataAccessWithComplex(
-                Name baseName, FeatureType complexType, DataStore delegate) {
+        public TestDataAccessWithComplex(Name baseName, FeatureType complexType, DataStore delegate) {
             super(baseName, delegate);
             this.complexType = complexType;
         }
@@ -402,8 +385,8 @@ public class ImageMosaicRepositoryTest {
     }
 
     /**
-     * Builds a complex feature type by decorating a simple one with some extras, code borrowed by
-     * GeoServer OpenSearch for EO
+     * Builds a complex feature type by decorating a simple one with some extras, code borrowed by GeoServer OpenSearch
+     * for EO
      */
     FeatureType buildComplexTypeFromSimple(SimpleFeatureType base) {
         TypeBuilder typeBuilder = new TypeBuilder(CommonFactoryFinder.getFeatureTypeFactory(null));
@@ -419,9 +402,9 @@ public class ImageMosaicRepositoryTest {
             ab.init(ad);
             ab.setMinOccurs(0);
             AttributeDescriptor mappedDescriptor;
-            if (ad instanceof GeometryDescriptor) {
+            if (ad instanceof GeometryDescriptor descriptor) {
                 GeometryType at = ab.buildGeometryType();
-                ab.setCRS(((GeometryDescriptor) ad).getCoordinateReferenceSystem());
+                ab.setCRS(descriptor.getCoordinateReferenceSystem());
                 mappedDescriptor = ab.buildDescriptor(new NameImpl(namespaceURI, name), at);
             } else {
                 AttributeType at = ab.buildType();
@@ -431,18 +414,15 @@ public class ImageMosaicRepositoryTest {
             typeBuilder.add(mappedDescriptor);
         }
         // adding the metadata property
-        AttributeDescriptor metadataDescriptor =
-                buildSimpleDescriptor(new NameImpl("metadata"), String.class);
+        AttributeDescriptor metadataDescriptor = buildSimpleDescriptor(new NameImpl("metadata"), String.class);
         typeBuilder.add(metadataDescriptor);
 
         // adding the quicklook property
-        AttributeDescriptor quicklookDescriptor =
-                buildSimpleDescriptor(new NameImpl("quicklook"), byte[].class);
+        AttributeDescriptor quicklookDescriptor = buildSimpleDescriptor(new NameImpl("quicklook"), byte[].class);
         typeBuilder.add(quicklookDescriptor);
 
         // map OGC links
-        AttributeDescriptor linksDescriptor =
-                buildFeatureListDescriptor(new NameImpl("ogcLinks"), base);
+        AttributeDescriptor linksDescriptor = buildFeatureListDescriptor(new NameImpl("ogcLinks"), base);
         typeBuilder.add(linksDescriptor);
 
         typeBuilder.setName("product");

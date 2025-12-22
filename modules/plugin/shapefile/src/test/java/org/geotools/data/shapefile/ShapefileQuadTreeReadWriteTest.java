@@ -28,24 +28,24 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.geotools.TestData;
-import org.geotools.data.DataStore;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.identity.FeatureId;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.Query;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.util.factory.GeoTools;
 import org.junit.Test;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.Id;
-import org.opengis.filter.identity.FeatureId;
 
 /**
  * @version $Id$
@@ -75,9 +75,10 @@ public class ShapefileQuadTreeReadWriteTest extends TestCaseSupport {
     public void testReadOutside() throws Exception {
         File f = copyShapefiles("shapes/statepop.shp");
         ShapefileDataStoreFactory fac = new ShapefileDataStoreFactory();
-        ShapefileDataStore ds = (ShapefileDataStore) createDataStore(fac, f.toURI().toURL(), true);
+        ShapefileDataStore ds =
+                (ShapefileDataStore) createDataStore(fac, f.toURI().toURL(), true);
         Query q = new Query(ds.getTypeNames()[0]);
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         q.setFilter(ff.bbox("the_geom", -62, -61, 23, 22, null));
         assertEquals(0, ds.getFeatureSource().getFeatures(q).size());
         ds.dispose();
@@ -87,9 +88,7 @@ public class ShapefileQuadTreeReadWriteTest extends TestCaseSupport {
     public void testWriteTwice() throws Exception {
         copyShapefiles("shapes/stream.shp");
         ShapefileDataStoreFactory fac = new ShapefileDataStoreFactory();
-        DataStore s1 =
-                createDataStore(
-                        fac, TestData.url(TestCaseSupport.class, "shapes/stream.shp"), true);
+        DataStore s1 = createDataStore(fac, TestData.url(TestCaseSupport.class, "shapes/stream.shp"), true);
         String typeName = s1.getTypeNames()[0];
         SimpleFeatureSource source = s1.getFeatureSource(typeName);
         SimpleFeatureType type = source.getSchema();
@@ -102,8 +101,7 @@ public class ShapefileQuadTreeReadWriteTest extends TestCaseSupport {
         s1.dispose();
     }
 
-    private DataStore createDataStore(ShapefileDataStoreFactory fac, URL url, boolean memoryMapped)
-            throws IOException {
+    private DataStore createDataStore(ShapefileDataStoreFactory fac, URL url, boolean memoryMapped) throws IOException {
         Map<String, Serializable> params = new HashMap<>();
         params.put(ShapefileDataStoreFactory.URLP.key, url);
         params.put(ShapefileDataStoreFactory.CREATE_SPATIAL_INDEX.key, Boolean.TRUE);
@@ -135,7 +133,8 @@ public class ShapefileQuadTreeReadWriteTest extends TestCaseSupport {
     void test(String f) throws Exception {
         File file = copyShapefiles(f); // Work on File rather than URL from
         // JAR.
-        DataStore s = createDataStore(new ShapefileDataStoreFactory(), file.toURI().toURL(), true);
+        DataStore s =
+                createDataStore(new ShapefileDataStoreFactory(), file.toURI().toURL(), true);
         String typeName = s.getTypeNames()[0];
         SimpleFeatureSource source = s.getFeatureSource(typeName);
         SimpleFeatureType type = source.getSchema();
@@ -173,17 +172,14 @@ public class ShapefileQuadTreeReadWriteTest extends TestCaseSupport {
     }
 
     static void compare(SimpleFeatureIterator fs1, SimpleFeatureIterator fs2) throws Exception {
-        try {
+        try (fs1;
+                fs2) {
             while (fs1.hasNext()) {
                 SimpleFeature f1 = fs1.next();
                 SimpleFeature f2 = fs2.next();
 
                 compare(f1, f2);
             }
-
-        } finally {
-            fs1.close();
-            fs2.close();
         }
     }
 
@@ -196,9 +192,7 @@ public class ShapefileQuadTreeReadWriteTest extends TestCaseSupport {
             Object att1 = f1.getAttribute(i);
             Object att2 = f2.getAttribute(i);
 
-            if (att1 instanceof Geometry && att2 instanceof Geometry) {
-                Geometry g1 = ((Geometry) att1);
-                Geometry g2 = ((Geometry) att2);
+            if (att1 instanceof Geometry g1 && att2 instanceof Geometry g2) {
                 g1.normalize();
                 g2.normalize();
 
@@ -207,8 +201,7 @@ public class ShapefileQuadTreeReadWriteTest extends TestCaseSupport {
                 }
             } else {
                 if (!att1.equals(att2)) {
-                    throw new Exception(
-                            "Different attribute (" + i + "): [" + att1 + "] - [" + att2 + "]");
+                    throw new Exception("Different attribute (" + i + "): [" + att1 + "] - [" + att2 + "]");
                 }
             }
         }
@@ -226,8 +219,7 @@ public class ShapefileQuadTreeReadWriteTest extends TestCaseSupport {
         params.put(ShapefileDataStoreFactory.CREATE_SPATIAL_INDEX.key, Boolean.TRUE);
         ShapefileDataStore ds = (ShapefileDataStore) fac.createDataStore(params);
 
-        FilterFactory2 ff =
-                (FilterFactory2) CommonFactoryFinder.getFilterFactory(GeoTools.getDefaultHints());
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(GeoTools.getDefaultHints());
 
         FeatureId featureId = ff.featureId("streams.84");
         Id filter = ff.id(Collections.singleton(featureId));

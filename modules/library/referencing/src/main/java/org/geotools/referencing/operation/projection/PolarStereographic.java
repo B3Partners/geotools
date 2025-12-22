@@ -32,22 +32,22 @@ import static java.lang.Math.sin;
 import static java.lang.Math.sqrt;
 
 import java.awt.geom.Point2D;
+import java.io.Serial;
 import java.util.Collection;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.metadata.i18n.ErrorKeys;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
-import org.opengis.parameter.GeneralParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.operation.MathTransform;
 import si.uom.NonSI;
 
 /**
- * The polar case of the {@linkplain Stereographic stereographic} projection. This default
- * implementation uses USGS equation (i.e. iteration) for computing the {@linkplain
- * #inverseTransformNormalized inverse transform}.
+ * The polar case of the {@linkplain Stereographic stereographic} projection. This default implementation uses USGS
+ * equation (i.e. iteration) for computing the {@linkplain #inverseTransformNormalized inverse transform}.
  *
  * @since 2.4
  * @version $Id$
@@ -57,6 +57,7 @@ import si.uom.NonSI;
  */
 public class PolarStereographic extends Stereographic {
     /** For compatibility with different versions during deserialization. */
+    @Serial
     private static final long serialVersionUID = -6635298308431138524L;
 
     /** Maximum number of iterations for iterative computations. */
@@ -68,10 +69,7 @@ public class PolarStereographic extends Stereographic {
     /** Maximum difference allowed when comparing real numbers. */
     private static final double EPSILON = 1E-8;
 
-    /**
-     * A constant used in the transformations. This is <strong>not</strong> equal to the {@link
-     * #scaleFactor}.
-     */
+    /** A constant used in the transformations. This is <strong>not</strong> equal to the {@link #scaleFactor}. */
     private final double k0;
 
     /**
@@ -79,10 +77,7 @@ public class PolarStereographic extends Stereographic {
      */
     final double standardParallel;
 
-    /**
-     * {@code true} if this projection is for the south pole, or {@code false} if it is for the
-     * north pole.
-     */
+    /** {@code true} if this projection is for the south pole, or {@code false} if it is for the north pole. */
     final boolean southPole;
 
     /** {@code true} if {@link #southPole} was forced, or {@code false} if it was auto-detected. */
@@ -93,9 +88,8 @@ public class PolarStereographic extends Stereographic {
      *
      * @param parameters The group of parameter values.
      * @param descriptor The expected parameter descriptor.
-     * @param forceSouthPole Forces projection to North pole if {@link Boolean#FALSE}, to South pole
-     *     if {@link Boolean#TRUE}, or do not force (i.e. detect from other parameter values) if
-     *     {@code null}.
+     * @param forceSouthPole Forces projection to North pole if {@link Boolean#FALSE}, to South pole if
+     *     {@link Boolean#TRUE}, or do not force (i.e. detect from other parameter values) if {@code null}.
      * @throws ParameterNotFoundException if a required parameter was not found.
      */
     PolarStereographic(
@@ -122,9 +116,7 @@ public class PolarStereographic extends Stereographic {
          * Pole" where it default to 90°S.
          */
         final ParameterDescriptor trueScaleDescriptor =
-                Boolean.TRUE.equals(forceSouthPole)
-                        ? ProviderSouth.STANDARD_PARALLEL
-                        : ProviderNorth.STANDARD_PARALLEL;
+                Boolean.TRUE.equals(forceSouthPole) ? ProviderSouth.STANDARD_PARALLEL : ProviderNorth.STANDARD_PARALLEL;
         final Collection<GeneralParameterDescriptor> expected = descriptor.descriptors();
         double latitudeTrueScale;
         if (isExpectedParameter(expected, trueScaleDescriptor)) {
@@ -132,14 +124,14 @@ public class PolarStereographic extends Stereographic {
             latitudeTrueScale = doubleValue(expected, trueScaleDescriptor, parameters);
         } else {
             // Polar A case
-            latitudeTrueScale = (latitudeOfOrigin < 0) ? -PI / 2 : PI / 2;
+            latitudeTrueScale = latitudeOfOrigin < 0 ? -PI / 2 : PI / 2;
         }
         ensureLatitudeInRange(trueScaleDescriptor, latitudeTrueScale, true);
         /*
          * Forces the "standard_parallel_1" to the appropriate hemisphere,
          * and forces the "latitude_of_origin" to ±90°.
          */
-        poleForced = (forceSouthPole != null);
+        poleForced = forceSouthPole != null;
         if (poleForced) {
             southPole = forceSouthPole.booleanValue();
             latitudeTrueScale = abs(latitudeTrueScale);
@@ -147,9 +139,9 @@ public class PolarStereographic extends Stereographic {
                 latitudeTrueScale = -latitudeTrueScale;
             }
         } else {
-            southPole = (latitudeTrueScale < 0);
+            southPole = latitudeTrueScale < 0;
         }
-        this.latitudeOfOrigin = (southPole) ? -(PI / 2) : +(PI / 2);
+        this.latitudeOfOrigin = southPole ? -(PI / 2) : +(PI / 2);
         this.standardParallel = latitudeTrueScale; // May be anything in [-90 .. +90] range.
         /*
          * Computes coefficients.
@@ -157,29 +149,22 @@ public class PolarStereographic extends Stereographic {
         latitudeTrueScale = abs(latitudeTrueScale);
         if (abs(latitudeTrueScale - PI / 2) >= EPSILON) {
             final double t = sin(latitudeTrueScale);
-            k0 =
-                    msfn(t, cos(latitudeTrueScale))
-                            / tsfn(latitudeTrueScale, t); // Derives from (21-32 and 21-33)
+            k0 = msfn(t, cos(latitudeTrueScale)) / tsfn(latitudeTrueScale, t); // Derives from (21-32 and 21-33)
         } else {
             // True scale at pole (part of (21-33))
-            k0 =
-                    2.0
-                            / sqrt(
-                                    pow(1 + excentricity, 1 + excentricity)
-                                            * pow(1 - excentricity, 1 - excentricity));
+            k0 = 2.0 / sqrt(pow(1 + excentricity, 1 + excentricity) * pow(1 - excentricity, 1 - excentricity));
         }
     }
 
     /**
-     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in
-     * radians) and stores the result in {@code ptDst} (linear distance on a unit sphere).
+     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in radians) and stores the
+     * result in {@code ptDst} (linear distance on a unit sphere).
      *
      * @param x The longitude of the coordinate, in <strong>radians</strong>.
      * @param y The latitude of the coordinate, in <strong>radians</strong>.
      */
     @Override
-    protected Point2D transformNormalized(double x, double y, Point2D ptDst)
-            throws ProjectionException {
+    protected Point2D transformNormalized(double x, double y, Point2D ptDst) throws ProjectionException {
         final double sinlat = sin(y);
         final double coslon = cos(x);
         final double sinlon = sin(x);
@@ -200,12 +185,11 @@ public class PolarStereographic extends Stereographic {
     }
 
     /**
-     * Transforms the specified (<var>x</var>,<var>y</var>) coordinates (units in radians) and
-     * stores the result in {@code ptDst} (linear distance on a unit sphere).
+     * Transforms the specified (<var>x</var>,<var>y</var>) coordinates (units in radians) and stores the result in
+     * {@code ptDst} (linear distance on a unit sphere).
      */
     @Override
-    protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst)
-            throws ProjectionException {
+    protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst) throws ProjectionException {
         final double rho = hypot(x, y);
         if (southPole) {
             y = -y;
@@ -218,10 +202,10 @@ public class PolarStereographic extends Stereographic {
         double phi0 = 0;
         for (int i = MAXIMUM_ITERATIONS; ; ) {
             final double esinphi = excentricity * sin(phi0);
-            final double phi = (PI / 2) - 2.0 * atan(t * pow((1 - esinphi) / (1 + esinphi), halfe));
+            final double phi = PI / 2 - 2.0 * atan(t * pow((1 - esinphi) / (1 + esinphi), halfe));
             if (abs(phi - phi0) < ITERATION_TOLERANCE) {
-                x = (abs(rho) < EPSILON) ? 0.0 : atan2(x, -y);
-                y = (southPole) ? -phi : phi;
+                x = abs(rho) < EPSILON ? 0.0 : atan2(x, -y);
+                y = southPole ? -phi : phi;
                 break;
             }
             phi0 = phi;
@@ -239,14 +223,13 @@ public class PolarStereographic extends Stereographic {
     /** {@inheritDoc} */
     @Override
     public ParameterValueGroup getParameterValues() {
-        final ParameterDescriptor trueScaleDescriptor =
-                poleForced
-                        ? (southPole
-                                ? ProviderSouth.STANDARD_PARALLEL
-                                : // forced = true,  south = true
-                                ProviderNorth.STANDARD_PARALLEL)
-                        : // forced = true,  south = false
-                        ProviderB.STANDARD_PARALLEL; // forced = false
+        final ParameterDescriptor trueScaleDescriptor = poleForced
+                ? southPole
+                        ? ProviderSouth.STANDARD_PARALLEL
+                        : // forced = true,  south = true
+                        ProviderNorth.STANDARD_PARALLEL
+                : // forced = true,  south = false
+                ProviderB.STANDARD_PARALLEL; // forced = false
         final ParameterValueGroup values = super.getParameterValues();
         final Collection<GeneralParameterDescriptor> expected =
                 getParameterDescriptors().descriptors();
@@ -278,8 +261,7 @@ public class PolarStereographic extends Stereographic {
     }
 
     /**
-     * Provides the transform equations for the spherical case of the polar stereographic
-     * projection.
+     * Provides the transform equations for the spherical case of the polar stereographic projection.
      *
      * @version $Id$
      * @author Martin Desruisseaux (PMO, IRD)
@@ -287,13 +269,13 @@ public class PolarStereographic extends Stereographic {
      */
     static final class Spherical extends PolarStereographic {
         /** For compatibility with different versions during deserialization. */
+        @Serial
         private static final long serialVersionUID = 1655096575897215547L;
 
         /**
-         * A constant used in the transformations. This constant hides the {@code k0} constant from
-         * the ellipsoidal case. The spherical and ellipsoidal {@code k0} are not computed in the
-         * same way, and we preserve the ellipsoidal {@code k0} in {@link Stereographic} in order to
-         * allow assertions to work.
+         * A constant used in the transformations. This constant hides the {@code k0} constant from the ellipsoidal
+         * case. The spherical and ellipsoidal {@code k0} are not computed in the same way, and we preserve the
+         * ellipsoidal {@code k0} in {@link Stereographic} in order to allow assertions to work.
          */
         private final double k0;
 
@@ -302,9 +284,8 @@ public class PolarStereographic extends Stereographic {
          *
          * @param parameters The group of parameter values.
          * @param descriptor The expected parameter descriptor.
-         * @param forceSouthPole For projection to North pole if {@link Boolean#FALSE}, to South
-         *     pole if {@link Boolean#TRUE}, or do not force (i.e. detect from other parameter
-         *     values) if {@code null}.
+         * @param forceSouthPole For projection to North pole if {@link Boolean#FALSE}, to South pole if
+         *     {@link Boolean#TRUE}, or do not force (i.e. detect from other parameter values) if {@code null}.
          * @throws ParameterNotFoundException if a required parameter was not found.
          */
         Spherical(
@@ -323,12 +304,11 @@ public class PolarStereographic extends Stereographic {
         }
 
         /**
-         * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in
-         * radians) and stores the result in {@code ptDst} (linear distance on a unit sphere).
+         * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in radians) and stores the
+         * result in {@code ptDst} (linear distance on a unit sphere).
          */
         @Override
-        protected Point2D transformNormalized(double x, double y, Point2D ptDst)
-                throws ProjectionException {
+        protected Point2D transformNormalized(double x, double y, Point2D ptDst) throws ProjectionException {
             // Compute using ellipsoidal formulas, for comparaison later.
             assert (ptDst = super.transformNormalized(x, y, ptDst)) != null;
             final double coslat = cos(y);
@@ -361,12 +341,11 @@ public class PolarStereographic extends Stereographic {
         }
 
         /**
-         * Transforms the specified (<var>x</var>,<var>y</var>) coordinates (units in radians) and
-         * stores the result in {@code ptDst} (linear distance on a unit sphere).
+         * Transforms the specified (<var>x</var>,<var>y</var>) coordinates (units in radians) and stores the result in
+         * {@code ptDst} (linear distance on a unit sphere).
          */
         @Override
-        protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst)
-                throws ProjectionException {
+        protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst) throws ProjectionException {
             // Compute using ellipsoidal formulas, for comparaison later.
             assert (ptDst = super.inverseTransformNormalized(x, y, ptDst)) != null;
             final double rho = hypot(x, y);
@@ -374,13 +353,13 @@ public class PolarStereographic extends Stereographic {
                 y = -y;
             }
             // (20-17) call atan2(x,y) to properly deal with y==0
-            x = (abs(x) < EPSILON && abs(y) < EPSILON) ? 0.0 : atan2(x, y);
+            x = abs(x) < EPSILON && abs(y) < EPSILON ? 0.0 : atan2(x, y);
             if (abs(rho) < EPSILON) {
                 y = latitudeOfOrigin;
             } else {
                 final double c = 2.0 * atan(rho / k0);
                 final double cosc = cos(c);
-                y = (southPole) ? asin(-cosc) : asin(cosc);
+                y = southPole ? asin(-cosc) : asin(cosc);
                 // (20-14) with phi1=90
             }
             assert checkInverseTransform(x, y, ptDst);
@@ -393,21 +372,21 @@ public class PolarStereographic extends Stereographic {
     }
 
     /**
-     * Overides {@link PolarStereographic} to use the a series for the {@link
-     * #inverseTransformNormalized inverseTransformNormalized(...)} method. This is the equation
-     * specified by the EPSG. Allows for a {@code "latitude_true_scale"} parameter to be used, but
-     * this parameter is not listed by the EPSG and is not given as a parameter by the provider.
+     * Overides {@link PolarStereographic} to use the a series for the {@link #inverseTransformNormalized
+     * inverseTransformNormalized(...)} method. This is the equation specified by the EPSG. Allows for a
+     * {@code "latitude_true_scale"} parameter to be used, but this parameter is not listed by the EPSG and is not given
+     * as a parameter by the provider.
      *
-     * <p>Compared to the default {@link PolarStereographic} implementation, the series
-     * implementation is a little bit faster at the expense of a little bit less accuracy. The
-     * default {@link PolarStereographic} implementation is a derivated work of Proj4, and is
-     * therefor better tested.
+     * <p>Compared to the default {@link PolarStereographic} implementation, the series implementation is a little bit
+     * faster at the expense of a little bit less accuracy. The default {@link PolarStereographic} implementation is a
+     * derivated work of Proj4, and is therefor better tested.
      *
      * @version $Id$
      * @author Rueben Schulz
      */
     static final class Series extends PolarStereographic {
         /** For compatibility with different versions during deserialization. */
+        @Serial
         private static final long serialVersionUID = 2795404156883313290L;
 
         /** Constants used for the inverse polar series */
@@ -417,9 +396,9 @@ public class PolarStereographic extends Stereographic {
         private double C, D;
 
         /**
-         * A constant used in the transformations. This constant hides the {@code k0} constant from
-         * the USGS case. The EPSG and USGS {@code k0} are not computed in the same way, and we
-         * preserve the USGS {@code k0} in order to allow assertions to work.
+         * A constant used in the transformations. This constant hides the {@code k0} constant from the USGS case. The
+         * EPSG and USGS {@code k0} are not computed in the same way, and we preserve the USGS {@code k0} in order to
+         * allow assertions to work.
          */
         private final double k0;
 
@@ -428,9 +407,8 @@ public class PolarStereographic extends Stereographic {
          *
          * @param parameters The group of parameter values.
          * @param descriptor The expected parameter descriptor.
-         * @param forceSouthPole For projection to North pole if {@link Boolean#FALSE}, to South
-         *     pole if {@link Boolean#TRUE}, or do not force (i.e. detect from other parameter
-         *     values) if {@code null}.
+         * @param forceSouthPole For projection to North pole if {@link Boolean#FALSE}, to South pole if
+         *     {@link Boolean#TRUE}, or do not force (i.e. detect from other parameter values) if {@code null}.
          * @throws ParameterNotFoundException if a required parameter was not found.
          */
         Series(
@@ -452,24 +430,17 @@ public class PolarStereographic extends Stereographic {
             final double latTrueScale = abs(standardParallel);
             if (abs(latTrueScale - PI / 2) >= EPSILON) {
                 final double t = sin(latTrueScale);
-                k0 =
-                        msfn(t, cos(latTrueScale))
-                                * sqrt(
-                                        pow(1 + excentricity, 1 + excentricity)
-                                                * pow(1 - excentricity, 1 - excentricity))
-                                / (2.0 * tsfn(latTrueScale, t));
+                k0 = msfn(t, cos(latTrueScale))
+                        * sqrt(pow(1 + excentricity, 1 + excentricity) * pow(1 - excentricity, 1 - excentricity))
+                        / (2.0 * tsfn(latTrueScale, t));
             } else {
                 k0 = 1.0;
             }
         }
 
-        /**
-         * Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in
-         * {@code ptDst}.
-         */
+        /** Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in {@code ptDst}. */
         @Override
-        protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst)
-                throws ProjectionException {
+        protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst) throws ProjectionException {
             // Compute using iteration formulas, for comparaison later.
             assert (ptDst = super.inverseTransformNormalized(x, y, ptDst)) != null;
             final double rho = hypot(x, y);
@@ -477,21 +448,19 @@ public class PolarStereographic extends Stereographic {
                 y = -y;
             }
             // The series form
-            final double t =
-                    (rho / k0)
-                            * sqrt(
-                                    pow(1 + excentricity, 1 + excentricity)
-                                            * pow(1 - excentricity, 1 - excentricity))
-                            / 2;
+            final double t = rho
+                    / k0
+                    * sqrt(pow(1 + excentricity, 1 + excentricity) * pow(1 - excentricity, 1 - excentricity))
+                    / 2;
             final double chi = PI / 2 - 2 * atan(t);
 
-            x = (abs(rho) < EPSILON) ? 0.0 : atan2(x, -y);
+            x = abs(rho) < EPSILON ? 0.0 : atan2(x, -y);
 
             // See Snyde P. 19, "Computation of Series"
             final double sin2chi = sin(2.0 * chi);
             final double cos2chi = cos(2.0 * chi);
             y = chi + sin2chi * (A + cos2chi * (B + cos2chi * (C + D * cos2chi)));
-            y = (southPole) ? -y : y;
+            y = southPole ? -y : y;
 
             assert checkInverseTransform(x, y, ptDst);
             if (ptDst != null) {
@@ -511,9 +480,9 @@ public class PolarStereographic extends Stereographic {
     //////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform
-     * provider} for a {@linkplain PolarStereographic Polar Stereographic} projection. This provider
-     * uses the series equations for the inverse elliptical calculations.
+     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform provider} for a
+     * {@linkplain PolarStereographic Polar Stereographic} projection. This provider uses the series equations for the
+     * inverse elliptical calculations.
      *
      * @since 2.4
      * @version $Id$
@@ -522,27 +491,28 @@ public class PolarStereographic extends Stereographic {
      */
     public static final class ProviderA extends Stereographic.Provider {
         /** For compatibility with different versions during deserialization. */
+        @Serial
         private static final long serialVersionUID = 9124091259039220308L;
 
         /** The parameters group. */
-        static final ParameterDescriptorGroup PARAMETERS =
-                createDescriptorGroup(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(Citations.OGC, "Polar_Stereographic"),
-                            new NamedIdentifier(Citations.EPSG, "Polar Stereographic (variant A)"),
-                            new NamedIdentifier(Citations.EPSG, "9810"),
-                            new NamedIdentifier(Citations.GEOTIFF, "CT_PolarStereographic"),
-                            new NamedIdentifier(Citations.GEOTOOLS, Provider.NAME)
-                        },
-                        new ParameterDescriptor[] {
-                            SEMI_MAJOR,
-                            SEMI_MINOR,
-                            CENTRAL_MERIDIAN,
-                            LATITUDE_OF_ORIGIN,
-                            SCALE_FACTOR,
-                            FALSE_EASTING,
-                            FALSE_NORTHING
-                        });
+        static final ParameterDescriptorGroup PARAMETERS = createDescriptorGroup(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(Citations.OGC, "Polar_Stereographic"),
+                    new NamedIdentifier(Citations.EPSG, "Polar Stereographic (variant A)"),
+                    new NamedIdentifier(Citations.EPSG, "9810"),
+                    new NamedIdentifier(Citations.GEOTIFF, "CT_PolarStereographic"),
+                    new NamedIdentifier(Citations.GEOTOOLS, Provider.NAME),
+                    new NamedIdentifier(Citations.PROJ, "stere")
+                },
+                new ParameterDescriptor[] {
+                    SEMI_MAJOR,
+                    SEMI_MINOR,
+                    CENTRAL_MERIDIAN,
+                    LATITUDE_OF_ORIGIN,
+                    SCALE_FACTOR,
+                    FALSE_EASTING,
+                    FALSE_NORTHING
+                });
 
         /** Constructs a new provider. */
         public ProviderA() {
@@ -568,11 +538,10 @@ public class PolarStereographic extends Stereographic {
     }
 
     /**
-     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform
-     * provider} for a {@linkplain PolarStereographic Polar Stereographic} (Variant B) projection.
-     * This provider includes a "Standard_Parallel_1" parameter and determines the hemisphere of the
-     * projection from the Standard_Parallel_1 value. It also uses the series equations for the
-     * inverse elliptical calculations.
+     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform provider} for a
+     * {@linkplain PolarStereographic Polar Stereographic} (Variant B) projection. This provider includes a
+     * "Standard_Parallel_1" parameter and determines the hemisphere of the projection from the Standard_Parallel_1
+     * value. It also uses the series equations for the inverse elliptical calculations.
      *
      * @since 2.4
      * @version $Id$
@@ -581,27 +550,28 @@ public class PolarStereographic extends Stereographic {
      */
     public static final class ProviderB extends Stereographic.Provider {
         /** For compatibility with different versions during deserialization. */
+        @Serial
         private static final long serialVersionUID = 5188231050523249971L;
 
         /**
-         * The operation parameter descriptor for the {@code standardParallel} parameter value.
-         * Valid values range is from -90 to 90°. The default value is 90°N.
+         * The operation parameter descriptor for the {@code standardParallel} parameter value. Valid values range is
+         * from -90 to 90°. The default value is 90°N.
          */
         public static final ParameterDescriptor STANDARD_PARALLEL = ProviderNorth.STANDARD_PARALLEL;
 
         /** The parameters group. */
-        static final ParameterDescriptorGroup PARAMETERS =
-                createDescriptorGroup(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(Citations.EPSG, "Polar Stereographic (variant B)"),
-                            new NamedIdentifier(Citations.EPSG, "9829"),
-                            new NamedIdentifier(Citations.GEOTOOLS, Provider.NAME)
-                        },
-                        new ParameterDescriptor[] {
-                            SEMI_MAJOR, SEMI_MINOR,
-                            CENTRAL_MERIDIAN, STANDARD_PARALLEL,
-                            FALSE_EASTING, FALSE_NORTHING
-                        });
+        static final ParameterDescriptorGroup PARAMETERS = createDescriptorGroup(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(Citations.EPSG, "Polar Stereographic (variant B)"),
+                    new NamedIdentifier(Citations.EPSG, "9829"),
+                    new NamedIdentifier(Citations.GEOTOOLS, Provider.NAME),
+                    new NamedIdentifier(Citations.PROJ, "stere")
+                },
+                new ParameterDescriptor[] {
+                    SEMI_MAJOR, SEMI_MINOR,
+                    CENTRAL_MERIDIAN, STANDARD_PARALLEL,
+                    FALSE_EASTING, FALSE_NORTHING
+                });
 
         /** Constructs a new provider. */
         public ProviderB() {
@@ -627,10 +597,9 @@ public class PolarStereographic extends Stereographic {
     }
 
     /**
-     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform
-     * provider} for a {@linkplain PolarStereographic North Polar Stereographic} projection. This
-     * provider sets the "latitude_of_origin" parameter to +90.0 degrees and uses the iterative
-     * equations for the inverse elliptical calculations.
+     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform provider} for a
+     * {@linkplain PolarStereographic North Polar Stereographic} projection. This provider sets the "latitude_of_origin"
+     * parameter to +90.0 degrees and uses the iterative equations for the inverse elliptical calculations.
      *
      * @since 2.4
      * @version $Id$
@@ -639,39 +608,39 @@ public class PolarStereographic extends Stereographic {
      */
     public static final class ProviderNorth extends Stereographic.Provider {
         /** For compatibility with different versions during deserialization. */
+        @Serial
         private static final long serialVersionUID = 657493908431273866L;
 
         /**
-         * The operation parameter descriptor for the {@code standardParallel} parameter value.
-         * Valid values range is from -90 to 90°. The default value is 90°N.
+         * The operation parameter descriptor for the {@code standardParallel} parameter value. Valid values range is
+         * from -90 to 90°. The default value is 90°N.
          */
-        public static final ParameterDescriptor STANDARD_PARALLEL =
-                createDescriptor(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(Citations.ESRI, "Standard_Parallel_1"),
-                            new NamedIdentifier(Citations.EPSG, "Latitude of standard parallel")
-                        },
-                        90,
-                        -90,
-                        90,
-                        NonSI.DEGREE_ANGLE);
+        public static final ParameterDescriptor STANDARD_PARALLEL = createDescriptor(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(Citations.ESRI, "Standard_Parallel_1"),
+                    new NamedIdentifier(Citations.EPSG, "Latitude of standard parallel"),
+                    new NamedIdentifier(Citations.PROJ, "lat_1")
+                },
+                90,
+                -90,
+                90,
+                NonSI.DEGREE_ANGLE);
 
         /** The parameters group. */
-        static final ParameterDescriptorGroup PARAMETERS =
-                createDescriptorGroup(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(Citations.ESRI, "Stereographic_North_Pole"),
-                            new NamedIdentifier(Citations.GEOTOOLS, Provider.NAME)
-                        },
-                        new ParameterDescriptor[] {
-                            SEMI_MAJOR,
-                            SEMI_MINOR,
-                            CENTRAL_MERIDIAN,
-                            STANDARD_PARALLEL,
-                            SCALE_FACTOR,
-                            FALSE_EASTING,
-                            FALSE_NORTHING
-                        });
+        static final ParameterDescriptorGroup PARAMETERS = createDescriptorGroup(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(Citations.ESRI, "Stereographic_North_Pole"),
+                    new NamedIdentifier(Citations.GEOTOOLS, Provider.NAME)
+                },
+                new ParameterDescriptor[] {
+                    SEMI_MAJOR,
+                    SEMI_MINOR,
+                    CENTRAL_MERIDIAN,
+                    STANDARD_PARALLEL,
+                    SCALE_FACTOR,
+                    FALSE_EASTING,
+                    FALSE_NORTHING
+                });
 
         /** Constructs a new provider. */
         public ProviderNorth() {
@@ -697,10 +666,9 @@ public class PolarStereographic extends Stereographic {
     }
 
     /**
-     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform
-     * provider} for a {@linkplain PolarStereographic South Polar Stereographic} projection. This
-     * provider sets the "latitude_of_origin" parameter to -90.0 degrees and uses the iterative
-     * equations for the inverse elliptical calculations.
+     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform provider} for a
+     * {@linkplain PolarStereographic South Polar Stereographic} projection. This provider sets the "latitude_of_origin"
+     * parameter to -90.0 degrees and uses the iterative equations for the inverse elliptical calculations.
      *
      * @since 2.4
      * @version $Id$
@@ -709,39 +677,39 @@ public class PolarStereographic extends Stereographic {
      */
     public static final class ProviderSouth extends Stereographic.Provider {
         /** For compatibility with different versions during deserialization. */
+        @Serial
         private static final long serialVersionUID = 6537800238416448564L;
 
         /**
-         * The operation parameter descriptor for the {@code standardParallel} parameter value.
-         * Valid values range is from -90 to 90°. The default value is 90°S.
+         * The operation parameter descriptor for the {@code standardParallel} parameter value. Valid values range is
+         * from -90 to 90°. The default value is 90°S.
          */
-        public static final ParameterDescriptor STANDARD_PARALLEL =
-                createDescriptor(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(Citations.ESRI, "Standard_Parallel_1"),
-                            new NamedIdentifier(Citations.EPSG, "Latitude of standard parallel")
-                        },
-                        -90,
-                        -90,
-                        90,
-                        NonSI.DEGREE_ANGLE);
+        public static final ParameterDescriptor STANDARD_PARALLEL = createDescriptor(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(Citations.ESRI, "Standard_Parallel_1"),
+                    new NamedIdentifier(Citations.EPSG, "Latitude of standard parallel"),
+                    new NamedIdentifier(Citations.PROJ, "lat_1")
+                },
+                -90,
+                -90,
+                90,
+                NonSI.DEGREE_ANGLE);
 
         /** The parameters group. */
-        static final ParameterDescriptorGroup PARAMETERS =
-                createDescriptorGroup(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(Citations.ESRI, "Stereographic_South_Pole"),
-                            new NamedIdentifier(Citations.GEOTOOLS, Provider.NAME)
-                        },
-                        new ParameterDescriptor[] {
-                            SEMI_MAJOR,
-                            SEMI_MINOR,
-                            CENTRAL_MERIDIAN,
-                            STANDARD_PARALLEL,
-                            SCALE_FACTOR,
-                            FALSE_EASTING,
-                            FALSE_NORTHING
-                        });
+        static final ParameterDescriptorGroup PARAMETERS = createDescriptorGroup(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(Citations.ESRI, "Stereographic_South_Pole"),
+                    new NamedIdentifier(Citations.GEOTOOLS, Provider.NAME)
+                },
+                new ParameterDescriptor[] {
+                    SEMI_MAJOR,
+                    SEMI_MINOR,
+                    CENTRAL_MERIDIAN,
+                    STANDARD_PARALLEL,
+                    SCALE_FACTOR,
+                    FALSE_EASTING,
+                    FALSE_NORTHING
+                });
 
         /** Constructs a new provider. */
         public ProviderSouth() {

@@ -1,9 +1,28 @@
+/*
+ *    GeoTools - The Open Source Java GIS Toolkit
+ *    http://geotools.org
+ *
+ *    (C) 2018, Open Source Geospatial Foundation (OSGeo)
+ *
+ *    This library is free software; you can redistribute it and/or
+ *    modify it under the terms of the GNU Lesser General Public
+ *    License as published by the Free Software Foundation;
+ *    version 2.1 of the License.
+ *
+ *    This library is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    Lesser General Public License for more details.
+ *
+ */
+
 package org.geotools.data.arcgisrest.schema.query;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Layer {
 
@@ -26,11 +45,11 @@ public class Layer {
     /** (Required) */
     @SerializedName("fields")
     @Expose
-    private List<Object> fields = new ArrayList<Object>();
+    private List<Object> fields = new ArrayList<>();
     /** (Required) */
     @SerializedName("features")
     @Expose
-    private List<Object> features = new ArrayList<Object>();
+    private List<Object> features = new ArrayList<>();
 
     /** (Required) */
     public String getObjectIdFieldName() {
@@ -135,19 +154,9 @@ public class Layer {
     public int hashCode() {
         int result = 1;
         result = ((result * 31) + ((this.features == null) ? 0 : this.features.hashCode()));
-        result =
-                ((result * 31)
-                        + ((this.globalIdFieldName == null)
-                                ? 0
-                                : this.globalIdFieldName.hashCode()));
-        result =
-                ((result * 31)
-                        + ((this.objectIdFieldName == null)
-                                ? 0
-                                : this.objectIdFieldName.hashCode()));
-        result =
-                ((result * 31)
-                        + ((this.spatialReference == null) ? 0 : this.spatialReference.hashCode()));
+        result = ((result * 31) + ((this.globalIdFieldName == null) ? 0 : this.globalIdFieldName.hashCode()));
+        result = ((result * 31) + ((this.objectIdFieldName == null) ? 0 : this.objectIdFieldName.hashCode()));
+        result = ((result * 31) + ((this.spatialReference == null) ? 0 : this.spatialReference.hashCode()));
         result = ((result * 31) + ((this.fields == null) ? 0 : this.fields.hashCode()));
         result = ((result * 31) + ((this.geometryType == null) ? 0 : this.geometryType.hashCode()));
         return result;
@@ -162,27 +171,11 @@ public class Layer {
             return false;
         }
         Layer rhs = ((Layer) other);
-        return (((((((this.features == rhs.features)
-                                                        || ((this.features != null)
-                                                                && this.features.equals(
-                                                                        rhs.features)))
-                                                && ((this.globalIdFieldName
-                                                                == rhs.globalIdFieldName)
-                                                        || ((this.globalIdFieldName != null)
-                                                                && this.globalIdFieldName.equals(
-                                                                        rhs.globalIdFieldName))))
-                                        && ((this.objectIdFieldName == rhs.objectIdFieldName)
-                                                || ((this.objectIdFieldName != null)
-                                                        && this.objectIdFieldName.equals(
-                                                                rhs.objectIdFieldName))))
-                                && ((this.spatialReference == rhs.spatialReference)
-                                        || ((this.spatialReference != null)
-                                                && this.spatialReference.equals(
-                                                        rhs.spatialReference))))
-                        && ((this.fields == rhs.fields)
-                                || ((this.fields != null) && this.fields.equals(rhs.fields))))
-                && ((this.geometryType == rhs.geometryType)
-                        || ((this.geometryType != null)
-                                && this.geometryType.equals(rhs.geometryType))));
+        return Objects.equals(this.features, rhs.features)
+                && Objects.equals(this.globalIdFieldName, rhs.globalIdFieldName)
+                && Objects.equals(this.objectIdFieldName, rhs.objectIdFieldName)
+                && Objects.equals(this.spatialReference, rhs.spatialReference)
+                && Objects.equals(this.fields, rhs.fields)
+                && Objects.equals(this.geometryType, rhs.geometryType);
     }
 }

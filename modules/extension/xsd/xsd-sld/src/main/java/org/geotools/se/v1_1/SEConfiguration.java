@@ -16,6 +16,8 @@
  */
 package org.geotools.se.v1_1;
 
+import org.geotools.api.style.ResourceLocator;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.filter.v1_1.OGCConfiguration;
 import org.geotools.se.v1_1.bindings.AnchorPointBinding;
 import org.geotools.se.v1_1.bindings.BaseSymbolizerBinding;
@@ -76,8 +78,6 @@ import org.geotools.se.v1_1.bindings.ThreshholdsBelongToTypeBinding;
 import org.geotools.se.v1_1.bindings.TrimBinding;
 import org.geotools.se.v1_1.bindings.VendorOptionBinding;
 import org.geotools.styling.DefaultResourceLocator;
-import org.geotools.styling.ResourceLocator;
-import org.geotools.styling.StyleFactory;
 import org.geotools.styling.StyleFactoryImpl;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.Parser;
@@ -113,17 +113,12 @@ public class SEConfiguration extends Configuration {
         // container.registerComponentImplementation(SE.FunctionType,FunctionTypeBinding.class);
         // container.registerComponentImplementation(SE.MethodType,MethodTypeBinding.class);
         // container.registerComponentImplementation(SE.ModeType,ModeTypeBinding.class);
-        container.registerComponentImplementation(
-                SE.ParameterValueType, ParameterValueTypeBinding.class);
-        container.registerComponentImplementation(
-                SE.searchDirectionType, SearchDirectionTypeBinding.class);
-        container.registerComponentImplementation(
-                SE.SelectedChannelType, SelectedChannelTypeBinding.class);
-        container.registerComponentImplementation(
-                SE.stripOffPositionType, StripOffPositionTypeBinding.class);
+        container.registerComponentImplementation(SE.ParameterValueType, ParameterValueTypeBinding.class);
+        container.registerComponentImplementation(SE.searchDirectionType, SearchDirectionTypeBinding.class);
+        container.registerComponentImplementation(SE.SelectedChannelType, SelectedChannelTypeBinding.class);
+        container.registerComponentImplementation(SE.stripOffPositionType, StripOffPositionTypeBinding.class);
         container.registerComponentImplementation(SE.SymbolizerType, SymbolizerTypeBinding.class);
-        container.registerComponentImplementation(
-                SE.ThreshholdsBelongToType, ThreshholdsBelongToTypeBinding.class);
+        container.registerComponentImplementation(SE.ThreshholdsBelongToType, ThreshholdsBelongToTypeBinding.class);
         // container.registerComponentImplementation(SE.VersionType,VersionTypeBinding.class);
 
         // Elements
@@ -132,21 +127,18 @@ public class SEConfiguration extends Configuration {
         container.registerComponentImplementation(SE.BrightnessOnly, BrightnessOnlyBinding.class);
         container.registerComponentImplementation(SE.Categorize, CategorizeBinding.class);
         container.registerComponentImplementation(SE.ChangeCase, ChangeCaseBinding.class);
-        container.registerComponentImplementation(
-                SE.ChannelSelection, ChannelSelectionBinding.class);
+        container.registerComponentImplementation(SE.ChannelSelection, ChannelSelectionBinding.class);
         container.registerComponentImplementation(SE.ColorMap, ColorMapBinding.class);
         // container.registerComponentImplementation(SE.ColorReplacement,ColorReplacementBinding.class);
         container.registerComponentImplementation(SE.Concatenate, ConcatenateBinding.class);
-        container.registerComponentImplementation(
-                SE.ContrastEnhancement, ContrastEnhancementBinding.class);
+        container.registerComponentImplementation(SE.ContrastEnhancement, ContrastEnhancementBinding.class);
         container.registerComponentImplementation(SE.CoverageName, CoverageNameBinding.class);
         container.registerComponentImplementation(SE.CoverageStyle, CoverageStyleBinding.class);
 
         container.registerComponentImplementation(SE.Description, DescriptionBinding.class);
         container.registerComponentImplementation(SE.Displacement, DisplacementBinding.class);
         container.registerComponentImplementation(SE.ExternalGraphic, ExternalGraphicBinding.class);
-        container.registerComponentImplementation(
-                SE.FeatureTypeStyle, FeatureTypeStyleBinding.class);
+        container.registerComponentImplementation(SE.FeatureTypeStyle, FeatureTypeStyleBinding.class);
         container.registerComponentImplementation(SE.Fill, FillBinding.class);
         container.registerComponentImplementation(SE.Font, FontBinding.class);
         container.registerComponentImplementation(SE.FormatDate, FormatDateBinding.class);
@@ -160,8 +152,7 @@ public class SEConfiguration extends Configuration {
         container.registerComponentImplementation(SE.ImageOutline, ImageOutlineBinding.class);
         container.registerComponentImplementation(SE.InlineContent, InlineContentBinding.class);
         container.registerComponentImplementation(SE.Interpolate, InterpolateBinding.class);
-        container.registerComponentImplementation(
-                SE.InterpolationPoint, InterpolationPointBinding.class);
+        container.registerComponentImplementation(SE.InterpolationPoint, InterpolationPointBinding.class);
         container.registerComponentImplementation(SE.LabelPlacement, LabelPlacementBinding.class);
         container.registerComponentImplementation(SE.LegendGraphic, LegendGraphicBinding.class);
         container.registerComponentImplementation(SE.LinePlacement, LinePlacementBinding.class);
@@ -174,10 +165,8 @@ public class SEConfiguration extends Configuration {
 
         container.registerComponentImplementation(SE.PointPlacement, PointPlacementBinding.class);
         container.registerComponentImplementation(SE.PointSymbolizer, PointSymbolizerBinding.class);
-        container.registerComponentImplementation(
-                SE.PolygonSymbolizer, PolygonSymbolizerBinding.class);
-        container.registerComponentImplementation(
-                SE.RasterSymbolizer, RasterSymbolizerBinding.class);
+        container.registerComponentImplementation(SE.PolygonSymbolizer, PolygonSymbolizerBinding.class);
+        container.registerComponentImplementation(SE.RasterSymbolizer, RasterSymbolizerBinding.class);
         // container.registerComponentImplementation(SE.Recode,RecodeBinding.class);
         container.registerComponentImplementation(SE.Rule, RuleBinding.class);
         container.registerComponentImplementation(SE.ShadedRelief, ShadedReliefBinding.class);

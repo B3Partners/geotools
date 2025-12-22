@@ -16,11 +16,11 @@
  */
 package org.geotools.filter.text.commons;
 
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.text.cql2.CQLCompiler;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.ecql.ECQLCompiler;
-import org.opengis.filter.FilterFactory;
 
 /**
  * Creates the compiler required for the specific language.
@@ -38,8 +38,7 @@ final class CompilerFactory {
      * @return CQLCompiler
      */
     public static ICompiler makeCompiler(
-            final Language language, final String predicate, final FilterFactory filterFactory)
-            throws CQLException {
+            final Language language, final String predicate, final FilterFactory filterFactory) throws CQLException {
 
         FilterFactory ff = filterFactory;
 

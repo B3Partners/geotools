@@ -27,53 +27,33 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Rule;
 import org.geotools.data.DataTestCase;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.IllegalFilterException;
 import org.geotools.filter.function.ClassificationFunction;
 import org.geotools.filter.function.EqualIntervalFunction;
 import org.geotools.filter.function.ExplicitClassifier;
 import org.geotools.filter.function.RangedClassifier;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.Rule;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 
 public class StyleGeneratorTest extends DataTestCase {
 
-    public void checkFilteredResultNotEmpty(
-            List<Rule> rules, SimpleFeatureSource fs, String attribName) throws IOException {
+    public void checkFilteredResultNotEmpty(List<Rule> rules, SimpleFeatureSource fs, String attribName)
+            throws IOException {
         for (Rule rule : rules) {
             Filter filter = rule.getFilter();
             SimpleFeatureCollection filteredCollection = fs.getFeatures(filter);
             assertTrue(filteredCollection.size() > 0);
-
-            String filterInfo =
-                    "Filter \""
-                            + filter.toString()
-                            + "\" contains "
-                            + filteredCollection.size()
-                            + " element(s) (";
-            try (SimpleFeatureIterator it = filteredCollection.features()) {
-
-                while (it.hasNext()) {
-                    SimpleFeature feature = it.next();
-                    filterInfo += ("'" + feature.getAttribute(attribName) + "'");
-
-                    if (it.hasNext()) {
-                        filterInfo += ", ";
-                    }
-                }
-            }
-            // System.out.println(filterInfo + ")");
         }
     }
 
@@ -114,16 +94,15 @@ public class StyleGeneratorTest extends DataTestCase {
         Color[] colors = brewer.getPalette(paletteName).getColors(2);
 
         // get the fts
-        FeatureTypeStyle fts =
-                StyleGenerator.createFeatureTypeStyle(
-                        classifier,
-                        expr2,
-                        colors,
-                        "myfts",
-                        roadFeatures[0].getFeatureType().getGeometryDescriptor(),
-                        StyleGenerator.ELSEMODE_IGNORE,
-                        0.5,
-                        null);
+        FeatureTypeStyle fts = StyleGenerator.createFeatureTypeStyle(
+                classifier,
+                expr2,
+                colors,
+                "myfts",
+                roadFeatures[0].getFeatureType().getGeometryDescriptor(),
+                StyleGenerator.ELSEMODE_IGNORE,
+                0.5,
+                null);
         assertNotNull(fts);
 
         // test each filter
@@ -158,9 +137,8 @@ public class StyleGeneratorTest extends DataTestCase {
         // assign each of the features to one of the bins
         try {
             fc.accepts(
-                    feature ->
-                            binValues2[0].add(
-                                    ((SimpleFeature) feature).getAttribute(attribName).toString()),
+                    feature -> binValues2[0].add(
+                            ((SimpleFeature) feature).getAttribute(attribName).toString()),
                     null);
         } catch (IOException e) {
             fail(e.getMessage());
@@ -171,16 +149,15 @@ public class StyleGeneratorTest extends DataTestCase {
         Color[] colors = brewer.getPalette(paletteName).getColors(binValues2.length);
 
         // get the fts
-        FeatureTypeStyle fts =
-                StyleGenerator.createFeatureTypeStyle(
-                        classifier,
-                        expr,
-                        colors,
-                        "myfts",
-                        riverFeatures[0].getFeatureType().getGeometryDescriptor(),
-                        StyleGenerator.ELSEMODE_IGNORE,
-                        0.5,
-                        null);
+        FeatureTypeStyle fts = StyleGenerator.createFeatureTypeStyle(
+                classifier,
+                expr,
+                colors,
+                "myfts",
+                riverFeatures[0].getFeatureType().getGeometryDescriptor(),
+                StyleGenerator.ELSEMODE_IGNORE,
+                0.5,
+                null);
         assertNotNull(fts);
 
         // test each filter

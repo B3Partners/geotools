@@ -21,21 +21,20 @@ import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 import java.awt.Color;
 import java.util.Iterator;
 import java.util.List;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 /**
- * Tint lesscss.org color function. Takes one colors and mixes it with white based on a weight (and
- * their eventual alpha)
+ * Tint lesscss.org color function. Takes one colors and mixes it with white based on a weight (and their eventual
+ * alpha)
  *
  * @author Andrea Aime - GeoSolutions
  */
 public class GrayscaleFunction extends FunctionImpl {
 
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "grayscale", parameter("result", Color.class), parameter("color", Color.class));
+            new FunctionNameImpl("grayscale", parameter("result", Color.class), parameter("color", Color.class));
 
     public GrayscaleFunction() {
         this.functionName = NAME;
@@ -50,19 +49,16 @@ public class GrayscaleFunction extends FunctionImpl {
         return hsl.toRGB();
     }
 
-    /**
-     * Creates a String representation of this Function with the function name and the arguments.
-     */
+    /** Creates a String representation of this Function with the function name and the arguments. */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(getName());
         sb.append("(");
-        List<org.opengis.filter.expression.Expression> params = getParameters();
+        List<org.geotools.api.filter.expression.Expression> params = getParameters();
         if (params != null) {
-            org.opengis.filter.expression.Expression exp;
-            for (Iterator<org.opengis.filter.expression.Expression> it = params.iterator();
-                    it.hasNext(); ) {
+            org.geotools.api.filter.expression.Expression exp;
+            for (Iterator<org.geotools.api.filter.expression.Expression> it = params.iterator(); it.hasNext(); ) {
                 exp = it.next();
                 sb.append("[");
                 sb.append(exp);

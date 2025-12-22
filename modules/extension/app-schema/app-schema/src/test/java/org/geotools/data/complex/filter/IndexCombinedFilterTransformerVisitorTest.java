@@ -22,12 +22,12 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.BinaryLogicOperator;
+import org.geotools.api.filter.Filter;
 import org.geotools.data.complex.IndexesTest;
 import org.geotools.data.complex.TestFeatureSource;
 import org.junit.Test;
-import org.opengis.filter.And;
-import org.opengis.filter.BinaryLogicOperator;
-import org.opengis.filter.Filter;
 
 /**
  * Tests org.geotools.data.complex.filter.IndexCombinedFilterTransformerVisitor
@@ -38,22 +38,16 @@ public class IndexCombinedFilterTransformerVisitorTest extends IndexesTest {
 
     @Test
     public void testVisitor() {
-        try (TestFeatureSource fsource =
-                new TestFeatureSource(
-                        "/test-data/index/",
-                        "stationsIndexed.xml",
-                        "http://www.stations.org/1.0",
-                        "stationsIndexed")) {
+        try (TestFeatureSource fsource = new TestFeatureSource(
+                "/test-data/index/", "stationsIndexed.xml", "http://www.stations.org/1.0", "stationsIndexed")) {
             Filter filter = partialIndexedFilter_2idxfilterResults();
-            List<Filter> indexedFilters =
-                    Arrays.asList(new Filter[] {totallyIndexedFilter(), totallyIndexedFilter2()});
-            IndexCombinedFilterTransformerVisitor visitor =
-                    new IndexCombinedFilterTransformerVisitor(
-                            (BinaryLogicOperator) partialIndexedFilter_2idxfilterResults(),
-                            indexedFilters,
-                            buildIdInExpression(
-                                    Arrays.asList(new String[] {"st.3", "st.2"}),
-                                    fsource.getMappedSource().getMapping()));
+            List<Filter> indexedFilters = Arrays.asList(new Filter[] {totallyIndexedFilter(), totallyIndexedFilter2()});
+            IndexCombinedFilterTransformerVisitor visitor = new IndexCombinedFilterTransformerVisitor(
+                    (BinaryLogicOperator) partialIndexedFilter_2idxfilterResults(),
+                    indexedFilters,
+                    buildIdInExpression(
+                            Arrays.asList(new String[] {"st.3", "st.2"}),
+                            fsource.getMappedSource().getMapping()));
             Filter ultimateFilter = (Filter) filter.accept(visitor, ff);
             assertNotEquals(filter, ultimateFilter);
             assertTrue(ultimateFilter instanceof And);

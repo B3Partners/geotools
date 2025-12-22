@@ -18,7 +18,6 @@ package org.h2gis.geotools;
 
 import org.geotools.jdbc.JDBCTypeNamesTestSetup;
 
-@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public class H2GISTypeNamesTestSetup extends JDBCTypeNamesTestSetup {
 
     protected H2GISTypeNamesTestSetup() {
@@ -27,11 +26,8 @@ public class H2GISTypeNamesTestSetup extends JDBCTypeNamesTestSetup {
 
     @Override
     protected void createTypes() throws Exception {
-        run(
-                "CREATE TABLE \"geotools\".\"ftntable\" ("
-                        + "\"id\" INT, \"name\" VARCHAR, \"geom\" GEOMETRY)");
-        run(
-                "CREATE VIEW \"geotools\".\"ftnview\" AS SELECT \"id\", \"geom\" FROM \"geotools\".\"ftntable\"");
+        run("CREATE TABLE \"geotools\".\"ftntable\" (" + "\"id\" INT, \"name\" VARCHAR, \"geom\" GEOMETRY)");
+        run("CREATE VIEW \"geotools\".\"ftnview\" AS SELECT \"id\", \"geom\" FROM \"geotools\".\"ftntable\"");
     }
 
     @Override

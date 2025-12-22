@@ -20,7 +20,7 @@ package org.geotools.data.shapefile.index;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
-import org.geotools.data.CloseableIterator;
+import org.geotools.api.data.CloseableIterator;
 import org.geotools.data.shapefile.index.quadtree.Node;
 import org.geotools.data.shapefile.index.quadtree.QuadTree;
 import org.geotools.data.shapefile.index.quadtree.StoreException;
@@ -38,7 +38,7 @@ public class CachedQuadTree {
     static {
         DATA_DEFINITION.addField(Integer.class);
         DATA_DEFINITION.addField(Long.class);
-    };
+    }
 
     MemoryNode root;
     Indices offsets;
@@ -83,7 +83,7 @@ public class CachedQuadTree {
         collectIndices(indices, root, bounds);
         indices.sort();
         final Data data = new Data(DATA_DEFINITION);
-        return new CloseableIterator<Data>() {
+        return new CloseableIterator<>() {
             boolean read = true;
             int idx = 0;
 
@@ -149,7 +149,7 @@ public class CachedQuadTree {
     }
 
     /** An efficient wrapper around an array of integers */
-    class Indices {
+    static class Indices {
         /** The current coordinate */
         int curr;
 
@@ -169,7 +169,7 @@ public class CachedQuadTree {
         /** Adds a coordinate to this list */
         void add(int index) {
             curr++;
-            if ((curr * 2 + 1) >= indices.length) {
+            if (curr * 2 + 1 >= indices.length) {
                 int newSize = indices.length * 3 / 2;
                 if (newSize < 10) {
                     newSize = 10;

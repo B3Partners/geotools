@@ -19,16 +19,16 @@ package org.geotools.referencing.operation.transform;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 
-import org.geotools.geometry.GeneralDirectPosition;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.datum.Ellipsoid;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.MathTransformFactory;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.geometry.GeneralPosition;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.referencing.datum.DefaultEllipsoid;
 import org.junit.Test;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.datum.Ellipsoid;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.MathTransformFactory;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * Tests the {@link GeocentricTranslation} class.
@@ -37,9 +37,7 @@ import org.opengis.referencing.operation.TransformException;
  * @author Martin Desruisseaux (IRD)
  */
 public final class GeocentricTranslationTest {
-    /**
-     * Test case using example from EPSG Guidance Note number 7 part 2 (May 2005), section 2.4.3.1.
-     */
+    /** Test case using example from EPSG Guidance Note number 7 part 2 (May 2005), section 2.4.3.1. */
     @Test
     public void testTranslation() throws FactoryException, TransformException {
         final String classification = "Geocentric translations (geog2d domain)";
@@ -51,7 +49,7 @@ public final class GeocentricTranslationTest {
         param.parameter("dz").setValue(116.95);
 
         final MathTransform test = factory.createParameterizedTransform(param);
-        final GeneralDirectPosition position = new GeneralDirectPosition(3);
+        final GeneralPosition position = new GeneralPosition(3);
         position.setOrdinate(0, 3771793.97);
         position.setOrdinate(1, 140253.34);
         position.setOrdinate(2, 5124304.35);
@@ -61,10 +59,7 @@ public final class GeocentricTranslationTest {
         assertEquals(5124421.30, position.getOrdinate(2), 1E-5);
     }
 
-    /**
-     * Test case using example from EPSG Guidance Note number 7 part 2 (May 2005), section
-     * 2.4.3.2.1.
-     */
+    /** Test case using example from EPSG Guidance Note number 7 part 2 (May 2005), section 2.4.3.2.1. */
     @Test
     public void testSevenParam() throws FactoryException, TransformException {
         final String classification = "Position Vector transformation (geog2d domain)";
@@ -80,7 +75,7 @@ public final class GeocentricTranslationTest {
         param.parameter("ppm").setValue(0.219);
 
         final MathTransform test = factory.createParameterizedTransform(param);
-        final GeneralDirectPosition position = new GeneralDirectPosition(3);
+        final GeneralPosition position = new GeneralPosition(3);
         position.setOrdinate(0, 3657660.66);
         position.setOrdinate(1, 255768.55);
         position.setOrdinate(2, 5201382.11);
@@ -90,10 +85,7 @@ public final class GeocentricTranslationTest {
         assertEquals(5201387.75, position.getOrdinate(2), 1E-2);
     }
 
-    /**
-     * Test case using example from EPSG Guidance Note number 7 part 2 (May 2005), section
-     * 2.4.3.2.2.
-     */
+    /** Test case using example from EPSG Guidance Note number 7 part 2 (May 2005), section 2.4.3.2.2. */
     @Test
     public void testFrameRotation() throws FactoryException, TransformException {
         final String classification = "Coordinate Frame rotation (geog2d domain)";
@@ -109,7 +101,7 @@ public final class GeocentricTranslationTest {
         param.parameter("ppm").setValue(0.219);
 
         final MathTransform test = factory.createParameterizedTransform(param);
-        final GeneralDirectPosition position = new GeneralDirectPosition(3);
+        final GeneralPosition position = new GeneralPosition(3);
         position.setOrdinate(0, 3657660.66);
         position.setOrdinate(1, 255768.55);
         position.setOrdinate(2, 5201382.11);
@@ -120,8 +112,8 @@ public final class GeocentricTranslationTest {
     }
 
     /**
-     * Tests the creation with geocentric transforms. Note: the expected values here are
-     * approximatives since we didn't used an external source of test points for this test.
+     * Tests the creation with geocentric transforms. Note: the expected values here are approximatives since we didn't
+     * used an external source of test points for this test.
      */
     @Test
     public void testGeotoolsExtensions() throws FactoryException, TransformException {
@@ -147,7 +139,7 @@ public final class GeocentricTranslationTest {
         param.parameter("tgt_semi_minor").setValue(targetEllipsoid.getSemiMinorAxis());
 
         final MathTransform test = factory.createParameterizedTransform(param);
-        final GeneralDirectPosition position = new GeneralDirectPosition(3);
+        final GeneralPosition position = new GeneralPosition(3);
         position.setOrdinate(0, 4.00); // Longitude
         position.setOrdinate(1, 55.00); // Latitude
         position.setOrdinate(2, -191.61); // Height

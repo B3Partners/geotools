@@ -31,23 +31,22 @@ import static java.lang.Math.sqrt;
 import static java.lang.Math.tan;
 
 import java.awt.geom.Point2D;
+import java.io.Serial;
 import java.util.Collection;
-import org.opengis.parameter.GeneralParameterDescriptor;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
 
 /**
- * Mercator Cylindrical Projection. The parallels and the meridians are straight lines and cross at
- * right angles; this projection thus produces rectangular charts. The scale is true along the
- * equator (by default) or along two parallels equidistant of the equator (if a scale factor other
- * than 1 is used). This projection is used to represent areas close to the equator. It is also
- * often used for maritime navigation because all the straight lines on the chart are
- * <em>loxodrome</em> lines, i.e. a ship following this line would keep a constant azimuth on its
- * compass.
+ * Mercator Cylindrical Projection. The parallels and the meridians are straight lines and cross at right angles; this
+ * projection thus produces rectangular charts. The scale is true along the equator (by default) or along two parallels
+ * equidistant of the equator (if a scale factor other than 1 is used). This projection is used to represent areas close
+ * to the equator. It is also often used for maritime navigation because all the straight lines on the chart are
+ * <em>loxodrome</em> lines, i.e. a ship following this line would keep a constant azimuth on its compass.
  *
- * <p>This implementation handles both the 1 and 2 stardard parallel cases. For {@code Mercator_1SP}
- * (EPSG code 9804), the line of contact is the equator. For {@code Mercator_2SP} (EPSG code 9805)
- * lines of contact are symmetrical about the equator.
+ * <p>This implementation handles both the 1 and 2 stardard parallel cases. For {@code Mercator_1SP} (EPSG code 9804),
+ * the line of contact is the equator. For {@code Mercator_2SP} (EPSG code 9805) lines of contact are symmetrical about
+ * the equator.
  *
  * <p><b>References:</b>
  *
@@ -58,8 +57,7 @@ import org.opengis.parameter.ParameterValueGroup;
  *       EPSG Guidence Note Number 7, Version 19.
  * </ul>
  *
- * @see <A HREF="http://mathworld.wolfram.com/MercatorProjection.html">Mercator projection on
- *     MathWorld</A>
+ * @see <A HREF="http://mathworld.wolfram.com/MercatorProjection.html">Mercator projection on MathWorld</A>
  * @see <A HREF="http://www.remotesensing.org/geotiff/proj_list/mercator_1sp.html">"mercator_1sp" on
  *     RemoteSensing.org</A>
  * @see <A HREF="http://www.remotesensing.org/geotiff/proj_list/mercator_2sp.html">"mercator_2sp" on
@@ -73,14 +71,15 @@ import org.opengis.parameter.ParameterValueGroup;
  */
 public abstract class Mercator extends MapProjection {
     /** For cross-version compatibility. */
+    @Serial
     private static final long serialVersionUID = 6146741819833248649L;
 
     /** Maximum difference allowed when comparing real numbers. */
     private static final double EPSILON = 1E-6;
 
     /**
-     * Standard Parallel used for the {@link Mercator2SP} case. Set to {@link Double#NaN} for the
-     * {@link Mercator1SP} case.
+     * Standard Parallel used for the {@link Mercator2SP} case. Set to {@link Double#NaN} for the {@link Mercator1SP}
+     * case.
      */
     protected final double standardParallel;
 
@@ -101,8 +100,7 @@ public abstract class Mercator extends MapProjection {
              * 'scaleFactor' to 1. We still use the '*=' operator rather than '=' in case a
              * user implementation still provides a scale factor for its custom projections.
              */
-            standardParallel =
-                    abs(doubleValue(expected, AbstractProvider.STANDARD_PARALLEL_1, parameters));
+            standardParallel = abs(doubleValue(expected, AbstractProvider.STANDARD_PARALLEL_1, parameters));
             ensureLatitudeInRange(AbstractProvider.STANDARD_PARALLEL_1, standardParallel, false);
             if (isSpherical) {
                 scaleFactor *= cos(standardParallel);
@@ -122,7 +120,7 @@ public abstract class Mercator extends MapProjection {
          * in a single multiplication.
          */
         final double sinPhi = sin(latitudeOfOrigin);
-        globalScale *= (cos(latitudeOfOrigin) / (sqrt(1 - excentricitySquared * sinPhi * sinPhi)));
+        globalScale *= cos(latitudeOfOrigin) / sqrt(1 - excentricitySquared * sinPhi * sinPhi);
     }
 
     /** {@inheritDoc} */
@@ -138,13 +136,12 @@ public abstract class Mercator extends MapProjection {
     }
 
     /**
-     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in
-     * radians) and stores the result in {@code ptDst} (linear distance on a unit sphere).
+     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in radians) and stores the
+     * result in {@code ptDst} (linear distance on a unit sphere).
      */
     @Override
-    protected Point2D transformNormalized(double x, double y, final Point2D ptDst)
-            throws ProjectionException {
-        if (abs(y) > (PI / 2 - EPSILON)) {
+    protected Point2D transformNormalized(double x, double y, final Point2D ptDst) throws ProjectionException {
+        if (abs(y) > PI / 2 - EPSILON) {
             throw new ProjectionException(y);
         }
         y = -log(tsfn(y, sin(y)));
@@ -156,13 +153,9 @@ public abstract class Mercator extends MapProjection {
         return new Point2D.Double(x, y);
     }
 
-    /**
-     * Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in
-     * {@code ptDst}.
-     */
+    /** Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in {@code ptDst}. */
     @Override
-    protected Point2D inverseTransformNormalized(double x, double y, final Point2D ptDst)
-            throws ProjectionException {
+    protected Point2D inverseTransformNormalized(double x, double y, final Point2D ptDst) throws ProjectionException {
         y = exp(-y);
         y = cphi2(y);
 
@@ -182,6 +175,7 @@ public abstract class Mercator extends MapProjection {
      */
     abstract static class Spherical extends Mercator {
         /** For cross-version compatibility. */
+        @Serial
         private static final long serialVersionUID = 2383414176395616561L;
 
         /**
@@ -190,20 +184,18 @@ public abstract class Mercator extends MapProjection {
          * @param parameters The parameter values in standard units.
          * @throws ParameterNotFoundException if a mandatory parameter is missing.
          */
-        protected Spherical(final ParameterValueGroup parameters)
-                throws ParameterNotFoundException {
+        protected Spherical(final ParameterValueGroup parameters) throws ParameterNotFoundException {
             super(parameters);
             ensureSpherical();
         }
 
         /**
-         * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in
-         * radians) and stores the result in {@code ptDst} (linear distance on a unit sphere).
+         * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in radians) and stores the
+         * result in {@code ptDst} (linear distance on a unit sphere).
          */
         @Override
-        protected Point2D transformNormalized(double x, double y, Point2D ptDst)
-                throws ProjectionException {
-            if (abs(y) > (PI / 2 - EPSILON)) {
+        protected Point2D transformNormalized(double x, double y, Point2D ptDst) throws ProjectionException {
+            if (abs(y) > PI / 2 - EPSILON) {
                 throw new ProjectionException(y);
             }
             // Compute using ellipsoidal formulas, for comparaison later.
@@ -220,12 +212,11 @@ public abstract class Mercator extends MapProjection {
         }
 
         /**
-         * Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in
-         * {@code ptDst} using equations for a sphere.
+         * Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in {@code ptDst} using
+         * equations for a sphere.
          */
         @Override
-        protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst)
-                throws ProjectionException {
+        protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst) throws ProjectionException {
             // Computes using ellipsoidal formulas, for comparaison later.
             assert (ptDst = super.inverseTransformNormalized(x, y, ptDst)) != null;
 

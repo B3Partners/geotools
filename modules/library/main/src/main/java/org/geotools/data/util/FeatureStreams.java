@@ -21,10 +21,10 @@ import java.util.Iterator;
 import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
 
 /**
  * Provides toStream transform methods for Feature Collection & Iterator
@@ -35,19 +35,13 @@ public final class FeatureStreams {
 
     private FeatureStreams() {}
 
-    /**
-     * Converts FeatureCollection to Stream of Features Use with try-with-resources clause for auto
-     * closing
-     */
-    public static <T extends Feature, K extends FeatureType> Stream<T> toFeatureStream(
-            FeatureCollection<K, T> fc) {
-        @SuppressWarnings("PMD.CloseResource") // wrapped and returned
+    /** Converts FeatureCollection to Stream of Features Use with try-with-resources clause for auto closing */
+    public static <T extends Feature, K extends FeatureType> Stream<T> toFeatureStream(FeatureCollection<K, T> fc) {
         StreamFeatureIterator<T> fi = new StreamFeatureIterator<>(fc.features());
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(fi, 0), false)
-                .onClose(
-                        () -> {
-                            fi.close();
-                        });
+                .onClose(() -> {
+                    fi.close();
+                });
     }
 
     /**
@@ -56,8 +50,7 @@ public final class FeatureStreams {
      * @author Fernando Miño, Geosolutions
      * @param <F>
      */
-    public static class StreamFeatureIterator<F extends Feature>
-            implements Closeable, Iterator<F>, FeatureIterator<F> {
+    public static class StreamFeatureIterator<F extends Feature> implements Closeable, Iterator<F>, FeatureIterator<F> {
 
         private FeatureIterator<F> delegate;
 

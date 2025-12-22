@@ -21,6 +21,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
@@ -30,14 +33,20 @@ import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
 
 public abstract class JDBCFeatureCollectionOnlineTest extends JDBCTestSupport {
     SimpleFeatureCollection collection;
     JDBCFeatureStore source;
+
+    public JDBCFeatureCollectionOnlineTest() {
+        super();
+    }
+
+    protected JDBCFeatureCollectionOnlineTest(double coordinateEps) {
+        super(coordinateEps);
+    }
 
     @Override
     protected void connect() throws Exception {
@@ -51,28 +60,24 @@ public abstract class JDBCFeatureCollectionOnlineTest extends JDBCTestSupport {
     public void testIterator() throws Exception {
         try (FeatureIterator<SimpleFeature> i = collection.features()) {
             assertNotNull(i);
-            assertFeatureIterator(
-                    0,
-                    3,
-                    i,
-                    new SimpleFeatureAssertion() {
+            assertFeatureIterator(0, 3, i, new SimpleFeatureAssertion() {
 
-                        @Override
-                        public int toIndex(SimpleFeature feature) {
-                            return ((Number) feature.getAttribute(aname("intProperty"))).intValue();
-                        }
+                @Override
+                public int toIndex(SimpleFeature feature) {
+                    return ((Number) feature.getAttribute(aname("intProperty"))).intValue();
+                }
 
-                        @Override
-                        public void check(int index, SimpleFeature feature) {
-                            assertNotNull(feature);
+                @Override
+                public void check(int index, SimpleFeature feature) {
+                    assertNotNull(feature);
 
-                            String fid = feature.getID();
+                    String fid = feature.getID();
 
-                            int id = Integer.parseInt(fid.substring(fid.indexOf('.') + 1));
+                    int id = Integer.parseInt(fid.substring(fid.indexOf('.') + 1));
 
-                            assertEquals(index, id);
-                        }
-                    });
+                    assertEquals(index, id);
+                }
+            });
         }
     }
 
@@ -137,11 +142,14 @@ public abstract class JDBCFeatureCollectionOnlineTest extends JDBCTestSupport {
                             ((Double) f.getAttribute(aname("doubleProperty"))).doubleValue(),
                             1e-5);
                     assertEquals(
-                            feature.getAttribute(aname("stringProperty")),
-                            f.getAttribute(aname("stringProperty")));
-                    assertEquals(
-                            feature.getAttribute(aname("geometry")),
-                            f.getAttribute(aname("geometry")));
+                            feature.getAttribute(aname("stringProperty")), f.getAttribute(aname("stringProperty")));
+                    Geometry expected = (Geometry) feature.getAttribute(aname("geometry"));
+                    Geometry actual = (Geometry) f.getAttribute(aname("geometry"));
+                    assertTrue(
+                            String.format(
+                                    "Was expecting %s but got %s, comparison failed with a tolerance of %s",
+                                    expected, actual, COORDINATE_EPS),
+                            expected.equalsExact(actual, COORDINATE_EPS));
                     found = true;
                 }
             }

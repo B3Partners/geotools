@@ -16,7 +16,8 @@
  */
 package org.geotools.process.raster;
 
-import javax.media.jai.JAI;
+import java.io.Serial;
+import org.eclipse.imagen.ImageN;
 import org.geotools.coverage.processing.OperationJAI;
 import org.geotools.image.jai.Registry;
 import org.geotools.processing.jai.TransparencyFillDescriptor;
@@ -24,14 +25,15 @@ import org.geotools.processing.jai.TransparencyFillRIF;
 
 public class TransparencyFill extends OperationJAI {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 3368109980974496342L;
 
     static {
         Registry.registerRIF(
-                JAI.getDefaultInstance(),
+                ImageN.getDefaultInstance(),
                 new TransparencyFillDescriptor(),
                 new TransparencyFillRIF(),
-                "it.geosolutions.jaiext");
+                "org.eclipse.imagen.media");
     }
 
     public TransparencyFill() {

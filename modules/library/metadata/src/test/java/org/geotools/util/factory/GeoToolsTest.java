@@ -28,17 +28,17 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.Manifest;
-import javax.media.jai.JAI;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import org.apache.commons.logging.LogFactory;
+import org.eclipse.imagen.ImageN;
+import org.geotools.api.filter.Filter;
 import org.geotools.util.NullEntityResolver;
 import org.geotools.util.PreventLocalEntityResolver;
 import org.geotools.util.Version;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.opengis.filter.Filter;
 import org.xml.sax.EntityResolver;
 
 /**
@@ -49,6 +49,7 @@ import org.xml.sax.EntityResolver;
  * @author Jody Garnett
  * @author Martin Desruisseaux
  */
+@SuppressWarnings("BanJNDI")
 public final class GeoToolsTest {
 
     @Before
@@ -64,8 +65,7 @@ public final class GeoToolsTest {
     }
 
     /**
-     * Tests the removal of keys from a hashmap. Required for {@link
-     * org.geotools.util.factory.FactoryRegistry} working.
+     * Tests the removal of keys from a hashmap. Required for {@link org.geotools.util.factory.FactoryRegistry} working.
      */
     @Test
     public void testHintsKey() {
@@ -102,16 +102,13 @@ public final class GeoToolsTest {
             String text = hints.toString().trim();
             assertTrue(text.matches("Hints:\\s+FORCE_LONGITUDE_FIRST_AXIS_ORDER = false"));
 
-            assertEquals(
-                    hints.put(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER, Boolean.TRUE), Boolean.FALSE);
+            assertEquals(hints.put(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER, Boolean.TRUE), Boolean.FALSE);
             text = hints.toString().trim();
             assertTrue(text.matches("Hints:\\s+FORCE_LONGITUDE_FIRST_AXIS_ORDER = true"));
 
             assertEquals(hints.remove(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER), Boolean.TRUE);
             text = hints.toString().trim();
-            assertTrue(
-                    text.matches(
-                            "Hints:\\s+System defaults:\\s+FORCE_LONGITUDE_FIRST_AXIS_ORDER = false"));
+            assertTrue(text.matches("Hints:\\s+System defaults:\\s+FORCE_LONGITUDE_FIRST_AXIS_ORDER = false"));
         } finally {
             assertNotNull(Hints.removeSystemDefault(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER));
         }
@@ -122,15 +119,14 @@ public final class GeoToolsTest {
     @Test
     public void testManifest() {
         // jar manifest lookup
-        Manifest jai = GeoTools.getManifest(JAI.class);
-        assertFalse("manifest metadata", jai.getMainAttributes().isEmpty());
+        Manifest imagen = GeoTools.getManifest(ImageN.class);
+        assertFalse("manifest metadata", imagen.getMainAttributes().isEmpty());
 
         // this should always be generated during a maven or ide build
         Manifest metadata = GeoTools.getManifest(GeoTools.class);
         assertFalse("manifest metadata", metadata.getMainAttributes().isEmpty());
         assertEquals(
-                GeoTools.getVersion().toString(),
-                metadata.getMainAttributes().getValue("Project-Version"));
+                GeoTools.getVersion().toString(), metadata.getMainAttributes().getValue("Project-Version"));
 
         // should be a jar durning maven build, generated during IDE build
         Manifest opengis = GeoTools.getManifest(Filter.class);
@@ -139,24 +135,22 @@ public final class GeoToolsTest {
         Manifest commons_logging = GeoTools.getManifest(LogFactory.class);
         assertNotNull(commons_logging);
         assertFalse("manifest metadata", commons_logging.getMainAttributes().isEmpty());
-        assertEquals("1.2", commons_logging.getMainAttributes().getValue("Implementation-Version"));
+        assertEquals("1.3.5", commons_logging.getMainAttributes().getValue("Implementation-Version"));
     }
 
     /** Test version lookup */
     @Test
     public void testVersion() {
 
-        String location =
-                "jar:file:/Users/jody/.m2/repository/org.locationtech/jts/1.14/jts-1.14"
-                        + ".jar!/org.locationtech/jts/geom/Geometry.class";
+        String location = "jar:file:/Users/jody/.m2/repository/org.locationtech/jts/1.14/jts-1.14"
+                + ".jar!/org.locationtech/jts/geom/Geometry.class";
         assertEquals("1.14", GeoTools.jarVersion(location));
 
         location =
                 "jar:file:/Users/jody/.m2/repository/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar!/org/apache/commons/logging/LogFactory.class";
         assertEquals("1.1.1", GeoTools.jarVersion(location));
 
-        location =
-                "jar:file:/Users/jody/Library/Java/Extensions/jai_core.jar!/javax/media/jai/JAI.class";
+        location = "jar:file:/Users/jody/Library/Java/Extensions/jai_core.jar!/javax/media/jai/JAI.class";
         assertNull(GeoTools.jarVersion(location));
 
         location =
@@ -166,13 +160,9 @@ public final class GeoToolsTest {
         Version version = GeoTools.getVersion(Filter.class);
         assertNotNull(version);
 
-        version = GeoTools.getVersion(JAI.class);
-        assertNotNull(version);
-        assertEquals("1.1.3", version.toString());
-
         version = GeoTools.getVersion(LogFactory.class);
         assertNotNull(version);
-        assertEquals("1.2", version.toString());
+        assertEquals("1.3.5", version.toString());
     }
     /** Tests the use of system properties. */
     @Test
@@ -200,8 +190,8 @@ public final class GeoToolsTest {
     }
 
     /**
-     * Tests {@link org.geotools.util.factory.GeoTools#fixName} using simpliest name or no context.
-     * We avoid the tests that would require a real initial context.
+     * Tests {@link org.geotools.util.factory.GeoTools#fixName} using simpliest name or no context. We avoid the tests
+     * that would require a real initial context.
      */
     @Test
     @SuppressWarnings("deprecation")
@@ -217,30 +207,21 @@ public final class GeoToolsTest {
 
         // confirm instantiate works
 
-        EntityResolver resolver =
-                GeoTools.instantiate(
-                        "org.geotools.util.factory.PlaceholderEntityResolver",
-                        EntityResolver.class,
-                        PreventLocalEntityResolver.INSTANCE);
+        EntityResolver resolver = GeoTools.instantiate(
+                "org.geotools.util.factory.PlaceholderEntityResolver",
+                EntityResolver.class,
+                PreventLocalEntityResolver.INSTANCE);
         assertTrue(resolver instanceof PlaceholderEntityResolver);
 
-        resolver =
-                GeoTools.instantiate(
-                        "org.geotools.util.NullEntityResolver",
-                        EntityResolver.class,
-                        PreventLocalEntityResolver.INSTANCE);
+        resolver = GeoTools.instantiate(
+                "org.geotools.util.NullEntityResolver", EntityResolver.class, PreventLocalEntityResolver.INSTANCE);
         assertTrue(resolver instanceof NullEntityResolver);
 
-        resolver =
-                GeoTools.instantiate(
-                        "invalid.class.reference",
-                        EntityResolver.class,
-                        PreventLocalEntityResolver.INSTANCE);
+        resolver = GeoTools.instantiate(
+                "invalid.class.reference", EntityResolver.class, PreventLocalEntityResolver.INSTANCE);
         assertTrue(resolver instanceof PreventLocalEntityResolver);
 
-        resolver =
-                GeoTools.instantiate(
-                        null, EntityResolver.class, PreventLocalEntityResolver.INSTANCE);
+        resolver = GeoTools.instantiate(null, EntityResolver.class, PreventLocalEntityResolver.INSTANCE);
         assertTrue(resolver instanceof PreventLocalEntityResolver);
 
         // confirm system hints work
@@ -253,17 +234,13 @@ public final class GeoToolsTest {
             assertSame(PreventLocalEntityResolver.INSTANCE, GeoTools.getEntityResolver(null));
 
             // test system property functions with default constructor
-            System.getProperties()
-                    .put(
-                            GeoTools.ENTITY_RESOLVER,
-                            "org.geotools.util.factory.PlaceholderEntityResolver");
+            System.getProperties().put(GeoTools.ENTITY_RESOLVER, "org.geotools.util.factory.PlaceholderEntityResolver");
             Hints.scanSystemProperties();
             EntityResolver entityResolver = GeoTools.getEntityResolver(null);
             assertTrue(entityResolver instanceof PlaceholderEntityResolver);
 
             // test system property functions with INSTANCE field constructor
-            System.getProperties()
-                    .put(GeoTools.ENTITY_RESOLVER, "org.geotools.util.NullEntityResolver");
+            System.getProperties().put(GeoTools.ENTITY_RESOLVER, "org.geotools.util.NullEntityResolver");
             Hints.scanSystemProperties();
             entityResolver = GeoTools.getEntityResolver(null);
             assertTrue(entityResolver instanceof NullEntityResolver);

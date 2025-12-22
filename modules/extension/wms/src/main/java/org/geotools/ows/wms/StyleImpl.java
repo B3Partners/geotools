@@ -18,7 +18,7 @@ package org.geotools.ows.wms;
 
 import java.net.URL;
 import java.util.List;
-import org.opengis.util.InternationalString;
+import org.geotools.api.util.InternationalString;
 
 /** @author Richard Gould */
 public class StyleImpl {
@@ -107,13 +107,13 @@ public class StyleImpl {
     public int hashCode() {
         final int PRIME = 31;
         int result = 1;
-        result = PRIME * result + ((name == null) ? 0 : name.hashCode());
+        result = PRIME * result + (name == null ? 0 : name.hashCode());
         return result;
     }
 
     /**
-     * Because the style's name is declared as unique identifier in the interface javadocs, we will
-     * use that as our equals comparison.
+     * Because the style's name is declared as unique identifier in the interface javadocs, we will use that as our
+     * equals comparison.
      *
      * <p>So if two Styles have the same name, they are considered equal.
      */

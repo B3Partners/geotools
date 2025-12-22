@@ -16,22 +16,22 @@
  */
 package org.geotools.data.transform;
 
-import org.geotools.referencing.CRS;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.Multiply;
+import org.geotools.api.filter.expression.NilExpression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.Subtract;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.geometry.jts.JTS;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.Multiply;
-import org.opengis.filter.expression.NilExpression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.expression.Subtract;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Evaluates the CRS of an expression returning geometries by static analysis if possible
@@ -49,19 +49,10 @@ class CRSEvaluator implements ExpressionVisitor {
     @Override
     public Object visit(Literal expression, Object extraData) {
         Object value = expression.getValue();
-        if (value instanceof Geometry) {
-            Geometry g = (Geometry) value;
-            if (g.getUserData() instanceof CoordinateReferenceSystem) {
-                return g.getUserData();
-            } else if (g.getSRID() > 0) {
-                try {
-                    return CRS.decode("EPSG:" + g.getSRID());
-                } catch (Exception e) {
-                    return null;
-                }
-            }
+        if (value instanceof Geometry g) {
+            CoordinateReferenceSystem crs = JTS.getCRS(g);
+            return crs;
         }
-
         return null;
     }
 
@@ -87,10 +78,9 @@ class CRSEvaluator implements ExpressionVisitor {
 
         if (ad == null) {
             throw new IllegalArgumentException(
-                    "Original feature type does not have a property named "
-                            + expression.getPropertyName());
-        } else if (ad instanceof GeometryDescriptor) {
-            return ((GeometryDescriptor) ad).getCoordinateReferenceSystem();
+                    "Original feature type does not have a property named " + expression.getPropertyName());
+        } else if (ad instanceof GeometryDescriptor descriptor) {
+            return descriptor.getCoordinateReferenceSystem();
         }
 
         return null;

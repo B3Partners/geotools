@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
@@ -77,11 +78,7 @@ public class Slice2DIndex {
 
     @Override
     public String toString() {
-        return "UnidataVariableIndex [index="
-                + Arrays.toString(index)
-                + ", variableName="
-                + variableName
-                + "]";
+        return "UnidataVariableIndex [index=" + Arrays.toString(index) + ", variableName=" + variableName + "]";
     }
 
     @Override
@@ -91,7 +88,7 @@ public class Slice2DIndex {
         for (int j : index) {
             result = prime * result + j;
         }
-        result = prime * result + ((variableName == null) ? 0 : variableName.hashCode());
+        result = prime * result + (variableName == null ? 0 : variableName.hashCode());
         return result;
     }
 
@@ -200,7 +197,7 @@ public class Slice2DIndex {
             int stringSize = (int) (endDataPosition - raf.getFilePointer());
             byte[] stringBytes = new byte[stringSize];
             raf.read(stringBytes);
-            String varName = new String(stringBytes);
+            String varName = new String(stringBytes, StandardCharsets.UTF_8);
 
             return new Slice2DIndex(index, varName);
         }
@@ -218,15 +215,12 @@ public class Slice2DIndex {
          * @param file the file to write to.
          * @param indexList the list of {@link Slice2DIndex} to dump to file.
          */
-        public static void writeIndexFile(File file, List<Slice2DIndex> indexList)
-                throws IOException {
+        public static void writeIndexFile(File file, List<Slice2DIndex> indexList) throws IOException {
             try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
                 int size = indexList.size();
                 // write number of records
                 raf.writeInt(size);
-                long dataPosition =
-                        ADDRESS_POSITION
-                                + (size + 1) * ADDRESS_SIZE; // the +1 is to have the end address
+                long dataPosition = ADDRESS_POSITION + (size + 1) * ADDRESS_SIZE; // the +1 is to have the end address
 
                 long[] pointer = new long[size];
                 raf.seek(dataPosition);
@@ -241,7 +235,7 @@ public class Slice2DIndex {
                     for (int j = 0; j < sliceNDIndex.getNCount(); j++) {
                         raf.writeInt(sliceNDIndex.getNIndex(j));
                     }
-                    raf.write(sliceNDIndex.getVariableName().getBytes());
+                    raf.write(sliceNDIndex.getVariableName().getBytes(StandardCharsets.UTF_8));
                 }
                 long dataEnd = raf.getFilePointer();
 
@@ -262,14 +256,11 @@ public class Slice2DIndex {
         @SuppressWarnings("deprecation") // finalize is deprecated in Java 9
         protected void finalize() throws Throwable {
             if (raf != null) {
-                LOGGER.warning(
-                        "There is code leaving slice index managers open, this might cause "
-                                + "issues with file deletion on Windows!");
+                LOGGER.warning("There is code leaving slice index managers open, this might cause "
+                        + "issues with file deletion on Windows!");
                 if (NetCDFUtilities.TRACE_ENABLED) {
                     LOGGER.log(
-                            Level.WARNING,
-                            "The unclosed slice index managers originated on this stack trace",
-                            tracer);
+                            Level.WARNING, "The unclosed slice index managers originated on this stack trace", tracer);
                 }
                 dispose();
             }

@@ -19,13 +19,12 @@ package org.geotools.feature.visitor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.expression.Expression;
 
 /**
- * Obtains the data needed for a Quantile operation (classification of features into classes of
- * equal size).
+ * Obtains the data needed for a Quantile operation (classification of features into classes of equal size).
  *
  * <p>The result contains an array of lists with the expression values in each.
  *
@@ -69,7 +68,7 @@ public class QuantileListVisitor implements FeatureCalc {
         }
 
         // calculate number of items to put into each of the larger bins
-        int binPop = (int) (Math.ceil((double) count / bins));
+        int binPop = (int) Math.ceil((double) count / bins);
         // determine index of bin where the next bin has one less item
         int lastBigBin = count % bins;
         if (lastBigBin == 0) lastBigBin = bins;
@@ -82,8 +81,7 @@ public class QuantileListVisitor implements FeatureCalc {
             for (int binMember = 0; binMember < binPop; binMember++) {
                 bin[binIndex].add(items.get(item++));
             }
-            if (lastBigBin == binIndex)
-                binPop--; // decrease the number of items in a bin for the next item
+            if (lastBigBin == binIndex) binPop--; // decrease the number of items in a bin for the next item
         }
         return new AbstractCalcResult() {
             @Override
@@ -94,11 +92,11 @@ public class QuantileListVisitor implements FeatureCalc {
     }
 
     public void visit(SimpleFeature feature) {
-        visit((org.opengis.feature.Feature) feature);
+        visit((org.geotools.api.feature.Feature) feature);
     }
 
     @Override
-    public void visit(org.opengis.feature.Feature feature) {
+    public void visit(org.geotools.api.feature.Feature feature) {
         Object value = expr.evaluate(feature);
 
         if (value == null) {
@@ -106,8 +104,8 @@ public class QuantileListVisitor implements FeatureCalc {
             return; // don't store this value
         }
 
-        if (value instanceof Double) {
-            double doubleVal = ((Double) value).doubleValue();
+        if (value instanceof Double double1) {
+            double doubleVal = double1.doubleValue();
             if (Double.isNaN(doubleVal) || Double.isInfinite(doubleVal)) {
                 countNaN++; // increment the NaN count
                 return; // don't store NaN value

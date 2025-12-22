@@ -14,14 +14,14 @@
 import java.io.File;
 import java.util.logging.Logger;
 
-import org.geotools.data.FileDataStore;
-import org.geotools.data.FileDataStoreFinder;
-import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.api.data.FileDataStore;
+import org.geotools.api.data.FileDataStoreFinder;
+import org.geotools.api.data.SimpleFeatureSource;
 import org.geotools.map.FeatureLayer;
 import org.geotools.map.Layer;
 import org.geotools.map.MapContent;
 import org.geotools.styling.SLD;
-import org.geotools.styling.Style;
+import org.geotools.api.style.Style;
 import org.geotools.swing.JMapFrame;
 import org.geotools.swing.data.JFileDataStoreChooser;
 
@@ -36,6 +36,8 @@ public class Quickstart {
     /**
      * GeoTools Quickstart demo application. Prompts the user for a shapefile and displays its
      * contents on the screen in a map frame
+     * @param args Ignored no args required.
+     * @throws Exception If there are errors finding the shapefile.
      */
     public static void main(String[] args) throws Exception {
         // display a data store file chooser dialog for shapefiles

@@ -16,11 +16,10 @@
  */
 package org.geotools.feature.visitor;
 
-import org.opengis.feature.FeatureVisitor;
+import org.geotools.api.feature.FeatureVisitor;
 
 /**
- * A visitor which performs a calculation on a FeatureCollection. A FeatureCalc will not modify the
- * features visited.
+ * A visitor which performs a calculation on a FeatureCollection. A FeatureCalc will not modify the features visited.
  *
  * @author Cory Horner, Refractions
  * @see FeatureVisitor

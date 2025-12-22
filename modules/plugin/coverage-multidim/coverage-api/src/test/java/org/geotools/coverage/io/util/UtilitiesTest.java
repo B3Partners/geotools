@@ -21,15 +21,27 @@ import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.io.IOException;
 import javax.measure.Unit;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.operator.ConstantDescriptor;
+import org.eclipse.imagen.PlanarImage;
+import org.eclipse.imagen.operator.ConstantDescriptor;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.geometry.Bounds;
+import org.geotools.api.metadata.spatial.PixelOrientation;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.ReferenceIdentifier;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.GeographicCRS;
+import org.geotools.api.referencing.datum.Ellipsoid;
+import org.geotools.api.referencing.datum.PixelInCell;
+import org.geotools.api.referencing.datum.PrimeMeridian;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.coverage.GridSampleDimension;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
-import org.geotools.data.DataSourceException;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.NamedIdentifier;
@@ -41,18 +53,6 @@ import org.geotools.referencing.operation.transform.AffineTransform2D;
 import org.geotools.util.factory.GeoTools;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.geometry.Envelope;
-import org.opengis.metadata.spatial.PixelOrientation;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.ReferenceIdentifier;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.GeographicCRS;
-import org.opengis.referencing.datum.Ellipsoid;
-import org.opengis.referencing.datum.PixelInCell;
-import org.opengis.referencing.datum.PrimeMeridian;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 import si.uom.SI;
 
 /** Class testing the {@link Utilities} methods. */
@@ -87,8 +87,7 @@ public class UtilitiesTest extends Assert {
         final double inverseFlattening = 298.257223563;
         final double equatorialRadius = 6378137;
         final DefaultGeodeticDatum datum =
-                Utilities.getDefaultGeodeticDatum(
-                        "WGS84", equatorialRadius, inverseFlattening, SI.METRE);
+                Utilities.getDefaultGeodeticDatum("WGS84", equatorialRadius, inverseFlattening, SI.METRE);
         final PrimeMeridian primeMeridian = datum.getPrimeMeridian();
         assertEquals(0, primeMeridian.getGreenwichLongitude(), DELTA);
         final Ellipsoid ellipsoid = datum.getEllipsoid();
@@ -99,8 +98,7 @@ public class UtilitiesTest extends Assert {
         final GeographicCRS geoCrs = Utilities.getBaseCRS(equatorialRadius, inverseFlattening);
         assertEquals(datum, geoCrs.getDatum());
 
-        CoordinateReferenceSystem mercatorCRS =
-                Utilities.getMercator2SPProjectedCRS(10, 0, 0, geoCrs, null);
+        CoordinateReferenceSystem mercatorCRS = Utilities.getMercator2SPProjectedCRS(10, 0, 0, geoCrs, null);
         assertTrue(mercatorCRS instanceof DefaultProjectedCRS);
         DefaultProjectedCRS mercator = (DefaultProjectedCRS) mercatorCRS;
         assertEquals(datum, mercator.getDatum());
@@ -117,14 +115,13 @@ public class UtilitiesTest extends Assert {
     }
 
     @Test
-    public void testEnvelopes()
-            throws NoSuchAuthorityCodeException, FactoryException, TransformException {
+    public void testEnvelopes() throws NoSuchAuthorityCodeException, FactoryException, TransformException {
         // Setting up an UTM and WGS84 CRSs
 
         // Setup a 3D envelope and return it as 2D, making sure there is no 3rd dimension anymore
-        final GeneralEnvelope envelope3D = new GeneralEnvelope(DefaultGeographicCRS.WGS84_3D);
+        final GeneralBounds envelope3D = new GeneralBounds(DefaultGeographicCRS.WGS84_3D);
         envelope3D.setEnvelope(0, 0, 0, 10, 10, 10);
-        final Envelope requestedEnvelope = Utilities.getRequestedEnvelope2D(envelope3D);
+        final Bounds requestedEnvelope = Utilities.getRequestedEnvelope2D(envelope3D);
         assertEquals(0, requestedEnvelope.getMinimum(0), DELTA);
         assertEquals(0, requestedEnvelope.getMinimum(1), DELTA);
         assertEquals(10, requestedEnvelope.getMaximum(0), DELTA);
@@ -145,12 +142,11 @@ public class UtilitiesTest extends Assert {
     public void testGetEnvelope() throws FactoryException, TransformException {
 
         // Setup an envelope in WGS84
-        GeneralEnvelope envelope = new GeneralEnvelope(DefaultGeographicCRS.WGS84);
+        GeneralBounds envelope = new GeneralBounds(DefaultGeographicCRS.WGS84);
         envelope.setEnvelope(0, 0, 10, 10);
 
-        GeneralEnvelope wgs84 = new GeneralEnvelope(Utilities.getEnvelopeAsWGS84(envelope, true));
-        GeneralEnvelope wgs84_2 =
-                new GeneralEnvelope(Utilities.getEnvelopeAsWGS84(envelope, false));
+        GeneralBounds wgs84 = new GeneralBounds(Utilities.getEnvelopeAsWGS84(envelope, true));
+        GeneralBounds wgs84_2 = new GeneralBounds(Utilities.getEnvelopeAsWGS84(envelope, false));
 
         // Ensure the 2 envelope contain the initial one
         assertFalse(wgs84.isEmpty());
@@ -159,11 +155,11 @@ public class UtilitiesTest extends Assert {
         assertTrue(wgs84_2.contains(envelope, true));
 
         // Setup an envelope in EPSG:3857
-        envelope = new GeneralEnvelope(CRS.decode("EPSG:3857"));
+        envelope = new GeneralBounds(CRS.decode("EPSG:3857"));
         envelope.setEnvelope(0, 0, 10, 10);
 
-        wgs84 = new GeneralEnvelope(Utilities.getEnvelopeAsWGS84(envelope, true));
-        wgs84_2 = new GeneralEnvelope(Utilities.getEnvelopeAsWGS84(envelope, false));
+        wgs84 = new GeneralBounds(Utilities.getEnvelopeAsWGS84(envelope, true));
+        wgs84_2 = new GeneralBounds(Utilities.getEnvelopeAsWGS84(envelope, false));
         // Ensure the new envelopes are not empty
         assertFalse(wgs84.isEmpty());
         assertFalse(wgs84_2.isEmpty());
@@ -172,7 +168,7 @@ public class UtilitiesTest extends Assert {
     @Test
     public void testCropRegion() throws TransformException {
         // Setup an envelope in WGS84
-        GeneralEnvelope envelope = new GeneralEnvelope(DefaultGeographicCRS.WGS84);
+        GeneralBounds envelope = new GeneralBounds(DefaultGeographicCRS.WGS84);
         envelope.setEnvelope(0, 0, 10, 10);
 
         // Setup a rectangle
@@ -183,8 +179,7 @@ public class UtilitiesTest extends Assert {
         GridGeometry2D gg2D = new GridGeometry2D(env, envelope);
 
         // Getting the crop region
-        Rectangle cropRegion =
-                Utilities.getCropRegion(envelope, gg2D.getGridToCRS2D(PixelOrientation.UPPER_LEFT));
+        Rectangle cropRegion = Utilities.getCropRegion(envelope, gg2D.getGridToCRS2D(PixelOrientation.UPPER_LEFT));
 
         // Ensure the crop region is contains the input one
         assertTrue(cropRegion.contains(rect));
@@ -211,7 +206,7 @@ public class UtilitiesTest extends Assert {
     @Test
     public void testGetTransform() {
         // Setup an envelope in WGS84
-        GeneralEnvelope envelope = new GeneralEnvelope(DefaultGeographicCRS.WGS84);
+        GeneralBounds envelope = new GeneralBounds(DefaultGeographicCRS.WGS84);
         envelope.setEnvelope(0, 0, 10, 10);
 
         // Setup a rectangle
@@ -229,9 +224,8 @@ public class UtilitiesTest extends Assert {
 
         // Check with the CELL_CORNER and the following transformation, the result is a
         // Linear Transform
-        assertTrue(
-                LinearTransform.class.isAssignableFrom(
-                        Utilities.getOriginalGridToWorld(tr, PixelInCell.CELL_CORNER).getClass()));
+        assertTrue(LinearTransform.class.isAssignableFrom(
+                Utilities.getOriginalGridToWorld(tr, PixelInCell.CELL_CORNER).getClass()));
 
         // Check that a Linear Transform is returned also with an Identity transform
         rect = new Rectangle(0, 0, 10, 10);
@@ -243,9 +237,8 @@ public class UtilitiesTest extends Assert {
         // Transform
         tr = gg2D.getGridToCRS2D(PixelOrientation.UPPER_LEFT);
 
-        assertTrue(
-                LinearTransform.class.isAssignableFrom(
-                        Utilities.getOriginalGridToWorld(tr, PixelInCell.CELL_CORNER).getClass()));
+        assertTrue(LinearTransform.class.isAssignableFrom(
+                Utilities.getOriginalGridToWorld(tr, PixelInCell.CELL_CORNER).getClass()));
     }
 
     @Test
@@ -254,43 +247,29 @@ public class UtilitiesTest extends Assert {
         GridCoverageFactory coverageFactory = new GridCoverageFactory(GeoTools.getDefaultHints());
         String coverageName = "test";
         int imageIndex = 0;
-        PlanarImage image =
-                ConstantDescriptor.create(10f, 10f, new Byte[] {1}, GeoTools.getDefaultHints());
+        PlanarImage image = ConstantDescriptor.create(10f, 10f, new Byte[] {1}, GeoTools.getDefaultHints());
         MathTransform raster2Model = new AffineTransform2D(AffineTransform.getScaleInstance(2, 2));
         CoordinateReferenceSystem spatialReferenceSystem2D = DefaultGeographicCRS.WGS84;
 
         // Calculate a gridGeometry from the image and the MathTransform
         Rectangle bounds = image.getBounds();
-        GridGeometry2D gg2D =
-                new GridGeometry2D(
-                        new GridEnvelope2D(bounds), raster2Model, spatialReferenceSystem2D);
+        GridGeometry2D gg2D = new GridGeometry2D(new GridEnvelope2D(bounds), raster2Model, spatialReferenceSystem2D);
 
-        GeneralEnvelope coverageEnvelope2D = new GeneralEnvelope(gg2D.getEnvelope());
+        GeneralBounds coverageEnvelope2D = new GeneralBounds(gg2D.getEnvelope());
         GridSampleDimension[] sampleDimensions = {new GridSampleDimension("testDim")};
         // Creation of the Coverage
-        GridCoverage2D coverage1 =
-                (GridCoverage2D)
-                        Utilities.createCoverageFromImage(
-                                coverageFactory,
-                                coverageName,
-                                imageIndex,
-                                image,
-                                raster2Model,
-                                spatialReferenceSystem2D,
-                                null,
-                                sampleDimensions);
+        GridCoverage2D coverage1 = (GridCoverage2D) Utilities.createCoverageFromImage(
+                coverageFactory,
+                coverageName,
+                imageIndex,
+                image,
+                raster2Model,
+                spatialReferenceSystem2D,
+                null,
+                sampleDimensions);
 
-        GridCoverage2D coverage2 =
-                (GridCoverage2D)
-                        Utilities.createCoverageFromImage(
-                                coverageFactory,
-                                coverageName,
-                                imageIndex,
-                                image,
-                                null,
-                                null,
-                                coverageEnvelope2D,
-                                sampleDimensions);
+        GridCoverage2D coverage2 = (GridCoverage2D) Utilities.createCoverageFromImage(
+                coverageFactory, coverageName, imageIndex, image, null, null, coverageEnvelope2D, sampleDimensions);
 
         // Ensure the two coverages have the same envelope and raster dimensions
         assertTrue(coverage1.getEnvelope2D().boundsEquals(coverage2.getEnvelope2D(), 0, 1, 0.01d));

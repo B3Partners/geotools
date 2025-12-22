@@ -30,14 +30,14 @@ import org.yaml.snakeyaml.representer.Represent;
 import org.yaml.snakeyaml.representer.Representer;
 
 /**
- * Represent YSLD JavaBeans Extends the yaml {@link Representer} for YSLD-specific representations
- * for Color, UOM (unit of measure) and Tuple.
+ * Represent YSLD JavaBeans Extends the yaml {@link Representer} for YSLD-specific representations for Color, UOM (unit
+ * of measure) and Tuple.
  */
 public class YsldRepresenter extends Representer {
     UomMapper uomMapper;
 
     public YsldRepresenter(UomMapper uomMapper) {
-        super();
+        super(new DumperOptions());
         this.multiRepresenters.put(Color.class, new RepresentColor());
         this.multiRepresenters.put(Unit.class, new RepresentUom());
         this.multiRepresenters.put(Tuple.class, new RepresentTuple());

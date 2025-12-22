@@ -12,25 +12,25 @@ import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
+import org.eclipse.imagen.media.viewer.ImageViewer;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.DirectLayer;
 import org.geotools.map.MapContent;
 import org.geotools.map.MapViewport;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.test.TestData;
-import org.jaitools.swing.ImageFrame;
 import org.junit.Test;
 
 /** @author michael */
 public class StreamingRendererDirectLayerTest {
 
-    private static final ReferencedEnvelope WORLD =
-            new ReferencedEnvelope(0, 1, 0, 1, DefaultGeographicCRS.WGS84);
+    private static final ReferencedEnvelope WORLD = new ReferencedEnvelope(0, 1, 0, 1, DefaultGeographicCRS.WGS84);
 
     private static final Rectangle SCREEN = new Rectangle(200, 200);
 
-    private class MockLayer extends DirectLayer {
+    private static class MockLayer extends DirectLayer {
 
         /*
          * Just draws a rectangle using graphics coordinates.
@@ -44,12 +44,8 @@ public class StreamingRendererDirectLayerTest {
             localGraphics.setPaint(Color.WHITE);
             localGraphics.fill(SCREEN);
 
-            Rectangle inner =
-                    new Rectangle(
-                            SCREEN.x + SCREEN.width / 4,
-                            SCREEN.y + SCREEN.height / 4,
-                            SCREEN.width / 2,
-                            SCREEN.height / 2);
+            Rectangle inner = new Rectangle(
+                    SCREEN.x + SCREEN.width / 4, SCREEN.y + SCREEN.height / 4, SCREEN.width / 2, SCREEN.height / 2);
             localGraphics.setPaint(Color.BLACK);
             localGraphics.fill(inner);
         }
@@ -68,8 +64,7 @@ public class StreamingRendererDirectLayerTest {
         StreamingRenderer renderer = new StreamingRenderer();
         renderer.setMapContent(mapContent);
 
-        BufferedImage image =
-                new BufferedImage(SCREEN.width, SCREEN.height, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage image = new BufferedImage(SCREEN.width, SCREEN.height, BufferedImage.TYPE_INT_ARGB);
         mapContent.getViewport().setScreenArea(SCREEN);
 
         Graphics2D destGraphics = image.createGraphics();
@@ -83,8 +78,7 @@ public class StreamingRendererDirectLayerTest {
         assertTrue(colorFreq.containsKey(Color.BLACK.getRGB()));
         assertTrue(colorFreq.containsKey(Color.WHITE.getRGB()));
 
-        double ratio =
-                (double) colorFreq.get(Color.BLACK.getRGB()) / colorFreq.get(Color.WHITE.getRGB());
+        double ratio = (double) colorFreq.get(Color.BLACK.getRGB()) / colorFreq.get(Color.WHITE.getRGB());
 
         assertTrue(ratio > 0.95 && ratio < 1.05);
 
@@ -119,27 +113,28 @@ public class StreamingRendererDirectLayerTest {
     }
 
     private void displayImage(final BufferedImage image, final CountDownLatch latch) {
-        SwingUtilities.invokeLater(
-                () -> {
-                    TestImageFrame frame = new TestImageFrame(image, latch);
-                    frame.setVisible(true);
-                });
+        SwingUtilities.invokeLater(() -> {
+            TestImageFrame frame = new TestImageFrame(image, latch);
+            frame.setVisible(true);
+        });
     }
 
-    private static class TestImageFrame extends ImageFrame {
+    private static class TestImageFrame extends JFrame {
         BufferedImage image;
 
         public TestImageFrame(final BufferedImage image, final CountDownLatch latch) {
-            super(image, "Rendered image");
+            super("Rendered image");
+            ImageViewer comp = new ImageViewer();
+            comp.setImage(image);
+            add(comp);
             setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-            addWindowListener(
-                    new WindowAdapter() {
-                        @Override
-                        public void windowClosed(WindowEvent e) {
-                            latch.countDown();
-                        }
-                    });
+            addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    latch.countDown();
+                }
+            });
 
             setSize(image.getWidth(), image.getHeight() + 21);
         }

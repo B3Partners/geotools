@@ -24,6 +24,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.coverage.io.CoverageAccess;
 import org.geotools.coverage.io.CoverageAccess.AccessType;
 import org.geotools.coverage.io.CoverageSource;
@@ -36,9 +39,6 @@ import org.geotools.referencing.CRS;
 import org.geotools.util.SimpleInternationalString;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.feature.type.Name;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class DriverTest extends Assert {
 
@@ -46,8 +46,7 @@ public class DriverTest extends Assert {
 
     private static CoordinateReferenceSystem WGS84;
 
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(TestDriver.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(TestDriver.class);
 
     static {
         try {
@@ -60,8 +59,7 @@ public class DriverTest extends Assert {
     @Test
     public void testDriver() throws IOException {
 
-        SimpleInternationalString driverName =
-                new SimpleInternationalString(TestDriver.TEST_DRIVER);
+        SimpleInternationalString driverName = new SimpleInternationalString(TestDriver.TEST_DRIVER);
 
         // Testing main driver capabilities. That's a Dummy Driver, it can only connect
         Map<String, Serializable> connectionParams = new HashMap<>();
@@ -80,8 +78,7 @@ public class DriverTest extends Assert {
         Map<String, Serializable> connectionParams = new HashMap<>();
         connectionParams.put(DefaultFileDriver.URL.key, new URL(TestDriver.TEST_URL));
 
-        CoverageAccess access =
-                driver.access(DriverCapabilities.CONNECT, connectionParams, null, null);
+        CoverageAccess access = driver.access(DriverCapabilities.CONNECT, connectionParams, null, null);
         assertFalse(access.isCreateSupported());
         assertFalse(access.isDeleteSupported());
         assertSame(driver, access.getDriver());
@@ -93,12 +90,7 @@ public class DriverTest extends Assert {
         assertEquals(TestCoverageSourceDescriptor.TEST_NAME, coverageName);
 
         final CoverageSource source =
-                access.access(
-                        TestCoverageSourceDescriptor.TEST_NAME,
-                        null,
-                        AccessType.READ_ONLY,
-                        null,
-                        null);
+                access.access(TestCoverageSourceDescriptor.TEST_NAME, null, AccessType.READ_ONLY, null, null);
         CoordinateReferenceSystem crs = source.getCoordinateReferenceSystem();
         assertEquals(TestCoverageSourceDescriptor.TEST_NAME, source.getName(null));
 

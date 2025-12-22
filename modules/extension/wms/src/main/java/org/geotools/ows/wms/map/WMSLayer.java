@@ -23,9 +23,17 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.RasterSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.factory.CommonFactoryFinder;
-import org.geotools.geometry.DirectPosition2D;
+import org.geotools.geometry.Position2D;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.GridReaderLayer;
 import org.geotools.ows.wms.Layer;
@@ -33,18 +41,10 @@ import org.geotools.ows.wms.WebMapServer;
 import org.geotools.ows.wms.request.GetMapRequest;
 import org.geotools.referencing.CRS;
 import org.geotools.renderer.lite.RendererUtilities;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.RasterSymbolizer;
-import org.geotools.styling.Rule;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyleFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
- * Wraps a WMS layer into a {@link Layer} for interactive rendering usage TODO: expose a
- * GetFeatureInfo that returns a feature collection TODO: expose the list of named styles and allow
- * choosing which style to use
+ * Wraps a WMS layer into a {@link Layer} for interactive rendering usage TODO: expose a GetFeatureInfo that returns a
+ * feature collection TODO: expose the list of named styles and allow choosing which style to use
  *
  * @author Andrea Aime - OpenGeo
  */
@@ -100,11 +100,10 @@ public class WMSLayer extends GridReaderLayer {
      *
      * @param pos the position to be checked, in real world coordinates
      */
-    public String getFeatureInfoAsText(DirectPosition2D pos, int featureCount) throws IOException {
+    public String getFeatureInfoAsText(Position2D pos, int featureCount) throws IOException {
         GetMapRequest mapRequest = getReader().mapRequest;
-        try (InputStream is =
-                        getReader().getFeatureInfo(pos, "text/plain", featureCount, mapRequest);
-                BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
+        try (InputStream is = getReader().getFeatureInfo(pos, "text/plain", featureCount, mapRequest);
+                BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
             String line;
             StringBuilder sb = new StringBuilder();
             while ((line = br.readLine()) != null) {
@@ -119,60 +118,49 @@ public class WMSLayer extends GridReaderLayer {
     }
 
     /**
-     * Retrieves the feature info as a generic input stream, it's the duty of the caller to
-     * interpret the contents and ensure the stream is closed feature info format)
+     * Retrieves the feature info as a generic input stream, it's the duty of the caller to interpret the contents and
+     * ensure the stream is closed feature info format)
      *
      * @param pos the position to be checked, in real world coordinates
      * @param infoFormat The INFO_FORMAT parameter in the GetFeatureInfo request
      */
-    public InputStream getFeatureInfo(DirectPosition2D pos, String infoFormat, int featureCount)
-            throws IOException {
+    public InputStream getFeatureInfo(Position2D pos, String infoFormat, int featureCount) throws IOException {
         GetMapRequest mapRequest = getReader().mapRequest;
         return getReader().getFeatureInfo(pos, infoFormat, featureCount, mapRequest);
     }
 
     /**
-     * Allows to run a standalone GetFeatureInfo request, without the need to have previously run a
-     * GetMap request on this layer. Mostly useful for stateless users that rebuild the map context
-     * for each rendering operation (e.g., GeoServer)
+     * Allows to run a standalone GetFeatureInfo request, without the need to have previously run a GetMap request on
+     * this layer. Mostly useful for stateless users that rebuild the map context for each rendering operation (e.g.,
+     * GeoServer)
      *
      * @param infoFormat The INFO_FORMAT parameter in the GetFeatureInfo request
      */
     public InputStream getFeatureInfo(
-            ReferencedEnvelope bbox,
-            int width,
-            int height,
-            int x,
-            int y,
-            String infoFormat,
-            int featureCount)
+            ReferencedEnvelope bbox, int width, int height, int x, int y, String infoFormat, int featureCount)
             throws IOException {
         try {
             getReader().initMapRequest(bbox, width, height, null);
             // we need to convert x/y from the screen to the original coordinates, and then to the
             // ones
             // that will be used to make the request
-            AffineTransform at =
-                    RendererUtilities.worldToScreenTransform(bbox, new Rectangle(width, height));
+            AffineTransform at = RendererUtilities.worldToScreenTransform(bbox, new Rectangle(width, height));
             Point2D screenPos = new Point2D.Double(x, y);
             Point2D worldPos = new Point2D.Double(x, y);
             at.inverseTransform(screenPos, worldPos);
-            DirectPosition2D fromPos = new DirectPosition2D(worldPos.getX(), worldPos.getY());
-            DirectPosition2D toPos = new DirectPosition2D();
-            MathTransform mt =
-                    CRS.findMathTransform(
-                            bbox.getCoordinateReferenceSystem(),
-                            getReader().requestedEnvelope.getCoordinateReferenceSystem(),
-                            true);
+            Position2D fromPos = new Position2D(worldPos.getX(), worldPos.getY());
+            Position2D toPos = new Position2D();
+            MathTransform mt = CRS.findMathTransform(
+                    bbox.getCoordinateReferenceSystem(),
+                    getReader().requestedEnvelope.getCoordinateReferenceSystem(),
+                    true);
             mt.transform(fromPos, toPos);
             GetMapRequest mapRequest = getLastGetMap();
             return getReader().getFeatureInfo(toPos, infoFormat, featureCount, mapRequest);
         } catch (IOException e) {
             throw e;
         } catch (Throwable t) {
-            throw (IOException)
-                    new IOException("Unexpected issue during GetFeatureInfo execution")
-                            .initCause(t);
+            throw (IOException) new IOException("Unexpected issue during GetFeatureInfo execution").initCause(t);
         }
     }
 
@@ -212,9 +200,9 @@ public class WMSLayer extends GridReaderLayer {
     }
 
     /**
-     * Returns true if the specified CRS can be used directly to perform WMS requests. Natively
-     * supported crs will provide the best rendering quality as no client side reprojection is
-     * necessary, the image coming from the WMS server will be used as-is
+     * Returns true if the specified CRS can be used directly to perform WMS requests. Natively supported crs will
+     * provide the best rendering quality as no client side reprojection is necessary, the image coming from the WMS
+     * server will be used as-is
      */
     public boolean isNativelySupported(CoordinateReferenceSystem crs) {
         try {

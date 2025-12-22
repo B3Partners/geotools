@@ -19,27 +19,28 @@ package org.geotools.filter.v1_1;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.DistanceBufferOperator;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
 import org.geotools.gml3.GML;
 import org.junit.Test;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.DistanceBufferOperator;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
 import org.w3c.dom.Document;
 
 public class BinarySpatialOpTypeBindingTest extends FilterTestSupport {
 
     @Test
     public void testDistanceBufferType() {
-        assertEquals(DistanceBufferOperator.class, binding(OGC.DistanceBufferType).getType());
+        assertEquals(
+                DistanceBufferOperator.class, binding(OGC.DistanceBufferType).getType());
     }
 
     @Test
@@ -68,7 +69,9 @@ public class BinarySpatialOpTypeBindingTest extends FilterTestSupport {
                 dom.getElementsByTagNameNS(OGC.NAMESPACE, OGC.PropertyName.getLocalPart())
                         .getLength());
         assertEquals(
-                1, dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Point.getLocalPart()).getLength());
+                1,
+                dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Point.getLocalPart())
+                        .getLength());
         assertEquals(1, dom.getElementsByTagNameNS(OGC.NAMESPACE, "Distance").getLength());
         assertEquals(
                 "1.0",
@@ -104,7 +107,9 @@ public class BinarySpatialOpTypeBindingTest extends FilterTestSupport {
                 dom.getElementsByTagNameNS(OGC.NAMESPACE, OGC.PropertyName.getLocalPart())
                         .getLength());
         assertEquals(
-                1, dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Point.getLocalPart()).getLength());
+                1,
+                dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Point.getLocalPart())
+                        .getLength());
         assertEquals(1, dom.getElementsByTagNameNS(OGC.NAMESPACE, "Distance").getLength());
         assertEquals(
                 "1.0",
@@ -116,7 +121,8 @@ public class BinarySpatialOpTypeBindingTest extends FilterTestSupport {
 
     @Test
     public void testBinarySpatialOpType() {
-        assertEquals(BinarySpatialOperator.class, binding(OGC.BinarySpatialOpType).getType());
+        assertEquals(
+                BinarySpatialOperator.class, binding(OGC.BinarySpatialOpType).getType());
     }
 
     @Test
@@ -143,7 +149,9 @@ public class BinarySpatialOpTypeBindingTest extends FilterTestSupport {
                 dom.getElementsByTagNameNS(OGC.NAMESPACE, OGC.PropertyName.getLocalPart())
                         .getLength());
         assertEquals(
-                1, dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Point.getLocalPart()).getLength());
+                1,
+                dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Point.getLocalPart())
+                        .getLength());
     }
 
     @Test
@@ -170,7 +178,9 @@ public class BinarySpatialOpTypeBindingTest extends FilterTestSupport {
                 dom.getElementsByTagNameNS(OGC.NAMESPACE, OGC.PropertyName.getLocalPart())
                         .getLength());
         assertEquals(
-                1, dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Point.getLocalPart()).getLength());
+                1,
+                dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Point.getLocalPart())
+                        .getLength());
     }
 
     @Test
@@ -197,7 +207,9 @@ public class BinarySpatialOpTypeBindingTest extends FilterTestSupport {
                 dom.getElementsByTagNameNS(OGC.NAMESPACE, OGC.PropertyName.getLocalPart())
                         .getLength());
         assertEquals(
-                1, dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Point.getLocalPart()).getLength());
+                1,
+                dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Point.getLocalPart())
+                        .getLength());
     }
 
     @Test
@@ -224,7 +236,9 @@ public class BinarySpatialOpTypeBindingTest extends FilterTestSupport {
                 dom.getElementsByTagNameNS(OGC.NAMESPACE, OGC.PropertyName.getLocalPart())
                         .getLength());
         assertEquals(
-                1, dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Point.getLocalPart()).getLength());
+                1,
+                dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Point.getLocalPart())
+                        .getLength());
     }
 
     @Test
@@ -251,7 +265,9 @@ public class BinarySpatialOpTypeBindingTest extends FilterTestSupport {
                 dom.getElementsByTagNameNS(OGC.NAMESPACE, OGC.PropertyName.getLocalPart())
                         .getLength());
         assertEquals(
-                1, dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Point.getLocalPart()).getLength());
+                1,
+                dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Point.getLocalPart())
+                        .getLength());
     }
 
     @Test
@@ -278,7 +294,9 @@ public class BinarySpatialOpTypeBindingTest extends FilterTestSupport {
                 dom.getElementsByTagNameNS(OGC.NAMESPACE, OGC.PropertyName.getLocalPart())
                         .getLength());
         assertEquals(
-                1, dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Point.getLocalPart()).getLength());
+                1,
+                dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Point.getLocalPart())
+                        .getLength());
     }
 
     @Test
@@ -305,7 +323,9 @@ public class BinarySpatialOpTypeBindingTest extends FilterTestSupport {
                 dom.getElementsByTagNameNS(OGC.NAMESPACE, OGC.PropertyName.getLocalPart())
                         .getLength());
         assertEquals(
-                1, dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Point.getLocalPart()).getLength());
+                1,
+                dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Point.getLocalPart())
+                        .getLength());
     }
 
     @Test
@@ -332,6 +352,8 @@ public class BinarySpatialOpTypeBindingTest extends FilterTestSupport {
                 dom.getElementsByTagNameNS(OGC.NAMESPACE, OGC.PropertyName.getLocalPart())
                         .getLength());
         assertEquals(
-                1, dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Point.getLocalPart()).getLength());
+                1,
+                dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Point.getLocalPart())
+                        .getLength());
     }
 }

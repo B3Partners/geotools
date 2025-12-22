@@ -20,17 +20,16 @@ package org.geotools.filter.function.math;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.util.Converters;
 import org.geotools.util.factory.Hints;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_round_2 extends FunctionExpressionImpl {
     // public static FunctionName NAME = new FunctionNameImpl("round_2", "double");
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "round_2", parameter("long", Long.class), parameter("number", Number.class));
+            new FunctionNameImpl("round_2", parameter("long", Long.class), parameter("number", Number.class));
 
     public FilterFunction_round_2() {
         super(NAME);

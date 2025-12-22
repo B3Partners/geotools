@@ -17,20 +17,19 @@
 package org.geotools.referencing.operation.builder;
 
 import java.util.List;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.cs.CartesianCS;
+import org.geotools.api.referencing.datum.GeodeticDatum;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.referencing.datum.BursaWolfParameters;
 import org.geotools.referencing.operation.matrix.GeneralMatrix;
 import org.geotools.referencing.operation.transform.GeocentricTranslation;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.cs.CartesianCS;
-import org.opengis.referencing.datum.GeodeticDatum;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
- * Builds {@linkplain org.opengis.referencing.operation.MathTransform MathTransform} setup as
- * BursaWolf transformation from a list of {@linkplain
- * org.geotools.referencing.operation.builder.MappedPosition MappedPosition}. The calculation uses
- * least square method. Calculated parameters can be used for following operations:
+ * Builds {@linkplain org.geotools.api.referencing.operation.MathTransform MathTransform} setup as BursaWolf
+ * transformation from a list of {@linkplain org.geotools.referencing.operation.builder.MappedPosition MappedPosition}.
+ * The calculation uses least square method. Calculated parameters can be used for following operations:
  *
  * <p>
  *
@@ -38,14 +37,14 @@ import org.opengis.referencing.operation.MathTransform;
  *
  * <pre> X = q * R * x  +  T ,             </pre>
  *
- * Where X is the Matrix of destination points, q is the scale, R is the rotation Matrix, x is the
- * Matrix of source points and T is matrix of translation. Expressing the errors, we get this:
+ * Where X is the Matrix of destination points, q is the scale, R is the rotation Matrix, x is the Matrix of source
+ * points and T is matrix of translation. Expressing the errors, we get this:
  *
  * <pre>        Err =  A * Dx + l </pre>
  *
- * where Err is the Error Matrix, A is Matrix of derivations, Dx is Matrix of difference changes of
- * 7 parameters, and l is value of DX, DY, DZ for calculated from approximate values. Using the
- * least square method to minimalize the errors we get this result:
+ * where Err is the Error Matrix, A is Matrix of derivations, Dx is Matrix of difference changes of 7 parameters, and l
+ * is value of DX, DY, DZ for calculated from approximate values. Using the least square method to minimalize the errors
+ * we get this result:
  *
  * <pre>
  *  Dx = (A<sup>T</sup>A)<sup>-1</sup> A<sup>T</sup>l  </pre>
@@ -112,11 +111,9 @@ public class BursaWolfTransformBuilder extends MathTransformBuilder {
     }
 
     /**
-     * Returns the dimension for {@link #getSourceCRS source} and {@link #getTargetCRS target} CRS,
-     * which is 2.
+     * Returns the dimension for {@link #getSourceCRS source} and {@link #getTargetCRS target} CRS, which is 2.
      *
-     * @return dimension for {@linkplain #getSourceCRS source} and {@link #getTargetCRS target} CRS,
-     *     which is 2.
+     * @return dimension for {@linkplain #getSourceCRS source} and {@link #getTargetCRS target} CRS, which is 2.
      */
     @Override
     public int getDimension() {
@@ -139,10 +136,10 @@ public class BursaWolfTransformBuilder extends MathTransformBuilder {
      * @return x matrix.
      */
     protected GeneralMatrix getx() {
-        final DirectPosition[] sourcePoints = getSourcePoints();
+        final Position[] sourcePoints = getSourcePoints();
         GeneralMatrix x = new GeneralMatrix(3 * sourcePoints.length, 1);
 
-        for (int j = 0; j < (x.getNumRow()); j = j + 3) {
+        for (int j = 0; j < x.getNumRow(); j = j + 3) {
             x.setElement(j, 0, sourcePoints[j / 3].getCoordinate()[0]);
             x.setElement(j + 1, 0, sourcePoints[j / 3].getCoordinate()[1]);
             x.setElement(j + 2, 0, sourcePoints[j / 3].getCoordinate()[2]);
@@ -157,11 +154,11 @@ public class BursaWolfTransformBuilder extends MathTransformBuilder {
      * @return the X matrix
      */
     protected GeneralMatrix getX() {
-        final DirectPosition[] sourcePoints = getSourcePoints();
-        final DirectPosition[] targetPoints = getTargetPoints();
+        final Position[] sourcePoints = getSourcePoints();
+        final Position[] targetPoints = getTargetPoints();
         GeneralMatrix X = new GeneralMatrix(3 * sourcePoints.length, 1);
 
-        for (int j = 0; j < (X.getNumRow()); j = j + 3) {
+        for (int j = 0; j < X.getNumRow(); j = j + 3) {
             X.setElement(j, 0, targetPoints[j / 3].getCoordinate()[0]);
             X.setElement(j + 1, 0, targetPoints[j / 3].getCoordinate()[1]);
             X.setElement(j + 2, 0, targetPoints[j / 3].getCoordinate()[2]);
@@ -401,8 +398,8 @@ public class BursaWolfTransformBuilder extends MathTransformBuilder {
     }
 
     /**
-     * Method that claculates the parameters by iteration. The tolarance is set to 1 10<sub>-8</sub>
-     * and max ï¿½number of steps is set to 20.
+     * Method that claculates the parameters by iteration. The tolarance is set to 1 10<sub>-8</sub> and max ï¿½number
+     * of steps is set to 20.
      *
      * @return Matrix of parameters (dx, dy, dz, ex, ey, ez, scale).
      */
@@ -417,6 +414,7 @@ public class BursaWolfTransformBuilder extends MathTransformBuilder {
      * @param maxSteps highest number of iteations.
      * @return GeneralMatrix of calculated parameters.
      */
+    @SuppressWarnings("ShortCircuitBoolean") // see while() statement
     private GeneralMatrix getDxMatrix(double tolerance, int maxSteps) {
         // Matriix of new calculated coefficeients
         GeneralMatrix xNew = new GeneralMatrix(7, 1);
@@ -467,7 +465,7 @@ public class BursaWolfTransformBuilder extends MathTransformBuilder {
             q = xNew.getElement(6, 0);
 
             i++;
-        } while ((!dxMatrix.equals(zero, tolerance) & (i < maxSteps)));
+        } while (!dxMatrix.equals(zero, tolerance) & i < maxSteps);
 
         xNew.transpose();
 
@@ -481,7 +479,7 @@ public class BursaWolfTransformBuilder extends MathTransformBuilder {
      * @return Angle is seconds
      */
     private static double radiansToSeconds(double rad) {
-        return (rad * (180 / Math.PI) * (3600));
+        return rad * (180 / Math.PI) * 3600;
     }
 
     /**
@@ -511,8 +509,8 @@ public class BursaWolfTransformBuilder extends MathTransformBuilder {
      * Returns MathtTransform setup as BursaWolf transformation.
      *
      * @return calculated MathTransform
-     * @throws FactoryException when the size of source and destination point is not the same or if
-     *     the number of points is too small to define such transformation.
+     * @throws FactoryException when the size of source and destination point is not the same or if the number of points
+     *     is too small to define such transformation.
      */
     @Override
     protected MathTransform computeMathTransform() throws FactoryException {

@@ -20,6 +20,18 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Equals;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.SchemaException;
 import org.geotools.filter.function.EnvFunction;
@@ -29,29 +41,17 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.PrecisionModel;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Id;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Equals;
 
 /**
- * Unit test for filters. Note that this unit test does not encompass all of filter package, just
- * the filters themselves. There is a seperate unit test for expressions.
+ * Unit test for filters. Note that this unit test does not encompass all of filter package, just the filters
+ * themselves. There is a seperate unit test for expressions.
  *
  * @author Andrea Aime, SATA
  */
 public class FilterAttributeExtractorTest {
     boolean set = false;
     FilterAttributeExtractor fae;
-    org.opengis.filter.FilterFactory2 fac;
+    org.geotools.api.filter.FilterFactory fac;
 
     /**
      * Sets up a schema and a test feature.
@@ -68,7 +68,7 @@ public class FilterAttributeExtractorTest {
 
         fae = new FilterAttributeExtractor();
 
-        fac = CommonFactoryFinder.getFilterFactory2(null);
+        fac = CommonFactoryFinder.getFilterFactory(null);
     }
 
     @Test
@@ -101,12 +101,11 @@ public class FilterAttributeExtractorTest {
      */
     @Test
     public void testCompare() throws IllegalFilterException {
-        PropertyIsEqualTo filter =
-                fac.equals(fac.property("testString"), fac.literal("test string data"));
+        PropertyIsEqualTo filter = fac.equals(fac.property("testString"), fac.literal("test string data"));
         assertAttributeName(filter, "testString");
     }
 
-    private void assertAttributeName(org.opengis.filter.Filter filter, String... names) {
+    private void assertAttributeName(org.geotools.api.filter.Filter filter, String... names) {
         fae.clear();
         filter.accept(fae, null);
 
@@ -169,8 +168,7 @@ public class FilterAttributeExtractorTest {
         assertAttributeName(fac.between(pint, lower, upper), "testInteger");
         assertAttributeName(fac.between(pint, pint, pint), "testInteger");
 
-        assertAttributeName(
-                fac.between(pint, plong, pfloat), "testInteger", "testLong", "testFloat");
+        assertAttributeName(fac.between(pint, plong, pfloat), "testInteger", "testLong", "testFloat");
     }
 
     /**
@@ -236,8 +234,7 @@ public class FilterAttributeExtractorTest {
         PropertyIsEqualTo filterTrue = fac.equals(testAttribute, fac.literal("test string data"));
 
         // Set up false sub filter
-        PropertyIsEqualTo filterFalse =
-                fac.equals(testAttribute, fac.literal("incorrect test string data"));
+        PropertyIsEqualTo filterFalse = fac.equals(testAttribute, fac.literal("incorrect test string data"));
 
         // Test OR for false negatives
         Or filter = fac.or(Arrays.asList(filterFalse, filterTrue));

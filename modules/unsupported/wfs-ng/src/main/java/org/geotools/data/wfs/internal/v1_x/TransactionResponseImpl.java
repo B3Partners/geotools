@@ -27,6 +27,7 @@ import net.opengis.wfs.InsertResultsType;
 import net.opengis.wfs.InsertedFeatureType;
 import net.opengis.wfs.TransactionResponseType;
 import net.opengis.wfs.TransactionSummaryType;
+import org.geotools.api.filter.identity.FeatureId;
 import org.geotools.data.wfs.internal.TransactionResponse;
 import org.geotools.data.wfs.internal.WFSRequest;
 import org.geotools.data.wfs.internal.WFSResponse;
@@ -35,7 +36,6 @@ import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.Parser;
-import org.opengis.filter.identity.FeatureId;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.SAXException;
 
@@ -49,8 +49,7 @@ public class TransactionResponseImpl extends WFSResponse implements TransactionR
 
     private int insertCount;
 
-    public TransactionResponseImpl(
-            WFSRequest originatingRequest, HTTPResponse response, InputStream in)
+    public TransactionResponseImpl(WFSRequest originatingRequest, HTTPResponse response, InputStream in)
             throws ServiceException, IOException {
 
         super(originatingRequest, response);
@@ -73,8 +72,7 @@ public class TransactionResponseImpl extends WFSResponse implements TransactionR
             response.dispose();
         }
 
-        if (parsed instanceof TransactionResponseType) {
-            TransactionResponseType tr = (TransactionResponseType) parsed;
+        if (parsed instanceof TransactionResponseType tr) {
             InsertResultsType insertResults = tr.getInsertResults();
             if (insertResults != null) {
                 @SuppressWarnings("unchecked")

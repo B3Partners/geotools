@@ -20,6 +20,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -127,11 +128,8 @@ public class SqlUtil {
     }
 
     public static void runScript(InputStream stream, Connection cx) throws SQLException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-
-        Statement st = cx.createStatement();
-
-        try {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
+                Statement st = cx.createStatement()) {
             StringBuilder buf = new StringBuilder();
             String sql = reader.readLine();
             while (sql != null) {
@@ -157,17 +155,6 @@ public class SqlUtil {
             st.executeBatch();
         } catch (IOException e) {
             throw new SQLException(e);
-        } finally {
-            try {
-                stream.close();
-            } catch (IOException e) {
-                LOGGER.log(Level.FINER, e.getMessage(), e);
-            }
-            try {
-                st.close();
-            } catch (SQLException e) {
-                LOGGER.log(Level.WARNING, "Error closing statement", e);
-            }
         }
     }
 
@@ -175,12 +162,10 @@ public class SqlUtil {
 
     public static void runScript(InputStream stream, Connection cx, Map<String, String> properties)
             throws SQLException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
 
-        Statement st = cx.createStatement();
         int insideBlock = 0;
-
-        try {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
+                Statement st = cx.createStatement()) {
             StringBuilder buf = new StringBuilder();
             String sql = reader.readLine();
             while (sql != null) {
@@ -200,8 +185,7 @@ public class SqlUtil {
                             String propertyName = matcher.group(1);
                             String propertyValue = properties.get(propertyName);
                             if (propertyValue == null) {
-                                throw new RuntimeException(
-                                        "Missing property " + propertyName + " for sql script");
+                                throw new RuntimeException("Missing property " + propertyName + " for sql script");
                             } else {
                                 buf.replace(matcher.start(), matcher.end(), propertyValue);
                                 matcher.reset();
@@ -221,22 +205,10 @@ public class SqlUtil {
             st.executeBatch();
         } catch (IOException e) {
             throw new SQLException(e);
-        } finally {
-            try {
-                stream.close();
-            } catch (IOException e) {
-                LOGGER.log(Level.FINER, e.getMessage(), e);
-            }
-            try {
-                st.close();
-            } catch (SQLException e) {
-                LOGGER.log(Level.WARNING, "Error closing statement", e);
-            }
         }
     }
 
-    public static PreparedStatementBuilder prepare(Connection conn, String sql)
-            throws SQLException {
+    public static PreparedStatementBuilder prepare(Connection conn, String sql) throws SQLException {
         return new PreparedStatementBuilder(conn, sql);
     }
 

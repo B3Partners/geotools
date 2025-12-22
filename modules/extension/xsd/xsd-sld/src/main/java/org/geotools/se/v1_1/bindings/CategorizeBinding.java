@@ -18,15 +18,15 @@ package org.geotools.se.v1_1.bindings;
 
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.ColorMap;
+import org.geotools.api.style.ColorMapEntry;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.se.v1_1.SE;
-import org.geotools.styling.ColorMap;
-import org.geotools.styling.ColorMapEntry;
-import org.geotools.styling.StyleFactory;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Binding object for the element http://www.opengis.net/se:Categorize.
@@ -122,8 +122,7 @@ public class CategorizeBinding extends AbstractComplexBinding {
             entry = styleFactory.createColorMapEntry();
             entry.setQuantity((Expression) children.get(i).getValue());
             if (i + 1 >= children.size()) {
-                throw new IllegalArgumentException(
-                        "Incorrectly specified color map Threshold/Value pair");
+                throw new IllegalArgumentException("Incorrectly specified color map Threshold/Value pair");
             }
 
             entry.setColor((Expression) children.get(i + 1).getValue());

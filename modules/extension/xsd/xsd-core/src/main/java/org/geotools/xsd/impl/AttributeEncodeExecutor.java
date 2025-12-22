@@ -40,8 +40,7 @@ public class AttributeEncodeExecutor implements BindingWalker.Visitor {
     /** logger */
     Logger logger;
 
-    public AttributeEncodeExecutor(
-            Object object, XSDAttributeDeclaration attribute, Document document, Logger logger) {
+    public AttributeEncodeExecutor(Object object, XSDAttributeDeclaration attribute, Document document, Logger logger) {
         this.object = object;
         this.attribute = attribute;
         this.document = document;
@@ -70,28 +69,18 @@ public class AttributeEncodeExecutor implements BindingWalker.Visitor {
             if (converted != null) {
                 object = converted;
             } else {
-                logger.fine(
-                        object
-                                + "[ "
-                                + object.getClass()
-                                + " ] is not of type "
-                                + binding.getType());
+                logger.fine(object + "[ " + object.getClass() + " ] is not of type " + binding.getType());
 
                 return;
             }
         }
 
-        if (binding instanceof SimpleBinding) {
-            SimpleBinding simple = (SimpleBinding) binding;
+        if (binding instanceof SimpleBinding simple) {
 
             try {
                 encoding.setValue(simple.encode(object, encoding.getValue()));
             } catch (Throwable t) {
-                String msg =
-                        "Encode failed for "
-                                + attribute.getName()
-                                + ". Cause: "
-                                + t.getLocalizedMessage();
+                String msg = "Encode failed for " + attribute.getName() + ". Cause: " + t.getLocalizedMessage();
                 throw new RuntimeException(msg, t);
             }
         }

@@ -57,8 +57,8 @@ import org.eclipse.emf.ecore.util.EObjectValidator;
 
 import org.eclipse.emf.ecore.xml.type.util.XMLTypeUtil;
 import org.eclipse.emf.ecore.xml.type.util.XMLTypeValidator;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
 
 /**
  * <!-- begin-user-doc -->
@@ -180,7 +180,7 @@ public class Wcs20Validator extends EObjectValidator {
 			case Wcs20Package.SERVICE_PARAMETERS_TYPE:
 				return validateServiceParametersType((ServiceParametersType)value, diagnostics, context);
 			case Wcs20Package.OBJECT:
-				return validateObject((Object)value, diagnostics, context);
+				return validateObject(value, diagnostics, context);
 			case Wcs20Package.EXTENSION_ITEM_TYPE:
 				return validateExtensionItemType((ExtensionItemType)value, diagnostics, context);
 			case Wcs20Package.RANGE_INTERVAL_TYPE:

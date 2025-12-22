@@ -24,22 +24,22 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.QueryCapabilities;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.geometry.BoundingBox;
 import org.geotools.coverage.grid.io.footprint.MultiLevelROI;
 import org.geotools.coverage.grid.io.footprint.MultiLevelROIProvider;
-import org.geotools.data.Query;
-import org.geotools.data.QueryCapabilities;
-import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.visitor.FeatureCalc;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.geometry.BoundingBox;
 
 /**
- * Applies read/write locks around all operations to protect the underlying store, which might not
- * be able to handle this scenario correctly
+ * Applies read/write locks around all operations to protect the underlying store, which might not be able to handle
+ * this scenario correctly
  */
 public class LockingGranuleCatalog extends GranuleCatalog {
 
@@ -61,8 +61,8 @@ public class LockingGranuleCatalog extends GranuleCatalog {
     }
 
     private void guard(Runnable operation, Lock lock) {
+        lock.lock();
         try {
-            lock.lock();
             operation.run();
         } finally {
             lock.unlock();
@@ -70,8 +70,8 @@ public class LockingGranuleCatalog extends GranuleCatalog {
     }
 
     private <V> V guard(Supplier<V> supplier, Lock lock) {
+        lock.lock();
         try {
-            lock.lock();
             return supplier.get();
         } finally {
             lock.unlock();
@@ -79,8 +79,8 @@ public class LockingGranuleCatalog extends GranuleCatalog {
     }
 
     private <V> V guardIO(IOCallable<V> operation, Lock lock) throws IOException {
+        lock.lock();
         try {
-            lock.lock();
             return operation.call();
         } finally {
             lock.unlock();
@@ -88,8 +88,8 @@ public class LockingGranuleCatalog extends GranuleCatalog {
     }
 
     private void guardIO(IORunnable operation, Lock lock) throws IOException {
+        lock.lock();
         try {
-            lock.lock();
             operation.run();
         } finally {
             lock.unlock();
@@ -97,14 +97,12 @@ public class LockingGranuleCatalog extends GranuleCatalog {
     }
 
     @Override
-    public void addGranule(String typeName, SimpleFeature granule, Transaction transaction)
-            throws IOException {
+    public void addGranule(String typeName, SimpleFeature granule, Transaction transaction) throws IOException {
         guardIO(() -> delegate.addGranule(typeName, granule, transaction), rwLock.writeLock());
     }
 
     @Override
-    public void addGranules(
-            String typeName, Collection<SimpleFeature> granules, Transaction transaction)
+    public void addGranules(String typeName, Collection<SimpleFeature> granules, Transaction transaction)
             throws IOException {
         guardIO(() -> delegate.addGranules(typeName, granules, transaction), rwLock.writeLock());
     }
@@ -115,11 +113,10 @@ public class LockingGranuleCatalog extends GranuleCatalog {
     }
 
     @Override
-    public void createType(String namespace, String typeName, String typeSpec)
-            throws IOException, SchemaException {
+    public void createType(String namespace, String typeName, String typeSpec) throws IOException, SchemaException {
         Lock lock = rwLock.writeLock();
+        lock.lock();
         try {
-            lock.lock();
             delegate.createType(namespace, typeName, typeSpec);
         } finally {
             lock.unlock();
@@ -132,11 +129,10 @@ public class LockingGranuleCatalog extends GranuleCatalog {
     }
 
     @Override
-    public void createType(String identification, String typeSpec)
-            throws SchemaException, IOException {
+    public void createType(String identification, String typeSpec) throws SchemaException, IOException {
         Lock lock = rwLock.writeLock();
+        lock.lock();
         try {
-            lock.lock();
             delegate.createType(identification, typeSpec);
         } finally {
             lock.unlock();
@@ -146,8 +142,8 @@ public class LockingGranuleCatalog extends GranuleCatalog {
     @Override
     public void dispose() {
         Lock lock = rwLock.writeLock();
+        lock.lock();
         try {
-            lock.lock();
             delegate.dispose();
         } finally {
             lock.unlock();
@@ -157,8 +153,8 @@ public class LockingGranuleCatalog extends GranuleCatalog {
     @Override
     public BoundingBox getBounds(String typeName) {
         Lock lock = rwLock.readLock();
+        lock.lock();
         try {
-            lock.lock();
             return delegate.getBounds(typeName);
         } finally {
             lock.unlock();
@@ -168,8 +164,8 @@ public class LockingGranuleCatalog extends GranuleCatalog {
     @Override
     public BoundingBox getBounds(final String typeName, Transaction t) {
         Lock lock = rwLock.readLock();
+        lock.lock();
         try {
-            lock.lock();
             return delegate.getBounds(typeName, t);
         } finally {
             lock.unlock();
@@ -225,8 +221,8 @@ public class LockingGranuleCatalog extends GranuleCatalog {
     @Override
     public String[] getTypeNames() {
         Lock lock = rwLock.readLock();
+        lock.lock();
         try {
-            lock.lock();
             return delegate.getTypeNames();
         } finally {
             lock.unlock();

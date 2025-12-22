@@ -17,8 +17,8 @@
 package org.geotools.coverage.io;
 
 import java.util.Map;
-import org.geotools.data.Parameter;
-import org.opengis.util.ProgressListener;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.util.ProgressListener;
 
 /**
  * Provided read-write access to a coverage data product.
@@ -30,22 +30,21 @@ import org.opengis.util.ProgressListener;
 public interface CoverageStore extends CoverageSource {
 
     /**
-     * Describes the required (and optional) parameters that can be passed to the {@link
-     * #update(CoverageReadRequest, ProgressListener)} method.
+     * Describes the required (and optional) parameters that can be passed to the {@link #update(CoverageReadRequest,
+     * ProgressListener)} method.
      *
      * <p>
      *
-     * @return Param a {@link Map} describing the {@link Map} for {@link
-     *     #update(CoverageReadRequest, ProgressListener)}.
+     * @return Param a {@link Map} describing the {@link Map} for {@link #update(CoverageReadRequest,
+     *     ProgressListener)}.
      */
     public Map<String, Parameter<?>> getUpdateParameterInfo();
 
     /**
      * Issue a writeRequest to the coverage store.
      *
-     * <p>The writeRequest should be constructed within the guidelines provided by the
-     * getUpdateParameterInfo method; and should be limited to the abilities laid out by the
-     * getCapabilities method.
+     * <p>The writeRequest should be constructed within the guidelines provided by the getUpdateParameterInfo method;
+     * and should be limited to the abilities laid out by the getCapabilities method.
      *
      * @return response capturing the success/failure and side effects of performing the update.
      */

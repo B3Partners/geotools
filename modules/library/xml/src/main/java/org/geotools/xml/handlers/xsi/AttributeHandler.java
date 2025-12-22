@@ -77,10 +77,10 @@ public class AttributeHandler extends XSIElementHandler {
     @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
     public int hashCode() {
-        return (LOCALNAME.hashCode()
-                        * ((id == null) ? 1 : id.hashCode())
-                        * ((type == null) ? 1 : type.hashCode())
-                        * ((name == null) ? 1 : name.hashCode()))
+        return LOCALNAME.hashCode()
+                        * (id == null ? 1 : id.hashCode())
+                        * (type == null ? 1 : type.hashCode())
+                        * (name == null ? 1 : name.hashCode())
                 + hashCodeOffset;
     }
 
@@ -109,8 +109,7 @@ public class AttributeHandler extends XSIElementHandler {
     }
 
     /**
-     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String,
-     *     org.xml.sax.Attributes)
+     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
     public void startElement(String namespaceURI, String localName, Attributes atts) {
@@ -225,7 +224,7 @@ public class AttributeHandler extends XSIElementHandler {
         if (simpleType != null) {
             st = simpleType.compress(parent);
         } else {
-            if ((ref != null) && !"".equalsIgnoreCase(ref)) {
+            if (ref != null && !"".equalsIgnoreCase(ref)) {
                 Attribute refA = parent.lookUpAttribute(ref);
 
                 if (refA == null) {
@@ -236,22 +235,20 @@ public class AttributeHandler extends XSIElementHandler {
                 name1 = refA.getName();
                 use1 = use1 | refA.getUse();
 
-                if ((def1 == null) || "".equalsIgnoreCase(def1)) {
+                if (def1 == null || "".equalsIgnoreCase(def1)) {
                     def1 = refA.getDefault();
                 }
 
-                if ((fixed1 == null) || "".equalsIgnoreCase(fixed1)) {
+                if (fixed1 == null || "".equalsIgnoreCase(fixed1)) {
                     fixed1 = refA.getFixed();
                 }
-            } else if ((type != null) && (!"".equalsIgnoreCase(type))) {
+            } else if (type != null && !"".equalsIgnoreCase(type)) {
                 // 	look it up --- find it
                 st = parent.lookUpSimpleType(type);
             }
         }
 
-        cache =
-                new AttributeGT(
-                        id, name1, parent.getTargetNamespace(), st, use1, def1, fixed1, false);
+        cache = new AttributeGT(id, name1, parent.getTargetNamespace(), st, use1, def1, fixed1, false);
 
         id = type = ref = null;
 

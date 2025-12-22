@@ -42,29 +42,25 @@ import org.geotools.util.Classes;
 /**
  * DJB:
  *
- * <p>This class was fundamentally wrong - it tried to convert <LinePlacement> into
- * <PointPlacement>. Not only was it doing a really crappy job, but its fundamentally the wrong
- * place to do it.
+ * <p>This class was fundamentally wrong - it tried to convert <LinePlacement> into <PointPlacement>. Not only was it
+ * doing a really crappy job, but its fundamentally the wrong place to do it.
  *
- * <p>The SLD spec defines a <PointPlacement> as: <xsd:sequence> <xsd:element ref="sld:AnchorPoint"
- * minOccurs="0"/> <xsd:element ref="sld:Displacement" minOccurs="0"/> <xsd:element
- * ref="sld:Rotation" minOccurs="0"/> </xsd:sequence>
+ * <p>The SLD spec defines a <PointPlacement> as: <xsd:sequence> <xsd:element ref="sld:AnchorPoint" minOccurs="0"/>
+ * <xsd:element ref="sld:Displacement" minOccurs="0"/> <xsd:element ref="sld:Rotation" minOccurs="0"/> </xsd:sequence>
  *
- * <p>and <LinePlacement> as: <xsd:sequence> <xsd:element ref="sld:PerpendicularOffset
- * "minOccurs="0"/> </xsd:sequence>
+ * <p>and <LinePlacement> as: <xsd:sequence> <xsd:element ref="sld:PerpendicularOffset "minOccurs="0"/> </xsd:sequence>
  *
- * <p>its annotated as: A "PerpendicularOffset" gives the perpendicular distance away from a line to
- * draw a label. which is a bit vague, but there's a little more details here:
+ * <p>its annotated as: A "PerpendicularOffset" gives the perpendicular distance away from a line to draw a label. which
+ * is a bit vague, but there's a little more details here:
  *
- * <p>The PerpendicularOffset element of a LinePlacement gives the perpendicular distance away from
- * a line to draw a label. ... The distance is in pixels and is positive to the left-hand.
+ * <p>The PerpendicularOffset element of a LinePlacement gives the perpendicular distance away from a line to draw a
+ * label. ... The distance is in pixels and is positive to the left-hand.
  *
- * <p>Left hand/right hand for perpendicularOffset is just crap - I'm assuming them mean +ive -->
- * "up" and -ive --> "down". See the actual label code for how it deals with this.
+ * <p>Left hand/right hand for perpendicularOffset is just crap - I'm assuming them mean +ive --> "up" and -ive -->
+ * "down". See the actual label code for how it deals with this.
  *
- * <p>I've removed all the absoluteLineDisplacement stuff and replaced it with isPointPlacement()
- * (true) --> render normally (PointPlacement Attributes) isPointPlacement() (false) --> render
- * LinePlacement
+ * <p>I've removed all the absoluteLineDisplacement stuff and replaced it with isPointPlacement() (true) --> render
+ * normally (PointPlacement Attributes) isPointPlacement() (false) --> render LinePlacement
  *
  * <p>This replaces the old behavior which converted a LinePlacement -> pointplacement and set the
  * absoluteLineDisplacement flag!
@@ -169,14 +165,8 @@ public class TextStyle2D extends Style2D {
         final int length = label.length();
         if (Bidi.requiresBidi(chars, 0, length)
                 && new Bidi(label, Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT).isRightToLeft()) {
-            textGlyphVector =
-                    getFont()
-                            .layoutGlyphVector(
-                                    graphics.getFontRenderContext(),
-                                    chars,
-                                    0,
-                                    length,
-                                    Font.LAYOUT_RIGHT_TO_LEFT);
+            textGlyphVector = getFont()
+                    .layoutGlyphVector(graphics.getFontRenderContext(), chars, 0, length, Font.LAYOUT_RIGHT_TO_LEFT);
         } else {
             textGlyphVector = getFont().createGlyphVector(graphics.getFontRenderContext(), chars);
         }
@@ -186,9 +176,8 @@ public class TextStyle2D extends Style2D {
     /** */
     public Shape getHaloShape(Graphics2D graphics) {
         GlyphVector gv = getTextGlyphVector(graphics);
-        haloShape =
-                new BasicStroke(2f * haloRadius, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
-                        .createStrokedShape(gv.getOutline());
+        haloShape = new BasicStroke(2f * haloRadius, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
+                .createStrokedShape(gv.getOutline());
         return haloShape;
     }
 
@@ -342,17 +331,16 @@ public class TextStyle2D extends Style2D {
     }
 
     public Rectangle getGraphicDimensions() {
-        if (graphic instanceof MarkStyle2D) {
-            return ((MarkStyle2D) graphic).getTransformedShape(0f, 0f).getBounds();
-        } else if (graphic instanceof GraphicStyle2D) {
-            BufferedImage i = ((GraphicStyle2D) graphic).getImage();
+        if (graphic instanceof MarkStyle2D style2D2) {
+            return style2D2.getTransformedShape(0f, 0f).getBounds();
+        } else if (graphic instanceof GraphicStyle2D style2D1) {
+            BufferedImage i = style2D1.getImage();
             return new Rectangle(i.getWidth(), i.getHeight());
-        } else if (graphic instanceof IconStyle2D) {
-            final Icon icon = ((IconStyle2D) graphic).getIcon();
+        } else if (graphic instanceof IconStyle2D style2D) {
+            final Icon icon = style2D.getIcon();
             return new Rectangle(icon.getIconWidth(), icon.getIconWidth());
         } else {
-            throw new RuntimeException(
-                    "Can't render graphic which is not a MarkStyle2D or a GraphicStyle2D");
+            throw new RuntimeException("Can't render graphic which is not a MarkStyle2D or a GraphicStyle2D");
         }
     }
 

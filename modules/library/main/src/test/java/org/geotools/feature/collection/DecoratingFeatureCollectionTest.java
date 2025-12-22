@@ -18,21 +18,21 @@ package org.geotools.feature.collection;
 
 import java.io.IOException;
 import org.easymock.EasyMock;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.feature.visitor.UniqueVisitor;
 import org.junit.Test;
-import org.opengis.feature.Feature;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.FilterFactory2;
 
 public class DecoratingFeatureCollectionTest {
 
     @Test
     public void testDelegateVisitor() throws IOException {
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
         UniqueVisitor visitor = new UniqueVisitor(ff.property("test"));
 
         FeatureCollection<FeatureType, Feature> mock = EasyMock.createMock(FeatureCollection.class);
@@ -40,20 +40,19 @@ public class DecoratingFeatureCollectionTest {
         EasyMock.expectLastCall();
         EasyMock.replay(mock);
 
-        DecoratingFeatureCollection decorator =
-                new DecoratingFeatureCollection<FeatureType, Feature>(mock) {
-                    @Override
-                    protected boolean canDelegate(FeatureVisitor visitor) {
-                        return true;
-                    }
-                };
+        DecoratingFeatureCollection decorator = new DecoratingFeatureCollection<>(mock) {
+            @Override
+            protected boolean canDelegate(FeatureVisitor visitor) {
+                return true;
+            }
+        };
         decorator.accepts(visitor, null);
         EasyMock.verify(mock);
     }
 
     @Test
     public void testDontDelegateVisitor() throws IOException {
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
         UniqueVisitor visitor = new UniqueVisitor(ff.property("test"));
 
         FeatureCollection<FeatureType, Feature> mock = EasyMock.createMock(FeatureCollection.class);
@@ -62,13 +61,12 @@ public class DecoratingFeatureCollectionTest {
         EasyMock.expect(mock.features()).andReturn(iterator);
         EasyMock.replay(mock, iterator);
 
-        DecoratingFeatureCollection decorator =
-                new DecoratingFeatureCollection<FeatureType, Feature>(mock) {
-                    @Override
-                    protected boolean canDelegate(FeatureVisitor visitor) {
-                        return false;
-                    }
-                };
+        DecoratingFeatureCollection decorator = new DecoratingFeatureCollection<>(mock) {
+            @Override
+            protected boolean canDelegate(FeatureVisitor visitor) {
+                return false;
+            }
+        };
         decorator.accepts(visitor, null);
         EasyMock.verify(mock);
     }

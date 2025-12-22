@@ -74,14 +74,14 @@ import org.eclipse.emf.ecore.xml.type.XMLTypePackage;
 
 import org.geotools.feature.FeatureCollection;
 
-import org.opengis.filter.Filter;
+import org.geotools.api.filter.Filter;
 
-import org.opengis.filter.capability.FilterCapabilities;
-import org.opengis.filter.expression.Function;
+import org.geotools.api.filter.capability.FilterCapabilities;
+import org.geotools.api.filter.expression.Function;
 
-import org.opengis.filter.identity.FeatureId;
+import org.geotools.api.filter.identity.FeatureId;
 
-import org.opengis.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortBy;
 import org.w3.xlink.XlinkPackage;
 
 /**
@@ -459,7 +459,7 @@ public class WfsPackageImpl extends EPackageImpl implements WfsPackage {
 
     // Obtain or create and register package
     Object registeredWfsPackage = EPackage.Registry.INSTANCE.get(eNS_URI);
-    WfsPackageImpl theWfsPackage = registeredWfsPackage instanceof WfsPackageImpl ? (WfsPackageImpl)registeredWfsPackage : new WfsPackageImpl();
+    WfsPackageImpl theWfsPackage = registeredWfsPackage instanceof WfsPackageImpl wpi ? wpi : new WfsPackageImpl();
 
     isInited = true;
 

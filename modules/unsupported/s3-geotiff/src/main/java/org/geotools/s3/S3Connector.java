@@ -16,24 +16,23 @@
  */
 package org.geotools.s3;
 
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.AnonymousAWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.regions.Region;
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.S3ClientOptions;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.net.URIBuilder;
 
 /** Handles connecting to S3 and fetching parts */
 public class S3Connector {
@@ -56,11 +55,11 @@ public class S3Connector {
     }
 
     /**
-     * Create an S3 connector from a URI-ish S3:// string. Notably, this constructor supports
-     * awsRegion and useAnon as query parameters to control these settings.
+     * Create an S3 connector from a URI-ish S3:// string. Notably, this constructor supports awsRegion and useAnon as
+     * query parameters to control these settings.
      *
-     * <p>Also of note, this URL is largely ignored outside of the query parameters. Mainly this is
-     * used to control authentication options
+     * <p>Also of note, this URL is largely ignored outside of the query parameters. Mainly this is used to control
+     * authentication options
      *
      * @param input an s3:// style URL.
      */
@@ -69,8 +68,8 @@ public class S3Connector {
         // Parse region and anon from URL
         try {
             URI s3Uri = new URI(input);
-            List<NameValuePair> nameValuePairs =
-                    URLEncodedUtils.parse(s3Uri, StandardCharsets.UTF_8);
+            URIBuilder uriBuilder = new URIBuilder(s3Uri);
+            List<NameValuePair> nameValuePairs = uriBuilder.getQueryParams();
 
             for (NameValuePair nvPair : nameValuePairs) {
                 if ("awsRegion".equals(nvPair.getName())) {
@@ -95,9 +94,8 @@ public class S3Connector {
             } catch (IllegalArgumentException e) {
                 // probably not great to have a default, but we can't just blow up if this
                 // property isn't set
-                LOGGER.warning(
-                        "AWS_REGION property is set, but not set correctly. "
-                                + "Check that the AWS_REGION property matches the Regions enum");
+                LOGGER.warning("AWS_REGION property is set, but not set correctly. "
+                        + "Check that the AWS_REGION property matches the Regions enum");
                 region = Regions.US_EAST_1;
             }
         } else {
@@ -109,35 +107,29 @@ public class S3Connector {
         // custom endpoint
         if (url != null && !url.startsWith("s3://")) {
             if (!url.contains("://")) {
-                throw new IllegalArgumentException(
-                        "Following this style: s3Alias://bucket/filename");
+                throw new IllegalArgumentException("Following this style: s3Alias://bucket/filename");
             }
             String s3Alias = url.split("://")[0];
 
             Properties prop = readProperties(s3Alias);
 
-            s3 =
-                    new AmazonS3Client(
-                            new BasicAWSCredentials(
-                                    prop.getProperty(s3Alias + ".s3.user"),
-                                    prop.getProperty(s3Alias + ".s3.password")));
-
-            final S3ClientOptions clientOptions =
-                    S3ClientOptions.builder().setPathStyleAccess(true).build();
-            s3.setS3ClientOptions(clientOptions);
             String endpoint = prop.getProperty(s3Alias + ".s3.endpoint");
-            if (!endpoint.endsWith("/")) {
-                endpoint = endpoint + "/";
-            }
-            s3.setEndpoint(endpoint);
+
+            s3 = AmazonS3ClientBuilder.standard()
+                    .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(
+                            prop.getProperty(s3Alias + ".s3.user"), prop.getProperty(s3Alias + ".s3.password"))))
+                    .withPathStyleAccessEnabled(true)
+                    .withEndpointConfiguration(new EndpointConfiguration(endpoint, region.getName()))
+                    .build();
 
             // aws cli client
         } else if (useAnon) {
-            s3 = new AmazonS3Client(new AnonymousAWSCredentials());
-            s3.setRegion(Region.getRegion(region));
+            s3 = AmazonS3ClientBuilder.standard()
+                    .withCredentials(new AWSStaticCredentialsProvider(new AnonymousAWSCredentials()))
+                    .withRegion(region)
+                    .build();
         } else {
-            s3 = new AmazonS3Client();
-            s3.setRegion(Region.getRegion(region));
+            s3 = AmazonS3ClientBuilder.standard().withRegion(region).build();
         }
 
         return s3;
@@ -171,10 +163,9 @@ public class S3Connector {
                         prop.load(resourceAsStream);
                     }
                 } else {
-                    throw new IOException(
-                            "Properties are missing! "
-                                    + "The system property 's3.properties.location' should be set "
-                                    + "and contain the path to the s3.properties file.");
+                    throw new IOException("Properties are missing! "
+                            + "The system property 's3.properties.location' should be set "
+                            + "and contain the path to the s3.properties file.");
                 }
             }
             // check if the properties are not null.
@@ -184,15 +175,11 @@ public class S3Connector {
             }
             if (prop.getProperty(s3Alias + ".s3.password") == null) {
                 throw new IllegalArgumentException(
-                        "s3.properties file does not contains value for:"
-                                + s3Alias
-                                + ".s3.password");
+                        "s3.properties file does not contains value for:" + s3Alias + ".s3.password");
             }
             if (prop.getProperty(s3Alias + ".s3.endpoint") == null) {
                 throw new IllegalArgumentException(
-                        "s3.properties file does not contains value for:"
-                                + s3Alias
-                                + ".s3.endpoint");
+                        "s3.properties file does not contains value for:" + s3Alias + ".s3.endpoint");
             }
         } catch (IOException ex) {
             LOGGER.severe(ex.getMessage());

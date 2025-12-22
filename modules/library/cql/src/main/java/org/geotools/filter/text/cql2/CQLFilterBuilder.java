@@ -16,14 +16,14 @@
  */
 package org.geotools.filter.text.cql2;
 
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.filter.text.commons.AbstractFilterBuilder;
-import org.opengis.filter.FilterFactory;
 
 /**
  * Filter builder for CQL expressions.
  *
- * <p>Builds Filter or Expression and their components (literal, functions, etc). It maintains the
- * results of semantic actions in the stack used to build complex filters and expressions.
+ * <p>Builds Filter or Expression and their components (literal, functions, etc). It maintains the results of semantic
+ * actions in the stack used to build complex filters and expressions.
  *
  * @author Mauricio Pazos (Axios Engineering)
  * @version Revision: 1.9

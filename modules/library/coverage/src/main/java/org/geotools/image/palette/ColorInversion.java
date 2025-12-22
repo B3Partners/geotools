@@ -20,8 +20,8 @@ import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.util.Vector;
-import javax.media.jai.ImageLayout;
-import javax.media.jai.PointOpImage;
+import org.eclipse.imagen.ImageLayout;
+import org.eclipse.imagen.PointOpImage;
 
 /**
  * {@link PointOpImage} to perform an efficient color inversion given a certain palette.
@@ -32,19 +32,15 @@ public class ColorInversion extends PointOpImage {
 
     private InverseColorMapRasterOp op;
 
-    public ColorInversion(
-            RenderedImage image, IndexColorModel icm, int quantizationColors, int alpaThreshold) {
+    public ColorInversion(RenderedImage image, IndexColorModel icm, int quantizationColors, int alpaThreshold) {
         super(image, new ImageLayout(image), null, false);
         this.setSource(image, 0);
         this.op = new InverseColorMapRasterOp(icm, quantizationColors, alpaThreshold);
 
         // setlayout;
-        setImageLayout(
-                new ImageLayout(image)
-                        .setColorModel(icm)
-                        .setSampleModel(
-                                icm.createCompatibleSampleModel(
-                                        image.getWidth(), image.getHeight())));
+        setImageLayout(new ImageLayout(image)
+                .setColorModel(icm)
+                .setSampleModel(icm.createCompatibleSampleModel(image.getWidth(), image.getHeight())));
     }
 
     @Override

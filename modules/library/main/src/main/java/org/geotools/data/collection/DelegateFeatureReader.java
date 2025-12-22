@@ -18,24 +18,22 @@ package org.geotools.data.collection;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
-import org.geotools.data.DataSourceException;
-import org.geotools.data.FeatureReader;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.type.FeatureType;
 import org.geotools.feature.FeatureIterator;
-import org.opengis.feature.Feature;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.type.FeatureType;
 
 /**
  * A FeatureReader that wraps up a normal FeatureIterator.
  *
- * <p>This class is useful for faking (and testing) the Resource based API against in memory
- * datastructures. You are warned that to complete the illusion that Resource based IO is occuring
- * content will be duplicated.
+ * <p>This class is useful for faking (and testing) the Resource based API against in memory datastructures. You are
+ * warned that to complete the illusion that Resource based IO is occuring content will be duplicated.
  *
  * @author Jody Garnett, Refractions Research, Inc.
  */
-public class DelegateFeatureReader<T extends FeatureType, F extends Feature>
-        implements FeatureReader<T, F> {
+public class DelegateFeatureReader<T extends FeatureType, F extends Feature> implements FeatureReader<T, F> {
     FeatureIterator<F> delegate;
     T schema;
 

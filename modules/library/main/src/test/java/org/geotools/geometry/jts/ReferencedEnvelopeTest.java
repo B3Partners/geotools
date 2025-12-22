@@ -9,17 +9,33 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.api.geometry.MismatchedReferenceSystemException;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultEngineeringCRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
+import org.geotools.referencing.crs.DefaultProjectedCRS;
+import org.geotools.util.factory.GeoTools;
+import org.geotools.util.factory.Hints;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
-import org.opengis.geometry.MismatchedReferenceSystemException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class ReferencedEnvelopeTest {
+
+    @Before
+    public void setUp() throws Exception {
+        // this is the only thing that actually forces CRS object to give up
+        // its configuration, necessary when tests are run by Maven, one JVM for all
+        // the tests in this module
+        Hints.putSystemDefault(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER, Boolean.FALSE);
+        GeoTools.fireConfigurationChanged();
+    }
 
     @Test
     public void testEverything() {
@@ -150,28 +166,22 @@ public class ReferencedEnvelopeTest {
 
     @Test
     public void testTransformToWGS84() throws Exception {
-        String wkt =
-                "GEOGCS[\"GDA94\","
-                        + " DATUM[\"Geocentric Datum of Australia 1994\","
-                        + "  SPHEROID[\"GRS 1980\", 6378137.0, 298.257222101, AUTHORITY[\"EPSG\",\"7019\"]],"
-                        + "  TOWGS84[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "
-                        + " AUTHORITY[\"EPSG\",\"6283\"]], "
-                        + " PRIMEM[\"Greenwich\", 0.0, AUTHORITY[\"EPSG\",\"8901\"]],"
-                        + " UNIT[\"degree\", 0.017453292519943295], "
-                        + " AXIS[\"Geodetic longitude\", EAST], "
-                        + " AXIS[\"Geodetic latitude\", NORTH], "
-                        + " AXIS[\"Ellipsoidal height\", UP], "
-                        + " AUTHORITY[\"EPSG\",\"4939\"]]";
+        String wkt = "GEOGCS[\"GDA94\","
+                + " DATUM[\"Geocentric Datum of Australia 1994\","
+                + "  SPHEROID[\"GRS 1980\", 6378137.0, 298.257222101, AUTHORITY[\"EPSG\",\"7019\"]],"
+                + "  TOWGS84[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "
+                + " AUTHORITY[\"EPSG\",\"6283\"]], "
+                + " PRIMEM[\"Greenwich\", 0.0, AUTHORITY[\"EPSG\",\"8901\"]],"
+                + " UNIT[\"degree\", 0.017453292519943295], "
+                + " AXIS[\"Geodetic longitude\", EAST], "
+                + " AXIS[\"Geodetic latitude\", NORTH], "
+                + " AXIS[\"Ellipsoidal height\", UP], "
+                + " AUTHORITY[\"EPSG\",\"4939\"]]";
 
         CoordinateReferenceSystem gda94 = CRS.parseWKT(wkt);
 
-        ReferencedEnvelope bounds =
-                new ReferencedEnvelope(
-                        130.875825803896,
-                        130.898939990319,
-                        -16.4491956225999,
-                        -16.4338185791628,
-                        DefaultGeographicCRS.WGS84);
+        ReferencedEnvelope bounds = new ReferencedEnvelope(
+                130.875825803896, 130.898939990319, -16.4491956225999, -16.4338185791628, DefaultGeographicCRS.WGS84);
 
         ReferencedEnvelope worldBounds2D = bounds.transform(DefaultGeographicCRS.WGS84, true);
         assertEquals(DefaultGeographicCRS.WGS84, worldBounds2D.getCoordinateReferenceSystem());
@@ -193,28 +203,154 @@ public class ReferencedEnvelopeTest {
         assertTrue(r1.isNull());
     }
 
-    /**
-     * Tests that the conversion of different bound types to ReferencedEnvelope does not lose the
-     * emptiness property
-     */
+    /** Tests that the conversion of different bound types to ReferencedEnvelope does not lose the emptiness property */
     @Test
     public void testEmptyEnvelopeConversion() throws Exception {
         // conversion of an empty OGC envelope should stay empty
-        GeneralEnvelope ge = new GeneralEnvelope(new double[] {0, 0}, new double[] {-1, -1});
+        GeneralBounds ge = new GeneralBounds(new double[] {0, 0}, new double[] {-1, -1});
         assertTrue(ge.isEmpty());
-        assertTrue(ReferencedEnvelope.create(ge, ge.getCoordinateReferenceSystem()).isEmpty());
+        assertTrue(
+                ReferencedEnvelope.create(ge, ge.getCoordinateReferenceSystem()).isEmpty());
         assertTrue(ReferencedEnvelope.reference(ge).isEmpty());
+
+        GeneralBounds bounds = new GeneralBounds(DefaultGeographicCRS.WGS84);
+        assertTrue(bounds.isEmpty());
+        assertTrue(ReferencedEnvelope.create(bounds, bounds.getCoordinateReferenceSystem())
+                .isEmpty());
+        assertTrue(ReferencedEnvelope.reference(bounds).isEmpty());
 
         // conversion of an empty Java Rectangle 2D should stay empty
         Rectangle2D r2d = new Rectangle2D.Double(0, 0, -1, -1);
         assertTrue(r2d.isEmpty());
         assertTrue(ReferencedEnvelope.create(r2d, null).isEmpty());
+        assertTrue(ReferencedEnvelope.rect(r2d).isEmpty());
+        assertTrue(ReferencedEnvelope.rect(r2d, DefaultGeographicCRS.WGS84).isEmpty());
 
         // conversion of an empty ReferencedEnvelope should stay empty
         ReferencedEnvelope re = new ReferencedEnvelope();
         assertTrue(re.isEmpty());
         assertTrue(ReferencedEnvelope.create(re).isEmpty());
-        assertTrue(ReferencedEnvelope.create(re, re.getCoordinateReferenceSystem()).isEmpty());
+        assertTrue(
+                ReferencedEnvelope.create(re, re.getCoordinateReferenceSystem()).isEmpty());
         assertTrue(ReferencedEnvelope.reference(re).isEmpty());
+    }
+
+    @Test
+    public void testWrappingEnvelopeConversion() throws Exception {
+        GeneralBounds ge = new GeneralBounds(new double[] {160, 20}, new double[] {-160, 40});
+        ge.setCoordinateReferenceSystem(DefaultGeographicCRS.WGS84);
+
+        // used to convert to an empty envelope, which is wrong, the above is not empty,
+        // it's just spanning the dateline. ReferencedEnvelope cannot represent that case,
+        // but we can at least make sure it doesn't convert to an empty envelope and use whole
+        // world instead
+        ReferencedEnvelope re = ReferencedEnvelope.reference(ge);
+        assertEquals(DefaultGeographicCRS.WGS84, re.getCoordinateReferenceSystem());
+        assertEquals(-180, re.getMinX(), 0d);
+        assertEquals(180, re.getMaxX(), 0d);
+        assertEquals(20, re.getMinY(), 0d);
+        assertEquals(40, re.getMaxY(), 0d);
+    }
+
+    @Test
+    public void testCompatibleCRSEnvelopeIntersection() throws Exception {
+        ReferencedEnvelope env1 = createEnvelope(
+                -2.177465925706197E7,
+                8646206.01995729,
+                -1.8020943797479007E7,
+                1.2385261999043737E7,
+                "EPSG:3857",
+                false);
+        ReferencedEnvelope env2 = createEnvelope(
+                -2.1788686706639238E7,
+                8621919.786483308,
+                -1.801691811921271E7,
+                1.2394009693069756E7,
+                "EPSG:3857",
+                true);
+        CoordinateReferenceSystem crs1 = env1.getCoordinateReferenceSystem();
+        CoordinateReferenceSystem crs2 = env2.getCoordinateReferenceSystem();
+        assertNotSame(
+                ((DefaultProjectedCRS) crs1)
+                        .getBaseCRS()
+                        .getCoordinateSystem()
+                        .getAxis(0)
+                        .getDirection(),
+                ((DefaultProjectedCRS) crs2)
+                        .getBaseCRS()
+                        .getCoordinateSystem()
+                        .getAxis(0)
+                        .getDirection());
+        assertTrue(CRS.isEquivalent(crs1, crs2));
+        ReferencedEnvelope re = env1.intersection(env2);
+        assertNotNull(re);
+    }
+
+    @Test(expected = MismatchedReferenceSystemException.class)
+    public void testIncompatibleCRSEnvelopeOperation() throws Exception {
+        ReferencedEnvelope env1 = createEnvelope(
+                -2.177465925706197E7,
+                8646206.01995729,
+                -1.8020943797479007E7,
+                1.2385261999043737E7,
+                "EPSG:3857",
+                false);
+        ReferencedEnvelope env2 = createEnvelope(
+                -2.1788686706639238E7,
+                8621919.786483308,
+                -1.801691811921271E7,
+                1.2394009693069756E7,
+                "EPSG:32632",
+                true);
+        assertFalse(CRS.isEquivalent(env1.getCoordinateReferenceSystem(), env2.getCoordinateReferenceSystem()));
+        // The intersection will throw a MismatchedReferenceSystemException
+        env1.expandToInclude(env2);
+    }
+
+    private ReferencedEnvelope createEnvelope(
+            double minX, double minY, double maxX, double maxY, String epsgCode, boolean longitudeFirst)
+            throws FactoryException {
+        GeneralBounds ge = new GeneralBounds(new double[] {minX, minY}, new double[] {maxX, maxY});
+        CoordinateReferenceSystem crs = CRS.decode(epsgCode, longitudeFirst);
+        ge.setCoordinateReferenceSystem(crs);
+        return ReferencedEnvelope.reference(ge);
+    }
+
+    /**
+     * This method tests the different ways of initializing a ReferencedEnvelope in a manner consistent with behavior of
+     * {@link Rectangle2D}
+     */
+    @Test
+    public void testRectangle2DBehaviour() throws Exception {
+        Rectangle2D rectangle = new Rectangle2D.Double(10.0, 10.0, 40.0, 30.0);
+        ReferencedEnvelope envelope =
+                ReferencedEnvelope.rect(10.0, 10.0, 40.0, 30.0, DefaultEngineeringCRS.CARTESIAN_2D);
+        assertEquals("rect", ReferencedEnvelope.rect(rectangle, DefaultEngineeringCRS.CARTESIAN_2D), envelope);
+
+        assertEquals("x", rectangle.getMinX(), envelope.getMinX(), 0.0);
+        assertEquals("height", rectangle.getHeight(), envelope.getHeight(), 0.0);
+
+        Point2D center = new Point2D.Double(50.0, 50.0);
+        Point2D outer = new Point2D.Double(85.0, 15.0);
+        rectangle.setFrameFromCenter(center, outer);
+        envelope.setFrameFromCenter(center, outer);
+        assertEquals(
+                "setFrameFromCenter", ReferencedEnvelope.rect(rectangle, DefaultEngineeringCRS.CARTESIAN_2D), envelope);
+
+        Point2D lower = new Point2D.Double(10.0, 10.0);
+        Point2D upper = new Point2D.Double(40.0, 30.0);
+
+        rectangle.setFrameFromDiagonal(lower, upper);
+        envelope.setFrameFromDiagonal(lower, upper);
+        assertEquals(
+                "setFrameFromDiagonal",
+                ReferencedEnvelope.rect(rectangle, DefaultEngineeringCRS.CARTESIAN_2D),
+                envelope);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        Hints.putSystemDefault(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER, Boolean.TRUE);
+        GeoTools.fireConfigurationChanged();
     }
 }

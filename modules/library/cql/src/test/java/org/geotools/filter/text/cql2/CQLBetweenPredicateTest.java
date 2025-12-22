@@ -17,13 +17,13 @@
 
 package org.geotools.filter.text.cql2;
 
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.filter.text.commons.CompilerUtil;
 import org.geotools.filter.text.commons.Language;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.filter.Filter;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Unit test for between predicate
@@ -83,8 +83,7 @@ public class CQLBetweenPredicateTest {
         final String propExpected = "gmd:aa:bb/gmd:cc/gmd:dd";
         Filter resultFilter = parseFilter(prop + " BETWEEN 100 AND 200 ");
 
-        Assert.assertTrue(
-                "PropertyIsBetween filter was expected", resultFilter instanceof PropertyIsBetween);
+        Assert.assertTrue("PropertyIsBetween filter was expected", resultFilter instanceof PropertyIsBetween);
 
         PropertyIsBetween filter = (PropertyIsBetween) resultFilter;
         Expression property = filter.getExpression();
@@ -93,8 +92,7 @@ public class CQLBetweenPredicateTest {
     }
 
     /** Execute the test with the provided sample */
-    protected void testBetweenPredicate(final String samplePredicate, Filter expected)
-            throws Exception {
+    protected void testBetweenPredicate(final String samplePredicate, Filter expected) throws Exception {
 
         Filter actual = parseFilter(samplePredicate);
 

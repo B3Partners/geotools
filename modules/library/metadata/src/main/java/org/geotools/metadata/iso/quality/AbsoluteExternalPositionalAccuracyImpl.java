@@ -19,8 +19,9 @@
  */
 package org.geotools.metadata.iso.quality;
 
-import org.opengis.metadata.quality.AbsoluteExternalPositionalAccuracy;
-import org.opengis.metadata.quality.Result;
+import java.io.Serial;
+import org.geotools.api.metadata.quality.AbsoluteExternalPositionalAccuracy;
+import org.geotools.api.metadata.quality.Result;
 
 /**
  * Closeness of reported coordinate values to values accepted as or being true.
@@ -33,6 +34,7 @@ import org.opengis.metadata.quality.Result;
 public class AbsoluteExternalPositionalAccuracyImpl extends PositionalAccuracyImpl
         implements AbsoluteExternalPositionalAccuracy {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 4116627805950579738L;
 
     /** Constructs an initially empty absolute external positional accuracy. */

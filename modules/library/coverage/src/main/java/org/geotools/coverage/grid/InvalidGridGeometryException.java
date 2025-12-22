@@ -16,13 +16,12 @@
  */
 package org.geotools.coverage.grid;
 
-import org.geotools.metadata.i18n.Errors;
+import java.io.Serial;
 
 /**
- * Thrown by {@link GeneralGridGeometry} when a grid geometry is in an invalid state. For example
- * this exception is thrown when {@link GeneralGridGeometry#getGridRange() getGridRange()} is
- * invoked while the grid geometry were built with a null {@link
- * org.opengis.coverage.grid.GridRange}.
+ * Thrown by {@link GeneralGridGeometry} when a grid geometry is in an invalid state. For example this exception is
+ * thrown when {@link GeneralGridGeometry#getGridRange() getGridRange()} is invoked while the grid geometry were built
+ * with a null {@link org.geotools.api.coverage.grid.GridRange}.
  *
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
@@ -30,18 +29,11 @@ import org.geotools.metadata.i18n.Errors;
  */
 public class InvalidGridGeometryException extends IllegalStateException {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -7386283388753448743L;
 
     /** Constructs an exception with no detail message. */
     public InvalidGridGeometryException() {}
-
-    /**
-     * Constructs an exception with a detail message from the specified error code. Should not be
-     * public because the GeoTools I18N framework is not a commited one.
-     */
-    InvalidGridGeometryException(final int code) {
-        super(Errors.format(code));
-    }
 
     /** Constructs an exception with the specified detail message. */
     public InvalidGridGeometryException(final String message) {

@@ -18,11 +18,13 @@ package org.geotools.geopkg;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import javax.sql.DataSource;
 import org.apache.commons.dbcp.BasicDataSource;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
 import org.geotools.geopkg.geom.GeoPkgGeomWriter;
 import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.jdbc.JDBCDataStoreFactory;
@@ -39,24 +41,12 @@ import org.sqlite.javax.SQLiteConnectionPoolDataSource;
 public class GeoPkgDataStoreFactory extends JDBCDataStoreFactory {
 
     /** parameter for database type */
-    public static final Param DBTYPE =
-            new Param(
-                    "dbtype",
-                    String.class,
-                    "Type",
-                    true,
-                    "geopkg",
-                    Collections.singletonMap(Parameter.LEVEL, "program"));
+    public static final Param DBTYPE = new Param(
+            "dbtype", String.class, "Type", true, "geopkg", Collections.singletonMap(Parameter.LEVEL, "program"));
 
     /** parameter for database instance */
     public static final Param DATABASE =
-            new Param(
-                    "database",
-                    File.class,
-                    "Database",
-                    true,
-                    null,
-                    Collections.singletonMap(Param.EXT, "gpkg"));
+            new Param("database", File.class, "Database", true, null, Collections.singletonMap(Param.EXT, "gpkg"));
 
     public static final Param READ_ONLY = new Param("read_only", Boolean.class, "Read only", false);
 
@@ -65,17 +55,14 @@ public class GeoPkgDataStoreFactory extends JDBCDataStoreFactory {
 
     /** Maximum mapped memory, defaults to null */
     public static final Param MEMORY_MAP_SIZE =
-            new Param(
-                    "memory map size",
-                    Integer.class,
-                    "Max memory SQlite will memory map, in megabytes",
-                    false,
-                    null);
+            new Param("memory map size", Integer.class, "Max memory SQlite will memory map, in megabytes", false, null);
 
     /** base location to store database files */
     File baseDirectory = null;
 
     GeoPkgGeomWriter.Configuration writerConfig;
+
+    private static int sqlLiteConnectTimeout = 60000;
 
     public GeoPkgDataStoreFactory() {
         this.writerConfig = new GeoPkgGeomWriter.Configuration();
@@ -145,7 +132,24 @@ public class GeoPkgDataStoreFactory extends JDBCDataStoreFactory {
                 db = new File(baseDirectory, db.getPath());
             }
         }
-        return "jdbc:sqlite:" + db;
+        String jdbcUri = "jdbc:sqlite:" + db.toURI();
+        Object readOnly = READ_ONLY.lookUp(params);
+        if (Boolean.TRUE.equals(readOnly) && isNeedImmutable(db.toPath())) {
+            // if the readOnly mode has been requested and the geopackage file and parent directory are also
+            // readonly we also set the immutable flag. This prevents any exceptions being thrown in the
+            // unlikely case the GeoPackage has an incomplete transaction because sqlite will otherwise
+            // attempt to recover the transaction and that will fail on a read only file system.
+            // Refer to: https://www.sqlite.org/wal.html#readonly
+            jdbcUri = jdbcUri + "?immutable=true";
+        }
+        return jdbcUri;
+    }
+
+    private boolean isNeedImmutable(Path databasePath) {
+        Path parentPath = databasePath.getParent();
+        return Files.exists(databasePath)
+                && (parentPath != null && !Files.isWritable(parentPath))
+                && !Files.isWritable(databasePath);
     }
 
     @Override
@@ -177,8 +181,7 @@ public class GeoPkgDataStoreFactory extends JDBCDataStoreFactory {
     }
 
     /**
-     * This is left for public API compatibility but it's not as efficient as using the GeoPackage
-     * internal pool
+     * This is left for public API compatibility but it's not as efficient as using the GeoPackage internal pool
      *
      * @param params Map of connection parameter.
      */
@@ -202,8 +205,7 @@ public class GeoPkgDataStoreFactory extends JDBCDataStoreFactory {
     }
 
     @Override
-    protected DataSource createDataSource(Map<String, ?> params, SQLDialect dialect)
-            throws IOException {
+    protected DataSource createDataSource(Map<String, ?> params, SQLDialect dialect) throws IOException {
         SQLiteConfig config = setupSQLiteConfig(params);
 
         // use native "pool", which is actually not pooling anything (that's fast and
@@ -216,7 +218,7 @@ public class GeoPkgDataStoreFactory extends JDBCDataStoreFactory {
 
     private static SQLiteConfig setupSQLiteConfig(Map<String, ?> params) throws IOException {
         SQLiteConfig config = new SQLiteConfig();
-        config.setSharedCache(true);
+        config.setSharedCache(false);
         config.enableLoadExtension(true);
         Object readOnly = READ_ONLY.lookUp(params);
         if (Boolean.TRUE.equals(readOnly)) {
@@ -224,15 +226,14 @@ public class GeoPkgDataStoreFactory extends JDBCDataStoreFactory {
             config.setReadOnly(true);
         }
         Object map = MEMORY_MAP_SIZE.lookUp(params);
-        if (map instanceof Integer && ((Integer) map) >= 0) {
-            int memoryMB = (Integer) map;
+        if (map instanceof Integer memoryMB && memoryMB >= 0) {
             config.setPragma(SQLiteConfig.Pragma.MMAP_SIZE, String.valueOf(memoryMB * 1024 * 1024));
         }
+        config.setBusyTimeout(sqlLiteConnectTimeout);
         return config;
     }
 
-    static void addConnectionProperties(BasicDataSource dataSource, Map<String, ?> configuration)
-            throws IOException {
+    static void addConnectionProperties(BasicDataSource dataSource, Map<String, ?> configuration) throws IOException {
         SQLiteConfig config = setupSQLiteConfig(configuration);
 
         for (Map.Entry<Object, Object> e : config.toProperties().entrySet()) {
@@ -241,9 +242,17 @@ public class GeoPkgDataStoreFactory extends JDBCDataStoreFactory {
     }
 
     @Override
-    protected JDBCDataStore createDataStoreInternal(JDBCDataStore dataStore, Map<String, ?> params)
-            throws IOException {
+    protected JDBCDataStore createDataStoreInternal(JDBCDataStore dataStore, Map<String, ?> params) throws IOException {
         dataStore.setDatabaseSchema(null);
         return dataStore;
+    }
+
+    /**
+     * Sets the timeout for SQLite connections in miliseconds (for testing). Default is 60 seconds.
+     *
+     * @param sqlLiteConnectTimeout timeout in miliseconds
+     */
+    public static void setSqlLiteConnectTimeout(int sqlLiteConnectTimeout) {
+        GeoPkgDataStoreFactory.sqlLiteConnectTimeout = sqlLiteConnectTimeout;
     }
 }

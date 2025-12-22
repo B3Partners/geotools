@@ -30,7 +30,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.media.jai.ROI;
+import org.eclipse.imagen.ROI;
 import org.geotools.image.ImageWorker;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
@@ -43,9 +43,7 @@ public class FootprintBehaviorTest {
         assertNotNull(values);
         Set<String> testSet = new HashSet<>(Arrays.asList(values));
         Set<String> expectedSet =
-                Arrays.stream(FootprintBehavior.values())
-                        .map(v -> v.name())
-                        .collect(Collectors.toSet());
+                Arrays.stream(FootprintBehavior.values()).map(v -> v.name()).collect(Collectors.toSet());
         assertEquals(expectedSet, testSet);
     }
 
@@ -76,8 +74,7 @@ public class FootprintBehaviorTest {
     @Test
     public void testPostProcessTransparent() {
         BufferedImage bi = new BufferedImage(10, 10, BufferedImage.TYPE_BYTE_GRAY);
-        RenderedImage postProcessed =
-                FootprintBehavior.Transparent.postProcessBlankResponse(bi, null);
+        RenderedImage postProcessed = FootprintBehavior.Transparent.postProcessBlankResponse(bi, null);
         assertNotSame(bi, postProcessed);
         checkEmptyROI(postProcessed);
         // has also been expanded and alpha channel added

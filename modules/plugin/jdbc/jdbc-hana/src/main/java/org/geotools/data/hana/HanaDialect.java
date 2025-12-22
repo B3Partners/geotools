@@ -34,11 +34,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.GeographicCRS;
+import org.geotools.api.referencing.crs.SingleCRS;
 import org.geotools.data.hana.wkb.HanaWKBParser;
 import org.geotools.data.hana.wkb.HanaWKBParserException;
 import org.geotools.data.hana.wkb.HanaWKBWriter;
 import org.geotools.data.hana.wkb.HanaWKBWriterException;
+import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.jdbc.PreparedFilterToSQL;
 import org.geotools.jdbc.PreparedStatementSQLDialect;
@@ -54,13 +62,6 @@ import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.GeographicCRS;
-import org.opengis.referencing.crs.SingleCRS;
 
 /**
  * A prepared statement SQL dialect for SAP HANA.
@@ -109,7 +110,7 @@ public class HanaDialect extends PreparedStatementSQLDialect {
         TYPE_NAME_TO_CLASS.put("ST_POINT", Point.class);
         TYPE_NAME_TO_CLASS.put("ST_GEOMETRY", Geometry.class);
         TYPE_NAME_TO_CLASS.put("BOOLEAN", Boolean.class);
-    };
+    }
 
     private static final Map<Integer, Class<?>> SQL_TYPE_TO_CLASS = new HashMap<>();
 
@@ -154,7 +155,19 @@ public class HanaDialect extends PreparedStatementSQLDialect {
 
     private HanaVersion hanaVersion;
 
+    private HanaCloudVersion cloudVersion;
+
     private SchemaCache currentSchemaCache = new SchemaCache();
+
+    private boolean estimatedExtentsEnabled = false;
+
+    public boolean isEstimatedExtentsEnabled() {
+        return estimatedExtentsEnabled;
+    }
+
+    public void setEstimatedExtentsEnabled(boolean estimatedExtentsEnabled) {
+        this.estimatedExtentsEnabled = estimatedExtentsEnabled;
+    }
 
     public void setFunctionEncodingEnabled(boolean enabled) {
         functionEncodingEnabled = enabled;
@@ -173,15 +186,16 @@ public class HanaDialect extends PreparedStatementSQLDialect {
         super.initializeConnection(cx);
         if (hanaVersion == null) {
             hanaVersion = new HanaVersion(cx.getMetaData().getDatabaseProductVersion());
-            if ((hanaVersion.getVersion() == 1) && (hanaVersion.getRevision() < 120)) {
+            if (hanaVersion.getVersion() == 1 && hanaVersion.getRevision() < 120) {
                 throw new SQLException("Only HANA 2 and HANA 1 SPS 12 and later are supported");
             }
+
+            cloudVersion = queryCloudVersion(cx);
         }
     }
 
     @Override
-    public boolean includeTable(String schemaName, String tableName, Connection cx)
-            throws SQLException {
+    public boolean includeTable(String schemaName, String tableName, Connection cx) throws SQLException {
         if (METADATA_TABLE_NAME.equals(tableName)) {
             return false;
         }
@@ -224,23 +238,20 @@ public class HanaDialect extends PreparedStatementSQLDialect {
         return GEOMETRY_TYPE_NAME;
     }
 
-    private Integer getGeometrySRIDFromView(
-            String schemaName, String tableName, String columnName, Connection cx)
+    private Integer getGeometrySRIDFromView(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
             if (schemaName != null) {
-                ps =
-                        cx.prepareStatement(
-                                "SELECT SRS_ID FROM PUBLIC.ST_GEOMETRY_COLUMNS WHERE SCHEMA_NAME = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?");
+                ps = cx.prepareStatement(
+                        "SELECT SRS_ID FROM PUBLIC.ST_GEOMETRY_COLUMNS WHERE SCHEMA_NAME = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?");
                 ps.setString(1, schemaName);
                 ps.setString(2, tableName);
                 ps.setString(3, columnName);
             } else {
-                ps =
-                        cx.prepareStatement(
-                                "SELECT SRS_ID FROM PUBLIC.ST_GEOMETRY_COLUMNS WHERE SCHEMA_NAME = CURRENT_SCHEMA AND TABLE_NAME = ? AND COLUMN_NAME = ?");
+                ps = cx.prepareStatement(
+                        "SELECT SRS_ID FROM PUBLIC.ST_GEOMETRY_COLUMNS WHERE SCHEMA_NAME = CURRENT_SCHEMA AND TABLE_NAME = ? AND COLUMN_NAME = ?");
                 ps.setString(1, tableName);
                 ps.setString(2, columnName);
             }
@@ -256,8 +267,7 @@ public class HanaDialect extends PreparedStatementSQLDialect {
         }
     }
 
-    private Integer getGeometrySRIDViaSelect(
-            String schemaName, String tableName, String columnName, Connection cx)
+    private Integer getGeometrySRIDViaSelect(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
         // Try the first non-NULL geometry
         StringBuffer sql = new StringBuffer();
@@ -285,8 +295,7 @@ public class HanaDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public Integer getGeometrySRID(
-            String schemaName, String tableName, String columnName, Connection cx)
+    public Integer getGeometrySRID(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
         Integer srid = getGeometrySRIDFromView(schemaName, tableName, columnName, cx);
         if (srid == null) {
@@ -296,8 +305,7 @@ public class HanaDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public int getGeometryDimension(
-            String schemaName, String tableName, String columnName, Connection cx)
+    public int getGeometryDimension(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
         // Try the metadata table first
         if (tableExists(schemaName, METADATA_TABLE_NAME, cx)) {
@@ -354,9 +362,8 @@ public class HanaDialect extends PreparedStatementSQLDialect {
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
-            ps =
-                    cx.prepareStatement(
-                            "SELECT ORGANIZATION, ORGANIZATION_COORDSYS_ID, DEFINITION FROM PUBLIC.ST_SPATIAL_REFERENCE_SYSTEMS WHERE SRS_ID = ?");
+            ps = cx.prepareStatement(
+                    "SELECT ORGANIZATION, ORGANIZATION_COORDSYS_ID, DEFINITION FROM PUBLIC.ST_SPATIAL_REFERENCE_SYSTEMS WHERE SRS_ID = ?");
             ps.setInt(1, srid);
             rs = ps.executeQuery();
             if (!rs.next()) return null;
@@ -369,13 +376,7 @@ public class HanaDialect extends PreparedStatementSQLDialect {
                     return CRS.decode(org + ":" + orgId);
                 } catch (Exception e) {
                     LOGGER.log(
-                            Level.WARNING,
-                            "Could not decode "
-                                    + org
-                                    + ":"
-                                    + orgId
-                                    + " using the geotools database",
-                            e);
+                            Level.WARNING, "Could not decode " + org + ":" + orgId + " using the geotools database", e);
                 }
             }
 
@@ -392,6 +393,71 @@ public class HanaDialect extends PreparedStatementSQLDialect {
             dataStore.closeSafe(rs);
             dataStore.closeSafe(ps);
         }
+    }
+
+    @Override
+    public List<ReferencedEnvelope> getOptimizedBounds(String schema, SimpleFeatureType featureType, Connection cx)
+            throws SQLException, IOException {
+        if (!isEstimatedExtentsEnabled()) return super.getOptimizedBounds(schema, featureType, cx);
+
+        if (!isExtentEstimationAvailable()) {
+            LOGGER.log(
+                    Level.WARNING,
+                    "Could not use fast extent estimation. This feature is available starting with HANA Cloud QRC1/2024 and HANA 2 SPS 08.");
+            return null;
+        }
+
+        String tableName = featureType.getTypeName();
+        if (dataStore.getVirtualTables().get(tableName) != null) return null;
+
+        List<ReferencedEnvelope> result = new ArrayList<>();
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        schema = resolveSchema(schema, cx);
+        try {
+            for (AttributeDescriptor att : featureType.getAttributeDescriptors()) {
+                if (att instanceof GeometryDescriptor) {
+                    StringBuffer sql = new StringBuffer();
+                    sql.append(
+                            "SELECT MIN_X, MAX_X, MIN_Y, MAX_Y FROM SYS.M_ST_GEOMETRY_COLUMNS WHERE SCHEMA_NAME=? AND TABLE_NAME=? AND COLUMN_NAME=?");
+
+                    ps = cx.prepareStatement(sql.toString());
+                    ps.setString(1, schema);
+                    ps.setString(2, tableName);
+                    ps.setString(3, att.getName().getLocalPart());
+
+                    rs = ps.executeQuery();
+                    if (rs.next()) {
+                        double xMin = rs.getDouble(1);
+                        double xMax = rs.getDouble(2);
+                        double yMin = rs.getDouble(3);
+                        double yMax = rs.getDouble(4);
+
+                        // Check if row for column is available and data is present
+                        if (rs.wasNull()) return null;
+
+                        result.add(new ReferencedEnvelope(
+                                xMin,
+                                xMax,
+                                yMin,
+                                yMax,
+                                CRS.getHorizontalCRS(featureType.getCoordinateReferenceSystem())));
+                    }
+
+                    rs.close();
+                    ps.close();
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.WARNING, "Fast Extent Estimation failed!", e);
+            return null;
+        } finally {
+            dataStore.closeSafe(rs);
+            dataStore.closeSafe(ps);
+        }
+
+        if (result.isEmpty()) return null;
+        return result;
     }
 
     @Override
@@ -417,8 +483,7 @@ public class HanaDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public Envelope decodeGeometryEnvelope(ResultSet rs, int column, Connection cx)
-            throws SQLException, IOException {
+    public Envelope decodeGeometryEnvelope(ResultSet rs, int column, Connection cx) throws SQLException, IOException {
         String senvelope = rs.getString(column);
         if (senvelope == null) return new Envelope();
         String[] comps = senvelope.split(":");
@@ -432,11 +497,7 @@ public class HanaDialect extends PreparedStatementSQLDialect {
 
     @Override
     public void encodeGeometryColumn(
-            GeometryDescriptor gatt,
-            String prefix,
-            int srid,
-            org.geotools.util.factory.Hints hints,
-            StringBuffer sql) {
+            GeometryDescriptor gatt, String prefix, int srid, org.geotools.util.factory.Hints hints, StringBuffer sql) {
         encodeColumnName(prefix, gatt.getLocalName(), sql);
         sql.append(".ST_AsBinary()");
     }
@@ -445,8 +506,8 @@ public class HanaDialect extends PreparedStatementSQLDialect {
     public void encodeGeometryColumnSimplified(
             GeometryDescriptor gatt, String prefix, int srid, StringBuffer sql, Double distance) {
         encodeColumnName(prefix, gatt.getLocalName(), sql);
-        if ((distance != null)
-                && (distance >= 0.0)
+        if (distance != null
+                && distance >= 0.0
                 && !simplifyDisabled
                 && isPlanarCRS(gatt.getCoordinateReferenceSystem())) {
             sql.append(".ST_Simplify(");
@@ -518,12 +579,7 @@ public class HanaDialect extends PreparedStatementSQLDialect {
 
     @Override
     public void encodePostColumnCreateTable(AttributeDescriptor att, StringBuffer sql) {
-        if (att instanceof GeometryDescriptor) {
-            // HANA expects the SRID right after the type, e.g. ST_Geometry(4326).
-            // Unfortunately, the data store might already have inserted column constraints like
-            // "NOT NULL". Therefore, we have to find the type string and insert the SRID right
-            // behind it.
-            GeometryDescriptor gd = (GeometryDescriptor) att;
+        if (att instanceof GeometryDescriptor gd) {
             Integer srid = (Integer) gd.getUserData().get(JDBCDataStore.JDBC_NATIVE_SRID);
             if (srid == null) {
                 srid = getSridFromCRS(gd);
@@ -575,8 +631,7 @@ public class HanaDialect extends PreparedStatementSQLDialect {
         createSequences(schemaName, featureType, cx);
     }
 
-    private void registerMetadata(String schemaName, SimpleFeatureType featureType, Connection cx)
-            throws SQLException {
+    private void registerMetadata(String schemaName, SimpleFeatureType featureType, Connection cx) throws SQLException {
         String tableName = featureType.getName().getLocalPart();
         for (AttributeDescriptor att : featureType.getAttributeDescriptors()) {
             if (!(att instanceof GeometryDescriptor)) {
@@ -587,15 +642,12 @@ public class HanaDialect extends PreparedStatementSQLDialect {
         }
     }
 
-    private void registerMetadata(
-            String schemaName, String tableName, GeometryDescriptor gd, Connection cx)
+    private void registerMetadata(String schemaName, String tableName, GeometryDescriptor gd, Connection cx)
             throws SQLException {
         // HANA accepts 2-, 3- and 4-dimensional geometries in each geometry column.
         // Therefore, we store the information about the dimension in an extra metadata table.
         int dimensions = 2;
-        Integer dimHint =
-                (Integer)
-                        gd.getUserData().get(org.geotools.util.factory.Hints.COORDINATE_DIMENSION);
+        Integer dimHint = (Integer) gd.getUserData().get(org.geotools.util.factory.Hints.COORDINATE_DIMENSION);
         if (dimHint != null) {
             dimensions = dimHint;
         }
@@ -634,8 +686,7 @@ public class HanaDialect extends PreparedStatementSQLDialect {
         }
     }
 
-    private void createSequences(String schemaName, SimpleFeatureType featureType, Connection cx)
-            throws SQLException {
+    private void createSequences(String schemaName, SimpleFeatureType featureType, Connection cx) throws SQLException {
         schemaName = resolveSchema(schemaName, cx);
         String tableName = featureType.getTypeName();
         List<String> pkColumns = getPrimaryKeys(schemaName, tableName, cx);
@@ -657,8 +708,7 @@ public class HanaDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public void preDropTable(String schemaName, SimpleFeatureType featureType, Connection cx)
-            throws SQLException {
+    public void preDropTable(String schemaName, SimpleFeatureType featureType, Connection cx) throws SQLException {
         schemaName = resolveSchema(schemaName, cx);
         String tableName = featureType.getTypeName();
         List<String> pkColumns = getPrimaryKeys(schemaName, tableName, cx);
@@ -679,8 +729,7 @@ public class HanaDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public void postDropTable(String schemaName, SimpleFeatureType featureType, Connection cx)
-            throws SQLException {
+    public void postDropTable(String schemaName, SimpleFeatureType featureType, Connection cx) throws SQLException {
         if (!tableExists(schemaName, METADATA_TABLE_NAME, cx)) {
             return;
         }
@@ -698,8 +747,7 @@ public class HanaDialect extends PreparedStatementSQLDialect {
         }
     }
 
-    private List<String> getPrimaryKeys(String schemaName, String tableName, Connection cx)
-            throws SQLException {
+    private List<String> getPrimaryKeys(String schemaName, String tableName, Connection cx) throws SQLException {
         DatabaseMetaData dbmd = cx.getMetaData();
 
         List<String> pkColumns = new ArrayList<>();
@@ -721,30 +769,26 @@ public class HanaDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public Object getNextAutoGeneratedValue(
-            String schemaName, String tableName, String columnName, Connection cx)
+    public Object getNextAutoGeneratedValue(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
         String sequenceName = getSequenceForColumn(schemaName, tableName, columnName, cx);
         return getNextSequenceValue(schemaName, sequenceName, cx);
     }
 
     @Override
-    public String getSequenceForColumn(
-            String schemaName, String tableName, String columnName, Connection cx)
+    public String getSequenceForColumn(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
         String sequenceName = getSequenceName(tableName, columnName);
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
             if (schemaName == null) {
-                ps =
-                        cx.prepareStatement(
-                                "SELECT COUNT(*) FROM PUBLIC.SEQUENCES WHERE SCHEMA_NAME = CURRENT_SCHEMA AND SEQUENCE_NAME = ?");
+                ps = cx.prepareStatement(
+                        "SELECT COUNT(*) FROM PUBLIC.SEQUENCES WHERE SCHEMA_NAME = CURRENT_SCHEMA AND SEQUENCE_NAME = ?");
                 ps.setString(1, sequenceName);
             } else {
-                ps =
-                        cx.prepareStatement(
-                                "SELECT COUNT(*) FROM PUBLIC.SEQUENCES WHERE SCHEMA_NAME = ? AND SEQUENCE_NAME = ?");
+                ps = cx.prepareStatement(
+                        "SELECT COUNT(*) FROM PUBLIC.SEQUENCES WHERE SCHEMA_NAME = ? AND SEQUENCE_NAME = ?");
                 ps.setString(1, schemaName);
                 ps.setString(2, sequenceName);
             }
@@ -753,7 +797,7 @@ public class HanaDialect extends PreparedStatementSQLDialect {
                 throw new AssertionError();
             }
             int count = rs.getInt(1);
-            return (count == 1) ? sequenceName : null;
+            return count == 1 ? sequenceName : null;
         } finally {
             dataStore.closeSafe(rs);
             dataStore.closeSafe(ps);
@@ -761,8 +805,7 @@ public class HanaDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public Object getNextSequenceValue(String schemaName, String sequenceName, Connection cx)
-            throws SQLException {
+    public Object getNextSequenceValue(String schemaName, String sequenceName, Connection cx) throws SQLException {
         String sql = "SELECT " + encodeNextSequenceValue(schemaName, sequenceName) + " FROM DUMMY";
         Statement stmt = null;
         ResultSet rs = null;
@@ -807,8 +850,7 @@ public class HanaDialect extends PreparedStatementSQLDialect {
     @Override
     protected void addSupportedHints(Set<org.geotools.util.factory.Hints.Key> hints) {
         if (!simplifyDisabled) {
-            if ((hanaVersion.getVersion() > 2)
-                    || ((hanaVersion.getVersion() == 2) && (hanaVersion.getRevision() >= 40))) {
+            if (hanaVersion.getVersion() > 2 || hanaVersion.getVersion() == 2 && hanaVersion.getRevision() >= 40) {
                 hints.add(Hints.GEOMETRY_SIMPLIFICATION);
             }
         }
@@ -826,7 +868,7 @@ public class HanaDialect extends PreparedStatementSQLDialect {
 
     @Override
     public void handleSelectHints(StringBuffer sql, SimpleFeatureType featureType, Query query) {
-        if ((selectHints == null) || selectHints.trim().isEmpty()) {
+        if (selectHints == null || selectHints.trim().isEmpty()) {
             return;
         }
         sql.append(" WITH HINT( ");
@@ -846,19 +888,14 @@ public class HanaDialect extends PreparedStatementSQLDialect {
 
     @Override
     public void prepareGeometryValue(
-            Class<? extends Geometry> gClass,
-            int dimension,
-            int srid,
-            Class binding,
-            StringBuffer sql) {
+            Class<? extends Geometry> gClass, int dimension, int srid, Class binding, StringBuffer sql) {
         sql.append("ST_GeomFromWKB(?, ");
         sql.append(srid);
         sql.append(")");
     }
 
     @Override
-    public void setGeometryValue(
-            Geometry g, int dimension, int srid, Class binding, PreparedStatement ps, int column)
+    public void setGeometryValue(Geometry g, int dimension, int srid, Class binding, PreparedStatement ps, int column)
             throws SQLException {
         if (g != null) {
             dimension = Math.min(dimension, HanaDimensionFinder.findDimension(g));
@@ -875,13 +912,13 @@ public class HanaDialect extends PreparedStatementSQLDialect {
 
     @Override
     public void setValue(
-            Object value, Class binding, PreparedStatement ps, int column, Connection cx)
+            Object value, Class<?> binding, AttributeDescriptor att, PreparedStatement ps, int column, Connection cx)
             throws SQLException {
         if (value == null) {
-            super.setValue(value, binding, ps, column, cx);
+            super.setValue(value, binding, att, ps, column, cx);
             return;
         }
-        Integer sqlType = dataStore.getMapping(binding);
+        Integer sqlType = dataStore.getMapping(binding, att);
         switch (sqlType) {
             case Types.TIME:
                 // HANA cannot deal with time instances where the date part is before 1970.
@@ -890,7 +927,7 @@ public class HanaDialect extends PreparedStatementSQLDialect {
                 ps.setTime(column, time);
                 break;
             default:
-                super.setValue(value, binding, ps, column, cx);
+                super.setValue(value, binding, att, ps, column, cx);
         }
     }
 
@@ -899,8 +936,7 @@ public class HanaDialect extends PreparedStatementSQLDialect {
         return new HanaFilterToSQL(this, functionEncodingEnabled, hanaVersion);
     }
 
-    private String resolveSchema(String schemaName, Connection cx)
-            throws SQLException, AssertionError {
+    private String resolveSchema(String schemaName, Connection cx) throws SQLException, AssertionError {
         if (schemaName == null) {
             schemaName = getCurrentSchema(cx);
         }
@@ -925,20 +961,16 @@ public class HanaDialect extends PreparedStatementSQLDialect {
         return schemaName;
     }
 
-    private boolean tableExists(String schemaName, String tableName, Connection cx)
-            throws SQLException {
+    private boolean tableExists(String schemaName, String tableName, Connection cx) throws SQLException {
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
             if (schemaName == null) {
-                ps =
-                        cx.prepareStatement(
-                                "SELECT COUNT(*) FROM PUBLIC.TABLES WHERE SCHEMA_NAME = CURRENT_SCHEMA AND TABLE_NAME = ?");
+                ps = cx.prepareStatement(
+                        "SELECT COUNT(*) FROM PUBLIC.TABLES WHERE SCHEMA_NAME = CURRENT_SCHEMA AND TABLE_NAME = ?");
                 ps.setString(1, tableName);
             } else {
-                ps =
-                        cx.prepareStatement(
-                                "SELECT COUNT(*) FROM PUBLIC.TABLES WHERE SCHEMA_NAME = ? AND TABLE_NAME = ?");
+                ps = cx.prepareStatement("SELECT COUNT(*) FROM PUBLIC.TABLES WHERE SCHEMA_NAME = ? AND TABLE_NAME = ?");
                 ps.setString(1, schemaName);
                 ps.setString(2, tableName);
             }
@@ -947,7 +979,7 @@ public class HanaDialect extends PreparedStatementSQLDialect {
                 throw new AssertionError();
             }
             int count = rs.getInt(1);
-            return (count == 1);
+            return count == 1;
         } finally {
             dataStore.closeSafe(rs);
             dataStore.closeSafe(ps);
@@ -967,6 +999,36 @@ public class HanaDialect extends PreparedStatementSQLDialect {
             }
             sb.append(HanaUtil.encodeIdentifier(id));
         }
+    }
+
+    private HanaCloudVersion queryCloudVersion(Connection cx) throws SQLException {
+        if (hanaVersion.getVersion() < 4) return HanaCloudVersion.INVALID_VERSION;
+
+        Statement st = null;
+        ResultSet rs = null;
+        try {
+            st = cx.createStatement();
+            rs = st.executeQuery("SELECT CLOUD_VERSION FROM SYS.M_DATABASE");
+
+            if (!rs.next()) throw new RuntimeException("Unable to determine HANA Cloud Version.");
+
+            String cloudVersion = rs.getString(1);
+            return new HanaCloudVersion(cloudVersion);
+        } finally {
+            dataStore.closeSafe(rs);
+            dataStore.closeSafe(st);
+        }
+    }
+
+    private boolean isExtentEstimationAvailable() {
+        switch (hanaVersion.getVersion()) {
+            case 2:
+                return hanaVersion.compareTo(new HanaVersion(2, 0, 80, 0)) >= 0;
+            case 4:
+                return cloudVersion.compareTo(new HanaCloudVersion(2024, 2, 0)) >= 0;
+        }
+
+        return false;
     }
 
     private class SchemaCache {

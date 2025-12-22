@@ -18,12 +18,13 @@
 package org.geotools.swing.data;
 
 import java.io.File;
+import java.io.Serial;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
 import org.geotools.swing.wizard.JWizard;
 import org.geotools.util.URLs;
 
@@ -33,11 +34,11 @@ import org.geotools.util.URLs;
  * <p>Example of use (from the GeoTools example project):
  *
  * <pre><code>
- * List<Parameter<?>> list = new ArrayList<Parameter<?>>();
- * list.add(new Parameter<File>("image", File.class, "Image",
+ * List&lt;Parameter&lt;?&gt;&gt; list = new ArrayList&lt;Parameter&lt;?&gt;&gt;();
+ * list.add(new Parameter&lt;File&gt;("image", File.class, "Image",
  * "GeoTiff or World+Image to display as basemap",
  * new KVP( Parameter.EXT, "tif", Parameter.EXT, "jpg")));
- * list.add(new Parameter<File>("shape", File.class, "Shapefile",
+ * list.add(new Parameter&lt;File&gt;("shape", File.class, "Shapefile",
  * "Shapefile contents to display", new KVP(Parameter.EXT, "shp")));
  *
  * JParameterListWizard wizard = new JParameterListWizard("Image Lab",
@@ -52,6 +53,7 @@ import org.geotools.util.URLs;
  * </pre></code>
  */
 public class JParameterListWizard extends JWizard {
+    @Serial
     private static final long serialVersionUID = -3961250234483352643L;
 
     /** Initial page of user focused options */
@@ -72,10 +74,7 @@ public class JParameterListWizard extends JWizard {
      * @param connectionParams an optional {@code Map} of initial parameter values
      */
     public JParameterListWizard(
-            String title,
-            String description,
-            List<Parameter<?>> contents,
-            Map<String, Object> connectionParams) {
+            String title, String description, List<Parameter<?>> contents, Map<String, Object> connectionParams) {
         super(title);
         this.connectionParameters = connectionParams == null ? new HashMap<>() : connectionParams;
         fillInDefaults(contents, this.connectionParameters);
@@ -89,9 +88,7 @@ public class JParameterListWizard extends JWizard {
         List<Parameter<?>> advancedContents = contentsForLevel(contents, "advanced");
 
         if (!advancedContents.isEmpty()) {
-            advancedPage =
-                    new JParameterListPage(
-                            title, description, advancedContents, connectionParameters);
+            advancedPage = new JParameterListPage(title, description, advancedContents, connectionParameters);
             advancedPage.setPageIdentifier("advancedPage");
             advancedPage.setBackPageIdentifier("userPage");
             registerWizardPanel(advancedPage);
@@ -138,10 +135,7 @@ public class JParameterListWizard extends JWizard {
         if (contents != null) {
             for (Parameter<?> param : contents) {
                 if (level != null) {
-                    String check =
-                            param.metadata == null
-                                    ? "user"
-                                    : (String) param.metadata.get(Parameter.LEVEL);
+                    String check = param.metadata == null ? "user" : (String) param.metadata.get(Parameter.LEVEL);
                     if (check == null) {
                         check = "user";
                     }
@@ -165,8 +159,7 @@ public class JParameterListWizard extends JWizard {
     }
 
     /**
-     * Helper method that returns the "url" element of the connection parameters as a File, if
-     * present. Equivalent to:
+     * Helper method that returns the "url" element of the connection parameters as a File, if present. Equivalent to:
      *
      * <pre><code>
      *     URL url = (URL) myWizard.getConnectionParameters().get("url");

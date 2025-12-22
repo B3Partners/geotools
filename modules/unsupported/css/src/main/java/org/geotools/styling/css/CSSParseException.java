@@ -16,6 +16,7 @@
  */
 package org.geotools.styling.css;
 
+import java.io.Serial;
 import java.util.List;
 import org.parboiled.errors.DefaultInvalidInputErrorFormatter;
 import org.parboiled.errors.InvalidInputError;
@@ -28,6 +29,7 @@ import org.parboiled.support.Position;
  * @author Andrea Aime - GeoSolutions
  */
 public class CSSParseException extends IllegalArgumentException {
+    @Serial
     private static final long serialVersionUID = -2624556764086947780L;
 
     private volatile List<ParseError> errors;
@@ -39,20 +41,17 @@ public class CSSParseException extends IllegalArgumentException {
 
     private static String buildMessage(List<ParseError> errors) {
         if (errors == null || errors.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Cannot build a CSSParseException without a list of errors");
+            throw new IllegalArgumentException("Cannot build a CSSParseException without a list of errors");
         }
 
         StringBuilder sb = new StringBuilder();
         for (ParseError pe : errors) {
             Position pos = pe.getInputBuffer().getPosition(pe.getStartIndex());
-            String message =
-                    pe.getErrorMessage() != null
-                            ? pe.getErrorMessage()
-                            : pe instanceof InvalidInputError
-                                    ? new DefaultInvalidInputErrorFormatter()
-                                            .format((InvalidInputError) pe)
-                                    : pe.getClass().getSimpleName();
+            String message = pe.getErrorMessage() != null
+                    ? pe.getErrorMessage()
+                    : pe instanceof InvalidInputError iie
+                            ? new DefaultInvalidInputErrorFormatter().format(iie)
+                            : pe.getClass().getSimpleName();
             sb.append(message)
                     .append(" (line ")
                     .append(pos.line)

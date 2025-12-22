@@ -17,10 +17,10 @@
 package org.geotools.temporal.object;
 
 import java.util.Date;
+import org.geotools.api.temporal.Instant;
+import org.geotools.api.temporal.Period;
+import org.geotools.api.temporal.RelativePosition;
 import org.geotools.util.Utilities;
-import org.opengis.temporal.Instant;
-import org.opengis.temporal.Period;
-import org.opengis.temporal.RelativePosition;
 
 /**
  * A one-dimensional geometric primitive that represent extent in time.
@@ -82,11 +82,9 @@ public class DefaultPeriod extends DefaultTemporalGeometricPrimitive implements 
         if (object == this) {
             return true;
         }
-        if (object instanceof DefaultPeriod) {
-            final DefaultPeriod that = (DefaultPeriod) object;
+        if (object instanceof DefaultPeriod that) {
 
-            return Utilities.equals(this.begining, that.begining)
-                    && Utilities.equals(this.ending, that.ending);
+            return Utilities.equals(this.begining, that.begining) && Utilities.equals(this.ending, that.ending);
         }
         return false;
     }

@@ -23,7 +23,14 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import org.geotools.geometry.Envelope2D;
+import org.geotools.api.geometry.Bounds;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.CoordinateOperation;
+import org.geotools.api.referencing.operation.CoordinateOperationFactory;
+import org.geotools.api.referencing.operation.OperationNotFoundException;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.util.factory.GeoTools;
@@ -31,24 +38,18 @@ import org.geotools.util.factory.Hints;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.CoordinateOperation;
-import org.opengis.referencing.operation.CoordinateOperationFactory;
-import org.opengis.referencing.operation.OperationNotFoundException;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * Unit test for <a href="https://jira.codehaus.org/browse/GEOT-4780">GEOT-4780</>.<br>
  * Detailled description :<br>
- * - One thread continuously retrieves the {@link CoordinateOperationFactory} through the {@link
- * ReferencingFactoryFinder}.<br>
- * - Another thread performs {@link #NUM_ITERATIONS} reprojections using CRS for which the HSQL
- * database indicates a NTv2Transform.<br>
+ * - One thread continuously retrieves the {@link CoordinateOperationFactory} through the
+ * {@link ReferencingFactoryFinder}.<br>
+ * - Another thread performs {@link #NUM_ITERATIONS} reprojections using CRS for which the HSQL database indicates a
+ * NTv2Transform.<br>
  * When the second thread ends, the first one is stopped.<br>
  * Using multiple iterations, we quite always produce a deadlock.<br>
- * Note that I could not reproduce the problem with {@link #LENIENT} set to <code>true</code> here,
- * but I could in another application.<br>
+ * Note that I could not reproduce the problem with {@link #LENIENT} set to <code>true</code> here, but I could in
+ * another application.<br>
  * <br>
  *
  * @author Stephane Wasserhardt
@@ -71,7 +72,7 @@ public class ThreadedTransformTest {
 
     private CoordinateReferenceSystem wgs84;
 
-    private Envelope2D envelope;
+    private Bounds envelope;
 
     /**
      * Instantiates the test data.
@@ -82,7 +83,7 @@ public class ThreadedTransformTest {
     public void setUp() throws Exception {
         nad83 = CRS.decode("EPSG:4269");
         wgs84 = CRS.decode("EPSG:4326");
-        envelope = new Envelope2D(wgs84, new Rectangle2D.Double(-77.145996, 39.04541, 0.1, 0.1));
+        envelope = new GeneralBounds(new Rectangle2D.Double(-77.145996, 39.04541, 0.1, 0.1), wgs84);
     }
 
     @After
@@ -97,8 +98,7 @@ public class ThreadedTransformTest {
     }
 
     protected void transform()
-            throws URISyntaxException, OperationNotFoundException, FactoryException,
-                    TransformException {
+            throws URISyntaxException, OperationNotFoundException, FactoryException, TransformException {
         for (int iter = 0; iter < NUM_ITERATIONS; iter++) {
             CoordinateOperationFactory coordinateOperationFactory =
                     ReferencingFactoryFinder.getCoordinateOperationFactory(HINTS);
@@ -106,42 +106,35 @@ public class ThreadedTransformTest {
             // coordinateOperationFactory = CRS
             // .getCoordinateOperationFactory(LENIENT);
 
-            final CoordinateOperation operation =
-                    coordinateOperationFactory.createOperation(wgs84, nad83);
+            final CoordinateOperation operation = coordinateOperationFactory.createOperation(wgs84, nad83);
 
             CRS.transform(operation, envelope);
         }
     }
 
     /**
-     * Main test method. Waits 30 seconds to perform envelope reprojections with multiple threads
-     * while one threads retrieves the coordinate operation factory. If this fails, there's most
-     * probably a deadlock that prevents the operations from finishing (use debugger to see threads
-     * & owned/waiting locks).<br>
-     * This may not fail all the time, but using multiple iterations should maximize chances of
-     * producing the bug. Although this may vary from a computer to another...
+     * Main test method. Waits 30 seconds to perform envelope reprojections with multiple threads while one threads
+     * retrieves the coordinate operation factory. If this fails, there's most probably a deadlock that prevents the
+     * operations from finishing (use debugger to see threads & owned/waiting locks).<br>
+     * This may not fail all the time, but using multiple iterations should maximize chances of producing the bug.
+     * Although this may vary from a computer to another...
      *
-     * @throws Exception If an exception occurs while performing {@link #retrieve} or {@link
-     *     #transform}.
+     * @throws Exception If an exception occurs while performing {@link #retrieve} or {@link #transform}.
      */
     @Test(timeout = 30000L)
     public void testMultithreadDeadlock() throws Exception {
         List<Future<Void>> futures = new ArrayList<>();
         // raise some hell with 32 total threads
         for (int i = 0; i < 16; i++) {
-            Future<Void> f =
-                    EXECUTOR.submit(
-                            () -> {
-                                retrieve();
-                                return null;
-                            });
+            Future<Void> f = EXECUTOR.submit(() -> {
+                retrieve();
+                return null;
+            });
             futures.add(f);
-            f =
-                    EXECUTOR.submit(
-                            () -> {
-                                transform();
-                                return null;
-                            });
+            f = EXECUTOR.submit(() -> {
+                transform();
+                return null;
+            });
             futures.add(f);
         }
 

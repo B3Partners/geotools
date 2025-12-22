@@ -18,7 +18,7 @@
 package org.geotools.grid;
 
 import java.util.Map;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
 /**
  * Controls the creating of features representing grid elements during vector grid construction.
@@ -66,11 +66,11 @@ public abstract class GridFeatureBuilder {
     }
 
     /**
-     * Sets the values of attributes for a new {@code SimpleFeature} being constructed from the
-     * given {@code GridElement}.
+     * Sets the values of attributes for a new {@code SimpleFeature} being constructed from the given
+     * {@code GridElement}.
      *
-     * <p>This method must be overridden by the user. It is called by the grid building classes as
-     * each new feature is constructed.
+     * <p>This method must be overridden by the user. It is called by the grid building classes as each new feature is
+     * constructed.
      *
      * @param el the element from which the new feature is being constructed
      * @param attributes a {@code Map} with attribute names as keys and attribute values as values
@@ -78,8 +78,8 @@ public abstract class GridFeatureBuilder {
     public abstract void setAttributes(GridElement el, Map<String, Object> attributes);
 
     /**
-     * Gets the {@code FeatureID} as a {@code String} for a new {@code SimpleFeature} being
-     * constructed from the given {@code GridElement}.
+     * Gets the {@code FeatureID} as a {@code String} for a new {@code SimpleFeature} being constructed from the given
+     * {@code GridElement}.
      *
      * <p>It is optional to override this method. The base implementation returns {@code null}.
      *
@@ -91,9 +91,9 @@ public abstract class GridFeatureBuilder {
     }
 
     /**
-     * Tests whether a feature will be constructed for the given {@code GridElement}. This can be
-     * overriden to create vector grids with 'holes' where elements are not required, for example,
-     * based on location or the relationship to other data layers.
+     * Tests whether a feature will be constructed for the given {@code GridElement}. This can be overriden to create
+     * vector grids with 'holes' where elements are not required, for example, based on location or the relationship to
+     * other data layers.
      *
      * <p>The base implementation always returns {@code true}.
      *

@@ -22,12 +22,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Unit tests for the DefaultFeatureBuilder class.
@@ -72,8 +72,7 @@ public class DefaultFeatureBuilderTest {
         // empty
     }
 
-    private void assertSetter(
-            DefaultGridFeatureBuilder setter, String typeName, CoordinateReferenceSystem crs) {
+    private void assertSetter(DefaultGridFeatureBuilder setter, String typeName, CoordinateReferenceSystem crs) {
         SimpleFeatureType type = setter.getType();
         assertEquals(2, type.getAttributeCount());
         assertNotNull(type.getDescriptor(GridFeatureBuilder.DEFAULT_GEOMETRY_ATTRIBUTE_NAME));

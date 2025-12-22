@@ -16,17 +16,16 @@
  */
 package org.geotools.data.solr.complex;
 
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
 
-/**
- * Data model class that will be used to retrieve from a XML file the Apache Solr index schema
- * fields definitions.
- */
+/** Data model class that will be used to retrieve from a XML file the Apache Solr index schema fields definitions. */
 public final class SchemaField implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private String name;
@@ -62,6 +61,7 @@ public final class SchemaField implements Serializable {
     @XmlRootElement(name = "schema")
     public static final class SchemaFields implements Serializable {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         private List<SchemaField> fields;

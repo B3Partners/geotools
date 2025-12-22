@@ -21,10 +21,17 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import org.geotools.data.Query;
+import java.nio.charset.StandardCharsets;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.filter.text.cql2.CQL;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.geometry.jts.ReferencedEnvelope3D;
@@ -34,12 +41,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.filter.Filter;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Test non functionality of PropertyDataStore.
@@ -63,7 +64,7 @@ public class PropertyDataStore2Test {
         if (file.exists()) {
             file.delete();
         }
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
             writer.write("_=id:Integer,*geom:Geometry,name:String");
             writer.newLine();
             writer.write("fid1=1|LINESTRING(0 0,10 10)|jody");
@@ -83,7 +84,7 @@ public class PropertyDataStore2Test {
         if (file2.exists()) {
             file2.delete();
         }
-        try (BufferedWriter writer2 = new BufferedWriter(new FileWriter(file2))) {
+        try (BufferedWriter writer2 = new BufferedWriter(new FileWriter(file2, StandardCharsets.UTF_8))) {
             writer2.write("_=id:Integer,geom:Geometry:srid=4283");
             writer2.newLine();
             writer2.write("fid1=1|LINESTRING(0 0,10 10)");
@@ -104,7 +105,7 @@ public class PropertyDataStore2Test {
             file3.delete();
         }
 
-        try (BufferedWriter writer3 = new BufferedWriter(new FileWriter(file3))) {
+        try (BufferedWriter writer3 = new BufferedWriter(new FileWriter(file3, StandardCharsets.UTF_8))) {
             writer3.write("_=id:Integer,geom:Geometry:srid=4327");
             writer3.newLine();
             writer3.write("fid1=1|LINESTRING(0 0 0,10 10 0)");
@@ -161,8 +162,7 @@ public class PropertyDataStore2Test {
                 geom = (Geometry) val;
 
                 Object userData = geom.getUserData();
-                Assert.assertTrue(
-                        userData != null && userData instanceof CoordinateReferenceSystem);
+                Assert.assertTrue(userData != null && userData instanceof CoordinateReferenceSystem);
                 // ensure the same CRS is passed on to userData for encoding
                 Assert.assertEquals(userData, geomType.getCoordinateReferenceSystem());
             }
@@ -175,8 +175,7 @@ public class PropertyDataStore2Test {
         Query q = new Query("road3", Filter.INCLUDE);
         Assert.assertEquals(2, fs.getCount(q));
         ReferencedEnvelope bounds =
-                new ReferencedEnvelope3D(
-                        0, 30, 0, 30, 0, 20, fs.getSchema().getCoordinateReferenceSystem());
+                new ReferencedEnvelope3D(0, 30, 0, 30, 0, 20, fs.getSchema().getCoordinateReferenceSystem());
         Assert.assertEquals(bounds, fs.getBounds());
         Assert.assertEquals(bounds, fs.getBounds(q));
 

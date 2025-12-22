@@ -22,10 +22,18 @@ import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvValidationException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.cs.AxisDirection;
 import org.geotools.data.csv.CSVFileState;
 import org.geotools.feature.AttributeTypeBuilder;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -35,13 +43,6 @@ import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.cs.AxisDirection;
 
 public class CSVLatLonStrategy extends CSVStrategy {
 
@@ -62,8 +63,7 @@ public class CSVLatLonStrategy extends CSVStrategy {
         this(csvFileState, latField, lngField, "location");
     }
 
-    public CSVLatLonStrategy(
-            CSVFileState csvFileState, String latField, String lngField, String pointField) {
+    public CSVLatLonStrategy(CSVFileState csvFileState, String latField, String lngField, String pointField) {
         super(csvFileState);
         this.latField = latField;
         this.lngField = lngField;
@@ -148,8 +148,7 @@ public class CSVLatLonStrategy extends CSVStrategy {
                 header.add(this.latField);
             }
         } else {
-            throw new IOException(
-                    "Unable use " + this.latField + "/" + this.lngField + " to represent " + gd);
+            throw new IOException("Unable use " + this.latField + "/" + this.lngField + " to represent " + gd);
         }
         for (AttributeDescriptor descriptor : featureType.getAttributeDescriptors()) {
             if (descriptor instanceof GeometryDescriptor) continue;
@@ -157,13 +156,12 @@ public class CSVLatLonStrategy extends CSVStrategy {
         }
 
         // Write out header, producing an empty file of the correct type
-        try (CSVWriter writer =
-                new CSVWriter(
-                        new FileWriter(this.csvFileState.getFile()),
-                        getSeparator(),
-                        getQuotechar(),
-                        getEscapechar(),
-                        getLineSeparator())) {
+        try (CSVWriter writer = new CSVWriter(
+                new FileWriter(this.csvFileState.getFile(), StandardCharsets.UTF_8),
+                getSeparator(),
+                getQuotechar(),
+                getEscapechar(),
+                getLineSeparator())) {
             writer.writeNext(header.toArray(new String[header.size()]), isQuoteAllFields());
         }
     }
@@ -247,8 +245,7 @@ public class CSVLatLonStrategy extends CSVStrategy {
             Object value = property.getValue();
             if (value == null) {
                 csvRecord.add("");
-            } else if (value instanceof Point) {
-                Point point = (Point) value;
+            } else if (value instanceof Point point) {
                 if (lngIndex < latIndex) {
                     csvRecord.add(Double.toString(point.getY()));
                     csvRecord.add(Double.toString(point.getX()));

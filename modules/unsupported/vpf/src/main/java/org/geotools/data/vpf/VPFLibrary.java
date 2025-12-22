@@ -35,8 +35,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.store.ContentDataStore;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
@@ -45,11 +50,6 @@ import org.geotools.data.vpf.file.VPFFileFactory;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.SchemaException;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /*
  * A data store for a VPF library. A library is identified by
@@ -122,10 +122,7 @@ public class VPFLibrary extends ContentDataStore {
         }
     }
 
-    /**
-     * The namespace to create FeatureTypes with. Set with a reasonable default of
-     * http://vpf.org/default.
-     */
+    /** The namespace to create FeatureTypes with. Set with a reasonable default of http://vpf.org/default. */
     private URI namespace = DEFAULT_NAMESPACE;
 
     /**
@@ -150,8 +147,8 @@ public class VPFLibrary extends ContentDataStore {
     */
 
     /**
-     * Constructor that adds a namespace to the File only constructor. If using another constructor
-     * then use setNamespace(URI) ((javadocTODO: add the correct link to previous method.))
+     * Constructor that adds a namespace to the File only constructor. If using another constructor then use
+     * setNamespace(URI) ((javadocTODO: add the correct link to previous method.))
      *
      * @param dir the containing directory
      * @throws SchemaException for problems making a featureType.
@@ -163,15 +160,14 @@ public class VPFLibrary extends ContentDataStore {
     */
 
     /**
-     * Constructor which defaults the containing database to null and looks up the first (and
-     * presumably only) entry in the library attribute table
+     * Constructor which defaults the containing database to null and looks up the first (and presumably only) entry in
+     * the library attribute table
      *
      * @param dir the containing directory
      * @param namespace the namespace to create features with.
      * @throws SchemaException For problems making one of the feature classes as a FeatureType.
      */
-    public VPFLibrary(SimpleFeature libraryFeature, File dir, URI namespace)
-            throws IOException, SchemaException {
+    public VPFLibrary(SimpleFeature libraryFeature, File dir, URI namespace) throws IOException, SchemaException {
         // read libraries info
         String vpfTableName = new File(dir, LIBRARY_HEADER_TABLE).toString();
         VPFFile lhtFile = VPFFileFactory.getInstance().getFile(vpfTableName);
@@ -330,20 +326,13 @@ public class VPFLibrary extends ContentDataStore {
     @Override
     public String toString() {
         return String.format(
-                "{"
-                        + "library: \"%s\","
-                        + "xmin: %f,"
-                        + "xmax: %f,"
-                        + "ymin: %f,"
-                        + "ymax: %f"
-                        + "}",
+                "{" + "library: \"%s\"," + "xmin: %f," + "xmax: %f," + "ymin: %f," + "ymax: %f" + "}",
                 libraryName, getXmin(), getXmax(), getYmin(), getYmax());
     }
     /** A map containing the tiles used by this library */
     private final Map<Short, String> tileMap = new HashMap<>();
     /**
-     * Returns a map containing the tiles used by this library. The map has Short keys and and
-     * string values.
+     * Returns a map containing the tiles used by this library. The map has Short keys and and string values.
      *
      * @return a <code>Map</code> value
      */
@@ -423,12 +412,10 @@ public class VPFLibrary extends ContentDataStore {
         // Get the type names for each coverage
         ArrayList<Name> result = new ArrayList<>();
         int coveragesCount = coverages.size();
-        int featureTypesCount = 0;
         // int index = 0;
         List[] coverageTypes = new List[coveragesCount];
         for (int inx = 0; inx < coveragesCount; inx++) {
             coverageTypes[inx] = coverages.get(inx).getFeatureTypes();
-            featureTypesCount += coverageTypes[inx].size();
         }
         // result = new String[featureTypesCount];
         for (int inx = 0; inx < coveragesCount; inx++) {
@@ -557,8 +544,8 @@ public class VPFLibrary extends ContentDataStore {
     }
 
     /**
-     * Returns the coordinate reference system appropriate for this library. If the coordinate
-     * reference system cannot be determined null will be returned.
+     * Returns the coordinate reference system appropriate for this library. If the coordinate reference system cannot
+     * be determined null will be returned.
      */
     public CoordinateReferenceSystem getCoordinateReferenceSystem() {
         if (crs == null) {

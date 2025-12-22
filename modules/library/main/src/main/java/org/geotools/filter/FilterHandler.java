@@ -19,8 +19,8 @@ package org.geotools.filter;
 import org.xml.sax.ContentHandler;
 
 /**
- * Interface to recieve filters from the filter sax parsing classes. Should be implemented by
- * classes that want the sax parsing classes to pass on their filter information.
+ * Interface to recieve filters from the filter sax parsing classes. Should be implemented by classes that want the sax
+ * parsing classes to pass on their filter information.
  *
  * @author Rob Hranac, Vision for New York
  * @version $Id$
@@ -31,5 +31,5 @@ public interface FilterHandler extends ContentHandler {
      *
      * @param filter The filter constructed by the factories.
      */
-    void filter(org.opengis.filter.Filter filter);
+    void filter(org.geotools.api.filter.Filter filter);
 }

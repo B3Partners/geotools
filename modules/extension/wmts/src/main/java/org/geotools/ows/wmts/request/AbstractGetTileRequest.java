@@ -25,6 +25,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.http.HTTPClient;
 import org.geotools.http.HTTPClientFinder;
@@ -42,8 +44,6 @@ import org.geotools.referencing.CRS;
 import org.geotools.renderer.lite.RendererUtilities;
 import org.geotools.tile.Tile;
 import org.geotools.util.logging.Logging;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * (Based on existing work by rgould for WMS service)
@@ -246,13 +246,7 @@ public abstract class AbstractGetTileRequest extends AbstractWMTSRequest impleme
         }
 
         if (LOGGER.isLoggable(Level.FINE)) {
-            LOGGER.fine(
-                    "getTiles:  layer:"
-                            + layer
-                            + " w:"
-                            + requestedWidth
-                            + " x h:"
-                            + requestedHeight);
+            LOGGER.fine("getTiles:  layer:" + layer + " w:" + requestedWidth + " x h:" + requestedHeight);
         }
 
         TileMatrixSet matrixSet = selectMatrixSet();
@@ -261,21 +255,14 @@ public abstract class AbstractGetTileRequest extends AbstractWMTSRequest impleme
 
         templateUrl = WMTSHelper.replaceToken(templateUrl, "time", requestedTime);
 
-        WMTSTileService wmtsService =
-                new WMTSTileService(templateUrl, layer, matrixSet, this.client);
+        WMTSTileService wmtsService = new WMTSTileService(templateUrl, layer, matrixSet, this.client);
 
         @SuppressWarnings("unchecked")
-        Map<String, String> extraHeaders =
-                ((Map<String, String>)
-                        (wmtsService
-                                .getExtrainfo()
-                                .computeIfAbsent(
-                                        WMTSTileService.EXTRA_HEADERS, extra -> new HashMap<>())));
+        Map<String, String> extraHeaders = (Map<String, String>)
+                wmtsService.getExtrainfo().computeIfAbsent(WMTSTileService.EXTRA_HEADERS, extra -> new HashMap<>());
         extraHeaders.putAll(this.headers);
 
-        double scale =
-                Math.round(
-                        RendererUtilities.calculateOGCScale(requestedBBox, requestedWidth, null));
+        double scale = Math.round(RendererUtilities.calculateOGCScale(requestedBBox, requestedWidth, null));
 
         return wmtsService.findTilesInExtent(requestedBBox, (int) scale, false, MAXTILES);
     }
@@ -283,8 +270,8 @@ public abstract class AbstractGetTileRequest extends AbstractWMTSRequest impleme
     /**
      * Used when creating WMTSTileService's based on a templateUrl.
      *
-     * <p>If the server supports RESTful calls. It will use that. Otherwise it will create a similar
-     * template for KVP requests.
+     * <p>If the server supports RESTful calls. It will use that. Otherwise it will create a similar template for KVP
+     * requests.
      *
      * @param tileMatrixSetName the name of the tileMatrixSet. This is expected to be UTF-8 encoded
      * @return template URL used containing placeholders for request parameters
@@ -298,8 +285,7 @@ public abstract class AbstractGetTileRequest extends AbstractWMTSRequest impleme
      */
     public String getTemplateUrl() {
         if (layer.getTemplate(format) == null) {
-            throw new IllegalStateException(
-                    "Template URL not available for GetTile request with format  " + format);
+            throw new IllegalStateException("Template URL not available for GetTile request with format  " + format);
         } else {
             return layer.getTemplate(format);
         }
@@ -344,7 +330,7 @@ public abstract class AbstractGetTileRequest extends AbstractWMTSRequest impleme
             CoordinateReferenceSystem matrixCRS = matrixSet.getCoordinateReferenceSystem();
             String matrixSRS = CRS.toSRS(matrixCRS);
             if (requestSRS.equals(matrixSRS)) { // matching SRS
-                if (links.containsKey((matrixSet.getIdentifier()))) { // and available for
+                if (links.containsKey(matrixSet.getIdentifier())) { // and available for
                     // this layer
                     if (LOGGER.isLoggable(Level.FINE)) {
                         LOGGER.fine("selected matrix set:" + matrixSet.getIdentifier());
@@ -360,13 +346,12 @@ public abstract class AbstractGetTileRequest extends AbstractWMTSRequest impleme
         // The layer does not provide the requested CRS, so just take any one
         if (retMatrixSet == null) {
             if (LOGGER.isLoggable(Level.INFO)) {
-                LOGGER.info(
-                        "Failed to match the requested CRS ("
-                                + requestCRS.getName()
-                                + ") with any of the tile matrices!");
+                LOGGER.info("Failed to match the requested CRS ("
+                        + requestCRS.getName()
+                        + ") with any of the tile matrices!");
             }
             for (TileMatrixSet matrix : capabilities.getMatrixSets()) {
-                if (links.containsKey((matrix.getIdentifier()))) { // available for this layer
+                if (links.containsKey(matrix.getIdentifier())) { // available for this layer
                     if (LOGGER.isLoggable(Level.FINE)) {
                         LOGGER.fine("defaulting matrix set:" + matrix.getIdentifier());
                     }
@@ -378,11 +363,10 @@ public abstract class AbstractGetTileRequest extends AbstractWMTSRequest impleme
             }
         }
         if (retMatrixSet == null) {
-            throw new ServiceException(
-                    "Unable to find a matching TileMatrixSet for layer "
-                            + layer.getName()
-                            + " and SRS: "
-                            + requestCRS.getName());
+            throw new ServiceException("Unable to find a matching TileMatrixSet for layer "
+                    + layer.getName()
+                    + " and SRS: "
+                    + requestCRS.getName());
         }
         return retMatrixSet;
     }

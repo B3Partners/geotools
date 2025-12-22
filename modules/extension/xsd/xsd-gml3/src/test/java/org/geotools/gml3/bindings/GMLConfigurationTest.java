@@ -29,26 +29,21 @@ import org.junit.Test;
 /** Test {@link GMLConfiguration}. */
 public class GMLConfigurationTest {
 
-    /**
-     * Check that all bindings in GMLConfiguration have a target (XSD name), and that the GML ones
-     * have a Java type.
-     */
+    /** Check that all bindings in GMLConfiguration have a target (XSD name), and that the GML ones have a Java type. */
     @Test
     public void testBindingTypes() throws Exception {
         GMLConfiguration configuration = new GMLConfiguration();
         Assert.assertEquals(GML.NAMESPACE, configuration.getNamespaceURI());
         Map<QName, Object> bindings = configuration.setupBindings();
         for (Object object : bindings.values()) {
-            if (object instanceof Class) {
-                Class type = (Class) object;
+            if (object instanceof Class type) {
                 if (Binding.class.isAssignableFrom(type)) {
                     Constructor c = type.getConstructors()[0];
                     Object[] params = new Object[c.getParameterTypes().length];
                     Binding binding = (Binding) c.newInstance(params);
                     Assert.assertNotNull(binding.getTarget());
                     if (binding.getTarget().getNamespaceURI().equals(GML.NAMESPACE)) {
-                        Assert.assertNotNull(
-                                binding.getTarget() + " has a null type", binding.getType());
+                        Assert.assertNotNull(binding.getTarget() + " has a null type", binding.getType());
                     }
                 }
             }

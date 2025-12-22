@@ -16,13 +16,17 @@
  */
 package org.geotools.brewer.styling.builder;
 
+import java.util.ArrayList;
 import java.util.List;
-import org.geotools.styling.GraphicLegend;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.GraphicalSymbol;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.ExternalGraphic;
+import org.geotools.api.style.GraphicLegend;
+import org.geotools.api.style.GraphicalSymbol;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.Symbol;
 
 public class GraphicLegendBuilder extends AbstractStyleBuilder<GraphicLegend> {
-    private List<GraphicalSymbol> symbols;
+    private List<Builder<? extends Symbol>> symbols = new ArrayList<>();
 
     private Expression opacity;
 
@@ -48,14 +52,16 @@ public class GraphicLegendBuilder extends AbstractStyleBuilder<GraphicLegend> {
         if (unset) {
             return null;
         }
+
+        if (symbols.isEmpty()) {
+            symbols.add(new MarkBuilder(this));
+        }
+        List<GraphicalSymbol> list = new ArrayList<>();
+        for (Builder<? extends Symbol> symbol : symbols) {
+            list.add(symbol.build());
+        }
         GraphicLegend graphic =
-                sf.graphicLegend(
-                        symbols,
-                        opacity,
-                        size,
-                        rotation,
-                        anchorPoint.build(),
-                        displacement.build());
+                sf.graphicLegend(list, opacity, size, rotation, anchorPoint.build(), displacement.build());
         return graphic;
     }
 
@@ -115,11 +121,13 @@ public class GraphicLegendBuilder extends AbstractStyleBuilder<GraphicLegend> {
         rotation = literal(0);
         anchorPoint.reset();
         displacement.reset();
+        symbols.clear();
         unset = false;
         return this;
     }
 
-    public GraphicLegendBuilder reset(org.opengis.style.GraphicLegend graphic) {
+    @Override
+    public GraphicLegendBuilder reset(GraphicLegend graphic) {
         if (graphic == null) {
             return unset();
         }
@@ -128,6 +136,19 @@ public class GraphicLegendBuilder extends AbstractStyleBuilder<GraphicLegend> {
         rotation = graphic.getRotation();
         anchorPoint.reset(graphic.getAnchorPoint());
         displacement.reset(graphic.getDisplacement());
+        symbols.clear();
+        for (GraphicalSymbol symbol : graphic.graphicalSymbols()) {
+            final Builder<? extends Symbol> builder;
+            if (symbol instanceof Mark mark) {
+                builder = new MarkBuilder(this).reset(mark);
+            } else if (symbol instanceof ExternalGraphic externalGraphic) {
+                builder = new ExternalGraphicBuilder(this).reset(externalGraphic);
+            } else {
+                throw new IllegalArgumentException("Unrecognized symbol type: " + symbol.getClass());
+            }
+
+            symbols.add(builder);
+        }
         unset = false;
         return this;
     }
@@ -140,11 +161,5 @@ public class GraphicLegendBuilder extends AbstractStyleBuilder<GraphicLegend> {
     @Override
     protected void buildStyleInternal(StyleBuilder sb) {
         sb.featureTypeStyle().rule().legend().init(this);
-    }
-
-    @Override
-    public GraphicLegendBuilder reset(GraphicLegend original) {
-        reset((org.opengis.style.GraphicLegend) original);
-        return this;
     }
 }

@@ -24,9 +24,16 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortOrder;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
 import org.geotools.coverage.util.FeatureUtilities;
-import org.geotools.data.Query;
 import org.geotools.filter.SortByImpl;
 import org.geotools.gce.imagemosaic.catalog.CatalogConfigurationBean;
 import org.geotools.gce.imagemosaic.catalog.CatalogConfigurationBeans;
@@ -37,13 +44,6 @@ import org.geotools.renderer.crs.ProjectionHandlerFinder;
 import org.geotools.util.Utilities;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.sort.SortOrder;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.operation.TransformException;
 
 /** Helper class building the mosaic query given the request and a reference bbox */
 class MosaicQueryBuilder {
@@ -73,19 +73,20 @@ class MosaicQueryBuilder {
 
     private void handleCoverageName(Query query) {
         query.getHints()
-                .put(CatalogConfigurationBeans.COVERAGE_NAME, request.getRasterManager().getName());
+                .put(
+                        CatalogConfigurationBeans.COVERAGE_NAME,
+                        request.getRasterManager().getName());
     }
 
     private void handleMultiThreadedLoading(Query query) {
         if (LOGGER.isLoggable(Level.INFO)) {
             ImageMosaicReader reader = request.getRasterManager().getParentReader();
-            LOGGER.info(
-                    "Multithreading status: "
-                            + String.valueOf(request.isMultithreadingAllowed())
-                            + " and executor: "
-                            + (reader.getMultiThreadedLoader() == null
-                                    ? " NONE"
-                                    : reader.getMultiThreadedLoader().toString()));
+            LOGGER.info("Multithreading status: "
+                    + String.valueOf(request.isMultithreadingAllowed())
+                    + " and executor: "
+                    + (reader.getMultiThreadedLoader() == null
+                            ? " NONE"
+                            : reader.getMultiThreadedLoader().toString()));
         }
         if (request.isMultithreadingAllowed()) {
             ImageMosaicReader reader = request.getRasterManager().getParentReader();
@@ -97,8 +98,8 @@ class MosaicQueryBuilder {
     }
 
     /**
-     * This method is responsible for initializing the {@link Query} object with the BBOX filter as
-     * per the incoming {@link RasterLayerRequest}.
+     * This method is responsible for initializing the {@link Query} object with the BBOX filter as per the incoming
+     * {@link RasterLayerRequest}.
      *
      * @return a {@link Query} object with the BBOX {@link Filter} in it.
      * @throws IOException in case something bad happens
@@ -112,25 +113,20 @@ class MosaicQueryBuilder {
             if (request.getMaximumNumberOfGranules() > 0) {
                 query.setMaxFeatures(request.getMaximumNumberOfGranules());
             }
-            final PropertyName geometryProperty =
-                    FeatureUtilities.DEFAULT_FILTER_FACTORY.property(
-                            rasterManager
-                                    .getGranuleCatalog()
-                                    .getType(typeName)
-                                    .getGeometryDescriptor()
-                                    .getName());
+            final PropertyName geometryProperty = FeatureUtilities.DEFAULT_FILTER_FACTORY.property(rasterManager
+                    .getGranuleCatalog()
+                    .getType(typeName)
+                    .getGeometryDescriptor()
+                    .getName());
             if (request.isHeterogeneousGranules() && queryBBox != null) {
                 ProjectionHandler handler =
-                        ProjectionHandlerFinder.getHandler(
-                                queryBBox, queryBBox.getCoordinateReferenceSystem(), true);
+                        ProjectionHandlerFinder.getHandler(queryBBox, queryBBox.getCoordinateReferenceSystem(), true);
                 if (handler != null) {
                     List<ReferencedEnvelope> envelopes = handler.getQueryEnvelopes();
                     if (envelopes != null && !envelopes.isEmpty()) {
                         List<Filter> filters = new ArrayList<>();
                         for (ReferencedEnvelope envelope : envelopes) {
-                            Filter f =
-                                    FeatureUtilities.DEFAULT_FILTER_FACTORY.bbox(
-                                            geometryProperty, envelope);
+                            Filter f = FeatureUtilities.DEFAULT_FILTER_FACTORY.bbox(geometryProperty, envelope);
                             filters.add(f);
                         }
                         if (envelopes.size() == 1) {
@@ -154,8 +150,8 @@ class MosaicQueryBuilder {
     }
 
     /**
-     * This method is responsible for creating the filters needed for addtional dimensions like
-     * TIME, ELEVATION additional Domains
+     * This method is responsible for creating the filters needed for addtional dimensions like TIME, ELEVATION
+     * additional Domains
      *
      * @param query the {@link Query} to set filters for.
      */
@@ -164,19 +160,17 @@ class MosaicQueryBuilder {
         final List elevations = request.getElevation();
         final Map<String, List> additionalDomains = request.getRequestedAdditionalDomains();
         final Filter filter = request.getFilter();
-        final boolean hasTime = (times != null && !times.isEmpty());
-        final boolean hasElevation = (elevations != null && !elevations.isEmpty());
+        final boolean hasTime = times != null && !times.isEmpty();
+        final boolean hasElevation = elevations != null && !elevations.isEmpty();
         final boolean hasAdditionalDomains = !additionalDomains.isEmpty();
         final boolean hasFilter = filter != null && !Filter.INCLUDE.equals(filter);
         // prepare eventual filter for filtering granules
         // handle elevation indexing first since we then combine this with the max in case we are
         // asking for current in time
         if (hasElevation) {
-            final Filter elevationF =
-                    rasterManager.elevationDomainManager.createFilter(
-                            GridCoverage2DReader.ELEVATION_DOMAIN, elevations);
-            query.setFilter(
-                    FeatureUtilities.DEFAULT_FILTER_FACTORY.and(query.getFilter(), elevationF));
+            final Filter elevationF = rasterManager.elevationDomainManager.createFilter(
+                    GridCoverage2DReader.ELEVATION_DOMAIN, elevations);
+            query.setFilter(FeatureUtilities.DEFAULT_FILTER_FACTORY.and(query.getFilter(), elevationF));
         }
 
         // handle generic filter since we then combine this with the max in case we are asking for
@@ -188,10 +182,8 @@ class MosaicQueryBuilder {
         // fuse time query with the bbox query
         if (hasTime) {
             final Filter timeFilter =
-                    this.rasterManager.timeDomainManager.createFilter(
-                            GridCoverage2DReader.TIME_DOMAIN, times);
-            query.setFilter(
-                    FeatureUtilities.DEFAULT_FILTER_FACTORY.and(query.getFilter(), timeFilter));
+                    this.rasterManager.timeDomainManager.createFilter(GridCoverage2DReader.TIME_DOMAIN, times);
+            query.setFilter(FeatureUtilities.DEFAULT_FILTER_FACTORY.and(query.getFilter(), timeFilter));
         }
 
         // === Custom Domains Management
@@ -200,16 +192,12 @@ class MosaicQueryBuilder {
             for (Map.Entry<String, List> entry : additionalDomains.entrySet()) {
 
                 // build a filter for each dimension
-                final String domainName =
-                        entry.getKey() + RasterManager.DomainDescriptor.DOMAIN_SUFFIX;
-                additionalFilter.add(
-                        rasterManager.domainsManager.createFilter(domainName, entry.getValue()));
+                final String domainName = entry.getKey() + RasterManager.DomainDescriptor.DOMAIN_SUFFIX;
+                additionalFilter.add(rasterManager.domainsManager.createFilter(domainName, entry.getValue()));
             }
             // merge with existing ones
-            query.setFilter(
-                    FeatureUtilities.DEFAULT_FILTER_FACTORY.and(
-                            query.getFilter(),
-                            FeatureUtilities.DEFAULT_FILTER_FACTORY.and(additionalFilter)));
+            query.setFilter(FeatureUtilities.DEFAULT_FILTER_FACTORY.and(
+                    query.getFilter(), FeatureUtilities.DEFAULT_FILTER_FACTORY.and(additionalFilter)));
         }
     }
 
@@ -226,35 +214,27 @@ class MosaicQueryBuilder {
         if (sortByClause != null && sortByClause.length() > 0) {
             SortBy[] sortBy = parseSortBy(sortByClause);
             if (sortBy == null) LOGGER.fine("No SortBy Clause");
-            else if (catalog.getQueryCapabilities(rasterManager.getTypeName())
-                    .supportsSorting(sortBy)) {
+            else if (catalog.getQueryCapabilities(rasterManager.getTypeName()).supportsSorting(sortBy)) {
                 query.setSortBy(sortBy);
             }
         } else {
             // no specified sorting, is this a heterogeneous CRS mosaic?
             String crsAttribute = rasterManager.getCrsAttribute();
             if (crsAttribute != null) {
-                SortBy sort =
-                        new SortByImpl(
-                                FeatureUtilities.DEFAULT_FILTER_FACTORY.property(crsAttribute),
-                                SortOrder.ASCENDING);
+                SortBy sort = new SortByImpl(
+                        FeatureUtilities.DEFAULT_FILTER_FACTORY.property(crsAttribute), SortOrder.ASCENDING);
                 SortBy[] sortBy = {sort};
-                if (catalog.getQueryCapabilities(rasterManager.getTypeName())
-                        .supportsSorting(sortBy)) {
+                if (catalog.getQueryCapabilities(rasterManager.getTypeName()).supportsSorting(sortBy)) {
                     query.setSortBy(sortBy);
                 } else {
-                    LOGGER.info(
-                            "Sorting parameter ignored, underlying datastore cannot sort on "
-                                    + Arrays.toString(sortBy));
+                    LOGGER.info("Sorting parameter ignored, underlying datastore cannot sort on "
+                            + Arrays.toString(sortBy));
                 }
             }
         }
     }
 
-    /**
-     * Parses a sort by definition, in the same syntax as WFS sortBy, into an array of {@link
-     * SortBy}
-     */
+    /** Parses a sort by definition, in the same syntax as WFS sortBy, into an array of {@link SortBy} */
     static SortBy[] parseSortBy(String sortByClause) {
         final String[] elements = sortByClause.split(",");
         if (elements != null && elements.length > 0) {
@@ -270,19 +250,15 @@ class MosaicQueryBuilder {
                     element = element.trim();
                     if (element.endsWith(Utils.ASCENDING_ORDER_IDENTIFIER)) {
                         String attribute = element.substring(0, element.length() - 2);
-                        clauses.add(
-                                new SortByImpl(
-                                        FeatureUtilities.DEFAULT_FILTER_FACTORY.property(attribute),
-                                        SortOrder.ASCENDING));
+                        clauses.add(new SortByImpl(
+                                FeatureUtilities.DEFAULT_FILTER_FACTORY.property(attribute), SortOrder.ASCENDING));
                         LOGGER.fine("Added clause ASCENDING on attribute:" + attribute);
                     } else
                     // DESCENDING
                     if (element.contains(Utils.DESCENDING_ORDER_IDENTIFIER)) {
                         String attribute = element.substring(0, element.length() - 2);
-                        clauses.add(
-                                new SortByImpl(
-                                        FeatureUtilities.DEFAULT_FILTER_FACTORY.property(attribute),
-                                        SortOrder.DESCENDING));
+                        clauses.add(new SortByImpl(
+                                FeatureUtilities.DEFAULT_FILTER_FACTORY.property(attribute), SortOrder.DESCENDING));
                         LOGGER.fine("Added clause DESCENDING on attribute:" + attribute);
                     } else {
                         LOGGER.fine("Ignoring sort clause :" + element);
@@ -301,14 +277,12 @@ class MosaicQueryBuilder {
     }
 
     private void handlePropertySelection(Query query) throws IOException {
-        CatalogConfigurationBean config =
-                rasterManager.getConfiguration().getCatalogConfigurationBean();
+        CatalogConfigurationBean config = rasterManager.getConfiguration().getCatalogConfigurationBean();
         boolean selectProperties = config.isPropertySelectionEnabled();
         // stack merge behavior needs extra attributes, for simplicity we disable property selection
         if (selectProperties && request.getMergeBehavior() == MergeBehavior.FLAT) {
             List<String> propertyNames = new ArrayList<>();
-            SimpleFeatureType schema =
-                    rasterManager.getGranuleCatalog().getType(rasterManager.getTypeName());
+            SimpleFeatureType schema = rasterManager.getGranuleCatalog().getType(rasterManager.getTypeName());
             propertyNames.add(schema.getGeometryDescriptor().getLocalName());
             propertyNames.add(getLocationAttributeProperty());
             if (schema.getDescriptor("imageindex") != null) propertyNames.add("imageindex");
@@ -321,9 +295,6 @@ class MosaicQueryBuilder {
     }
 
     private String getLocationAttributeProperty() {
-        return rasterManager
-                .getConfiguration()
-                .getCatalogConfigurationBean()
-                .getLocationAttribute();
+        return rasterManager.getConfiguration().getCatalogConfigurationBean().getLocationAttribute();
     }
 }

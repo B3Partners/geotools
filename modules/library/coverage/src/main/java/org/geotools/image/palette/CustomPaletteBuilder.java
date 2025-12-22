@@ -26,19 +26,19 @@ import java.awt.image.WritableRaster;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageTypeSpecifier;
-import javax.media.jai.ImageLayout;
+import org.eclipse.imagen.ImageLayout;
 import org.geotools.util.logging.Logging;
 
 /**
- * This class implements the octree quantization method as it is described in the "Graphics Gems"
- * (ISBN 0-12-286166-3, Chapter 4, pages 297-293)
+ * This class implements the octree quantization method as it is described in the "Graphics Gems" (ISBN 0-12-286166-3,
+ * Chapter 4, pages 297-293)
  *
  * @author Simone Giannecchini - GeoSolutions
  */
 public final class CustomPaletteBuilder {
     /**
-     * Default value for the threshold to decide whether a pixel is opaque (>=) or transparent (<).
-     * Default is 1 to try to preserve antialising
+     * Default value for the threshold to decide whether a pixel is opaque (>=) or transparent (<). Default is 1 to try
+     * to preserve antialising
      */
     public static final int DEFAULT_ALPHA_TH = 1;
 
@@ -84,8 +84,8 @@ public final class CustomPaletteBuilder {
      * Returns <code>true</code> if PaletteBuilder is able to create palette for given image type.
      *
      * @param type an instance of <code>ImageTypeSpecifier</code> to be indexed.
-     * @return <code>true</code> if the <code>PaletteBuilder</code> is likely to be able to create
-     *     palette for this image type.
+     * @return <code>true</code> if the <code>PaletteBuilder</code> is likely to be able to create palette for this
+     *     image type.
      * @exception IllegalArgumentException if <code>type</code> is <code>null</code>.
      */
     public static boolean canCreatePalette(ImageTypeSpecifier type) {
@@ -97,12 +97,11 @@ public final class CustomPaletteBuilder {
     }
 
     /**
-     * Returns <code>true</code> if PaletteBuilder is able to create palette for given rendered
-     * image.
+     * Returns <code>true</code> if PaletteBuilder is able to create palette for given rendered image.
      *
      * @param image an instance of <code>RenderedImage</code> to be indexed.
-     * @return <code>true</code> if the <code>PaletteBuilder</code> is likely to be able to create
-     *     palette for this image type.
+     * @return <code>true</code> if the <code>PaletteBuilder</code> is likely to be able to create palette for this
+     *     image type.
      * @exception IllegalArgumentException if <code>image</code> is <code>null</code>.
      */
     public static boolean canCreatePalette(RenderedImage image) {
@@ -122,8 +121,7 @@ public final class CustomPaletteBuilder {
         //
         // //
         final IndexColorModel icm = getIndexColorModel();
-        final WritableRaster destWr =
-                icm.createCompatibleWritableRaster(src.getWidth(), src.getHeight());
+        final WritableRaster destWr = icm.createCompatibleWritableRaster(src.getWidth(), src.getHeight());
         final BufferedImage dst = new BufferedImage(icm, destWr, false, null);
 
         // //
@@ -139,7 +137,7 @@ public final class CustomPaletteBuilder {
         // //
         final int numBands = src.getSampleModel().getNumBands();
         final int[] rgba = new int[numBands];
-        final boolean sourceHasAlpha = (numBands % 2 == 0);
+        final boolean sourceHasAlpha = numBands % 2 == 0;
         final int alphaBand = sourceHasAlpha ? numBands - 1 : -1;
         final int minx_ = src.getMinX();
         final int miny_ = src.getMinY();
@@ -196,11 +194,11 @@ public final class CustomPaletteBuilder {
     }
 
     public CustomPaletteBuilder(RenderedImage src, int size, int subsx, int subsy, int alpha_th) {
-        if ((subsx <= 0) || (subsx >= src.getWidth())) {
+        if (subsx <= 0 || subsx >= src.getWidth()) {
             throw new IllegalArgumentException("Invalid subsample x size");
         }
 
-        if ((subsy <= 0) || (subsy >= src.getWidth())) {
+        if (subsy <= 0 || subsy >= src.getWidth()) {
             throw new IllegalArgumentException("Invalid subsample y size");
         }
 
@@ -241,7 +239,7 @@ public final class CustomPaletteBuilder {
     }
 
     protected int findColorIndex(ColorNode aNode, int[] rgba, int transpBand) {
-        if ((transparency != Transparency.OPAQUE) && (rgba[transpBand] < alphaThreshold)) {
+        if (transparency != Transparency.OPAQUE && rgba[transpBand] < alphaThreshold) {
             return 0; // default transparent pixel
         }
 
@@ -254,13 +252,13 @@ public final class CustomPaletteBuilder {
                 if (aNode.children[childIndex] == null) {
                     int i = 1;
                     for (; i < 8; i++) {
-                        if (((childIndex + i) < 8) && (aNode.children[childIndex + i] != null)) {
+                        if (childIndex + i < 8 && aNode.children[childIndex + i] != null) {
                             childIndex += i;
 
                             break;
                         }
 
-                        if (((childIndex - i) >= 0) && (aNode.children[childIndex - i] != null)) {
+                        if (childIndex - i >= 0 && aNode.children[childIndex - i] != null) {
                             childIndex -= i;
 
                             break;
@@ -420,7 +418,7 @@ public final class CustomPaletteBuilder {
                 maxy = maxy > maxy_ ? maxy_ : maxy;
 
                 for (int j = miny; j < maxy; j++) {
-                    if ((subsampley > 1) && ((j % subsampley) != 0)) {
+                    if (subsampley > 1 && j % subsampley != 0) {
                         if (LOGGER.isLoggable(Level.FINER)) {
                             LOGGER.finer("Skipping J:" + j + " due to subsy:" + subsampley);
                         }
@@ -428,7 +426,7 @@ public final class CustomPaletteBuilder {
                     }
 
                     for (int i = minx; i < maxx; i++) {
-                        if ((subsampleX > 1) && ((i % subsampleX) != 0)) {
+                        if (subsampleX > 1 && i % subsampleX != 0) {
                             if (LOGGER.isLoggable(Level.FINER)) {
                                 LOGGER.finer("Skipping I:" + j + " due to subsx:" + subsampleX);
                             }
@@ -440,7 +438,7 @@ public final class CustomPaletteBuilder {
                          * assume all colors with alpha less than 1.0 as fully
                          * transparent.
                          */
-                        if (discriminantTransparency && (rgba[transpBand] < alphaThreshold)) {
+                        if (discriminantTransparency && rgba[transpBand] < alphaThreshold) {
                             transColor = insertNode(transColor, rgba, 0);
                             if (LOGGER.isLoggable(Level.FINER)) {
                                 LOGGER.finer("Transparent color!");
@@ -470,7 +468,7 @@ public final class CustomPaletteBuilder {
             }
 
             aNode.level = aLevel;
-            aNode.isLeaf = (aLevel > maxLevel);
+            aNode.isLeaf = aLevel > maxLevel;
 
             if (aNode.isLeaf) {
                 currSize++;
@@ -528,8 +526,7 @@ public final class CustomPaletteBuilder {
         return new IndexColorModel(8, currSize, red, green, blue);
     }
 
-    protected int findPaletteEntry(
-            ColorNode aNode, int index, byte[] red, byte[] green, byte[] blue) {
+    protected int findPaletteEntry(ColorNode aNode, int index, byte[] red, byte[] green, byte[] blue) {
         if (aNode == null) {
             return index;
         }
@@ -555,15 +552,15 @@ public final class CustomPaletteBuilder {
     }
 
     protected int getBranchIndex(int[] rgba, int aLevel) {
-        if ((aLevel > maxLevel) || (aLevel < 0)) {
+        if (aLevel > maxLevel || aLevel < 0) {
             throw new IllegalArgumentException("Invalid octree node depth: " + aLevel);
         }
         final int numBands = rgba.length;
         int shift = maxLevel - aLevel;
-        int red_index = 0x1 & ((0xff & rgba[0]) >> shift);
-        int green_index = 0x1 & ((0xff & rgba[numBands < 3 ? 0 : 1]) >> shift);
-        int blue_index = 0x1 & ((0xff & rgba[numBands < 3 ? 0 : 2]) >> shift);
-        int index = (red_index << 2) | (green_index << 1) | blue_index;
+        int red_index = 0x1 & (0xff & rgba[0]) >> shift;
+        int green_index = 0x1 & (0xff & rgba[numBands < 3 ? 0 : 1]) >> shift;
+        int blue_index = 0x1 & (0xff & rgba[numBands < 3 ? 0 : 2]) >> shift;
+        int index = red_index << 2 | green_index << 1 | blue_index;
 
         return index;
     }
@@ -573,7 +570,7 @@ public final class CustomPaletteBuilder {
             LOGGER.finer("reduceTree called");
         }
         int level = reduceList.length - 1;
-        while ((reduceList[level] == null) && (level >= 0)) {
+        while (reduceList[level] == null && level >= 0) {
             level--;
         }
 
@@ -614,7 +611,7 @@ public final class CustomPaletteBuilder {
         // reduce node
         int leafChildCount = thisNode.getLeafChildCount();
         thisNode.isLeaf = true;
-        currSize -= (leafChildCount - 1);
+        currSize -= leafChildCount - 1;
 
         for (int i = 0; i < 8; i++) {
             thisNode.children[i] = freeTree(thisNode.children[i]);
@@ -637,7 +634,7 @@ public final class CustomPaletteBuilder {
     }
 
     /** The node of color tree. */
-    protected class ColorNode {
+    protected static class ColorNode {
         public boolean isLeaf;
 
         public int childCount;
@@ -699,7 +696,7 @@ public final class CustomPaletteBuilder {
             int g = (int) green / colorCount;
             int b = (int) blue / colorCount;
 
-            int c = (0xff << 24) | ((0xff & r) << 16) | ((0xff & g) << 8) | (0xff & b);
+            int c = 0xff << 24 | (0xff & r) << 16 | (0xff & g) << 8 | 0xff & b;
 
             return c;
         }

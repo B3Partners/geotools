@@ -16,32 +16,32 @@
  */
 package org.geotools.parameter;
 
+import java.io.Serial;
 import java.io.Serializable;
+import java.text.MessageFormat;
 import java.util.AbstractList;
 import java.util.List;
 import java.util.RandomAccess;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.InvalidParameterCardinalityException;
+import org.geotools.api.parameter.InvalidParameterNameException;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterValue;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.referencing.AbstractIdentifiedObject;
-import org.opengis.parameter.GeneralParameterDescriptor;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.InvalidParameterCardinalityException;
-import org.opengis.parameter.InvalidParameterNameException;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterValue;
 
 /**
- * The list to be returned by {@link Parameter#values}. This class performs check on the parameter
- * value to be added or removed. This implementation supports {@link #add} and {@link #remove}
- * operations.
+ * The list to be returned by {@link Parameter#values}. This class performs check on the parameter value to be added or
+ * removed. This implementation supports {@link #add} and {@link #remove} operations.
  *
  * @since 2.1
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
  */
-final class ParameterValueList extends AbstractList<GeneralParameterValue>
-        implements RandomAccess, Serializable {
+final class ParameterValueList extends AbstractList<GeneralParameterValue> implements RandomAccess, Serializable {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -7446077551686135264L;
 
     /** The descriptor. */
@@ -56,8 +56,7 @@ final class ParameterValueList extends AbstractList<GeneralParameterValue>
      * @param descriptor The descriptor for this list.
      * @param values The parameter values for this list.
      */
-    public ParameterValueList(
-            final ParameterDescriptorGroup descriptor, final List<GeneralParameterValue> values) {
+    public ParameterValueList(final ParameterDescriptorGroup descriptor, final List<GeneralParameterValue> values) {
         this.descriptor = descriptor;
         this.values = values;
     }
@@ -108,25 +107,23 @@ final class ParameterValueList extends AbstractList<GeneralParameterValue>
     }
 
     /**
-     * Adds a {@linkplain ParameterValue parameter value} or an other {@linkplain ParameterGroup
-     * parameter group} to this group. If an existing parameter is already included for the same
-     * {@linkplain ParameterDescriptor#getName identifier}, then there is a choice:
+     * Adds a {@linkplain ParameterValue parameter value} or an other {@linkplain ParameterGroup parameter group} to
+     * this group. If an existing parameter is already included for the same {@linkplain ParameterDescriptor#getName
+     * identifier}, then there is a choice:
      *
      * <UL>
      *   <LI>For <code>{@linkplain GeneralParameterDescriptor#getMaximumOccurs maximumOccurs}
      *       == 1</code>, the new parameter will replace the existing parameter.
      *   <LI>For <code>{@linkplain GeneralParameterDescriptor#getMaximumOccurs maximumOccurs}
-     *       &gt; 1</code>, the new parameter will be added. If adding the new parameter will
-     *       increase the number past what is allowable by {@code maximumOccurs}, then an {@link
-     *       IllegalStateException} will be thrown.
+     *       &gt; 1</code>, the new parameter will be added. If adding the new parameter will increase the number past
+     *       what is allowable by {@code maximumOccurs}, then an {@link IllegalStateException} will be thrown.
      * </UL>
      *
      * @param parameter New parameter to be added to this group.
      * @return {@code true} if this object changed as a result of this call.
-     * @throws IllegalArgumentException if the specified parameter is not allowable by the groups
-     *     descriptor.
-     * @throws InvalidParameterCardinalityException if adding this parameter would result in more
-     *     parameters than allowed by {@code maximumOccurs}.
+     * @throws IllegalArgumentException if the specified parameter is not allowable by the groups descriptor.
+     * @throws InvalidParameterCardinalityException if adding this parameter would result in more parameters than
+     *     allowed by {@code maximumOccurs}.
      */
     @Override
     public boolean add(final GeneralParameterValue parameter) {
@@ -146,7 +143,7 @@ final class ParameterValueList extends AbstractList<GeneralParameterValue>
                      * the descriptor was illegal.
                      */
                     throw new IllegalArgumentException(
-                            Errors.format(ErrorKeys.ILLEGAL_DESCRIPTOR_FOR_PARAMETER_$1, name));
+                            MessageFormat.format(ErrorKeys.ILLEGAL_DESCRIPTOR_FOR_PARAMETER_$1, name));
                 }
             }
             /*
@@ -154,13 +151,13 @@ final class ParameterValueList extends AbstractList<GeneralParameterValue>
              * was invalid.
              */
             final Object value;
-            if (parameter instanceof ParameterValue) {
-                value = ((ParameterValue) parameter).getValue();
+            if (parameter instanceof ParameterValue parameterValue) {
+                value = parameterValue.getValue();
             } else {
                 value = "(group)";
             }
             throw new InvalidParameterNameException(
-                    Errors.format(ErrorKeys.ILLEGAL_ARGUMENT_$2, name, value), name);
+                    MessageFormat.format(ErrorKeys.ILLEGAL_ARGUMENT_$2, name, value), name);
         }
         final int max = type.getMaximumOccurs();
         if (max == 1) {
@@ -190,7 +187,7 @@ final class ParameterValueList extends AbstractList<GeneralParameterValue>
             }
             if (count >= max) {
                 throw new InvalidParameterCardinalityException(
-                        Errors.format(ErrorKeys.TOO_MANY_OCCURENCES_$2, name, count), name);
+                        MessageFormat.format(ErrorKeys.TOO_MANY_OCCURENCES_$2, name, count), name);
             }
         }
         values.add(parameter);
@@ -226,9 +223,7 @@ final class ParameterValueList extends AbstractList<GeneralParameterValue>
         if (count <= min) {
             final int max = type.getMaximumOccurs();
             throw new InvalidParameterCardinalityException(
-                    Errors.format(
-                            ErrorKeys.ILLEGAL_OCCURS_FOR_PARAMETER_$4, name, count - 1, min, max),
-                    name);
+                    MessageFormat.format(ErrorKeys.ILLEGAL_OCCURS_FOR_PARAMETER_$4, name, count - 1, min, max), name);
         }
         final GeneralParameterValue value = values.remove(index);
         assert value != null && type.equals(value.getDescriptor()) : value;

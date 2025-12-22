@@ -16,15 +16,20 @@
  */
 package org.geotools.data;
 
+import java.io.Serial;
 import java.util.List;
+import org.geotools.api.data.CloseableIterator;
+import org.geotools.api.data.FileServiceInfo;
+import org.geotools.api.data.Query;
 
 /**
- * Default implementation of {@link FileServiceInfo}. It simply returns a {@link
- * DefaultCloseableIterator} built on top of the underlying file list.
+ * Default implementation of {@link FileServiceInfo}. It simply returns a {@link DefaultCloseableIterator} built on top
+ * of the underlying file list.
  */
 public class DefaultFileServiceInfo extends DefaultServiceInfo implements FileServiceInfo {
 
     /** serialVersionUID */
+    @Serial
     private static final long serialVersionUID = 3278465948006711812L;
 
     protected List<FileGroup> files;

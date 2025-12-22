@@ -16,6 +16,7 @@
  */
 package org.geotools.geometry.jts;
 
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -44,6 +45,7 @@ import org.locationtech.jts.geom.PrecisionModel;
  */
 public class CurvedGeometryFactory extends GeometryFactory {
 
+    @Serial
     private static final long serialVersionUID = -298811277709598383L;
 
     GeometryFactory delegate;
@@ -62,8 +64,8 @@ public class CurvedGeometryFactory extends GeometryFactory {
     /**
      * Creates a {@link CircularString}
      *
-     * @param dimension Number of dimensions in the control point array. For the time being, any
-     *     value other than 2 will cause a IllegalArgumentException
+     * @param dimension Number of dimensions in the control point array. For the time being, any value other than 2 will
+     *     cause a IllegalArgumentException
      */
     public LineString createCircularString(int dimension, double... controlPoints) {
         if (dimension != 2) {
@@ -74,11 +76,11 @@ public class CurvedGeometryFactory extends GeometryFactory {
     }
 
     /**
-     * Creates a {@link CircularString} or a {@link CircularRing} depending on whether the points
-     * are forming a closed ring, or not
+     * Creates a {@link CircularString} or a {@link CircularRing} depending on whether the points are forming a closed
+     * ring, or not
      *
-     * @param dimension Number of dimensions in the control point array. For the time being, any
-     *     value other than 2 will cause a IllegalArgumentException
+     * @param dimension Number of dimensions in the control point array. For the time being, any value other than 2 will
+     *     cause a IllegalArgumentException
      */
     public LineString createCurvedGeometry(int dimension, double... controlPoints) {
         if (dimension != 2) {
@@ -99,8 +101,8 @@ public class CurvedGeometryFactory extends GeometryFactory {
     }
 
     /**
-     * Creates a {@link CircularString} or a {@link CircularRing} depending on whether the points
-     * are forming a closed ring, or not
+     * Creates a {@link CircularString} or a {@link CircularRing} depending on whether the points are forming a closed
+     * ring, or not
      */
     public LineString createCurvedGeometry(CoordinateSequence cs) {
         int lastCoordinate = cs.size() - 1;
@@ -156,9 +158,9 @@ public class CurvedGeometryFactory extends GeometryFactory {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((delegate == null) ? 0 : delegate.hashCode());
+        result = prime * result + (delegate == null ? 0 : delegate.hashCode());
         long temp = Double.doubleToLongBits(tolerance);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
+        result = prime * result + (int) (temp ^ temp >>> 32);
         return result;
     }
 
@@ -171,8 +173,7 @@ public class CurvedGeometryFactory extends GeometryFactory {
         if (delegate == null) {
             if (other.delegate != null) return false;
         } else if (!delegate.equals(other.delegate)) return false;
-        if (Double.doubleToLongBits(tolerance) != Double.doubleToLongBits(other.tolerance))
-            return false;
+        if (Double.doubleToLongBits(tolerance) != Double.doubleToLongBits(other.tolerance)) return false;
         return true;
     }
 
@@ -328,13 +329,11 @@ public class CurvedGeometryFactory extends GeometryFactory {
         }
 
         final AtomicBoolean hasCurves = new AtomicBoolean(false);
-        g.apply(
-                (GeometryComponentFilter)
-                        geom -> {
-                            if (geom instanceof CurvedGeometry) {
-                                hasCurves.set(true);
-                            }
-                        });
+        g.apply((GeometryComponentFilter) geom -> {
+            if (geom instanceof CurvedGeometry) {
+                hasCurves.set(true);
+            }
+        });
 
         return hasCurves.get();
     }

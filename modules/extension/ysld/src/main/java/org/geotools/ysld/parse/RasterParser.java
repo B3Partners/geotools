@@ -18,17 +18,17 @@
 package org.geotools.ysld.parse;
 
 import java.util.Map;
-import org.geotools.styling.ChannelSelection;
-import org.geotools.styling.ColorMap;
-import org.geotools.styling.ContrastEnhancement;
-import org.geotools.styling.RasterSymbolizer;
-import org.geotools.styling.Rule;
-import org.geotools.styling.SelectedChannelType;
-import org.geotools.styling.Symbolizer;
+import org.geotools.api.style.ChannelSelection;
+import org.geotools.api.style.ColorMap;
+import org.geotools.api.style.ContrastEnhancement;
+import org.geotools.api.style.ContrastMethod;
+import org.geotools.api.style.RasterSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.SelectedChannelType;
+import org.geotools.api.style.Symbolizer;
 import org.geotools.ysld.Band;
 import org.geotools.ysld.YamlMap;
 import org.geotools.ysld.YamlObject;
-import org.opengis.style.ContrastMethod;
 
 /** Handles the parsing of a Ysld "raster" symbolizer property into a {@link Symbolizer} object. */
 public class RasterParser extends SymbolizerParser<RasterSymbolizer> {
@@ -47,14 +47,12 @@ public class RasterParser extends SymbolizerParser<RasterSymbolizer> {
             sym.setOpacity(Util.expression(map.str("opacity"), factory));
         }
 
-        context.push(
-                "color-map",
-                new ColorMapParser(factory) {
-                    @Override
-                    protected void colorMap(ColorMap colorMap) {
-                        sym.setColorMap(colorMap);
-                    }
-                });
+        context.push("color-map", new ColorMapParser(factory) {
+            @Override
+            protected void colorMap(ColorMap colorMap) {
+                sym.setColorMap(colorMap);
+            }
+        });
         context.push("contrast-enhancement", new ContrastEnhancementHandler());
         context.push("channels", new ChannelsHandler());
     }
@@ -144,15 +142,13 @@ public class RasterParser extends SymbolizerParser<RasterSymbolizer> {
         public void handle(YamlObject<?> obj, YamlParseContext context) {
             String name = obj.map().str("name");
             sel.setChannelName(Util.expression(name, factory));
-            context.push(
-                    "contrast-enhancement",
-                    new ContrastEnhancementHandler() {
+            context.push("contrast-enhancement", new ContrastEnhancementHandler() {
 
-                        @Override
-                        protected void set() {
-                            sel.setContrastEnhancement(this.contrast);
-                        }
-                    });
+                @Override
+                protected void set() {
+                    sel.setContrastEnhancement(this.contrast);
+                }
+            });
         }
     }
 }

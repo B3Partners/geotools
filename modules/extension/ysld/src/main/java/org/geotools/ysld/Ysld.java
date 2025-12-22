@@ -17,6 +17,7 @@
  */
 package org.geotools.ysld;
 
+import jakarta.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -30,19 +31,19 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
-import javax.annotation.Nullable;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import org.geotools.api.style.ResourceLocator;
+import org.geotools.api.style.StyledLayerDescriptor;
 import org.geotools.factory.CommonFactoryFinder;
-import org.geotools.styling.ResourceLocator;
-import org.geotools.styling.StyledLayerDescriptor;
+import org.geotools.styling.zoom.ZoomContextFinder;
 import org.geotools.xml.styling.SLDParser;
 import org.geotools.ysld.encode.YsldEncoder;
 import org.geotools.ysld.parse.YsldParser;
-import org.geotools.ysld.parse.ZoomContextFinder;
 import org.geotools.ysld.validate.YsldValidator;
 import org.yaml.snakeyaml.error.MarkedYAMLException;
 
@@ -67,14 +68,14 @@ public class Ysld {
      * @throws java.lang.IllegalArgumentException If the input object can not be converted.
      */
     static YsldInput reader(Object input) throws IOException {
-        if (input instanceof Reader) {
-            return new YsldInput((Reader) input);
-        } else if (input instanceof InputStream) {
-            return new YsldInput(new BufferedReader(new InputStreamReader((InputStream) input)));
-        } else if (input instanceof File) {
-            return new YsldInput(new BufferedReader(new FileReader((File) input)));
-        } else if (input instanceof String) {
-            return new YsldInput(new StringReader((String) input));
+        if (input instanceof Reader reader) {
+            return new YsldInput(reader);
+        } else if (input instanceof InputStream stream) {
+            return new YsldInput(new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8)));
+        } else if (input instanceof File file) {
+            return new YsldInput(new BufferedReader(new FileReader(file, StandardCharsets.UTF_8)));
+        } else if (input instanceof String string) {
+            return new YsldInput(new StringReader(string));
         } else {
             throw new IllegalArgumentException("Unable to turn " + input + " into reader");
         }
@@ -95,12 +96,12 @@ public class Ysld {
      * @throws java.lang.IllegalArgumentException If the output object can not be converted.
      */
     static Writer writer(Object output) throws IOException {
-        if (output instanceof Writer) {
-            return (Writer) output;
-        } else if (output instanceof OutputStream) {
-            return new BufferedWriter(new OutputStreamWriter((OutputStream) output));
-        } else if (output instanceof File) {
-            return new BufferedWriter(new FileWriter((File) output));
+        if (output instanceof Writer writer) {
+            return writer;
+        } else if (output instanceof OutputStream stream) {
+            return new BufferedWriter(new OutputStreamWriter(stream, StandardCharsets.UTF_8));
+        } else if (output instanceof File file) {
+            return new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8));
         } else {
             throw new IllegalArgumentException("Unable to turn " + output + " into writer");
         }
@@ -133,9 +134,7 @@ public class Ysld {
      * @return The GeoTools SLD object.
      */
     public static StyledLayerDescriptor parse(
-            Object ysld,
-            @Nullable List<ZoomContextFinder> zCtxtFinders,
-            @Nullable ResourceLocator locator)
+            Object ysld, @Nullable List<ZoomContextFinder> zCtxtFinders, @Nullable ResourceLocator locator)
             throws IOException {
         return parse(ysld, zCtxtFinders, locator, new UomMapper());
     }
@@ -197,8 +196,7 @@ public class Ysld {
      * @param sld The sld to encode.
      * @param output The output object, anything accepted by {@link #writer(Object)}
      */
-    public static void encode(StyledLayerDescriptor sld, Object output, UomMapper uomMapper)
-            throws IOException {
+    public static void encode(StyledLayerDescriptor sld, Object output, UomMapper uomMapper) throws IOException {
         YsldEncoder e = new YsldEncoder(writer(output), uomMapper);
         e.encode(sld);
     }
@@ -247,8 +245,7 @@ public class Ysld {
      * @return List of marked exceptions corresponding to validation errors.
      */
     public static List<MarkedYAMLException> validate(
-            Object ysld, List<ZoomContextFinder> zContextFinders, UomMapper uomMapper)
-            throws IOException {
+            Object ysld, List<ZoomContextFinder> zContextFinders, UomMapper uomMapper) throws IOException {
         YsldInput in = reader(ysld);
         try {
             YsldValidator validator = new YsldValidator();

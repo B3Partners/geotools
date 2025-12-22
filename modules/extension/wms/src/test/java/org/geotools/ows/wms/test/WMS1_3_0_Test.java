@@ -65,8 +65,7 @@ public class WMS1_3_0_Test {
             assertEquals(capabilities.getService().getName(), "WMS");
             assertEquals(capabilities.getService().getTitle(), "World Map");
             assertEquals(capabilities.getService().get_abstract(), "None");
-            assertEquals(
-                    capabilities.getService().getOnlineResource(), new URL("http://www2.demis.nl"));
+            assertEquals(capabilities.getService().getOnlineResource(), new URL("http://www2.demis.nl"));
 
             assertEquals(capabilities.getService().getLayerLimit(), 40);
             assertEquals(capabilities.getService().getMaxWidth(), 2000);
@@ -91,12 +90,12 @@ public class WMS1_3_0_Test {
                     capabilities.getRequest().getGetMap().getGet(),
                     new URL("http://www2.demis.nl/wms/wms.asp?wms=WorldMap&"));
 
-            assertEquals(capabilities.getRequest().getGetFeatureInfo().getFormats().size(), 4);
+            assertEquals(
+                    capabilities.getRequest().getGetFeatureInfo().getFormats().size(), 4);
             assertEquals(
                     capabilities.getRequest().getGetFeatureInfo().getFormats().get(0), "text/xml");
             assertEquals(
-                    capabilities.getRequest().getGetFeatureInfo().getFormats().get(1),
-                    "text/plain");
+                    capabilities.getRequest().getGetFeatureInfo().getFormats().get(1), "text/plain");
             assertEquals(
                     capabilities.getRequest().getGetFeatureInfo().getFormats().get(2), "text/html");
             assertEquals(
@@ -179,7 +178,7 @@ public class WMS1_3_0_Test {
             if (ce.getMessage().indexOf("timed out") > 0) {
                 LOGGER.warning("Unable to test - timed out: " + ce);
             } else {
-                throw (ce);
+                throw ce;
             }
         }
     }
@@ -206,14 +205,35 @@ public class WMS1_3_0_Test {
         }
     }
 
+    @Test
+    public void testGEOT7718() {
+        try {
+            WMSCapabilities capabilities = createCapabilities("ign.xml");
+
+            assertNotNull(capabilities);
+
+            assertEquals(capabilities.getVersion(), "1.3.0");
+            assertEquals(capabilities.getService().getName(), "WMS");
+
+            Layer topLayer = capabilities.getLayerList().get(0);
+            assertNotNull(topLayer);
+            assertNull(topLayer.getParent());
+            assertFalse(topLayer.isQueryable());
+            assertEquals("WMS layers", topLayer.getTitle());
+            assertEquals(192, topLayer.getSrs().size());
+            assertTrue(topLayer.getSrs().contains("EPSG:2154"));
+        } catch (Exception e) {
+            java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
+        }
+    }
+
     protected WMSCapabilities createCapabilities(String capFile) throws Exception {
         try {
             File getCaps = TestData.file(this, capFile);
             URL getCapsURL = getCaps.toURI().toURL();
             Map<String, Object> hints = new HashMap<>();
             hints.put(DocumentHandler.DEFAULT_NAMESPACE_HINT_KEY, WMSSchema.getInstance());
-            Object object =
-                    DocumentFactory.getInstance(getCapsURL.openStream(), hints, Level.WARNING);
+            Object object = DocumentFactory.getInstance(getCapsURL.openStream(), hints, Level.WARNING);
 
             SchemaFactory.getInstance(WMSSchema.NAMESPACE);
 
@@ -226,13 +246,12 @@ public class WMS1_3_0_Test {
                 // System.err.println("Unable to test - timed out: " + ce);
                 return null;
             } else {
-                throw (ce);
+                throw ce;
             }
         }
     }
 
-    protected void validateBoundingBox(
-            CRSEnvelope llbbox, double minX, double minY, double maxX, double maxY) {
+    protected void validateBoundingBox(CRSEnvelope llbbox, double minX, double minY, double maxX, double maxY) {
         assertNotNull(llbbox);
         assertEquals(llbbox.getMinX(), minX, 0.0);
         assertEquals(llbbox.getMinY(), minY, 0.0);

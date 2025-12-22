@@ -24,6 +24,13 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.TemporalCRS;
+import org.geotools.api.referencing.operation.MathTransform2D;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.coverage.grid.io.DimensionDescriptor;
 import org.geotools.coverage.io.CoverageSource.AdditionalDomain;
 import org.geotools.coverage.io.CoverageSource.SpatialDomain;
@@ -33,13 +40,6 @@ import org.geotools.feature.NameImpl;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultTemporalCRS;
 import org.geotools.util.DateRange;
-import org.opengis.feature.type.Name;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.TemporalCRS;
-import org.opengis.referencing.operation.MathTransform2D;
-import org.opengis.util.ProgressListener;
 
 public class TestCoverageSourceDescriptor extends CoverageSourceDescriptor {
 
@@ -65,8 +65,8 @@ public class TestCoverageSourceDescriptor extends CoverageSourceDescriptor {
         }
 
         @Override
-        public Set<? extends BoundingBox> getSpatialElements(
-                boolean overall, ProgressListener listener) throws IOException {
+        public Set<? extends BoundingBox> getSpatialElements(boolean overall, ProgressListener listener)
+                throws IOException {
             // TODO Auto-generated method stub
             return null;
         }
@@ -77,15 +77,14 @@ public class TestCoverageSourceDescriptor extends CoverageSourceDescriptor {
         }
 
         @Override
-        public MathTransform2D getGridToWorldTransform(ProgressListener listener)
-                throws IOException {
+        public MathTransform2D getGridToWorldTransform(ProgressListener listener) throws IOException {
             // TODO Auto-generated method stub
             return null;
         }
 
         @Override
-        public Set<? extends RasterLayout> getRasterElements(
-                boolean overall, ProgressListener listener) throws IOException {
+        public Set<? extends RasterLayout> getRasterElements(boolean overall, ProgressListener listener)
+                throws IOException {
             return layout;
         }
     }
@@ -102,8 +101,8 @@ public class TestCoverageSourceDescriptor extends CoverageSourceDescriptor {
         }
 
         @Override
-        public SortedSet<? extends DateRange> getTemporalElements(
-                boolean overall, ProgressListener listener) throws IOException {
+        public SortedSet<? extends DateRange> getTemporalElements(boolean overall, ProgressListener listener)
+                throws IOException {
             return new DateRangeTreeSet(dates);
         }
 
@@ -115,10 +114,8 @@ public class TestCoverageSourceDescriptor extends CoverageSourceDescriptor {
 
     private static SpatialDomain testSpatialDomain;
 
-    private static TemporalDomain testTemporalDomain =
-            new TestTemporalDomain(
-                    DefaultTemporalCRS.JAVA,
-                    Collections.singleton(new DateRange(new Date(10000), new Date(20000))));
+    private static TemporalDomain testTemporalDomain = new TestTemporalDomain(
+            DefaultTemporalCRS.JAVA, Collections.singleton(new DateRange(new Date(10000), new Date(20000))));
 
     public static final String TEST_COVERAGE = "testCoverage";
 

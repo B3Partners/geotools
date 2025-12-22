@@ -18,14 +18,12 @@ package org.geotools.data;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
-import org.geotools.data.simple.SimpleFeatureReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.SimpleFeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
-/**
- * Bridges between {@link FeatureReader<SimpleFeatureType, SimpleFeature>} and {@link
- * SimpleFeatureReader}
- */
+/** Bridges between {@link FeatureReader <SimpleFeatureType, SimpleFeature>} and {@link SimpleFeatureReader} */
 class SimpleFeatureReaderBrige implements SimpleFeatureReader {
 
     FeatureReader<SimpleFeatureType, SimpleFeature> reader;
@@ -40,8 +38,7 @@ class SimpleFeatureReaderBrige implements SimpleFeatureReader {
     }
 
     @Override
-    public SimpleFeature next()
-            throws IOException, IllegalArgumentException, NoSuchElementException {
+    public SimpleFeature next() throws IOException, IllegalArgumentException, NoSuchElementException {
         return reader.next();
     }
 

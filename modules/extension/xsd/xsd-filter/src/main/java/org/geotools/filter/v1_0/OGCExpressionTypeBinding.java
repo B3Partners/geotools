@@ -17,11 +17,11 @@
 package org.geotools.filter.v1_0;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -89,8 +89,8 @@ public class OGCExpressionTypeBinding extends AbstractComplexBinding {
     /**
      *
      * <!-- begin-user-doc -->
-     * This binding simply looks for any text in the node and turns it into a literal expression. If
-     * differnt behaviour is required by a sub binding then they should ovveride.
+     * This binding simply looks for any text in the node and turns it into a literal expression. If differnt behaviour
+     * is required by a sub binding then they should ovveride.
      * <!-- end-user-doc -->
      *
      * @generated modifiable

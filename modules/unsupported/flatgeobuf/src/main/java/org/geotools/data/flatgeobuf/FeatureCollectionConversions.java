@@ -21,157 +21,23 @@ import com.google.flatbuffers.FlatBufferBuilder;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.memory.MemoryFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.locationtech.jts.geom.Envelope;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 import org.wololo.flatgeobuf.Constants;
 import org.wololo.flatgeobuf.HeaderMeta;
 import org.wololo.flatgeobuf.PackedRTree;
-import org.wololo.flatgeobuf.PackedRTree.SearchHit;
 import org.wololo.flatgeobuf.PackedRTree.SearchResult;
-import org.wololo.flatgeobuf.generated.Feature;
 
 public class FeatureCollectionConversions {
 
-    private static final class ReadHitsIterable implements Iterable<SimpleFeature> {
-        private final SimpleFeatureBuilder fb;
-        private final ArrayList<SearchHit> hits;
-        private final HeaderMeta headerMeta;
-        private final int featuresOffset;
-        private final LittleEndianDataInputStream data;
-
-        private ReadHitsIterable(
-                SimpleFeatureBuilder fb,
-                ArrayList<SearchHit> hits,
-                HeaderMeta headerMeta,
-                int featuresOffset,
-                LittleEndianDataInputStream data) {
-            this.fb = fb;
-            this.hits = hits;
-            this.headerMeta = headerMeta;
-            this.featuresOffset = featuresOffset;
-            this.data = data;
-        }
-
-        @Override
-        public Iterator<SimpleFeature> iterator() {
-            Iterator<SimpleFeature> it =
-                    new Iterator<SimpleFeature>() {
-                        int i = 0;
-                        long pos = featuresOffset;
-
-                        @Override
-                        public boolean hasNext() {
-                            return i < hits.size();
-                        }
-
-                        @Override
-                        public SimpleFeature next() {
-                            if (!hasNext()) throw new NoSuchElementException();
-                            SearchHit hit = hits.get(i);
-                            long skip = hit.offset - (pos - featuresOffset);
-                            try {
-                                FlatGeobufFeatureReader.skipNBytes(data, skip);
-                                pos += skip;
-                                int featureSize = data.readInt();
-                                pos += 4;
-                                byte[] bytes = new byte[featureSize];
-                                data.readFully(bytes);
-                                pos += featureSize;
-                                ByteBuffer bb = ByteBuffer.wrap(bytes);
-                                Feature f = Feature.getRootAsFeature(bb);
-                                SimpleFeature feature =
-                                        FeatureConversions.deserialize(
-                                                f, fb, headerMeta, hit.index);
-                                i++;
-                                return feature;
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
-                    };
-            return it;
-        }
-    }
-
-    private static final class ReadAllInterable implements Iterable<SimpleFeature> {
-        private final HeaderMeta headerMeta;
-        private final LittleEndianDataInputStream data;
-        private final SimpleFeatureBuilder fb;
-
-        private ReadAllInterable(
-                HeaderMeta headerMeta, LittleEndianDataInputStream data, SimpleFeatureBuilder fb) {
-            this.headerMeta = headerMeta;
-            this.data = data;
-            this.fb = fb;
-        }
-
-        @Override
-        public Iterator<SimpleFeature> iterator() {
-            Iterator<SimpleFeature> it =
-                    new Iterator<SimpleFeature>() {
-                        long count = 0;
-                        SimpleFeature feature;
-                        SimpleFeature nextFeature;
-                        boolean done = false;
-
-                        @Override
-                        public boolean hasNext() {
-                            if (done) return false;
-                            if (nextFeature != null) {
-                                feature = nextFeature;
-                                nextFeature = null;
-                            } else {
-                                try {
-                                    nextFeature = next();
-                                } catch (NoSuchElementException e) {
-                                    done = true;
-                                    return false;
-                                }
-                                return true;
-                            }
-                            return true;
-                        }
-
-                        @Override
-                        public SimpleFeature next() {
-                            if (nextFeature != null) {
-                                feature = nextFeature;
-                                nextFeature = null;
-                            } else {
-                                int featureSize;
-                                try {
-                                    featureSize = data.readInt();
-                                    byte[] bytes = new byte[featureSize];
-                                    data.readFully(bytes);
-                                    ByteBuffer bb = ByteBuffer.wrap(bytes);
-                                    Feature f = Feature.getRootAsFeature(bb);
-                                    feature =
-                                            FeatureConversions.deserialize(
-                                                    f, fb, headerMeta, count++);
-                                } catch (IOException e) {
-                                    throw new NoSuchElementException();
-                                }
-                            }
-                            return feature;
-                        }
-                    };
-            return it;
-        }
-    }
-
     public static void serialize(
-            SimpleFeatureCollection featureCollection,
-            long featuresCount,
-            OutputStream outputStream)
+            SimpleFeatureCollection featureCollection, long featuresCount, OutputStream outputStream)
             throws IOException {
         SimpleFeatureType featureType = featureCollection.getSchema();
         FlatBufferBuilder builder = FlatBuffers.newBuilder(16 * 1024);
@@ -192,61 +58,98 @@ public class FeatureCollectionConversions {
         }
     }
 
-    public static SimpleFeatureCollection deserialize(InputStream stream) throws IOException {
+    public static SimpleFeatureCollection deserializeSFC(InputStream stream) throws IOException {
+        HeaderMeta headerMeta = HeaderMeta.read(stream);
+        SimpleFeatureType featureType = HeaderMetaUtil.toFeatureType(headerMeta, "unknown");
+        return deserializeSFC(stream, headerMeta, featureType);
+    }
+
+    public static Iterable<SimpleFeature> deserialize(InputStream stream) throws IOException {
         HeaderMeta headerMeta = HeaderMeta.read(stream);
         SimpleFeatureType featureType = HeaderMetaUtil.toFeatureType(headerMeta, "unknown");
         return deserialize(stream, headerMeta, featureType);
     }
 
-    public static Iterable<SimpleFeature> deserialize(InputStream stream, Envelope rect)
-            throws IOException {
+    public static Iterable<SimpleFeature> deserialize(InputStream stream, Envelope rect) throws IOException {
         HeaderMeta headerMeta = HeaderMeta.read(stream);
         SimpleFeatureType featureType = HeaderMetaUtil.toFeatureType(headerMeta, "unknown");
         return deserialize(stream, headerMeta, featureType, rect);
     }
 
-    public static SimpleFeatureCollection deserialize(
+    public static SimpleFeatureCollection deserializeSFC(
             InputStream stream, HeaderMeta headerMeta, SimpleFeatureType ft) throws IOException {
-        Iterator<SimpleFeature> it = deserialize(stream, headerMeta, ft, null).iterator();
+        Iterator<SimpleFeature> it = deserialize(stream, headerMeta, ft).iterator();
         MemoryFeatureCollection fc = new MemoryFeatureCollection(ft);
         while (it.hasNext()) fc.add(it.next());
         return fc;
     }
 
+    public static Iterable<SimpleFeature> deserialize(InputStream stream, long[] fids) throws IOException {
+        HeaderMeta headerMeta = HeaderMeta.read(stream);
+        SimpleFeatureType featureType = HeaderMetaUtil.toFeatureType(headerMeta, "unknown");
+        return deserialize(stream, headerMeta, featureType, fids);
+    }
+
     public static Iterable<SimpleFeature> deserialize(
-            InputStream stream, HeaderMeta headerMeta, SimpleFeatureType ft, Envelope rect)
+            InputStream stream, HeaderMeta headerMeta, SimpleFeatureType ft, long[] fids) throws IOException {
+        SimpleFeatureBuilder fb = new SimpleFeatureBuilder(ft);
+        LittleEndianDataInputStream data = new LittleEndianDataInputStream(stream);
+        Iterable<SimpleFeature> it = new ReadFidsIterable(fb, fids, headerMeta, data);
+        return it;
+    }
+
+    private static long getTreeSize(HeaderMeta headerMeta) {
+        long treeSize = headerMeta.featuresCount > 0 && headerMeta.indexNodeSize > 0
+                ? PackedRTree.calcSize((int) headerMeta.featuresCount, headerMeta.indexNodeSize)
+                : 0;
+        return treeSize;
+    }
+
+    public static Iterable<SimpleFeature> deserialize(InputStream stream, HeaderMeta headerMeta, SimpleFeatureType ft)
             throws IOException {
-        int treeSize =
-                headerMeta.featuresCount > 0 && headerMeta.indexNodeSize > 0
-                        ? (int)
-                                PackedRTree.calcSize(
-                                        (int) headerMeta.featuresCount, headerMeta.indexNodeSize)
-                        : 0;
-        int featuresOffset = headerMeta.offset + treeSize;
+        long treeSize = getTreeSize(headerMeta);
         SimpleFeatureBuilder fb = new SimpleFeatureBuilder(ft);
         LittleEndianDataInputStream data = new LittleEndianDataInputStream(stream);
 
         Iterable<SimpleFeature> iterable;
-        if (rect == null) {
-            if (treeSize > 0) {
-                FlatGeobufFeatureReader.skipNBytes(data, treeSize);
-            }
-            iterable = new ReadAllInterable(headerMeta, data, fb);
-        } else {
-            SearchResult result =
-                    PackedRTree.search(
-                            data,
-                            headerMeta.offset,
-                            (int) headerMeta.featuresCount,
-                            headerMeta.indexNodeSize,
-                            rect);
-            int skip = treeSize - result.pos;
-            if (skip > 0) {
-                FlatGeobufFeatureReader.skipNBytes(data, treeSize - result.pos);
-            }
-            iterable = new ReadHitsIterable(fb, result.hits, headerMeta, featuresOffset, data);
-        }
+        if (treeSize > 0) FlatGeobufFeatureReader.skipNBytes(data, treeSize);
+        iterable = new ReadAllInterable(headerMeta, data, fb, 0);
 
+        return iterable;
+    }
+
+    public static Iterable<SimpleFeature> deserialize(
+            InputStream stream, HeaderMeta headerMeta, SimpleFeatureType ft, int startIndex) throws IOException {
+        long treeSize = getTreeSize(headerMeta);
+        SimpleFeatureBuilder fb = new SimpleFeatureBuilder(ft);
+        LittleEndianDataInputStream data = new LittleEndianDataInputStream(stream);
+        if (treeSize > 0) {
+            if (startIndex >= headerMeta.featuresCount) throw new IndexOutOfBoundsException();
+            long[] offsets = PackedRTree.readFeatureOffsets(data, new long[] {startIndex}, headerMeta);
+            FlatGeobufFeatureReader.skipNBytes(data, offsets[0]);
+        } else {
+            startIndex = 0;
+        }
+        Iterable<SimpleFeature> iterable = new ReadAllInterable(headerMeta, data, fb, startIndex);
+        return iterable;
+    }
+
+    public static Iterable<SimpleFeature> deserialize(
+            InputStream stream, HeaderMeta headerMeta, SimpleFeatureType ft, Envelope rect) throws IOException {
+        long treeSize = getTreeSize(headerMeta);
+        long featuresOffset = headerMeta.offset + treeSize;
+        SimpleFeatureBuilder fb = new SimpleFeatureBuilder(ft);
+        LittleEndianDataInputStream data = new LittleEndianDataInputStream(stream);
+        Iterable<SimpleFeature> iterable;
+        if (headerMeta.indexNodeSize > 1) {
+            SearchResult result = PackedRTree.search(
+                    data, headerMeta.offset, (int) headerMeta.featuresCount, headerMeta.indexNodeSize, rect);
+            long skip = treeSize - result.pos;
+            if (skip > 0) FlatGeobufFeatureReader.skipNBytes(data, skip);
+            iterable = new ReadHitsIterable(fb, result.hits, headerMeta, featuresOffset, data);
+        } else {
+            iterable = new ReadAllInterable(headerMeta, data, fb, 0);
+        }
         return iterable;
     }
 }

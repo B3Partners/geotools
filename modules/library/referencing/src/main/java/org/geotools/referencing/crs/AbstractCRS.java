@@ -19,9 +19,14 @@
  */
 package org.geotools.referencing.crs;
 
+import java.io.Serial;
 import java.util.HashMap;
 import java.util.Map;
 import javax.measure.Unit;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.cs.CoordinateSystem;
+import org.geotools.api.util.InternationalString;
 import org.geotools.measure.Measure;
 import org.geotools.metadata.i18n.Vocabulary;
 import org.geotools.referencing.AbstractIdentifiedObject;
@@ -30,10 +35,6 @@ import org.geotools.referencing.cs.AbstractCS;
 import org.geotools.referencing.util.CRSUtilities;
 import org.geotools.referencing.wkt.Formatter;
 import org.geotools.util.UnsupportedImplementationException;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.cs.CoordinateSystem;
-import org.opengis.util.InternationalString;
 
 /**
  * Abstract coordinate reference system, usually defined by a coordinate system and a datum.
@@ -43,20 +44,22 @@ import org.opengis.util.InternationalString;
  * @see AbstractCS
  * @see org.geotools.referencing.datum.AbstractDatum
  */
-public abstract class AbstractCRS extends AbstractReferenceSystem
-        implements CoordinateReferenceSystem {
+public abstract class AbstractCRS extends AbstractReferenceSystem implements CoordinateReferenceSystem {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -7433284548909530047L;
 
     /** The coordinate system. */
     protected final CoordinateSystem coordinateSystem;
 
+    // Lazily initialized, cached hashCode (see "Effective Java", Item 71)
+    private volatile int hashCode;
+
     /**
-     * Constructs a new coordinate reference system with the same values than the specified one.
-     * This copy constructor provides a way to wrap an arbitrary implementation into a Geotools one
-     * or a user-defined one (as a subclass), usually in order to leverage some
-     * implementation-specific API. This constructor performs a shallow copy, i.e. the properties
-     * are not cloned.
+     * Constructs a new coordinate reference system with the same values than the specified one. This copy constructor
+     * provides a way to wrap an arbitrary implementation into a Geotools one or a user-defined one (as a subclass),
+     * usually in order to leverage some implementation-specific API. This constructor performs a shallow copy, i.e. the
+     * properties are not cloned.
      *
      * @param crs The coordinate reference system to copy.
      * @since 2.2
@@ -67,9 +70,8 @@ public abstract class AbstractCRS extends AbstractReferenceSystem
     }
 
     /**
-     * Constructs a coordinate reference system from a set of properties. The properties are given
-     * unchanged to the {@linkplain AbstractReferenceSystem#AbstractReferenceSystem(Map) super-class
-     * constructor}.
+     * Constructs a coordinate reference system from a set of properties. The properties are given unchanged to the
+     * {@linkplain AbstractReferenceSystem#AbstractReferenceSystem(Map) super-class constructor}.
      *
      * @param properties Set of properties. Should contains at least {@code "name"}.
      * @param cs The coordinate system.
@@ -81,13 +83,12 @@ public abstract class AbstractCRS extends AbstractReferenceSystem
     }
 
     /**
-     * Creates a name for the predefined constants in subclasses. The name is an unlocalized String
-     * object. However, since this method is used for creation of convenience objects only (not for
-     * objects created from an "official" database), the "unlocalized" name is actually choosen
-     * according the user's locale at class initialization time. The same name is also added in a
-     * localizable form as an alias. Since the {@link #nameMatches} convenience method checks the
-     * alias, it still possible to consider two objects are equivalent even if their names were
-     * formatted in different locales.
+     * Creates a name for the predefined constants in subclasses. The name is an unlocalized String object. However,
+     * since this method is used for creation of convenience objects only (not for objects created from an "official"
+     * database), the "unlocalized" name is actually choosen according the user's locale at class initialization time.
+     * The same name is also added in a localizable form as an alias. Since the {@link #nameMatches} convenience method
+     * checks the alias, it still possible to consider two objects are equivalent even if their names were formatted in
+     * different locales.
      */
     static Map<String, ?> name(final int key) {
         final Map<String, Object> properties = new HashMap<>(4);
@@ -104,40 +105,39 @@ public abstract class AbstractCRS extends AbstractReferenceSystem
     }
 
     /**
-     * Returns the unit used for all axis. If not all axis uses the same unit, then this method
-     * returns {@code null}. This method is often used for Well Know Text (WKT) formatting.
+     * Returns the unit used for all axis. If not all axis uses the same unit, then this method returns {@code null}.
+     * This method is often used for Well Know Text (WKT) formatting.
      */
     final Unit<?> getUnit() {
         return CRSUtilities.getUnit(coordinateSystem);
     }
 
     /**
-     * Computes the distance between two points. This convenience method delegates the work to the
-     * underlyling {@linkplain AbstractCS coordinate system}, if possible.
+     * Computes the distance between two points. This convenience method delegates the work to the underlyling
+     * {@linkplain AbstractCS coordinate system}, if possible.
      *
      * @param coord1 Coordinates of the first point.
      * @param coord2 Coordinates of the second point.
      * @return The distance between {@code coord1} and {@code coord2}.
-     * @throws UnsupportedOperationException if this coordinate reference system can't compute
-     *     distances.
+     * @throws UnsupportedOperationException if this coordinate reference system can't compute distances.
      * @throws MismatchedDimensionException if a coordinate doesn't have the expected dimension.
      */
     public Measure distance(final double[] coord1, final double[] coord2)
             throws UnsupportedOperationException, MismatchedDimensionException {
-        if (coordinateSystem instanceof AbstractCS) {
-            return ((AbstractCS) coordinateSystem).distance(coord1, coord2);
+        if (coordinateSystem instanceof AbstractCS cS) {
+            return cS.distance(coord1, coord2);
         }
         throw new UnsupportedImplementationException(coordinateSystem.getClass());
     }
 
     /**
-     * Compare this coordinate reference system with the specified object for equality. If {@code
-     * compareMetadata} is {@code true}, then all available properties are compared including
-     * {@linkplain #getDomainOfValidity()} valid area} and {@linkplain #getScope scope}.
+     * Compare this coordinate reference system with the specified object for equality. If {@code compareMetadata} is
+     * {@code true}, then all available properties are compared including {@linkplain #getDomainOfValidity()} valid
+     * area} and {@linkplain #getScope scope}.
      *
      * @param object The object to compare to {@code this}.
-     * @param compareMetadata {@code true} for performing a strict comparaison, or {@code false} for
-     *     comparing only properties relevant to transformations.
+     * @param compareMetadata {@code true} for performing a strict comparaison, or {@code false} for comparing only
+     *     properties relevant to transformations.
      * @return {@code true} if both objects are equal.
      */
     @Override
@@ -150,31 +150,39 @@ public abstract class AbstractCRS extends AbstractReferenceSystem
     }
 
     /**
-     * Returns a hash value for this CRS. {@linkplain #getName Name}, {@linkplain #getIdentifiers
-     * identifiers} and {@linkplain #getRemarks remarks} are not taken in account. In other words,
-     * two CRS objects will return the same hash value if they are equal in the sense of <code>
+     * Returns a hash value for this CRS. {@linkplain #getName Name}, {@linkplain #getIdentifiers identifiers} and
+     * {@linkplain #getRemarks remarks} are not taken in account. In other words, two CRS objects will return the same
+     * hash value if they are equal in the sense of <code>
      * {@link #equals(AbstractIdentifiedObject,boolean) equals}(AbstractIdentifiedObject,
      * <strong>false</strong>)</code>.
      *
-     * @return The hash code value. This value doesn't need to be the same in past or future
-     *     versions of this class.
+     * @return The hash code value. This value doesn't need to be the same in past or future versions of this class.
      */
     @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
-    public int hashCode() {
+    public final int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = calculateHashCode();
+            hashCode = result;
+        }
+        return result;
+    }
+
+    /** Subclasses should override and compute hash code. See also {@link #hashCode()}. */
+    protected int calculateHashCode() {
         return (int) serialVersionUID ^ coordinateSystem.hashCode();
     }
 
     /**
      * Formats the inner part of a <A
-     * HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html"><cite>Well
-     * Known Text</cite> (WKT)</A> element. The default implementation writes the following
-     * elements:
+     * HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html"><cite>Well Known
+     * Text</cite> (WKT)</A> element. The default implementation writes the following elements:
      *
      * <ul>
      *   <li>The {@linkplain #datum datum}, if any.
-     *   <li>The unit if all axis use the same unit. Otherwise the unit is omitted and the WKT
-     *       format is {@linkplain Formatter#isInvalidWKT flagged as invalid}.
+     *   <li>The unit if all axis use the same unit. Otherwise the unit is omitted and the WKT format is
+     *       {@linkplain Formatter#isInvalidWKT flagged as invalid}.
      *   <li>All {@linkplain #coordinateSystem coordinate system}'s axis.
      * </ul>
      *
@@ -189,8 +197,8 @@ public abstract class AbstractCRS extends AbstractReferenceSystem
     }
 
     /**
-     * Default implementation of {@link #formatWKT}. For {@link DefaultEngineeringCRS} and {@link
-     * DefaultVerticalCRS} use only.
+     * Default implementation of {@link #formatWKT}. For {@link DefaultEngineeringCRS} and {@link DefaultVerticalCRS}
+     * use only.
      */
     void formatDefaultWKT(final Formatter formatter) {
         final Unit<?> unit = getUnit();

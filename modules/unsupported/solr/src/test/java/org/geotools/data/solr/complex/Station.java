@@ -16,20 +16,23 @@
  */
 package org.geotools.data.solr.complex;
 
+import jakarta.xml.bind.annotation.XmlRootElement;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import javax.xml.bind.annotation.XmlRootElement;
 import org.apache.solr.common.SolrInputDocument;
 
 /**
- * Data model class that represents a demoralized station. This class will be mainly used as a
- * support to read the stations information from a XML file.
+ * Data model class that represents a demoralized station. This class will be mainly used as a support to read the
+ * stations information from a XML file.
  */
 @XmlRootElement
 public final class Station implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
+
     private String measurementName;
     private String measurementTime;
     private String measurementUnit;
@@ -173,7 +176,9 @@ public final class Station implements Serializable {
 
     @XmlRootElement
     public static final class Stations implements Serializable {
+        @Serial
         private static final long serialVersionUID = 1L;
+
         private List<Station> stations = new ArrayList<>();
 
         public Stations() {}

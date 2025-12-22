@@ -20,15 +20,22 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import org.geotools.jdbc.JDBCDelegatingTestSetup;
+import org.geotools.jdbc.JDBCTestSetup;
 import org.postgresql.util.PSQLException;
 
 public class PostGISJsonTestSetup extends JDBCDelegatingTestSetup {
 
     protected PostGISJsonTestSetup() {
-        super(new PostGISTestSetup());
+        this(new PostGISTestSetup());
+    }
+
+    protected PostGISJsonTestSetup(JDBCTestSetup setup) {
+        super(setup);
     }
 
     protected boolean supportJsonB = false;
+
+    protected boolean supportJsonPathExists = false;
 
     @Override
     protected void setUpData() throws Exception {
@@ -39,11 +46,15 @@ public class PostGISJsonTestSetup extends JDBCDelegatingTestSetup {
                 ResultSet rs = st.executeQuery("SELECT current_setting('server_version_num')")) {
             if (rs.next()) {
                 try {
+                    int version = Integer.parseInt(rs.getString(1));
                     // JSONB has been introduced with version 9.4
-                    supportJsonB = Integer.parseInt(rs.getString(1)) >= 90004;
+                    supportJsonB = version >= 90004;
+                    // JsonPathExists has been introduced with version 12.0
+                    supportJsonPathExists = version >= 120000;
                 } catch (NumberFormatException nfe) {
                     // unable to determine PostgreSQL version because non-integer returned
                     supportJsonB = false;
+                    supportJsonPathExists = false;
                 }
             }
         } catch (PSQLException pse) {
@@ -57,11 +68,10 @@ public class PostGISJsonTestSetup extends JDBCDelegatingTestSetup {
 
     private void createTestJsonTable() throws Exception {
 
-        String sql =
-                "CREATE TABLE \"jsontest\" ("
-                        + "\"id\" INT, \"name\" VARCHAR, \"jsonColumn\" JSON, "
-                        + (supportJsonB ? "\"jsonbColumn\" JSONB, " : "")
-                        + "PRIMARY KEY(id))";
+        String sql = "CREATE TABLE \"jsontest\" ("
+                + "\"id\" INT, \"name\" VARCHAR, \"jsonColumn\" JSON, "
+                + (supportJsonB ? "\"jsonbColumn\" JSONB, " : "")
+                + "PRIMARY KEY(id))";
         run(sql);
 
         // Quoting from PostgreSQL Documentation:
@@ -85,43 +95,50 @@ public class PostGISJsonTestSetup extends JDBCDelegatingTestSetup {
         // to the behavior of the underlying numeric type. In practice this means that numbers
         // entered with E notation
         // will be printed without it, for example:
-        sql =
-                "INSERT INTO \"jsontest\" VALUES (0, 'numberEntry','{\"weight\": 1e-3 }'"
-                        + (supportJsonB ? ",'{\"weight\": 1e-3}'" : "")
-                        + " );"
-                        + "INSERT INTO \"jsontest\" VALUES (1, 'entryWithSpaces','{\"title\"    :    \"Title\" }'"
-                        + (supportJsonB ? ",'{\"title\"    :    \"Title\" }'" : "")
-                        + ");"
-                        + "INSERT INTO \"jsontest\" VALUES (2, 'duppedKeyEntry', '{\"title\":\"Title1\", \"title\":\"Title2\"}'"
-                        + (supportJsonB ? ",'{\"title\":\"Title1\", \"title\":\"Title2\"}'" : "")
-                        + ");"
-                        + "INSERT INTO \"jsontest\" VALUES (3, 'nullKey', '{\"title\":null}'"
-                        + (supportJsonB ? ", '{\"title\":null}'" : "")
-                        + ");"
-                        + "INSERT INTO \"jsontest\" VALUES (4, 'nullEntry', NULL"
-                        + (supportJsonB ? ", NULL" : "")
-                        + ");"
-                        + "INSERT INTO \"jsontest\" VALUES (5, 'arrayEntry', '{\"arrayValues\":[3,5,6]}'"
-                        + (supportJsonB ? ", '{\"arrayValues\":[3,5,6]}'" : "")
-                        + ");"
-                        + "INSERT INTO \"jsontest\" VALUES (6, 'arrayEntry2', '{\"strVal\": \"stringValue\", \"arrayValues\":[3,6,7]}'"
-                        + (supportJsonB
-                                ? ", '{\"strVal\": \"stringValue\",\"arrayValues\":[3,6,7]}'"
-                                : "")
-                        + ");"
-                        + "INSERT INTO \"jsontest\" VALUES (7, 'nestedObj', '{\"nestedObj\": {\"nestedProp\":\"stringValue\", \"nestedObj2\": {\"numProp\": 3, \"strProp\": \"stringValue2\"},\"nestedAr\":[3,6,7]}}'"
-                        + (supportJsonB
-                                ? ", '{\"nestedObj\": {\"nestedProp\":\"stringValue\", \"nestedObj2\": {\"numProp\": 3, \"strProp\": \"stringValue2\"}, \"nestedAr\":[3,6,7]}}'"
-                                : "")
-                        + ");"
-                        + "INSERT INTO \"jsontest\" VALUES (8, 'nestedObj', '{\"nestedObj\": {\"nestedProp\":\"stringValue\", \"nestedObj2\": {\"numProp\": 4, \"strProp\": \"stringValue2\"}, \"nestedAr\":[3,5,7]}}'"
-                        + (supportJsonB
-                                ? ", '{\"nestedObj\": {\"nestedProp\":\"stringValue\", \"nestedObj2\": {\"numProp\": 4, \"strProp\": \"stringValue2\"}, \"nestedAr\":[3,5,7]}}'"
-                                : "")
-                        + ");"
-                        + "INSERT INTO \"jsontest\" VALUES (9, 'arrayEntryStr', '{\"arrayStrValues\":[\"EL1\",\"EL2\",\"EL3\"]}'"
-                        + (supportJsonB ? ", '{\"arrayStrValues\":[\"EL1\",\"EL2\",\"EL3\"]}'" : "")
-                        + ");";
+        sql = "INSERT INTO \"jsontest\" VALUES (0, 'numberEntry','{\"weight\": 1e-3 }'"
+                + (supportJsonB ? ",'{\"weight\": 1e-3}'" : "")
+                + " );"
+                + "INSERT INTO \"jsontest\" VALUES (1, 'entryWithSpaces','{\"title\"    :    \"Title\" }'"
+                + (supportJsonB ? ",'{\"title\"    :    \"Title\" }'" : "")
+                + ");"
+                + "INSERT INTO \"jsontest\" VALUES (2, 'duppedKeyEntry', '{\"title\":\"Title1\", \"title\":\"Title2\"}'"
+                + (supportJsonB ? ",'{\"title\":\"Title1\", \"title\":\"Title2\"}'" : "")
+                + ");"
+                + "INSERT INTO \"jsontest\" VALUES (3, 'nullKey', '{\"title\":null}'"
+                + (supportJsonB ? ", '{\"title\":null}'" : "")
+                + ");"
+                + "INSERT INTO \"jsontest\" VALUES (4, 'nullEntry', NULL"
+                + (supportJsonB ? ", NULL" : "")
+                + ");"
+                + "INSERT INTO \"jsontest\" VALUES (5, 'arrayEntry', '{\"arrayValues\":[3,5,6]}'"
+                + (supportJsonB ? ", '{\"arrayValues\":[3,5,6]}'" : "")
+                + ");"
+                + "INSERT INTO \"jsontest\" VALUES (6, 'arrayEntry2', '{\"strVal\": \"stringValue\", \"arrayValues\":[3,6,7]}'"
+                + (supportJsonB ? ", '{\"strVal\": \"stringValue\",\"arrayValues\":[3,6,7]}'" : "")
+                + ");"
+                + "INSERT INTO \"jsontest\" VALUES (7, 'nestedObj', '{\"nestedObj\": {\"nestedProp\":\"stringValue\", \"nestedObj2\": {\"numProp\": 3, \"strProp\": \"stringValue2\"},\"nestedAr\":[3,6,7]}}'"
+                + (supportJsonB
+                        ? ", '{\"nestedObj\": {\"nestedProp\":\"stringValue\", \"nestedObj2\": {\"numProp\": 3, \"strProp\": \"stringValue2\"}, \"nestedAr\":[3,6,7]}}'"
+                        : "")
+                + ");"
+                + "INSERT INTO \"jsontest\" VALUES (8, 'nestedObj', '{\"nestedObj\": {\"nestedProp\":\"stringValue\", \"nestedObj2\": {\"numProp\": 4, \"strProp\": \"stringValue2\"}, \"nestedAr\":[3,5,7]}}'"
+                + (supportJsonB
+                        ? ", '{\"nestedObj\": {\"nestedProp\":\"stringValue\", \"nestedObj2\": {\"numProp\": 4, \"strProp\": \"stringValue2\"}, \"nestedAr\":[3,5,7]}}'"
+                        : "")
+                + ");"
+                + "INSERT INTO \"jsontest\" VALUES (9, 'arrayEntryStr', '{\"arrayStrValues\":[\"EL1\",\"EL2\",\"EL3\"]}'"
+                + (supportJsonB ? ", '{\"arrayStrValues\":[\"EL1\",\"EL2\",\"EL3\"]}'" : "")
+                + ");"
+                + "INSERT INTO \"jsontest\" VALUES (10, 'arrayEntryStr', '[{\"type\": \"MAIN\", \"version\": 1 }, {\"type\": \"OTHERS\", \"version\": 2 }]'"
+                + (supportJsonB
+                        ? ", '[{\"type\": \"MAIN\", \"version\": 1 }, {\"type\": \"OTHERS\", \"version\": 2 }]'"
+                        : "")
+                + ");"
+                + "INSERT INTO \"jsontest\" VALUES (11, 'arrayEntryStr', '[{\"type\": \"DEFAULT\", \"version\": 3 }, {\"type\": \"UNKNOWN\", \"version\": 4 }]'"
+                + (supportJsonB
+                        ? ", '[{\"type\": \"DEFAULT\", \"version\": 3 }, {\"type\": \"UNKNOWN\", \"version\": 4 }]'"
+                        : "")
+                + ");";
 
         run(sql);
     }

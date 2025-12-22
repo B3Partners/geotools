@@ -20,8 +20,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import org.geotools.api.style.AnchorPoint;
 import org.geotools.filter.Filters;
-import org.geotools.styling.AnchorPoint;
 import org.junit.Test;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -47,8 +47,7 @@ public class SLDAnchorPointBindingTest extends SLDTestSupport {
     @Test
     public void testNoY() throws Exception {
         Element anchorPoint = SLDMockData.anchorPoint(document, document);
-        NodeList anchorPointX =
-                anchorPoint.getElementsByTagNameNS(SLD.NAMESPACE, SLD.ANCHORPOINTY.getLocalPart());
+        NodeList anchorPointX = anchorPoint.getElementsByTagNameNS(SLD.NAMESPACE, SLD.ANCHORPOINTY.getLocalPart());
         anchorPoint.removeChild(anchorPointX.item(0));
 
         AnchorPoint point = (AnchorPoint) parse();

@@ -21,14 +21,15 @@ import static org.junit.Assert.assertNotEquals;
 
 import java.io.IOException;
 import java.util.List;
-import org.geotools.data.DataStore;
-import org.geotools.data.Query;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.gen.info.GeneralizationInfos;
 import org.geotools.data.gen.info.GeneralizationInfosProvider;
 import org.geotools.data.gen.info.GeneralizationInfosProviderImpl;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.feature.NameImpl;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.factory.Hints.Key;
@@ -36,7 +37,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
 
 public class PreGeneralizedSimpleFeatureTest {
 
@@ -78,8 +78,7 @@ public class PreGeneralizedSimpleFeatureTest {
 
             // Get generalized features
             GeneralizationInfosProvider provider = new GeneralizationInfosProviderImpl();
-            GeneralizationInfos ginfos =
-                    provider.getGeneralizationInfos("src/test/resources/geninfo_horizontal.xml");
+            GeneralizationInfos ginfos = provider.getGeneralizationInfos("src/test/resources/geninfo_horizontal.xml");
             PreGeneralizedDataStore ds = new PreGeneralizedDataStore(ginfos, TestSetup.REPOSITORY);
             fs = ds.getFeatureSource(typeName);
             Query query = new Query();
@@ -90,8 +89,7 @@ public class PreGeneralizedSimpleFeatureTest {
             Geometry simplified = null;
             fColl = fs.getFeatures(query);
             try (SimpleFeatureIterator iterator = fColl.features()) {
-                if (iterator.hasNext())
-                    simplified = (Geometry) iterator.next().getDefaultGeometry();
+                if (iterator.hasNext()) simplified = (Geometry) iterator.next().getDefaultGeometry();
             }
             return original.getNumPoints() > simplified.getNumPoints();
         } catch (IOException ex) {
@@ -128,9 +126,8 @@ public class PreGeneralizedSimpleFeatureTest {
 
             for (int i = 0; i < feature1.getType().getAttributeDescriptors().size(); i++) {
                 Object value1 = feature1.getAttribute(i);
-                Object value2 =
-                        feature1.getAttribute(
-                                feature1.getType().getAttributeDescriptors().get(i).getLocalName());
+                Object value2 = feature1.getAttribute(
+                        feature1.getType().getAttributeDescriptors().get(i).getLocalName());
                 Assert.assertSame(value1, value2);
             }
 
@@ -156,37 +153,29 @@ public class PreGeneralizedSimpleFeatureTest {
             Assert.assertEquals(
                     feature1.getDefaultGeometryProperty().getName(),
                     feature2.getDefaultGeometryProperty().getName());
-            assertNotEquals(
-                    feature1.getDefaultGeometryProperty(), feature2.getDefaultGeometryProperty());
+            assertNotEquals(feature1.getDefaultGeometryProperty(), feature2.getDefaultGeometryProperty());
 
             Assert.assertEquals(feature1.getFeatureType(), feature2.getFeatureType());
-            Assert.assertEquals("GenStreams", feature2.getFeatureType().getName().getLocalPart());
+            Assert.assertEquals(
+                    "GenStreams", feature2.getFeatureType().getName().getLocalPart());
 
             Assert.assertEquals(feature1.getIdentifier(), feature1.getIdentifier());
             assertNotEquals(feature1.getIdentifier(), feature2.getIdentifier());
 
             Assert.assertEquals(4, feature1.getProperties().size());
-            Assert.assertEquals(
-                    feature1.getProperty("CAT_ID").getValue(), feature1.getAttribute("CAT_ID"));
-            Assert.assertEquals(
-                    feature1.getProperty("the_geom").getValue(), feature1.getAttribute("the_geom"));
+            Assert.assertEquals(feature1.getProperty("CAT_ID").getValue(), feature1.getAttribute("CAT_ID"));
+            Assert.assertEquals(feature1.getProperty("the_geom").getValue(), feature1.getAttribute("the_geom"));
             // assertFalse(feature1.getProperty("CAT_ID").getValue().equals(feature2.getAttribute
             // ("CAT_ID"
             // )));
-            assertNotEquals(
-                    feature1.getProperty("the_geom").getValue(), feature2.getAttribute("the_geom"));
+            assertNotEquals(feature1.getProperty("the_geom").getValue(), feature2.getAttribute("the_geom"));
 
-            Assert.assertTrue(
-                    feature1.getProperties("CAT_ID").contains(feature1.getProperty("CAT_ID")));
-            Assert.assertFalse(
-                    feature2.getProperties("the_geom").contains(feature1.getProperty("the_geom")));
+            Assert.assertTrue(feature1.getProperties("CAT_ID").contains(feature1.getProperty("CAT_ID")));
+            Assert.assertFalse(feature2.getProperties("the_geom").contains(feature1.getProperty("the_geom")));
 
-            Assert.assertTrue(
-                    feature1.getProperties(new NameImpl("CAT_ID"))
-                            .contains(feature1.getProperty("CAT_ID")));
+            Assert.assertTrue(feature1.getProperties(new NameImpl("CAT_ID")).contains(feature1.getProperty("CAT_ID")));
             Assert.assertFalse(
-                    feature2.getProperties(new NameImpl("the_geom"))
-                            .contains(feature1.getProperty("the_geom")));
+                    feature2.getProperties(new NameImpl("the_geom")).contains(feature1.getProperty("the_geom")));
 
             Assert.assertEquals(feature1.getType(), fCollection.getSchema());
             Assert.assertEquals(feature1.getValue(), feature1.getProperties());
@@ -293,7 +282,7 @@ public class PreGeneralizedSimpleFeatureTest {
             }
 
             try {
-                feature1.setValue((Object) null);
+                feature1.setValue(null);
             } catch (UnsupportedOperationException ex) {
                 error = false;
             }

@@ -18,18 +18,15 @@ package org.geotools.mbstyle.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 /** Returns "italic" or "normal" based on the font name */
 public class MapBoxFontStyleFunction extends FunctionImpl {
 
-    public static final FunctionName NAME =
-            new FunctionNameImpl(
-                    "mbFontStyle",
-                    parameter("style", Boolean.class),
-                    parameter("fontName", Integer.class));
+    public static final FunctionName NAME = new FunctionNameImpl(
+            "mbFontStyle", parameter("style", Boolean.class), parameter("fontName", Integer.class));
 
     public MapBoxFontStyleFunction() {
         this.functionName = NAME;

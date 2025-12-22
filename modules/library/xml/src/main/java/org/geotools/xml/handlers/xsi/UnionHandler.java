@@ -43,9 +43,9 @@ public class UnionHandler extends XSIElementHandler {
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
     public int hashCode() {
         return LOCALNAME.hashCode()
-                * ((id == null) ? 1 : id.hashCode())
-                * ((memberTypes == null) ? 1 : memberTypes.hashCode())
-                * ((simpleTypes == null) ? 1 : simpleTypes.hashCode());
+                * (id == null ? 1 : id.hashCode())
+                * (memberTypes == null ? 1 : memberTypes.hashCode())
+                * (simpleTypes == null ? 1 : simpleTypes.hashCode());
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandler(java.lang.String, java.lang.String) */
@@ -71,8 +71,7 @@ public class UnionHandler extends XSIElementHandler {
     }
 
     /**
-     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String,
-     *     org.xml.sax.Attributes)
+     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
     public void startElement(String namespaceURI, String localName, Attributes atts) {

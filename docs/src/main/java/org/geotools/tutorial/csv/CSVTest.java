@@ -18,35 +18,36 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.Serializable;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFinder;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.identity.FeatureId;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.filter.text.cql2.CQL;
 import org.geotools.referencing.CRS;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.identity.FeatureId;
 
 public class CSVTest {
 
@@ -55,7 +56,7 @@ public class CSVTest {
         List<String> cities = new ArrayList<>();
         URL url = CSVTest.class.getResource("locations.csv");
         File file = new File(url.toURI());
-        try (FileReader reader = new FileReader(file)) {
+        try (FileReader reader = new FileReader(file, StandardCharsets.UTF_8)) {
             CsvReader locations = new CsvReader(reader);
             locations.readHeaders();
             while (locations.readRecord()) {
@@ -105,8 +106,7 @@ public class CSVTest {
         // access by list
         for (AttributeDescriptor descriptor : type.getAttributeDescriptors()) {
             System.out.print("  " + descriptor.getName());
-            System.out.print(
-                    " (" + descriptor.getMinOccurs() + "," + descriptor.getMaxOccurs() + ",");
+            System.out.print(" (" + descriptor.getMinOccurs() + "," + descriptor.getMaxOccurs() + ",");
             System.out.print((descriptor.isNillable() ? "nillable" : "manditory") + ")");
             System.out.print(" type: " + descriptor.getType().getName());
             System.out.println(" binding: " + descriptor.getType().getBinding().getSimpleName());
@@ -114,23 +114,27 @@ public class CSVTest {
         // access by index
         AttributeDescriptor attributeDescriptor = type.getDescriptor(0);
         System.out.println("attribute 0    name: " + attributeDescriptor.getName());
-        System.out.println("attribute 0    type: " + attributeDescriptor.getType().toString());
-        System.out.println("attribute 0 binding: " + attributeDescriptor.getType().getBinding());
+        System.out.println(
+                "attribute 0    type: " + attributeDescriptor.getType().toString());
+        System.out.println(
+                "attribute 0 binding: " + attributeDescriptor.getType().getBinding());
 
         // access by name
         AttributeDescriptor cityDescriptor = type.getDescriptor("CITY");
         System.out.println("attribute 'CITY'    name: " + cityDescriptor.getName());
-        System.out.println("attribute 'CITT'    type: " + cityDescriptor.getType().toString());
-        System.out.println("attribute 'CITY' binding: " + cityDescriptor.getType().getBinding());
+        System.out.println(
+                "attribute 'CITT'    type: " + cityDescriptor.getType().toString());
+        System.out.println(
+                "attribute 'CITY' binding: " + cityDescriptor.getType().getBinding());
 
         // default geometry
         GeometryDescriptor geometryDescriptor = type.getGeometryDescriptor();
         System.out.println("default geom    name: " + geometryDescriptor.getName());
-        System.out.println("default geom    type: " + geometryDescriptor.getType().toString());
-        System.out.println("default geom binding: " + geometryDescriptor.getType().getBinding());
         System.out.println(
-                "default geom     crs: "
-                        + CRS.toSRS(geometryDescriptor.getCoordinateReferenceSystem()));
+                "default geom    type: " + geometryDescriptor.getType().toString());
+        System.out.println(
+                "default geom binding: " + geometryDescriptor.getType().getBinding());
+        System.out.println("default geom     crs: " + CRS.toSRS(geometryDescriptor.getCoordinateReferenceSystem()));
 
         // example2 end
         System.out.println("\nexample2 end\n");

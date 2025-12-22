@@ -23,8 +23,8 @@ import org.geotools.xsd.Binding;
 import org.geotools.xsd.ComplexBinding;
 
 /**
- * Gets properties from a parent object by visiting bindings in the hierachy. The object properties
- * are stored as name, object tuples.
+ * Gets properties from a parent object by visiting bindings in the hierachy. The object properties are stored as name,
+ * object tuples.
  *
  * @author Justin Deoliveira, The Open Planning Project
  */
@@ -50,8 +50,7 @@ public class GetPropertiesExecutor implements BindingWalker.Visitor {
 
     @Override
     public void visit(Binding binding) {
-        if (binding instanceof ComplexBinding) {
-            ComplexBinding complex = (ComplexBinding) binding;
+        if (binding instanceof ComplexBinding complex) {
 
             try {
                 List<Object[]> properties = complex.getProperties(parent, element);

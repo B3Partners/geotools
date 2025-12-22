@@ -17,13 +17,13 @@
 package org.geotools.temporal.reference;
 
 import java.util.Collection;
+import org.geotools.api.temporal.Calendar;
+import org.geotools.api.temporal.CalendarDate;
+import org.geotools.api.temporal.CalendarEra;
+import org.geotools.api.temporal.JulianDate;
+import org.geotools.api.temporal.Period;
+import org.geotools.api.util.InternationalString;
 import org.geotools.util.Utilities;
-import org.opengis.temporal.Calendar;
-import org.opengis.temporal.CalendarDate;
-import org.opengis.temporal.CalendarEra;
-import org.opengis.temporal.JulianDate;
-import org.opengis.temporal.Period;
-import org.opengis.util.InternationalString;
 
 /** @author Mehdi Sidhoum (Geomatys) */
 public class DefaultCalendarEra implements CalendarEra {
@@ -31,21 +31,20 @@ public class DefaultCalendarEra implements CalendarEra {
     /** identify the calendar era within this calendar. */
     private InternationalString name;
     /**
-     * provide the name or description of a mythical or historic event which fixes the position of
-     * the base scale of the calendar era.
+     * provide the name or description of a mythical or historic event which fixes the position of the base scale of the
+     * calendar era.
      */
     private InternationalString referenceEvent;
     /**
-     * provide the date of the reference referenceEvent expressed as a date in the given calendar.
-     * In most calendars, this date is the origin (i.e the first day) of the scale, but this is not
-     * always true.
+     * provide the date of the reference referenceEvent expressed as a date in the given calendar. In most calendars,
+     * this date is the origin (i.e the first day) of the scale, but this is not always true.
      */
     private CalendarDate referenceDate;
     /** provide the Julian date that corresponds to the reference date. */
     private JulianDate julianReference;
     /**
-     * identify the TM_Period for which the calendar era was used as a basis for dating, the
-     * datatype for TM_Period.begin and Tm_Period.end shall be JulianDate.
+     * identify the TM_Period for which the calendar era was used as a basis for dating, the datatype for
+     * TM_Period.begin and Tm_Period.end shall be JulianDate.
      */
     private Period epochOfUse;
 
@@ -113,8 +112,7 @@ public class DefaultCalendarEra implements CalendarEra {
 
     @Override
     public boolean equals(final Object object) {
-        if (object instanceof DefaultCalendarEra) {
-            final DefaultCalendarEra that = (DefaultCalendarEra) object;
+        if (object instanceof DefaultCalendarEra that) {
 
             return Utilities.equals(this.epochOfUse, that.epochOfUse)
                     && Utilities.equals(this.julianReference, that.julianReference)

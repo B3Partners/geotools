@@ -19,13 +19,13 @@ package org.geotools.feature.visitor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.expression.Expression;
 
 /**
- * Obtains the data needed for a Equal Area operation (classification of features into classes each
- * roughly having the same area).
+ * Obtains the data needed for a Equal Area operation (classification of features into classes each roughly having the
+ * same area).
  *
  * <p>The result contains an array of lists with the expression values in each.
  *
@@ -136,11 +136,11 @@ public class EqualAreaListVisitor implements FeatureCalc {
     }
 
     public void visit(SimpleFeature feature) {
-        visit((org.opengis.feature.Feature) feature);
+        visit((org.geotools.api.feature.Feature) feature);
     }
 
     @Override
-    public void visit(org.opengis.feature.Feature feature) {
+    public void visit(org.geotools.api.feature.Feature feature) {
         Object value = expression.evaluate(feature);
 
         if (value == null) {
@@ -148,8 +148,8 @@ public class EqualAreaListVisitor implements FeatureCalc {
             return; // don't store this value
         }
 
-        if (value instanceof Double) {
-            double doubleVal = ((Double) value).doubleValue();
+        if (value instanceof Double double1) {
+            double doubleVal = double1.doubleValue();
             if (Double.isNaN(doubleVal) || Double.isInfinite(doubleVal)) {
                 countNaN++; // increment the NaN count
                 return; // don't store NaN value

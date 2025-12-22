@@ -21,25 +21,23 @@ import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 /**
- * Formats a date into a string given a certain pattern (specified in the format accepted by {@link
- * SimpleDateFormat}}
+ * Formats a date into a string given a certain pattern (specified in the format accepted by {@link SimpleDateFormat}}
  *
  * @see SimpleDateFormat
  * @author Andrea Aime - TOPP
  */
 public class FilterFunction_dateFormat extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "dateFormat",
-                    parameter("formatted", String.class),
-                    parameter("format", String.class),
-                    parameter("date", Date.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "dateFormat",
+            parameter("formatted", String.class),
+            parameter("format", String.class),
+            parameter("date", Date.class));
 
     public FilterFunction_dateFormat() {
         super(NAME);

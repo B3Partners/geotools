@@ -22,11 +22,11 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.logging.Logger;
-import org.geotools.data.FeatureReader;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.store.ContentState;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 class ElasticFeatureReaderScroll implements FeatureReader<SimpleFeatureType, SimpleFeature> {
 
@@ -46,8 +46,7 @@ class ElasticFeatureReaderScroll implements FeatureReader<SimpleFeatureType, Sim
 
     private final Set<String> scrollIds;
 
-    public ElasticFeatureReaderScroll(
-            ContentState contentState, ElasticResponse searchResponse, int maxFeatures) {
+    public ElasticFeatureReaderScroll(ContentState contentState, ElasticResponse searchResponse, int maxFeatures) {
         this.contentState = contentState;
         this.maxFeatures = maxFeatures;
         this.numFeatures = 0;
@@ -70,8 +69,7 @@ class ElasticFeatureReaderScroll implements FeatureReader<SimpleFeatureType, Sim
             final int n = maxFeatures - numFeatures;
             hits = searchResponse.getResults().getHits().subList(0, n);
         }
-        delegate =
-                new ElasticFeatureReader(contentState, hits, searchResponse.getAggregations(), 0);
+        delegate = new ElasticFeatureReader(contentState, hits, searchResponse.getAggregations(), 0);
         nextScrollId = searchResponse.getScrollId();
         lastScroll = numHits == 0 || numFeatures + hits.size() >= maxFeatures;
         LOGGER.fine("Scoll numHits=" + hits.size() + " (total=" + numFeatures + hits.size());

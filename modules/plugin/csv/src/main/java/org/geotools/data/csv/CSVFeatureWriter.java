@@ -13,20 +13,21 @@ import com.opencsv.CSVWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.NoSuchElementException;
 import org.apache.commons.io.FilenameUtils;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
 import org.geotools.data.csv.parse.CSVIterator;
 import org.geotools.data.csv.parse.CSVStrategy;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.wkt.Formattable;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Iterator supporting writing of feature content.
@@ -62,8 +63,7 @@ public class CSVFeatureWriter implements FeatureWriter<SimpleFeatureType, Simple
         this(csvFileState, csvStrategy, Query.ALL);
     }
 
-    public CSVFeatureWriter(CSVFileState csvFileState, CSVStrategy csvStrategy, Query query)
-            throws IOException {
+    public CSVFeatureWriter(CSVFileState csvFileState, CSVStrategy csvStrategy, Query query) throws IOException {
         this.csvFileState = csvFileState;
         File file = csvFileState.getFile();
         File directory = file.getParentFile();
@@ -73,13 +73,12 @@ public class CSVFeatureWriter implements FeatureWriter<SimpleFeatureType, Simple
         this.featureType = csvStrategy.getFeatureType();
         this.iterator = csvStrategy.iterator();
         this.csvStrategy = csvStrategy;
-        this.csvWriter =
-                new CSVWriter(
-                        new FileWriter(this.temp),
-                        csvStrategy.getSeparator(),
-                        csvStrategy.getQuotechar(),
-                        csvStrategy.getEscapechar(),
-                        csvStrategy.getLineSeparator());
+        this.csvWriter = new CSVWriter(
+                new FileWriter(this.temp, StandardCharsets.UTF_8),
+                csvStrategy.getSeparator(),
+                csvStrategy.getQuotechar(),
+                csvStrategy.getEscapechar(),
+                csvStrategy.getLineSeparator());
         this.csvWriter.writeNext(this.csvFileState.getCSVHeaders(), csvStrategy.isQuoteAllFields());
     }
 
@@ -105,8 +104,7 @@ public class CSVFeatureWriter implements FeatureWriter<SimpleFeatureType, Simple
 
     // next start
     @Override
-    public SimpleFeature next()
-            throws IOException, IllegalArgumentException, NoSuchElementException {
+    public SimpleFeature next() throws IOException, IllegalArgumentException, NoSuchElementException {
         if (csvWriter == null) {
             throw new IOException("Writer has been closed");
         }
@@ -134,10 +132,7 @@ public class CSVFeatureWriter implements FeatureWriter<SimpleFeatureType, Simple
     // next end
 
     // remove start
-    /**
-     * Mark our {@link #currentFeature} feature as null, it will be skipped when written effectively
-     * removing it.
-     */
+    /** Mark our {@link #currentFeature} feature as null, it will be skipped when written effectively removing it. */
     @Override
     public void remove() throws IOException {
         this.currentFeature = null; // just mark it done which means it will not get written out.
@@ -150,8 +145,7 @@ public class CSVFeatureWriter implements FeatureWriter<SimpleFeatureType, Simple
         if (this.currentFeature == null) {
             return; // current feature has been deleted
         }
-        this.csvWriter.writeNext(
-                this.csvStrategy.encode(this.currentFeature), csvStrategy.isQuoteAllFields());
+        this.csvWriter.writeNext(this.csvStrategy.encode(this.currentFeature), csvStrategy.isQuoteAllFields());
         nextRow++;
         this.currentFeature = null; // indicate that it has been written
     }
@@ -183,12 +177,11 @@ public class CSVFeatureWriter implements FeatureWriter<SimpleFeatureType, Simple
         Files.copy(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
         if (csvStrategy.isWritePrj()) {
-            File prjFile =
-                    new File(file.getParent(), FilenameUtils.getBaseName(file.getName()) + ".prj");
+            File prjFile = new File(file.getParent(), FilenameUtils.getBaseName(file.getName()) + ".prj");
             if (prjFile.exists()) {
                 prjFile.delete();
             }
-            try (FileWriter writer = new FileWriter(prjFile)) {
+            try (FileWriter writer = new FileWriter(prjFile, StandardCharsets.UTF_8)) {
                 writer.write(((Formattable) csvFileState.getCrs()).toWKT(Citations.EPSG, 2));
             }
         }

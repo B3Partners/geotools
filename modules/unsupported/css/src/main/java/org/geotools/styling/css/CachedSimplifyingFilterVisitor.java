@@ -23,16 +23,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
 import org.geotools.styling.css.util.UnboundSimplifyingFilterVisitor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.And;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
 
 /**
- * A simplifying filter visitor that caches the results, to avoid repeating their computation over
- * and over
+ * A simplifying filter visitor that caches the results, to avoid repeating their computation over and over
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -91,8 +90,8 @@ class CachedSimplifyingFilterVisitor extends UnboundSimplifyingFilterVisitor {
             for (int i = 0; i < filters.size(); ) {
                 Filter f = filters.get(i);
                 boolean skip = false;
-                if (f instanceof Or) {
-                    Or or = ((Or) f);
+                if (f instanceof Or or1) {
+                    Or or = or1;
                     for (Filter child : or.getChildren()) {
                         if (topLevel.contains(child)) {
                             skip = true;
@@ -112,8 +111,8 @@ class CachedSimplifyingFilterVisitor extends UnboundSimplifyingFilterVisitor {
         if (filters.size() > 1) {
             for (int i = 0; i < filters.size(); i++) {
                 Filter f = filters.get(i);
-                if (f instanceof Or) {
-                    Or or = ((Or) f);
+                if (f instanceof Or or1) {
+                    Or or = or1;
                     Filter reduced = null;
                     boolean twoOrMore = false;
                     for (Filter child : or.getChildren()) {
@@ -168,8 +167,8 @@ class CachedSimplifyingFilterVisitor extends UnboundSimplifyingFilterVisitor {
             for (int i = 0; i < filters.size(); ) {
                 Filter f = filters.get(i);
                 boolean skip = false;
-                if (f instanceof And) {
-                    And and = ((And) f);
+                if (f instanceof And and1) {
+                    And and = and1;
                     for (Filter child : and.getChildren()) {
                         if (topLevel.contains(child)) {
                             skip = true;
@@ -189,8 +188,8 @@ class CachedSimplifyingFilterVisitor extends UnboundSimplifyingFilterVisitor {
             // overall expression
             for (int i = 0; i < filters.size(); i++) {
                 Filter f = filters.get(i);
-                if (f instanceof And) {
-                    And and = ((And) f);
+                if (f instanceof And and1) {
+                    And and = and1;
                     Filter reduced = null;
                     boolean twoOrMore = false;
                     for (Filter child : and.getChildren()) {

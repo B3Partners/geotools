@@ -18,9 +18,9 @@ package org.geotools.filter;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Takes an AttributeExpression, and computes the length of the data for the attribute.
@@ -30,10 +30,7 @@ import org.opengis.filter.expression.Expression;
 public class LengthFunction extends FunctionExpressionImpl {
     // public static FunctionName NAME = new FunctionNameImpl("length","string");
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "length",
-                    parameter("length", Integer.class),
-                    parameter("string", String.class));
+            new FunctionNameImpl("length", parameter("length", Integer.class), parameter("string", String.class));
 
     public LengthFunction() {
         super(NAME);

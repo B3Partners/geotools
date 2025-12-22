@@ -20,18 +20,14 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_notEqualTo extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "notEqualTo",
-                    Boolean.class,
-                    parameter("a", Object.class),
-                    parameter("b", Object.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "notEqualTo", Boolean.class, parameter("a", Object.class), parameter("b", Object.class));
 
     public FilterFunction_notEqualTo() {
         super(NAME);

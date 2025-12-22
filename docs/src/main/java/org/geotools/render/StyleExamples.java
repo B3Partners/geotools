@@ -18,36 +18,35 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.AnchorPoint;
+import org.geotools.api.style.Displacement;
+import org.geotools.api.style.ExternalGraphic;
+import org.geotools.api.style.FeatureTypeConstraint;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Font;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.GraphicalSymbol;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.PointPlacement;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.Stroke;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.style.StyledLayerDescriptor;
+import org.geotools.api.style.TextSymbolizer;
+import org.geotools.api.style.UserLayer;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.NameImpl;
 import org.geotools.metadata.iso.citation.OnLineResourceImpl;
-import org.geotools.styling.AnchorPoint;
-import org.geotools.styling.Displacement;
-import org.geotools.styling.ExternalGraphic;
-import org.geotools.styling.FeatureTypeConstraint;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.Fill;
-import org.geotools.styling.Font;
-import org.geotools.styling.Graphic;
-import org.geotools.styling.Mark;
-import org.geotools.styling.PointPlacement;
-import org.geotools.styling.PointSymbolizer;
-import org.geotools.styling.PolygonSymbolizer;
-import org.geotools.styling.Rule;
-import org.geotools.styling.Stroke;
-import org.geotools.styling.Style;
 import org.geotools.styling.StyleBuilder;
-import org.geotools.styling.StyleFactory;
-import org.geotools.styling.StyledLayerDescriptor;
-import org.geotools.styling.TextSymbolizer;
-import org.geotools.styling.UserLayer;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.Parser;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.GraphicalSymbol;
 
 public class StyleExamples {
 
@@ -55,8 +54,8 @@ public class StyleExamples {
         // styleFactoryExample start
         //
         // We are using the GeoTools styleFactory that allows access to get/set methods
-        org.geotools.styling.StyleFactory sf = CommonFactoryFinder.getStyleFactory();
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        org.geotools.api.style.StyleFactory sf = CommonFactoryFinder.getStyleFactory();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
 
         StyledLayerDescriptor sld = sf.createStyledLayerDescriptor();
         sld.setName("sld");
@@ -68,8 +67,7 @@ public class StyleExamples {
 
         //
         // define constraint limited what features the sld applies to
-        FeatureTypeConstraint constraint =
-                sf.createFeatureTypeConstraint("Feature", Filter.INCLUDE, null);
+        FeatureTypeConstraint constraint = sf.createFeatureTypeConstraint("Feature", Filter.INCLUDE);
 
         layer.layerFeatureConstraints().add(constraint);
 
@@ -120,8 +118,7 @@ public class StyleExamples {
 
         // define a point symbolizer of a small circle
         Graphic city = sf.graphic(symbols, opacity, size, rotation, anchor, displacement);
-        PointSymbolizer pointSymbolizer =
-                sf.pointSymbolizer("point", ff.property("the_geom"), null, null, city);
+        PointSymbolizer pointSymbolizer = sf.pointSymbolizer("point", ff.property("the_geom"), null, null, city);
 
         rule1.symbolizers().add(pointSymbolizer);
 
@@ -134,18 +131,10 @@ public class StyleExamples {
         dotSymbols.add(sf.mark(ff.literal("circle"), null, null));
         Graphic dotGraphic = sf.graphic(dotSymbols, null, ff.literal(3), null, null, null);
         PointSymbolizer dotSymbolizer = sf.pointSymbolizer("dot", null, null, null, dotGraphic);
-        List<org.opengis.style.Symbolizer> symbolizers = new ArrayList<>();
+        List<org.geotools.api.style.Symbolizer> symbolizers = new ArrayList<>();
         symbolizers.add(dotSymbolizer);
         Filter other = null; // null will mark this rule as "other" accepting all remaining features
-        Rule rule2 =
-                sf.rule(
-                        "default",
-                        null,
-                        null,
-                        Double.MIN_VALUE,
-                        Double.MAX_VALUE,
-                        symbolizers,
-                        other);
+        Rule rule2 = sf.rule("default", null, null, Double.MIN_VALUE, Double.MAX_VALUE, symbolizers, other);
         featureTypeStyle.rules().add(rule2);
 
         style.featureTypeStyles().add(featureTypeStyle);
@@ -161,7 +150,7 @@ public class StyleExamples {
         //
         // We are using the GeoTools StyleBuilder that is helpful for quickly making things
         StyleBuilder builder = new StyleBuilder();
-        FilterFactory2 ff = builder.getFilterFactory();
+        FilterFactory ff = builder.getFilterFactory();
 
         // RULE 1
         // first rule to draw cities
@@ -171,10 +160,8 @@ public class StyleExamples {
         city.setSize(ff.literal(10));
         city.graphicalSymbols().add(builder.createExternalGraphic("file:city.svg", "svg")); // svg
         // preferred
-        city.graphicalSymbols()
-                .add(builder.createExternalGraphic("file:city.png", "png")); // png next
-        city.graphicalSymbols()
-                .add(builder.createMark(StyleBuilder.MARK_CIRCLE, Color.BLUE, Color.BLACK, 1));
+        city.graphicalSymbols().add(builder.createExternalGraphic("file:city.png", "png")); // png next
+        city.graphicalSymbols().add(builder.createMark(StyleBuilder.MARK_CIRCLE, Color.BLUE, Color.BLACK, 1));
         PointSymbolizer pointSymbolizer = builder.createPointSymbolizer(city, "the_geom");
 
         Rule rule1 = builder.createRule(pointSymbolizer);
@@ -185,8 +172,7 @@ public class StyleExamples {
 
         //
         // RULE 2 Default
-        Graphic dotGraphic =
-                builder.createGraphic(null, builder.createMark(StyleBuilder.MARK_CIRCLE), null);
+        Graphic dotGraphic = builder.createGraphic(null, builder.createMark(StyleBuilder.MARK_CIRCLE), null);
         PointSymbolizer dotSymbolize = builder.createPointSymbolizer(dotGraphic);
         Rule rule2 = builder.createRule(dotSymbolize);
         rule2.setElseFilter(true);
@@ -209,7 +195,7 @@ public class StyleExamples {
     private void splatExample() {
         // splatExample start
         StyleBuilder builder = new StyleBuilder();
-        FilterFactory2 ff = builder.getFilterFactory();
+        FilterFactory ff = builder.getFilterFactory();
 
         Graphic splat = builder.createGraphic(null, builder.createMark("splat"), null);
         PointSymbolizer symbolizer = builder.createPointSymbolizer(splat);
@@ -230,8 +216,7 @@ public class StyleExamples {
         UserLayer layer = styleFactory.createUserLayer();
         layer.setName("layer");
 
-        FeatureTypeConstraint constraint =
-                styleFactory.createFeatureTypeConstraint("Feature", Filter.INCLUDE, null);
+        FeatureTypeConstraint constraint = styleFactory.createFeatureTypeConstraint("Feature", Filter.INCLUDE);
 
         layer.layerFeatureConstraints().add(constraint);
 
@@ -257,8 +242,7 @@ public class StyleExamples {
         PointSymbolizer pointSymbolizer = styleBuilder.createPointSymbolizer();
 
         Graphic graphic = styleBuilder.createGraphic();
-        ExternalGraphic external =
-                styleBuilder.createExternalGraphic("file:///C:/images/house.gif", "image/gif");
+        ExternalGraphic external = styleBuilder.createExternalGraphic("file:///C:/images/house.gif", "image/gif");
         graphic.graphicalSymbols().add(external);
         graphic.graphicalSymbols().add(styleBuilder.createMark("circle"));
 
@@ -274,7 +258,7 @@ public class StyleExamples {
     private void twoFeatureTypeStyles() {
         // twoFeatureTypeStyles start
         StyleFactory styleFactory = CommonFactoryFinder.getStyleFactory();
-        FilterFactory2 filterFactory = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory filterFactory = CommonFactoryFinder.getFilterFactory();
 
         Style style = styleFactory.getDefaultStyle();
 
@@ -308,18 +292,16 @@ public class StyleExamples {
         // quickPointSymbolizer start
         // "testPoint" feature type style
         StyleBuilder sb = new StyleBuilder();
-        FilterFactory2 ff = sb.getFilterFactory();
+        FilterFactory ff = sb.getFilterFactory();
 
-        Mark testMark =
-                sb.createMark(sb.attributeExpression("name"), sb.createFill(Color.RED, 0.5), null);
-        Graphic graph =
-                sb.createGraphic(
-                        null, // An external graphics if needed
-                        new Mark[] {testMark}, // a Mark if not an external graphics
-                        null, // aSymbol
-                        ff.literal(1), // opacity
-                        ff.property("size"), // read from feature "size" attribute
-                        ff.property("rotation")); // rotation, here read into the feature
+        Mark testMark = sb.createMark(sb.attributeExpression("name"), sb.createFill(Color.RED, 0.5), null);
+        Graphic graph = sb.createGraphic(
+                null, // An external graphics if needed
+                new Mark[] {testMark}, // a Mark if not an external graphics
+                null, // aSymbol
+                ff.literal(1), // opacity
+                ff.property("size"), // read from feature "size" attribute
+                ff.property("rotation")); // rotation, here read into the feature
         PointSymbolizer aPointSymbolizer = sb.createPointSymbolizer(graph);
 
         // creation of the style
@@ -331,21 +313,18 @@ public class StyleExamples {
         // quickTextSymbolizer start
         // "labelPoint" feature type style
         StyleBuilder sb = new StyleBuilder();
-        FilterFactory2 ff = sb.getFilterFactory();
+        FilterFactory ff = sb.getFilterFactory();
 
         // creation of the TextSymbolizer
-        AnchorPoint anchorPoint =
-                sb.createAnchorPoint(sb.attributeExpression("X"), sb.attributeExpression("Y"));
-        PointPlacement pointPlacement =
-                sb.createPointPlacement(anchorPoint, null, sb.literalExpression(0));
-        TextSymbolizer textSymbolizer =
-                sb.createTextSymbolizer(
-                        sb.createFill(Color.BLACK),
-                        new Font[] {sb.createFont("Lucida Sans", 10), sb.createFont("Arial", 10)},
-                        sb.createHalo(),
-                        sb.attributeExpression("name"),
-                        pointPlacement,
-                        null);
+        AnchorPoint anchorPoint = sb.createAnchorPoint(sb.attributeExpression("X"), sb.attributeExpression("Y"));
+        PointPlacement pointPlacement = sb.createPointPlacement(anchorPoint, null, sb.literalExpression(0));
+        TextSymbolizer textSymbolizer = sb.createTextSymbolizer(
+                sb.createFill(Color.BLACK),
+                new Font[] {sb.createFont("Lucida Sans", 10), sb.createFont("Arial", 10)},
+                sb.createHalo(),
+                sb.attributeExpression("name"),
+                pointPlacement,
+                null);
 
         // creation of the Point symbolizer
         Mark circle = sb.createMark(StyleBuilder.MARK_CIRCLE, Color.RED);
@@ -354,8 +333,7 @@ public class StyleExamples {
 
         // creation of the style
         Style style = sb.createStyle();
-        FeatureTypeStyle featureTypeStyle =
-                sb.createFeatureTypeStyle("labelPoint", textSymbolizer, pointSymbolizer);
+        FeatureTypeStyle featureTypeStyle = sb.createFeatureTypeStyle("labelPoint", textSymbolizer, pointSymbolizer);
         style.featureTypeStyles().add(featureTypeStyle);
 
         // creation of the style
@@ -365,7 +343,7 @@ public class StyleExamples {
     private void quickPolygonSymbolizer() {
         // quickPolygonSymbolizer start
         StyleBuilder styleBuilder = new StyleBuilder();
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
 
         PolygonSymbolizer polygonSymbolizer = styleBuilder.createPolygonSymbolizer(Color.BLUE);
         polygonSymbolizer.getFill().setOpacity(ff.literal(0.5)); // 50% blue
@@ -399,37 +377,30 @@ public class StyleExamples {
         style.setName("MyStyle");
 
         // "testPoint" feature type style
-        Mark testMark =
-                sb.createMark(sb.attributeExpression("name"), sb.createFill(Color.RED, 0.5), null);
-        Graphic graph =
-                sb.createGraphic(
-                        null,
-                        new Mark[] {testMark},
-                        null,
-                        sb.literalExpression(1),
-                        sb.attributeExpression("size"),
-                        sb.attributeExpression("rotation"));
-        style.featureTypeStyles()
-                .add(sb.createFeatureTypeStyle("testPoint", sb.createPointSymbolizer(graph)));
+        Mark testMark = sb.createMark(sb.attributeExpression("name"), sb.createFill(Color.RED, 0.5), null);
+        Graphic graph = sb.createGraphic(
+                null,
+                new Mark[] {testMark},
+                null,
+                sb.literalExpression(1),
+                sb.attributeExpression("size"),
+                sb.attributeExpression("rotation"));
+        style.featureTypeStyles().add(sb.createFeatureTypeStyle("testPoint", sb.createPointSymbolizer(graph)));
 
         // "labelPoint" feature type style
-        AnchorPoint anchorPoint =
-                sb.createAnchorPoint(sb.attributeExpression("X"), sb.attributeExpression("Y"));
-        PointPlacement pointPlacement =
-                sb.createPointPlacement(anchorPoint, null, sb.literalExpression(0));
-        TextSymbolizer textSymbolizer =
-                sb.createTextSymbolizer(
-                        sb.createFill(Color.BLACK),
-                        new Font[] {sb.createFont("Lucida Sans", 10), sb.createFont("Arial", 10)},
-                        sb.createHalo(),
-                        sb.attributeExpression("name"),
-                        pointPlacement,
-                        null);
+        AnchorPoint anchorPoint = sb.createAnchorPoint(sb.attributeExpression("X"), sb.attributeExpression("Y"));
+        PointPlacement pointPlacement = sb.createPointPlacement(anchorPoint, null, sb.literalExpression(0));
+        TextSymbolizer textSymbolizer = sb.createTextSymbolizer(
+                sb.createFill(Color.BLACK),
+                new Font[] {sb.createFont("Lucida Sans", 10), sb.createFont("Arial", 10)},
+                sb.createHalo(),
+                sb.attributeExpression("name"),
+                pointPlacement,
+                null);
         Mark circle = sb.createMark(StyleBuilder.MARK_CIRCLE, Color.RED);
         Graphic graph2 = sb.createGraphic(null, circle, null, 1, 4, 0);
         PointSymbolizer pointSymbolizer = sb.createPointSymbolizer(graph2);
-        style.featureTypeStyles()
-                .add(sb.createFeatureTypeStyle("labelPoint", textSymbolizer, pointSymbolizer));
+        style.featureTypeStyles().add(sb.createFeatureTypeStyle("labelPoint", textSymbolizer, pointSymbolizer));
         // markTestSLD end
     }
 

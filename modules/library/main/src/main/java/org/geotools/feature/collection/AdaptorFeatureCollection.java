@@ -19,17 +19,17 @@ package org.geotools.feature.collection;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.util.ProgressListener;
 
 /**
  * Implement a feature collection just based on provision of iterator.
@@ -117,8 +117,8 @@ public abstract class AdaptorFeatureCollection implements SimpleFeatureCollectio
     /**
      * Returns <tt>true</tt> if this collection contains the specified element. <tt></tt>.
      *
-     * <p>This implementation iterates over the elements in the collection, checking each element in
-     * turn for equality with the specified element.
+     * <p>This implementation iterates over the elements in the collection, checking each element in turn for equality
+     * with the specified element.
      *
      * @param o object to be checked for containment in this collection.
      * @return <tt>true</tt> if this collection contains the specified element.
@@ -179,14 +179,12 @@ public abstract class AdaptorFeatureCollection implements SimpleFeatureCollectio
     // Bulk Operations
 
     /**
-     * Returns <tt>true</tt> if this collection contains all of the elements in the specified
-     * collection.
+     * Returns <tt>true</tt> if this collection contains all of the elements in the specified collection.
      *
      * <p>
      *
      * @param c collection to be checked for containment in this collection.
-     * @return <tt>true</tt> if this collection contains all of the elements in the specified
-     *     collection.
+     * @return <tt>true</tt> if this collection contains all of the elements in the specified collection.
      * @throws NullPointerException if the specified collection is null.
      * @see #contains(Object)
      */
@@ -240,8 +238,7 @@ public abstract class AdaptorFeatureCollection implements SimpleFeatureCollectio
     /**
      * Please implement!
      *
-     * <p>Note: If you return a ResourceIterator, the default implemntation of close( Iterator )
-     * will know what to do.
+     * <p>Note: If you return a ResourceIterator, the default implemntation of close( Iterator ) will know what to do.
      */
     public final Iterator<SimpleFeature> iterator() {
         Iterator<SimpleFeature> iterator = openIterator();
@@ -257,8 +254,8 @@ public abstract class AdaptorFeatureCollection implements SimpleFeatureCollectio
     public abstract int size();
 
     /**
-     * Clean up after any resources assocaited with this iteartor in a manner similar to JDO
-     * collections. Example (safe) use:
+     * Clean up after any resources assocaited with this iteartor in a manner similar to JDO collections. Example (safe)
+     * use:
      *
      * <pre><code>
      * Iterator iterator = collection.iterator();
@@ -284,8 +281,8 @@ public abstract class AdaptorFeatureCollection implements SimpleFeatureCollectio
     /**
      * Open an Iterator, we will call close( iterator ).
      *
-     * <p>Please subclass to provide your own iterator - note <code>iterator()</code> is implemented
-     * to call <code>open()</code> and track the results in for later <code>purge()</code>.
+     * <p>Please subclass to provide your own iterator - note <code>iterator()</code> is implemented to call <code>
+     * open()</code> and track the results in for later <code>purge()</code>.
      *
      * @return Iterator based on resource use
      */
@@ -294,11 +291,9 @@ public abstract class AdaptorFeatureCollection implements SimpleFeatureCollectio
     /**
      * Please override to cleanup after your own iterators, and any used resources.
      *
-     * <p>As an example if the iterator was working off a File then the inputstream should be
-     * closed.
+     * <p>As an example if the iterator was working off a File then the inputstream should be closed.
      *
-     * <p>Subclass must call super.close( close ) to allow the list of open iterators to be
-     * adjusted.
+     * <p>Subclass must call super.close( close ) to allow the list of open iterators to be adjusted.
      *
      * @param close Iterator, will not be <code>null</code>
      */
@@ -317,7 +312,6 @@ public abstract class AdaptorFeatureCollection implements SimpleFeatureCollectio
     /** Subclasses need to override this. */
     @Override
     public ReferencedEnvelope getBounds() {
-        throw new UnsupportedOperationException(
-                "Subclasses " + getClass().getSimpleName() + " should override");
+        throw new UnsupportedOperationException("Subclasses " + getClass().getSimpleName() + " should override");
     }
 }

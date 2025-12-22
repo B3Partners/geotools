@@ -24,6 +24,30 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.BinaryComparisonOperator;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.BinaryExpression;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.Multiply;
+import org.geotools.api.filter.expression.NilExpression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.Subtract;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.temporal.BinaryTemporalOperator;
 import org.geotools.appschema.filter.FilterFactoryImplNamespaceAware;
 import org.geotools.data.complex.AttributeMapping;
 import org.geotools.data.complex.FeatureTypeMapping;
@@ -41,30 +65,6 @@ import org.geotools.filter.expression.PropertyAccessorFactory;
 import org.geotools.filter.visitor.PostPreProcessFilterSplittingVisitor;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.BinaryComparisonOperator;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.Id;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.BinaryExpression;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.Multiply;
-import org.opengis.filter.expression.NilExpression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.expression.Subtract;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.temporal.BinaryTemporalOperator;
 
 /** @author Niels Charlier (Curtin University of Technology) */
 public class ComplexFilterSplitter extends PostPreProcessFilterSplittingVisitor {
@@ -293,16 +293,13 @@ public class ComplexFilterSplitter extends PostPreProcessFilterSplittingVisitor 
         // replace the artificial DEFAULT_GEOMETRY property with the actual one
         if (DEFAULT_GEOMETRY_LOCAL_NAME.equals(expression.getPropertyName())) {
             String defGeomPath = mappings.getDefaultGeometryXPath();
-            FilterFactory2 ff = new FilterFactoryImplNamespaceAware(mappings.getNamespaces());
+            FilterFactory ff = new FilterFactoryImplNamespaceAware(mappings.getNamespaces());
             expression = ff.property(defGeomPath);
         }
 
         // break into single steps
         StepList exprSteps =
-                XPath.steps(
-                        mappings.getTargetFeature(),
-                        expression.getPropertyName(),
-                        this.mappings.getNamespaces());
+                XPath.steps(mappings.getTargetFeature(), expression.getPropertyName(), this.mappings.getNamespaces());
 
         if (exprSteps.containsPredicate()) {
             postStack.push(expression);
@@ -313,31 +310,25 @@ public class ComplexFilterSplitter extends PostPreProcessFilterSplittingVisitor 
 
         if (AppSchemaDataAccessConfigurator.shouldEncodeNestedFilters()) {
             // check nested mappings
-            FeatureChainedAttributeVisitor nestedAttrExtractor =
-                    new FeatureChainedAttributeVisitor(mappings);
+            FeatureChainedAttributeVisitor nestedAttrExtractor = new FeatureChainedAttributeVisitor(mappings);
             nestedAttrExtractor.visit(expression, null);
             // check expression exists
             FeatureChainedAttributeVisitor existsAttrExtractor = existsExtractorVisitor();
             existsAttrExtractor.visit(expression, null);
 
-            List<FeatureChainedAttributeDescriptor> fcAttrs =
-                    nestedAttrExtractor.getFeatureChainedAttributes();
+            List<FeatureChainedAttributeDescriptor> fcAttrs = nestedAttrExtractor.getFeatureChainedAttributes();
             // error on attribute check
-            checkAttributeFound(
-                    expression, exprSteps, nestedAttrExtractor, existsAttrExtractor, fcAttrs);
+            checkAttributeFound(expression, exprSteps, nestedAttrExtractor, existsAttrExtractor, fcAttrs);
             // encoding of filters on multiple nested attributes is not (yet) supported
-            if (fcAttrs.size() == 1
-                    || (!fcAttrs.isEmpty() && validateNoClientProperties(fcAttrs))) {
+            if (fcAttrs.size() == 1 || !fcAttrs.isEmpty() && validateNoClientProperties(fcAttrs)) {
                 FeatureChainedAttributeDescriptor nestedAttrDescr = fcAttrs.get(0);
                 if (nestedAttrDescr.chainSize() > 1 && nestedAttrDescr.isJoiningEnabled()) {
-                    FeatureTypeMapping featureMapping =
-                            nestedAttrDescr.getFeatureTypeOwningAttribute();
+                    FeatureTypeMapping featureMapping = nestedAttrDescr.getFeatureTypeOwningAttribute();
                     nestedAttributes.add(nestedAttrDescr);
 
                     // add source expressions for target attribute
                     List<Expression> nestedMappings =
-                            featureMapping.findMappingsFor(
-                                    nestedAttrDescr.getAttributePath(), false);
+                            featureMapping.findMappingsFor(nestedAttrDescr.getAttributePath(), false);
                     Iterator<Expression> it = matchingMappings.iterator();
                     while (it.hasNext()) {
                         if (it.next() == null) {
@@ -355,16 +346,14 @@ public class ComplexFilterSplitter extends PostPreProcessFilterSplittingVisitor 
                         if (mappingStep.hasNestedFeature()) {
                             FeatureChainLink parentStep = nestedAttrDescr.getLink(i);
 
-                            NestedAttributeMapping nestedAttr =
-                                    parentStep.getNestedFeatureAttribute();
+                            NestedAttributeMapping nestedAttr = parentStep.getNestedFeatureAttribute();
                             FeatureTypeMapping nestedFeature = null;
                             try {
                                 nestedFeature = nestedAttr.getFeatureTypeMapping(null);
                             } catch (IOException e) {
-                                LOGGER.warning(
-                                        "Exception occurred processing nested filter, encoding"
-                                                + "will be disabled: "
-                                                + e.getMessage());
+                                LOGGER.warning("Exception occurred processing nested filter, encoding"
+                                        + "will be disabled: "
+                                        + e.getMessage());
                                 postStack.push(expression);
                                 return null;
                             }
@@ -385,9 +374,7 @@ public class ComplexFilterSplitter extends PostPreProcessFilterSplittingVisitor 
         if (matchingMappings.isEmpty()) {
             // handle multi value
             AttributeMapping candidate = mappings.getAttributeMapping(exprSteps);
-            if (candidate != null
-                    && candidate.isMultiValued()
-                    && candidate.getMultipleValue() != null) {
+            if (candidate != null && candidate.isMultiValued() && candidate.getMultipleValue() != null) {
                 return super.visit(expression, notUsed);
             }
             postStack.push(expression);
@@ -419,8 +406,9 @@ public class ComplexFilterSplitter extends PostPreProcessFilterSplittingVisitor 
             for (FeatureChainLink clink : ad.getFeatureChain()) {
                 if (clink.getNestedFeatureAttribute() == null) continue;
                 if (clink.getNestedFeatureAttribute().getClientProperties() != null
-                        && !clink.getNestedFeatureAttribute().getClientProperties().isEmpty())
-                    return false;
+                        && !clink.getNestedFeatureAttribute()
+                                .getClientProperties()
+                                .isEmpty()) return false;
             }
         }
         return true;
@@ -438,10 +426,8 @@ public class ComplexFilterSplitter extends PostPreProcessFilterSplittingVisitor 
                 && !isXlinkHRef(exprSteps)
                 && !existsAttrExtractor.isUnboundedNestedElementFound()
                 && existsAttrExtractor.getFeatureChainedAttributes().isEmpty()) {
-            throw new IllegalArgumentException(
-                    String.format(
-                            "Attribute \"%s\" not found in type \"%s\"",
-                            expression, mappings.getTargetFeature().getName().toString()));
+            throw new IllegalArgumentException("Attribute \"%s\" not found in type \"%s\""
+                    .formatted(expression, mappings.getTargetFeature().getName().toString()));
         }
     }
 
@@ -484,9 +470,7 @@ public class ComplexFilterSplitter extends PostPreProcessFilterSplittingVisitor 
                     // should
                     // be tested against the container type, i.e. the previous link in the chain
                     String ownerTypeName =
-                            Types.toPrefixedName(
-                                    ownerType.getTargetFeature().getName(),
-                                    ownerType.getNamespaces());
+                            Types.toPrefixedName(ownerType.getTargetFeature().getName(), ownerType.getNamespaces());
                     boolean chainingSimpleType =
                             ownerTypeName.equals(descr.getAttributePath().toString());
                     FeatureChainLink lastLink = descr.getLastLink();
@@ -500,9 +484,8 @@ public class ComplexFilterSplitter extends PostPreProcessFilterSplittingVisitor 
                             xpathSteps.add(attrPath.get(0));
                         }
                     } else {
-                        LOGGER.warning(
-                                String.format(
-                                        "Cound not run sanity check for nested attribute \"%s\" of type \"%s\"",
+                        LOGGER.warning("Cound not run sanity check for nested attribute \"%s\" of type \"%s\""
+                                .formatted(
                                         descr.getAttributePath(),
                                         ownerType.getTargetFeature().getName()));
                     }
@@ -538,39 +521,37 @@ public class ComplexFilterSplitter extends PostPreProcessFilterSplittingVisitor 
         if (filter instanceof BinarySpatialOperator) {
             expectedType = GeometryDescriptor.class;
         } else {
-            if (xpath.size() > 0) {
+            if (!xpath.isEmpty()) {
                 boolean isXmlAttr = xpath.get(xpath.size() - 1).isXmlAttribute();
-                expectedType = (isXmlAttr) ? Name.class : AttributeDescriptor.class;
+                expectedType = isXmlAttr ? Name.class : AttributeDescriptor.class;
             }
         }
 
         return expectedType;
     }
 
-    private void checkPropetyExistenceAndType(
-            FeatureTypeMapping mapping, String xpath, Class<?> expectedType) {
+    private void checkPropetyExistenceAndType(FeatureTypeMapping mapping, String xpath, Class<?> expectedType) {
         FeatureType featureType = (FeatureType) mapping.getTargetFeature().getType();
         FeaturePropertyAccessorFactory accessorFactory = new FeaturePropertyAccessorFactory();
         Hints hints = new Hints(PropertyAccessorFactory.NAMESPACE_CONTEXT, mapping.getNamespaces());
         PropertyAccessor accessor =
-                accessorFactory.createPropertyAccessor(
-                        featureType.getClass(), xpath, Object.class, hints);
+                accessorFactory.createPropertyAccessor(featureType.getClass(), xpath, Object.class, hints);
         if (accessor != null) {
             Object descr = null;
             try {
                 descr = accessor.get(featureType, xpath, Object.class);
             } catch (Exception e) {
                 throw new IllegalArgumentException(
-                        String.format(
-                                "Attribute \"%s\" not found in type \"%s\"",
-                                xpath, mappings.getTargetFeature().getName().toString()),
+                        "Attribute \"%s\" not found in type \"%s\""
+                                .formatted(
+                                        xpath,
+                                        mappings.getTargetFeature().getName().toString()),
                         e);
             }
-            if (!(expectedType.isAssignableFrom(descr.getClass()))) {
+            if (!expectedType.isAssignableFrom(descr.getClass())) {
                 throw new IllegalArgumentException(
-                        String.format(
-                                "Attribute descriptor for \"%s\" if of type \"%s\", but it should be of type \"%s\"",
-                                xpath, descr.getClass().getName(), expectedType.getName()));
+                        "Attribute descriptor for \"%s\" if of type \"%s\", but it should be of type \"%s\""
+                                .formatted(xpath, descr.getClass().getName(), expectedType.getName()));
             }
         }
     }

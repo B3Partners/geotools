@@ -25,6 +25,10 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.text.ecql.ECQL;
 import org.geotools.filter.visitor.SimplifyingFilterVisitor;
@@ -35,33 +39,29 @@ import org.geotools.styling.css.selector.Selector;
 import org.geotools.styling.css.util.OgcFilterBuilder;
 import org.geotools.styling.css.util.ScaleRangeExtractor;
 import org.geotools.styling.css.util.UnboundSimplifyingFilterVisitor;
+import org.geotools.styling.zoom.ZoomContext;
 import org.geotools.util.NumberRange;
 import org.geotools.util.Range;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.And;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
 
 /**
- * Represents the current coverage of the scale/filter domain, and has helper methods to add {@link
- * CssRule} to the covereage, split them into subrules by scale ranges, compare them with the
- * existing coverage, and genenerate rules matching only what's left to be covered.
+ * Represents the current coverage of the scale/filter domain, and has helper methods to add {@link CssRule} to the
+ * covereage, split them into subrules by scale ranges, compare them with the existing coverage, and genenerate rules
+ * matching only what's left to be covered.
  *
  * @author Andrea Aime - GeoSolutions
  */
 class DomainCoverage {
 
     /** The full range of scales possible. Once this is covered, the whole domain is */
-    static final NumberRange<Double> FULL_SCALE_RANGE =
-            new NumberRange<>(Double.class, 0d, Double.POSITIVE_INFINITY);
+    static final NumberRange<Double> FULL_SCALE_RANGE = new NumberRange<>(Double.class, 0d, Double.POSITIVE_INFINITY);
 
     static final Logger LOGGER = Logging.getLogger(DomainCoverage.class);
 
     /**
-     * A simplified representation of a Selector that takes apart the three main components, scale
-     * range, filter and pseudoClass, to make it compatible with the SLD filtering model. A Selector
-     * expressed in CSS language can be converted into a list of these.
+     * A simplified representation of a Selector that takes apart the three main components, scale range, filter and
+     * pseudoClass, to make it compatible with the SLD filtering model. A Selector expressed in CSS language can be
+     * converted into a list of these.
      *
      * @author Andrea Aime - GeoSolutions
      */
@@ -74,19 +74,18 @@ class DomainCoverage {
         Integer complexity;
 
         public SLDSelector(NumberRange<?> scaleRange, Filter filter) {
-            this.scaleRange =
-                    new NumberRange<>(
-                            Double.class,
-                            scaleRange.getMinimum(),
-                            scaleRange.isMinIncluded(),
-                            scaleRange.getMaximum(),
-                            scaleRange.isMaxIncluded());
+            this.scaleRange = new NumberRange<>(
+                    Double.class,
+                    scaleRange.getMinimum(),
+                    scaleRange.isMinIncluded(),
+                    scaleRange.getMaximum(),
+                    scaleRange.isMaxIncluded());
             this.filter = filter;
         }
 
         /**
-         * Returns a list of scale dependent filters that represent the difference (the uncovered
-         * area) between this {@link SLDSelector} and then specified rule
+         * Returns a list of scale dependent filters that represent the difference (the uncovered area) between this
+         * {@link SLDSelector} and then specified rule
          */
         public List<SLDSelector> difference(SLDSelector other) {
             List<SLDSelector> result = new ArrayList<>();
@@ -171,7 +170,7 @@ class DomainCoverage {
      *
      * @author Andrea Aime - GeoSolutions
      */
-    private class SLDSelectorComparator implements Comparator<SLDSelector> {
+    private static class SLDSelectorComparator implements Comparator<SLDSelector> {
 
         @Override
         public int compare(SLDSelector o1, SLDSelector o2) {
@@ -190,7 +189,7 @@ class DomainCoverage {
         }
     }
 
-    static final FilterFactory2 FF = CommonFactoryFinder.getFilterFactory2();
+    static final FilterFactory FF = CommonFactoryFinder.getFilterFactory();
 
     /** The current domain coverage */
     private List<SLDSelector> elements;
@@ -199,14 +198,14 @@ class DomainCoverage {
     private FeatureType targetFeatureType;
 
     /**
-     * A simplifier visitor that will cache results that have been simplified already, since this
-     * class unites/intersects filters a lot in order to compute the coverage
+     * A simplifier visitor that will cache results that have been simplified already, since this class
+     * unites/intersects filters a lot in order to compute the coverage
      */
     private UnboundSimplifyingFilterVisitor simplifier;
 
     /**
-     * The set of selectors generated so far. We can get several repeated selectors due to
-     * conditional pseudo-classes, but only the first one will be not covered
+     * The set of selectors generated so far. We can get several repeated selectors due to conditional pseudo-classes,
+     * but only the first one will be not covered
      */
     Set<SLDSelector> generatedSelectors = new HashSet<>();
 
@@ -214,31 +213,33 @@ class DomainCoverage {
     boolean exclusiveRulesEnabled = true;
 
     /**
-     * If the threshold is set, switches out of exclusive mode once the total complexity of the
-     * coverage goes beyond the threshold.
+     * If the threshold is set, switches out of exclusive mode once the total complexity of the coverage goes beyond the
+     * threshold.
      */
     int complexityThreshold = 0;
 
+    private final ZoomContext zoomContext;
+
     /** Create a new domain coverage for the given feature type */
     public DomainCoverage(
-            FeatureType targetFeatureType, UnboundSimplifyingFilterVisitor simplifier) {
+            FeatureType targetFeatureType, UnboundSimplifyingFilterVisitor simplifier, ZoomContext zoomContext) {
         this.elements = new ArrayList<>();
         this.targetFeatureType = targetFeatureType;
         this.simplifier = simplifier;
+        this.zoomContext = zoomContext;
     }
 
     /**
-     * Adds a rule to the domain, and returns a list of rules representing bits of the domain that
-     * were still not covered by the previous rules
+     * Adds a rule to the domain, and returns a list of rules representing bits of the domain that were still not
+     * covered by the previous rules
      */
     public List<CssRule> addRule(CssRule rule) {
         Selector selector = rule.getSelector();
 
         // turns the rule in a set of domain coverage expressions (simplified selectors)
-        List<SLDSelector> ruleCoverage =
-                toSLDSelectors(selector, targetFeatureType).stream()
-                        .filter(s -> !generatedSelectors.contains(s))
-                        .collect(Collectors.toList());
+        List<SLDSelector> ruleCoverage = toSLDSelectors(selector, targetFeatureType).stream()
+                .filter(s -> !generatedSelectors.contains(s))
+                .collect(Collectors.toList());
         if (ruleCoverage.isEmpty()) {
             return Collections.emptyList();
         } else {
@@ -285,11 +286,7 @@ class DomainCoverage {
                 List<CssRule> derivedRules = new ArrayList<>();
                 reducedCoverage = combineSLDSelectors(reducedCoverage);
                 for (SLDSelector rc : reducedCoverage) {
-                    derivedRules.add(
-                            new CssRule(
-                                    rc.toSelector(simplifier),
-                                    rule.getProperties(),
-                                    rule.getComment()));
+                    derivedRules.add(new CssRule(rc.toSelector(simplifier), rule.getProperties(), rule.getComment()));
                 }
 
                 elements.addAll(reducedCoverage);
@@ -311,18 +308,16 @@ class DomainCoverage {
             if (prev == null) {
                 prev = ss;
             } else if (prev.scaleRange.equals(ss.scaleRange)) {
-                org.opengis.filter.Or or = FF.or(ss.filter, prev.filter);
+                org.geotools.api.filter.Or or = FF.or(ss.filter, prev.filter);
                 Filter simplified = simplify(or);
                 prev = new SLDSelector(prev.scaleRange, simplified);
-            } else if (prev.scaleRange.getMaximum() == ss.scaleRange.getMinimum()
-                    && prev.filter.equals(ss.filter)) {
-                NumberRange combinedRange =
-                        new NumberRange<>(
-                                Double.class,
-                                prev.scaleRange.getMinimum(),
-                                prev.scaleRange.isMinIncluded(),
-                                ss.scaleRange.getMaximum(),
-                                ss.scaleRange.isMaxIncluded());
+            } else if (prev.scaleRange.getMaximum() == ss.scaleRange.getMinimum() && prev.filter.equals(ss.filter)) {
+                NumberRange combinedRange = new NumberRange<>(
+                        Double.class,
+                        prev.scaleRange.getMinimum(),
+                        prev.scaleRange.isMinIncluded(),
+                        ss.scaleRange.getMaximum(),
+                        ss.scaleRange.isMaxIncluded());
                 prev = new SLDSelector(combinedRange, prev.filter);
             } else {
                 combined.add(prev);
@@ -347,9 +342,7 @@ class DomainCoverage {
 
         List<CssRule> result = new ArrayList<>();
         for (SLDSelector ss : ruleCoverage) {
-            result.add(
-                    new CssRule(
-                            ss.toSelector(simplifier), rule.getProperties(), rule.getComment()));
+            result.add(new CssRule(ss.toSelector(simplifier), rule.getProperties(), rule.getComment()));
         }
 
         return result;
@@ -358,14 +351,12 @@ class DomainCoverage {
     /** Turns the specified selector into a list of "standardized" SLDSelector */
     List<SLDSelector> toSLDSelectors(Selector selector, FeatureType targetFeatureType) {
         List<SLDSelector> result = new ArrayList<>();
-        if (selector instanceof Or) {
-            Or or = (Or) selector;
+        if (selector instanceof Or or) {
             for (Selector s : or.getChildren()) {
                 if (s instanceof Or) {
-                    throw new IllegalArgumentException(
-                            "Unexpected or selector nested inside another one, "
-                                    + "at this point they should have been all flattened: "
-                                    + selector);
+                    throw new IllegalArgumentException("Unexpected or selector nested inside another one, "
+                            + "at this point they should have been all flattened: "
+                            + selector);
                 }
                 toIndependentSLDSelectors(s, targetFeatureType, result);
             }
@@ -377,14 +368,12 @@ class DomainCoverage {
     }
 
     /**
-     * Flattens a single SLD selector into a list of {@link SLDSelector}, adding them into the
-     * scaleDependentFilters list
+     * Flattens a single SLD selector into a list of {@link SLDSelector}, adding them into the scaleDependentFilters
+     * list
      */
     private void toIndependentSLDSelectors(
-            Selector selector,
-            FeatureType targetFeatureType,
-            List<SLDSelector> scaleDependentFilters) {
-        Range<Double> range = ScaleRangeExtractor.getScaleRange(selector);
+            Selector selector, FeatureType targetFeatureType, List<SLDSelector> scaleDependentFilters) {
+        Range<Double> range = ScaleRangeExtractor.getScaleRange(selector, zoomContext);
         if (range == null) {
             range = FULL_SCALE_RANGE;
         }
@@ -392,8 +381,7 @@ class DomainCoverage {
         boolean merged = false;
         for (SLDSelector existing : scaleDependentFilters) {
             if (existing.scaleRange.equals(range)) {
-                if (existing.filter instanceof org.opengis.filter.Or) {
-                    org.opengis.filter.Or or = (org.opengis.filter.Or) existing.filter;
+                if (existing.filter instanceof org.geotools.api.filter.Or or) {
                     List<Filter> children = new ArrayList<>(or.getChildren());
                     children.add(filter);
                     existing.filter = simplify(FF.or(children));
@@ -409,18 +397,16 @@ class DomainCoverage {
         }
     }
 
-    /**
-     * Simplifies a filter via the simplifying filter visitor, taking into account the target
-     * feature type
-     */
+    /** Simplifies a filter via the simplifying filter visitor, taking into account the target feature type */
     Filter simplify(Filter filter) {
         return (Filter) filter.accept(simplifier, null);
     }
 
     @Override
     public String toString() {
-        StringBuilder sb =
-                new StringBuilder("DomainCoverage[items=").append(elements.size()).append(",\n");
+        StringBuilder sb = new StringBuilder("DomainCoverage[items=")
+                .append(elements.size())
+                .append(",\n");
         for (SLDSelector selector : elements) {
             sb.append(selector).append("\n");
         }

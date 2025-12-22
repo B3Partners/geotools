@@ -39,17 +39,16 @@ import org.geotools.xsd.Configuration;
 import org.geotools.xsd.Encoder;
 
 /**
- * Describes an abstract ExecuteProcess request. Provides everything except the versioning info,
- * which subclasses must implement.
+ * Describes an abstract ExecuteProcess request. Provides everything except the versioning info, which subclasses must
+ * implement.
  *
  * @author gdavis
  */
-public abstract class AbstractExecuteProcessRequest extends AbstractWPSRequest
-        implements ExecuteProcessRequest {
+public abstract class AbstractExecuteProcessRequest extends AbstractWPSRequest implements ExecuteProcessRequest {
 
     /**
-     * only support POST for execute requests right now (in the future this could be dynamically set
-     * based on what properties are set for this request).
+     * only support POST for execute requests right now (in the future this could be dynamically set based on what
+     * properties are set for this request).
      */
     private boolean usePost = true;
 
@@ -117,7 +116,7 @@ public abstract class AbstractExecuteProcessRequest extends AbstractWPSRequest
         request.setVersion("1.0.0"); // TODO: un-hardcode
 
         // inputs - loop through inputs and add them
-        if ((this.inputs != null) && !this.inputs.isEmpty()) {
+        if (this.inputs != null && !this.inputs.isEmpty()) {
             DataInputsType1 inputtypes = Wps10Factory.eINSTANCE.createDataInputsType1();
 
             Set<Object> keyset = this.inputs.keySet();
@@ -131,16 +130,14 @@ public abstract class AbstractExecuteProcessRequest extends AbstractWPSRequest
                 while (iterator2.hasNext()) {
                     // identifier
                     EObject oInput = iterator2.next();
-                    if (oInput instanceof DataType) {
-                        DataType dt = (DataType) oInput;
+                    if (oInput instanceof DataType dt) {
                         InputType input = Wps10Factory.eINSTANCE.createInputType();
                         CodeType ct = Ows11Factory.eINSTANCE.createCodeType();
                         ct.setValue((String) key);
                         input.setIdentifier(ct);
                         input.setData(dt);
                         inputtypes.getInput().add(input);
-                    } else if (oInput instanceof InputReferenceType) {
-                        InputReferenceType rt = (InputReferenceType) oInput;
+                    } else if (oInput instanceof InputReferenceType rt) {
                         InputType input = Wps10Factory.eINSTANCE.createInputType();
                         CodeType ct = Ows11Factory.eINSTANCE.createCodeType();
                         ct.setValue((String) key);
@@ -148,11 +145,10 @@ public abstract class AbstractExecuteProcessRequest extends AbstractWPSRequest
                         input.setReference(rt);
                         inputtypes.getInput().add(input);
                     } else {
-                        throw new IllegalStateException(
-                                "The input for key "
-                                        + key
-                                        + " contain an unsupported object of type "
-                                        + oInput.getClass());
+                        throw new IllegalStateException("The input for key "
+                                + key
+                                + " contain an unsupported object of type "
+                                + oInput.getClass());
                     }
                 }
             }
@@ -169,8 +165,8 @@ public abstract class AbstractExecuteProcessRequest extends AbstractWPSRequest
     }
 
     /**
-     * Add an input to the input properties. If null is passed as the value, remove any current
-     * input with the given name.
+     * Add an input to the input properties. If null is passed as the value, remove any current input with the given
+     * name.
      *
      * @param name input name
      * @param value the list of datatype input objects
@@ -183,9 +179,8 @@ public abstract class AbstractExecuteProcessRequest extends AbstractWPSRequest
             // check input for validity
             for (EObject o : value) {
                 if (!(o instanceof DataType) && !(o instanceof InputReferenceType)) {
-                    throw new IllegalArgumentException(
-                            "The values can be either of type net.opengis.wps10.DataType "
-                                    + "or of type net.opengis.wps10.InputReferenceType");
+                    throw new IllegalArgumentException("The values can be either of type net.opengis.wps10.DataType "
+                            + "or of type net.opengis.wps10.InputReferenceType");
                 }
             }
             // all right, let's roll

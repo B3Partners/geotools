@@ -17,8 +17,8 @@
 package org.geotools.process.classify;
 
 import java.util.Set;
-import org.jaitools.numeric.Range;
-import org.jaitools.numeric.Statistic;
+import org.eclipse.imagen.media.range.Range;
+import org.eclipse.imagen.media.stats.Statistics.StatsType;
 
 /** A classification of data into classes, with a count and statistics for each class. */
 public interface ClassificationStats {
@@ -27,13 +27,13 @@ public interface ClassificationStats {
     int size();
 
     /** The statistics maintained for each class. */
-    Set<Statistic> getStats();
+    Set<StatsType> getStats();
 
     /** The value range for the specified class. */
     Range range(int i);
 
     /** The stat value for the specified class and statistic type. */
-    Double value(int i, Statistic stat);
+    Double value(int i, StatsType stat);
 
     /** The count of values for the speciifed class. */
     Long count(int i);

@@ -23,20 +23,20 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import org.geotools.data.DataStore;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
 import org.geotools.data.store.ContentState;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class FlatGeobufFeatureWriter implements FeatureWriter<SimpleFeatureType, SimpleFeature> {
 
-    private ContentState state;
+    private final ContentState state;
 
-    private File temp;
+    private final File temp;
 
     private FlatGeobufFeatureReader delegate;
 
@@ -46,29 +46,29 @@ public class FlatGeobufFeatureWriter implements FeatureWriter<SimpleFeatureType,
 
     private int nextRow = 0;
 
-    private File file;
+    private final File file;
 
     private FlatGeobufWriter writer;
 
-    private OutputStream outputStream;
+    private final OutputStream outputStream;
 
-    private FlatBufferBuilder builder;
+    private final FlatBufferBuilder builder;
+
+    private final FlatGeobufDataStore flatGeobufDataStore;
 
     public FlatGeobufFeatureWriter(ContentState state, Query query) throws IOException {
         this.state = state;
         String typeName = query.getTypeName();
         DataStore dataStore = state.getEntry().getDataStore();
-        FlatGeobufDataStore flatGeobufDataStore;
-        if (dataStore instanceof FlatGeobufDirectoryDataStore) {
-            flatGeobufDataStore = ((FlatGeobufDirectoryDataStore) dataStore).getDataStore(typeName);
+        if (dataStore instanceof FlatGeobufDirectoryDataStore flatGeobufDirectoryDataStore) {
+            this.flatGeobufDataStore = flatGeobufDirectoryDataStore.getDataStore(typeName);
             this.file = flatGeobufDataStore.getFile();
         } else {
-            flatGeobufDataStore = (FlatGeobufDataStore) dataStore;
+            this.flatGeobufDataStore = (FlatGeobufDataStore) dataStore;
             this.file = flatGeobufDataStore.getFile();
         }
         File directory = file.getParentFile();
-        this.temp =
-                File.createTempFile(typeName + System.currentTimeMillis(), "flatgeobuf", directory);
+        this.temp = File.createTempFile(typeName + System.currentTimeMillis(), "flatgeobuf", directory);
         this.outputStream = new FileOutputStream(this.temp);
         this.builder = FlatBuffers.newBuilder(4096);
         this.writer = new FlatGeobufWriter(this.outputStream, this.builder);
@@ -136,18 +136,19 @@ public class FlatGeobufFeatureWriter implements FeatureWriter<SimpleFeatureType,
 
     @Override
     public void close() throws IOException {
-        if (this.writer == null) {
-            throw new IOException("Writer alread closed");
+        try (this.outputStream) {
+            if (this.writer == null) {
+                throw new IOException("Writer alread closed");
+            }
+            if (this.currentFeature != null) {
+                this.write();
+            }
+            while (hasNext()) {
+                next();
+                write();
+            }
+            this.outputStream.flush();
         }
-        if (this.currentFeature != null) {
-            this.write();
-        }
-        while (hasNext()) {
-            next();
-            write();
-        }
-        this.outputStream.flush();
-        this.outputStream.close();
         this.writer = null;
         FlatBuffers.release(this.builder);
         if (delegate != null) {
@@ -156,5 +157,8 @@ public class FlatGeobufFeatureWriter implements FeatureWriter<SimpleFeatureType,
         }
         Files.copy(temp.toPath(), this.file.toPath(), StandardCopyOption.REPLACE_EXISTING);
         temp.delete();
+
+        // invalidate the header cache after write
+        flatGeobufDataStore.clearHeaderMeta();
     }
 }

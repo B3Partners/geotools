@@ -22,25 +22,22 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.NoSuchElementException;
 import java.util.logging.Logger;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.collection.BaseSimpleFeatureCollection;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.simple.SimpleFeature;
 
-/**
- * A GeoJSON specific feature collection that can follow "next" links in order to retrieve all data
- */
+/** A GeoJSON specific feature collection that can follow "next" links in order to retrieve all data */
 public class PagingFeatureCollection extends BaseSimpleFeatureCollection {
 
     protected static final Logger LOGGER = Logging.getLogger(PagingFeatureCollection.class);
 
     final Integer matched;
-    SimpleFeatureCollection first;
-    ObjectNode next;
+    private final SimpleFeatureCollection first;
+    private final ObjectNode next;
 
-    public PagingFeatureCollection(
-            SimpleFeatureCollection first, ObjectNode next, Integer matched) {
+    public PagingFeatureCollection(SimpleFeatureCollection first, ObjectNode next, Integer matched) {
         super(first.getSchema());
         this.first = first;
         this.next = next;
@@ -54,8 +51,7 @@ public class PagingFeatureCollection extends BaseSimpleFeatureCollection {
 
     @Override
     public int size() {
-        if (matched != null) return matched;
-        return super.size();
+        return matched != null ? matched : super.size();
     }
 
     @Override
@@ -63,9 +59,16 @@ public class PagingFeatureCollection extends BaseSimpleFeatureCollection {
         return new PagingFeatureIterator(first.features(), next);
     }
 
+    protected SimpleFeatureCollection getFirstCollection() {
+        return first;
+    }
+
+    protected ObjectNode getNext() {
+        return next;
+    }
     /**
-     * Reads the next feature collection, or return null if there is none. Subclasses can override
-     * if they need a different logic for fetching the next page.
+     * Reads the next feature collection, or return null if there is none. Subclasses can override if they need a
+     * different logic for fetching the next page.
      */
     protected SimpleFeatureCollection readNext(ObjectNode next) throws IOException {
         if (next == null) return null;
@@ -80,27 +83,28 @@ public class PagingFeatureCollection extends BaseSimpleFeatureCollection {
 
     protected class PagingFeatureIterator implements SimpleFeatureIterator {
         private SimpleFeatureIterator delegate;
-        private ObjectNode next;
+        private ObjectNode nextPage;
 
         public PagingFeatureIterator(SimpleFeatureIterator delegate, ObjectNode next) {
             this.delegate = delegate;
-            this.next = next;
+            this.nextPage = next;
         }
 
         @Override
         public boolean hasNext() {
             // jump to the next link, if possible, until a non-empty collection is found,
             // or no next links are found
-            while (!delegate.hasNext() && next != null) {
+            while (!delegate.hasNext() && nextPage != null) {
                 try {
                     // call the reader again, but do not delegate to avoid creating a series of
                     // nested objects (the next collection might contain another and so on)
-                    SimpleFeatureCollection features = readNext(next);
-                    this.delegate = features.features();
-                    if (features instanceof PagingFeatureCollection) {
-                        this.next = ((PagingFeatureCollection) features).next;
+                    SimpleFeatureCollection features = readNext(nextPage);
+                    if (features instanceof PagingFeatureCollection collection) {
+                        this.nextPage = collection.getNext();
+                        this.delegate = collection.getFirstCollection().features();
                     } else {
-                        this.next = null;
+                        this.nextPage = null;
+                        this.delegate = features.features();
                     }
                 } catch (IOException e) {
                     throw new RuntimeException("Switching to the next page failed", e);

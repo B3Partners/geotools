@@ -22,11 +22,11 @@ import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.MapContent;
 import org.geotools.renderer.GTRenderer;
 import org.geotools.renderer.RenderListener;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * A rendering task to be run by a {@code RenderingExecutor}.
@@ -48,8 +48,7 @@ public class RenderingTask implements Callable<Boolean>, RenderListener {
     private final AtomicBoolean cancelled;
 
     /** Creates a new rendering task. */
-    public RenderingTask(
-            MapContent mapContent, Graphics2D destinationGraphics, GTRenderer renderer) {
+    public RenderingTask(MapContent mapContent, Graphics2D destinationGraphics, GTRenderer renderer) {
 
         if (mapContent == null) {
             throw new IllegalArgumentException("mapContent must not be null");

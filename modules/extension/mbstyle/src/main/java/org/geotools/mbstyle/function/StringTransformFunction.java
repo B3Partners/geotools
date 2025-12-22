@@ -17,18 +17,18 @@
 package org.geotools.mbstyle.function;
 
 import java.util.List;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.FunctionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.text.Text;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
 
 /**
- * Function that takes an input and applies a text transformation (one of "lowercase", "uppercase",
- * or "none"). The default transformation is "none". <br>
+ * Function that takes an input and applies a text transformation (one of "lowercase", "uppercase", or "none"). The
+ * default transformation is "none". <br>
  * <br>
  * ECQL Examples:
  *
@@ -42,22 +42,21 @@ public class StringTransformFunction extends FunctionImpl {
 
     public static final FunctionName NAME;
 
-    private static final FilterFactory2 ff2 = CommonFactoryFinder.getFilterFactory2(null);
+    private static final FilterFactory ff2 = CommonFactoryFinder.getFilterFactory(null);
 
     static {
         Parameter<Object> result = new Parameter<>("result", Object.class, 1, 1);
         Parameter<Object> input = new Parameter<>("input", Object.class, 1, 1);
-        Parameter<Object> transform =
-                new Parameter<>(
-                        "transform",
-                        Object.class,
-                        Text.text("transform"),
-                        Text.text("The transform to perform ('uppercase', 'lowercase', or 'none')"),
-                        true,
-                        0,
-                        1,
-                        "uppercase",
-                        null);
+        Parameter<Object> transform = new Parameter<>(
+                "transform",
+                Object.class,
+                Text.text("transform"),
+                Text.text("The transform to perform ('uppercase', 'lowercase', or 'none')"),
+                true,
+                0,
+                1,
+                "uppercase",
+                null);
         NAME = new FunctionNameImpl("StringTransform", result, input, transform);
     }
 

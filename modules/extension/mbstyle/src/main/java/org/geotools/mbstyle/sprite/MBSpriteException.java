@@ -16,13 +16,16 @@
  */
 package org.geotools.mbstyle.sprite;
 
+import java.io.Serial;
+
 /**
- * Thrown by {@link SpriteGraphicFactory} in case of an exception while retrieving or parsing either
- * a spritesheet or a sprite index file.
+ * Thrown by {@link SpriteGraphicFactory} in case of an exception while retrieving or parsing either a spritesheet or a
+ * sprite index file.
  */
 public class MBSpriteException extends RuntimeException {
 
     /** serialVersionUID */
+    @Serial
     private static final long serialVersionUID = 1371164543614500159L;
 
     public MBSpriteException(String msg) {

@@ -7,13 +7,13 @@
                                                                                 
         Version: $Id$              
      ======================================================================= -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                                 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                                 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.geotools</groupId>
     <artifactId>geotools</artifactId>
-    <version>29-SNAPSHOT</version>
+    <version>35-SNAPSHOT</version>
   </parent>
 
   <!-- =========================================================== -->
@@ -23,36 +23,191 @@
   <packaging>pom</packaging>
   <name>Geotools Release</name>
   <description>Geotools library release packaging</description>
+  <properties>
+    <maven.build.timestamp.format>yyyy</maven.build.timestamp.format>
+    <copyright.year>${maven.build.timestamp}</copyright.year>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-platform-dependencies</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
-    <!-- docs dependency only used to schedule release after docs module order        -->
-    <!-- uses exclusions to avoid contributing additional dependencies to release     -->
+    <!-- these jars are only available from osgeo repo -->
     <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>docs</artifactId>
-      <version>${project.version}</version>
-      <exclusions>
-        <exclusion>
-          <artifactId>*</artifactId>
-          <groupId>*</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <!-- please keep the list of dependencies alphabetical so it is easier to maintain -->
-    <dependency>
-      <groupId>javax.media</groupId>
-      <artifactId>jai_core</artifactId>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>imagen-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>javax.media</groupId>
-      <artifactId>jai_codec</artifactId>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>jiffle-op</artifactId>
     </dependency>
     <dependency>
-      <groupId>javax.media</groupId>
-      <artifactId>jai_imageio</artifactId>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>classbreaks</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>affine</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>algebra</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>bandmerge</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>bandselect</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>bandcombine</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>border</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>buffer</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>crop</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>iterators</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>lookup</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>mosaic</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>nullop</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>rescale</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>scale</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>scale2</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>stats</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>translate</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>utilities</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>warp</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>zonal</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>binarize</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>format</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>colorconvert</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>errordiffusion</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>orderdither</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>colorindexer</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>imagefunction</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>piecewise</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>classifier</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>rlookup</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>vectorbin</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>shadedrelief</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>concurrent-tile-cache</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>rendered-image-browser</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>imageread</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>convolve</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>contour</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.imagen</groupId>
+      <artifactId>vectorize</artifactId>
+    </dependency>
+    <!-- Check that dependences listed here are included in binaryDistDependencies.xml -->
+    <!-- This ensures that transitive dependences are packaged up in libs/ folder.     -->
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-app-schema-resolver</artifactId>
@@ -85,7 +240,12 @@
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
-      <artifactId>gt-cql-json</artifactId>
+      <artifactId>gt-cql2-text</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-cql2-json</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -231,7 +391,7 @@
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
-      <artifactId>gt-opengis</artifactId>
+      <artifactId>gt-api</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -436,17 +596,71 @@
   <!-- =========================================================== -->
   <build>
     <plugins>
+      <plugin>
+        <artifactId>maven-clean-plugin</artifactId>
+        <configuration>
+          <filesets>
+            <fileset>
+              <directory>src/it/commons/target</directory>
+            </fileset>
+            <fileset>
+              <directory>src/it/log4j/target</directory>
+            </fileset>
+            <fileset>
+              <directory>src/it/logback/target</directory>
+            </fileset>
+            <fileset>
+              <directory>src/it/logging/target</directory>
+            </fileset>
+            <fileset>
+              <directory>src/it/reload4j/target</directory>
+            </fileset>
+          </filesets>
+          <followSymlinks>true</followSymlinks>
+          <failOnError>false</failOnError>
+        </configuration>
+      </plugin>
+      <!-- process markdown templates -->
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <phase>process-resources</phase>
+            <configuration>
+              <outputDirectory>${project.basedir}/target/html-template</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>src/markdown/html</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <!-- process markdown -->
       <plugin>
         <groupId>com.ruleoftech</groupId>
         <artifactId>markdown-page-generator-plugin</artifactId>
+        <configuration>
+          <recursiveInput>false</recursiveInput>
+          <transformRelativeMarkdownLinks>true</transformRelativeMarkdownLinks>
+          <headerHtmlFile>${project.basedir}/target/html-template/header.html</headerHtmlFile>
+          <footerHtmlFile>${project.basedir}/target/html-template/footer.html</footerHtmlFile>
+          <pegdownExtensions>TABLES,FENCED_CODE_BLOCKS</pegdownExtensions>
+          <defaultTitle>true</defaultTitle>
+        </configuration>
         <executions>
           <execution>
             <id>licenses</id>
-            <phase>process-resources</phase>
             <goals>
               <goal>generate</goal>
             </goals>
+            <phase>process-resources</phase>
             <configuration>
               <inputDirectory>${project.basedir}/../licenses</inputDirectory>
               <outputDirectory>${project.build.directory}/html/licenses</outputDirectory>
@@ -454,37 +668,21 @@
           </execution>
           <execution>
             <id>readme</id>
-            <phase>process-resources</phase>
             <goals>
               <goal>generate</goal>
             </goals>
+            <phase>process-resources</phase>
             <configuration>
               <inputDirectory>${project.basedir}/src/markdown</inputDirectory>
               <outputDirectory>${project.build.directory}/html</outputDirectory>
             </configuration>
           </execution>
         </executions>
-        <configuration>
-          <recursiveInput>false</recursiveInput>
-          <transformRelativeMarkdownLinks>true</transformRelativeMarkdownLinks>
-          <headerHtmlFile>${project.basedir}/src/markdown/html/header.html</headerHtmlFile>
-          <footerHtmlFile>${project.basedir}/src/markdown/html/footer.html</footerHtmlFile>
-          <pegdownExtensions>TABLES,FENCED_CODE_BLOCKS</pegdownExtensions>
-          <defaultTitle>true</defaultTitle>
-        </configuration>
       </plugin>
 
       <!-- package distribution -->
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>make-assembly</id>
-            <goals>
-              <goal>single</goal>
-            </goals>
-          </execution>
-        </executions>
         <configuration>
           <finalName>geotools-${project.version}</finalName>
           <descriptors>
@@ -493,17 +691,58 @@
             <descriptor>src/assembly/userDocDist.xml</descriptor>
           </descriptors>
         </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
-      <!-- no need to deploy to nexus repo -->
+      <!-- integration testing to see if packages are good -->
       <plugin>
-        <artifactId>maven-deploy-plugin</artifactId>
+        <artifactId>maven-invoker-plugin</artifactId>
         <configuration>
-          <skip>true</skip>
+          <parallelThreads>1C</parallelThreads>
+          <ignoreFailures>true</ignoreFailures>
+          <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
+          <settingsFile>src/it/settings.xml</settingsFile>
+          <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
+          <showErrors>true</showErrors>
+          <streamLogs>false</streamLogs>
         </configuration>
+        <executions>
+          <execution>
+            <id>integration-test</id>
+            <goals>
+              <!-- run exec:exec to generate output -->
+              <goal>integration-test</goal>
+              <!-- run postbuild.sh to check output -->
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <goals>
+                <goal>clean</goal>
+                <goal>compile</goal>
+                <goal>exec:exec</goal>
+                <goal>integration-test</goal>
+              </goals>
+              <verifyHookScript>postbuild.bsh</verifyHookScript>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <!-- no need to install this to local repo -->
       <plugin>
         <artifactId>maven-install-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+      <!-- no need to deploy to nexus repo -->
+      <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
         <configuration>
           <skip>true</skip>
         </configuration>

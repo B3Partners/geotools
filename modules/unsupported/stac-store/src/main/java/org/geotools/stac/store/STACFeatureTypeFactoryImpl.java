@@ -17,19 +17,19 @@
 package org.geotools.stac.store;
 
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.util.InternationalString;
 import org.geotools.feature.simple.SimpleFeatureTypeImpl;
 import org.geotools.feature.type.FeatureTypeFactoryImpl;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.util.InternationalString;
 
 /**
- * Allows creation of a subtype of a STAC item that references a property inside the "assets" top
- * level JSON object (the SimpleFeatureType machinery would have otherwise failed)
+ * Allows creation of a subtype of a STAC item that references a property inside the "assets" top level JSON object (the
+ * SimpleFeatureType machinery would have otherwise failed)
  */
 class STACFeatureTypeFactoryImpl extends FeatureTypeFactoryImpl {
 
@@ -61,8 +61,7 @@ class STACFeatureTypeFactoryImpl extends FeatureTypeFactoryImpl {
 
         @Override
         public AttributeDescriptor getDescriptor(String name) {
-            if (name.startsWith(STACFeatureSource.ASSETS + "/"))
-                return super.getDescriptor(STACFeatureSource.ASSETS);
+            if (name.startsWith(STACFeatureSource.ASSETS + "/")) return super.getDescriptor(STACFeatureSource.ASSETS);
             return super.getDescriptor(name);
         }
     }

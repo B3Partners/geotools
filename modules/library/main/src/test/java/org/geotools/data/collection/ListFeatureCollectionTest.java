@@ -25,6 +25,9 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.SchemaException;
@@ -39,15 +42,12 @@ import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Unit tests for ListFeatureCollection.
  *
- * <p>Note: this class doesn't extend {@linkplain org.geotools.data.DataTestCase} because we are
- * working with JUnit 4 and because we want feature types with CRS defined.
+ * <p>Note: this class doesn't extend {@linkplain org.geotools.data.DataTestCase} because we are working with JUnit 4
+ * and because we want feature types with CRS defined.
  *
  * @author mbedward
  * @since 2.7
@@ -58,8 +58,7 @@ public class ListFeatureCollectionTest {
 
     private static final CoordinateReferenceSystem DEFAULT_CRS = DefaultEngineeringCRS.CARTESIAN_2D;
 
-    private static final ReferencedEnvelope WORLD =
-            new ReferencedEnvelope(-10.0, 10.0, -5.0, 5.0, DEFAULT_CRS);
+    private static final ReferencedEnvelope WORLD = new ReferencedEnvelope(-10.0, 10.0, -5.0, 5.0, DEFAULT_CRS);
 
     private static final SimpleFeatureType TYPE = createType();
     private static final GeometryFactory geomFactory = new GeometryFactory();
@@ -168,21 +167,12 @@ public class ListFeatureCollectionTest {
 
         // initialize FC with test features
         featureCollection = new ListFeatureCollection(TYPE, featureList);
-        SimpleFeature f1 =
-                SimpleFeatureBuilder.build(
-                        type,
-                        new Object[] {"testFeature1", gf.createPoint(new Coordinate(10, 20, 30))},
-                        null);
-        SimpleFeature f2 =
-                SimpleFeatureBuilder.build(
-                        type,
-                        new Object[] {"testFeature2", gf.createPoint(new Coordinate(10, 10, 60))},
-                        null);
-        SimpleFeature f3 =
-                SimpleFeatureBuilder.build(
-                        type,
-                        new Object[] {"testFeature2", gf.createPoint(new Coordinate(1, 10, 6))},
-                        null);
+        SimpleFeature f1 = SimpleFeatureBuilder.build(
+                type, new Object[] {"testFeature1", gf.createPoint(new Coordinate(10, 20, 30))}, null);
+        SimpleFeature f2 = SimpleFeatureBuilder.build(
+                type, new Object[] {"testFeature2", gf.createPoint(new Coordinate(10, 10, 60))}, null);
+        SimpleFeature f3 = SimpleFeatureBuilder.build(
+                type, new Object[] {"testFeature2", gf.createPoint(new Coordinate(1, 10, 6))}, null);
         featureCollection.add(f1);
         featureCollection.add(f2);
 
@@ -198,8 +188,8 @@ public class ListFeatureCollectionTest {
     }
 
     /**
-     * Creates point features at each corner of the specified envelope and puts them into the
-     * feature collection (features field).
+     * Creates point features at each corner of the specified envelope and puts them into the feature collection
+     * (features field).
      *
      * @param env bounding envelope
      */

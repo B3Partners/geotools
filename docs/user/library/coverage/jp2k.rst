@@ -75,7 +75,7 @@ Here below we have added some code to show how to interact with the plugin to re
      // Setting GridGeometry for reading half coverage.
      //
      // //
-     final Rectangle range = ((GridEnvelope2D)reader.getOriginalGridRange()).getBounds();
+     final Rectangle range = ((GridGeneralBounds)reader.getOriginalGridRange()).getBounds();
      final GeneralEnvelope originalEnvelope = reader.getOriginalEnvelope();
      final GeneralEnvelope reducedEnvelope = new GeneralEnvelope(
                 new double[] {
@@ -87,7 +87,7 @@ Here below we have added some code to show how to interact with the plugin to re
     	reducedEnvelope.setCoordinateReferenceSystem(reader.getCrs());
      
     	final ParameterValue<GridGeometry2D> gg = JP2KFormat.READ_GRIDGEOMETRY2D.createValue();
-    	gg.setValue(new GridGeometry2D(new GridEnvelope2D(new Rectangle(
+    	gg.setValue(new GridGeometry2D(new GridGeneralBounds(new Rectangle(
                 0,
                 0,
              (int) (range.width / 2.0),
@@ -113,7 +113,7 @@ Here below we have added some code to show how to interact with the plugin to re
     	// Setting read type: use JAI ImageRead
     	//
     	// //
-    	final ParameterValue<Boolean> useJaiRead = JP2KFormat.USE_JAI_IMAGEREAD.createValue();
+    	final ParameterValue<Boolean> useJaiRead = JP2KFormat.USE_IMAGEN_IMAGEREAD.createValue();
     	useJaiRead.setValue(true);
      
     	final GridCoverage gc = (GridCoverage2D) reader.read(new GeneralParameterValue[] { gg,tilesize, useJaiRead });

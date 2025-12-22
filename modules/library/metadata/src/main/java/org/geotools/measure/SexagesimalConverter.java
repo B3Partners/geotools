@@ -17,15 +17,15 @@
 package org.geotools.measure;
 
 import java.io.ObjectStreamException;
+import java.io.Serial;
 import javax.measure.UnitConverter;
 import tech.units.indriya.function.AbstractConverter;
 
 /**
- * A converter from fractional degrees to sexagesimal degrees. Sexagesimal degrees are pseudo-unit
- * in the format
+ * A converter from fractional degrees to sexagesimal degrees. Sexagesimal degrees are pseudo-unit in the format
  *
- * <p><cite>sign - degrees - decimal point - minutes (two digits) - integer seconds (two digits) -
- * fraction of seconds (any precision)</cite>.
+ * <p><cite>sign - degrees - decimal point - minutes (two digits) - integer seconds (two digits) - fraction of seconds
+ * (any precision)</cite>.
  *
  * <p>Unfortunatly, this pseudo-unit is extensively used in the EPSG database.
  *
@@ -35,6 +35,7 @@ import tech.units.indriya.function.AbstractConverter;
  */
 class SexagesimalConverter extends AbstractConverter {
     /** Serial number for compatibility with different versions. */
+    @Serial
     private static final long serialVersionUID = -2663951106460584999L;
 
     /** Small tolerance factor for rounding errors. */
@@ -47,8 +48,8 @@ class SexagesimalConverter extends AbstractConverter {
     static final SexagesimalConverter FRACTIONAL = new SexagesimalConverter(10000);
 
     /**
-     * The value to divide DMS unit by. For "degree minute second" (EPSG code 9107), this is 1. For
-     * "sexagesimal degree" (EPSG code 9110), this is 10000.
+     * The value to divide DMS unit by. For "degree minute second" (EPSG code 9107), this is 1. For "sexagesimal degree"
+     * (EPSG code 9110), this is 10000.
      */
     final int divider;
 
@@ -58,18 +59,15 @@ class SexagesimalConverter extends AbstractConverter {
     /**
      * Constructs a converter for sexagesimal units.
      *
-     * @param divider The value to divide DMS unit by. For "degree minute second" (EPSG code 9107),
-     *     this is 1. For "sexagesimal degree" (EPSG code 9110), this is 10000.
+     * @param divider The value to divide DMS unit by. For "degree minute second" (EPSG code 9107), this is 1. For
+     *     "sexagesimal degree" (EPSG code 9110), this is 10000.
      */
     private SexagesimalConverter(final int divider) {
         this.divider = divider;
         this.inverse = new Inverse(this);
     }
 
-    /**
-     * Constructs a converter for sexagesimal units. This constructor is for {@link Inverse} usage
-     * only.
-     */
+    /** Constructs a converter for sexagesimal units. This constructor is for {@link Inverse} usage only. */
     private SexagesimalConverter(final int divider, final SexagesimalConverter inverse) {
         this.divider = divider;
         this.inverse = inverse;
@@ -133,7 +131,7 @@ class SexagesimalConverter extends AbstractConverter {
                 throw new ArithmeticException("Invalid secondes: " + value);
             }
         }
-        value = ((value / 60) + min) / 60 + deg;
+        value = (value / 60 + min) / 60 + deg;
         return value;
     }
 
@@ -196,6 +194,7 @@ class SexagesimalConverter extends AbstractConverter {
     /** The inverse of {@link SexagesimalConverter}. */
     private static final class Inverse extends SexagesimalConverter {
         /** Serial number for compatibility with different versions. */
+        @Serial
         private static final long serialVersionUID = -7145237719599612406L;
 
         /** Constructs a converter. */

@@ -23,14 +23,14 @@ import java.util.Map;
 import java.util.Set;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
 import org.geotools.geopkg.wps.GeoPackageProcessRequest;
 import org.geotools.geopkg.wps.GeoPackageProcessRequest.Layer;
 import org.geotools.geopkg.wps.GeoPackageProcessRequest.Overview;
 import org.geotools.xs.bindings.XSQNameBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
 
 /**
  * Binding object for the type http://www.opengis.net/gpkg:geopkgtype_features.
@@ -91,11 +91,11 @@ public class Geopkgtype_featuresBinding extends LayertypeBinding {
             layer.setIndexed(indexed);
         }
         Object overviews = node.getChildValue("overviews");
-        if (overviews instanceof Overview) {
-            layer.setOverviews(Arrays.asList((Overview) overviews));
-        } else if (overviews instanceof Map) {
+        if (overviews instanceof Overview overview1) {
+            layer.setOverviews(Arrays.asList(overview1));
+        } else if (overviews instanceof Map<?, ?> map) {
             @SuppressWarnings("unchecked")
-            List<Overview> overview = (List<Overview>) ((Map<?, ?>) overviews).get("overview");
+            List<Overview> overview = (List<Overview>) map.get("overview");
             layer.setOverviews(overview);
         }
         return layer;

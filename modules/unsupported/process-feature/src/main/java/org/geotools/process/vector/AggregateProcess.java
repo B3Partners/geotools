@@ -25,10 +25,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.util.ProgressListener;
+import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.util.NullProgressListener;
 import org.geotools.factory.CommonFactoryFinder;
+import org.geotools.feature.FeatureCollection;
+import org.geotools.feature.simple.SimpleFeatureBuilder;
+import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.feature.visitor.AbstractCalcResult;
 import org.geotools.feature.visitor.AverageVisitor;
 import org.geotools.feature.visitor.CalcResult;
@@ -46,11 +58,10 @@ import org.geotools.process.ProcessException;
 import org.geotools.process.factory.DescribeParameter;
 import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.util.ProgressListener;
+import org.geotools.util.Converter;
+import org.geotools.util.ConverterFactory;
+import org.geotools.util.factory.Hints;
+import org.geotools.util.logging.Logging;
 
 /**
  * Computes various attribute statistics over vector data sets.
@@ -62,6 +73,9 @@ import org.opengis.util.ProgressListener;
         description =
                 "Computes one or more aggregation functions on a feature attribute. Functions include Count, Average, Max, Median, Min, StdDev, and Sum.")
 public class AggregateProcess implements VectorProcess {
+
+    private static final Logger LOGGER = Logging.getLogger(AggregateProcess.class);
+
     // the functions this process can handle
     public enum AggregationFunction {
         Count,
@@ -71,7 +85,7 @@ public class AggregateProcess implements VectorProcess {
         Min,
         StdDev,
         Sum,
-        SumArea;
+        SumArea
     }
     /**
      * Computes various attribute statistics over vector data sets
@@ -99,8 +113,7 @@ public class AggregateProcess implements VectorProcess {
             ProgressListener progressListener)
             throws ProcessException, IOException {
         AggregateProcess process = new AggregateProcess();
-        return process.execute(
-                features, aggAttribute, functions, singlePass, groupByAttributes, progressListener);
+        return process.execute(features, aggAttribute, functions, singlePass, groupByAttributes, progressListener);
     }
 
     public Results execute(
@@ -113,9 +126,7 @@ public class AggregateProcess implements VectorProcess {
         return execute(features, aggAttribute, functions, singlePass, null, progressListener);
     }
 
-    @DescribeResult(
-            name = "result",
-            description = "Aggregation results (one value for each function computed)")
+    @DescribeResult(name = "result", description = "Aggregation results (one value for each function computed)")
     public Results execute(
             @DescribeParameter(name = "features", description = "Input feature collection")
                     SimpleFeatureCollection features,
@@ -147,8 +158,7 @@ public class AggregateProcess implements VectorProcess {
 
         if (groupByAttributes != null && !groupByAttributes.isEmpty()) {
             // this request as group by attributes which need special care
-            return handleGroupByVisitor(
-                    features, aggAttribute, functions, groupByAttributes, progressListener);
+            return handleGroupByVisitor(features, aggAttribute, functions, groupByAttributes, progressListener);
         }
 
         int attIndex = -1;
@@ -161,13 +171,12 @@ public class AggregateProcess implements VectorProcess {
         }
 
         if (attIndex == -1) {
-            throw new ProcessException(
-                    "Could not find attribute "
-                            + "["
-                            + aggAttribute
-                            + "] "
-                            + " the valid values are "
-                            + attNames(atts));
+            throw new ProcessException("Could not find attribute "
+                    + "["
+                    + aggAttribute
+                    + "] "
+                    + " the valid values are "
+                    + attNames(atts));
         }
         if (functions == null) {
             throw new NullPointerException("Aggregate function to call is required");
@@ -188,9 +197,8 @@ public class AggregateProcess implements VectorProcess {
             } else if (function == AggregationFunction.Min) {
                 calc = new MinVisitor(attIndex, features.getSchema());
             } else if (function == AggregationFunction.StdDev) {
-                calc =
-                        new StandardDeviationVisitor(
-                                CommonFactoryFinder.getFilterFactory(null).property(aggAttribute));
+                calc = new StandardDeviationVisitor(
+                        CommonFactoryFinder.getFilterFactory(null).property(aggAttribute));
             } else if (function == AggregationFunction.Sum) {
                 calc = new SumVisitor(attIndex, features.getSchema());
             } else if (function == AggregationFunction.SumArea) {
@@ -225,8 +233,7 @@ public class AggregateProcess implements VectorProcess {
     }
 
     /**
-     * Helper method that handle requests that have group by attributes by wrapping the functions in
-     * group by visitors.
+     * Helper method that handle requests that have group by attributes by wrapping the functions in group by visitors.
      */
     private Results handleGroupByVisitor(
             SimpleFeatureCollection features,
@@ -239,41 +246,37 @@ public class AggregateProcess implements VectorProcess {
 
         FilterFactory factory = CommonFactoryFinder.getFilterFactory(null);
 
-        Function<AggregationFunction, GroupByVisitor> builder =
-                function ->
-                        new GroupByVisitorBuilder()
-                                .withAggregateAttribute(
-                                        function == AggregationFunction.SumArea
-                                                ? getArea2(features, aggAttribute, factory)
-                                                : getProperty(features, aggAttribute, factory))
-                                .withAggregateVisitor(function.name())
-                                .withGroupByAttributes(rawGroupByAttributes, features.getSchema())
-                                .withProgressListener(progressListener)
-                                .build();
-        List<GroupByVisitor> groupByVisitors =
-                functions.stream().map(builder).collect(Collectors.toList());
+        Function<AggregationFunction, GroupByVisitor> builder = function -> new GroupByVisitorBuilder()
+                .withAggregateAttribute(
+                        function == AggregationFunction.SumArea
+                                ? getArea2(features, aggAttribute, factory)
+                                : getProperty(features, aggAttribute, factory))
+                .withAggregateVisitor(function.name())
+                .withGroupByAttributes(rawGroupByAttributes, features.getSchema())
+                .withProgressListener(progressListener)
+                .build();
+        List<GroupByVisitor> groupByVisitors = functions.stream().map(builder).collect(Collectors.toList());
         // visiting the features collection with each visitor
         for (GroupByVisitor visitor : groupByVisitors) {
             features.accepts(visitor, progressListener);
         }
         // extracting the results from each group by visitor
-        List<Map<List<Object>, Object>> results =
-                groupByVisitors.stream()
-                        .map(visitor -> getListObjectMap(visitor))
-                        .collect(Collectors.toList());
+        List<Map<List<Object>, Object>> results = groupByVisitors.stream()
+                .map(visitor -> getListObjectMap(visitor))
+                .collect(Collectors.toList());
         return new Results(
                 aggAttribute,
                 functions,
                 rawGroupByAttributes,
-                mergeResults(results, rawGroupByAttributes.size()));
+                mergeResults(results, rawGroupByAttributes.size()),
+                features.getSchema());
     }
 
-    private PropertyName getProperty(
-            SimpleFeatureCollection features, String aggAttribute, FilterFactory factory) {
+    private PropertyName getProperty(SimpleFeatureCollection features, String aggAttribute, FilterFactory factory) {
         return factory.property(features.getSchema().getDescriptor(aggAttribute).getLocalName());
     }
 
-    private org.opengis.filter.expression.Function getArea2(
+    private org.geotools.api.filter.expression.Function getArea2(
             SimpleFeatureCollection features, String attribute, FilterFactory factory) {
         PropertyName property =
                 factory.property(features.getSchema().getDescriptor(attribute).getLocalName());
@@ -286,11 +289,10 @@ public class AggregateProcess implements VectorProcess {
     }
 
     /**
-     * Helper method that merge all group by visitors results in a tabular format. Each line of the
-     * table is composed of the group by attributes values and the aggregation functions results.
+     * Helper method that merge all group by visitors results in a tabular format. Each line of the table is composed of
+     * the group by attributes values and the aggregation functions results.
      */
-    private List<Object[]> mergeResults(
-            List<Map<List<Object>, Object>> results, int groupByAttributesNumber) {
+    private List<Object[]> mergeResults(List<Map<List<Object>, Object>> results, int groupByAttributesNumber) {
         List<Object[]> mergedResults = new ArrayList<>();
         if (results.isEmpty()) {
             // no results so nothing to do
@@ -361,6 +363,7 @@ public class AggregateProcess implements VectorProcess {
 
     /** The aggregate function results */
     public static final class Results {
+        SimpleFeatureType schema;
         Double min;
         Double max;
         Double median;
@@ -383,11 +386,13 @@ public class AggregateProcess implements VectorProcess {
                 String aggregateAttribute,
                 Set<AggregationFunction> functions,
                 List<String> groupByAttributes,
-                List<Object[]> groupByResult) {
+                List<Object[]> groupByResult,
+                SimpleFeatureType schema) {
             this.aggregateAttribute = aggregateAttribute;
             this.functions = functions;
             this.groupByAttributes = groupByAttributes;
             this.groupByResult = groupByResult;
+            this.schema = schema;
         }
 
         // this constructor is used to output normal aggregations results
@@ -469,6 +474,104 @@ public class AggregateProcess implements VectorProcess {
 
         public EnumMap<AggregationFunction, Number> getResults() {
             return results;
+        }
+
+        /**
+         * Converts the results to a {@link SimpleFeatureCollection} where each feature represents a group and contains
+         * the aggregated values as attributes. If the result is not from a grouping, no feature collection will be
+         * returned (null).
+         *
+         * @return a {@link SimpleFeatureCollection} representing the aggregation results
+         */
+        public SimpleFeatureCollection toFeatureCollection() {
+            if (schema == null || groupByAttributes == null || groupByAttributes.isEmpty()) return null;
+
+            SimpleFeatureType outputSchema = buildOutputSchema();
+            SimpleFeatureBuilder fb = new SimpleFeatureBuilder(outputSchema);
+
+            ListFeatureCollection collection = new ListFeatureCollection(outputSchema);
+            for (Object[] objects : groupByResult) {
+                fb.addAll(objects);
+                SimpleFeature sf = fb.buildFeature(null);
+                collection.add(sf);
+            }
+
+            return collection;
+        }
+
+        private SimpleFeatureType buildOutputSchema() {
+            // add types for the grouping attributes
+            SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
+            for (String att : groupByAttributes) {
+                AttributeDescriptor ad = schema.getDescriptor(att);
+                checkAttributeDescriptor(att, ad);
+                tb.add(ad);
+            }
+
+            // check the aggregate attribute
+            AttributeDescriptor ad = schema.getDescriptor(aggregateAttribute);
+            checkAttributeDescriptor(aggregateAttribute, ad);
+            Class<?> type = ad.getType().getClass();
+
+            // add types for the aggregation functions
+            for (AggregationFunction function : functions) {
+                switch (function) {
+                    case Count:
+                        tb.add(function.name(), Long.class);
+                        break;
+                    case Average:
+                    case StdDev:
+                    case Sum:
+                    case SumArea:
+                    case Median: // in case of even number of elements, the median is actually a double
+                        tb.add(function.name(), Double.class);
+                        break;
+                    case Max:
+                    case Min:
+                        tb.add(function.name(), type);
+                        break;
+                    default:
+                        throw new IllegalArgumentException(
+                                String.format("Unsupported aggregation function: %s", function));
+                }
+            }
+
+            tb.setName("Aggregates");
+            SimpleFeatureType outputSchema = tb.buildFeatureType();
+            return outputSchema;
+        }
+
+        private void checkAttributeDescriptor(String att, AttributeDescriptor ad) {
+            if (ad == null) {
+                throw new IllegalArgumentException(
+                        String.format("Could not find attribute [%s] in schema [%s]", att, schema.getTypeName()));
+            }
+        }
+    }
+
+    /**
+     * Converter factory that converts {@link Results} to {@link FeatureCollection}. Currently, it only supports group
+     * by results, which are converted to a {@link FeatureCollection} where each feature represents a group and contains
+     * the aggregated values as attributes. It's meant to be used in rendering transformations where one of the grouping
+     * attributes is a geometry, allowing the results to be rendered
+     */
+    public static class AggregateResultsConverterFactory implements ConverterFactory {
+
+        @Override
+        public Converter createConverter(Class<?> source, Class<?> target, Hints hints) {
+            if (Results.class.isAssignableFrom(source)
+                    && (target.equals(FeatureCollection.class) || target.equals(SimpleFeatureCollection.class))) {
+                return new Converter() {
+                    @SuppressWarnings("unchecked")
+                    @Override
+                    public <T> T convert(Object source, Class<T> target) throws Exception {
+                        Results results = (Results) source;
+                        return (T) results.toFeatureCollection();
+                    }
+                };
+            }
+
+            return null;
         }
     }
 }

@@ -19,18 +19,19 @@ package org.geotools.filter.v2_0.bindings;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.DistanceBufferOperator;
+import org.geotools.api.filter.temporal.BinaryTemporalOperator;
+import org.geotools.filter.v1_0.DistanceUnits;
 import org.geotools.filter.v2_0.FES;
 import org.geotools.gml3.v3_2.GML;
 import org.geotools.xsd.Node;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.DistanceBufferOperator;
-import org.opengis.filter.temporal.BinaryTemporalOperator;
 
 /**
  * Utility class for FES bindings.
@@ -57,8 +58,8 @@ public class FESParseEncodeUtil {
         }
 
         Expression expr = null;
-        if (other instanceof Expression) {
-            expr = (Expression) other;
+        if (other instanceof Expression expression) {
+            expr = expression;
         } else {
             expr = factory.literal(other);
         }
@@ -78,16 +79,16 @@ public class FESParseEncodeUtil {
         List<Object[]> l = new ArrayList<>();
         l.add(distanceBufferOpProperty(op.getExpression1()));
         l.add(distanceBufferOpProperty(op.getExpression2()));
-
-        l.add(new Object[] {new QName(FES.NAMESPACE, "Distance"), op.getDistance()});
+        l.add(new Object[] {
+            new QName(FES.NAMESPACE, "Distance"), DistanceUnits.of(op.getDistance(), op.getDistanceUnits())
+        });
         return l;
     }
 
     static Object[] distanceBufferOpProperty(Expression e) {
         if (e instanceof PropertyName) {
             return new Object[] {FES.ValueReference, e};
-        } else if (e instanceof Literal) {
-            Literal l = (Literal) e;
+        } else if (e instanceof Literal l) {
             if (l.getValue() instanceof Geometry) {
                 Geometry g = (Geometry) l.getValue();
                 return new Object[] {new QName(GML.NAMESPACE, g.getGeometryType()), g};

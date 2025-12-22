@@ -21,16 +21,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.spy;
 
-import org.geotools.data.Query;
-import org.geotools.data.Repository;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Repository;
+import org.geotools.api.data.Transaction;
 import org.geotools.util.factory.Hints;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-public class PreGeneralizedFeatureSourceNotCachedTest
-        extends AbstractPreGeneralizedFeatureSourceTest {
+public class PreGeneralizedFeatureSourceNotCachedTest extends AbstractPreGeneralizedFeatureSourceTest {
 
     static final String ConfigName = "src/test/resources/geninfo_shapefile.xml";
     private Repository repository;
@@ -45,8 +44,7 @@ public class PreGeneralizedFeatureSourceNotCachedTest
     public void getBoundsHitsRepositoryDataStore() {
         try {
             PreGeneralizedDataStore ds = getDataStore(ConfigName);
-            PreGeneralizedFeatureSource fs =
-                    (PreGeneralizedFeatureSource) ds.getFeatureSource("GenStreams");
+            PreGeneralizedFeatureSource fs = (PreGeneralizedFeatureSource) ds.getFeatureSource("GenStreams");
 
             fs.getBounds();
             Mockito.verify(repository, atLeastOnce()).dataStore(any());

@@ -19,7 +19,12 @@ package org.geotools.data.postgis;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.spatial.Intersects;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.jdbc.JDBCFeatureSourceOnlineTest;
@@ -29,12 +34,6 @@ import org.geotools.referencing.CRS.AxisOrder;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.spatial.Intersects;
 
 public class PostGISFeatureSourceOnlineTest extends JDBCFeatureSourceOnlineTest {
 
@@ -58,20 +57,15 @@ public class PostGISFeatureSourceOnlineTest extends JDBCFeatureSourceOnlineTest 
         ((PostGISDialect) dataStore.getSQLDialect()).setEncodeBBOXFilterAsEnvelope(true);
 
         GeometryFactory gf = dataStore.getGeometryFactory();
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
-        Intersects filter =
-                ff.intersects(
-                        ff.property("geometry"),
-                        ff.literal(
-                                gf.createPolygon(
-                                        gf.createLinearRing(
-                                                new Coordinate[] {
-                                                    new Coordinate(0, 0),
-                                                    new Coordinate(0, 2),
-                                                    new Coordinate(2, 2),
-                                                    new Coordinate(2, 0),
-                                                    new Coordinate(0, 0)
-                                                }))));
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
+        Intersects filter = ff.intersects(
+                ff.property("geometry"), ff.literal(gf.createPolygon(gf.createLinearRing(new Coordinate[] {
+                    new Coordinate(0, 0),
+                    new Coordinate(0, 2),
+                    new Coordinate(2, 2),
+                    new Coordinate(2, 0),
+                    new Coordinate(0, 0)
+                }))));
 
         Query query = new Query();
         query.setFilter(filter);
@@ -105,8 +99,7 @@ public class PostGISFeatureSourceOnlineTest extends JDBCFeatureSourceOnlineTest 
         ((PostGISDialect) dataStore.getSQLDialect()).setEstimatedExtentsEnabled(true);
 
         FilterFactory ff = dataStore.getFilterFactory();
-        PropertyIsEqualTo filter =
-                ff.equals(ff.property(aname("stringProperty")), ff.literal("one"));
+        PropertyIsEqualTo filter = ff.equals(ff.property(aname("stringProperty")), ff.literal("one"));
 
         Query query = new Query();
         query.setFilter(filter);

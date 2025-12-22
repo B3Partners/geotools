@@ -21,23 +21,23 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.logging.Level;
-import javax.media.jai.PlanarImage;
+import org.eclipse.imagen.PlanarImage;
 import org.gdal.gdal.Driver;
 import org.gdal.gdal.gdal;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.GridFormatFactorySpi;
 import org.geotools.coverage.grid.io.GridFormatFinder;
 import org.geotools.coverageio.gdal.GDALTestCase;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.test.TestData;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
 
 /**
  * @author Daniele Romagnoli, GeoSolutions
@@ -72,10 +72,6 @@ public final class JP2MrSIDTest extends GDALTestCase {
 
     @Test
     public void test() throws Exception {
-        if (!testingEnabled()) {
-            return;
-        }
-
         File file = null;
         try {
             file = TestData.file(this, fileName);
@@ -85,9 +81,8 @@ public final class JP2MrSIDTest extends GDALTestCase {
         }
 
         final JP2MrSIDReader reader = new JP2MrSIDReader(file);
-        final ParameterValue gg =
-                ((AbstractGridFormat) reader.getFormat()).READ_GRIDGEOMETRY2D.createValue();
-        final GeneralEnvelope oldEnvelope = reader.getOriginalEnvelope();
+        final ParameterValue gg = ((AbstractGridFormat) reader.getFormat()).READ_GRIDGEOMETRY2D.createValue();
+        final GeneralBounds oldEnvelope = reader.getOriginalEnvelope();
         gg.setValue(new GridGeometry2D(reader.getOriginalGridRange(), oldEnvelope));
 
         final GridCoverage2D gc = reader.read(new GeneralParameterValue[] {gg});
@@ -109,10 +104,6 @@ public final class JP2MrSIDTest extends GDALTestCase {
 
     @Test
     public void testIsAvailable() throws NoSuchAuthorityCodeException, FactoryException {
-        if (!testingEnabled()) {
-            return;
-        }
-
         GridFormatFinder.scanForPlugins();
 
         Iterator list = GridFormatFinder.getAvailableFormats().iterator();

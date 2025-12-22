@@ -18,6 +18,7 @@ package org.geotools.data.sqlserver;
 
 import static org.junit.Assert.assertEquals;
 
+import org.geotools.api.feature.type.GeometryDescriptor;
 import org.geotools.jdbc.JDBCGeometryOnlineTest;
 import org.geotools.jdbc.JDBCGeometryTestSetup;
 import org.geotools.referencing.CRS;
@@ -30,7 +31,6 @@ import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.type.GeometryDescriptor;
 
 /** @author DamianoG */
 public class SQLServerGeometryOnlineTest extends JDBCGeometryOnlineTest {
@@ -104,5 +104,11 @@ public class SQLServerGeometryOnlineTest extends JDBCGeometryOnlineTest {
                 dataStore.getFeatureSource(tname("gtmeta")).getSchema().getGeometryDescriptor();
         assertEquals(Point.class, gd.getType().getBinding());
         assertEquals(4326, (int) CRS.lookupEpsgCode(gd.getCoordinateReferenceSystem(), false));
+    }
+
+    @Override
+    public void testMultiSurfaceLinearized() throws Exception {
+        testSetup.setupMetadataTable(dataStore);
+        super.testMultiSurfaceLinearized();
     }
 }

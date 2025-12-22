@@ -36,8 +36,8 @@ import org.picocontainer.defaults.InstanceComponentAdapter;
 /**
  * A {@link Map} decorator which implements the {@link MutablePicoContainer} interface.
  *
- * <p>This class is used internally to help transition from pico container to a map based system for
- * registering bindings.
+ * <p>This class is used internally to help transition from pico container to a map based system for registering
+ * bindings.
  *
  * @author Justin Deoliveira, The Open Planning Project, jdeolive@openplans.org
  */
@@ -134,14 +134,13 @@ public class PicoMap implements Map, MutablePicoContainer {
 
     @Override
     public ComponentAdapter registerComponent(ComponentAdapter componentAdapter) {
-        if (componentAdapter instanceof DecoratingComponentAdapter) {
-            componentAdapter = ((DecoratingComponentAdapter) componentAdapter).getDelegate();
+        if (componentAdapter instanceof DecoratingComponentAdapter adapter) {
+            componentAdapter = adapter.getDelegate();
         }
 
         Object key = componentAdapter.getComponentKey();
-        if (componentAdapter instanceof InstanceComponentAdapter) {
-            Object instance =
-                    ((InstanceComponentAdapter) componentAdapter).getComponentInstance(null);
+        if (componentAdapter instanceof InstanceComponentAdapter adapter) {
+            Object instance = adapter.getComponentInstance(null);
             put(key, instance);
         } else {
             Class implementation = componentAdapter.getComponentImplementation();
@@ -158,8 +157,7 @@ public class PicoMap implements Map, MutablePicoContainer {
     }
 
     @Override
-    public ComponentAdapter registerComponentImplementation(
-            Object componentKey, Class componentImplementation) {
+    public ComponentAdapter registerComponentImplementation(Object componentKey, Class componentImplementation) {
         put(componentKey, componentImplementation);
         return null;
     }
@@ -178,8 +176,7 @@ public class PicoMap implements Map, MutablePicoContainer {
     }
 
     @Override
-    public ComponentAdapter registerComponentInstance(
-            Object componentKey, Object componentInstance) {
+    public ComponentAdapter registerComponentInstance(Object componentKey, Object componentInstance) {
         put(componentKey, componentInstance);
         return null;
     }
@@ -230,9 +227,9 @@ public class PicoMap implements Map, MutablePicoContainer {
             return null;
         }
 
-        if (o instanceof Class) {
+        if (o instanceof Class class1) {
             // TODO: determine which form of injection to use
-            return new ConstructorInjectionComponentAdapter(componentKey, (Class) o);
+            return new ConstructorInjectionComponentAdapter(componentKey, class1);
         }
 
         return new InstanceComponentAdapter(componentKey, o);
@@ -250,7 +247,7 @@ public class PicoMap implements Map, MutablePicoContainer {
 
     @Override
     public Collection getComponentAdapters() {
-        List adapters = new ArrayList();
+        List adapters = new ArrayList<>();
 
         for (Object o : entrySet()) {
             Entry entry = (Entry) o;
@@ -266,7 +263,7 @@ public class PicoMap implements Map, MutablePicoContainer {
             return Collections.emptyList();
         }
 
-        List adapters = new ArrayList();
+        List adapters = new ArrayList<>();
 
         for (Object o : entrySet()) {
             Entry entry = (Entry) o;
@@ -293,9 +290,7 @@ public class PicoMap implements Map, MutablePicoContainer {
         }
 
         Object o = get(componentKey);
-        if (o instanceof Class) {
-            // TODO: instantiate
-            Class clazz = (Class) o;
+        if (o instanceof Class clazz) {
             try {
                 return clazz.getDeclaredConstructor().newInstance();
             } catch (Exception e) {
@@ -341,7 +336,7 @@ public class PicoMap implements Map, MutablePicoContainer {
 
     @Override
     public List getComponentInstances() {
-        ArrayList instances = new ArrayList();
+        ArrayList instances = new ArrayList<>();
 
         for (Object o : entrySet()) {
             Entry entry = (Entry) o;
@@ -357,7 +352,7 @@ public class PicoMap implements Map, MutablePicoContainer {
             return Collections.emptyList();
         }
 
-        ArrayList instances = new ArrayList();
+        ArrayList instances = new ArrayList<>();
         for (Object o : entrySet()) {
             Entry entry = (Entry) o;
 

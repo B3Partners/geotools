@@ -21,60 +21,61 @@ import static org.geotools.referencing.CRS.findMathTransform;
 import static org.geotools.referencing.CRS.getMapProjection;
 
 import java.util.logging.Level;
-import org.geotools.geometry.DirectPosition2D;
-import org.geotools.geometry.GeneralDirectPosition;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.api.geometry.Bounds;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.geometry.MismatchedReferenceSystemException;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.ReferenceIdentifier;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.GeographicCRS;
+import org.geotools.api.referencing.crs.ProjectedCRS;
+import org.geotools.api.referencing.cs.CoordinateSystem;
+import org.geotools.api.referencing.cs.CoordinateSystemAxis;
+import org.geotools.api.referencing.operation.CoordinateOperation;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.NoninvertibleTransformException;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.geometry.GeneralBounds;
+import org.geotools.geometry.GeneralPosition;
+import org.geotools.geometry.Position2D;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.referencing.CRS.AxisOrder;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.referencing.cs.DefaultCoordinateSystemAxis;
 import org.geotools.referencing.operation.projection.AzimuthalEquidistant;
 import org.geotools.referencing.operation.projection.LambertAzimuthalEqualArea;
 import org.geotools.referencing.operation.projection.MapProjection;
+import org.geotools.referencing.operation.projection.Orthographic;
 import org.geotools.referencing.operation.projection.PolarStereographic;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.geometry.Envelope;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.geometry.MismatchedReferenceSystemException;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.ReferenceIdentifier;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.GeographicCRS;
-import org.opengis.referencing.crs.ProjectedCRS;
-import org.opengis.referencing.cs.CoordinateSystem;
-import org.opengis.referencing.cs.CoordinateSystemAxis;
-import org.opengis.referencing.operation.CoordinateOperation;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.NoninvertibleTransformException;
-import org.opengis.referencing.operation.TransformException;
 
 /**
- * Handles reprojection of envelopes based on a {@link CoordinateOperation}. Takes into account a
- * number of notable situations where the envelope reprojection is not a mere sampling of the
- * reprojected points, including poles, datelines, specific issues polar and azimuthal projections
+ * Handles reprojection of envelopes based on a {@link CoordinateOperation}. Takes into account a number of notable
+ * situations where the envelope reprojection is not a mere sampling of the reprojected points, including poles,
+ * datelines, specific issues polar and azimuthal projections
  */
 class EnvelopeReprojector {
 
+    private static final int MAX_BISECT_DEPTH = 6;
+
     /**
-     * Transforms an envelope using the given {@linkplain CoordinateOperation coordinate operation}.
-     * The transformation is only approximative. It may be bigger than the smallest possible
-     * bounding box, but should not be smaller. Note that the returned envelope may not have the
-     * same number of dimensions than the original envelope.
+     * Transforms an envelope using the given {@linkplain CoordinateOperation coordinate operation}. The transformation
+     * is only approximative. It may be bigger than the smallest possible bounding box, but should not be smaller. Note
+     * that the returned envelope may not have the same number of dimensions than the original envelope.
      *
-     * <p>This method can handle the case where the envelope contains the North or South pole, or
-     * when it cross the &plusmn;180° longitude.
+     * <p>This method can handle the case where the envelope contains the North or South pole, or when it cross the
+     * &plusmn;180° longitude.
      *
      * @param operation The operation to use. Source and target dimension must be 2.
      * @param envelope Envelope to transform, or {@code null}. This envelope will not be modified.
      * @return The transformed envelope, or {@code null} if {@code envelope} was null.
      * @throws TransformException if a transform failed.
      * @since 2.4
-     * @see CRS#transform(MathTransform, Envelope)
+     * @see CRS#transform(MathTransform, Bounds)
      */
-    static GeneralEnvelope transform(final CoordinateOperation operation, final Envelope envelope)
+    static GeneralBounds transform(final CoordinateOperation operation, final Bounds envelope)
             throws TransformException {
         if (envelope == null) {
             return null;
@@ -83,13 +84,19 @@ class EnvelopeReprojector {
         if (sourceCRS != null) {
             final CoordinateReferenceSystem crs = envelope.getCoordinateReferenceSystem();
             if (crs != null && !CRS.equalsIgnoreMetadata(crs, sourceCRS)) {
-                throw new MismatchedReferenceSystemException(
-                        Errors.format(ErrorKeys.MISMATCHED_COORDINATE_REFERENCE_SYSTEM));
+                throw new MismatchedReferenceSystemException(ErrorKeys.MISMATCHED_COORDINATE_REFERENCE_SYSTEM);
             }
         }
         MathTransform mt = operation.getMathTransform();
-        final GeneralDirectPosition centerPt = new GeneralDirectPosition(mt.getTargetDimensions());
-        final GeneralEnvelope transformed = CRS.transform(mt, envelope, centerPt);
+        final GeneralPosition centerPt = new GeneralPosition(mt.getTargetDimensions());
+        GeneralBounds transformed;
+        try {
+            transformed = CRS.transform(mt, envelope, centerPt);
+        } catch (TransformException e) {
+            // ok, let's try bisecting the envelope then
+            transformed = TransformException.runWithoutStackTraces(() ->
+                    bisectionTransform(mt, envelope, new GeneralBounds(mt.getTargetDimensions()), MAX_BISECT_DEPTH));
+        }
 
         expandOnAxisExtremCrossing(envelope, sourceCRS, mt, transformed);
 
@@ -104,12 +111,18 @@ class EnvelopeReprojector {
          * the whole set of longitudes should be included
          */
         MapProjection sourceProjection = getMapProjection(sourceCRS);
-        GeneralEnvelope generalEnvelope = toGeneralEnvelope(envelope);
-        expandOnPolarOrigin(
-                sourceCRS, mt, transformed, targetCRS, sourceProjection, generalEnvelope);
+        GeneralBounds generalEnvelope = toGeneralEnvelope(envelope);
+        expandOnPolarOrigin(sourceCRS, mt, transformed, targetCRS, sourceProjection, generalEnvelope);
+
+        /* For the polar stereographic, extreme points are at quadrants */
         MapProjection targetProjection = getMapProjection(targetCRS);
         if (targetProjection instanceof PolarStereographic && sourceCRS instanceof GeographicCRS) {
             expandOnPolarQuadrands(envelope, sourceCRS, mt, transformed, generalEnvelope);
+        }
+
+        /* Similar case for Orthographic, but the center is configurable, not the pole */
+        if (targetProjection instanceof Orthographic && sourceCRS instanceof GeographicCRS) {
+            expandOnOrthographicQuadrants(envelope, transformed, targetCRS, mt);
         }
 
         /*
@@ -121,7 +134,7 @@ class EnvelopeReprojector {
             // It should be an error, but we keep this method tolerant.
             return transformed;
         }
-        GeneralEnvelope transformedSingularities =
+        GeneralBounds transformedSingularities =
                 expandSingularityPoints(mt, centerPt, transformed, generalEnvelope, targetCS);
         if (transformedSingularities != null) return transformedSingularities;
 
@@ -132,8 +145,7 @@ class EnvelopeReprojector {
             getProjectionCenterLonLat(targetCRS, centerPt);
             // now try to intesect the source envelope with the center point
             if (isPole(centerPt, DefaultGeographicCRS.WGS84)) {
-                includePoles(
-                        envelope, sourceCRS, centerPt, transformed, targetCRS, targetProjection);
+                includePoles(envelope, sourceCRS, centerPt, transformed, targetCRS, targetProjection);
             }
 
             // Azimuthal equidistant is weird, the extreme points in the output map are close
@@ -147,16 +159,157 @@ class EnvelopeReprojector {
         return transformed;
     }
 
+    /**
+     * Recursively split by 4 the envelope, and transform each quadrant. If the transformed envelope is not valid, then
+     * the envelope is split again. The process is repeated until the envelope is not growing any longer.
+     *
+     * @param mt
+     * @param envelope
+     * @return
+     */
+    @SuppressWarnings(
+            "OperatorPrecedence") // revisit: Use grouping parenthesis to make the operator precedence explicit (see
+    // https://errorprone.info/bugpattern/OperatorPrecedence)
+    // Did you mean '|| ((growth(transformed, oldTransformed, 0) < 0.01)'?
+    private static GeneralBounds bisectionTransform(
+            MathTransform mt, Bounds envelope, GeneralBounds transformed, int maxDepth) throws TransformException {
+        if (maxDepth <= 0) {
+            return transformed;
+        }
+
+        GeneralBounds oldTransformed = new GeneralBounds(transformed);
+        double minX = envelope.getMinimum(0);
+        double minY = envelope.getMinimum(1);
+        double maxX = envelope.getMaximum(0);
+        double maxY = envelope.getMaximum(1);
+        double midX = minX + (maxX - minX) / 2;
+        double midY = minY + (maxY - minY) / 2;
+
+        // Create the 9 sample points for the entire envelope (4 corners, 4 midpoints, 1 center)
+        double[] points = {
+            minX, minY, midX, minY, maxX, minY, // 0 1 2, bottom
+            minX, midY, midX, midY, maxX, midY, // 3 4 5, mid row
+            minX, maxY, midX, maxY, maxX, maxY // 6 7 8, top row
+        };
+
+        // transform each point, with tolerance
+        int numPoints = points.length / 2;
+        boolean[] failures = new boolean[numPoints];
+        double[] tx = new double[2];
+        for (int i = 0; i < numPoints; i++) {
+            try {
+                mt.transform(points, i * 2, tx, 0, 1);
+                transformed.add(tx[0], tx[1]);
+            } catch (TransformException | IllegalArgumentException e) {
+                failures[i] = true;
+            }
+        }
+
+        // If all points failed to transform, throw an exception
+        if (allTrue(failures)) {
+            throw new TransformException("Failed to transform envelope");
+        }
+
+        // do not recurse if the envelope is not growing, or not growing enough
+        if (allFalse(failures)
+                && (oldTransformed.equals(transformed)
+                        || growth(transformed, oldTransformed, 0) < 0.01
+                                && growth(transformed, oldTransformed, 1) < 0.01)) {
+            return oldTransformed;
+        }
+
+        // recurse otherwise
+        if (mixedResults(failures, 0, 1, 3, 4)) {
+            GeneralBounds lowerLeft = new GeneralBounds(new double[] {minX, minY}, new double[] {midX, midY});
+            bisectionTransform(mt, lowerLeft, transformed, maxDepth - 1);
+        }
+        if (mixedResults(failures, 1, 2, 4, 5)) {
+            GeneralBounds lowerRight = new GeneralBounds(new double[] {midX, minY}, new double[] {maxX, midY});
+            bisectionTransform(mt, lowerRight, transformed, maxDepth - 1);
+        }
+        if (mixedResults(failures, 3, 4, 6, 7)) {
+            GeneralBounds upperLeft = new GeneralBounds(new double[] {minX, midY}, new double[] {midX, maxY});
+            bisectionTransform(mt, upperLeft, transformed, maxDepth - 1);
+        }
+        if (mixedResults(failures, 4, 5, 7, 8)) {
+            GeneralBounds upperRight = new GeneralBounds(new double[] {midX, midY}, new double[] {maxX, maxY});
+            bisectionTransform(mt, upperRight, transformed, maxDepth - 1);
+        }
+
+        return transformed;
+    }
+
+    private static boolean mixedResults(boolean[] failures, int... indexes) {
+        int foundTrue = 0;
+        for (int i : indexes) {
+            if (failures[i]) foundTrue++;
+        }
+        return foundTrue > 0 && foundTrue < indexes.length;
+    }
+
+    private static double growth(GeneralBounds bounds, GeneralBounds oldBounds, int dimension) {
+        return (bounds.getSpan(dimension) - oldBounds.getSpan(dimension)) / bounds.getSpan(dimension);
+    }
+
+    private static boolean allTrue(boolean[] array) {
+        for (boolean b : array) if (!b) return false;
+        return true;
+    }
+
+    private static boolean allFalse(boolean[] array) {
+        for (boolean b : array) if (b) return false;
+        return true;
+    }
+
+    private static void expandOnOrthographicQuadrants(
+            Bounds sourceEnvelope, GeneralBounds transformed, CoordinateReferenceSystem targetCRS, MathTransform mt)
+            throws TransformException {
+        final GeneralPosition centerPt = new GeneralPosition(2);
+        getProjectionCenterLonLat(targetCRS, centerPt);
+
+        // check if the envelope contains the center point
+        GeneralPosition targetPt = new GeneralPosition(mt.getTargetDimensions());
+        GeneralPosition sourcePt = new GeneralPosition(mt.getSourceDimensions());
+
+        // check the meridian going through the center first ordinate
+        double o1 = centerPt.getOrdinate(0);
+        if (sourceEnvelope.getMinimum(0) <= o1 && sourceEnvelope.getMaximum(0) >= o1) {
+            sourcePt.setOrdinate(0, o1);
+            sourcePt.setOrdinate(1, Math.max(sourceEnvelope.getMinimum(1), centerPt.getOrdinate(1) - 90));
+            mt.transform(sourcePt, targetPt);
+            transformed.add(targetPt);
+
+            sourcePt.setOrdinate(0, o1);
+            sourcePt.setOrdinate(1, Math.min(centerPt.getOrdinate(1) + 90, sourceEnvelope.getMaximum(1)));
+            mt.transform(sourcePt, targetPt);
+            transformed.add(targetPt);
+        }
+
+        // check the parallel going through the center second ordinate
+        double o2 = centerPt.getOrdinate(1);
+        if (sourceEnvelope.getMinimum(1) <= o2 && sourceEnvelope.getMaximum(1) >= o2) {
+            sourcePt.setOrdinate(0, Math.max(sourceEnvelope.getMinimum(0), centerPt.getOrdinate(0) - 90));
+            sourcePt.setOrdinate(1, o2);
+            mt.transform(sourcePt, targetPt);
+            transformed.add(targetPt);
+
+            sourcePt.setOrdinate(0, Math.min(centerPt.getOrdinate(0) + 90, sourceEnvelope.getMaximum(0)));
+            sourcePt.setOrdinate(1, o2);
+            mt.transform(sourcePt, targetPt);
+            transformed.add(targetPt);
+        }
+    }
+
     private static void expandOnAntimeridian(
-            Envelope envelope,
+            Bounds envelope,
             CoordinateReferenceSystem sourceCRS,
-            GeneralDirectPosition centerPt,
-            GeneralEnvelope transformed,
+            GeneralPosition centerPt,
+            GeneralBounds transformed,
             CoordinateReferenceSystem targetCRS) {
         getProjectionCenterLonLat(targetCRS, centerPt);
         try {
             MathTransform geoToTarget;
-            Envelope geoEnvelope;
+            Bounds geoEnvelope;
             if (sourceCRS instanceof GeographicCRS) {
                 // this is a simplification to avoid dateline flips due to datum differences
                 geoToTarget = findMathTransform(sourceCRS, targetCRS);
@@ -168,12 +321,9 @@ class EnvelopeReprojector {
             }
             double nagativeMeridian = -centerPt.getOrdinate(1);
 
-            if (geoEnvelope.getMinimum(1) <= nagativeMeridian
-                    && geoEnvelope.getMaximum(1) >= nagativeMeridian) {
-                expandOnMeridian(
-                        transformed, geoToTarget, geoEnvelope, nagativeMeridian - 1e-6, 50);
-                expandOnMeridian(
-                        transformed, geoToTarget, geoEnvelope, nagativeMeridian + 1e-6, 50);
+            if (geoEnvelope.getMinimum(1) <= nagativeMeridian && geoEnvelope.getMaximum(1) >= nagativeMeridian) {
+                expandOnMeridian(transformed, geoToTarget, geoEnvelope, nagativeMeridian - 1e-6, 50);
+                expandOnMeridian(transformed, geoToTarget, geoEnvelope, nagativeMeridian + 1e-6, 50);
             }
         } catch (FactoryException | TransformException e) {
             CRS.LOGGER.log(
@@ -185,15 +335,15 @@ class EnvelopeReprojector {
     }
 
     private static void includePoles(
-            Envelope envelope,
+            Bounds envelope,
             CoordinateReferenceSystem sourceCRS,
-            GeneralDirectPosition centerPt,
-            GeneralEnvelope transformed,
+            GeneralPosition centerPt,
+            GeneralBounds transformed,
             CoordinateReferenceSystem targetCRS,
             MapProjection targetProjection) {
         try {
             MathTransform geoToTarget;
-            Envelope geoEnvelope;
+            Bounds geoEnvelope;
             if (sourceCRS instanceof GeographicCRS) {
                 // this is a simplification to avoid dateline flips due to datum differences
                 geoToTarget = findMathTransform(sourceCRS, targetCRS);
@@ -223,11 +373,11 @@ class EnvelopeReprojector {
         }
     }
 
-    private static GeneralEnvelope expandSingularityPoints(
+    private static GeneralBounds expandSingularityPoints(
             MathTransform mt,
-            GeneralDirectPosition centerPt,
-            GeneralEnvelope transformed,
-            GeneralEnvelope generalEnvelope,
+            GeneralPosition centerPt,
+            GeneralBounds transformed,
+            GeneralBounds generalEnvelope,
             CoordinateSystem targetCS) {
         /*
          * Checks for singularity points. For example the south pole is a singularity point in
@@ -261,8 +411,8 @@ class EnvelopeReprojector {
          * transformed envelope will be expanded to the full (-180 to 180) range. This is quite
          * large, but at least it is correct (while the envelope without expansion is not).
          */
-        DirectPosition sourcePt = null;
-        DirectPosition targetPt = null;
+        Position sourcePt = null;
+        Position targetPt = null;
         final int dimension = targetCS.getDimension();
         for (int i = 0; i < dimension; i++) {
             final CoordinateSystemAxis axis = targetCS.getAxis(i);
@@ -300,7 +450,7 @@ class EnvelopeReprojector {
                         }
                         return transformed;
                     }
-                    targetPt = new GeneralDirectPosition(mt.getSourceDimensions());
+                    targetPt = new GeneralPosition(mt.getSourceDimensions());
                     for (int j = 0; j < dimension; j++) {
                         targetPt.setOrdinate(j, centerPt.getOrdinate(j));
                     }
@@ -328,11 +478,11 @@ class EnvelopeReprojector {
     }
 
     private static void expandOnPolarQuadrands(
-            Envelope envelope,
+            Bounds envelope,
             CoordinateReferenceSystem sourceCRS,
             MathTransform mt,
-            GeneralEnvelope transformed,
-            GeneralEnvelope generalEnvelope)
+            GeneralBounds transformed,
+            GeneralBounds generalEnvelope)
             throws TransformException {
         final CoordinateSystem sourceCS = sourceCRS.getCoordinateSystem();
         for (int i = 0; i < sourceCS.getDimension(); i++) {
@@ -340,11 +490,11 @@ class EnvelopeReprojector {
             if (CRS.equalsIgnoreMetadata(DefaultCoordinateSystemAxis.LONGITUDE, axis)) {
                 double minLon = envelope.getMinimum(i);
                 double maxLon = envelope.getMaximum(i);
-                DirectPosition lower = generalEnvelope.getLowerCorner();
-                DirectPosition upper = generalEnvelope.getUpperCorner();
-                DirectPosition dest = new DirectPosition2D();
+                Position lower = generalEnvelope.getLowerCorner();
+                Position upper = generalEnvelope.getUpperCorner();
+                Position dest = new Position2D();
                 // world spanning longitude? add points around the globe quadrants then
-                if ((maxLon - minLon) >= 360) {
+                if (maxLon - minLon >= 360) {
                     for (int lon = -180; lon <= 180; lon += 90) {
                         addLowerUpperPoints(mt, transformed, i, lower, upper, dest, lon);
                     }
@@ -365,34 +515,29 @@ class EnvelopeReprojector {
     private static void expandOnPolarOrigin(
             CoordinateReferenceSystem sourceCRS,
             MathTransform mt,
-            GeneralEnvelope transformed,
+            GeneralBounds transformed,
             CoordinateReferenceSystem targetCRS,
             MapProjection sourceProjection,
-            GeneralEnvelope generalEnvelope)
+            GeneralBounds generalEnvelope)
             throws TransformException {
-        if (sourceProjection instanceof PolarStereographic
-                || (sourceProjection instanceof LambertAzimuthalEqualArea)) {
-            ParameterValue<?> fe =
-                    sourceProjection
-                            .getParameterValues()
-                            .parameter(
-                                    MapProjection.AbstractProvider.FALSE_EASTING
-                                            .getName()
-                                            .getCode());
+        if (sourceProjection instanceof PolarStereographic || sourceProjection instanceof LambertAzimuthalEqualArea) {
+            ParameterValue<?> fe = sourceProjection
+                    .getParameterValues()
+                    .parameter(MapProjection.AbstractProvider.FALSE_EASTING
+                            .getName()
+                            .getCode());
             double originX = fe.doubleValue();
-            ParameterValue<?> fn =
-                    sourceProjection
-                            .getParameterValues()
-                            .parameter(
-                                    MapProjection.AbstractProvider.FALSE_NORTHING
-                                            .getName()
-                                            .getCode());
+            ParameterValue<?> fn = sourceProjection
+                    .getParameterValues()
+                    .parameter(MapProjection.AbstractProvider.FALSE_NORTHING
+                            .getName()
+                            .getCode());
             double originY = fn.doubleValue();
-            DirectPosition2D origin = new DirectPosition2D(originX, originY);
+            Position2D origin = new Position2D(originX, originY);
             if (isPole(origin, sourceCRS)) {
                 if (generalEnvelope.contains(origin)) {
                     if (targetCRS instanceof GeographicCRS) {
-                        DirectPosition lowerCorner = transformed.getLowerCorner();
+                        Position lowerCorner = transformed.getLowerCorner();
                         if (CRS.getAxisOrder(targetCRS) == AxisOrder.NORTH_EAST) {
                             lowerCorner.setOrdinate(1, -180);
                             transformed.add(lowerCorner);
@@ -409,8 +554,8 @@ class EnvelopeReprojector {
                         // sense for the target projection. We do a 1deg sampling as a compromise
                         // between
                         // speed and accuracy
-                        DirectPosition lc = transformed.getLowerCorner();
-                        DirectPosition uc = transformed.getUpperCorner();
+                        Position lc = transformed.getLowerCorner();
+                        Position uc = transformed.getUpperCorner();
                         for (int j = -180; j < 180; j++) {
                             expandEnvelopeByLongitude(j, lc, transformed, targetCRS);
                             expandEnvelopeByLongitude(j, uc, transformed, targetCRS);
@@ -419,24 +564,22 @@ class EnvelopeReprojector {
                 } else {
                     // check where the point closes to the origin is, make sure it's included
                     // in the tranformation points
-                    if (generalEnvelope.getMinimum(0) < originX
-                            && generalEnvelope.getMaximum(0) > originX) {
-                        DirectPosition lc = generalEnvelope.getLowerCorner();
+                    if (generalEnvelope.getMinimum(0) < originX && generalEnvelope.getMaximum(0) > originX) {
+                        Position lc = generalEnvelope.getLowerCorner();
                         lc.setOrdinate(0, originX);
                         mt.transform(lc, lc);
                         transformed.add(lc);
-                        DirectPosition uc = generalEnvelope.getUpperCorner();
+                        Position uc = generalEnvelope.getUpperCorner();
                         uc.setOrdinate(0, originX);
                         mt.transform(uc, uc);
                         transformed.add(uc);
                     }
-                    if (generalEnvelope.getMinimum(1) < originY
-                            && generalEnvelope.getMaximum(1) > originY) {
-                        DirectPosition lc = generalEnvelope.getLowerCorner();
+                    if (generalEnvelope.getMinimum(1) < originY && generalEnvelope.getMaximum(1) > originY) {
+                        Position lc = generalEnvelope.getLowerCorner();
                         lc.setOrdinate(1, originY);
                         mt.transform(lc, lc);
                         transformed.add(lc);
-                        DirectPosition uc = generalEnvelope.getUpperCorner();
+                        Position uc = generalEnvelope.getUpperCorner();
                         uc.setOrdinate(1, originY);
                         mt.transform(uc, uc);
                         transformed.add(uc);
@@ -447,24 +590,20 @@ class EnvelopeReprojector {
     }
 
     /**
-     * If the source envelope crosses the expected range of valid coordinates, also projects the
-     * range bounds as a safety. Example: if the source envelope goes from 150 to 200°E, some map
-     * projections will interpret 200° as if it was -160°, and consequently produce an envelope
-     * which do not include the 180°W extremum. We will add those extremum points explicitly as a
-     * safety. It may leads to bigger than necessary target envelope, but the contract is to include
-     * at least the source envelope, not to returns the smallest one.
+     * If the source envelope crosses the expected range of valid coordinates, also projects the range bounds as a
+     * safety. Example: if the source envelope goes from 150 to 200°E, some map projections will interpret 200° as if it
+     * was -160°, and consequently produce an envelope which do not include the 180°W extremum. We will add those
+     * extremum points explicitly as a safety. It may leads to bigger than necessary target envelope, but the contract
+     * is to include at least the source envelope, not to returns the smallest one.
      */
     private static void expandOnAxisExtremCrossing(
-            Envelope envelope,
-            CoordinateReferenceSystem sourceCRS,
-            MathTransform mt,
-            GeneralEnvelope transformed)
+            Bounds envelope, CoordinateReferenceSystem sourceCRS, MathTransform mt, GeneralBounds transformed)
             throws TransformException {
         if (sourceCRS != null) {
             final CoordinateSystem cs = sourceCRS.getCoordinateSystem();
             if (cs != null) { // Should never be null, but check as a paranoiac safety.
-                DirectPosition sourcePt = null;
-                DirectPosition targetPt = null;
+                Position sourcePt = null;
+                Position targetPt = null;
                 final int dimension = cs.getDimension();
                 for (int i = 0; i < dimension; i++) {
                     final CoordinateSystemAxis axis = cs.getAxis(i);
@@ -475,13 +614,13 @@ class EnvelopeReprojector {
                     final double max = envelope.getMaximum(i);
                     final double v1 = axis.getMinimumValue();
                     final double v2 = axis.getMaximumValue();
-                    final boolean b1 = (v1 > min && v1 < max);
-                    final boolean b2 = (v2 > min && v2 < max);
+                    final boolean b1 = v1 > min && v1 < max;
+                    final boolean b2 = v2 > min && v2 < max;
                     if (!b1 && !b2) {
                         continue;
                     }
                     if (sourcePt == null) {
-                        sourcePt = new GeneralDirectPosition(dimension);
+                        sourcePt = new GeneralPosition(dimension);
                         for (int j = 0; j < dimension; j++) {
                             sourcePt.setOrdinate(j, envelope.getMedian(j));
                         }
@@ -501,11 +640,7 @@ class EnvelopeReprojector {
     }
 
     private static void expandOnMeridian(
-            GeneralEnvelope target,
-            MathTransform geoToTarget,
-            Envelope geoEnvelope,
-            double antimeridian,
-            int numPoints)
+            GeneralBounds target, MathTransform geoToTarget, Bounds geoEnvelope, double antimeridian, int numPoints)
             throws TransformException {
         double minLon = geoEnvelope.getMinimum(0);
         double maxLon = geoEnvelope.getMaximum(0);
@@ -518,7 +653,7 @@ class EnvelopeReprojector {
             lon = minLon + delta * i / 2;
         }
         geoToTarget.transform(points, 0, points, 0, numPoints);
-        DirectPosition dp = new DirectPosition2D();
+        Position dp = new Position2D();
         for (int i = 0; i < points.length; ) {
             dp.setOrdinate(0, points[i++]);
             dp.setOrdinate(1, points[i++]);
@@ -528,11 +663,11 @@ class EnvelopeReprojector {
 
     private static void addLowerUpperPoints(
             MathTransform mt,
-            GeneralEnvelope transformed,
+            GeneralBounds transformed,
             int axis,
-            DirectPosition lower,
-            DirectPosition upper,
-            DirectPosition dest,
+            Position lower,
+            Position upper,
+            Position dest,
             double ordinate)
             throws TransformException {
         lower.setOrdinate(axis, ordinate);
@@ -543,20 +678,20 @@ class EnvelopeReprojector {
         transformed.add(dest);
     }
 
-    private static GeneralEnvelope toGeneralEnvelope(final Envelope envelope) {
+    private static GeneralBounds toGeneralEnvelope(final Bounds envelope) {
         // TODO: avoid the hack below if we provide a contains(DirectPosition)
         // method in GeoAPI Envelope interface.
-        GeneralEnvelope generalEnvelope;
-        if (envelope instanceof GeneralEnvelope) {
-            generalEnvelope = (GeneralEnvelope) envelope;
+        GeneralBounds generalEnvelope;
+        if (envelope instanceof GeneralBounds bounds) {
+            generalEnvelope = bounds;
         } else {
-            generalEnvelope = new GeneralEnvelope(envelope);
+            generalEnvelope = new GeneralBounds(envelope);
         }
         return generalEnvelope;
     }
 
-    private static boolean isPole(DirectPosition point, CoordinateReferenceSystem crs) {
-        DirectPosition result = new DirectPosition2D();
+    private static boolean isPole(Position point, CoordinateReferenceSystem crs) {
+        Position result = new Position2D();
         GeographicCRS geographic;
         try {
             ProjectedCRS projectedCRS = CRS.getProjectedCRS(crs);
@@ -564,9 +699,9 @@ class EnvelopeReprojector {
                 geographic = projectedCRS.getBaseCRS();
                 MathTransform mt = findMathTransform(projectedCRS, geographic);
                 mt.transform(point, result);
-            } else if (crs instanceof GeographicCRS) {
+            } else if (crs instanceof GeographicCRS rS) {
                 result = point;
-                geographic = (GeographicCRS) crs;
+                geographic = rS;
             } else {
                 return false;
             }
@@ -576,22 +711,17 @@ class EnvelopeReprojector {
 
         final double EPS = 1e-6;
         if (CRS.getAxisOrder(geographic) == NORTH_EAST) {
-            return Math.abs(result.getOrdinate(0) - 90) < EPS
-                    || Math.abs(result.getOrdinate(0) + 90) < EPS;
+            return Math.abs(result.getOrdinate(0) - 90) < EPS || Math.abs(result.getOrdinate(0) + 90) < EPS;
         } else {
-            return Math.abs(result.getOrdinate(1) - 90) < EPS
-                    || Math.abs(result.getOrdinate(1) + 90) < EPS;
+            return Math.abs(result.getOrdinate(1) - 90) < EPS || Math.abs(result.getOrdinate(1) + 90) < EPS;
         }
     }
 
     private static void expandEnvelopeByLongitude(
-            double longitude,
-            DirectPosition input,
-            GeneralEnvelope transformed,
-            CoordinateReferenceSystem sourceCRS) {
+            double longitude, Position input, GeneralBounds transformed, CoordinateReferenceSystem sourceCRS) {
         try {
             MathTransform mt = findMathTransform(sourceCRS, DefaultGeographicCRS.WGS84);
-            DirectPosition2D pos = new DirectPosition2D(sourceCRS);
+            Position2D pos = new Position2D(sourceCRS);
             mt.transform(input, pos);
             pos.setOrdinate(0, longitude);
             mt.inverse().transform(pos, pos);
@@ -608,8 +738,7 @@ class EnvelopeReprojector {
         }
     }
 
-    private static GeneralDirectPosition getProjectionCenterLonLat(
-            CoordinateReferenceSystem crs, GeneralDirectPosition centerPt) {
+    private static GeneralPosition getProjectionCenterLonLat(CoordinateReferenceSystem crs, GeneralPosition centerPt) {
         // set defaults
         centerPt.setOrdinate(0, 0);
         centerPt.setOrdinate(1, 0);
@@ -628,7 +757,9 @@ class EnvelopeReprojector {
             ReferenceIdentifier pvName = pv.getDescriptor().getName();
             if (MapProjection.AbstractProvider.LATITUDE_OF_ORIGIN.getName().equals(pvName)) {
                 centerPt.setOrdinate(1, pv.doubleValue());
-            } else if (MapProjection.AbstractProvider.LATITUDE_OF_CENTRE.getName().equals(pvName)) {
+            } else if (MapProjection.AbstractProvider.LATITUDE_OF_CENTRE
+                    .getName()
+                    .equals(pvName)) {
                 centerPt.setOrdinate(1, pv.doubleValue());
             } else if (MapProjection.AbstractProvider.LONGITUDE_OF_CENTRE
                     .getName()
@@ -643,12 +774,9 @@ class EnvelopeReprojector {
     }
 
     private static void expandEnvelopeOnExtremePoints(
-            GeneralDirectPosition centerPt,
-            GeneralEnvelope transformed,
-            MathTransform geoToTarget,
-            Envelope geoEnvelope)
+            GeneralPosition centerPt, GeneralBounds transformed, MathTransform geoToTarget, Bounds geoEnvelope)
             throws TransformException {
-        GeneralDirectPosition workPoint = new GeneralDirectPosition(centerPt.getDimension());
+        GeneralPosition workPoint = new GeneralPosition(centerPt.getDimension());
         double centerLon = centerPt.getOrdinate(0);
         double minLon = geoEnvelope.getMinimum(0);
         double maxLon = geoEnvelope.getMaximum(0);
@@ -670,11 +798,7 @@ class EnvelopeReprojector {
     }
 
     private static void includeTransformedPoint(
-            GeneralEnvelope envelope,
-            MathTransform mt,
-            GeneralDirectPosition workPoint,
-            double x,
-            double y)
+            GeneralBounds envelope, MathTransform mt, GeneralPosition workPoint, double x, double y)
             throws TransformException {
         workPoint.setOrdinate(0, x);
         workPoint.setOrdinate(1, y);
@@ -682,8 +806,9 @@ class EnvelopeReprojector {
         envelope.add(workPoint);
     }
 
+    @SuppressWarnings("NarrowCalculation") // revisit? shouldn't it be "/ 360.0"
     private static double rollLongitude(final double x) {
-        double rolled = x - (((int) (x + Math.signum(x) * 180)) / 360) * 360.0;
+        double rolled = x - ((int) (x + Math.signum(x) * 180) / 360) * 360.0;
         return rolled;
     }
 }

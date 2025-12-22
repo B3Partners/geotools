@@ -16,25 +16,25 @@
  */
 package org.geotools.parameter;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
-import javax.media.jai.OperationDescriptor;
+import org.eclipse.imagen.OperationDescriptor;
 import org.geotools.util.AbstractInternationalString;
 import org.geotools.util.Utilities;
 
 /**
- * A localized string for a JAI's operation parameter. This is used by {@link
- * ImagingParameterDescriptors}.
+ * A localized string for a JAI's operation parameter. This is used by {@link ImagingParameterDescriptors}.
  *
  * @since 2.2
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
  */
-final class ImagingParameterDescription extends AbstractInternationalString
-        implements Serializable {
+final class ImagingParameterDescription extends AbstractInternationalString implements Serializable {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -325584046563057577L;
 
     /** Shared keys for arguments. Will be completed only as needed. */
@@ -47,8 +47,8 @@ final class ImagingParameterDescription extends AbstractInternationalString
     private final String key;
 
     /**
-     * Prefix to removes from the value associated to the {@code key}, or {@code null} if none. This
-     * is usually the vendor key.
+     * Prefix to removes from the value associated to the {@code key}, or {@code null} if none. This is usually the
+     * vendor key.
      */
     private final String prefixKey;
 
@@ -80,8 +80,7 @@ final class ImagingParameterDescription extends AbstractInternationalString
      * @param operation The operation to fetch localized resource from.
      * @param key The key for the resource to fetch.
      */
-    public ImagingParameterDescription(
-            final OperationDescriptor operation, final String key, final String prefixKey) {
+    public ImagingParameterDescription(final OperationDescriptor operation, final String key, final String prefixKey) {
         this.operation = operation;
         this.key = key;
         this.prefixKey = prefixKey;
@@ -118,9 +117,8 @@ final class ImagingParameterDescription extends AbstractInternationalString
     }
 
     /**
-     * If the specified name starts with the specified prefix, removes the prefix from the name.
-     * This is used for removing the "org.geotools" part in operation name like
-     * "org.geotools.NodataFilter" for example.
+     * If the specified name starts with the specified prefix, removes the prefix from the name. This is used for
+     * removing the "org.geotools" part in operation name like "org.geotools.NodataFilter" for example.
      */
     static String trimPrefix(String name, String prefix) {
         name = name.trim();

@@ -62,10 +62,10 @@ public class AttributeGroupHandler extends XSIElementHandler {
     @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
     public int hashCode() {
-        return (LOCALNAME.hashCode()
-                        * ((id == null) ? 1 : id.hashCode())
-                        * ((ref == null) ? 1 : ref.hashCode())
-                        * ((name == null) ? 1 : name.hashCode()))
+        return LOCALNAME.hashCode()
+                        * (id == null ? 1 : id.hashCode())
+                        * (ref == null ? 1 : ref.hashCode())
+                        * (name == null ? 1 : name.hashCode())
                 + hashCodeOffset;
     }
 
@@ -106,8 +106,7 @@ public class AttributeGroupHandler extends XSIElementHandler {
                 if (anyAttribute == null) {
                     anyAttribute = sth;
                 } else {
-                    throw new SAXNotRecognizedException(
-                            LOCALNAME + " may only have one child declaration.");
+                    throw new SAXNotRecognizedException(LOCALNAME + " may only have one child declaration.");
                 }
 
                 return sth;
@@ -118,8 +117,7 @@ public class AttributeGroupHandler extends XSIElementHandler {
     }
 
     /**
-     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String,
-     *     org.xml.sax.Attributes)
+     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
     public void startElement(String namespaceURI, String localName, Attributes atts) {
@@ -159,7 +157,7 @@ public class AttributeGroupHandler extends XSIElementHandler {
             return cache;
         }
 
-        String anyAttributeNamespace = (anyAttribute == null) ? null : anyAttribute.getNamespace();
+        String anyAttributeNamespace = anyAttribute == null ? null : anyAttribute.getNamespace();
         Attribute[] attributes = null;
 
         if (attrDecs != null) {
@@ -169,13 +167,13 @@ public class AttributeGroupHandler extends XSIElementHandler {
             while (i.hasNext()) {
                 Object o = i.next();
 
-                if (o instanceof AttributeHandler) {
-                    h.add(((AttributeHandler) o).compress(parent));
+                if (o instanceof AttributeHandler handler) {
+                    h.add(handler.compress(parent));
                 } else {
                     AttributeGroupHandler agh = (AttributeGroupHandler) o;
                     AttributeGroup ag = agh.compress(parent);
 
-                    if ((ag != null) && (ag.getAttributes() != null)) {
+                    if (ag != null && ag.getAttributes() != null) {
                         Attribute[] aa = ag.getAttributes();
 
                         for (Attribute attribute : aa) h.add(attribute);
@@ -188,7 +186,7 @@ public class AttributeGroupHandler extends XSIElementHandler {
 
         String name1 = this.name;
 
-        if ((ref != null) && !"".equalsIgnoreCase(ref)) {
+        if (ref != null && !"".equalsIgnoreCase(ref)) {
             AttributeGroup ag = parent.lookUpAttributeGroup(ref);
 
             if (ag == null) {
@@ -197,7 +195,7 @@ public class AttributeGroupHandler extends XSIElementHandler {
 
             name1 = ag.getName();
 
-            if ((anyAttribute == null) || "".equalsIgnoreCase(anyAttribute.getNamespace())) {
+            if (anyAttribute == null || "".equalsIgnoreCase(anyAttribute.getNamespace())) {
                 anyAttributeNamespace = ag.getAnyAttributeNameSpace();
             }
 
@@ -208,9 +206,7 @@ public class AttributeGroupHandler extends XSIElementHandler {
             attributes = ag.getAttributes();
         }
 
-        cache =
-                new AttributeGroupGT(
-                        id, name1, parent.getTargetNamespace(), attributes, anyAttributeNamespace);
+        cache = new AttributeGroupGT(id, name1, parent.getTargetNamespace(), attributes, anyAttributeNamespace);
 
         return cache;
     }

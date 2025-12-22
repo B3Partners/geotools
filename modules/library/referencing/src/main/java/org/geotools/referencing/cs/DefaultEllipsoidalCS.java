@@ -19,25 +19,25 @@
  */
 package org.geotools.referencing.cs;
 
+import java.io.Serial;
 import java.util.Map;
 import javax.measure.IncommensurableException;
 import javax.measure.UnconvertibleException;
 import javax.measure.Unit;
 import javax.measure.UnitConverter;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.referencing.cs.AxisDirection;
+import org.geotools.api.referencing.cs.CoordinateSystemAxis;
+import org.geotools.api.referencing.cs.EllipsoidalCS;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.metadata.i18n.VocabularyKeys;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.cs.AxisDirection;
-import org.opengis.referencing.cs.CoordinateSystemAxis;
-import org.opengis.referencing.cs.EllipsoidalCS;
 import si.uom.NonSI;
 import si.uom.SI;
 
 /**
- * A two- or three-dimensional coordinate system in which position is specified by geodetic
- * latitude, geodetic longitude, and (in the three-dimensional case) ellipsoidal height. An {@code
- * EllipsoidalCS} shall have two or three {@linkplain #getAxis axis}.
+ * A two- or three-dimensional coordinate system in which position is specified by geodetic latitude, geodetic
+ * longitude, and (in the three-dimensional case) ellipsoidal height. An {@code EllipsoidalCS} shall have two or three
+ * {@linkplain #getAxis axis}.
  *
  * <TABLE CELLPADDING='6' BORDER='1'>
  * <TR BGCOLOR="#EEEEFF"><TH NOWRAP>Used with CRS type(s)</TH></TR>
@@ -52,50 +52,41 @@ import si.uom.SI;
  */
 public class DefaultEllipsoidalCS extends AbstractCS implements EllipsoidalCS {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -1452492488902329211L;
 
     /**
-     * A two-dimensional ellipsoidal CS with <var>{@linkplain
-     * DefaultCoordinateSystemAxis#GEODETIC_LONGITUDE geodetic longitude}</var>, <var>{@linkplain
-     * DefaultCoordinateSystemAxis#GEODETIC_LATITUDE geodetic latitude}</var> axis in decimal
-     * degrees.
+     * A two-dimensional ellipsoidal CS with <var>{@linkplain DefaultCoordinateSystemAxis#GEODETIC_LONGITUDE geodetic
+     * longitude}</var>, <var>{@linkplain DefaultCoordinateSystemAxis#GEODETIC_LATITUDE geodetic latitude}</var> axis in
+     * decimal degrees.
      */
-    public static DefaultEllipsoidalCS GEODETIC_2D =
-            new DefaultEllipsoidalCS(
-                    name(VocabularyKeys.GEODETIC_2D),
-                    DefaultCoordinateSystemAxis.GEODETIC_LONGITUDE,
-                    DefaultCoordinateSystemAxis.GEODETIC_LATITUDE);
+    public static DefaultEllipsoidalCS GEODETIC_2D = new DefaultEllipsoidalCS(
+            name(VocabularyKeys.GEODETIC_2D),
+            DefaultCoordinateSystemAxis.GEODETIC_LONGITUDE,
+            DefaultCoordinateSystemAxis.GEODETIC_LATITUDE);
 
     /**
-     * A three-dimensional ellipsoidal CS with <var>{@linkplain
-     * DefaultCoordinateSystemAxis#GEODETIC_LONGITUDE geodetic longitude}</var>, <var>{@linkplain
-     * DefaultCoordinateSystemAxis#GEODETIC_LATITUDE geodetic latitude}</var>, <var>{@linkplain
-     * DefaultCoordinateSystemAxis#ELLIPSOIDAL_HEIGHT ellipsoidal height}</var> axis.
+     * A three-dimensional ellipsoidal CS with <var>{@linkplain DefaultCoordinateSystemAxis#GEODETIC_LONGITUDE geodetic
+     * longitude}</var>, <var>{@linkplain DefaultCoordinateSystemAxis#GEODETIC_LATITUDE geodetic latitude}</var>,
+     * <var>{@linkplain DefaultCoordinateSystemAxis#ELLIPSOIDAL_HEIGHT ellipsoidal height}</var> axis.
      */
-    public static DefaultEllipsoidalCS GEODETIC_3D =
-            new DefaultEllipsoidalCS(
-                    name(VocabularyKeys.GEODETIC_3D),
-                    DefaultCoordinateSystemAxis.GEODETIC_LONGITUDE,
-                    DefaultCoordinateSystemAxis.GEODETIC_LATITUDE,
-                    DefaultCoordinateSystemAxis.ELLIPSOIDAL_HEIGHT);
+    public static DefaultEllipsoidalCS GEODETIC_3D = new DefaultEllipsoidalCS(
+            name(VocabularyKeys.GEODETIC_3D),
+            DefaultCoordinateSystemAxis.GEODETIC_LONGITUDE,
+            DefaultCoordinateSystemAxis.GEODETIC_LATITUDE,
+            DefaultCoordinateSystemAxis.ELLIPSOIDAL_HEIGHT);
 
-    /**
-     * The axis number for longitude, latitude and height. Will be constructed only when first
-     * needed.
-     */
+    /** The axis number for longitude, latitude and height. Will be constructed only when first needed. */
     private transient int longitudeAxis, latitudeAxis, heightAxis;
 
-    /**
-     * The unit converters for longitude, latitude and height. Will be constructed only when first
-     * needed.
-     */
+    /** The unit converters for longitude, latitude and height. Will be constructed only when first needed. */
     private transient UnitConverter longitudeConverter, latitudeConverter, heightConverter;
 
     /**
-     * Constructs a new coordinate system with the same values than the specified one. This copy
-     * constructor provides a way to wrap an arbitrary implementation into a Geotools one or a
-     * user-defined one (as a subclass), usually in order to leverage some implementation-specific
-     * API. This constructor performs a shallow copy, i.e. the properties are not cloned.
+     * Constructs a new coordinate system with the same values than the specified one. This copy constructor provides a
+     * way to wrap an arbitrary implementation into a Geotools one or a user-defined one (as a subclass), usually in
+     * order to leverage some implementation-specific API. This constructor performs a shallow copy, i.e. the properties
+     * are not cloned.
      *
      * @param cs The coordinate system to copy.
      * @since 2.2
@@ -111,8 +102,7 @@ public class DefaultEllipsoidalCS extends AbstractCS implements EllipsoidalCS {
      * @param axis0 The first axis.
      * @param axis1 The second axis.
      */
-    public DefaultEllipsoidalCS(
-            final String name, final CoordinateSystemAxis axis0, final CoordinateSystemAxis axis1) {
+    public DefaultEllipsoidalCS(final String name, final CoordinateSystemAxis axis0, final CoordinateSystemAxis axis1) {
         super(name, axis0, axis1);
     }
 
@@ -133,25 +123,21 @@ public class DefaultEllipsoidalCS extends AbstractCS implements EllipsoidalCS {
     }
 
     /**
-     * Constructs a two-dimensional coordinate system from a set of properties. The properties map
-     * is given unchanged to the {@linkplain AbstractCS#AbstractCS(Map,CoordinateSystemAxis[])
-     * super-class constructor}.
+     * Constructs a two-dimensional coordinate system from a set of properties. The properties map is given unchanged to
+     * the {@linkplain AbstractCS#AbstractCS(Map,CoordinateSystemAxis[]) super-class constructor}.
      *
      * @param properties Set of properties. Should contains at least {@code "name"}.
      * @param axis0 The first axis.
      * @param axis1 The second axis.
      */
     public DefaultEllipsoidalCS(
-            final Map<String, ?> properties,
-            final CoordinateSystemAxis axis0,
-            final CoordinateSystemAxis axis1) {
+            final Map<String, ?> properties, final CoordinateSystemAxis axis0, final CoordinateSystemAxis axis1) {
         super(properties, axis0, axis1);
     }
 
     /**
-     * Constructs a three-dimensional coordinate system from a set of properties. The properties map
-     * is given unchanged to the {@linkplain AbstractCS#AbstractCS(Map,CoordinateSystemAxis[])
-     * super-class constructor}.
+     * Constructs a three-dimensional coordinate system from a set of properties. The properties map is given unchanged
+     * to the {@linkplain AbstractCS#AbstractCS(Map,CoordinateSystemAxis[]) super-class constructor}.
      *
      * @param properties Set of properties. Should contains at least {@code "name"}.
      * @param axis0 The first axis.
@@ -167,16 +153,15 @@ public class DefaultEllipsoidalCS extends AbstractCS implements EllipsoidalCS {
     }
 
     /** For {@link #usingUnit} usage only. */
-    private DefaultEllipsoidalCS(
-            final Map<String, ?> properties, final CoordinateSystemAxis... axis) {
+    private DefaultEllipsoidalCS(final Map<String, ?> properties, final CoordinateSystemAxis... axis) {
         super(properties, axis);
     }
 
     /**
-     * Returns {@code true} if the specified axis direction is allowed for this coordinate system.
-     * The default implementation accepts only the following directions: {@link AxisDirection#NORTH
-     * NORTH}, {@link AxisDirection#SOUTH SOUTH}, {@link AxisDirection#EAST EAST}, {@link
-     * AxisDirection#WEST WEST}, {@link AxisDirection#UP UP} and {@link AxisDirection#DOWN DOWN}.
+     * Returns {@code true} if the specified axis direction is allowed for this coordinate system. The default
+     * implementation accepts only the following directions: {@link AxisDirection#NORTH NORTH},
+     * {@link AxisDirection#SOUTH SOUTH}, {@link AxisDirection#EAST EAST}, {@link AxisDirection#WEST WEST},
+     * {@link AxisDirection#UP UP} and {@link AxisDirection#DOWN DOWN}.
      */
     @Override
     protected boolean isCompatibleDirection(AxisDirection direction) {
@@ -187,9 +172,9 @@ public class DefaultEllipsoidalCS extends AbstractCS implements EllipsoidalCS {
     }
 
     /**
-     * Returns {@code true} if the specified unit is compatible with {@linkplain NonSI#DEGREE_ANGLE
-     * decimal degrees} (or {@linkplain SI#METER meters} in the special case of height). This method
-     * is invoked at construction time for checking units compatibility.
+     * Returns {@code true} if the specified unit is compatible with {@linkplain NonSI#DEGREE_ANGLE decimal degrees} (or
+     * {@linkplain SI#METER meters} in the special case of height). This method is invoked at construction time for
+     * checking units compatibility.
      *
      * @since 2.2
      */
@@ -229,8 +214,7 @@ public class DefaultEllipsoidalCS extends AbstractCS implements EllipsoidalCS {
                     continue;
                 }
             } catch (UnconvertibleException | IncommensurableException e) {
-                throw new MismatchedDimensionException(
-                        "The axis unit is not convertible to the expected dimension", e);
+                throw new MismatchedDimensionException("The axis unit is not convertible to the expected dimension", e);
             }
             // Should not happen, since 'isCompatibleDirection'
             // has already checked axis directions.
@@ -239,14 +223,12 @@ public class DefaultEllipsoidalCS extends AbstractCS implements EllipsoidalCS {
     }
 
     /**
-     * Returns the longitude found in the specified coordinate point, always in {@linkplain
-     * NonSI#DEGREE_ANGLE decimal degrees}.
+     * Returns the longitude found in the specified coordinate point, always in {@linkplain NonSI#DEGREE_ANGLE decimal
+     * degrees}.
      *
      * @param coordinates The coordinate point expressed in this coordinate system.
-     * @return The longitude in the specified array, in {@linkplain NonSI#DEGREE_ANGLE decimal
-     *     degrees}.
-     * @throws MismatchedDimensionException is the coordinate point doesn't have the expected
-     *     dimension.
+     * @return The longitude in the specified array, in {@linkplain NonSI#DEGREE_ANGLE decimal degrees}.
+     * @throws MismatchedDimensionException is the coordinate point doesn't have the expected dimension.
      */
     public double getLongitude(final double[] coordinates) throws MismatchedDimensionException {
         ensureDimensionMatch("coordinates", coordinates);
@@ -257,14 +239,12 @@ public class DefaultEllipsoidalCS extends AbstractCS implements EllipsoidalCS {
     }
 
     /**
-     * Returns the latitude found in the specified coordinate point, always in {@linkplain
-     * NonSI#DEGREE_ANGLE decimal degrees}.
+     * Returns the latitude found in the specified coordinate point, always in {@linkplain NonSI#DEGREE_ANGLE decimal
+     * degrees}.
      *
      * @param coordinates The coordinate point expressed in this coordinate system.
-     * @return The latitude in the specified array, in {@linkplain NonSI#DEGREE_ANGLE decimal
-     *     degrees}.
-     * @throws MismatchedDimensionException is the coordinate point doesn't have the expected
-     *     dimension.
+     * @return The latitude in the specified array, in {@linkplain NonSI#DEGREE_ANGLE decimal degrees}.
+     * @throws MismatchedDimensionException is the coordinate point doesn't have the expected dimension.
      */
     public double getLatitude(final double[] coordinates) throws MismatchedDimensionException {
         ensureDimensionMatch("coordinates", coordinates);
@@ -275,28 +255,25 @@ public class DefaultEllipsoidalCS extends AbstractCS implements EllipsoidalCS {
     }
 
     /**
-     * Returns the height found in the specified coordinate point, always in {@linkplain SI#METER
-     * meters}.
+     * Returns the height found in the specified coordinate point, always in {@linkplain SI#METER meters}.
      *
      * @param coordinates The coordinate point expressed in this coordinate system.
      * @return The height in the specified array, in {@linkplain SI#METER meters}.
-     * @throws MismatchedDimensionException is the coordinate point doesn't have the expected
-     *     dimension.
+     * @throws MismatchedDimensionException is the coordinate point doesn't have the expected dimension.
      */
     public double getHeight(final double[] coordinates) throws MismatchedDimensionException {
         ensureDimensionMatch("coordinates", coordinates);
         if (heightConverter == null) {
             update();
             if (heightConverter == null) {
-                throw new IllegalStateException(Errors.format(ErrorKeys.NOT_THREE_DIMENSIONAL_CS));
+                throw new IllegalStateException(ErrorKeys.NOT_THREE_DIMENSIONAL_CS);
             }
         }
         return heightConverter.convert(coordinates[heightAxis]);
     }
 
     /**
-     * Returns a new coordinate system with the same properties than the current one except for axis
-     * units.
+     * Returns a new coordinate system with the same properties than the current one except for axis units.
      *
      * @param unit The unit for the new axis.
      * @return A coordinate system with axis using the specified units.

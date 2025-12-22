@@ -17,8 +17,8 @@
 package org.geotools.graph.util.delaunay;
 
 import java.util.Objects;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.graph.structure.line.BasicXYNode;
-import org.opengis.feature.simple.SimpleFeature;
 
 /** @author jfc173 */
 public class DelaunayNode extends BasicXYNode {
@@ -38,9 +38,9 @@ public class DelaunayNode extends BasicXYNode {
 
     @Override
     public boolean equals(Object o) {
-        return ((o instanceof DelaunayNode)
-                && (this.getCoordinate().x == ((DelaunayNode) o).getCoordinate().x)
-                && (this.getCoordinate().y == ((DelaunayNode) o).getCoordinate().y));
+        return o instanceof DelaunayNode dn
+                && this.getCoordinate().x == dn.getCoordinate().x
+                && this.getCoordinate().y == dn.getCoordinate().y;
     }
 
     @Override

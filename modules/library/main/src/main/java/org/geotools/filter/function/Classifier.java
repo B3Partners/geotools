@@ -17,8 +17,8 @@
 package org.geotools.filter.function;
 
 /**
- * The data structure returned by classification functions. We can take this object, tweak it, and
- * then pass it to a ClassifyFunction.
+ * The data structure returned by classification functions. We can take this object, tweak it, and then pass it to a
+ * ClassifyFunction.
  *
  * @author Cory Horner, Refractions Research
  */
@@ -49,7 +49,7 @@ public abstract class Classifier {
     }
 
     /** Returns the slot containing the passed expression's value. */
-    public int classify(org.opengis.filter.expression.Expression expr, Object feature) {
+    public int classify(org.geotools.api.filter.expression.Expression expr, Object feature) {
         Object value = expr.evaluate(feature); // retrive value from context
         return classify(value);
     }

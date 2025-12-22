@@ -18,16 +18,16 @@ package org.geotools.filter.visitor;
 
 import static org.junit.Assert.assertEquals;
 
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.data.DataUtilities;
 import org.geotools.factory.CommonFactoryFinder;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.expression.Literal;
 
 public class BindingFilterVisitorTest {
 
@@ -39,10 +39,9 @@ public class BindingFilterVisitorTest {
 
     @Before
     public void setup() throws Exception {
-        ft =
-                DataUtilities.createType(
-                        "test",
-                        "theGeom:LineString,b:java.lang.Byte,s:java.lang.Short,i:java.lang.Integer,l:java.lang.Long,d:java.lang.Double,label:String");
+        ft = DataUtilities.createType(
+                "test",
+                "theGeom:LineString,b:java.lang.Byte,s:java.lang.Short,i:java.lang.Integer,l:java.lang.Long,d:java.lang.Double,label:String");
         visitor = new BindingFilterVisitor(ft);
     }
 

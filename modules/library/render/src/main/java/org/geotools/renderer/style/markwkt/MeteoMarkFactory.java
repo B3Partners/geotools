@@ -25,10 +25,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.renderer.style.MarkFactory;
 import org.geotools.renderer.util.ExplicitBoundsShape;
-import org.opengis.feature.Feature;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Adds to the well-known shapes some symbols the weathermen may find useful.
@@ -41,24 +41,20 @@ public class MeteoMarkFactory implements MarkFactory {
     public static final String SHAPE_PREFIX = "extshape://";
 
     /** The logger for the rendering module. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(MeteoMarkFactory.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(MeteoMarkFactory.class);
 
-    /**
-     * Key for the extshape://arrow height ratio (between 0 and 1000). Default value is 2, twice as
-     * high as large
-     */
+    /** Key for the extshape://arrow height ratio (between 0 and 1000). Default value is 2, twice as high as large */
     public static final String ARROW_HEIGHT_RATIO_KEY = "hr";
 
     /**
-     * Key for the extshape://arrow base line thickness (must be between 0, just border, and 1,
-     * which turns the arrow into a irregular pentagon, "little house" like). Default value is 0.2
+     * Key for the extshape://arrow base line thickness (must be between 0, just border, and 1, which turns the arrow
+     * into a irregular pentagon, "little house" like). Default value is 0.2
      */
     public static final String ARROW_THICKNESS_KEY = "t";
 
     /**
-     * Key for the extshape://arrow location of the arrowhead base, a value of 0 turns the shape
-     * into a triangle, a value of 1 into a rectangle. Default value is 0.5
+     * Key for the extshape://arrow location of the arrowhead base, a value of 0 turns the shape into a triangle, a
+     * value of 1 into a rectangle. Default value is 0.5
      */
     public static final String ARROWHEAD_BASE_KEY = "ab";
 
@@ -129,11 +125,10 @@ public class MeteoMarkFactory implements MarkFactory {
      * Return a shape with the given url.
      *
      * @see org.geotools.renderer.style.MarkFactory#getShape(java.awt.Graphics2D,
-     * org.opengis.filter.expression.Expression, org.opengis.feature.Feature)
+     * org.geotools.api.filter.expression.Expression, org.geotools.api.feature.Feature)
      */
     @Override
-    public Shape getShape(Graphics2D graphics, Expression symbolUrl, Feature feature)
-            throws Exception {
+    public Shape getShape(Graphics2D graphics, Expression symbolUrl, Feature feature) throws Exception {
         // cannot handle a null url
         if (symbolUrl == null) return null;
 
@@ -189,12 +184,7 @@ public class MeteoMarkFactory implements MarkFactory {
                     arrowBase = value;
                     break;
                 default:
-                    LOGGER.warning(
-                            "Unexpected key value pair "
-                                    + key
-                                    + "="
-                                    + svalue
-                                    + " for extshape://arrow");
+                    LOGGER.warning("Unexpected key value pair " + key + "=" + svalue + " for extshape://arrow");
             }
         }
         return buildDynamicArrow(height, thickness, arrowBase);
@@ -231,16 +221,15 @@ public class MeteoMarkFactory implements MarkFactory {
 
     private void validateRange(String key, double value, double min, double max) {
         if (value < min || value > max) {
-            throw new IllegalArgumentException(
-                    "Invalid value "
-                            + value
-                            + " for key "
-                            + key
-                            + ", should have been between "
-                            + min
-                            + " and "
-                            + max
-                            + " (extreme excluded)");
+            throw new IllegalArgumentException("Invalid value "
+                    + value
+                    + " for key "
+                    + key
+                    + ", should have been between "
+                    + min
+                    + " and "
+                    + max
+                    + " (extreme excluded)");
         }
     }
 

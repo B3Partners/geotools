@@ -21,26 +21,26 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.factory.CommonFactoryFinder;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.LineSymbolizer;
-import org.geotools.styling.Rule;
-import org.geotools.styling.StyleFactory2;
 import org.geotools.styling.UomOgcMapping;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.filter.FilterFactory2;
 
 public class UnitRescaleTest {
 
-    private StyleFactory2 sf;
-    private FilterFactory2 ff;
+    private StyleFactory sf;
+    private FilterFactory ff;
 
     @Before
     public void setUp() throws Exception {
-        sf = (StyleFactory2) CommonFactoryFinder.getStyleFactory(null);
-        ff = CommonFactoryFinder.getFilterFactory2(null);
+        sf = CommonFactoryFinder.getStyleFactory(null);
+        ff = CommonFactoryFinder.getFilterFactory(null);
     }
 
     @Test
@@ -61,30 +61,24 @@ public class UnitRescaleTest {
         double dpi90 = 25.4 / 0.28;
         double widthAtDpi90 = 10714.286;
         Assert.assertEquals(widthAtDpi90, getStrokeWidth(featureTypeStyles, rules, dpi90), 0.1);
-        Assert.assertEquals(
-                widthAtDpi90 * 2, getStrokeWidth(featureTypeStyles, rules, dpi90 * 2), 0.5);
-        Assert.assertEquals(
-                widthAtDpi90 * 3, getStrokeWidth(featureTypeStyles, rules, dpi90 * 3), 0.5);
-        Assert.assertEquals(
-                widthAtDpi90 * 4, getStrokeWidth(featureTypeStyles, rules, dpi90 * 4), 0.5);
-        Assert.assertEquals(
-                widthAtDpi90 * 5, getStrokeWidth(featureTypeStyles, rules, dpi90 * 5), 0.5);
+        Assert.assertEquals(widthAtDpi90 * 2, getStrokeWidth(featureTypeStyles, rules, dpi90 * 2), 0.5);
+        Assert.assertEquals(widthAtDpi90 * 3, getStrokeWidth(featureTypeStyles, rules, dpi90 * 3), 0.5);
+        Assert.assertEquals(widthAtDpi90 * 4, getStrokeWidth(featureTypeStyles, rules, dpi90 * 4), 0.5);
+        Assert.assertEquals(widthAtDpi90 * 5, getStrokeWidth(featureTypeStyles, rules, dpi90 * 5), 0.5);
     }
 
-    private double getStrokeWidth(
-            List<FeatureTypeStyle> featureTypeStyles, Rule[] rules, double dpi) {
+    private double getStrokeWidth(List<FeatureTypeStyle> featureTypeStyles, Rule[] rules, double dpi) {
         ArrayList<LiteFeatureTypeStyle> lfts = new ArrayList<>();
         for (FeatureTypeStyle fts : featureTypeStyles) {
             List<Rule> ruleList = new ArrayList<>(Arrays.asList(rules));
             List<Rule> elseRuleList = new ArrayList<>();
             LiteFeatureTypeStyle s =
-                    new LiteFeatureTypeStyle(
-                            null, null, ruleList, elseRuleList, fts.getTransformation());
+                    new LiteFeatureTypeStyle(null, null, ruleList, elseRuleList, fts.getTransformation());
             lfts.add(s);
         }
 
         Map<Object, Object> hints = new HashMap<>();
-        hints.put("dpi", Double.valueOf(dpi));
+        hints.put("dpi", dpi);
 
         StreamingRenderer renderer = new StreamingRenderer();
         renderer.scaleDenominator = 1;
@@ -93,7 +87,8 @@ public class UnitRescaleTest {
 
         for (LiteFeatureTypeStyle s : lfts) {
             Rule r = s.ruleList[0];
-            LineSymbolizer rescaledLineSymbolizer = (LineSymbolizer) r.symbolizers().get(0);
+            LineSymbolizer rescaledLineSymbolizer =
+                    (LineSymbolizer) r.symbolizers().get(0);
             return rescaledLineSymbolizer.getStroke().getWidth().evaluate(null, Double.class);
         }
 

@@ -28,10 +28,49 @@
       <useTransitiveFiltering>true</useTransitiveFiltering>
       <useStrictFiltering>true</useStrictFiltering>
       <includes>
-        <include>javax.media:jai_core</include>
-        <include>javax.media:jai_codec</include>
-        <include>javax.media:jai_imageio</include>
-      
+        <include>org.eclipse.imagen:imagen-core</include>
+        <include>org.eclipse.imagen:jiffle-op</include>
+        <include>org.eclipse.imagen:classbreaks</include>
+        <include>org.eclipse.imagen:affine</include>
+        <include>org.eclipse.imagen:algebra</include>
+        <include>org.eclipse.imagen:bandmerge</include>
+        <include>org.eclipse.imagen:bandselect</include>
+        <include>org.eclipse.imagen:bandcombine</include>
+        <include>org.eclipse.imagen:border</include>
+        <include>org.eclipse.imagen:buffer</include>
+        <include>org.eclipse.imagen:crop</include>
+        <include>org.eclipse.imagen:iterators</include>
+        <include>org.eclipse.imagen:lookup</include>
+        <include>org.eclipse.imagen:mosaic</include>
+        <include>org.eclipse.imagen:nullop</include>
+        <include>org.eclipse.imagen:rescale</include>
+        <include>org.eclipse.imagen:scale</include>
+        <include>org.eclipse.imagen:scale2</include>
+        <include>org.eclipse.imagen:stats</include>
+        <include>org.eclipse.imagen:translate</include>
+        <include>org.eclipse.imagen:utilities</include>
+        <include>org.eclipse.imagen:warp</include>
+        <include>org.eclipse.imagen:zonal</include>
+        <include>org.eclipse.imagen:binarize</include>
+        <include>org.eclipse.imagen:format</include>
+        <include>org.eclipse.imagen:colorconvert</include>
+        <include>org.eclipse.imagen:errordiffusion</include>
+        <include>org.eclipse.imagen:orderdither</include>
+        <include>org.eclipse.imagen:colorindexer</include>
+        <include>org.eclipse.imagen:imagefunction</include>
+        <include>org.eclipse.imagen:piecewise</include>
+        <include>org.eclipse.imagen:classifier</include>
+        <include>org.eclipse.imagen:rlookup</include>
+        <include>org.eclipse.imagen:vectorbin</include>
+        <include>org.eclipse.imagen:shadedrelief</include>
+        <include>org.eclipse.imagen:concurrent-tile-cache</include>
+        <include>org.eclipse.imagen:rendered-image-browser</include>
+        <include>org.eclipse.imagen:imageread</include>
+        <include>org.eclipse.imagen:convolve</include>
+        <include>org.eclipse.imagen:contour</include>
+        <include>org.eclipse.imagen:vectorize</include>
+
+        <include>org.geotools:gt-api</include>
         <include>org.geotools:gt-arcgrid</include>
         <include>org.geotools:gt-brewer</include>
         <include>org.geotools:gt-charts</include>
@@ -39,6 +78,8 @@
         <include>org.geotools:gt-coverage-api</include>
         <include>org.geotools:gt-coverage</include>
         <include>org.geotools:gt-cql</include>
+        <include>org.geotools:gt-cql2-text</include>
+        <include>org.geotools:gt-cql2-json</include>
         <include>org.geotools:gt-csv</include>
         <include>org.geotools:gt-epsg-extension</include>
         <include>org.geotools:gt-epsg-hsql</include>
@@ -62,7 +103,6 @@
         <include>org.geotools:gt-metadata</include>
         <include>org.geotools:gt-mongodb</include>
         <include>org.geotools:gt-netcdf</include>
-        <include>org.geotools:gt-opengis</include>
         <include>org.geotools:gt-process-feature</include>
         <include>org.geotools:gt-process-geometry</include>
         <include>org.geotools:gt-process-raster</include>
@@ -96,7 +136,6 @@
         <include>org.geotools.xsd:gt-xsd-wmts</include>
         <include>org.geotools.xsd:gt-xsd-wps</include>
         
-        <include>org.geotools.jdbc:gt-jdbc-oracle</include>
         <include>org.geotools.jdbc:gt-jdbc-db2</include>
         <include>org.geotools.jdbc:gt-jdbc-h2</include>
         <include>org.geotools.jdbc:gt-jdbc-hana</include>

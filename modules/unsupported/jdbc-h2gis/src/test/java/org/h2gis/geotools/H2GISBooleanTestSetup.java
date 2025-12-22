@@ -20,7 +20,6 @@ package org.h2gis.geotools;
 import org.geotools.jdbc.JDBCBooleanTestSetup;
 import org.geotools.jdbc.JDBCDataStore;
 
-@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public class H2GISBooleanTestSetup extends JDBCBooleanTestSetup {
 
     protected H2GISBooleanTestSetup() {
@@ -35,8 +34,7 @@ public class H2GISBooleanTestSetup extends JDBCBooleanTestSetup {
 
     @Override
     protected void createBooleanTable() throws Exception {
-        run(
-                "CREATE TABLE \"b\" (fid int AUTO_INCREMENT(0) PRIMARY KEY, \"id\" int, \"boolProperty\" boolean)");
+        run("CREATE TABLE \"b\" (fid int AUTO_INCREMENT(0) PRIMARY KEY, \"id\" int, \"boolProperty\" boolean)");
         run("INSERT INTO \"b\" (\"id\",\"boolProperty\") VALUES (0, false)");
         run("INSERT INTO \"b\" (\"id\",\"boolProperty\") VALUES (1, true)");
     }

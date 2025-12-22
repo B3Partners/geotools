@@ -19,8 +19,8 @@ package org.geotools.renderer.lite;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.sort.SortOrder;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortOrder;
 
 /**
  * Sort key used to find the next feature to draw in a cross-layer z-ordering setup
@@ -30,8 +30,7 @@ import org.opengis.filter.sort.SortOrder;
 class SortKey {
 
     @SuppressWarnings("unchecked")
-    private static java.util.Comparator<Comparable> FORWARD_COMPARATOR =
-            (o1, o2) -> o1.compareTo(o2);
+    private static java.util.Comparator<Comparable> FORWARD_COMPARATOR = (o1, o2) -> o1.compareTo(o2);
 
     private static java.util.Comparator<Comparable> REVERSE_COMPARATOR =
             (o1, o2) -> -FORWARD_COMPARATOR.compare(o1, o2);

@@ -1,7 +1,26 @@
+/*
+ *    GeoTools - The Open Source Java GIS Toolkit
+ *    http://geotools.org
+ *
+ *    (C) 2018, Open Source Geospatial Foundation (OSGeo)
+ *
+ *    This library is free software; you can redistribute it and/or
+ *    modify it under the terms of the GNU Lesser General Public
+ *    License as published by the Free Software Foundation;
+ *    version 2.1 of the License.
+ *
+ *    This library is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    Lesser General Public License for more details.
+ *
+ */
+
 package org.geotools.data.arcgisrest.schema.webservice;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import java.util.Objects;
 
 public class Field {
 
@@ -188,32 +207,13 @@ public class Field {
             return false;
         }
         Field rhs = ((Field) other);
-        return (((((((((this.sqlType == rhs.sqlType)
-                                                                        || ((this.sqlType != null)
-                                                                                && this.sqlType
-                                                                                        .equals(
-                                                                                                rhs.sqlType)))
-                                                                && ((this.nullable == rhs.nullable)
-                                                                        || ((this.nullable != null)
-                                                                                && this.nullable
-                                                                                        .equals(
-                                                                                                rhs.nullable))))
-                                                        && ((this.editable == rhs.editable)
-                                                                || ((this.editable != null)
-                                                                        && this.editable.equals(
-                                                                                rhs.editable))))
-                                                && ((this.defaultValue == rhs.defaultValue)
-                                                        || ((this.defaultValue != null)
-                                                                && this.defaultValue.equals(
-                                                                        rhs.defaultValue))))
-                                        && ((this.domain == rhs.domain)
-                                                || ((this.domain != null)
-                                                        && this.domain.equals(rhs.domain))))
-                                && ((this.name == rhs.name)
-                                        || ((this.name != null) && this.name.equals(rhs.name))))
-                        && ((this.alias == rhs.alias)
-                                || ((this.alias != null) && this.alias.equals(rhs.alias))))
-                && ((this.type == rhs.type)
-                        || ((this.type != null) && this.type.equals(rhs.type))));
+        return Objects.equals(this.sqlType, rhs.sqlType)
+                && Objects.equals(this.nullable, rhs.nullable)
+                && Objects.equals(this.editable, rhs.editable)
+                && Objects.equals(this.defaultValue, rhs.defaultValue)
+                && Objects.equals(this.domain, rhs.domain)
+                && Objects.equals(this.name, rhs.name)
+                && Objects.equals(this.alias, rhs.alias)
+                && Objects.equals(this.type, rhs.type);
     }
 }

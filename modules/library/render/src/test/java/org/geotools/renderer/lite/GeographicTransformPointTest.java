@@ -10,8 +10,10 @@ import static org.junit.Assert.assertTrue;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.style.Style;
 import org.geotools.data.property.PropertyDataStore;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.image.test.ImageAssert;
@@ -20,7 +22,6 @@ import org.geotools.map.MapContent;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.CRS.AxisOrder;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.geotools.styling.Style;
 import org.geotools.test.TestData;
 import org.geotools.util.factory.GeoTools;
 import org.junit.Before;
@@ -29,7 +30,6 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /** Test streaming renderer handling of 3D data (that must be transformed via WGS84). */
 public class GeographicTransformPointTest {
@@ -48,7 +48,8 @@ public class GeographicTransformPointTest {
     @Before
     public void setUp() throws Exception {
         // setup data
-        File property = new File(TestData.getResource(this, "point_test.properties").toURI());
+        File property =
+                new File(TestData.getResource(this, "point_test.properties").toURI());
         PropertyDataStore ds = new PropertyDataStore(property.getParentFile());
         point_test = ds.getFeatureSource("point_test");
         assertNotNull("point_test data available", point_test);
@@ -61,8 +62,7 @@ public class GeographicTransformPointTest {
     }
 
     File file(String name) {
-        return new File(
-                "src/test/resources/org/geotools/renderer/lite/test-data/line/" + name + ".png");
+        return new File("src/test/resources/org/geotools/renderer/lite/test-data/line/" + name + ".png");
     }
 
     @Test
@@ -87,9 +87,7 @@ public class GeographicTransformPointTest {
         CoordinateReferenceSystem gda94 = CRS.decode("EPSG:4939", true);
 
         GeometryFactory gf = new GeometryFactory();
-        Point point =
-                gf.createPoint(
-                        new Coordinate(130.882672103999, -16.4463909341494, 97.009018073082));
+        Point point = gf.createPoint(new Coordinate(130.882672103999, -16.4463909341494, 97.009018073082));
 
         Point world = (Point) JTS.toGeographic(point, gda94);
         assertEquals(point.getX(), world.getX(), 0.00000005);
@@ -102,12 +100,10 @@ public class GeographicTransformPointTest {
 
         BufferedImage reference = toImage(point_test_2d, style);
         BufferedImage actual = null;
-        if (CRS.getAxisOrder(point_test_strict.getSchema().getCoordinateReferenceSystem())
-                == AxisOrder.NORTH_EAST) {
+        if (CRS.getAxisOrder(point_test_strict.getSchema().getCoordinateReferenceSystem()) == AxisOrder.NORTH_EAST) {
             actual = toImage(point_test_strict, style);
         }
-        if (CRS.getAxisOrder(point_test.getSchema().getCoordinateReferenceSystem())
-                == AxisOrder.EAST_NORTH) {
+        if (CRS.getAxisOrder(point_test.getSchema().getCoordinateReferenceSystem()) == AxisOrder.EAST_NORTH) {
             actual = toImage(point_test, style);
         }
         ImageAssert.assertEquals(reference, actual, 10);
@@ -126,27 +122,22 @@ public class GeographicTransformPointTest {
         assertNotNull(typeName + " world", bounds);
         assertTrue(
                 typeName + " world WGS84",
-                CRS.equalsIgnoreMetadata(
-                        DefaultGeographicCRS.WGS84, bounds.getCoordinateReferenceSystem()));
+                CRS.equalsIgnoreMetadata(DefaultGeographicCRS.WGS84, bounds.getCoordinateReferenceSystem()));
         assertFalse(typeName + " world empty", bounds.isEmpty());
         assertFalse(typeName + " world null", bounds.isNull());
 
         ReferencedEnvelope reference = JTS.toGeographic(point_test_2d.getBounds());
         assertNotNull("reference point_test_2d bounds", reference);
-        assertTrue(
-                "reference point_test_2d bounds available",
-                !reference.isEmpty() && !reference.isNull());
+        assertTrue("reference point_test_2d bounds available", !reference.isEmpty() && !reference.isNull());
         assertTrue(
                 "bounds WGS84",
-                CRS.equalsIgnoreMetadata(
-                        DefaultGeographicCRS.WGS84, reference.getCoordinateReferenceSystem()));
+                CRS.equalsIgnoreMetadata(DefaultGeographicCRS.WGS84, reference.getCoordinateReferenceSystem()));
 
         content.getViewport().setBounds(reference);
         assertEquals("map viewport set", reference, content.getViewport().getBounds());
         assertTrue(
                 "map viewport WGS84",
-                CRS.equalsIgnoreMetadata(
-                        DefaultGeographicCRS.WGS84, content.getCoordinateReferenceSystem()));
+                CRS.equalsIgnoreMetadata(DefaultGeographicCRS.WGS84, content.getCoordinateReferenceSystem()));
 
         content.addLayer(new FeatureLayer(featuerSource, style));
 

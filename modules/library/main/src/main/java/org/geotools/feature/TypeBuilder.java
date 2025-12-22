@@ -24,24 +24,24 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.feature.type.AssociationDescriptor;
+import org.geotools.api.feature.type.AssociationType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.ComplexType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.FeatureTypeFactory;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.feature.type.PropertyType;
+import org.geotools.api.feature.type.Schema;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.util.InternationalString;
 import org.geotools.feature.type.Types;
 import org.geotools.referencing.CRS;
-import org.opengis.feature.type.AssociationDescriptor;
-import org.opengis.feature.type.AssociationType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.ComplexType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.FeatureTypeFactory;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.feature.type.PropertyType;
-import org.opengis.feature.type.Schema;
-import org.opengis.filter.Filter;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.util.InternationalString;
 
 /**
  * Makes building types easier by maintaining state.
@@ -312,8 +312,8 @@ import org.opengis.util.InternationalString;
  *   <li>{@link init()} - completly replace settings with builder defaults
  *       <ul>
  *         <li>{@link reset()} - called after a type creation methods to reset common type settings
- *         <li>{@link clear()} - called after an descriptor create method (or add methods) to clear
- *             common descriptor settings
+ *         <li>{@link clear()} - called after an descriptor create method (or add methods) to clear common descriptor
+ *             settings
  *       </ul>
  * </ul>
  *
@@ -431,8 +431,7 @@ public class TypeBuilder {
      *   <li>maxOccurs
      * </ul>
      *
-     * <p>Note: type type of collection class is not reset, a new instanceof the existing collection
-     * class is used.
+     * <p>Note: type type of collection class is not reset, a new instanceof the existing collection class is used.
      */
     public void reset() {
         this.name = null;
@@ -484,13 +483,11 @@ public class TypeBuilder {
         name = descriptor.getName().getLocalPart();
         minOccurs = descriptor.getMinOccurs();
         maxOccurs = descriptor.getMaxOccurs();
-        if (descriptor instanceof AttributeDescriptor) {
-            AttributeDescriptor attribute = (AttributeDescriptor) descriptor;
+        if (descriptor instanceof AttributeDescriptor attribute) {
             isNillable = attribute.isNillable();
             propertyType = attribute.getType();
         }
-        if (descriptor instanceof AssociationDescriptor) {
-            AssociationDescriptor association = (AssociationDescriptor) descriptor;
+        if (descriptor instanceof AssociationDescriptor association) {
             propertyType = association.getType();
         }
     }
@@ -506,32 +503,27 @@ public class TypeBuilder {
         restrictions = null;
         restrictions().addAll(type.getRestrictions());
 
-        if (type instanceof AssociationType) {
-            AssociationType assType = (AssociationType) type;
+        if (type instanceof AssociationType assType) {
 
             referenceType = assType.getRelatedType();
             superType = assType.getSuper();
         }
-        if (type instanceof AttributeType) {
-            AttributeType aType = (AttributeType) type;
+        if (type instanceof AttributeType aType) {
 
             binding = aType.getBinding();
             isIdentified = aType.isIdentified();
             superType = aType.getSuper();
         }
-        if (type instanceof GeometryType) {
-            GeometryType geometryType = (GeometryType) type;
+        if (type instanceof GeometryType geometryType) {
 
             this.crs = geometryType.getCoordinateReferenceSystem();
         }
-        if (type instanceof ComplexType) {
-            ComplexType cType = (ComplexType) type;
+        if (type instanceof ComplexType cType) {
 
             properties = newCollection(cType.getDescriptors());
             properties.addAll(cType.getDescriptors());
         }
-        if (type instanceof FeatureType) {
-            FeatureType featureType = (FeatureType) type;
+        if (type instanceof FeatureType featureType) {
             defaultGeom = featureType.getGeometryDescriptor().getType().getName();
             crs = featureType.getCoordinateReferenceSystem();
         }
@@ -557,15 +549,8 @@ public class TypeBuilder {
      * @return AttributeType created
      */
     public AttributeType attribute() {
-        AttributeType type =
-                factory.createAttributeType(
-                        typeName(),
-                        getBinding(),
-                        isIdentified(),
-                        isAbstract(),
-                        restrictions(),
-                        getSuper(),
-                        getDescription());
+        AttributeType type = factory.createAttributeType(
+                typeName(), getBinding(), isIdentified(), isAbstract(), restrictions(), getSuper(), getDescription());
         reset();
         return type;
     }
@@ -573,12 +558,7 @@ public class TypeBuilder {
     /** Create AssociationType */
     public AssociationType association() {
         return factory.createAssociationType(
-                typeName(),
-                getReferenceType(),
-                true,
-                this.restrictions,
-                getAssociationSuper(),
-                this.getDescription());
+                typeName(), getReferenceType(), true, this.restrictions, getAssociationSuper(), this.getDescription());
     }
 
     /**
@@ -640,16 +620,15 @@ public class TypeBuilder {
      * @return ComplexType
      */
     public ComplexType complex() {
-        ComplexType type =
-                getTypeFactory()
-                        .createComplexType(
-                                typeName(),
-                                properties(),
-                                isIdentified(),
-                                isAbstract(),
-                                restrictions(),
-                                getSuper(),
-                                getDescription());
+        ComplexType type = getTypeFactory()
+                .createComplexType(
+                        typeName(),
+                        properties(),
+                        isIdentified(),
+                        isAbstract(),
+                        restrictions(),
+                        getSuper(),
+                        getDescription());
         reset();
         return type;
     }
@@ -669,34 +648,26 @@ public class TypeBuilder {
     public AttributeDescriptor attributeDescriptor() {
         // TODO: handle default value
         AttributeDescriptor attribute;
-        if (propertyType instanceof GeometryType) {
-            attribute =
-                    getTypeFactory()
-                            .createGeometryDescriptor(
-                                    (GeometryType) propertyType,
-                                    typeName(),
-                                    getMinOccurs(),
-                                    getMaxOccurs(),
-                                    isNillable(),
-                                    null);
+        if (propertyType instanceof GeometryType type) {
+            attribute = getTypeFactory()
+                    .createGeometryDescriptor(type, typeName(), getMinOccurs(), getMaxOccurs(), isNillable(), null);
         } else {
-            attribute =
-                    getTypeFactory()
-                            .createAttributeDescriptor(
-                                    (AttributeType) propertyType,
-                                    typeName(),
-                                    getMinOccurs(),
-                                    getMaxOccurs(),
-                                    isNillable(),
-                                    null);
+            attribute = getTypeFactory()
+                    .createAttributeDescriptor(
+                            (AttributeType) propertyType,
+                            typeName(),
+                            getMinOccurs(),
+                            getMaxOccurs(),
+                            isNillable(),
+                            null);
         }
         reset();
         return attribute;
     }
 
     /**
-     * Create an AssociationDesctiptor, define relationships between ComplexAttribtues (in
-     * particular FeatureCollection to members).
+     * Create an AssociationDesctiptor, define relationships between ComplexAttribtues (in particular FeatureCollection
+     * to members).
      *
      * <p>Example:
      *
@@ -708,14 +679,9 @@ public class TypeBuilder {
      * @return AttributeDescriptor used to define sturcture of ComplexAttribtues
      */
     public AssociationDescriptor associationDescriptor() {
-        AssociationDescriptor association =
-                getTypeFactory()
-                        .createAssociationDescriptor(
-                                (AssociationType) propertyType,
-                                typeName(),
-                                getMinOccurs(),
-                                getMaxOccurs(),
-                                isNillable());
+        AssociationDescriptor association = getTypeFactory()
+                .createAssociationDescriptor(
+                        (AssociationType) propertyType, typeName(), getMinOccurs(), getMaxOccurs(), isNillable());
         reset();
         return association;
     }
@@ -727,15 +693,14 @@ public class TypeBuilder {
      */
     public FeatureType feature() {
         // FeatureTypeFactory typeFactory = getTypeFactory();
-        FeatureType type =
-                factory.createFeatureType(
-                        typeName(),
-                        properties(),
-                        defaultGeometry(),
-                        isAbstract(),
-                        restrictions(),
-                        getSuper(),
-                        getDescription());
+        FeatureType type = factory.createFeatureType(
+                typeName(),
+                properties(),
+                defaultGeometry(),
+                isAbstract(),
+                restrictions(),
+                getSuper(),
+                getDescription());
         reset();
         return type;
     }
@@ -876,8 +841,7 @@ public class TypeBuilder {
     }
 
     /**
-     * Template method to enable subclasses to customize the set implementation used for
-     * restrictions.
+     * Template method to enable subclasses to customize the set implementation used for restrictions.
      *
      * @return A HashSet.
      */
@@ -931,16 +895,16 @@ public class TypeBuilder {
     /**
      * Used to provide a specific type for provided binding.
      *
-     * <p>You can use this method to map the AttributeType used when addAttribute( String name,
-     * Class binding ) is called.
+     * <p>You can use this method to map the AttributeType used when addAttribute( String name, Class binding ) is
+     * called.
      */
     public void addBinding(Class binding, AttributeType type) {
         bindings().put(binding, type);
     }
 
     /**
-     * Load the indicated schema to map Java class to your Type System. (please us a profile to
-     * prevent binding conflicts).
+     * Load the indicated schema to map Java class to your Type System. (please us a profile to prevent binding
+     * conflicts).
      */
     public void load(Schema schema) {
         for (AttributeType type : schema.values()) {
@@ -1011,10 +975,8 @@ public class TypeBuilder {
 
     public TypeBuilder attribute(Name name, AttributeType type) {
         // TODO: handle default value
-        AttributeDescriptor descriptor =
-                getTypeFactory()
-                        .createAttributeDescriptor(
-                                type, name, getMinOccurs(), getMaxOccurs(), isNillable(), null);
+        AttributeDescriptor descriptor = getTypeFactory()
+                .createAttributeDescriptor(type, name, getMinOccurs(), getMaxOccurs(), isNillable(), null);
         add(descriptor);
         return this;
     }
@@ -1041,10 +1003,8 @@ public class TypeBuilder {
 
     public void addAttribute(Name name, AttributeType type) {
         // TODO: handle default value
-        AttributeDescriptor descriptor =
-                getTypeFactory()
-                        .createAttributeDescriptor(
-                                type, name, getMinOccurs(), getMaxOccurs(), isNillable(), null);
+        AttributeDescriptor descriptor = getTypeFactory()
+                .createAttributeDescriptor(type, name, getMinOccurs(), getMaxOccurs(), isNillable(), null);
         add(descriptor);
     }
 
@@ -1072,9 +1032,7 @@ public class TypeBuilder {
 
     public TypeBuilder association(Name name, AssociationType type) {
         AssociationDescriptor descriptor =
-                getTypeFactory()
-                        .createAssociationDescriptor(
-                                type, name, getMinOccurs(), getMaxOccurs(), isNillable());
+                getTypeFactory().createAssociationDescriptor(type, name, getMinOccurs(), getMaxOccurs(), isNillable());
 
         add(descriptor);
         return this;
@@ -1083,9 +1041,9 @@ public class TypeBuilder {
     /**
      * Add provided descriptor to the type to be created.
      *
-     * <p>Please note that you may not have two types with the same name, depending on the factory
-     * being used the order of the structural content may be signficant - this builder will preserve
-     * order although the factory may or may not make use of this fact.
+     * <p>Please note that you may not have two types with the same name, depending on the factory being used the order
+     * of the structural content may be signficant - this builder will preserve order although the factory may or may
+     * not make use of this fact.
      */
     public TypeBuilder add(PropertyDescriptor descriptor) {
         if (!contains(properties(), descriptor)) {
@@ -1109,9 +1067,8 @@ public class TypeBuilder {
     /**
      * Access to properties used by builder.
      *
-     * <p>You can use this method to perform collection opperations before construction. This is
-     * most useful when initializing the builder with a known type, performing modifications, and
-     * then creating a derrived type.
+     * <p>You can use this method to perform collection opperations before construction. This is most useful when
+     * initializing the builder with a known type, performing modifications, and then creating a derrived type.
      */
     public Collection<PropertyDescriptor> getProperties() {
         if (properties == null) {
@@ -1131,10 +1088,9 @@ public class TypeBuilder {
      *   <li>etc...
      * </ul>
      *
-     * The collection class used here should be matched by content described by this type.
-     * Explicitly a FeatureType with <code>getProperties() instanceof Set</code> indicates that
-     * Features of that FeatureType should maintain a Set of properties where order is not
-     * significant.
+     * The collection class used here should be matched by content described by this type. Explicitly a FeatureType with
+     * <code>getProperties() instanceof Set</code> indicates that Features of that FeatureType should maintain a Set of
+     * properties where order is not significant.
      *
      * @param properties Collection implementation used to organize properties
      */
@@ -1146,11 +1102,10 @@ public class TypeBuilder {
     // Creation
     //
     /**
-     * Template method to enable subclasses to customize the collection implementation used by
-     * "default".
+     * Template method to enable subclasses to customize the collection implementation used by "default".
      *
-     * <p>Considered moving this to the type interface but it would be in appropriate as the user
-     * may need to specifiy different collections for seperate types in the same schema.
+     * <p>Considered moving this to the type interface but it would be in appropriate as the user may need to specifiy
+     * different collections for seperate types in the same schema.
      *
      * @return Collection (subclass may override)
      */
@@ -1192,8 +1147,8 @@ public class TypeBuilder {
     /**
      * Grab property collection as an argument to factory method.
      *
-     * <p>This may return a copy as needed, since most calls to a factory method end up with a reset
-     * this seems not be needed at present.
+     * <p>This may return a copy as needed, since most calls to a factory method end up with a reset this seems not be
+     * needed at present.
      */
     protected Collection<PropertyDescriptor> properties() {
         if (properties == null) {
@@ -1241,9 +1196,8 @@ public class TypeBuilder {
     }
 
     /**
-     * Convenience method for getting the descriptor of the default geometry type. This method will
-     * first try to look up the supplied <code>defaultGeom</code> property, if it cant find, it will
-     * try to locate any added geometry.
+     * Convenience method for getting the descriptor of the default geometry type. This method will first try to look up
+     * the supplied <code>defaultGeom</code> property, if it cant find, it will try to locate any added geometry.
      */
     protected GeometryDescriptor defaultGeometry() {
         if (defaultGeom != null) {
@@ -1256,8 +1210,8 @@ public class TypeBuilder {
 
         // not found or not set, return first geometry
         for (PropertyDescriptor pd : properties) {
-            if (pd instanceof GeometryDescriptor) {
-                return (GeometryDescriptor) pd;
+            if (pd instanceof GeometryDescriptor descriptor) {
+                return descriptor;
             }
         }
         return null;
@@ -1273,8 +1227,8 @@ public class TypeBuilder {
     }
 
     /**
-     * Uses CRS utility class with buildres TypeFactory.getCRSFactory to look up a
-     * CoordinateReferenceSystem based on the provied srs.
+     * Uses CRS utility class with buildres TypeFactory.getCRSFactory to look up a CoordinateReferenceSystem based on
+     * the provied srs.
      *
      * <p>A SpatialReferenceSystem can be one of the following:
      *
@@ -1290,8 +1244,7 @@ public class TypeBuilder {
         try {
             setCRS(CRS.decode(SRS));
         } catch (Exception e) {
-            IllegalArgumentException iae =
-                    new IllegalArgumentException("SRS '" + SRS + "' unknown:" + e);
+            IllegalArgumentException iae = new IllegalArgumentException("SRS '" + SRS + "' unknown:" + e);
             iae.initCause(e);
             throw iae;
         }
@@ -1308,9 +1261,8 @@ public class TypeBuilder {
     /**
      * Access to members used by builder.
      *
-     * <p>You can use this method to perform collection opperations before construction. This is
-     * most useful when initializing the builder with a known type, performing modifications, and
-     * then creating a derrived type.
+     * <p>You can use this method to perform collection opperations before construction. This is most useful when
+     * initializing the builder with a known type, performing modifications, and then creating a derrived type.
      */
     public Collection getMembers() {
         if (members == null) {
@@ -1327,8 +1279,8 @@ public class TypeBuilder {
     /**
      * Grab member collection as an argument to factory method.
      *
-     * <p>This may return a copy as needed, since most calls to a factory method end up with a reset
-     * this seems not be needed at present.
+     * <p>This may return a copy as needed, since most calls to a factory method end up with a reset this seems not be
+     * needed at present.
      */
     protected Collection<PropertyDescriptor> members() {
         if (members == null) {
@@ -1384,9 +1336,7 @@ public class TypeBuilder {
      */
     public TypeBuilder member(Name name, AssociationType type) {
         AssociationDescriptor descriptor =
-                getTypeFactory()
-                        .createAssociationDescriptor(
-                                type, name, getMinOccurs(), getMaxOccurs(), isNillable());
+                getTypeFactory().createAssociationDescriptor(type, name, getMinOccurs(), getMaxOccurs(), isNillable());
         clear();
         return member(descriptor);
     }

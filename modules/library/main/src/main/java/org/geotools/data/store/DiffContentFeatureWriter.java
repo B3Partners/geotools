@@ -19,23 +19,23 @@ package org.geotools.data.store;
 import java.io.IOException;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import org.geotools.data.DataSourceException;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.Diff;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * A FeatureWriter that captures modifications against a FeatureReader.
  *
  * <p>You will eventually need to write out the differences, later.
  *
- * <p>The API has been implemented in terms of FeatureReader<SimpleFeatureType, SimpleFeature> to
- * make explicit that no Features are written out by this Class.
+ * <p>The API has been implemented in terms of FeatureReader<SimpleFeatureType, SimpleFeature> to make explicit that no
+ * Features are written out by this Class.
  *
  * @author Jody Garnett (Refractions Research)
  * @see DiffContentState
@@ -59,9 +59,7 @@ public class DiffContentFeatureWriter implements FeatureWriter<SimpleFeatureType
 
     /** DiffFeatureWriter construction. */
     public DiffContentFeatureWriter(
-            ContentFeatureStore store,
-            Diff diff,
-            FeatureReader<SimpleFeatureType, SimpleFeature> reader) {
+            ContentFeatureStore store, Diff diff, FeatureReader<SimpleFeatureType, SimpleFeature> reader) {
         this(store, diff, reader, new SimpleFeatureBuilder(reader.getFeatureType()));
     }
 
@@ -81,7 +79,7 @@ public class DiffContentFeatureWriter implements FeatureWriter<SimpleFeatureType
     /**
      * Supplys FeatureTypeFrom reader
      *
-     * @see org.geotools.data.FeatureWriter#getFeatureType()
+     * @see FeatureWriter#getFeatureType()
      */
     @Override
     public SimpleFeatureType getFeatureType() {
@@ -91,7 +89,7 @@ public class DiffContentFeatureWriter implements FeatureWriter<SimpleFeatureType
     /**
      * Next Feature from reader or new content.
      *
-     * @see org.geotools.data.FeatureWriter#next()
+     * @see FeatureWriter#next()
      */
     @Override
     public SimpleFeature next() throws IOException {
@@ -113,15 +111,13 @@ public class DiffContentFeatureWriter implements FeatureWriter<SimpleFeatureType
             // (The real writer will supply a FID later)
             live = null;
             next = null;
-            current =
-                    builder.buildFeature(
-                            "new" + diff.nextFID, new Object[type.getAttributeCount()]);
+            current = builder.buildFeature("new" + diff.nextFID, new Object[type.getAttributeCount()]);
             diff.nextFID++;
             return current;
         }
     }
 
-    /** @see org.geotools.data.FeatureWriter#remove() */
+    /** @see FeatureWriter#remove() */
     @Override
     public void remove() throws IOException {
         if (live != null) {
@@ -140,14 +136,14 @@ public class DiffContentFeatureWriter implements FeatureWriter<SimpleFeatureType
     /**
      * Writes out the current feature.
      *
-     * @see org.geotools.data.FeatureWriter#write()
+     * @see FeatureWriter#write()
      */
     @Override
     public void write() throws IOException {
         // DJB: I modified this so it doesnt throw an error if you
         // do an update and you didnt actually change anything.
         // (We do the work)
-        if ((live != null)) {
+        if (live != null) {
             // We have a modification to record!
             diff.modify(live.getID(), current);
 
@@ -155,7 +151,7 @@ public class DiffContentFeatureWriter implements FeatureWriter<SimpleFeatureType
             state.fireFeatureUpdated(store, live, bounds);
             live = null;
             current = null;
-        } else if ((live == null) && (current != null)) {
+        } else if (live == null && current != null) {
             // We have new content to record
             //
             String fid = current.getID();
@@ -163,9 +159,7 @@ public class DiffContentFeatureWriter implements FeatureWriter<SimpleFeatureType
                 if (current.getUserData().containsKey(Hints.PROVIDED_FID)) {
                     fid = (String) current.getUserData().get(Hints.PROVIDED_FID);
                     Map<Object, Object> userData = current.getUserData();
-                    current =
-                            SimpleFeatureBuilder.build(
-                                    current.getFeatureType(), current.getAttributes(), fid);
+                    current = SimpleFeatureBuilder.build(current.getFeatureType(), current.getAttributes(), fid);
                     current.getUserData().putAll(userData);
                 }
             }
@@ -180,7 +174,7 @@ public class DiffContentFeatureWriter implements FeatureWriter<SimpleFeatureType
     /**
      * Query for more content.
      *
-     * @see org.geotools.data.FeatureWriter#hasNext()
+     * @see FeatureWriter#hasNext()
      */
     @Override
     public boolean hasNext() throws IOException {
@@ -211,10 +205,10 @@ public class DiffContentFeatureWriter implements FeatureWriter<SimpleFeatureType
     /**
      * Clean up resources associated with this writer.
      *
-     * <p>Diff is not clear()ed as it is assumed that it belongs to a Transaction.State object and
-     * may yet be written out.
+     * <p>Diff is not clear()ed as it is assumed that it belongs to a Transaction.State object and may yet be written
+     * out.
      *
-     * @see org.geotools.data.FeatureWriter#close()
+     * @see FeatureWriter#close()
      */
     @Override
     public void close() throws IOException {

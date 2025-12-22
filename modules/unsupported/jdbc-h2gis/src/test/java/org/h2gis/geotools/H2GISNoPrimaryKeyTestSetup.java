@@ -19,7 +19,6 @@ package org.h2gis.geotools;
 import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.jdbc.JDBCNoPrimaryKeyTestSetup;
 
-@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public class H2GISNoPrimaryKeyTestSetup extends JDBCNoPrimaryKeyTestSetup {
 
     protected H2GISNoPrimaryKeyTestSetup() {
@@ -36,12 +35,10 @@ public class H2GISNoPrimaryKeyTestSetup extends JDBCNoPrimaryKeyTestSetup {
     @Override
     protected void createLakeTable() throws Exception {
         run("DROP TABLE \"lake\"");
-        run(
-                "CREATE TABLE \"lake\"(\"id\" int, \"geom\" GEOMETRY(POLYGON, 4326), \"name\" varchar )");
-        run(
-                "INSERT INTO \"lake\" (\"id\",\"geom\",\"name\") VALUES ( 0,"
-                        + "ST_GeomFromText('POLYGON((12 6, 14 8, 16 6, 16 4, 14 4, 12 6))',4326),"
-                        + "'muddy')");
+        run("CREATE TABLE \"lake\"(\"id\" int, \"geom\" GEOMETRY(POLYGON, 4326), \"name\" varchar )");
+        run("INSERT INTO \"lake\" (\"id\",\"geom\",\"name\") VALUES ( 0,"
+                + "ST_GeomFromText('POLYGON((12 6, 14 8, 16 6, 16 4, 14 4, 12 6))',4326),"
+                + "'muddy')");
     }
 
     @Override

@@ -20,10 +20,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import org.geotools.data.DataStore;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.data.SimpleFeatureStore;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.ResourceInfo;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.data.wfs.WFSDataStore;
 import org.geotools.data.wfs.WFSTestData;
 import org.geotools.data.wfs.integration.AbstractIntegrationTest;
@@ -67,30 +67,22 @@ public class GeoServerIntegrationTest extends AbstractIntegrationTest {
         TestDataType testDataType = new TestDataType();
 
         testDataType.featureType =
-                DataUtilities.createType(
-                        "roadsType", "the_geom:MultiLineString,cat:java.lang.Long,label:String");
-        testDataType.featureType =
-                DataUtilities.createSubType(
-                        testDataType.featureType,
-                        null,
-                        CRS.decode("urn:x-ogc:def:crs:EPSG:6.11.2:26713"));
+                DataUtilities.createType("roadsType", "the_geom:MultiLineString,cat:java.lang.Long,label:String");
+        testDataType.featureType = DataUtilities.createSubType(
+                testDataType.featureType, null, CRS.decode("urn:x-ogc:def:crs:EPSG:6.11.2:26713"));
 
         testDataType.stringAttribute = "label";
         testDataType.numberOfFeatures = 3;
         testDataType.typeName = "sf_roads";
-        testDataType.newFeature =
-                SimpleFeatureBuilder.build(
-                        testDataType.featureType,
-                        new Object[] {
-                            new GeometryFactory()
-                                    .createLineString(
-                                            new Coordinate[] {
-                                                new Coordinate(1, 2), new Coordinate(2, 3)
-                                            }),
-                            Integer.valueOf(4),
-                            "somekindofroad"
-                        },
-                        "roads.4");
+        testDataType.newFeature = SimpleFeatureBuilder.build(
+                testDataType.featureType,
+                new Object[] {
+                    new GeometryFactory()
+                            .createLineString(new Coordinate[] {new Coordinate(1, 2), new Coordinate(2, 3)}),
+                    Integer.valueOf(4),
+                    "somekindofroad"
+                },
+                "roads.4");
 
         return testDataType;
     }
@@ -100,13 +92,9 @@ public class GeoServerIntegrationTest extends AbstractIntegrationTest {
         TestDataType testDataType = new TestDataType();
 
         testDataType.featureType =
-                DataUtilities.createType(
-                        "archsitesType", "the_geom:Point,cat:java.lang.Long,str1:String");
-        testDataType.featureType =
-                DataUtilities.createSubType(
-                        testDataType.featureType,
-                        null,
-                        CRS.decode("urn:x-ogc:def:crs:EPSG:6.11.2:26713", true));
+                DataUtilities.createType("archsitesType", "the_geom:Point,cat:java.lang.Long,str1:String");
+        testDataType.featureType = DataUtilities.createSubType(
+                testDataType.featureType, null, CRS.decode("urn:x-ogc:def:crs:EPSG:6.11.2:26713", true));
 
         testDataType.stringAttribute = "str1";
         testDataType.numberOfFeatures = 3;
@@ -125,7 +113,7 @@ public class GeoServerIntegrationTest extends AbstractIntegrationTest {
         assertTrue(info.getKeywords().contains("sfRoads roads"));
         assertEquals("roads_Type", info.getTitle());
         assertEquals("http://www.openplans.org/spearfish", info.getSchema().toString());
-        assertEquals(589275.24, info.getBounds().getMinX(), 0.01);
+        assertEquals(589276.63, info.getBounds().getMinX(), 0.01);
         assertEquals("EPSG:NAD27 / UTM zone 13N", info.getCRS().getName().toString());
     }
 

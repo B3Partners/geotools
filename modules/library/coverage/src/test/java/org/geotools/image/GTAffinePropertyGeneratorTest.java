@@ -20,9 +20,9 @@ import static org.junit.Assert.assertEquals;
 
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
-import javax.media.jai.Interpolation;
-import javax.media.jai.RenderedOp;
-import javax.media.jai.operator.AffineDescriptor;
+import org.eclipse.imagen.Interpolation;
+import org.eclipse.imagen.RenderedOp;
+import org.eclipse.imagen.media.affine.AffineDescriptor;
 import org.junit.Test;
 
 public class GTAffinePropertyGeneratorTest {
@@ -30,13 +30,8 @@ public class GTAffinePropertyGeneratorTest {
     @Test
     public void testPropertyGeneration() {
         BufferedImage source = new BufferedImage(10, 10, BufferedImage.TYPE_3BYTE_BGR);
-        RenderedOp affine =
-                AffineDescriptor.create(
-                        source,
-                        new AffineTransform(),
-                        Interpolation.getInstance(Interpolation.INTERP_NEAREST),
-                        null,
-                        null);
+        RenderedOp affine = AffineDescriptor.create(
+                source, new AffineTransform(), Interpolation.getInstance(Interpolation.INTERP_NEAREST), null, null);
 
         Object property = new GTAffinePropertyGenerator().getProperty("ROI", (Object) affine);
         assertEquals(java.awt.Image.UndefinedProperty, property);

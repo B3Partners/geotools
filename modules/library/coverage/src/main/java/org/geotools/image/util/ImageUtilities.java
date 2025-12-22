@@ -16,11 +16,7 @@
  */
 package org.geotools.image.util;
 
-import com.sun.media.imageioimpl.common.BogusColorSpace;
-import com.sun.media.jai.operator.ImageReadDescriptor;
-import com.sun.media.jai.util.Rational;
 import it.geosolutions.imageio.imageioimpl.EnhancedImageReadParam;
-import it.geosolutions.jaiext.utilities.ImageLayout2;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Rectangle;
@@ -45,8 +41,7 @@ import java.awt.image.WritableRenderedImage;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -57,36 +52,38 @@ import java.util.logging.Logger;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
-import javax.media.jai.BorderExtender;
-import javax.media.jai.BorderExtenderCopy;
-import javax.media.jai.BorderExtenderReflect;
-import javax.media.jai.ImageLayout;
-import javax.media.jai.Interpolation;
-import javax.media.jai.JAI;
-import javax.media.jai.OpImage;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.ROI;
-import javax.media.jai.RasterFactory;
-import javax.media.jai.RenderedImageAdapter;
-import javax.media.jai.RenderedOp;
-import javax.media.jai.WritableRenderedImageAdapter;
-import org.geotools.geometry.GeneralEnvelope;
+import org.eclipse.imagen.BorderExtender;
+import org.eclipse.imagen.BorderExtenderCopy;
+import org.eclipse.imagen.BorderExtenderReflect;
+import org.eclipse.imagen.ImageLayout;
+import org.eclipse.imagen.ImageN;
+import org.eclipse.imagen.Interpolation;
+import org.eclipse.imagen.NotAColorSpace;
+import org.eclipse.imagen.OpImage;
+import org.eclipse.imagen.PlanarImage;
+import org.eclipse.imagen.ROI;
+import org.eclipse.imagen.RasterFactory;
+import org.eclipse.imagen.RenderedImageAdapter;
+import org.eclipse.imagen.RenderedOp;
+import org.eclipse.imagen.WritableRenderedImageAdapter;
+import org.eclipse.imagen.media.imageread.ImageReadDescriptor;
+import org.eclipse.imagen.media.util.Rational;
+import org.eclipse.imagen.media.utilities.ImageLayout2;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.metadata.extent.GeographicBoundingBox;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.image.ImageWorker;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.util.Classes;
 import org.geotools.util.Utilities;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.metadata.extent.GeographicBoundingBox;
 
 /**
- * A set of static methods working on images. Some of those methods are useful, but not really
- * rigorous. This is why they do not appear in any "official" package, but instead in this private
- * one.
+ * A set of static methods working on images. Some of those methods are useful, but not really rigorous. This is why
+ * they do not appear in any "official" package, but instead in this private one.
  *
  * <p><strong>Do not rely on this API!</strong>
  *
@@ -105,7 +102,7 @@ public final class ImageUtilities {
 
     static final Logger LOGGER = Logging.getLogger(ImageUtilities.class);
 
-    /** {@code true} if JAI media lib is available. */
+    /** {@code true} if ImageN media lib is available. */
     private static final boolean mediaLibAvailable;
 
     static {
@@ -116,41 +113,33 @@ public final class ImageUtilities {
             mediaLibImage = Class.forName("com.sun.medialib.mlib.Image");
         } catch (ClassNotFoundException e) {
         }
-        boolean mediaLib = (mediaLibImage != null);
+        boolean mediaLib = mediaLibImage != null;
 
-        // npw check if we either wanted to disable explicitly and if we installed the native libs
+        // now check if we either wanted to disable explicitly and if we installed the native libs
         if (mediaLib) {
 
             try {
                 // explicit disable
-                mediaLib = !Boolean.getBoolean("com.sun.media.jai.disableMediaLib");
+                mediaLib = !Boolean.getBoolean("org.eclipse.imagen.media.disableMediaLib");
 
                 // native libs installed
                 if (mediaLib) {
                     final Class<?> mImage = mediaLibImage;
-                    PrivilegedAction<Boolean> action =
-                            () -> {
-                                try {
-                                    // get the method
-                                    final Class<?>[] params = {};
-                                    Method method = mImage.getDeclaredMethod("isAvailable", params);
-
-                                    // invoke
-                                    final Object[] paramsObj = {};
-
-                                    final Object o = mImage.getDeclaredConstructor().newInstance();
-                                    return (Boolean) method.invoke(o, paramsObj);
-                                } catch (Throwable e) {
-                                    return false;
-                                }
-                            };
-                    mediaLib = AccessController.doPrivileged(action);
+                    try {
+                        // get the method
+                        Method method = mImage.getDeclaredMethod("isAvailable");
+                        // invoke
+                        final Object o = mImage.getDeclaredConstructor().newInstance();
+                        mediaLib = (Boolean) method.invoke(o);
+                    } catch (Throwable e) {
+                        mediaLib = false;
+                    }
                 }
             } catch (Throwable e) {
-                // Because the property com.sun.media.jai.disableMediaLib isn't
+                // Because the property org.eclipse.imagen.media.disableMediaLib isn't
                 // defined as public, the users shouldn't know it.  In most of
                 // the cases, it isn't defined, and thus no access permission
-                // is granted to it in the policy file.  When JAI is utilized in
+                // is granted to it in the policy file.  When ImageN is utilized in
                 // a security environment, AccessControlException will be thrown.
                 // In this case, we suppose that the users would like to use
                 // medialib accelaration.  So, the medialib won't be disabled.
@@ -164,49 +153,37 @@ public final class ImageUtilities {
         mediaLibAvailable = mediaLib;
     }
 
-    /**
-     * {@link RenderingHints} used to prevent {@link JAI} operations from expanding {@link
-     * IndexColorModel}s.
-     */
+    /** {@link RenderingHints} used to prevent {@link JAI} operations from expanding {@link IndexColorModel}s. */
     public static final RenderingHints DONT_REPLACE_INDEX_COLOR_MODEL =
-            new RenderingHints(JAI.KEY_REPLACE_INDEX_COLOR_MODEL, Boolean.FALSE);
+            new RenderingHints(ImageN.KEY_REPLACE_INDEX_COLOR_MODEL, Boolean.FALSE);
 
-    /**
-     * {@link RenderingHints} used to force {@link JAI} operations to expand {@link
-     * IndexColorModel}s.
-     */
+    /** {@link RenderingHints} used to force {@link JAI} operations to expand {@link IndexColorModel}s. */
     public static final RenderingHints REPLACE_INDEX_COLOR_MODEL =
-            new RenderingHints(JAI.KEY_REPLACE_INDEX_COLOR_MODEL, Boolean.TRUE);
+            new RenderingHints(ImageN.KEY_REPLACE_INDEX_COLOR_MODEL, Boolean.TRUE);
 
     /** {@link RenderingHints} for requesting Nearest Neighbor intepolation. */
     public static final RenderingHints NN_INTERPOLATION_HINT =
-            new RenderingHints(
-                    JAI.KEY_INTERPOLATION, Interpolation.getInstance(Interpolation.INTERP_NEAREST));
+            new RenderingHints(ImageN.KEY_INTERPOLATION, Interpolation.getInstance(Interpolation.INTERP_NEAREST));
 
     /** {@link RenderingHints} for avoiding caching of {@link JAI} {@link RenderedOp}s. */
-    public static final RenderingHints NOCACHE_HINT = new RenderingHints(JAI.KEY_TILE_CACHE, null);
+    public static final RenderingHints NOCACHE_HINT = new RenderingHints(ImageN.KEY_TILE_CACHE, null);
 
     /**
-     * Cached instance of a {@link RenderingHints} for controlling border extension on {@link JAI}
-     * operations. It contains an instance of a {@link BorderExtenderCopy}.
+     * Cached instance of a {@link RenderingHints} for controlling border extension on {@link JAI} operations. It
+     * contains an instance of a {@link BorderExtenderCopy}.
      */
     public static final RenderingHints EXTEND_BORDER_BY_COPYING =
-            new RenderingHints(
-                    JAI.KEY_BORDER_EXTENDER,
-                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+            new RenderingHints(ImageN.KEY_BORDER_EXTENDER, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
     /**
-     * Cached instance of a {@link RenderingHints} for controlling border extension on {@link JAI}
-     * operations. It contains an instance of a {@link BorderExtenderReflect}.
+     * Cached instance of a {@link RenderingHints} for controlling border extension on {@link JAI} operations. It
+     * contains an instance of a {@link BorderExtenderReflect}.
      */
-    public static final RenderingHints EXTEND_BORDER_BY_REFLECT =
-            new RenderingHints(
-                    JAI.KEY_BORDER_EXTENDER,
-                    BorderExtender.createInstance(BorderExtender.BORDER_REFLECT));
+    public static final RenderingHints EXTEND_BORDER_BY_REFLECT = new RenderingHints(
+            ImageN.KEY_BORDER_EXTENDER, BorderExtender.createInstance(BorderExtender.BORDER_REFLECT));
 
     /**
-     * The default tile size. This default tile size can be overridden with a call to {@link
-     * JAI#setDefaultTileSize}.
+     * The default tile size. This default tile size can be overridden with a call to {@link JAI#setDefaultTileSize}.
      */
     private static final Dimension GEOTOOLS_DEFAULT_TILE_SIZE = new Dimension(512, 512);
 
@@ -214,20 +191,17 @@ public final class ImageUtilities {
     private static final int GEOTOOLS_MIN_TILE_SIZE = 256;
 
     /**
-     * Maximum tile width or height before to consider a tile as a stripe. It tile width or height
-     * are smaller or equals than this size, then the image will be retiled. That is done because
-     * there are many formats that use stripes as an alternative to tiles, an example is tiff. A
-     * stripe can be a performance black hole, users can have stripes as large as 20000 columns x 8
-     * rows. If we just want to see a chunk of 512x512, this is a lot of uneeded data to load.
+     * Maximum tile width or height before to consider a tile as a stripe. It tile width or height are smaller or equals
+     * than this size, then the image will be retiled. That is done because there are many formats that use stripes as
+     * an alternative to tiles, an example is tiff. A stripe can be a performance black hole, users can have stripes as
+     * large as 20000 columns x 8 rows. If we just want to see a chunk of 512x512, this is a lot of uneeded data to
+     * load.
      */
     private static final int STRIPE_SIZE = 64;
 
-    /**
-     * List of valid names. Note: the "Optimal" type is not implemented because currently not
-     * provided by JAI.
-     */
+    /** List of valid names. Note: the "Optimal" type is not implemented because currently not provided by ImageN. */
     public static final String[] INTERPOLATION_NAMES = {
-        "Nearest", // JAI name
+        "Nearest", // ImageN name
         "NearestNeighbor", // OpenGIS name
         "Bilinear",
         "Bicubic",
@@ -247,10 +221,9 @@ public final class ImageUtilities {
             BorderExtender.createInstance(BorderExtender.BORDER_COPY);
 
     public static final RenderingHints BORDER_EXTENDER_HINTS =
-            new RenderingHints(JAI.KEY_BORDER_EXTENDER, DEFAULT_BORDER_EXTENDER);
+            new RenderingHints(ImageN.KEY_BORDER_EXTENDER, DEFAULT_BORDER_EXTENDER);
 
-    public static final String DIRECT_KAKADU_PLUGIN =
-            "it.geosolutions.imageio.plugins.jp2k.JP2KKakaduImageReader";
+    public static final String DIRECT_KAKADU_PLUGIN = "it.geosolutions.imageio.plugins.jp2k.JP2KKakaduImageReader";
 
     // FORMULAE FOR FORWARD MAP are derived as follows
     //     Nearest
@@ -316,21 +289,20 @@ public final class ImageUtilities {
     private ImageUtilities() {}
 
     /**
-     * Suggests an {@link ImageLayout} for the specified image. All parameters are initially set
-     * equal to those of the given {@link RenderedImage}, and then the {@linkplain #toTileSize tile
-     * size is updated according the image size}. This method never returns {@code null}.
+     * Suggests an {@link ImageLayout} for the specified image. All parameters are initially set equal to those of the
+     * given {@link RenderedImage}, and then the {@linkplain #toTileSize tile size is updated according the image size}.
+     * This method never returns {@code null}.
      */
     public static ImageLayout getImageLayout(final RenderedImage image) {
         return getImageLayout(image, true);
     }
 
     /**
-     * Returns an {@link ImageLayout} for the specified image. If {@code initToImage} is {@code
-     * true}, then all parameters are initially set equal to those of the given {@link
-     * RenderedImage} and the returned layout is never {@code null} (except if the image is null).
+     * Returns an {@link ImageLayout} for the specified image. If {@code initToImage} is {@code true}, then all
+     * parameters are initially set equal to those of the given {@link RenderedImage} and the returned layout is never
+     * {@code null} (except if the image is null).
      */
-    private static ImageLayout getImageLayout(
-            final RenderedImage image, final boolean initToImage) {
+    private static ImageLayout getImageLayout(final RenderedImage image, final boolean initToImage) {
         if (image == null) {
             return null;
         }
@@ -343,7 +315,7 @@ public final class ImageUtilities {
             if (layout != null) {
                 layout = layout.unsetTileLayout();
             }
-            Dimension defaultSize = JAI.getDefaultTileSize();
+            Dimension defaultSize = ImageN.getDefaultTileSize();
             if (defaultSize == null) {
                 defaultSize = GEOTOOLS_DEFAULT_TILE_SIZE;
             }
@@ -377,8 +349,8 @@ public final class ImageUtilities {
     }
 
     /**
-     * Suggests a set of {@link RenderingHints} for the specified image. The rendering hints may
-     * include the following parameters:
+     * Suggests a set of {@link RenderingHints} for the specified image. The rendering hints may include the following
+     * parameters:
      *
      * <ul>
      *   <li>{@link JAI#KEY_IMAGE_LAYOUT} with a proposed tile size.
@@ -388,45 +360,41 @@ public final class ImageUtilities {
      */
     public static RenderingHints getRenderingHints(final RenderedImage image) {
         final ImageLayout layout = getImageLayout(image, false);
-        return (layout != null) ? new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout) : null;
+        return layout != null ? new RenderingHints(ImageN.KEY_IMAGE_LAYOUT, layout) : null;
     }
 
     /**
-     * Suggests a tile size for the specified image size. On input, {@code size} is the image's
-     * size. On output, it is the tile size. This method write the result directly in the supplied
-     * object and returns {@code size} for convenience.
+     * Suggests a tile size for the specified image size. On input, {@code size} is the image's size. On output, it is
+     * the tile size. This method write the result directly in the supplied object and returns {@code size} for
+     * convenience.
      *
-     * <p>This method it aimed to computing a tile size such that the tile grid would have
-     * overlapped the image bound in order to avoid having tiles crossing the image bounds and being
-     * therefore partially empty. This method will never returns a tile size smaller than {@value
-     * ImageUtilities#GEOTOOLS_MIN_TILE_SIZE}. If this method can't suggest a size, then it left the
-     * corresponding {@code size} field ({@link Dimension#width width} or {@link Dimension#height
+     * <p>This method it aimed to computing a tile size such that the tile grid would have overlapped the image bound in
+     * order to avoid having tiles crossing the image bounds and being therefore partially empty. This method will never
+     * returns a tile size smaller than {@value ImageUtilities#GEOTOOLS_MIN_TILE_SIZE}. If this method can't suggest a
+     * size, then it left the corresponding {@code size} field ({@link Dimension#width width} or {@link Dimension#height
      * height}) unchanged.
      *
-     * <p>The {@link Dimension#width width} and {@link Dimension#height height} fields are processed
-     * independently in the same way. The following discussion use the {@code width} field as an
-     * example.
+     * <p>The {@link Dimension#width width} and {@link Dimension#height height} fields are processed independently in
+     * the same way. The following discussion use the {@code width} field as an example.
      *
-     * <p>This method inspects different tile sizes close to the {@linkplain
-     * JAI#getDefaultTileSize() default tile size}. Lets {@code width} be the default tile width.
-     * Values are tried in the following order: {@code width}, {@code width+1}, {@code width-1},
-     * {@code width+2}, {@code width-2}, {@code width+3}, {@code width-3}, <cite>etc.</cite> until
-     * one of the following happen:
+     * <p>This method inspects different tile sizes close to the {@linkplain JAI#getDefaultTileSize() default tile
+     * size}. Lets {@code width} be the default tile width. Values are tried in the following order: {@code width},
+     * {@code width+1}, {@code width-1}, {@code width+2}, {@code width-2}, {@code width+3}, {@code width-3},
+     * <cite>etc.</cite> until one of the following happen:
      *
      * <p>
      *
      * <ul>
-     *   <li>A suitable tile size is found. More specifically, a size is found which is a dividor of
-     *       the specified image size, and is the closest one of the default tile size. The {@link
-     *       Dimension} field ({@code width} or {@code height}) is set to this value.
-     *   <li>An arbitrary limit (both a minimum and a maximum tile size) is reached. In this case,
-     *       this method <strong>may</strong> set the {@link Dimension} field to a value that
-     *       maximize the remainder of <var>image size</var> / <var>tile size</var> (in other words,
-     *       the size that left as few empty pixels as possible).
+     *   <li>A suitable tile size is found. More specifically, a size is found which is a dividor of the specified image
+     *       size, and is the closest one of the default tile size. The {@link Dimension} field ({@code width} or
+     *       {@code height}) is set to this value.
+     *   <li>An arbitrary limit (both a minimum and a maximum tile size) is reached. In this case, this method
+     *       <strong>may</strong> set the {@link Dimension} field to a value that maximize the remainder of <var>image
+     *       size</var> / <var>tile size</var> (in other words, the size that left as few empty pixels as possible).
      * </ul>
      */
     public static Dimension toTileSize(final Dimension size) {
-        Dimension defaultSize = JAI.getDefaultTileSize();
+        Dimension defaultSize = ImageN.getDefaultTileSize();
         if (defaultSize == null) {
             defaultSize = GEOTOOLS_DEFAULT_TILE_SIZE;
         }
@@ -437,11 +405,10 @@ public final class ImageUtilities {
     }
 
     /**
-     * Suggests a tile size close to {@code tileSize} for the specified {@code imageSize}. This
-     * method it aimed to computing a tile size such that the tile grid would have overlapped the
-     * image bound in order to avoid having tiles crossing the image bounds and being therefore
-     * partially empty. This method will never returns a tile size smaller than {@value
-     * #GEOTOOLS_MIN_TILE_SIZE}. If this method can't suggest a size, then it returns 0.
+     * Suggests a tile size close to {@code tileSize} for the specified {@code imageSize}. This method it aimed to
+     * computing a tile size such that the tile grid would have overlapped the image bound in order to avoid having
+     * tiles crossing the image bounds and being therefore partially empty. This method will never returns a tile size
+     * smaller than {@value #GEOTOOLS_MIN_TILE_SIZE}. If this method can't suggest a size, then it returns 0.
      *
      * @param imageSize The image size.
      * @param tileSize The preferred tile size, which is often {@value #GEOTOOLS_DEFAULT_TILE_SIZE}.
@@ -498,23 +465,21 @@ public final class ImageUtilities {
          * consider that it doesn't worth to use a "non-standard" tile size. The purpose of this
          * arbitrary test is again to avoid too many small tiles (assuming that
          */
-        return (rmax >= tileSize - tileSize / 4) ? sopt : 0;
+        return rmax >= tileSize - tileSize / 4 ? sopt : 0;
     }
 
     /**
-     * Computes a new {@link ImageLayout} which is the intersection of the specified {@code
-     * ImageLayout} and all {@code RenderedImage}s in the supplied list. If the {@link
-     * ImageLayout#getMinX minX}, {@link ImageLayout#getMinY minY}, {@link ImageLayout#getWidth
-     * width} and {@link ImageLayout#getHeight height} properties are not defined in the {@code
-     * layout}, then they will be inherited from the <strong>first</strong> source for consistency
-     * with {@link OpImage} constructor.
+     * Computes a new {@link ImageLayout} which is the intersection of the specified {@code ImageLayout} and all
+     * {@code RenderedImage}s in the supplied list. If the {@link ImageLayout#getMinX minX}, {@link ImageLayout#getMinY
+     * minY}, {@link ImageLayout#getWidth width} and {@link ImageLayout#getHeight height} properties are not defined in
+     * the {@code layout}, then they will be inherited from the <strong>first</strong> source for consistency with
+     * {@link OpImage} constructor.
      *
      * @param layout The original layout. This object will not be modified.
      * @param sources The list of sources {@link RenderedImage}.
      * @return A new {@code ImageLayout}, or the original {@code layout} if no change was needed.
      */
-    public static ImageLayout createIntersection(
-            final ImageLayout layout, final List<RenderedImage> sources) {
+    public static ImageLayout createIntersection(final ImageLayout layout, final List<RenderedImage> sources) {
         ImageLayout result = layout;
         if (result == null) {
             result = new ImageLayout();
@@ -535,10 +500,10 @@ public final class ImageUtilities {
                 final int maxX = source.getWidth() + minX;
                 final int maxY = source.getHeight() + minY;
                 int mask = 0;
-                if (minXL < minX) mask |= (1 | 4); // set minX and width
-                if (minYL < minY) mask |= (2 | 8); // set minY and height
-                if (maxXL > maxX) mask |= (4); // Set width
-                if (maxYL > maxY) mask |= (8); // Set height
+                if (minXL < minX) mask |= 1 | 4; // set minX and width
+                if (minYL < minY) mask |= 2 | 8; // set minY and height
+                if (maxXL > maxX) mask |= 4; // Set width
+                if (maxYL > maxY) mask |= 8; // Set height
                 if (mask != 0) {
                     if (layout == result) {
                         result = (ImageLayout) layout.clone();
@@ -574,14 +539,13 @@ public final class ImageUtilities {
     /**
      * Casts the specified object to an {@link Interpolation object}.
      *
-     * @param type The interpolation type as an {@link Interpolation} or a {@link CharSequence}
-     *     object.
+     * @param type The interpolation type as an {@link Interpolation} or a {@link CharSequence} object.
      * @return The interpolation object for the specified type.
      * @throws IllegalArgumentException if the specified interpolation type is not a know one.
      */
     public static Interpolation toInterpolation(final Object type) throws IllegalArgumentException {
-        if (type instanceof Interpolation) {
-            return (Interpolation) type;
+        if (type instanceof Interpolation interpolation) {
+            return interpolation;
         } else if (type instanceof CharSequence) {
             final String name = type.toString();
             final int length = INTERPOLATION_NAMES.length;
@@ -591,15 +555,15 @@ public final class ImageUtilities {
                 }
             }
         }
-        throw new IllegalArgumentException(Errors.format(ErrorKeys.UNKNOW_INTERPOLATION_$1, type));
+        throw new IllegalArgumentException(MessageFormat.format(ErrorKeys.UNKNOW_INTERPOLATION_$1, type));
     }
 
     /**
-     * Returns the interpolation name for the specified interpolation object. This method tries to
-     * infer the name from the object's class name.
+     * Returns the interpolation name for the specified interpolation object. This method tries to infer the name from
+     * the object's class name.
      *
-     * @param interp The interpolation object, or {@code null} for "nearest" (which is an other way
-     *     to say "no interpolation").
+     * @param interp The interpolation object, or {@code null} for "nearest" (which is an other way to say "no
+     *     interpolation").
      */
     public static String getInterpolationName(Interpolation interp) {
         if (interp == null) {
@@ -619,14 +583,13 @@ public final class ImageUtilities {
     /**
      * Tiles the specified image.
      *
-     * @todo Usually, the tiling doesn't need to be performed as a separated operation. The {@link
-     *     ImageLayout} hint with tile information can be provided to most JAI operators. The {@link
-     *     #getRenderingHints} method provides such tiling information only if the image was not
-     *     already tiled, so it should not be a cause of tile size mismatch in an operation chain.
-     *     The mean usage for a separated "tile" operation is to tile an image before to save it on
-     *     disk in some format supporting tiling.
-     * @throws IOException If an I/O operation were required (in order to check if the image were
-     *     tiled on disk) and failed.
+     * @todo Usually, the tiling doesn't need to be performed as a separated operation. The {@link ImageLayout} hint
+     *     with tile information can be provided to most ImageN operators. The {@link #getRenderingHints} method
+     *     provides such tiling information only if the image was not already tiled, so it should not be a cause of tile
+     *     size mismatch in an operation chain. The mean usage for a separated "tile" operation is to tile an image
+     *     before to save it on disk in some format supporting tiling.
+     * @throws IOException If an I/O operation were required (in order to check if the image were tiled on disk) and
+     *     failed.
      * @since 2.3
      */
     public static RenderedOp tileImage(final RenderedOp image) throws IOException {
@@ -649,8 +612,7 @@ public final class ImageUtilities {
         // /////////////////////////////////////////////////////////////////////
         // getting the reader
         final Object o = image.getProperty(ImageReadDescriptor.PROPERTY_NAME_IMAGE_READER);
-        if (o instanceof ImageReader) {
-            final ImageReader reader = (ImageReader) o;
+        if (o instanceof ImageReader reader) {
             if (!reader.isImageTiled(0)) {
                 needToTile = true;
             }
@@ -675,7 +637,7 @@ public final class ImageUtilities {
             layout.unsetValid(ImageLayout.COLOR_MODEL_MASK | ImageLayout.SAMPLE_MODEL_MASK);
 
             // changing parameters related to the tiling
-            final RenderingHints hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout);
+            final RenderingHints hints = new RenderingHints(ImageN.KEY_IMAGE_LAYOUT, layout);
 
             // reading the image
             return new ImageWorker(image)
@@ -687,8 +649,8 @@ public final class ImageUtilities {
     }
 
     /**
-     * Sets every samples in the given image to the given value. This method is typically used for
-     * clearing an image content.
+     * Sets every samples in the given image to the given value. This method is typically used for clearing an image
+     * content.
      *
      * @param image The image to fill.
      * @param value The value to to given to every samples.
@@ -709,9 +671,8 @@ public final class ImageUtilities {
     }
 
     /**
-     * Sets the content of all banks in the given data buffer to the specified value. We do not
-     * allow setting of different value for invidivual bank because the data buffer "banks" do not
-     * necessarly match the image "bands".
+     * Sets the content of all banks in the given data buffer to the specified value. We do not allow setting of
+     * different value for invidivual bank because the data buffer "banks" do not necessarly match the image "bands".
      *
      * @param buffer The data buffer to fill.
      * @param value The values to be given to every elements in the data buffer.
@@ -719,58 +680,51 @@ public final class ImageUtilities {
     private static void fill(final DataBuffer buffer, final Number value) {
         final int[] offsets = buffer.getOffsets();
         final int size = buffer.getSize();
-        if (buffer instanceof DataBufferByte) {
-            final DataBufferByte data = (DataBufferByte) buffer;
+        if (buffer instanceof DataBufferByte data) {
             final byte n = value.byteValue();
             for (int i = 0; i < offsets.length; i++) {
                 final int offset = offsets[i];
                 Arrays.fill(data.getData(i), offset, offset + size, n);
             }
-        } else if (buffer instanceof DataBufferShort) {
-            final DataBufferShort data = (DataBufferShort) buffer;
+        } else if (buffer instanceof DataBufferShort data) {
             final short n = value.shortValue();
             for (int i = 0; i < offsets.length; i++) {
                 final int offset = offsets[i];
                 Arrays.fill(data.getData(i), offset, offset + size, n);
             }
-        } else if (buffer instanceof DataBufferUShort) {
-            final DataBufferUShort data = (DataBufferUShort) buffer;
+        } else if (buffer instanceof DataBufferUShort data) {
             final short n = value.shortValue();
             for (int i = 0; i < offsets.length; i++) {
                 final int offset = offsets[i];
                 Arrays.fill(data.getData(i), offset, offset + size, n);
             }
-        } else if (buffer instanceof DataBufferInt) {
-            final DataBufferInt data = (DataBufferInt) buffer;
+        } else if (buffer instanceof DataBufferInt data) {
             final int n = value.intValue();
             for (int i = 0; i < offsets.length; i++) {
                 final int offset = offsets[i];
                 Arrays.fill(data.getData(i), offset, offset + size, n);
             }
-        } else if (buffer instanceof DataBufferFloat) {
-            final DataBufferFloat data = (DataBufferFloat) buffer;
+        } else if (buffer instanceof DataBufferFloat data) {
             final float n = value.floatValue();
             for (int i = 0; i < offsets.length; i++) {
                 final int offset = offsets[i];
                 Arrays.fill(data.getData(i), offset, offset + size, n);
             }
-        } else if (buffer instanceof DataBufferDouble) {
-            final DataBufferDouble data = (DataBufferDouble) buffer;
+        } else if (buffer instanceof DataBufferDouble data) {
             final double n = value.doubleValue();
             for (int i = 0; i < offsets.length; i++) {
                 final int offset = offsets[i];
                 Arrays.fill(data.getData(i), offset, offset + size, n);
             }
         } else {
-            throw new IllegalArgumentException(Errors.format(ErrorKeys.UNSUPPORTED_DATA_TYPE));
+            throw new IllegalArgumentException(ErrorKeys.UNSUPPORTED_DATA_TYPE);
         }
     }
 
     /**
-     * Tells me whether or not the native libraries for JAI are active or not.
+     * Tells me whether or not the native libraries for ImageN are active or not.
      *
-     * @return <code>false</code> in case the JAI native libs are not in the path, <code>true</code>
-     *     otherwise.
+     * @return <code>false</code> in case the ImageN native libs are not in the path, <code>true</code> otherwise.
      */
     public static boolean isMediaLibAvailable() {
         return mediaLibAvailable;
@@ -786,15 +740,16 @@ public final class ImageUtilities {
         disposePlanarImageChain(pi, new HashSet<>());
     }
 
+    @SuppressWarnings("PMD.CloseResource") // iis.close() is being called explicitly
     private static void disposePlanarImageChain(PlanarImage pi, Set<PlanarImage> visited) {
         List<?> sinks = pi.getSinks();
         // check all the sinks (the image might be in the middle of a chain)
         if (sinks != null) {
             for (Object sink : sinks) {
-                if (sink instanceof PlanarImage && !visited.contains(sink))
-                    disposePlanarImageChain((PlanarImage) sink, visited);
-                else if (sink instanceof BufferedImage) {
-                    ((BufferedImage) sink).flush();
+                if (sink instanceof PlanarImage image1 && !visited.contains(sink))
+                    disposePlanarImageChain(image1, visited);
+                else if (sink instanceof BufferedImage image) {
+                    image.flush();
                 }
             }
         }
@@ -806,21 +761,18 @@ public final class ImageUtilities {
         List<?> sources = pi.getSources();
         if (sources != null) {
             for (Object child : sources) {
-                if (child instanceof PlanarImage && !visited.contains(child))
-                    disposePlanarImageChain((PlanarImage) child, visited);
-                else if (child instanceof BufferedImage) {
-                    ((BufferedImage) child).flush();
+                if (child instanceof PlanarImage image1 && !visited.contains(child))
+                    disposePlanarImageChain(image1, visited);
+                else if (child instanceof BufferedImage image) {
+                    image.flush();
                 }
             }
         }
 
         // ImageRead might also hold onto a image input stream that we have to close
-        if (pi instanceof RenderedOp) {
-            RenderedOp op = (RenderedOp) pi;
+        if (pi instanceof RenderedOp op) {
             for (Object param : op.getParameterBlock().getParameters()) {
-                if (param instanceof ImageInputStream) {
-                    @SuppressWarnings("PMD.CloseResource") // we are actually closing it...
-                    ImageInputStream iis = (ImageInputStream) param;
+                if (param instanceof ImageInputStream iis) {
                     try {
                         iis.close();
                     } catch (Throwable e) {
@@ -829,8 +781,7 @@ public final class ImageUtilities {
                             LOGGER.log(Level.FINE, e.getLocalizedMessage());
                         }
                     }
-                } else if (param instanceof ImageReader) {
-                    ImageReader reader = (ImageReader) param;
+                } else if (param instanceof ImageReader reader) {
                     reader.dispose();
                 }
             }
@@ -842,8 +793,7 @@ public final class ImageUtilities {
      *
      * @param transparentColor the {@link Color} to make transparent
      * @param image the {@link RenderedImage} to work on
-     * @return a new {@link RenderedImage} where the provided {@link Color} has turned into
-     *     transparent.
+     * @return a new {@link RenderedImage} where the provided {@link Color} has turned into transparent.
      */
     public static RenderedImage maskColor(final Color transparentColor, final RenderedImage image)
             throws IllegalStateException {
@@ -905,8 +855,8 @@ public final class ImageUtilities {
                 param.getSubsamplingYOffset());
 
         // check if need to copy extra parameters
-        if (param instanceof EnhancedImageReadParam) {
-            newParam.setBands(((EnhancedImageReadParam) param).getBands());
+        if (param instanceof EnhancedImageReadParam readParam) {
+            newParam.setBands(readParam.getBands());
         }
 
         // Replace the local variable with the new ImageReadParam.
@@ -914,12 +864,7 @@ public final class ImageUtilities {
     }
 
     public static Rectangle2D layoutHelper(
-            RenderedImage source,
-            float scaleX,
-            float scaleY,
-            float transX,
-            float transY,
-            Interpolation interp) {
+            RenderedImage source, float scaleX, float scaleY, float transX, float transY, Interpolation interp) {
 
         // Represent the scale factors as Rational numbers.
         // Since a value of 1.2 is represented as 1.200001 which
@@ -1026,9 +971,9 @@ public final class ImageUtilities {
     }
 
     /**
-     * Builds a {@link ReferencedEnvelope} from a {@link GeographicBoundingBox}. This is useful in
-     * order to have an implementation of {@link BoundingBox} from a {@link GeographicBoundingBox}
-     * which strangely does implement {@link GeographicBoundingBox}.
+     * Builds a {@link ReferencedEnvelope} from a {@link GeographicBoundingBox}. This is useful in order to have an
+     * implementation of {@link BoundingBox} from a {@link GeographicBoundingBox} which strangely does implement
+     * {@link GeographicBoundingBox}.
      *
      * @param geographicBBox the {@link GeographicBoundingBox} to convert.
      * @return an instance of {@link ReferencedEnvelope}.
@@ -1045,14 +990,13 @@ public final class ImageUtilities {
     }
 
     /**
-     * Builds a {@link ReferencedEnvelope} in WGS84 from a {@link GeneralEnvelope}.
+     * Builds a {@link ReferencedEnvelope} in WGS84 from a {@link GeneralBounds}.
      *
-     * @param coverageEnvelope the {@link GeneralEnvelope} to convert.
-     * @return an instance of {@link ReferencedEnvelope} in WGS84 or <code>null</code> in case a
-     *     problem during the conversion occurs.
+     * @param coverageEnvelope the {@link GeneralBounds} to convert.
+     * @return an instance of {@link ReferencedEnvelope} in WGS84 or <code>null</code> in case a problem during the
+     *     conversion occurs.
      */
-    public static ReferencedEnvelope getWGS84ReferencedEnvelope(
-            final GeneralEnvelope coverageEnvelope) {
+    public static ReferencedEnvelope getWGS84ReferencedEnvelope(final GeneralBounds coverageEnvelope) {
         Utilities.ensureNonNull("coverageEnvelope", coverageEnvelope);
         final ReferencedEnvelope refEnv = new ReferencedEnvelope(coverageEnvelope);
         try {
@@ -1063,12 +1007,12 @@ public final class ImageUtilities {
     }
 
     /**
-     * Retrieves the dimensions of the {@link RenderedImage} at index <code>imageIndex</code> for
-     * the provided {@link ImageReader} and {@link ImageInputStream}.
+     * Retrieves the dimensions of the {@link RenderedImage} at index <code>imageIndex</code> for the provided
+     * {@link ImageReader} and {@link ImageInputStream}.
      *
-     * <p>Notice that none of the input parameters can be <code>null</code> or a {@link
-     * NullPointerException} will be thrown. Morevoer the <code>imageIndex</code> cannot be negative
-     * or an {@link IllegalArgumentException} will be thrown.
+     * <p>Notice that none of the input parameters can be <code>null</code> or a {@link NullPointerException} will be
+     * thrown. Morevoer the <code>imageIndex</code> cannot be negative or an {@link IllegalArgumentException} will be
+     * thrown.
      *
      * @param imageIndex the index of the image to get the dimensions for.
      * @param inStream the {@link ImageInputStream} to use as an input
@@ -1078,27 +1022,23 @@ public final class ImageUtilities {
      * @throws IOException in case the {@link ImageReader} or the {@link ImageInputStream} fail.
      */
     public static Rectangle getDimension(
-            final int imageIndex, final ImageInputStream inStream, final ImageReader reader)
-            throws IOException {
+            final int imageIndex, final ImageInputStream inStream, final ImageReader reader) throws IOException {
         Utilities.ensureNonNull("inStream", inStream);
         Utilities.ensureNonNull("reader", reader);
         if (imageIndex < 0)
-            throw new IllegalArgumentException(
-                    Errors.format(ErrorKeys.INDEX_OUT_OF_BOUNDS_$1, imageIndex));
+            throw new IllegalArgumentException(MessageFormat.format(ErrorKeys.INDEX_OUT_OF_BOUNDS_$1, imageIndex));
         inStream.reset();
         reader.setInput(inStream);
         return new Rectangle(0, 0, reader.getWidth(imageIndex), reader.getHeight(imageIndex));
     }
 
     /**
-     * Checks that the provided <code>dimensions</code> when intersected with the source region used
-     * by the provided {@link ImageReadParam} instance does not result in an empty {@link
-     * Rectangle}.
+     * Checks that the provided <code>dimensions</code> when intersected with the source region used by the provided
+     * {@link ImageReadParam} instance does not result in an empty {@link Rectangle}.
      *
      * <p>Input parameters cannot be null.
      *
-     * @param readParameters an instance of {@link ImageReadParam} for which we want to check the
-     *     source region element.
+     * @param readParameters an instance of {@link ImageReadParam} for which we want to check the source region element.
      * @param dimensions an instance of {@link Rectangle} to use for the check.
      * @return <code>true</code> if the intersection is not empty, <code>false</code> otherwise.
      */
@@ -1114,14 +1054,12 @@ public final class ImageUtilities {
     }
 
     /**
-     * Build a background values array using the same dataType of the input {@link SampleModel} (if
-     * available) and the values provided in the input array.
+     * Build a background values array using the same dataType of the input {@link SampleModel} (if available) and the
+     * values provided in the input array.
      */
-    public static Number[] getBackgroundValues(
-            final SampleModel sampleModel, final double[] backgroundValues) {
+    public static Number[] getBackgroundValues(final SampleModel sampleModel, final double[] backgroundValues) {
         Number[] values = null;
-        final int dataType =
-                sampleModel != null ? sampleModel.getDataType() : DataBuffer.TYPE_DOUBLE;
+        final int dataType = sampleModel != null ? sampleModel.getDataType() : DataBuffer.TYPE_DOUBLE;
         final int numBands = sampleModel != null ? sampleModel.getNumBands() : 1;
         switch (dataType) {
             case DataBuffer.TYPE_BYTE:
@@ -1131,10 +1069,9 @@ public final class ImageUtilities {
                 } else {
                     // we have background values available
                     for (int i = 0; i < values.length; i++)
-                        values[i] =
-                                i >= backgroundValues.length
-                                        ? Byte.valueOf((byte) backgroundValues[0])
-                                        : Byte.valueOf((byte) backgroundValues[i]);
+                        values[i] = i >= backgroundValues.length
+                                ? Byte.valueOf((byte) backgroundValues[0])
+                                : Byte.valueOf((byte) backgroundValues[i]);
                 }
                 break;
             case DataBuffer.TYPE_SHORT:
@@ -1144,10 +1081,9 @@ public final class ImageUtilities {
                 else {
                     // we have background values available
                     for (int i = 0; i < values.length; i++)
-                        values[i] =
-                                i >= backgroundValues.length
-                                        ? Short.valueOf((short) backgroundValues[0])
-                                        : Short.valueOf((short) backgroundValues[i]);
+                        values[i] = i >= backgroundValues.length
+                                ? Short.valueOf((short) backgroundValues[0])
+                                : Short.valueOf((short) backgroundValues[i]);
                 }
                 break;
             case DataBuffer.TYPE_INT:
@@ -1156,10 +1092,9 @@ public final class ImageUtilities {
                 else {
                     // we have background values available
                     for (int i = 0; i < values.length; i++)
-                        values[i] =
-                                i >= backgroundValues.length
-                                        ? Integer.valueOf((int) backgroundValues[0])
-                                        : Integer.valueOf((int) backgroundValues[i]);
+                        values[i] = i >= backgroundValues.length
+                                ? Integer.valueOf((int) backgroundValues[0])
+                                : Integer.valueOf((int) backgroundValues[i]);
                 }
                 break;
             case DataBuffer.TYPE_FLOAT:
@@ -1168,10 +1103,9 @@ public final class ImageUtilities {
                 else {
                     // we have background values available
                     for (int i = 0; i < values.length; i++)
-                        values[i] =
-                                i >= backgroundValues.length
-                                        ? Float.valueOf((float) backgroundValues[0])
-                                        : Float.valueOf((float) backgroundValues[i]);
+                        values[i] = i >= backgroundValues.length
+                                ? Float.valueOf((float) backgroundValues[0])
+                                : Float.valueOf((float) backgroundValues[i]);
                 }
                 break;
             case DataBuffer.TYPE_DOUBLE:
@@ -1180,15 +1114,15 @@ public final class ImageUtilities {
                 else {
                     // we have background values available
                     for (int i = 0; i < values.length; i++)
-                        values[i] =
-                                i >= backgroundValues.length
-                                        ? Double.valueOf(backgroundValues[0])
-                                        : Double.valueOf(backgroundValues[i]);
+                        values[i] = i >= backgroundValues.length
+                                ? Double.valueOf(backgroundValues[0])
+                                : Double.valueOf(backgroundValues[i]);
                 }
                 break;
         }
         return values;
     }
+
     /**
      * Allow to dispose this image, as well as the related image sources, readers, stream, ROI.
      *
@@ -1196,8 +1130,7 @@ public final class ImageUtilities {
      */
     public static void disposeImage(RenderedImage inputImage) {
         if (inputImage != null) {
-            if (inputImage instanceof PlanarImage) {
-                PlanarImage planarImage = (PlanarImage) inputImage;
+            if (inputImage instanceof PlanarImage planarImage) {
 
                 final int nSources = planarImage.getNumSources();
                 if (nSources > 0) {
@@ -1209,10 +1142,10 @@ public final class ImageUtilities {
                             // Ignore
                         }
                         if (source != null) {
-                            if (source instanceof PlanarImage) {
-                                disposeImage((PlanarImage) source);
-                            } else if (source instanceof BufferedImage) {
-                                ((BufferedImage) source).flush();
+                            if (source instanceof PlanarImage image1) {
+                                disposeImage(image1);
+                            } else if (source instanceof BufferedImage image) {
+                                image.flush();
                                 source = null;
                             }
                         }
@@ -1222,17 +1155,13 @@ public final class ImageUtilities {
                     Object imageReader = null;
 
                     try {
-                        imageReader =
-                                inputImage.getProperty(
-                                        ImageReadDescriptor.PROPERTY_NAME_IMAGE_READER);
+                        imageReader = inputImage.getProperty(ImageReadDescriptor.PROPERTY_NAME_IMAGE_READER);
                     } catch (NullPointerException npe) {
                         // for some reason, chained cleanup may have already cleaned (and null) some
                         // underlying images. let's ignore it
                     }
 
-                    if ((imageReader != null) && (imageReader instanceof ImageReader)) {
-                        @SuppressWarnings("PMD.CloseResource") // we are actually closing it
-                        final ImageReader reader = (ImageReader) imageReader;
+                    if (imageReader != null && imageReader instanceof ImageReader reader) {
                         @SuppressWarnings("PMD.CloseResource") // we are actually closing it
                         final ImageInputStream stream = (ImageInputStream) reader.getInput();
                         try {
@@ -1249,8 +1178,8 @@ public final class ImageUtilities {
                 }
 
                 disposeSinglePlanarImage(planarImage);
-            } else if (inputImage instanceof BufferedImage) {
-                ((BufferedImage) inputImage).flush();
+            } else if (inputImage instanceof BufferedImage image) {
+                image.flush();
                 inputImage = null;
             }
         }
@@ -1266,12 +1195,10 @@ public final class ImageUtilities {
             // for some reason, chained cleanup may have already cleaned (and null) some images
             // let's ignore it
         }
-        if ((roi != null)
-                && ((ROI.class.equals(roi.getClass()) || (roi instanceof RenderedImage)))) {
-            if (roi instanceof ROI) {
-                ROI roiImage = (ROI) roi;
+        if (roi != null && (ROI.class.equals(roi.getClass()) || roi instanceof RenderedImage)) {
+            if (roi instanceof ROI roiImage) {
                 Rectangle bounds = roiImage.getBounds();
-                if (!(bounds.isEmpty())) {
+                if (!bounds.isEmpty()) {
                     PlanarImage image = roiImage.getAsImage();
                     if (image != null) {
                         // do not recurse, we have ROIs that have ROIs that have ROIs ....
@@ -1348,8 +1275,8 @@ public final class ImageUtilities {
     }
 
     /**
-     * Applies values rescaling if either the scales or the offsets array is non null, or has any
-     * value that is not a default (1 for scales, 0 for offsets)
+     * Applies values rescaling if either the scales or the offsets array is non null, or has any value that is not a
+     * default (1 for scales, 0 for offsets)
      *
      * @param scales The scales array
      * @param offsets The offsets array
@@ -1357,8 +1284,7 @@ public final class ImageUtilities {
      * @param hints The image processing hints, if any (can be null)
      * @return The original image, or a rescaled image
      */
-    public static RenderedImage applyRescaling(
-            Double[] scales, Double[] offsets, RenderedImage image, Hints hints) {
+    public static RenderedImage applyRescaling(Double[] scales, Double[] offsets, RenderedImage image, Hints hints) {
         // if there is nothing to do, return immediately
         if (scales == null && offsets == null) {
             return image;
@@ -1378,29 +1304,22 @@ public final class ImageUtilities {
 
         // use the input hints if possible, but create a proper layout to impose the target data
         // type
-        RenderingHints localHints =
-                hints != null
-                        ? hints.clone()
-                        : (RenderingHints) JAI.getDefaultInstance().getRenderingHints().clone();
-        final ImageLayout layout =
-                Optional.ofNullable((ImageLayout) localHints.get(JAI.KEY_IMAGE_LAYOUT))
-                        .map(il -> (ImageLayout) il.clone())
-                        .orElse(new ImageLayout2(image));
-        SampleModel sm =
-                RasterFactory.createBandedSampleModel(
-                        DataBuffer.TYPE_DOUBLE,
-                        image.getTileWidth(),
-                        image.getTileHeight(),
-                        image.getSampleModel().getNumBands());
+        RenderingHints localHints = hints != null
+                ? hints.clone()
+                : (RenderingHints)
+                        ImageN.getDefaultInstance().getRenderingHints().clone();
+        final ImageLayout layout = Optional.ofNullable((ImageLayout) localHints.get(ImageN.KEY_IMAGE_LAYOUT))
+                .map(il -> (ImageLayout) il.clone())
+                .orElse(new ImageLayout2(image));
+        SampleModel sm = RasterFactory.createBandedSampleModel(
+                DataBuffer.TYPE_DOUBLE,
+                image.getTileWidth(),
+                image.getTileHeight(),
+                image.getSampleModel().getNumBands());
         layout.setSampleModel(sm);
-        layout.setColorModel(
-                new ComponentColorModel(
-                        new BogusColorSpace(numBands),
-                        false,
-                        false,
-                        Transparency.OPAQUE,
-                        DataBuffer.TYPE_DOUBLE));
-        localHints.put(JAI.KEY_IMAGE_LAYOUT, layout);
+        layout.setColorModel(new ComponentColorModel(
+                new NotAColorSpace(numBands), false, false, Transparency.OPAQUE, DataBuffer.TYPE_DOUBLE));
+        localHints.put(ImageN.KEY_IMAGE_LAYOUT, layout);
 
         // at least one band is getting rescaled, apply the operation
         ImageWorker iw = new ImageWorker(image);
@@ -1424,5 +1343,122 @@ public final class ImageUtilities {
         }
 
         return result;
+    }
+
+    /**
+     * Computes and applies suitable subsampling factors on the given {@link ImageReadParam}.
+     *
+     * <p>The method determines integer subsampling factors based on the ratio between the requested resolution and the
+     * selected overview resolution, and applies several adjustments to ensure both quality and seamless rendering:
+     *
+     * <ul>
+     *   <li>Uses {@code floor(ratio + epsilon)} to derive the base subsampling factor, avoiding oversampling and
+     *       rounding errors.
+     *   <li>Optionally increases the factor by +1 if this provides a closer match to the requested resolution and the
+     *       relative error remains within a configurable tolerance (default 3%). This reduces the number of pixels
+     *       read, improving performance with negligible quality loss.
+     *   <li>Clamps the factors so they are never less than 1 or greater than the raster width/height.
+     *   <li>If a source region is defined, aligns its x/y/width/height to multiples of the subsampling factors. This
+     *       prevents “whiteline” artifacts (seams) by ensuring no partial rows/columns are skipped during read.
+     *       Negative x/y are not expected at this stage (they would be rejected by {@code ImageReadParam}), but
+     *       clipping to ≥0 is performed defensively.
+     * </ul>
+     *
+     * @param readParameters the read parameters on which to set the source region and subsampling
+     * @param requestedRes the resolution requested by the client (x,y)
+     * @param selectedRes the resolution of the selected overview (x,y)
+     * @param rasterWidth full width of the raster
+     * @param rasterHeight full height of the raster
+     */
+    public static void setSubsamplingFactors(
+            ImageReadParam readParameters,
+            double[] requestedRes,
+            double[] selectedRes,
+            int rasterWidth,
+            int rasterHeight) {
+        // DECIMATION ON READING
+        // Setting subsampling factors with some checks
+        // 1) the subsampling factors cannot be zero
+        // 2) the subsampling factors cannot be such that the w or h are zero
+        // Note: using "round" instead of floor to go for the closest subsampling factory
+        // improves quality
+        // /////////////////////////////////////////////////////////////////////
+
+        // Control parameters
+        // Small epsilon to avoid floating point errors when using floor
+        final double resEpsilon = Double.parseDouble(System.getProperty("IMAGEUTILITIES.RES_EPSILON", "1e-9"));
+        // Relative tolerance (3%) that allows a slight upward adjustment
+        // of the subsampling factor when the difference is minimal,
+        // improving alignment without losing noticeable quality.
+        final double overviewTolerance =
+                Double.parseDouble(System.getProperty("IMAGEUTILITIES.OVERVIEW_TOLERANCE", "0.03"));
+
+        // Ratios between requested resolution and the resolution of the selected overview
+        final double ratioX = requestedRes[0] / selectedRes[0];
+        final double ratioY = requestedRes[1] / selectedRes[1];
+
+        // Use floor to avoid overshooting the factor.
+        // Adding epsilon prevents wrong rounding due to floating-point noise.
+        int subSamplingFactorX = (int) Math.floor(ratioX + resEpsilon);
+        int subSamplingFactorY = (int) Math.floor(ratioY + resEpsilon);
+
+        // Ensure subsampling factors are never less than 1
+        // (0 is invalid, we always need at least one pixel step).
+        subSamplingFactorX = Math.max(1, subSamplingFactorX);
+        subSamplingFactorY = Math.max(1, subSamplingFactorY);
+
+        // Explicit clamp per dimension (replaces integer division)
+        // Ensures we never request a factor larger than the raster size
+        if (subSamplingFactorX > rasterWidth) subSamplingFactorX = rasterWidth;
+        if (subSamplingFactorY > rasterHeight) subSamplingFactorY = rasterHeight;
+
+        // Check if increasing the factor by +1 yields a closer match
+        // to the requested ratio, but only if the relative error
+        // stays within the tolerance (3% in this case).
+        int candidateX = subSamplingFactorX + 1;
+        if (candidateX <= rasterWidth) {
+            double relErrFloor = Math.abs(ratioX - subSamplingFactorX) / Math.max(ratioX, 1e-9);
+            double relErrUp = Math.abs(ratioX - candidateX) / Math.max(ratioX, 1e-9);
+            if (relErrUp <= overviewTolerance && relErrUp < relErrFloor) {
+                subSamplingFactorX = candidateX;
+            }
+        }
+        int candidateY = subSamplingFactorY + 1;
+        if (candidateY <= rasterHeight) {
+            double relErrFloor = Math.abs(ratioY - subSamplingFactorY) / Math.max(ratioY, 1e-9);
+            double relErrUp = Math.abs(ratioY - candidateY) / Math.max(ratioY, 1e-9);
+            if (relErrUp <= overviewTolerance && relErrUp < relErrFloor) {
+                subSamplingFactorY = candidateY;
+            }
+        }
+
+        // Align SourceRegion to subsampling factors to avoid seams
+        // If there is a source region, adjust it so (x,y,width,height) are multiples of the factors
+        java.awt.Rectangle region = readParameters.getSourceRegion();
+        if (region != null) {
+            // Align x and y to the lower multiple of the factors
+            int alignedX = region.x - Math.floorMod(region.x, subSamplingFactorX);
+            int alignedY = region.y - Math.floorMod(region.y, subSamplingFactorY);
+
+            // Align width/height to the lower multiple of the factors (avoids half rows/columns)
+            int alignedW = region.width - Math.floorMod(region.width, subSamplingFactorX);
+            int alignedH = region.height - Math.floorMod(region.height, subSamplingFactorY);
+
+            // Ensure positive, non-zero sizes (at least one subsampling block)
+            if (alignedW <= 0) alignedW = subSamplingFactorX;
+            if (alignedH <= 0) alignedH = subSamplingFactorY;
+
+            // Conservative clipping if realignment exceeds raster bounds
+            // (assuming (0,0)-(rasterWidth,rasterHeight) as the full raster bounds)
+            if (alignedX < 0) alignedX = 0;
+            if (alignedY < 0) alignedY = 0;
+            if (alignedX + alignedW > rasterWidth) alignedW = Math.max(subSamplingFactorX, rasterWidth - alignedX);
+            if (alignedY + alignedH > rasterHeight) alignedH = Math.max(subSamplingFactorY, rasterHeight - alignedY);
+
+            readParameters.setSourceRegion(new java.awt.Rectangle(alignedX, alignedY, alignedW, alignedH));
+        }
+
+        // Finally, apply the sanitized and aligned subsampling
+        readParameters.setSourceSubsampling(subSamplingFactorX, subSamplingFactorY, 0, 0);
     }
 }

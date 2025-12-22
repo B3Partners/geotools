@@ -25,14 +25,19 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.geotools.data.DataAccess;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.FeatureListener;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.QueryCapabilities;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureListener;
-import org.geotools.data.Query;
-import org.geotools.data.QueryCapabilities;
-import org.geotools.data.ResourceInfo;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.store.EmptyFeatureCollection;
 import org.geotools.data.store.ReTypingFeatureCollection;
 import org.geotools.data.store.ReprojectingFeatureCollection;
@@ -41,17 +46,11 @@ import org.geotools.feature.collection.FilteringSimpleFeatureCollection;
 import org.geotools.feature.collection.MaxSimpleFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
 
 /**
  * This is a "port" of ContentFeatureSource to work with an iterator.
  *
- * <p>To use this class please "wrap" CollectionFeatureSource around your choice of
- * FeatureCollection.
+ * <p>To use this class please "wrap" CollectionFeatureSource around your choice of FeatureCollection.
  *
  * <pre>
  * SimpleFeatureCollection collection = new ListFeatureCollection(schema);
@@ -60,8 +59,8 @@ import org.opengis.filter.sort.SortBy;
  * FeatureSource source = new CollectionFeatureSource(collection);
  * </pre>
  *
- * <p>Note to implementors: If you are performing "real I/O" please use ContentFeatureSource as it
- * provides support for IOException.
+ * <p>Note to implementors: If you are performing "real I/O" please use ContentFeatureSource as it provides support for
+ * IOException.
  *
  * @author Jody
  */
@@ -133,24 +132,22 @@ public class CollectionFeatureSource implements SimpleFeatureSource {
     @Override
     public synchronized QueryCapabilities getQueryCapabilities() {
         if (capabilities == null) {
-            capabilities =
-                    new QueryCapabilities() {
-                        @Override
-                        public boolean isOffsetSupported() {
-                            return true;
-                        }
+            capabilities = new QueryCapabilities() {
+                @Override
+                public boolean isOffsetSupported() {
+                    return true;
+                }
 
-                        @Override
-                        public boolean isReliableFIDSupported() {
-                            return true;
-                        }
+                @Override
+                public boolean isReliableFIDSupported() {
+                    return true;
+                }
 
-                        @Override
-                        public boolean supportsSorting(
-                                org.opengis.filter.sort.SortBy[] sortAttributes) {
-                            return true;
-                        }
-                    };
+                @Override
+                public boolean supportsSorting(org.geotools.api.filter.sort.SortBy... sortAttributes) {
+                    return true;
+                }
+            };
         }
         return capabilities;
     }
@@ -195,9 +192,8 @@ public class CollectionFeatureSource implements SimpleFeatureSource {
         final int offset = query.getStartIndex() != null ? query.getStartIndex() : 0;
         if (offset > 0 && query.getSortBy() == null) {
             if (!getQueryCapabilities().supportsSorting(query.getSortBy())) {
-                throw new IllegalStateException(
-                        "Feature source does not support this sorting "
-                                + "so there is no way a stable paging (offset/limit) can be performed");
+                throw new IllegalStateException("Feature source does not support this sorting "
+                        + "so there is no way a stable paging (offset/limit) can be performed");
             }
             Query copy = new Query(query);
             copy.setSortBy(SortBy.NATURAL_ORDER);
@@ -213,9 +209,7 @@ public class CollectionFeatureSource implements SimpleFeatureSource {
         }
         // step two: reproject
         if (query.getCoordinateSystemReproject() != null) {
-            features =
-                    new ReprojectingFeatureCollection(
-                            features, query.getCoordinateSystemReproject());
+            features = new ReprojectingFeatureCollection(features, query.getCoordinateSystemReproject());
         }
         // step two sort! (note this makes a sorted copy)
         if (query.getSortBy() != null && query.getSortBy().length != 0) {
@@ -244,8 +238,7 @@ public class CollectionFeatureSource implements SimpleFeatureSource {
         if (query.getPropertyNames() != Query.ALL_NAMES) {
             // rebuild the type and wrap the reader
             SimpleFeatureType schema = features.getSchema();
-            SimpleFeatureType target =
-                    SimpleFeatureTypeBuilder.retype(schema, query.getPropertyNames());
+            SimpleFeatureType target = SimpleFeatureTypeBuilder.retype(schema, query.getPropertyNames());
 
             // do an equals check because we may have needlessly retyped (that is,
             // the subclass might be able to only partially retype)
@@ -260,8 +253,8 @@ public class CollectionFeatureSource implements SimpleFeatureSource {
     /**
      * SubCollection for CollectionFeatureSource.
      *
-     * <p>Will route any calls refining the feature collection back to CollectionFeatureSource. This
-     * is based on the success of ContentFeatureCollection.
+     * <p>Will route any calls refining the feature collection back to CollectionFeatureSource. This is based on the
+     * success of ContentFeatureCollection.
      *
      * @author Jody
      */

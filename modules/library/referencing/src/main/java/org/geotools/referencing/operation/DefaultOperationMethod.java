@@ -19,11 +19,20 @@
  */
 package org.geotools.referencing.operation;
 
+import java.io.Serial;
+import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.Matrix;
+import org.geotools.api.referencing.operation.Operation;
+import org.geotools.api.referencing.operation.OperationMethod;
+import org.geotools.api.referencing.operation.Projection;
+import org.geotools.api.util.InternationalString;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.metadata.i18n.Vocabulary;
 import org.geotools.metadata.i18n.VocabularyKeys;
 import org.geotools.parameter.Parameters;
@@ -31,40 +40,33 @@ import org.geotools.referencing.AbstractIdentifiedObject;
 import org.geotools.referencing.operation.transform.AbstractMathTransform;
 import org.geotools.referencing.operation.transform.ConcatenatedTransform;
 import org.geotools.referencing.operation.transform.PassThroughTransform;
+import org.geotools.referencing.proj.PROJFormattable;
+import org.geotools.referencing.proj.PROJFormatter;
 import org.geotools.referencing.wkt.Formatter;
 import org.geotools.util.Utilities;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.Matrix;
-import org.opengis.referencing.operation.Operation;
-import org.opengis.referencing.operation.OperationMethod;
-import org.opengis.referencing.operation.Projection;
-import org.opengis.util.InternationalString;
 
 /**
- * Definition of an algorithm used to perform a coordinate operation. Most operation methods use a
- * number of operation parameters, although some coordinate conversions use none. Each coordinate
- * operation using the method assigns values to these parameters.
+ * Definition of an algorithm used to perform a coordinate operation. Most operation methods use a number of operation
+ * parameters, although some coordinate conversions use none. Each coordinate operation using the method assigns values
+ * to these parameters.
  *
  * @since 2.1
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
  * @see DefaultOperation
  */
-public class DefaultOperationMethod extends AbstractIdentifiedObject implements OperationMethod {
+public class DefaultOperationMethod extends AbstractIdentifiedObject implements OperationMethod, PROJFormattable {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -98032729598205972L;
 
-    /**
-     * List of localizable properties. To be given to {@link AbstractIdentifiedObject} constructor.
-     */
+    /** List of localizable properties. To be given to {@link AbstractIdentifiedObject} constructor. */
     private static final String[] LOCALIZABLES = {FORMULA_KEY};
 
     /**
-     * Formula(s) or procedure used by this operation method. This may be a reference to a
-     * publication. Note that the operation method may not be analytic, in which case this attribute
-     * references or contains the procedure, not an analytic formula.
+     * Formula(s) or procedure used by this operation method. This may be a reference to a publication. Note that the
+     * operation method may not be analytic, in which case this attribute references or contains the procedure, not an
+     * analytic formula.
      */
     private final InternationalString formula;
 
@@ -78,9 +80,9 @@ public class DefaultOperationMethod extends AbstractIdentifiedObject implements 
     private final ParameterDescriptorGroup parameters;
 
     /**
-     * Convenience constructor that creates an operation method from a math transform. The
-     * information provided in the newly created object are approximative, and usually acceptable
-     * only as a fallback when no other information are available.
+     * Convenience constructor that creates an operation method from a math transform. The information provided in the
+     * newly created object are approximative, and usually acceptable only as a fallback when no other information are
+     * available.
      *
      * @param transform The math transform to describe.
      */
@@ -93,13 +95,12 @@ public class DefaultOperationMethod extends AbstractIdentifiedObject implements 
     }
 
     /**
-     * Work around for RFE #4093999 in Sun's bug database ("Relax constraint on placement of
-     * this()/super() call in constructors").
+     * Work around for RFE #4093999 in Sun's bug database ("Relax constraint on placement of this()/super() call in
+     * constructors").
      */
     private static Map<String, ?> getProperties(final MathTransform transform) {
         ensureNonNull("transform", transform);
-        if (transform instanceof AbstractMathTransform) {
-            final AbstractMathTransform mt = (AbstractMathTransform) transform;
+        if (transform instanceof AbstractMathTransform mt) {
             if (mt.getParameterDescriptors() != null) {
                 return getProperties(mt.getParameterDescriptors(), null);
             }
@@ -108,23 +109,22 @@ public class DefaultOperationMethod extends AbstractIdentifiedObject implements 
     }
 
     /**
-     * Work around for RFE #4093999 in Sun's bug database ("Relax constraint on placement of
-     * this()/super() call in constructors"). This code should have been merged with {@code
-     * getProperties} above.
+     * Work around for RFE #4093999 in Sun's bug database ("Relax constraint on placement of this()/super() call in
+     * constructors"). This code should have been merged with {@code getProperties} above.
      */
     private static ParameterDescriptorGroup getDescriptor(final MathTransform transform) {
         ParameterDescriptorGroup descriptor = null;
-        if (transform instanceof AbstractMathTransform) {
-            descriptor = ((AbstractMathTransform) transform).getParameterDescriptors();
+        if (transform instanceof AbstractMathTransform mathTransform) {
+            descriptor = mathTransform.getParameterDescriptors();
         }
         return descriptor;
     }
 
     /**
-     * Constructs a new operation method with the same values than the specified one. This copy
-     * constructor provides a way to wrap an arbitrary implementation into a Geotools one or a
-     * user-defined one (as a subclass), usually in order to leverage some implementation-specific
-     * API. This constructor performs a shallow copy, i.e. the properties are not cloned.
+     * Constructs a new operation method with the same values than the specified one. This copy constructor provides a
+     * way to wrap an arbitrary implementation into a Geotools one or a user-defined one (as a subclass), usually in
+     * order to leverage some implementation-specific API. This constructor performs a shallow copy, i.e. the properties
+     * are not cloned.
      *
      * @param method The operation method to copy.
      */
@@ -137,8 +137,7 @@ public class DefaultOperationMethod extends AbstractIdentifiedObject implements 
     }
 
     /**
-     * Constructs a new operation method with the same values than the specified one except the
-     * dimensions.
+     * Constructs a new operation method with the same values than the specified one except the dimensions.
      *
      * @param method The operation method to copy.
      * @param sourceDimensions Number of dimensions in the source CRS of this operation method.
@@ -156,10 +155,9 @@ public class DefaultOperationMethod extends AbstractIdentifiedObject implements 
     }
 
     /**
-     * Constructs an operation method from a set of properties and a descriptor group. The
-     * properties given in argument follow the same rules than for the {@linkplain
-     * AbstractIdentifiedObject#AbstractIdentifiedObject(Map) super-class constructor}.
-     * Additionally, the following properties are understood by this construtor: <br>
+     * Constructs an operation method from a set of properties and a descriptor group. The properties given in argument
+     * follow the same rules than for the {@linkplain AbstractIdentifiedObject#AbstractIdentifiedObject(Map) super-class
+     * constructor}. Additionally, the following properties are understood by this construtor: <br>
      * <br>
      *
      * <table border='1'>
@@ -189,8 +187,8 @@ public class DefaultOperationMethod extends AbstractIdentifiedObject implements 
     }
 
     /**
-     * Work around for RFE #4093999 in Sun's bug database ("Relax constraint on placement of
-     * this()/super() call in constructors").
+     * Work around for RFE #4093999 in Sun's bug database ("Relax constraint on placement of this()/super() call in
+     * constructors").
      */
     private DefaultOperationMethod(
             final Map<String, ?> properties,
@@ -210,25 +208,22 @@ public class DefaultOperationMethod extends AbstractIdentifiedObject implements 
     }
 
     /**
-     * Ensure that the specified value is positive. An {@link IllegalArgumentException} is throws if
-     * it is not.
+     * Ensure that the specified value is positive. An {@link IllegalArgumentException} is throws if it is not.
      *
      * @param name The parameter name.
      * @param value The parameter value.
      * @throws IllegalArgumentException if the specified value is not positive.
      */
-    private static void ensurePositive(final String name, final int value)
-            throws IllegalArgumentException {
+    private static void ensurePositive(final String name, final int value) throws IllegalArgumentException {
         if (value < 0) {
-            throw new IllegalArgumentException(
-                    Errors.format(ErrorKeys.ILLEGAL_ARGUMENT_$2, name, value));
+            throw new IllegalArgumentException(MessageFormat.format(ErrorKeys.ILLEGAL_ARGUMENT_$2, name, value));
         }
     }
 
     /**
-     * Formula(s) or procedure used by this operation method. This may be a reference to a
-     * publication. Note that the operation method may not be analytic, in which case this attribute
-     * references or contains the procedure, not an analytic formula.
+     * Formula(s) or procedure used by this operation method. This may be a reference to a publication. Note that the
+     * operation method may not be analytic, in which case this attribute references or contains the procedure, not an
+     * analytic formula.
      */
     @Override
     public InternationalString getFormula() {
@@ -254,14 +249,13 @@ public class DefaultOperationMethod extends AbstractIdentifiedObject implements 
     /** Returns the set of parameters. */
     @Override
     public ParameterDescriptorGroup getParameters() {
-        return (parameters != null) ? parameters : Parameters.EMPTY_GROUP;
+        return parameters != null ? parameters : Parameters.EMPTY_GROUP;
     }
 
     /**
-     * Returns the operation type. Current implementation returns {@code Projection.class} for
-     * proper WKT formatting using an unknow implementation. But the {@link MathTransformProvider}
-     * subclass (with protected access) will overrides this method with a more conservative default
-     * value.
+     * Returns the operation type. Current implementation returns {@code Projection.class} for proper WKT formatting
+     * using an unknow implementation. But the {@link MathTransformProvider} subclass (with protected access) will
+     * overrides this method with a more conservative default value.
      *
      * @return The GeoAPI interface implemented by this operation.
      */
@@ -270,13 +264,12 @@ public class DefaultOperationMethod extends AbstractIdentifiedObject implements 
     }
 
     /**
-     * Compare this operation method with the specified object for equality. If {@code
-     * compareMetadata} is {@code true}, then all available properties are compared including
-     * {@linkplain #getFormula formula}.
+     * Compare this operation method with the specified object for equality. If {@code compareMetadata} is {@code true},
+     * then all available properties are compared including {@linkplain #getFormula formula}.
      *
      * @param object The object to compare to {@code this}.
-     * @param compareMetadata {@code true} for performing a strict comparaison, or {@code false} for
-     *     comparing only properties relevant to transformations.
+     * @param compareMetadata {@code true} for performing a strict comparaison, or {@code false} for comparing only
+     *     properties relevant to transformations.
      * @return {@code true} if both objects are equal.
      */
     @Override
@@ -308,8 +301,8 @@ public class DefaultOperationMethod extends AbstractIdentifiedObject implements 
 
     /**
      * Format the inner part of a <A
-     * HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html"><cite>Well
-     * Known Text</cite> (WKT)</A> element.
+     * HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html"><cite>Well Known
+     * Text</cite> (WKT)</A> element.
      *
      * @param formatter The formatter to use.
      * @return The WKT element name.
@@ -323,14 +316,13 @@ public class DefaultOperationMethod extends AbstractIdentifiedObject implements 
     }
 
     /**
-     * Returns {@code true} if the specified transform is likely to exists only for axis switch
-     * and/or unit conversions. The heuristic rule checks if the transform is backed by a square
-     * matrix with exactly one non-null value in each row and each column. This method is used for
-     * implementation of the {@link #checkDimensions} method only.
+     * Returns {@code true} if the specified transform is likely to exists only for axis switch and/or unit conversions.
+     * The heuristic rule checks if the transform is backed by a square matrix with exactly one non-null value in each
+     * row and each column. This method is used for implementation of the {@link #checkDimensions} method only.
      */
     private static boolean isTrivial(final MathTransform transform) {
-        if (transform instanceof LinearTransform) {
-            final Matrix matrix = ((LinearTransform) transform).getMatrix();
+        if (transform instanceof LinearTransform linearTransform) {
+            final Matrix matrix = linearTransform.getMatrix();
             final int size = matrix.getNumRow();
             if (matrix.getNumCol() == size) {
                 for (int j = 0; j < size; j++) {
@@ -350,27 +342,25 @@ public class DefaultOperationMethod extends AbstractIdentifiedObject implements 
     }
 
     /**
-     * Checks if an operation method and a math transform have a compatible number of source and
-     * target dimensions. In the particular case of a {@linkplain PassThroughTransform pass through
-     * transform} with more dimension than the expected number, the check will rather be performed
-     * against the {@linkplain PassThroughTransform#getSubTransform sub transform}.
+     * Checks if an operation method and a math transform have a compatible number of source and target dimensions. In
+     * the particular case of a {@linkplain PassThroughTransform pass through transform} with more dimension than the
+     * expected number, the check will rather be performed against the {@linkplain PassThroughTransform#getSubTransform
+     * sub transform}.
      *
      * <p>This convenience method is provided for argument checking.
      *
      * @param method The operation method to compare to the math transform, or {@code null}.
      * @param transform The math transform to compare to the operation method, or {@code null}.
      * @throws MismatchedDimensionException if the number of dimensions are incompatibles.
-     * @todo The check for {@link ConcatenatedTransform} and {@link PassThroughTransform} works only
-     *     for Geotools implementation.
+     * @todo The check for {@link ConcatenatedTransform} and {@link PassThroughTransform} works only for Geotools
+     *     implementation.
      */
     public static void checkDimensions(final OperationMethod method, MathTransform transform)
             throws MismatchedDimensionException {
         if (method != null && transform != null) {
             int actual, expected = method.getSourceDimensions();
             while ((actual = transform.getSourceDimensions()) > expected) {
-                if (transform instanceof ConcatenatedTransform) {
-                    // Ignore axis switch and unit conversions.
-                    final ConcatenatedTransform c = (ConcatenatedTransform) transform;
+                if (transform instanceof ConcatenatedTransform c) {
                     if (isTrivial(c.transform1)) {
                         transform = c.transform2;
                     } else if (isTrivial(c.transform2)) {
@@ -381,8 +371,8 @@ public class DefaultOperationMethod extends AbstractIdentifiedObject implements 
                         // exception be thrown after the loop.
                         break;
                     }
-                } else if (transform instanceof PassThroughTransform) {
-                    transform = ((PassThroughTransform) transform).getSubTransform();
+                } else if (transform instanceof PassThroughTransform throughTransform) {
+                    transform = throughTransform.getSubTransform();
                 } else {
                     break;
                 }
@@ -400,7 +390,12 @@ public class DefaultOperationMethod extends AbstractIdentifiedObject implements 
                 }
             }
             throw new IllegalArgumentException(
-                    Errors.format(ErrorKeys.MISMATCHED_DIMENSION_$3, name, actual, expected));
+                    MessageFormat.format(ErrorKeys.MISMATCHED_DIMENSION_$3, name, actual, expected));
         }
+    }
+
+    @Override
+    public String formatPROJ(final PROJFormatter formatter) {
+        return Projection.class.isAssignableFrom(getOperationType()) ? "+proj=" : PROJFormatter.NO_KEYWORD;
     }
 }

@@ -21,6 +21,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.DefaultFeatureCollection;
@@ -28,12 +34,6 @@ import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
 
 /** @author Cory Horner, Refractions Research Inc. */
 public class QuantileFunctionTest extends FunctionTestSupport {
@@ -88,28 +88,26 @@ public class QuantileFunctionTest extends FunctionTestSupport {
     /**
      * Test a feature collection where each feature will be in it's own bin.
      *
-     * <p>Creates a feature collection with five features 1-5. Then uses the quantile function to
-     * put these features in 5 bins. Each bin should have a single feature.
+     * <p>Creates a feature collection with five features 1-5. Then uses the quantile function to put these features in
+     * 5 bins. Each bin should have a single feature.
      */
     @Test
     public void testSingleBin() throws Exception {
 
         // create a feature collection with five features values 1-5
-        SimpleFeatureType dataType =
-                DataUtilities.createType("classification.test1", "id:0,value:int");
+        SimpleFeatureType dataType = DataUtilities.createType("classification.test1", "id:0,value:int");
         int[] iVal = {1, 2, 3, 4, 5};
         SimpleFeature[] myfeatures = new SimpleFeature[iVal.length];
         for (int i = 0; i < iVal.length; i++) {
-            myfeatures[i] =
-                    SimpleFeatureBuilder.build(
-                            dataType,
-                            new Object[] {Integer.valueOf(i + 1), Integer.valueOf(iVal[i])},
-                            "classification.test1" + (i + 1));
+            myfeatures[i] = SimpleFeatureBuilder.build(
+                    dataType,
+                    new Object[] {Integer.valueOf(i + 1), Integer.valueOf(iVal[i])},
+                    "classification.test1" + (i + 1));
         }
         SimpleFeatureCollection myFeatureCollection = DataUtilities.collection(myfeatures);
 
         // run the quantile function
-        org.opengis.filter.expression.Expression function =
+        org.geotools.api.filter.expression.Expression function =
                 ff.function("Quantile", ff.property("value"), ff.literal(5));
         Classifier classifier = (Classifier) function.evaluate(myFeatureCollection);
 
@@ -134,21 +132,19 @@ public class QuantileFunctionTest extends FunctionTestSupport {
     @Test
     public void test2() throws Exception {
         // create a feature collection with five features values 1-5
-        SimpleFeatureType dataType =
-                DataUtilities.createType("classification.test1", "id:0,value:int");
+        SimpleFeatureType dataType = DataUtilities.createType("classification.test1", "id:0,value:int");
         int[] iVal = {1, 2, 3, 4, 5, 6};
         SimpleFeature[] myfeatures = new SimpleFeature[iVal.length];
         for (int i = 0; i < iVal.length; i++) {
-            myfeatures[i] =
-                    SimpleFeatureBuilder.build(
-                            dataType,
-                            new Object[] {Integer.valueOf(i + 1), Integer.valueOf(iVal[i])},
-                            "classification.t" + (i + 1));
+            myfeatures[i] = SimpleFeatureBuilder.build(
+                    dataType,
+                    new Object[] {Integer.valueOf(i + 1), Integer.valueOf(iVal[i])},
+                    "classification.t" + (i + 1));
         }
         SimpleFeatureCollection myFeatureCollection = DataUtilities.collection(myfeatures);
 
         // run the quantile function
-        org.opengis.filter.expression.Expression function =
+        org.geotools.api.filter.expression.Expression function =
                 ff.function("Quantile", ff.property("value"), ff.literal(5));
         Classifier classifier = (Classifier) function.evaluate(myFeatureCollection);
         assertTrue(classifier instanceof RangedClassifier);
@@ -156,7 +152,7 @@ public class QuantileFunctionTest extends FunctionTestSupport {
 
     @Test
     public void testEvaluateWithStrings() throws Exception {
-        org.opengis.filter.expression.Expression function =
+        org.geotools.api.filter.expression.Expression function =
                 ff.function("Quantile", ff.property("group"), ff.literal(2));
         Classifier classifier = (Classifier) function.evaluate(featureCollection);
         assertNotNull(classifier);
@@ -172,8 +168,7 @@ public class QuantileFunctionTest extends FunctionTestSupport {
     @Ignore
     public void testNullNaNHandling() throws Exception {
         // create a feature collection
-        SimpleFeatureType ft =
-                DataUtilities.createType("classification.nullnan", "id:0,foo:int,bar:double");
+        SimpleFeatureType ft = DataUtilities.createType("classification.nullnan", "id:0,foo:int,bar:double");
         Integer[] iVal = {
             Integer.valueOf(0),
             Integer.valueOf(0),
@@ -200,13 +195,12 @@ public class QuantileFunctionTest extends FunctionTestSupport {
         SimpleFeature[] testFeatures = new SimpleFeature[iVal.length];
 
         for (int i = 0; i < iVal.length; i++) {
-            testFeatures[i] =
-                    SimpleFeatureBuilder.build(
-                            ft,
-                            new Object[] {
-                                Integer.valueOf(i + 1), iVal[i], dVal[i],
-                            },
-                            "nantest.t" + (i + 1));
+            testFeatures[i] = SimpleFeatureBuilder.build(
+                    ft,
+                    new Object[] {
+                        Integer.valueOf(i + 1), iVal[i], dVal[i],
+                    },
+                    "nantest.t" + (i + 1));
         }
         SimpleFeatureCollection thisFC = DataUtilities.collection(testFeatures);
 
@@ -258,20 +252,16 @@ public class QuantileFunctionTest extends FunctionTestSupport {
 
     @Test
     public void testEvaluateNotNumericalWithPercentages() throws SchemaException {
-        SimpleFeatureType dataType =
-                DataUtilities.createType("classification.test1", "id:0,value:String");
+        SimpleFeatureType dataType = DataUtilities.createType("classification.test1", "id:0,value:String");
         String[] sVal = {"a", "b", "c", "d", "e", "f"};
         SimpleFeature[] myfeatures = new SimpleFeature[sVal.length];
         for (int i = 0; i < sVal.length; i++) {
-            myfeatures[i] =
-                    SimpleFeatureBuilder.build(
-                            dataType,
-                            new Object[] {Integer.valueOf(i + 1), sVal[i]},
-                            "classification.test1" + (i + 1));
+            myfeatures[i] = SimpleFeatureBuilder.build(
+                    dataType, new Object[] {Integer.valueOf(i + 1), sVal[i]}, "classification.test1" + (i + 1));
         }
 
         SimpleFeatureCollection myFeatureCollection = DataUtilities.collection(myfeatures);
-        org.opengis.filter.expression.Expression func2 =
+        org.geotools.api.filter.expression.Expression func2 =
                 ff.function("Quantile", ff.property("value"), ff.literal(6), ff.literal(true));
 
         Object value2 = func2.evaluate(myFeatureCollection);
@@ -286,20 +276,18 @@ public class QuantileFunctionTest extends FunctionTestSupport {
     @Test
     public void testPercentagesConsistencyWithUnevenDistributedValues() throws SchemaException {
 
-        SimpleFeatureType dataType =
-                DataUtilities.createType("classification.test1", "id:0,value:int");
+        SimpleFeatureType dataType = DataUtilities.createType("classification.test1", "id:0,value:int");
         int[] iVal = {1, 1, 2, 3, 4, 5};
         SimpleFeature[] myfeatures = new SimpleFeature[iVal.length];
         for (int i = 0; i < iVal.length; i++) {
-            myfeatures[i] =
-                    SimpleFeatureBuilder.build(
-                            dataType,
-                            new Object[] {Integer.valueOf(i + 1), Integer.valueOf(iVal[i])},
-                            "classification.test1" + (i + 1));
+            myfeatures[i] = SimpleFeatureBuilder.build(
+                    dataType,
+                    new Object[] {Integer.valueOf(i + 1), Integer.valueOf(iVal[i])},
+                    "classification.test1" + (i + 1));
         }
 
         SimpleFeatureCollection myFeatureCollection = DataUtilities.collection(myfeatures);
-        org.opengis.filter.expression.Expression func =
+        org.geotools.api.filter.expression.Expression func =
                 ff.function("Quantile", ff.property("value"), ff.literal(5), ff.literal(true));
 
         Object value = func.evaluate(myFeatureCollection);
@@ -315,7 +303,7 @@ public class QuantileFunctionTest extends FunctionTestSupport {
 
     @Test
     public void testPercentagesConsistencyWithMoreClassThanIntervals() {
-        org.opengis.filter.expression.Expression func =
+        org.geotools.api.filter.expression.Expression func =
                 ff.function("Quantile", ff.property("foo"), ff.literal(10), ff.literal(true));
         Object value = func.evaluate(featureCollection);
         assertTrue(value instanceof RangedClassifier);

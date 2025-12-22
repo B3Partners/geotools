@@ -23,8 +23,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import javax.xml.namespace.QName;
-import org.geotools.geometry.GeneralDirectPosition;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.api.referencing.crs.CompoundCRS;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.TemporalCRS;
+import org.geotools.api.temporal.Position;
+import org.geotools.geometry.GeneralBounds;
+import org.geotools.geometry.GeneralPosition;
 import org.geotools.gml4wcs.GML;
 import org.geotools.metadata.iso.extent.ExtentImpl;
 import org.geotools.referencing.crs.DefaultCompoundCRS;
@@ -33,10 +37,6 @@ import org.geotools.temporal.object.DefaultPosition;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.referencing.crs.CompoundCRS;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.TemporalCRS;
-import org.opengis.temporal.Position;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -83,7 +83,7 @@ public class EnvelopeWithTimePeriodTypeBinding extends AbstractComplexBinding {
      */
     @Override
     public Class getType() {
-        return GeneralEnvelope.class;
+        return GeneralBounds.class;
     }
 
     /**
@@ -95,7 +95,7 @@ public class EnvelopeWithTimePeriodTypeBinding extends AbstractComplexBinding {
      */
     @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        GeneralEnvelope envelope = (GeneralEnvelope) value;
+        GeneralBounds envelope = (GeneralBounds) value;
 
         List<Node> timePositions = node.getChildren("timePosition");
 
@@ -104,13 +104,9 @@ public class EnvelopeWithTimePeriodTypeBinding extends AbstractComplexBinding {
             properties.put(CoordinateReferenceSystem.NAME_KEY, "Compound");
             properties.put(CoordinateReferenceSystem.DOMAIN_OF_VALIDITY_KEY, ExtentImpl.WORLD);
 
-            CoordinateReferenceSystem crs =
-                    new DefaultCompoundCRS(
-                            properties,
-                            new CoordinateReferenceSystem[] {
-                                envelope.getCoordinateReferenceSystem(),
-                                DefaultTemporalCRS.TRUNCATED_JULIAN
-                            });
+            CoordinateReferenceSystem crs = new DefaultCompoundCRS(properties, new CoordinateReferenceSystem[] {
+                envelope.getCoordinateReferenceSystem(), DefaultTemporalCRS.TRUNCATED_JULIAN
+            });
 
             double[] minCP = new double[envelope.getDimension() + 1];
             double[] maxCP = new double[envelope.getDimension() + 1];
@@ -120,22 +116,20 @@ public class EnvelopeWithTimePeriodTypeBinding extends AbstractComplexBinding {
                 maxCP[i] = envelope.getUpperCorner().getOrdinate(i);
             }
 
-            DefaultTemporalCRS TCRS =
-                    (DefaultTemporalCRS) ((CompoundCRS) crs).getCoordinateReferenceSystems().get(1);
+            DefaultTemporalCRS TCRS = (DefaultTemporalCRS)
+                    ((CompoundCRS) crs).getCoordinateReferenceSystems().get(1);
 
             Node timePositionNodeBegin = timePositions.get(0);
             Node timePositionNodeEnd = timePositions.get(1);
-            minCP[minCP.length - 1] =
-                    TCRS.toValue(((DefaultPosition) timePositionNodeBegin.getValue()).getDate());
-            maxCP[maxCP.length - 1] =
-                    TCRS.toValue(((DefaultPosition) timePositionNodeEnd.getValue()).getDate());
+            minCP[minCP.length - 1] = TCRS.toValue(((DefaultPosition) timePositionNodeBegin.getValue()).getDate());
+            maxCP[maxCP.length - 1] = TCRS.toValue(((DefaultPosition) timePositionNodeEnd.getValue()).getDate());
 
-            GeneralDirectPosition minDP = new GeneralDirectPosition(minCP);
+            GeneralPosition minDP = new GeneralPosition(minCP);
             minDP.setCoordinateReferenceSystem(crs);
-            GeneralDirectPosition maxDP = new GeneralDirectPosition(maxCP);
+            GeneralPosition maxDP = new GeneralPosition(maxCP);
             maxDP.setCoordinateReferenceSystem(crs);
 
-            GeneralEnvelope envelopeWithTime = new GeneralEnvelope(minDP, maxDP);
+            GeneralBounds envelopeWithTime = new GeneralBounds(minDP, maxDP);
 
             return envelopeWithTime;
         }
@@ -159,12 +153,10 @@ public class EnvelopeWithTimePeriodTypeBinding extends AbstractComplexBinding {
      */
     @Override
     public Element encode(Object object, Document document, Element value) throws Exception {
-        GeneralEnvelope envelope = (GeneralEnvelope) object;
+        GeneralBounds envelope = (GeneralBounds) object;
 
         if (envelope == null) {
-            value.appendChild(
-                    document.createElementNS(
-                            GML.NAMESPACE, org.geotools.gml3.GML.Null.getLocalPart()));
+            value.appendChild(document.createElementNS(GML.NAMESPACE, org.geotools.gml3.GML.Null.getLocalPart()));
         }
 
         return null;
@@ -172,7 +164,7 @@ public class EnvelopeWithTimePeriodTypeBinding extends AbstractComplexBinding {
 
     @Override
     public Object getProperty(Object object, QName name) {
-        GeneralEnvelope envelope = (GeneralEnvelope) object;
+        GeneralBounds envelope = (GeneralBounds) object;
 
         if (envelope == null) {
             return null;
@@ -187,8 +179,8 @@ public class EnvelopeWithTimePeriodTypeBinding extends AbstractComplexBinding {
                 List CRSs = ((DefaultCompoundCRS) crs).getCoordinateReferenceSystems();
 
                 for (Object item : CRSs) {
-                    if (item instanceof TemporalCRS) {
-                        temporalCRS = (TemporalCRS) item;
+                    if (item instanceof TemporalCRS rS) {
+                        temporalCRS = rS;
                     }
                 }
             }
@@ -196,18 +188,10 @@ public class EnvelopeWithTimePeriodTypeBinding extends AbstractComplexBinding {
             if (temporalCRS != null) {
                 List<Position> envelopePositions = new LinkedList<>();
 
-                Position beginning =
-                        new DefaultPosition(
-                                ((DefaultTemporalCRS) temporalCRS)
-                                        .toDate(
-                                                envelope.getLowerCorner()
-                                                        .getOrdinate(envelope.getDimension() - 1)));
-                Position ending =
-                        new DefaultPosition(
-                                ((DefaultTemporalCRS) temporalCRS)
-                                        .toDate(
-                                                envelope.getUpperCorner()
-                                                        .getOrdinate(envelope.getDimension() - 1)));
+                Position beginning = new DefaultPosition(((DefaultTemporalCRS) temporalCRS)
+                        .toDate(envelope.getLowerCorner().getOrdinate(envelope.getDimension() - 1)));
+                Position ending = new DefaultPosition(((DefaultTemporalCRS) temporalCRS)
+                        .toDate(envelope.getUpperCorner().getOrdinate(envelope.getDimension() - 1)));
 
                 envelopePositions.add(beginning);
                 envelopePositions.add(ending);

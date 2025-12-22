@@ -26,28 +26,27 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.IdentifiedObject;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.ObjectFactory;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CRSFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.GeographicCRS;
+import org.geotools.api.referencing.crs.ProjectedCRS;
+import org.geotools.api.util.InternationalString;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.util.Version;
 import org.geotools.util.factory.AbstractFactory;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.IdentifiedObject;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.ObjectFactory;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CRSFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.GeographicCRS;
-import org.opengis.referencing.crs.ProjectedCRS;
-import org.opengis.util.InternationalString;
 
 /**
- * Default implementation for a coordinate reference system authority factory backed by the EPSG
- * property file. This gives most of the benifits of using the EPSG database backed authority
- * factory, in a nice, portable property file.
+ * Default implementation for a coordinate reference system authority factory backed by the EPSG property file. This
+ * gives most of the benifits of using the EPSG database backed authority factory, in a nice, portable property file.
  *
  * @version $Id$
  * @author Jody Garnett
@@ -61,15 +60,12 @@ public class EPSGCRSAuthorityFactory extends AbstractFactory implements CRSAutho
     public static final String AUTHORITY_PREFIX = "EPSG:";
     // would be nice to cache crs objects for codes that have already been requested
 
-    /**
-     * The default coordinate system authority factory. Will be constructed only when first
-     * requested.
-     */
+    /** The default coordinate system authority factory. Will be constructed only when first requested. */
     protected static EPSGCRSAuthorityFactory DEFAULT;
 
     /**
-     * The properties object for our properties file. Keys are the EPSG code for a coordinate
-     * reference system and the associated value is a WKT string for the CRS.
+     * The properties object for our properties file. Keys are the EPSG code for a coordinate reference system and the
+     * associated value is a WKT string for the CRS.
      */
     protected Properties epsg = new Properties();
 
@@ -80,16 +76,16 @@ public class EPSGCRSAuthorityFactory extends AbstractFactory implements CRSAutho
     private Map<String, Object> cache = new HashMap<>();
 
     /**
-     * Loads from epsg.properties if the file exists, defaults to internal defintions exported from
-     * postgis and cubeworks.
+     * Loads from epsg.properties if the file exists, defaults to internal defintions exported from postgis and
+     * cubeworks.
      */
     public EPSGCRSAuthorityFactory() {
         this(ReferencingFactoryFinder.getCRSFactory(null));
     }
 
     /**
-     * Loads from epsg.properties if the file exists, defaults to internal defintions exported from
-     * postgis and cubeworks.
+     * Loads from epsg.properties if the file exists, defaults to internal defintions exported from postgis and
+     * cubeworks.
      */
     protected EPSGCRSAuthorityFactory(final CRSFactory factory) {
         super(MINIMUM_PRIORITY); // Select EPSG-HSQL factory first.
@@ -105,8 +101,7 @@ public class EPSGCRSAuthorityFactory extends AbstractFactory implements CRSAutho
     }
 
     /** */
-    protected EPSGCRSAuthorityFactory(final CRSFactory factory, URL definition)
-            throws FactoryException {
+    protected EPSGCRSAuthorityFactory(final CRSFactory factory, URL definition) throws FactoryException {
         this(factory);
 
         try {
@@ -118,8 +113,8 @@ public class EPSGCRSAuthorityFactory extends AbstractFactory implements CRSAutho
     }
 
     /**
-     * Loads from epsg.properties if the file exists, defaults to internal defintions exported from
-     * postgis and cubeworks.
+     * Loads from epsg.properties if the file exists, defaults to internal defintions exported from postgis and
+     * cubeworks.
      */
     protected void loadDefault() throws IOException {
         // Check the application directory first
@@ -148,25 +143,22 @@ public class EPSGCRSAuthorityFactory extends AbstractFactory implements CRSAutho
     }
 
     @Override
-    public synchronized CoordinateReferenceSystem createCoordinateReferenceSystem(String code)
-            throws FactoryException {
+    public synchronized CoordinateReferenceSystem createCoordinateReferenceSystem(String code) throws FactoryException {
         if (code == null) {
             return null;
         }
         if (!code.startsWith(AUTHORITY_PREFIX)) {
-            throw new NoSuchAuthorityCodeException(
-                    "This factory only understand EPSG codes", AUTHORITY, code);
+            throw new NoSuchAuthorityCodeException("This factory only understand EPSG codes", AUTHORITY, code);
         }
         final String EPSG_NUMBER = code.substring(code.indexOf(':') + 1).trim();
 
         if (cache.containsKey(EPSG_NUMBER)) {
             Object value = cache.get(EPSG_NUMBER);
-            if (value instanceof Throwable) {
-                throw new FactoryException(
-                        "WKT for " + code + " could not be parsed", (Throwable) value);
+            if (value instanceof Throwable throwable) {
+                throw new FactoryException("WKT for " + code + " could not be parsed", throwable);
             }
-            if (value instanceof CoordinateReferenceSystem) {
-                return (CoordinateReferenceSystem) value;
+            if (value instanceof CoordinateReferenceSystem system) {
+                return system;
             }
         }
         String wkt = epsg.getProperty(EPSG_NUMBER);
@@ -214,24 +206,21 @@ public class EPSGCRSAuthorityFactory extends AbstractFactory implements CRSAutho
     }
 
     /**
-     * Returns the set of authority codes of the given type. The type argument specify the base
-     * class. For example if this factory is an instance of CRSAuthorityFactory, then:
+     * Returns the set of authority codes of the given type. The type argument specify the base class. For example if
+     * this factory is an instance of CRSAuthorityFactory, then:
      *
      * <ul>
-     *   <li>CoordinateReferenceSystem.class asks for all authority codes accepted by
-     *       createGeographicCRS, createProjectedCRS, createVerticalCRS, createTemporalCRS and their
-     *       friends.
+     *   <li>CoordinateReferenceSystem.class asks for all authority codes accepted by createGeographicCRS,
+     *       createProjectedCRS, createVerticalCRS, createTemporalCRS and their friends.
      *   <li>ProjectedCRS.class asks only for authority codes accepted by createProjectedCRS.
      * </ul>
      *
-     * The following implementaiton filters the set of codes based on the "PROJCS" and "GEOGCS" at
-     * the start of the WKT strings. It is assumed that we only have GeographicCRS and
-     * ProjectedCRS's here.
+     * The following implementaiton filters the set of codes based on the "PROJCS" and "GEOGCS" at the start of the WKT
+     * strings. It is assumed that we only have GeographicCRS and ProjectedCRS's here.
      *
      * @param clazz The spatial reference objects type (may be Object.class).
-     * @return The set of authority codes for spatial reference objects of the given type. If this
-     *     factory doesn't contains any object of the given type, then this method returns an empty
-     *     set.
+     * @return The set of authority codes for spatial reference objects of the given type. If this factory doesn't
+     *     contains any object of the given type, then this method returns an empty set.
      * @throws FactoryException if access to the underlying database failed.
      */
     @Override
@@ -302,43 +291,37 @@ public class EPSGCRSAuthorityFactory extends AbstractFactory implements CRSAutho
     }
 
     @Override
-    public org.opengis.referencing.crs.CompoundCRS createCompoundCRS(String str)
-            throws FactoryException {
+    public org.geotools.api.referencing.crs.CompoundCRS createCompoundCRS(String str) throws FactoryException {
         throw new FactoryException("Not implemented");
     }
 
     @Override
-    public org.opengis.referencing.crs.DerivedCRS createDerivedCRS(String str)
-            throws FactoryException {
+    public org.geotools.api.referencing.crs.DerivedCRS createDerivedCRS(String str) throws FactoryException {
         throw new FactoryException("Not implemented");
     }
 
     @Override
-    public org.opengis.referencing.crs.EngineeringCRS createEngineeringCRS(String str)
-            throws FactoryException {
+    public org.geotools.api.referencing.crs.EngineeringCRS createEngineeringCRS(String str) throws FactoryException {
         throw new FactoryException("Not implemented");
     }
 
     @Override
-    public org.opengis.referencing.crs.GeocentricCRS createGeocentricCRS(String str)
-            throws FactoryException {
+    public org.geotools.api.referencing.crs.GeocentricCRS createGeocentricCRS(String str) throws FactoryException {
         throw new FactoryException("Not implemented");
     }
 
     @Override
-    public org.opengis.referencing.crs.ImageCRS createImageCRS(String str) throws FactoryException {
+    public org.geotools.api.referencing.crs.ImageCRS createImageCRS(String str) throws FactoryException {
         throw new FactoryException("Not implemented");
     }
 
     @Override
-    public org.opengis.referencing.crs.TemporalCRS createTemporalCRS(String str)
-            throws FactoryException {
+    public org.geotools.api.referencing.crs.TemporalCRS createTemporalCRS(String str) throws FactoryException {
         throw new FactoryException("Not implemented");
     }
 
     @Override
-    public org.opengis.referencing.crs.VerticalCRS createVerticalCRS(String str)
-            throws FactoryException {
+    public org.geotools.api.referencing.crs.VerticalCRS createVerticalCRS(String str) throws FactoryException {
         throw new FactoryException("Not implemented");
     }
 }

@@ -20,23 +20,22 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.TreeMap;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.collection.AbstractFeatureCollection;
 import org.geotools.feature.collection.RandomFeatureAccess;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Implement a SimpleFeatureCollection by burning memory!
  *
- * <p>Contents are maintained in a sorted TreeMap by FID, this serves as a reference implementation
- * when exploring the SimpleFeatureCollection api.
+ * <p>Contents are maintained in a sorted TreeMap by FID, this serves as a reference implementation when exploring the
+ * SimpleFeatureCollection api.
  *
- * <p>This is similar to DefaultFeatureCollection, although additional methods are supported and
- * test cases have been written. Unlike DefaultFeatureCollection the type information must be known
- * at construction time.
+ * <p>This is similar to DefaultFeatureCollection, although additional methods are supported and test cases have been
+ * written. Unlike DefaultFeatureCollection the type information must be known at construction time.
  *
  * @author Jody Garnett, Refractions Research
  */
@@ -65,7 +64,7 @@ public class MemoryFeatureCollection extends AbstractFeatureCollection
         return new MemoryIterator(contents.values().iterator());
     }
 
-    class MemoryIterator implements Iterator<SimpleFeature>, SimpleFeatureIterator {
+    static class MemoryIterator implements Iterator<SimpleFeature>, SimpleFeatureIterator {
         Iterator<SimpleFeature> it;
 
         MemoryIterator(Iterator<SimpleFeature> iterator) {
@@ -118,8 +117,7 @@ public class MemoryFeatureCollection extends AbstractFeatureCollection
             return old;
         }
         return null;
-    };
-
+    }
     /** Calculates the bounds of the features without caching. */
     @Override
     public ReferencedEnvelope getBounds() {

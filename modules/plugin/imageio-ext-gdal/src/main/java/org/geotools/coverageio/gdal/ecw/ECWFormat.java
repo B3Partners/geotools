@@ -19,11 +19,11 @@ package org.geotools.coverageio.gdal.ecw;
 import it.geosolutions.imageio.plugins.ecw.ECWImageReaderSpi;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.coverage.grid.Format;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.geometry.MismatchedDimensionException;
 import org.geotools.coverageio.gdal.BaseGDALGridFormat;
-import org.geotools.data.DataSourceException;
 import org.geotools.util.factory.Hints;
-import org.opengis.coverage.grid.Format;
-import org.opengis.geometry.MismatchedDimensionException;
 
 /**
  * An implementation of {@link Format} for the ECW format.
@@ -35,8 +35,7 @@ import org.opengis.geometry.MismatchedDimensionException;
 public final class ECWFormat extends BaseGDALGridFormat implements Format {
 
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(ECWFormat.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(ECWFormat.class);
 
     /** Creates an instance and sets the metadata. */
     public ECWFormat() {

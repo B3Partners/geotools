@@ -25,8 +25,8 @@ import java.util.Set;
 import org.geotools.util.Utilities;
 
 /**
- * A view of a metadata object as a map. Keys are property names and values are the value returned
- * by the {@code getFoo()} method using reflection.
+ * A view of a metadata object as a map. Keys are property names and values are the value returned by the
+ * {@code getFoo()} method using reflection.
  *
  * @since 2.4
  * @version $Id$
@@ -63,13 +63,13 @@ final class PropertyMap extends AbstractMap<String, Object> {
     }
 
     /**
-     * Returns the value to which the specified key is mapped, or {@code null} if this map contains
-     * no mapping for the key.
+     * Returns the value to which the specified key is mapped, or {@code null} if this map contains no mapping for the
+     * key.
      */
     @Override
     public Object get(final Object key) {
-        if (key instanceof String) {
-            final Object value = accessor.get(accessor.indexOf((String) key), metadata);
+        if (key instanceof String string) {
+            final Object value = accessor.get(accessor.indexOf(string), metadata);
             if (!PropertyAccessor.isEmpty(value)) {
                 return value;
             }
@@ -84,16 +84,15 @@ final class PropertyMap extends AbstractMap<String, Object> {
      * @throws ClassCastException if the given value is not of the expected type.
      */
     @Override
-    public Object put(final String key, final Object value)
-            throws IllegalArgumentException, ClassCastException {
+    public Object put(final String key, final Object value) throws IllegalArgumentException, ClassCastException {
         return accessor.set(accessor.requiredIndexOf(key), metadata, value);
     }
 
     /** Removes the mapping for a key from this map if it is present. */
     @Override
     public Object remove(final Object key) {
-        if (key instanceof String) {
-            return put((String) key, null);
+        if (key instanceof String string) {
+            return put(string, null);
         } else {
             return null;
         }
@@ -148,28 +147,27 @@ final class PropertyMap extends AbstractMap<String, Object> {
         }
 
         /** Compares the specified entry with this one for equality. */
+        @SuppressWarnings("NonOverridingEquals") // Type-specific helper method, not overriding Object.equals
         public boolean equals(final Map.Entry<?, ?> entry) {
-            return Utilities.equals(getKey(), entry.getKey())
-                    && Utilities.equals(getValue(), entry.getValue());
+            return Utilities.equals(getKey(), entry.getKey()) && Utilities.equals(getValue(), entry.getValue());
         }
 
         /**
-         * Compares the specified object with this entry for equality. Criterions are specified by
-         * the {@link Map.Entry} contract.
+         * Compares the specified object with this entry for equality. Criterions are specified by the {@link Map.Entry}
+         * contract.
          */
         @Override
         public boolean equals(final Object object) {
-            return (object instanceof Map.Entry) && equals((Map.Entry) object);
+            return object instanceof Map.Entry e && equals(e);
         }
 
         /**
-         * Returns the hash code value for this map entry. The formula is specified by the {@link
-         * Map.Entry} contract.
+         * Returns the hash code value for this map entry. The formula is specified by the {@link Map.Entry} contract.
          */
         @Override
         public int hashCode() {
             Object x = getKey();
-            int code = (x != null) ? x.hashCode() : 0;
+            int code = x != null ? x.hashCode() : 0;
             x = getValue();
             if (x != null) {
                 code ^= x.hashCode();
@@ -192,10 +190,7 @@ final class PropertyMap extends AbstractMap<String, Object> {
             move(0);
         }
 
-        /**
-         * Move {@link #next} to the first property with a valid value, starting at the specified
-         * index.
-         */
+        /** Move {@link #next} to the first property with a valid value, starting at the specified index. */
         private void move(int index) {
             final int count = accessor.count();
             while (index < count) {
@@ -268,11 +263,10 @@ final class PropertyMap extends AbstractMap<String, Object> {
         /** Returns {@code true} if this collection contains the specified element. */
         @Override
         public boolean contains(final Object object) {
-            if (object instanceof Map.Entry) {
-                final Map.Entry entry = (Map.Entry) object;
+            if (object instanceof Map.Entry entry) {
                 final Object key = entry.getKey();
-                if (key instanceof String) {
-                    return new Property((String) key).equals(entry);
+                if (key instanceof String string) {
+                    return new Property(string).equals(entry);
                 }
             }
             return false;

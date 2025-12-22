@@ -7,13 +7,13 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.style.Style;
 import org.geotools.data.property.PropertyDataStore;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.FeatureLayer;
 import org.geotools.map.MapContent;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.geotools.styling.Style;
 import org.geotools.test.TestData;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,7 +24,8 @@ public class WrapPointSymbolizerTest {
 
     @Before
     public void setUp() throws Exception {
-        File property = new File(TestData.getResource(this, "bigsquare.properties").toURI());
+        File property =
+                new File(TestData.getResource(this, "bigsquare.properties").toURI());
         PropertyDataStore ds = new PropertyDataStore(property.getParentFile());
         fs = ds.getFeatureSource("bigsquare");
     }
@@ -35,8 +36,7 @@ public class WrapPointSymbolizerTest {
 
         MapContent mc = new MapContent();
         mc.addLayer(new FeatureLayer(fs, style));
-        ReferencedEnvelope bounds =
-                new ReferencedEnvelope(0, 370, 0, 10, DefaultGeographicCRS.WGS84);
+        ReferencedEnvelope bounds = new ReferencedEnvelope(0, 370, 0, 10, DefaultGeographicCRS.WGS84);
         mc.getViewport().setBounds(bounds);
 
         StreamingRenderer renderer = new StreamingRenderer();

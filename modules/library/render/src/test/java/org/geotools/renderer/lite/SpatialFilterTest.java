@@ -6,9 +6,18 @@ import java.io.File;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.Symbolizer;
 import org.geotools.data.property.PropertyDataStore;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -19,11 +28,7 @@ import org.geotools.referencing.CRS.AxisOrder;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.renderer.RenderListener;
-import org.geotools.styling.PolygonSymbolizer;
-import org.geotools.styling.Rule;
-import org.geotools.styling.Style;
 import org.geotools.styling.StyleBuilder;
-import org.geotools.styling.Symbolizer;
 import org.geotools.test.TestData;
 import org.geotools.util.factory.Hints;
 import org.junit.AfterClass;
@@ -32,17 +37,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class SpatialFilterTest {
 
     private static final long TIME = 2000;
 
-    FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
     SimpleFeatureSource squareFS;
 
@@ -68,15 +68,13 @@ public class SpatialFilterTest {
         // the following is only to make the test work in Eclipse, where the test
         // classpath is tainted by the test classpath of dependent modules (whilst in Maven it's
         // not)
-        Set<CRSAuthorityFactory> factories =
-                ReferencingFactoryFinder.getCRSAuthorityFactories(null);
+        Set<CRSAuthorityFactory> factories = ReferencingFactoryFinder.getCRSAuthorityFactories(null);
         for (CRSAuthorityFactory factory : factories) {
             if (factory.getClass().getSimpleName().equals("EPSGCRSAuthorityFactory")) {
                 ReferencingFactoryFinder.removeAuthorityFactory(factory);
             }
         }
-        assertEquals(
-                AxisOrder.NORTH_EAST, CRS.getAxisOrder(CRS.decode("urn:ogc:def:crs:EPSG::4326")));
+        assertEquals(AxisOrder.NORTH_EAST, CRS.getAxisOrder(CRS.decode("urn:ogc:def:crs:EPSG::4326")));
     }
 
     @Before
@@ -94,19 +92,18 @@ public class SpatialFilterTest {
         content.getViewport().setCoordinateReferenceSystem(DefaultGeographicCRS.WGS84);
 
         renderer.setMapContent(content);
-        renderer.addRenderListener(
-                new RenderListener() {
+        renderer.addRenderListener(new RenderListener() {
 
-                    @Override
-                    public void featureRenderer(SimpleFeature feature) {
-                        renderedIds.add(feature.getID());
-                    }
+            @Override
+            public void featureRenderer(SimpleFeature feature) {
+                renderedIds.add(feature.getID());
+            }
 
-                    @Override
-                    public void errorOccurred(Exception e) {
-                        errorCount++;
-                    }
-                });
+            @Override
+            public void errorOccurred(Exception e) {
+                errorCount++;
+            }
+        });
 
         // System.setProperty("org.geotools.test.interactive", "true");
     }
@@ -157,8 +154,7 @@ public class SpatialFilterTest {
         rule.setFilter(ff.bbox("geom", 5, 1, 7, 3, null));
 
         // force EPSG axis order interpretation
-        renderer.setRendererHints(
-                Collections.singletonMap(StreamingRenderer.FORCE_EPSG_AXIS_ORDER_KEY, true));
+        renderer.setRendererHints(Collections.singletonMap(StreamingRenderer.FORCE_EPSG_AXIS_ORDER_KEY, true));
 
         content.addLayer(new FeatureLayer(pointFS, style));
 
@@ -179,18 +175,16 @@ public class SpatialFilterTest {
         Symbolizer ps = sb.createPointSymbolizer();
         Style style = sb.createStyle(ps);
         Rule rule = style.featureTypeStyles().get(0).rules().get(0);
-        rule.setFilter(
-                ff.bbox(
-                        "geom",
-                        envUTM31N.getMinX(),
-                        envUTM31N.getMinY(),
-                        envUTM31N.getMaxX(),
-                        envUTM31N.getMaxY(),
-                        "EPSG:32631"));
+        rule.setFilter(ff.bbox(
+                "geom",
+                envUTM31N.getMinX(),
+                envUTM31N.getMinY(),
+                envUTM31N.getMaxX(),
+                envUTM31N.getMaxY(),
+                "EPSG:32631"));
 
         // force EPSG axis order interpretation
-        renderer.setRendererHints(
-                Collections.singletonMap(StreamingRenderer.FORCE_EPSG_AXIS_ORDER_KEY, true));
+        renderer.setRendererHints(Collections.singletonMap(StreamingRenderer.FORCE_EPSG_AXIS_ORDER_KEY, true));
 
         content.addLayer(new FeatureLayer(pointFS, style));
 
@@ -255,8 +249,7 @@ public class SpatialFilterTest {
 
         content.addLayer(layer);
 
-        RendererBaseTest.showRender(
-                "Reprojected polygon as a definition query", renderer, TIME, bounds);
+        RendererBaseTest.showRender("Reprojected polygon as a definition query", renderer, TIME, bounds);
         assertEquals(1, renderedIds.size());
         assertEquals("point.4", renderedIds.iterator().next());
     }

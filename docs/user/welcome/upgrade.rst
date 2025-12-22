@@ -1,11 +1,11 @@
 Upgrade
 =======
 
-With a library as old as GeoTools you will occasionally run into a project from ten years ago that
+With a library as experienced as GeoTools you will occasionally run into a project from ten years ago that
 needs to be upgraded. This page collects the upgrade notes for each release change; highlighting any
 fundamental changes with code examples showing how to upgrade your code.
 
-The first step to upgrade: change the ``geotools.version`` of your dependencies in your ``pom.xml`` to |release| (or an appropriate stable version):
+The first step to upgrade: change the ``geotools.version`` of your dependencies in your ``pom.xml`` to |release|:
 
 .. use a parsed-literal here instead of a code-block because substitution of the RELEASE token does not work in a code-block
 .. parsed-literal::
@@ -16,33 +16,528 @@ The first step to upgrade: change the ``geotools.version`` of your dependencies 
     </properties>
     ....
     <dependencies>
+          <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-bom</artifactId>
+            <version>${geotools.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+          </dependency>
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-shapefile</artifactId>
-            <version>${geotools.version}</version>
         </dependency>
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-swing</artifactId>
-            <version>${geotools.version}</version>
         </dependency>
         ....
     </dependencies>
 
+.. _update35:
+
+GeoTools 35.x
+-------------
+
+JavaEE to JakartaEE Migration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+GeoTools 35.x has upgraded from JavaEE to JakartaEE reflecting the transition of this technology from Oracle to the Eclipse Foundation. Jakarta version mangement is provided by `platform-dependencies/pom.xml` import.
+
+BEFORE:
+
+.. code-block:: xml
+
+   <dependency>
+     <groupId>javax.xml.bind</groupId>
+     <artifactId>jaxb-api</artifactId>
+   </dependency>
+   <dependency>
+     <groupId>javax.activation</groupId>
+     <artifactId>javax.activation-api</artifactId>
+   </dependency>
+   <dependency>
+     <groupId>javax.mail</groupId>
+     <artifactId>mail</artifactId>
+   </dependency>
+
+.. code-block:: java
+   
+   import javax.xml.bind.annotation.XmlRootElement;
+
+AFTER:
+
+.. code-block:: xml
+
+   <dependency>
+     <groupId>jakarta.xml.bind</groupId>
+     <artifactId>jakarta.xml.bind-api</artifactId>
+   </dependency>
+   <dependency>
+     <groupId>jakarta.activation</groupId>
+     <artifactId>jakarta.activation-api</artifactId>
+   </dependency>
+   <dependency>
+     <groupId>jakarta.mail</groupId>
+     <artifactId>jakarta.mail-api</artifactId>
+   </dependency>
+
+.. code-block:: java
+
+   import jakarta.xml.bind.annotation.XmlRootElement;
+
+Migration instructions:
+
+* `Migrate to Jakarta EE 10 <https://docs.openrewrite.org/recipes/java/migrate/jakarta/jakartaee10)>`__ (Open Rewrite Script)
+
+.. _update34:
+
+
+GeoTools 34.x
+-------------
+
+Maven Bill of Materials
+^^^^^^^^^^^^^^^^^^^^^^^
+
+GeoTools 34.x has adopted the use of Maven Bill of Materials (BOM) to advertise both the versions of GeoTools modules and the third party libraries used by GeoTools.
+
+This change will significantly reduce the amount of work expected of downstream projects, however to take advantage of this you will need to perform some clean up of your ``pom.xml``
+to remove dependencies, and especially remove version numbers.
+
+Use maven import scope to include the `gt-bom`:
+
+.. code-block:: xml
+
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-bom</artifactId>
+            <version>${geotools.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+
+GeoTools dependencies can then be listed without version numbers:
+
+.. code-block:: xml
+
+  <dependencies>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-shapefile</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-swing</artifactId>
+    </dependency>
+  </dependencies>
+
+To align third party dependencies with those used by GeoTools import the ``gt-platform-dependencies``:
+
+.. code-block:: xml
+
+   <dependency>
+     <groupId>org.geotools</groupId>
+     <artifactId>gt-platform-dependencies</artifactId>
+     <version>${geotools.version}</version>
+     <type>pom</type>
+     <scope>import</scope>
+   </dependency>
+
+Third-party dependences such as the postgresql jdbc driver can then be listed without version numbers:
+
+.. code-block:: xml
+
+   <dependency>
+     <groupId>org.postgresql</groupId>
+     <artifactId>postgresql</artifactId>
+   </dependency>
+
+Java 17 Minimum
+^^^^^^^^^^^^^^^
+
+GeoTools 34.x is the first series requiring Java 17 minimum.
+
+Javas 17 introduces additional Java Runtime Environment protections "Strongly Encapsulate JDK Internals" and "Sealed Classes". These new restrictions have resulted in several significant component upgrades (ImageN and removal of JAI Tools) outlined below.
+
+.. code-block:: xml
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <release>17</release>
+          <encoding>UTF-8</encoding>
+        </configuration>
+      </plugin>
+
+Migration to Eclipse ImageN
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The `Eclipse ImageN <https://projects.eclipse.org/projects/technology.imagen>`__ library is continuing the work of **Java Advanced Imaging** thanks to a code donation
+from Oracle. In order to provide test coverage the project has directly incorporated the JAI-Ext operators
+and improvements that have been made on behalf of the GeoTools and GeoServer projects.
+
+Migration instructions and script are provided by the new ImageN project:
+
+* `JAI Migration <https://eclipse-imagen.github.io/imagen/migration/>`__
+* ImageN is available as individual maven modules, or as a combined `imagen-all` module.
+
+BEFORE:
+
+.. code-block:: xml
+
+   <dependency>
+     <groupId>javax.media</groupId>
+     <artifactId>jai_core</artifactId>
+     <version>1.1.3</version>
+   </dependency>
+
+.. code-block:: java
+
+   import javax.media.jai.JAI;
+   import javax.media.jai.RenderedOp;
+   import com.sun.media.jai.codec.FileSeekableStream;
+   import javax.media.jai.widget.ScrollingImagePanel;
+   
+AFTER:
+
+.. code-block:: xml
+
+   <dependency>
+     <groupId>org.eclipse.imagen</groupId>
+     <artifactId>imagen-core</artifactId>
+     <!-- version managed via gt-platform-dependencies bom -->
+   </dependency>
+   <dependency>
+     <groupId>org.eclipse.imagen</groupId>
+     <artifactId>affine</artifactId>
+     <!-- version managed via gt-platform-dependencies bom -->
+   </dependency>
+   
+.. code-block:: java
+
+   import org.eclipse.imagen.JAI;
+   import org.eclipse.imagen.RenderedOp;
+   import org.eclipse.imagen.media.codec.FileSeekableStream;
+   import org.eclipse.imagen.widget.ScrollingImagePanel;
+
+GeoTools ImageN API Changes
+'''''''''''''''''''''''''''
+
+Additional GeoTools migration guidance:
+
+* JAIExt utility class is no longer required and has been removed.
+* Logging has been updated, ``Logging.IMAGEN`` is now used to configure ImageN logging
+* THe constant `ImageMosaicFormat.USE_JAI_IMAGEREAD` has changed to `ImageMosaicFormat.USE_IMAGEN_IMAGEREAD`.
+* `ComponentColorModelJAI`: Deprecated, no longer required, maintained for serialization compatibility
+
+Removal of JAI Tools
+''''''''''''''''''''
+
+To facilitate the migration to Eclipse ImageN the JAI Tools library is no longer available.
+
+GeoTools now uses equivalent functionality:
+
+* Use of RangeLookupTable and Range
+* In the case of statistics has internally adopted JAI Tools code
+
+BEFORE:
+
+.. code-block:: java
+
+   import org.jaitools.numeric.Range;
+   import org.jaitools.media.jai.rangelookup.RangeLookupTable;
+   
+
+   Range<Double> span = Range.create(0.0,true,5.0,false);
+   Range<Float> span1 = Range.create(0.0f,true,10.0f,false);
+   Range<Float> span2 = Range.create(10.0f,true,null,true);
+   
+   RangeLookupTable lookup = CoverageUtilities.getRangeLookupTable(List.of(span1,span2),-1.0f);
+   PolygonExtractionProcess.process(band,insideEdges,noDataValues,List.of(span1,span2));
+
+JAI-Ext:
+
+.. code-block:: java
+
+   import it.geosolutions.jaiext.range.Range;
+   import it.geosolutions.jaiext.range.RangeFactory;
+   import it.geosolutions.jaiext.rlookup.RangeLookupTable;
+
+   RangeDouble span1 = (RangeDouble) RangeFactory.create(0.0,true,5.0,false);
+   RangeFloat span1 = (RangeFloat) RangeFactory.create(0.0f,true,10.0f,false);
+   RangeFloat span2 = (RangeFloat) RangeFactory.create(10.0f,true,null,true);
+   RangeLookupTable lookup = CoverageUtilities.getRangeLookupTable(List.of(span1,span2),-1.0f);
+   PolygonExtractionProcess.process(band,insideEdges,noDataValues,List.of(span1,span2));
+   
+ImageN:
+
+.. code-block:: java
+
+   import org.eclipse.imagen.media.range.Range;
+   import org.eclipse.imagen.media.rangerange.RangeFactory;
+   import org.eclipse.imagen.media.rlookup.RangeLookupTable;
+   
+   RangeDouble span = RangeFactory.create(0.0,true,5.0,false);
+   RangeFloat span1 = RangeFactory.create(0.0f,true,10.0f,false);
+   RangeFloat span2 = RangeFactory.create(10.0f,true,null,true);
+   RangeLookupTable lookup = CoverageUtilities.getRangeLookupTable(List.of(span1,span2),-1.0f);
+   PolygonExtractionProcess.process(band,insideEdges,noDataValues,List.of(span1,span2));
+
+.. _update32:
+
+GeoTools 32.x
+-------------
+
+End Java 11 Compatibility
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+GeoTools 32.x is the final release compatible with Java 11.
+
+ImageMosaic Deserialization Validation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Since GeoTools 31.4, class names are validated when deserializing sample image files for ImageMosaic.
+
+If the default allowlist of classes that image mosaic will deserialize is preventing the usage of valid
+sample image files, the ``org.geotools.gce.imagemosaic.sampleimage.allowlist`` system property can be set to
+allow additional classes whose fully-qualified class names match the provided regular expression.
+
+Since GeoTools 32.3, certain fields of the ``javax.media.jai.remote.SerializableRenderedImage`` class are
+blocked by the default allow list to block deserializing instances of that class. GeoTools has migrated to
+the using the ``org.geotools.gce.imagemosaic.SampleImage`` class since version 16.2 (released February 2017)
+so most users will probably not be affected by this but the following example shows how to set the system
+property to allow SerializableRenderedImage instances if necessary:
+
+.. code-block:: properties
+
+   org.geotools.gce.imagemosaic.sampleimage.allowlist=^java\\.(net\\.InetAddress|util\\.Hashtable)$
+
+JDBC Method signature change in PreparedStatementSQLDialect
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The method ``PreparedStatementSQLDialect.setValue(Object, Class<?>, PreparedStatement, int, Connection)`` was refactored to receive an additional argument.
+
+The new signature is ``PreparedStatementSQLDialect.setValue(Object, Class<?>, AttributeDescriptor, PreparedStatement, int, Connection)``.
+
+The AttributeDescriptor passed corresponds to the feature's attribute and maybe be ``null`` in cases where no attribute is directly available.
+
+From now on, the sqlType for a specific feature attribute is taken into consideration for ``INSERT`` and ``UPDATE`` operations, rather than solely the attribute's class.  The type is now determined by the new method ``org.geotools.jdbc.JDBCDataStore.getMapping(Class<?>, AttributeDescriptor): Integer``.
+
+Users of JDBCDataStore are not affected. Custom implementations of ``org.geotools.jdbc.PreparedStatementSQLDialect`` must be adjusted to the new method signature in order to compile.
+
+NetCDF Version upgrade to 5.5.3
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+GeoTools 32.0 upgraded underlying Unidata NetCDF libraries from 4.6.15 to 5.5.3 which includes internal GRIB mapping table 
+updates and GRIB parameters interpretation updates. The upgrade impacted the way the GRIB parameters are being retrieved as
+well the way the temporal information is being extracted from the underlying data which may affect the construction of the
+names and the reported temporal ranges as well, resulting in some breakage with the upgrade.
+
+Refer to `GEOT-7547 <https://osgeo-org.atlassian.net/browse/GEOT-7547>`_ for relevant details on what has been broken.
+
+If a GRIB dataset stopped working:
+
+#. Remove any auxiliary/cache file associated with the underlying GRIB file (assuming the file is named gribfile.grib2):
+
+   * gribfile.ncx3
+   * gribfile.ncx4
+   * gribfile.gbx9
+   * .gribfile_hash folder (if not previously deleted) located beside the original file.
+
+   * The screenshot below, represents an actual example of a tpcprblty.2019100912.incremental.grib2 file with related auxiliary/cache files
+
+    .. figure:: /images/grib_auxiliary_files.png
+
+Additional steps needed in case of ImageMosaic of GRIBs
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+#. Remove any automatically created ImageMosaic configuration file within the ImageMosaic root folder. Assuming the underlying ImageMosaic was named mosaicM, containing coverages related to VariableA, VariableB, VariableC, …:
+
+   * VariableA.properties, VariableB.properties, VariableC.properties, …
+   * VariableAsample_image.dat, VariableBsample_image.dat, VariableCsample_image.dat, …
+   * mosaicM.xml
+
+#. If using a datastore.properties connecting to an actual DB, cleanup the tables from the DB
+
+   * Assuming that all the grib files belonging to the same ImageMosaic are affected by the same issue, you can delete the related tables and allow the imageMosaic reconfiguration to recreate them.
+   * Based on the above example, the naming convention is that granules for VariableA are stored on table named VariableA and so on.
+
+#. Recreate the indexer.xml and _auxiliary.xml file as reported in the `NetCDF documentation <https://docs.geoserver.org/main/en/user/extensions/netcdf/netcdf.html#setting-up-a-basic-mosaic>`__ . (At the end, GRIB file are served through the NetCDF libraries)
+
+ZoomContext related classes moved from gt-ysld to gt-main
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+All classes related to ``ZoomContext`` and ``ZoomContextFinder`` have been moved into gt-main, in the ``org.geotools.styling.zoom`` package.
+The old classes in gt-ysld are still available, but are deprecated and will be removed. Please switch imports at your earliest convenience.
+
+.. _update31:
+
+GeoTools 31.x
+-------------
+
+DataStore Optimization uses Actual Query
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The actual query can now be passed to the method to determine whether the DataStore implementation can optimize for specific queries.
+
+For example, ``canLimit()`` changes to ``canLimit(query)`` so the actual query can be evaluated and used to determine the response of true or false.  Previously, ``canLimit()`` had to respond in a generic way, without the benefit of the query.  The old methods have been deprecated.
+
+This allows some simple queries to be optimized when possible without also having to optimize for more complex queries (which might not be possible for the particular DataStore.)
+
+For more details on whether a method can be optimized in this way, please refer to the `API docs <https://docs.geotools.org/latest/javadocs/org/geotools/data/store/ContentFeatureSource.html>`_ and the `tutorial <https://docs.geotools.org/latest/userguide/tutorial/datastore/optimisation.html>`_.
+
+
+.. _update30:
+
+GeoTools 30.x
+-------------
+
+This update contains a major breaking change to the GeoTools library refactoring to remove the ``org.opengis`` pacakage.
+
+The ``gt-opengis`` module has been renamed, change your dependency to:
+
+.. code-block:: xml
+
+   <dependency>
+       <groupId>org.geotools</groupId>
+       <artifactId>gt-api</artifactId>
+       <version>${geotools.version}</version>
+   </dependency>
+
+Unfortunately we could not maintain a deprecation cycle for this change and have provided an update script to assist.
+
+Remove OpenGIS and Cleanup GeoTools API
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The package ``org.opengis`` has changed ``org.geotools.api``.
+
+To aid in this transition an `Apache Ant <https://ant.apache.org>`__ script is provided:
+
+1. Download Ant script :download:`remove-opengis.xml <files/remove-opengis.xml>` included with this documentation.
+
+2. The default ``update`` target will update your Java code and ``META-INF/services``:
+
+   Use the absolute path for project.dir:
+
+   .. code-block:: bash
+    
+      ant -f remove-opengis.xml -Dproject.dir=(absolute path to your project directory)
+
+   Or copy :file:`remove-opengis.xml` file into  your project directory and run:
+
+   .. code-block:: bash
+
+      ant -f remove-opengis.xml
+
+3. We have done our best to with this update script but it is not perfect - known issues:
+
+   * Double check use of geometry Position and temporal Position which have the same classname in different packages
+   * Clean up unused or duplicate imports
+   * You may need to re-run code formatters
+
+Data API
+^^^^^^^^
+
+The main data access interfaces have been moved from ``org.geotools.data`` to ``org.geotools.api.data``.
+This includes, ``DataStore``, ``FeatureSource``, ``FeatureIterator``, and many others.
+
+As part of the move, the datastore registration files found in ``META-INF/services`` need to be moved as well, 
+in particular:
+
+
+.. code-block:: 
+
+   org.geotools.data.DataAccessFactory
+   org.geotools.data.DataStoreFactorySpi
+   org.geotools.data.FileDataStoreFactorySpi
+
+should now be named:
+
+.. code-block:: 
+
+   org.geotools.api.data.DataAccessFactory
+   org.geotools.api.data.DataStoreFactorySpi
+   org.geotools.api.data.FileDataStoreFactorySpi
+
+The upgrade script should take care of this change.
+
+
+ISO Geometry
+^^^^^^^^^^^^
+
+The **org.opengis.geometry** interfaces (for ``Point``, ``Curve`` and ``Surface`` and supporting classes) were no longer in use.
+
+The direct use of **JTS Topology Suite** ``Geometry`` is now used throughout the library. Previously Object was used
+requiring a cast to Geometry.
+
+.. code-block:: java
+
+   // cast to Geometry no longer needed
+   Geometry geometry = feature.getDefaultGeometry();
+
+
+DirectPosition and GeneralEnvelope cleanup
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The **org.opengis.geometry** and **org.opengis.geometry.coordinates** interfaces for positions, envelopes and bounding
+boxes have been revised as part of their refactor to **org.geotools.api**.
+
+===============================================  ===============================================================
+GeoAPI Preflight / OpenGIS                       GeoTools 30.x API
+===============================================  ===============================================================
+org.opengis.geometry.BoundingBox                 org.geotools.api.geometry.BoundingBox
+org.opengis.geometry.BoundingBox3D               org.geotools.api.geometry.BoundingBox3D
+org.opengis.geometry.DirectPosition              org.geotools.api.geometry.Position
+org.opengis.geometry.Envelope                    org.geotools.api.geometry.Bounds
+org.opengis.geometry.coordinates.PointArray      java.util.List<Position>
+org.opengis.geometry.coordinates.Position        org.geotools.api.geometry.Position
+===============================================  ===============================================================
+
+===============================================  ===============================================================
+GeoTools 29.x Implementation                     GeoTools 30.x Implementation
+===============================================  ===============================================================
+org.geotools.geometry.AbstractDirectPosition     org.geotools.api.geometry.AbstractPosition
+org.geotools.geometry.AbstractEnvelope           org.geotools.api.geometry.AbstractBounds
+org.geotools.geometry.DirectPosition1D           org.geotools.api.geometry.Position1D
+org.geotools.geometry.DirectPosition2D           org.geotools.api.geometry.Position2D
+org.geotools.geometry.DirectPosition3D           org.geotools.api.geometry.Position3D
+org.geotools.geometry.Envelope2D                 org.geotools.geometry.jts.ReferencedEnvelope
+org.geotools.geometry.GeneralDirectPosition      org.geotools.api.geometry.GeneralPosition
+org.geotools.geometry.GeneralEnvelope            org.geotools.api.geometry.GeneralBounds
+===============================================  ===============================================================
+
+For the most part these changes are method compatible, attempting common replacements:
+
+* Replace ``ReferencedEnvelope.create(Envelope,CoordinateReferenceSystem)`` with ``ReferencedEnvelope.envelope(Envelope,CoordinateReferenceSystem)``
+
+* Replace constructor ``Envelope2D(crs,x,y,width,height)`` with ``ReferencedEnvelope.rect(x,y,width,height,crs)``
+
+* Replace ``Envelope2D.equals(Envelope2D)`` with ``ReferencedEnvelope.boundsEquals2D(Bounds,double)``
+
+* Replace ``Envelope`` field access ``x``,``y``,``width``,``height`` with appropriate methods (example ``ReferencedEnvelope.getMinX()``)
+
+.. _update29:
+
 GeoTools 29.x
 -------------
 
-Java 11 as the minimum version
+Java 17 as the minimum version
 ------------------------------
 
-GeoTools 29.x requires Java 11 as the minimum version. If you are still using Java 8, you will have
-to remain on GeoTools 28.x or ealier.
+GeoTools 34.x requires Java 17 as the minimum version. If you are still using Java 11, you will have
+to remain on GeoTools 33.x or earlier.
 
 Deprecated functions removed
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In gt-wfs-ng we've removed:
 ``org.geotools.data.wfs.WFSFeatureReader.WFSFeatureReader(GetParser<SimpleFeature>)``
+
+.. _update27:
 
 GeoTools 27.x
 -------------
@@ -52,7 +547,7 @@ Log4JLoggingFactory migrated to Reload4J
 
 We have changed to testing ``Log4JLoggingFactory`` against `reload4j project <https://reload4j.qos.ch/>`__.
 
-The Log4J 1.2 API has been `retired from Apache<https://logging.apache.org/log4j/1.2/>`__`, and the API is now maintained by the Reload4J project:
+The Log4J 1.2 API has been `retired from Apache <https://logging.apache.org/log4j/1.2/>`__, and the API is now maintained by the Reload4J project:
 
 .. code-block:: xml
 
@@ -126,6 +621,8 @@ In a production environment several logging libraries from different components 
 
 For more information see :doc:`/library/metadata/logging/factory`.
 
+.. _update26:
+
 GeoTools 26.x
 -------------
 
@@ -174,6 +671,8 @@ filter to make use of the faster and more robust `Google regular expression's li
 but inadvisable patterns, such as those with multi character escapes or wild cards. If you had patterns that 
 relied on long escape or wild card patterns you may now get an ``IllegalArgumentException`` for a pattern that 
 happened to work in the past.
+
+.. _update25:
 
 GeoTools 25.x
 -------------
@@ -400,6 +899,7 @@ See list of available constructors:
 For the same reason we will not allow changes to the headers after initialisation,
 and have deprecated ``public Map<String, String> getHeaders()``.
 
+.. _update24:
 
 GeoTools 24.x
 -------------
@@ -409,6 +909,8 @@ The Oracle extension was upgraded to use the current JDBC driver release. If you
 ``DbaseFileHeader.readHeader(ReadableByteChannel, Charset)`` method was removed. Instead ``DbaseFileHeader`` constructor must be used to pass a charset and ``DbaseFileHeader.readHeader(ReadableByteChannel)`` to read the header.
 
 The Units library (JSR 385) was updated to Units 2.0. This is mostly a change from package ``tec.uom.se.*`` to ``tech.units.indriya.*``. If you make any use of the Units library in your own code you will need to update the imports. There are also changes to the arithmetic operations' names. See this `blog post <https://schneide.blog/tag/unit-api-2-0/>`_ for more details.
+
+.. _update22:
 
 GeoTools 22.x
 -------------
@@ -509,10 +1011,12 @@ AFTER :file:`pom.xml`:
      <releases><enabled>false</enabled></releases>
    </repository>
 
+.. _update21:
+
 GeoTools 21.x
 -------------
 
-GeoTools 21 is the first is compatible with Java 8 and Java 11.
+GeoTools 21 is the first release compatible with Java 8 and Java 11.
 
 Restructured Library
 ^^^^^^^^^^^^^^^^^^^^
@@ -634,6 +1138,8 @@ AFTER :file:`pom.xml`:
        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
        <geotools.version>21.5</geotools.version>
    </properties>
+
+.. _update20:
 
 GeoTools 20.x
 -------------
@@ -802,6 +1308,8 @@ You will find it no longer compiles. It should be converted to use the ``Quantit
     System.out.println(dist.to(MetricPrefix.KILO(SI.METRE)).getValue() + " Km");
     System.out.println(dist.to(USCustomary.MILE) + " miles");
 
+.. _update19:
+
 GeoTools 19.x
 -------------
 
@@ -810,6 +1318,8 @@ GeoTools is built and tested with Java 8 at this time, to use this library in a 
     --add-modules=java.xml.bind --add-modules=java.activation -XX:+IgnoreUnrecognizedVMOptions
 
 These settings turn on several JRE modules that have been disabled by default in Java 9 onward.
+
+.. _update15:
 
 GeoTools 15.x
 -------------
@@ -829,6 +1339,8 @@ GeoTools 15.x requires Java 8::
             </plugin>
         </plugins>
     </build>
+
+.. _update14:
 
 GeoTools 14.x
 -------------
@@ -873,6 +1385,8 @@ AFTER::
 
 ``ShapefileDataStore`` representing shapefiles without any data, now return empty bounds on ``getBounds()`` instead of the bounds inside the shapefile header (mostly [0:0,0:0]). So ``bounds.isEmpty()`` and ``bounds.isNull()`` will return true for empty shapefiles.
 
+.. _update13:
+
 GeoTools 13.0
 -------------
 As of GeoTools 13.0, the ``CoverageViewType`` classes have been removed. The ``AbstractDataStore`` class is also now deprecated. Extensive work has been done to bring in ``ContentDataStore`` as its replacement.
@@ -888,15 +1402,21 @@ Many readers and iterators are now ``Closable`` for use with try-with-resource s
        }
    }
 
+.. _update12:
+
 GeoTools 12.0
 -------------
 GeoTools now requires `Java 7 <http://docs.geotools.org/latest/userguide/build/install/jdk.html>`_ and this is the first release tested with OpenJDK! Please ensure you are using JDK 1.7 or newer for GeoTools 12. Both Oracle Java 7 and OpenJDK 7 are supported, tested, release targets.
 
 Filter interfaces have been simplified. The GeoTools interfaces have been deprecated since GeoTools 2.3, and finally they have been removed. All filter interfaces now use the GeoAPI Filter.
 
+.. _update11:
+
 GeoTools 11.0
 -------------
 Only new features were added in GeoTools 11.0.
+
+.. _update10:
 
 GeoTools 10.0
 -------------
@@ -917,6 +1437,8 @@ BEFORE::
 AFTER::
  
   GridCoverage2DReader reader = format.getReader(source);
+
+.. _update9:
 
 GeoTools 9.0
 ------------
@@ -1095,6 +1617,9 @@ JAVA7 using try-with-resource syntax for ``Iterator`` that implements ``Closeabl
     }
     
 
+.. _update8:
+
+
 GeoTools 8.0
 ------------
 
@@ -1140,7 +1665,7 @@ The filter system was upgrade to match Filter 2.0 resulting in a few additions. 
 effects people writing their own functions (as now we need to know about parameter types).
 
 FeatureId
-''''''''''
+'''''''''
 
 * BEFORE::
 
@@ -1155,7 +1680,7 @@ FeatureId
 
 * AFTER
 
-  .. literalinclude:: /../src/main/java/org/geotools/opengis/FilterExamples.java
+  .. literalinclude:: /../src/main/java/org/geotools/api/FilterExamples.java
      :language: java
      :start-after: // id start
      :end-before: // id end
@@ -1234,6 +1759,8 @@ AFTER::
 
       NumberRange<Double> after1 = new NumberRange( Double.class, 0.0, 5.0 );
       NumberRange<Double> after2 = NumberRage.create( 0.0, 5.0 );
+
+.. _update7:
 
 GeoTools 2.7
 ------------
@@ -1433,6 +1960,9 @@ Old Method                          New Method
 ``getLength(dimension, unit)``      ``double getSpan(dimension, unit)``
 =================================== ===================================================
 
+.. _update6:
+
+
 GeoTools 2.6
 ------------
 
@@ -1465,9 +1995,9 @@ This is shown in the code example below with the ``maxx`` variable.
 
 As far as switching over to the new classes, the equivalence are as follows:
 
-1. Replace ``GridRange2D`` with ``GridEnvelope2D``
+1. Replace ``GridRange2D`` with ``GridGeneralBounds``
 
-   Notice that now ``GridEnvelope2D`` is a Java2D ``Rectangle`` and that it is also mutable!
+   Notice that now ``GridGeneralBounds`` is a Java2D ``Rectangle`` and that it is also mutable!
 2. Replace ``GeneralGridRange`` with ``GeneralGridEnvelope``
 
 There are a few more caveats, which we are showing here below.
@@ -1503,9 +2033,9 @@ BEFORE:
         final int w = originalGridRange.getSpan(0);
         final int maxx = originalGridRange.getHigh(0)+1;
 
-        import org.geotools.coverage.grid.GridEnvelope2D;
+        import org.geotools.coverage.grid.GridGeneralBounds;
         final Rectangle actualDim = new Rectangle(0, 0, hrWidth, hrHeight);
-        final GridEnvelope2D originalGridRange2D = new GridEnvelope2D(actualDim);
+        final GridGeneralBounds originalGridRange2D = new GridGeneralBounds(actualDim);
         final int w = originalGridRange2D.getSpan(0);
         final int maxx = originalGridRange2D.getHigh(0)+1;
         final Rectangle rect = (Rectangle)originalGridRange2D.clone();
@@ -1648,6 +2178,9 @@ Removed deprecated constructors from ``DefaultParameterDescriptor`` and ``Parame
 
     DefaultParameterDescriptor.create(...)
     Parameter.create(...)
+
+.. _update5:
+
 
 GeoTools 2.5
 ------------
@@ -1972,6 +2505,8 @@ DataAccess and DataStore
     }
     //No DataAccess.getFeatureReader/Writer
 
+.. _update4:
+
 GeoTools 2.4
 ------------
 
@@ -2156,7 +2691,7 @@ Here are the steps to follow to update your own code:
    BEFORE::
 
      filter = filterFactory.createCompareFilter(FilterType.COMPARE_EQUALS)
-     filter.setLeftGeoemtry( expr1 );
+     filter.setLeftGeometry( expr1 );
      filter.setRightGeometry( expr3 );
 
    AFTER::

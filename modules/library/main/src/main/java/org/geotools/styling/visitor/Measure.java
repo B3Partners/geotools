@@ -18,22 +18,22 @@ package org.geotools.styling.visitor;
 
 import javax.measure.Unit;
 import javax.measure.quantity.Length;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.NilExpression;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.visitor.SimplifyingFilterVisitor;
 import org.geotools.measure.Units;
 import org.geotools.util.Converters;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.NilExpression;
 import si.uom.SI;
 import systems.uom.common.USCustomary;
 
 /**
- * Helper class that parses a measure with eventual local unit of measure and helps the {@link
- * RescalingMode} enumeration to perfom its scaling job
+ * Helper class that parses a measure with eventual local unit of measure and helps the {@link RescalingMode}
+ * enumeration to perfom its scaling job
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -58,8 +58,8 @@ class Measure {
         this.expression = unscaled;
         setDefaultUnit(defaultUnit);
         this.uom = defaultUnit;
-        if (unscaled instanceof Literal) {
-            processLiteralExpression((Literal) unscaled, defaultUnit);
+        if (unscaled instanceof Literal literal1) {
+            processLiteralExpression(literal1, defaultUnit);
         } else {
             // see if we can still optimize
             PropertyIsNull test = ff.isNull(unscaled);
@@ -68,11 +68,10 @@ class Measure {
                 // special case, the expression was nil to start with
                 this.expression = NilExpression.NIL;
                 this.uom = defaultUnit;
-            } else if (simplified instanceof PropertyIsNull) {
-                PropertyIsNull pin = (PropertyIsNull) simplified;
+            } else if (simplified instanceof PropertyIsNull pin) {
                 Expression se = pin.getExpression();
-                if (se instanceof Literal) {
-                    processLiteralExpression((Literal) se, defaultUnit);
+                if (se instanceof Literal literal) {
+                    processLiteralExpression(literal, defaultUnit);
                 } else {
                     this.expression = se;
                     this.uom = defaultUnit;
@@ -116,9 +115,7 @@ class Measure {
         Double measure = Converters.convert(unitless, Double.class);
         if (measure == null) {
             throw new IllegalArgumentException(
-                    "Invalid measure '"
-                            + value
-                            + "', was expecting a number, eventually followed by px, m or ft");
+                    "Invalid measure '" + value + "', was expecting a number, eventually followed by px, m or ft");
         }
         this.expression = ff.literal(value);
         this.value = measure;
@@ -132,14 +129,10 @@ class Measure {
 
     /** Returns true if the uom is pixel within a symbolizer whose default unit is also pixel */
     boolean isPixelInPixelDefault() {
-        return (uom == null || uom == defaultUnit)
-                && (defaultUnit == null || defaultUnit == Units.PIXEL);
+        return (uom == null || uom == defaultUnit) && (defaultUnit == null || defaultUnit == Units.PIXEL);
     }
 
-    /**
-     * @return true, if the uom is a real world unit within a symbolizer whose default unit is
-     *     pixel.
-     */
+    /** @return true, if the uom is a real world unit within a symbolizer whose default unit is pixel. */
     public boolean isRealWorldUnitInPixelDefault() {
         return isRealWorldUnit() && (defaultUnit == null || defaultUnit == Units.PIXEL);
     }

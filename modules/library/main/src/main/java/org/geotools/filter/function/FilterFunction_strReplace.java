@@ -20,20 +20,19 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_strReplace extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "strReplace",
-                    parameter("string", String.class),
-                    parameter("string", String.class),
-                    parameter("search", String.class),
-                    parameter("replace", String.class),
-                    parameter("all", Boolean.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "strReplace",
+            parameter("string", String.class),
+            parameter("string", String.class),
+            parameter("search", String.class),
+            parameter("replace", String.class),
+            parameter("all", Boolean.class));
 
     public FilterFunction_strReplace() {
         super(NAME);
@@ -74,6 +73,7 @@ public class FilterFunction_strReplace extends FunctionExpressionImpl {
             arg3 = getExpression(3).evaluate(feature, Boolean.class); // extra
         } catch (Exception e) // probably a type error
         {
+            // ignored
         }
 
         if (arg3 == null) {

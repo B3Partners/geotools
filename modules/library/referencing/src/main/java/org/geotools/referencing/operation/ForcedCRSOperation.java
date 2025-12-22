@@ -18,21 +18,20 @@ package org.geotools.referencing.operation;
 
 import java.util.Collection;
 import java.util.Set;
-import org.opengis.metadata.extent.Extent;
-import org.opengis.metadata.quality.PositionalAccuracy;
-import org.opengis.referencing.ReferenceIdentifier;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.CoordinateOperation;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.util.GenericName;
-import org.opengis.util.InternationalString;
+import org.geotools.api.metadata.extent.Extent;
+import org.geotools.api.metadata.quality.PositionalAccuracy;
+import org.geotools.api.referencing.ReferenceIdentifier;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.CoordinateOperation;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.util.GenericName;
+import org.geotools.api.util.InternationalString;
 
 /**
- * Used by {@link AuthorityBackedFactory} when concanating operations, in case we're concatenating
- * identities, but so that the source or target CRS are not the same as the non identity part. This
- * happens, for example, when trying to work against a projected CRS with a wrapped geographic CRS
- * axis in lon/lat order, and with the database providing an operation that uses the same projected
- * CRS around a geographic CRS with axis in lat/lon order
+ * Used by {@link AuthorityBackedFactory} when concanating operations, in case we're concatenating identities, but so
+ * that the source or target CRS are not the same as the non identity part. This happens, for example, when trying to
+ * work against a projected CRS with a wrapped geographic CRS axis in lon/lat order, and with the database providing an
+ * operation that uses the same projected CRS around a geographic CRS with axis in lat/lon order
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -45,9 +44,7 @@ class ForcedCRSOperation implements CoordinateOperation {
     CoordinateReferenceSystem targetCRS;
 
     public ForcedCRSOperation(
-            CoordinateOperation delegate,
-            CoordinateReferenceSystem sourceCRS,
-            CoordinateReferenceSystem targetCRS) {
+            CoordinateOperation delegate, CoordinateReferenceSystem sourceCRS, CoordinateReferenceSystem targetCRS) {
         this.delegate = delegate;
         this.sourceCRS = sourceCRS;
         this.targetCRS = targetCRS;

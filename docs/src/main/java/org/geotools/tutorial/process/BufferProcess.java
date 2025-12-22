@@ -13,12 +13,12 @@ package org.geotools.tutorial.process;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.data.util.NullProgressListener;
 import org.geotools.process.ProcessFactory;
 import org.geotools.process.impl.AbstractProcess;
 import org.geotools.text.Text;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.util.ProgressListener;
 
 /**
  * Process for adding a buffer around a geometry
@@ -36,6 +36,7 @@ class BufferProcess extends AbstractProcess {
         return factory;
     }
 
+    @Override
     public Map<String, Object> execute(Map<String, Object> input, ProgressListener monitor) {
         if (started) throw new IllegalStateException("Process can only be run once");
         started = true;

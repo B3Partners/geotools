@@ -16,6 +16,8 @@
  */
 package org.geotools.renderer.crs;
 
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.LiteCoordinateSequence;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
@@ -24,12 +26,10 @@ import org.geotools.referencing.operation.projection.MapProjection;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * Returns a {@link ProjectionHandler} for the {@link Homolosine} projection that will cut
- * geometries on interruptions before reprojection
+ * Returns a {@link ProjectionHandler} for the {@link Homolosine} projection that will cut geometries on interruptions
+ * before reprojection
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -39,17 +39,13 @@ public class HomolosineHandlerFactory implements ProjectionHandlerFactory {
 
     @Override
     public ProjectionHandler getHandler(
-            ReferencedEnvelope renderingEnvelope,
-            CoordinateReferenceSystem sourceCrs,
-            boolean wrap,
-            int maxWraps)
+            ReferencedEnvelope renderingEnvelope, CoordinateReferenceSystem sourceCrs, boolean wrap, int maxWraps)
             throws FactoryException {
         if (renderingEnvelope == null) {
             return null;
         }
 
-        MapProjection mapProjection =
-                CRS.getMapProjection(renderingEnvelope.getCoordinateReferenceSystem());
+        MapProjection mapProjection = CRS.getMapProjection(renderingEnvelope.getCoordinateReferenceSystem());
         if (mapProjection instanceof Homolosine) {
             final double[] MASK_COORDS = {
                 // north side

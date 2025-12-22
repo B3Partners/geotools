@@ -75,6 +75,7 @@ public final class IntegerListTest {
     }
 
     /** Returns the next number from the random number generator. */
+    @SuppressWarnings("MathAbsoluteNegative") // Math.abs on random int is acceptable for test data
     private int nextInt(final int maximalValue) {
         if (maximalValue == Integer.MAX_VALUE) {
             return Math.abs(random.nextInt());
@@ -84,8 +85,8 @@ public final class IntegerListTest {
     }
 
     /**
-     * Tests the fill value using the existing list, which is assumed already filled with random
-     * values prior this method call.
+     * Tests the fill value using the existing list, which is assumed already filled with random values prior this
+     * method call.
      */
     private void testFill(final int value) {
         assertEquals(400, list.size());

@@ -20,12 +20,11 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
-import org.geotools.geometry.DirectPosition2D;
-import org.opengis.geometry.DirectPosition;
+import org.geotools.api.geometry.Position;
+import org.geotools.geometry.Position2D;
 
 /**
- * Simple polygons like three - sided (triangle) or four - sided (qadrilateral), that are used for
- * triangulation.
+ * Simple polygons like three - sided (triangle) or four - sided (qadrilateral), that are used for triangulation.
  *
  * @since 2.4
  * @version $Id$
@@ -33,19 +32,19 @@ import org.opengis.geometry.DirectPosition;
  */
 class Polygon implements Cloneable {
     /** Vertices of this polygon. */
-    private DirectPosition[] vertices;
+    private Position[] vertices;
 
     /**
      * Creates a polygon using specified vertices.
      *
      * @param coordinates of vertices
      */
-    Polygon(DirectPosition... coordinates) {
+    Polygon(Position... coordinates) {
         this.vertices = coordinates;
     }
 
     /** Sets the vertices of this polygon. */
-    public void setCoordinates(DirectPosition... coordinates) {
+    public void setCoordinates(Position... coordinates) {
         this.vertices = coordinates;
     }
 
@@ -54,7 +53,7 @@ class Polygon implements Cloneable {
      *
      * @return vertices of this polygon.
      */
-    public DirectPosition[] getPoints() {
+    public Position[] getPoints() {
         return vertices;
     }
 
@@ -70,7 +69,7 @@ class Polygon implements Cloneable {
         for (int i = 0; i < vertices.length; i++) {
             wkt = wkt + vertices[i].getCoordinate()[0] + " " + vertices[i].getCoordinate()[1];
 
-            if (i != (vertices.length - 1)) {
+            if (i != vertices.length - 1) {
                 wkt = wkt + ", ";
             }
         }
@@ -84,7 +83,7 @@ class Polygon implements Cloneable {
      * @param points vertices of polygon.
      * @return generated GeneralPath.
      */
-    protected GeneralPath generateGeneralPath(DirectPosition... points) {
+    protected GeneralPath generateGeneralPath(Position... points) {
         GeneralPath ring = new GeneralPath();
 
         // Set the initiakl coordinates of the general Path
@@ -104,8 +103,8 @@ class Polygon implements Cloneable {
      * @param dp Point to be tested whether is inside of polygon.
      * @return True if the point is inside (or is the vertex of polygon, false if not.
      */
-    protected boolean containsOrIsVertex(DirectPosition dp) {
-        if (generateGeneralPath(vertices).contains((Point2D) dp) || (hasVertex(dp))) {
+    protected boolean containsOrIsVertex(Position dp) {
+        if (generateGeneralPath(vertices).contains((Point2D) dp) || hasVertex(dp)) {
             return true;
         }
 
@@ -118,8 +117,8 @@ class Polygon implements Cloneable {
      * @param p the candidate point
      * @return whether v is equal to one of the vertices of this Triangle
      */
-    public boolean hasVertex(DirectPosition p) {
-        for (DirectPosition vertex : vertices) {
+    public boolean hasVertex(Position p) {
+        for (Position vertex : vertices) {
             if (p == vertex) {
                 return true;
             }
@@ -137,7 +136,7 @@ class Polygon implements Cloneable {
         double sumX = 0;
         double sumY = 0;
 
-        for (DirectPosition directPosition : vertices) {
+        for (Position directPosition : vertices) {
             sumX = sumX + directPosition.getCoordinate()[0];
             sumY = sumY + directPosition.getCoordinate()[1];
         }
@@ -147,9 +146,9 @@ class Polygon implements Cloneable {
         sumY = sumY / vertices.length;
 
         // The homothetic transformation is made.
-        for (DirectPosition vertex : vertices) {
-            vertex.getCoordinate()[0] = (scale * (vertex.getCoordinate()[0] - sumX)) + sumX;
-            vertex.getCoordinate()[1] = (scale * (vertex.getCoordinate()[1] - sumY)) + sumY;
+        for (Position vertex : vertices) {
+            vertex.getCoordinate()[0] = scale * (vertex.getCoordinate()[0] - sumX) + sumX;
+            vertex.getCoordinate()[1] = scale * (vertex.getCoordinate()[1] - sumY) + sumY;
         }
     }
 
@@ -158,16 +157,15 @@ class Polygon implements Cloneable {
      *
      * @return The List of reduced vertives
      */
-    protected List<DirectPosition> reduce() {
+    protected List<Position> reduce() {
         // Coordinate[] redCoords = new Coordinate[coordinates.length];
-        ArrayList<DirectPosition> redCoords = new ArrayList<>();
+        ArrayList<Position> redCoords = new ArrayList<>();
 
-        for (DirectPosition vertex : vertices) {
-            redCoords.add(
-                    new DirectPosition2D(
-                            vertex.getCoordinateReferenceSystem(),
-                            vertex.getCoordinate()[0] - vertices[0].getCoordinate()[0],
-                            vertex.getCoordinate()[1] - vertices[0].getCoordinate()[1]));
+        for (Position vertex : vertices) {
+            redCoords.add(new Position2D(
+                    vertex.getCoordinateReferenceSystem(),
+                    vertex.getCoordinate()[0] - vertices[0].getCoordinate()[0],
+                    vertex.getCoordinate()[1] - vertices[0].getCoordinate()[1]));
         }
 
         return redCoords;
@@ -179,8 +177,8 @@ class Polygon implements Cloneable {
      * @param coordinate of coordinates
      * @return whether this Polygon contains the all of the given coordinates
      */
-    protected boolean containsAll(List<DirectPosition> coordinate) {
-        for (DirectPosition directPosition : coordinate) {
+    protected boolean containsAll(List<Position> coordinate) {
+        for (Position directPosition : coordinate) {
             if (!this.containsOrIsVertex(directPosition)) {
                 return false;
             }

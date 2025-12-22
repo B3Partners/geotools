@@ -19,10 +19,10 @@ package org.geotools.filter.v1_1.capabilities;
 import static org.junit.Assert.assertEquals;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.capability.GeometryOperand;
 import org.geotools.filter.v1_1.OGC;
 import org.geotools.xsd.Binding;
 import org.junit.Test;
-import org.opengis.filter.capability.GeometryOperand;
 import org.w3c.dom.Document;
 
 /**
@@ -64,13 +64,13 @@ public class GeometryOperandsTypeBindingTest extends OGCTestSupport {
 
     @Test
     public void testEncode() throws Exception {
-        Document dom =
-                encode(
-                        FilterMockData.geometryOperands(),
-                        new QName(OGC.NAMESPACE, "GeometryOperands"),
-                        OGC.GeometryOperandsType);
+        Document dom = encode(
+                FilterMockData.geometryOperands(),
+                new QName(OGC.NAMESPACE, "GeometryOperands"),
+                OGC.GeometryOperandsType);
         assertEquals(
                 2,
-                getElementsByQName(dom, new QName(OGC.NAMESPACE, "GeometryOperand")).getLength());
+                getElementsByQName(dom, new QName(OGC.NAMESPACE, "GeometryOperand"))
+                        .getLength());
     }
 }

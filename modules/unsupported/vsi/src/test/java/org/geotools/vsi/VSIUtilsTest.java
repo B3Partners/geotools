@@ -45,6 +45,7 @@ import org.mockito.MockedStatic;
  *
  * @author Matthew Northcott <matthewnorthcott@catalyst.net.nz>
  */
+@SuppressWarnings("PMD.ReplaceHashtableWithMap") // API mandate
 public final class VSIUtilsTest {
 
     @Test
@@ -54,9 +55,7 @@ public final class VSIUtilsTest {
         assertTrue(VSIUtils.isVSILocation("/vsizip/path/to/zipfile.zip"));
         assertTrue(VSIUtils.isVSILocation("/vsizip/path/to/zipfile.zip/location/in/file.tif"));
         assertTrue(VSIUtils.isVSILocation("/vsizip//vsiswift/remote/path/to/archive.zip"));
-        assertTrue(
-                VSIUtils.isVSILocation(
-                        "/vsizip//vsiswift/remote/path/to/archive.zip/location/in/file.tif"));
+        assertTrue(VSIUtils.isVSILocation("/vsizip//vsiswift/remote/path/to/archive.zip/location/in/file.tif"));
 
         assertFalse(VSIUtils.isVSILocation("/vsi/invalid/prefix.tif"));
         assertFalse(VSIUtils.isVSILocation("/vsinoexist/invalid/prefix.tif"));
@@ -75,16 +74,10 @@ public final class VSIUtilsTest {
         assertEquals(VSIUtils.getFileName("/vsiswift/path/to/file.tif"), "file.tif");
         assertEquals(VSIUtils.getFileName("/vsiswift/path/without/extension"), "extension");
         assertEquals(VSIUtils.getFileName("/vsizip/path/to/zipfile.zip"), "zipfile.zip");
+        assertEquals(VSIUtils.getFileName("/vsizip/path/to/zipfile.zip/location/in/file.tif"), "file.tif");
+        assertEquals(VSIUtils.getFileName("/vsizip//vsiswift/remote/path/to/archive.zip"), "archive.zip");
         assertEquals(
-                VSIUtils.getFileName("/vsizip/path/to/zipfile.zip/location/in/file.tif"),
-                "file.tif");
-        assertEquals(
-                VSIUtils.getFileName("/vsizip//vsiswift/remote/path/to/archive.zip"),
-                "archive.zip");
-        assertEquals(
-                VSIUtils.getFileName(
-                        "/vsizip//vsiswift/remote/path/to/archive.zip/location/in/file.tif"),
-                "file.tif");
+                VSIUtils.getFileName("/vsizip//vsiswift/remote/path/to/archive.zip/location/in/file.tif"), "file.tif");
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -122,7 +115,7 @@ public final class VSIUtilsTest {
         final Band band = mock(Band.class);
         final Map<String, Object> metadata = new Hashtable<>();
 
-        metadata.put("source_0", (Object) "<SourceBand>0");
+        metadata.put("source_0", "<SourceBand>0");
         doReturn(band).when(dataset).GetRasterBand(anyInt());
         doReturn(metadata).when(band).GetMetadata_Dict(eq("vrt_sources"));
 
@@ -135,8 +128,7 @@ public final class VSIUtilsTest {
         verify(dataset, times(2)).GetRasterBand(anyInt());
         verify(band, times(1)).SetColorInterpretation(anyInt());
         verify(band, times(1)).GetMetadata_Dict(eq("vrt_sources"));
-        verify(band, times(1))
-                .SetMetadataItem(eq("source_0"), eq("<SourceBand>mask"), eq("new_vrt_sources"));
+        verify(band, times(1)).SetMetadataItem(eq("source_0"), eq("<SourceBand>mask"), eq("new_vrt_sources"));
         verify(dataset, times(1)).FlushCache();
     }
 
@@ -150,7 +142,7 @@ public final class VSIUtilsTest {
         final File file = mock(File.class);
 
         final Map<String, Object> metadata = new Hashtable<>();
-        metadata.put("source_0", (Object) "<SourceBand>0");
+        metadata.put("source_0", "<SourceBand>0");
 
         doReturn(path).when(file).getAbsolutePath();
         doReturn(destination).when(driver).CreateCopy(eq(path), eq(source));
@@ -173,8 +165,7 @@ public final class VSIUtilsTest {
         verify(destination, times(2)).GetRasterBand(anyInt());
         verify(band, times(1)).SetColorInterpretation(anyInt());
         verify(band, times(1)).GetMetadata_Dict(eq("vrt_sources"));
-        verify(band, times(1))
-                .SetMetadataItem(eq("source_0"), eq("<SourceBand>mask"), eq("new_vrt_sources"));
+        verify(band, times(1)).SetMetadataItem(eq("source_0"), eq("<SourceBand>mask"), eq("new_vrt_sources"));
     }
 
     @Test(expected = IOException.class)

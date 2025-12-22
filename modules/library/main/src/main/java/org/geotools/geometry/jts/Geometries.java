@@ -85,10 +85,7 @@ public enum Geometries {
     /** Representing {@link Point} */
     POINT(Point.class, 2001),
 
-    /**
-     * Representing {@lin LinearRing}, {@link SingleCurvedGeometry} and {@link
-     * CompoundCurvedGeometry}
-     */
+    /** Representing {@lin LinearRing}, {@link SingleCurvedGeometry} and {@link CompoundCurvedGeometry} */
     LINESTRING(LineString.class, 2002),
 
     /** Represent {@link Polygon} */
@@ -118,7 +115,7 @@ public enum Geometries {
         this.binding = type;
         this.sqlType = sqlType;
         this.name = type.getSimpleName();
-        this.simpleName = (name.startsWith("Multi") ? name.substring(5) : name);
+        this.simpleName = name.startsWith("Multi") ? name.substring(5) : name;
     }
 
     /**
@@ -159,9 +156,8 @@ public enum Geometries {
     }
 
     /**
-     * Get the 'simple name'. Returns the same value as {@linkplain #getName()} except for
-     * MULTIPOINT, MULTILINESTRING and MULTIPOLYGON, for which it returns the name without the
-     * 'Multi' prefix.
+     * Get the 'simple name'. Returns the same value as {@linkplain #getName()} except for MULTIPOINT, MULTILINESTRING
+     * and MULTIPOLYGON, for which it returns the name without the 'Multi' prefix.
      *
      * @return the simple name
      */
@@ -173,8 +169,7 @@ public enum Geometries {
      * Get the {@code Geometries} for the given object.
      *
      * @param geom a JTS Geometry object
-     * @return the {@code Geometries} for the argument's class, or {@code null} if the argument is
-     *     {@code null}
+     * @return the {@code Geometries} for the argument's class, or {@code null} if the argument is {@code null}
      */
     public static Geometries get(Geometry geom) {
         if (geom != null) {

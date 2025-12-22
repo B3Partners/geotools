@@ -18,6 +18,16 @@ package org.geotools.temporal.reference;
 
 import java.util.Collection;
 import java.util.GregorianCalendar;
+import org.geotools.api.metadata.extent.Extent;
+import org.geotools.api.referencing.ReferenceIdentifier;
+import org.geotools.api.temporal.Calendar;
+import org.geotools.api.temporal.CalendarDate;
+import org.geotools.api.temporal.CalendarEra;
+import org.geotools.api.temporal.Clock;
+import org.geotools.api.temporal.ClockTime;
+import org.geotools.api.temporal.DateAndTime;
+import org.geotools.api.temporal.JulianDate;
+import org.geotools.api.temporal.TemporalCoordinateSystem;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
 import org.geotools.temporal.object.DefaultCalendarDate;
@@ -25,16 +35,6 @@ import org.geotools.temporal.object.DefaultDateAndTime;
 import org.geotools.temporal.object.DefaultJulianDate;
 import org.geotools.util.SimpleInternationalString;
 import org.geotools.util.Utilities;
-import org.opengis.metadata.extent.Extent;
-import org.opengis.referencing.ReferenceIdentifier;
-import org.opengis.temporal.Calendar;
-import org.opengis.temporal.CalendarDate;
-import org.opengis.temporal.CalendarEra;
-import org.opengis.temporal.Clock;
-import org.opengis.temporal.ClockTime;
-import org.opengis.temporal.DateAndTime;
-import org.opengis.temporal.JulianDate;
-import org.opengis.temporal.TemporalCoordinateSystem;
 
 /** @author Mehdi Sidhoum (Geomatys) */
 public class DefaultCalendar extends DefaultTemporalReferenceSystem implements Calendar {
@@ -49,33 +49,28 @@ public class DefaultCalendar extends DefaultTemporalReferenceSystem implements C
         super(name, domainOfValidity);
     }
 
-    /**
-     * Convert a TemporalPosition representing by a CalendarDate and a ClockTime to a Julian date.
-     */
+    /** Convert a TemporalPosition representing by a CalendarDate and a ClockTime to a Julian date. */
     @Override
     public JulianDate dateTrans(CalendarDate calDate, ClockTime time) {
         JulianDate response;
         if (calDate != null && time != null) {
-            DateAndTime dateAndTime =
-                    new DefaultDateAndTime(
-                            this,
-                            calDate.getIndeterminatePosition(),
-                            calDate.getCalendarEraName(),
-                            calDate.getCalendarDate(),
-                            time.getClockTime());
+            DateAndTime dateAndTime = new DefaultDateAndTime(
+                    this,
+                    calDate.getIndeterminatePosition(),
+                    calDate.getCalendarEraName(),
+                    calDate.getCalendarDate(),
+                    time.getClockTime());
             return dateTrans(dateAndTime);
         }
         GregorianCalendar gc = new GregorianCalendar(-4713, 1, 1);
         gc.set(GregorianCalendar.ERA, GregorianCalendar.BC);
         final int julianGre = 15 + 31 * (10 + 12 * 1582);
         Number coordinateValue = 0;
-        TemporalCoordinateSystem refSystem =
-                new DefaultTemporalCoordinateSystem(
-                        new NamedIdentifier(
-                                Citations.CRS, new SimpleInternationalString("Julian calendar")),
-                        null,
-                        gc.getTime(),
-                        new SimpleInternationalString("day"));
+        TemporalCoordinateSystem refSystem = new DefaultTemporalCoordinateSystem(
+                new NamedIdentifier(Citations.CRS, new SimpleInternationalString("Julian calendar")),
+                null,
+                gc.getTime(),
+                new SimpleInternationalString("day"));
         if (calDate != null) {
             int[] cal = calDate.getCalendarDate();
             int year = 0;
@@ -103,15 +98,11 @@ public class DefaultCalendar extends DefaultTemporalReferenceSystem implements C
                     julianYear--;
                     julianMonth += 13;
                 }
-                double julian =
-                        (java.lang.Math.floor(365.25 * julianYear)
-                                + java.lang.Math.floor(30.6001 * julianMonth)
-                                + day
-                                + 1720995.0);
+                double julian = Math.floor(365.25 * julianYear) + Math.floor(30.6001 * julianMonth) + day + 1720995.0;
                 if (day + 31 * (month + 12 * year) >= julianGre) {
                     // change over to Gregorian calendar
                     int ja = (int) (0.01 * julianYear);
-                    julian += 2 - ja + (0.25 * ja);
+                    julian += 2 - ja + 0.25 * ja;
                 }
                 coordinateValue = java.lang.Math.floor(julian);
                 response = new DefaultJulianDate(refSystem, null, coordinateValue);
@@ -123,8 +114,7 @@ public class DefaultCalendar extends DefaultTemporalReferenceSystem implements C
             Number minute = 0;
             Number second = 0;
             if (clk.length > 3) {
-                throw new IllegalArgumentException(
-                        "The ClockTime Number array is malformed ! see ISO 8601 format.");
+                throw new IllegalArgumentException("The ClockTime Number array is malformed ! see ISO 8601 format.");
             } else {
                 hour = clk[0];
                 if (clk.length > 0) {
@@ -134,34 +124,26 @@ public class DefaultCalendar extends DefaultTemporalReferenceSystem implements C
                     second = clk[2];
                 }
                 double julian =
-                        ((hour.doubleValue() - 12) / 24)
-                                + (minute.doubleValue() / 1440)
-                                + (second.doubleValue() / 86400);
+                        (hour.doubleValue() - 12) / 24 + minute.doubleValue() / 1440 + second.doubleValue() / 86400;
                 coordinateValue = julian;
                 response = new DefaultJulianDate(refSystem, null, coordinateValue);
                 return response;
             }
         } else {
-            throw new IllegalArgumentException(
-                    "the both CalendarDate and ClockTime cannot be null !");
+            throw new IllegalArgumentException("the both CalendarDate and ClockTime cannot be null !");
         }
     }
 
-    /**
-     * This method is called by the Overrided method dateTrans() which take 2 arguments CalendarDate
-     * and ClockTime.
-     */
+    /** This method is called by the Overrided method dateTrans() which take 2 arguments CalendarDate and ClockTime. */
     public JulianDate dateTrans(DateAndTime dateAndTime) {
         GregorianCalendar gc = new GregorianCalendar(-4713, 1, 1);
         gc.set(GregorianCalendar.ERA, GregorianCalendar.BC);
         final int julianGre = 15 + 31 * (10 + 12 * 1582);
-        TemporalCoordinateSystem refSystem =
-                new DefaultTemporalCoordinateSystem(
-                        new NamedIdentifier(
-                                Citations.CRS, new SimpleInternationalString("Julian calendar")),
-                        null,
-                        gc.getTime(),
-                        new SimpleInternationalString("day"));
+        TemporalCoordinateSystem refSystem = new DefaultTemporalCoordinateSystem(
+                new NamedIdentifier(Citations.CRS, new SimpleInternationalString("Julian calendar")),
+                null,
+                gc.getTime(),
+                new SimpleInternationalString("day"));
         Number coordinateValue = 0;
         int year = 0, month = 0, day = 0;
         Number hour = 0, minute = 0, second = 0;
@@ -192,14 +174,10 @@ public class DefaultCalendar extends DefaultTemporalReferenceSystem implements C
                     julianYear--;
                     julianMonth += 13;
                 }
-                double julian =
-                        (java.lang.Math.floor(365.25 * julianYear)
-                                + java.lang.Math.floor(30.6001 * julianMonth)
-                                + day
-                                + 1720995.0);
+                double julian = Math.floor(365.25 * julianYear) + Math.floor(30.6001 * julianMonth) + day + 1720995.0;
                 if (day + 31 * (month + 12 * year) >= julianGre) {
                     int ja = (int) (0.01 * julianYear);
-                    julian += 2 - ja + (0.25 * ja);
+                    julian += 2 - ja + 0.25 * ja;
                 }
                 coordinateValue = java.lang.Math.floor(julian);
             }
@@ -207,8 +185,7 @@ public class DefaultCalendar extends DefaultTemporalReferenceSystem implements C
         if (dateAndTime.getClockTime() != null) {
             Number[] clk = dateAndTime.getClockTime();
             if (clk.length > 3) {
-                throw new IllegalArgumentException(
-                        "The ClockTime Number array is malformed ! see ISO 8601 format.");
+                throw new IllegalArgumentException("The ClockTime Number array is malformed ! see ISO 8601 format.");
             } else {
                 hour = clk[0];
                 if (clk.length > 0) {
@@ -218,9 +195,7 @@ public class DefaultCalendar extends DefaultTemporalReferenceSystem implements C
                     second = clk[2];
                 }
                 double julian =
-                        ((hour.doubleValue() - 12) / 24)
-                                + (minute.doubleValue() / 1440)
-                                + (second.doubleValue() / 86400);
+                        (hour.doubleValue() - 12) / 24 + minute.doubleValue() / 1440 + second.doubleValue() / 86400;
                 coordinateValue = coordinateValue.doubleValue() + julian;
             }
         }
@@ -285,11 +260,9 @@ public class DefaultCalendar extends DefaultTemporalReferenceSystem implements C
         if (object == this) {
             return true;
         }
-        if (object instanceof DefaultCalendar && super.equals(object)) {
-            final DefaultCalendar that = (DefaultCalendar) object;
+        if (object instanceof DefaultCalendar that && super.equals(object)) {
 
-            return Utilities.equals(this.basis, that.basis)
-                    && Utilities.equals(this.timeBasis, that.timeBasis);
+            return Utilities.equals(this.basis, that.basis) && Utilities.equals(this.timeBasis, that.timeBasis);
         }
         return false;
     }

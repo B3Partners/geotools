@@ -28,8 +28,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
+import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -54,7 +54,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.EventListenerList;
 import javax.xml.parsers.SAXParser;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.util.Arguments;
 import org.geotools.util.Classes;
 import org.geotools.util.NullEntityResolver;
@@ -68,22 +67,21 @@ import org.geotools.util.logging.Logging;
 import org.xml.sax.EntityResolver;
 
 /**
- * Static methods relative to the global GeoTools configuration. GeoTools can be configured in a
- * system-wide basis through {@linkplain System#getProperties system properties}, some of them are
- * declared as {@link String} constants in this class.
+ * Static methods relative to the global GeoTools configuration. GeoTools can be configured in a system-wide basis
+ * through {@linkplain System#getProperties system properties}, some of them are declared as {@link String} constants in
+ * this class.
  *
  * <p>There are many aspects to the configuration of GeoTools:
  *
  * <ul>
- *   <li>Default Settings: Are handled as the Hints returned by {@link #getDefaultHints()}, the
- *       default values can be provided in application code, or specified using system properties.
- *   <li>Integration JNDI: Telling the GeoTools library about the facilities of an application, or
- *       application container takes several forms. This class provides the {@link
- *       #init(InitialContext)} method allowing to tell GeoTools about the JNDI context to use.
- *   <li>Integration Plugins: If hosting GeoTools in a alternate plugin system such as Spring or
- *       OSGi, application may needs to hunt down the {@code FactoryFinder}s and register additional
- *       "Factory Iterators" for GeoTools to search using the {@link #addFactoryIteratorProvider}
- *       method.
+ *   <li>Default Settings: Are handled as the Hints returned by {@link #getDefaultHints()}, the default values can be
+ *       provided in application code, or specified using system properties.
+ *   <li>Integration JNDI: Telling the GeoTools library about the facilities of an application, or application container
+ *       takes several forms. This class provides the {@link #init(InitialContext)} method allowing to tell GeoTools
+ *       about the JNDI context to use.
+ *   <li>Integration Plugins: If hosting GeoTools in a alternate plugin system such as Spring or OSGi, application may
+ *       needs to hunt down the {@code FactoryFinder}s and register additional "Factory Iterators" for GeoTools to
+ *       search using the {@link #addFactoryIteratorProvider} method.
  * </ul>
  *
  * @since 2.4
@@ -91,6 +89,7 @@ import org.xml.sax.EntityResolver;
  * @author Jody Garnett
  * @author Martin Desruisseaux
  */
+@SuppressWarnings("BanJNDI")
 public final class GeoTools {
 
     /** Properties about this geotools build */
@@ -100,19 +99,14 @@ public final class GeoTools {
         PROPS = loadProperites("GeoTools.properties");
     }
 
-    @SuppressWarnings("PMD.UseTryWithResources") // stream may be null
     private static Properties loadProperites(String resource) {
         Properties props = new Properties();
         InputStream stream = GeoTools.class.getResourceAsStream(resource);
         if (stream != null) {
-            try {
+            try (stream) {
                 props.load(stream);
             } catch (IOException ignore) {
-            } finally {
-                try {
-                    stream.close();
-                } catch (IOException ignore) {
-                }
+                Logging.getLogger(GeoTools.class).log(Level.FINE, "Error loading resource " + resource, ignore);
             }
         }
 
@@ -133,26 +127,23 @@ public final class GeoTools {
     private static final String BUILD_TIMESTAMP = PROPS.getProperty("build.timestamp", "");
 
     /**
-     * Object to inform about system-wide configuration changes. We use the Swing utility listener
-     * list since it is lightweight and thread-safe. Note that it doesn't involve any dependency to
-     * the remaining of Swing library.
+     * Object to inform about system-wide configuration changes. We use the Swing utility listener list since it is
+     * lightweight and thread-safe. Note that it doesn't involve any dependency to the remaining of Swing library.
      */
     private static final EventListenerList LISTENERS = new EventListenerList();
 
     /**
-     * The {@linkplain System#getProperty(String) system property} key for the default value to be
-     * assigned to the {@link Hints#CRS_AUTHORITY_EXTRA_DIRECTORY CRS_AUTHORITY_EXTRA_DIRECTORY}
-     * hint.
+     * The {@linkplain System#getProperty(String) system property} key for the default value to be assigned to the
+     * {@link Hints#CRS_AUTHORITY_EXTRA_DIRECTORY CRS_AUTHORITY_EXTRA_DIRECTORY} hint.
      *
      * @see Hints#CRS_AUTHORITY_EXTRA_DIRECTORY
      * @see #getDefaultHints
      */
-    public static final String CRS_AUTHORITY_EXTRA_DIRECTORY =
-            "org.geotools.referencing.crs-directory";
+    public static final String CRS_AUTHORITY_EXTRA_DIRECTORY = "org.geotools.referencing.crs-directory";
 
     /**
-     * The {@linkplain System#getProperty(String) system property} key for the default value to be
-     * assigned to the {@link Hints#EPSG_DATA_SOURCE EPSG_DATA_SOURCE} hint.
+     * The {@linkplain System#getProperty(String) system property} key for the default value to be assigned to the
+     * {@link Hints#EPSG_DATA_SOURCE EPSG_DATA_SOURCE} hint.
      *
      * @see Hints#EPSG_DATA_SOURCE
      * @see #getDefaultHints
@@ -160,13 +151,12 @@ public final class GeoTools {
     public static final String EPSG_DATA_SOURCE = "org.geotools.referencing.epsg-datasource";
 
     /**
-     * The {@linkplain System#getProperty(String) system property} key for the default value to be
-     * assigned to the {@link Hints#FORCE_LONGITUDE_FIRST_AXIS_ORDER
-     * FORCE_LONGITUDE_FIRST_AXIS_ORDER} hint.
+     * The {@linkplain System#getProperty(String) system property} key for the default value to be assigned to the
+     * {@link Hints#FORCE_LONGITUDE_FIRST_AXIS_ORDER FORCE_LONGITUDE_FIRST_AXIS_ORDER} hint.
      *
      * <p>This setting can provide a transition path for projects expecting a (<var>longitude</var>,
-     * <var>latitude</var>) axis order on a system-wide level. Application developpers can set the
-     * default value as below:
+     * <var>latitude</var>) axis order on a system-wide level. Application developpers can set the default value as
+     * below:
      *
      * <blockquote>
      *
@@ -176,19 +166,38 @@ public final class GeoTools {
      *
      * </blockquote>
      *
-     * Note that this system property applies mostly to the default EPSG factory. Most other
-     * factories ({@code "CRS"}, {@code "AUTO"}, <cite>etc.</cite>) don't need this property since
-     * they use (<var>longitude</var>, <var>latitude</var>) axis order by design.
+     * Note that this system property applies mostly to the default EPSG factory. Most other factories ({@code "CRS"},
+     * {@code "AUTO"}, <cite>etc.</cite>) don't need this property since they use (<var>longitude</var>,
+     * <var>latitude</var>) axis order by design.
      *
      * @see Hints#FORCE_LONGITUDE_FIRST_AXIS_ORDER
      * @see #getDefaultHints
      */
-    public static final String FORCE_LONGITUDE_FIRST_AXIS_ORDER =
-            "org.geotools.referencing.forceXY";
+    public static final String FORCE_LONGITUDE_FIRST_AXIS_ORDER = "org.geotools.referencing.forceXY";
 
     /**
-     * The {@linkplain System#getProperty(String) system property} key for the default value to be
-     * assigned to the {@link Hints# ENTITY_RESOLVER} hint.
+     * The {@linkplain System#getProperty(String) system property} key for the default value to be assigned to the
+     * {@link Hints# FORCE_SRS_STYLE} hint.
+     *
+     * <p>GML Encoding in geotools forces http://www.opengis.net/gml/srs/epsg.xml# syntax on CRS that are East\North
+     * oriented or have no orientation (such as 1D CRS). This property prevents this behaviour.
+     *
+     * <blockquote>
+     *
+     * <pre>
+     * System.setProperty(FORCE_SRS_STYLE, "true");
+     * </pre>
+     *
+     * </blockquote>
+     *
+     * @see Hints#FORCE_SRS_STYLE
+     * @see #getDefaultHints
+     */
+    public static final String FORCE_SRS_STYLE = "org.geotools.gml.forceSrsStyle";
+
+    /**
+     * The {@linkplain System#getProperty(String) system property} key for the default value to be assigned to the
+     * {@link Hints# ENTITY_RESOLVER} hint.
      *
      * <p>This setting specifies the XML Entity resolver to be used when configuring a SAXParser
      *
@@ -198,11 +207,11 @@ public final class GeoTools {
     public static final String ENTITY_RESOLVER = "org.xml.sax.EntityResolver";
 
     /**
-     * The {@linkplain System#getProperty(String) system property} key for the default value to be
-     * assigned to the {@link Hints# RESAMPLE_TOLERANCE} hint.
+     * The {@linkplain System#getProperty(String) system property} key for the default value to be assigned to the
+     * {@link Hints# RESAMPLE_TOLERANCE} hint.
      *
-     * <p>This setting specifies the tolerance used when linearizing warp transformation into
-     * piecewise linear ones, by default it is 0.333 pixels
+     * <p>This setting specifies the tolerance used when linearizing warp transformation into piecewise linear ones, by
+     * default it is 0.333 pixels
      *
      * @see Hints#RESAMPLE_TOLERANCE
      * @see #getDefaultHints
@@ -210,8 +219,8 @@ public final class GeoTools {
     public static final String RESAMPLE_TOLERANCE = "org.geotools.referencing.resampleTolerance";
 
     /**
-     * The {@linkplain System#getProperty(String) system property} key for the default value to be
-     * assigned to the {@link Hints#LOCAL_DATE_TIME_HANDLING} hint.
+     * The {@linkplain System#getProperty(String) system property} key for the default value to be assigned to the
+     * {@link Hints#LOCAL_DATE_TIME_HANDLING} hint.
      *
      * <p>This setting specifies if dates shall be treated as local dates ignoring time zones.
      *
@@ -222,11 +231,10 @@ public final class GeoTools {
     public static final String LOCAL_DATE_TIME_HANDLING = "org.geotools.localDateTimeHandling";
 
     /**
-     * The {@linkplain System#getProperty(String) system property} key for the default value to be
-     * assigned to the {@link Hints#DATE_TIME_FORMAT_HANDLING} hint.
+     * The {@linkplain System#getProperty(String) system property} key for the default value to be assigned to the
+     * {@link Hints#DATE_TIME_FORMAT_HANDLING} hint.
      *
-     * <p>This setting specifies if GML 2 temporal data shall be formatted using same approach as
-     * GML 3+.
+     * <p>This setting specifies if GML 2 temporal data shall be formatted using same approach as GML 3+.
      *
      * @see Hints#DATE_TIME_FORMAT_HANDLING
      * @see #getDefaultHints
@@ -235,12 +243,11 @@ public final class GeoTools {
     public static final String DATE_TIME_FORMAT_HANDLING = "org.geotools.dateTimeFormatHandling";
 
     /**
-     * The {@linkplain System#getProperty(String) system property} key for the default value to be
-     * assigned to the {@link Hints#ENCODE_EWKT} hint.
+     * The {@linkplain System#getProperty(String) system property} key for the default value to be assigned to the
+     * {@link Hints#ENCODE_EWKT} hint.
      *
-     * <p>This setting specifies if geometries with {@link
-     * org.opengis.referencing.crs.CoordinateReferenceSystem} in the user data shall be encoded as
-     * EWKT or not.
+     * <p>This setting specifies if geometries with {@link org.geotools.api.referencing.crs.CoordinateReferenceSystem}
+     * in the user data shall be encoded as EWKT or not.
      *
      * @see Hints#ENCODE_EWKT
      * @see #getDefaultHints
@@ -249,8 +256,8 @@ public final class GeoTools {
     public static final String ENCODE_WKT = "org.geotools.ecql.ewkt";
 
     /**
-     * The {@linkplain System#getProperty(String) system property} key for the default value to be
-     * assigned to the {@link Hints#HTTP_CLIENT} hint.
+     * The {@linkplain System#getProperty(String) system property} key for the default value to be assigned to the
+     * {@link Hints#HTTP_CLIENT} hint.
      *
      * <p>This setting specifies whether we wan't to use a special http client
      *
@@ -261,8 +268,8 @@ public final class GeoTools {
     public static final String HTTP_CLIENT = "org.geotools.http.client";
 
     /**
-     * The {@linkplain System#getProperty(String) system property} key for the default value to be
-     * assigned to the {@link Hints#HTTP_LOGGING} hint.
+     * The {@linkplain System#getProperty(String) system property} key for the default value to be assigned to the
+     * {@link Hints#HTTP_LOGGING} hint.
      *
      * <p>This setting specifies whether we want to log all http requests.
      *
@@ -276,19 +283,17 @@ public final class GeoTools {
     private static InitialContext context;
 
     /**
-     * Class loaders to be added to the list in ${link {@link FactoryRegistry#getClassLoaders()}}
-     * which are used to look-up plug-ins. Class loaders are added via {@link
-     * #addClassLoader(ClassLoader)}
+     * Class loaders to be added to the list in ${link {@link FactoryRegistry#getClassLoaders()}} which are used to
+     * look-up plug-ins. Class loaders are added via {@link #addClassLoader(ClassLoader)}
      */
-    private static final Set<ClassLoader> addedClassLoaders =
-            Collections.synchronizedSet(new HashSet<>());
+    private static final Set<ClassLoader> addedClassLoaders = Collections.synchronizedSet(new HashSet<>());
 
     /**
      * The bindings between {@linkplain System#getProperties system properties} and a hint key.
      *
-     * <p>This registry is used by {@link #scanForSystemHints} to evaluate which System properties
-     * are present using this map's keys as System property names and its mapped value to resolve
-     * the System property value the correct value type/
+     * <p>This registry is used by {@link #scanForSystemHints} to evaluate which System properties are present using
+     * this map's keys as System property names and its mapped value to resolve the System property value the correct
+     * value type/
      */
     private static final Map<String, RenderingHints.Key> BINDINGS;
 
@@ -304,52 +309,46 @@ public final class GeoTools {
         bind(DATE_TIME_FORMAT_HANDLING, Hints.DATE_TIME_FORMAT_HANDLING, bindings);
         bind(HTTP_CLIENT, Hints.HTTP_CLIENT, bindings);
         bind(HTTP_LOGGING, Hints.HTTP_LOGGING, bindings);
+        bind(FORCE_SRS_STYLE, Hints.FORCE_SRS_STYLE, bindings);
         BINDINGS = Collections.unmodifiableMap(bindings);
     }
 
     /**
-     * Default JNDI name validator, allows lookups only on names without a scheme, or using the
-     * <code>java</code> scheme.
+     * Default JNDI name validator, allows lookups only on names without a scheme, or using the <code>java</code>
+     * scheme.
      */
-    public static final Predicate<String> DEFAULT_JNDI_VALIDATOR =
-            name -> {
-                Logger LOGGER = Logging.getLogger(GeoTools.class);
-                try {
-                    URI uri = new URI(name);
-                    boolean result = uri.getScheme() == null || uri.getScheme().equals("java");
-                    if (!result)
-                        LOGGER.warning(
-                                "JNDI lookup allowed only on java scheme, or no scheme. Found instead: "
-                                        + name);
-                    return result;
-                } catch (URISyntaxException e) {
-                    LOGGER.log(Level.WARNING, "Invalid JNDI name provided", e);
-                    return false;
-                }
-            };
+    public static final Predicate<String> DEFAULT_JNDI_VALIDATOR = name -> {
+        Logger LOGGER = Logging.getLogger(GeoTools.class);
+        try {
+            URI uri = new URI(name);
+            boolean result = uri.getScheme() == null || uri.getScheme().equals("java");
+            if (!result)
+                LOGGER.warning("JNDI lookup allowed only on java scheme, or no scheme. Found instead: " + name);
+            return result;
+        } catch (URISyntaxException e) {
+            LOGGER.log(Level.WARNING, "Invalid JNDI name provided", e);
+            return false;
+        }
+    };
 
     private static Predicate<String> jndiValidator = DEFAULT_JNDI_VALIDATOR;
 
     /**
-     * Binds the specified {@linkplain System#getProperty(String) system property} to the specified
-     * key. Only one key can be bound to a given system property. However the same key can be binded
-     * to more than one system property names, in which case the extra system property names are
-     * aliases.
+     * Binds the specified {@linkplain System#getProperty(String) system property} to the specified key. Only one key
+     * can be bound to a given system property. However the same key can be binded to more than one system property
+     * names, in which case the extra system property names are aliases.
      *
      * @param property The system property.
      * @param key The key to bind to the system property.
      * @param bindings The target registry mapping System properties to RenderingHints
-     * @throws IllegalArgumentException if an other key is already bounds to the given system
-     *     property.
+     * @throws IllegalArgumentException if an other key is already bounds to the given system property.
      */
     private static void bind(
-            final String property,
-            final RenderingHints.Key key,
-            Map<String, RenderingHints.Key> bindings) {
+            final String property, final RenderingHints.Key key, Map<String, RenderingHints.Key> bindings) {
         final RenderingHints.Key old = bindings.putIfAbsent(property, key);
         if (old != null) {
             throw new IllegalArgumentException(
-                    Errors.format(ErrorKeys.ILLEGAL_ARGUMENT_$2, "property", property));
+                    MessageFormat.format(ErrorKeys.ILLEGAL_ARGUMENT_$2, "property", property));
         }
     }
 
@@ -357,9 +356,8 @@ public final class GeoTools {
     private GeoTools() {}
 
     /**
-     * Returns summary information about GeoTools and the current environment. Calls {@linkplain
-     * #getEnvironmentInfo()} followed by {@linkplain #getGeoToolsJarInfo()} and concatenates their
-     * results.
+     * Returns summary information about GeoTools and the current environment. Calls {@linkplain #getEnvironmentInfo()}
+     * followed by {@linkplain #getGeoToolsJarInfo()} and concatenates their results.
      *
      * @return requested information as a string
      */
@@ -367,7 +365,7 @@ public final class GeoTools {
         final StringBuilder sb = new StringBuilder();
 
         sb.append(getEnvironmentInfo());
-        sb.append(String.format("%n"));
+        sb.append("%n".formatted());
         sb.append(getGeoToolsJarInfo());
 
         return sb.toString();
@@ -379,7 +377,7 @@ public final class GeoTools {
      * @return information as a String
      */
     public static String getEnvironmentInfo() {
-        final String newline = String.format("%n");
+        final String newline = "%n".formatted();
 
         final StringBuilder sb = new StringBuilder();
         sb.append("GeoTools version ").append(getVersion().toString());
@@ -391,9 +389,7 @@ public final class GeoTools {
         sb.append(System.getProperty("java.version"));
 
         sb.append(newline).append("Operating system: ");
-        sb.append(System.getProperty("os.name"))
-                .append(' ')
-                .append(System.getProperty("os.version"));
+        sb.append(System.getProperty("os.name")).append(' ').append(System.getProperty("os.version"));
 
         return sb.toString();
     }
@@ -405,7 +401,7 @@ public final class GeoTools {
      */
     public static String getGeoToolsJarInfo() {
         final StringBuilder sb = new StringBuilder();
-        final String newline = String.format("%n");
+        final String newline = "%n".formatted();
         final String indent = "    ";
 
         sb.append("GeoTools jars on classpath:");
@@ -417,8 +413,8 @@ public final class GeoTools {
     }
 
     /**
-     * A helper method for {@linkplain #getGeoToolsJarInfo} which scans the classpath looking for
-     * GeoTools jars matching the current version.
+     * A helper method for {@linkplain #getGeoToolsJarInfo} which scans the classpath looking for GeoTools jars matching
+     * the current version.
      *
      * @return a list of jar names
      */
@@ -517,9 +513,7 @@ public final class GeoTools {
                     manifest.read(content);
                 }
                 for (String attribute :
-                        new String[] {
-                            "Implementation-Version", "Project-Version", "Specification-Version"
-                        }) {
+                        new String[] {"Implementation-Version", "Project-Version", "Specification-Version"}) {
                     String value = manifest.getMainAttributes().getValue(attribute);
                     if (value != null) {
                         return new Version(value);
@@ -587,10 +581,7 @@ public final class GeoTools {
         URL url;
         if (classLocation.startsWith("jar:")) {
             try {
-                url =
-                        new URL(
-                                classLocation.substring(0, classLocation.lastIndexOf("!") + 1)
-                                        + "/META-INF/MANIFEST.MF");
+                url = new URL(classLocation.substring(0, classLocation.lastIndexOf("!") + 1) + "/META-INF/MANIFEST.MF");
                 return url;
             } catch (MalformedURLException e) {
                 return null;
@@ -626,20 +617,19 @@ public final class GeoTools {
                     manifest.read(content);
                 }
             } catch (IOException ignore) {
+                Logging.getLogger(GeoTools.class).log(Level.FINE, "Error loading manifest " + manifestLocation, ignore);
             }
         }
         if (manifest.getMainAttributes().isEmpty()) {
             // must be running in IDE
             String name = type.getName();
-            if (name.startsWith("org.geotools")
-                    || name.startsWith("org.opengis")
-                    || name.startsWith("net.opengis")) {
-                String generated =
-                        "Manifest-Version: 1.0\n" + "Project-Version: " + getVersion() + "\n";
+            if (name.startsWith("org.geotools") || name.startsWith("org.opengis") || name.startsWith("net.opengis")) {
+                String generated = "Manifest-Version: 1.0\n" + "Project-Version: " + getVersion() + "\n";
 
                 try {
-                    manifest.read(new ByteArrayInputStream(generated.getBytes()));
+                    manifest.read(new ByteArrayInputStream(generated.getBytes(StandardCharsets.UTF_8)));
                 } catch (IOException e) {
+                    Logging.getLogger(GeoTools.class).log(Level.FINE, "Error reading manifest " + manifestLocation, e);
                 }
             }
         }
@@ -648,16 +638,15 @@ public final class GeoTools {
     /**
      * Sets the global {@linkplain LoggerFactory logger factory}.
      *
-     * <p>This method is the same as calling {@link Logging#setLoggerFactory(factory)} to configure
-     * both {@link Logging#ALL} logger creation.
+     * <p>This method is the same as calling {@link Logging#setLoggerFactory(factory)} to configure both
+     * {@link Logging#ALL} logger creation.
      *
-     * <p>GeoTools provides logback, log4j, reload4j, and commons-logging factories. This method
-     * exists to allow you supply your own implementation (when using a GeoTools library in an
-     * exotic environment like Eclipse, OC4J or your application).
+     * <p>GeoTools provides logback, log4j, reload4j, and commons-logging factories. This method exists to allow you
+     * supply your own implementation (when using a GeoTools library in an exotic environment like Eclipse, OC4J or your
+     * application).
      *
-     * <p>If {@code null} is used, the Java logging {@linkplain java.util.logging.Formatter
-     * formatter} for console output is replaced by a {@linkplain
-     * org.geotools.util.logging.MonolineFormatter monoline formatter}.
+     * <p>If {@code null} is used, the Java logging {@linkplain java.util.logging.Formatter formatter} for console
+     * output is replaced by a {@linkplain org.geotools.util.logging.MonolineFormatter monoline formatter}.
      *
      * @param factory The logger factory to use, or null for native java util logging.
      * @see Logging#setLoggerFactory(LoggerFactory)
@@ -672,39 +661,33 @@ public final class GeoTools {
     }
 
     /**
-     * Initializes GeoTools for use. This convenience method performs various tasks (more may be
-     * added in the future), including setting up the {@linkplain java.util.logging Java logging
-     * framework} in one of the following states:
+     * Initializes GeoTools for use. This convenience method performs various tasks (more may be added in the future),
+     * including setting up the {@linkplain java.util.logging Java logging framework} in one of the following states:
      *
      * <p>
      *
      * <ul>
-     *   <li>If <A HREF="https://logback.qos.ch/">Logback</A> is available, then messages in {@code
-     *       org.geotools} and {@code javax.media.jai} namespace sent to {@linkplain
-     *       java.util.logging.Logger logger} are redirected to SL4J API used by logback.
-     *   <li>Otherwise if <A HREF="http://logging.apache.org/log4j">Log4J</A> is available, then
-     *       messages in {@code org.geotools} and {@code javax.media.jai} namespace sent to Java
+     *   <li>If <A HREF="https://logback.qos.ch/">Logback</A> is available, then messages in {@code org.geotools} and
+     *       {@code org.eclipse.imagen} namespace sent to {@linkplain java.util.logging.Logger logger} are redirected to
+     *       SL4J API used by logback.
+     *   <li>Otherwise if <A HREF="http://logging.apache.org/log4j">Log4J</A> is available, then messages in
+     *       {@code org.geotools} and {@code org.eclipse.imagen} namespace sent to Java
      *       {@linkplain java.util.logging.Logger logger} are redirected to Log4J API.
-     *   <li>Otherwise if <A HREF="http://logging.apache.org/log4j">Reload4J</A> is available, then
-     *       messages in {@code org.geotools} and {@code javax.media.jai} namespace sent to Java
-     *       {@linkplain java.util.logging.Logger logger} are redirected to Log4J 1 API used by
-     *       Reload4J.
-     *   <li>finally if <A HREF="http://jakarta.apache.org/commons/logging/">Commons-logging</A> is
-     *       available, then messages in {@code org.geotools} and {@code javax.media.jai} namespaces
-     *       sent to the Java {@linkplain java.util.logging.Logger logger} are redirected to
-     *       Commons-logging.
-     *   <li>Otherwise, the Java logging {@linkplain java.util.logging.Formatter formatter} for
-     *       console output is replaced by a {@linkplain org.geotools.util.logging.MonolineFormatter
-     *       monoline formatter}.
+     *   <li>Otherwise if <A HREF="http://logging.apache.org/log4j">Reload4J</A> is available, then messages in
+     *       {@code org.geotools} and {@code org.eclipse.imagen} namespace sent to Java
+     *       {@linkplain java.util.logging.Logger logger} are redirected to Log4J 1 API used by Reload4J.
+     *   <li>finally if <A HREF="http://jakarta.apache.org/commons/logging/">Commons-logging</A> is available, then
+     *       messages in {@code org.geotools} and {@code org.eclipse.imagen} namespaces sent to the Java
+     *       {@linkplain java.util.logging.Logger logger} are redirected to Commons-logging.
+     *   <li>Otherwise, the Java logging {@linkplain java.util.logging.Formatter formatter} for console output is
+     *       replaced by a {@linkplain org.geotools.util.logging.MonolineFormatter monoline formatter}.
      * </ul>
      *
-     * <p>In addition, the {@linkplain #getDefaultHints default hints} are initialized to the
-     * specified {@code hints}.
+     * <p>In addition, the {@linkplain #getDefaultHints default hints} are initialized to the specified {@code hints}.
      *
-     * <p>Invoking this method is <strong>not</strong> required fpr the GeoTools library to
-     * function. It is just a convenience method for overwriting select Java and GeoTools default
-     * settings. Supplying these defaults is not desirable in all settings, such as writing test
-     * cases.
+     * <p>Invoking this method is <strong>not</strong> required for the GeoTools library to function. It is just a
+     * convenience method for overwriting select Java and GeoTools default settings. Supplying these defaults is not
+     * desirable in all settings, such as writing test cases.
      *
      * <p>Example of typical invocation in a GeoServer environment:
      *
@@ -729,37 +712,32 @@ public final class GeoTools {
         }
     }
     /**
-     * Initializes GeoTools for use. This convenience method performs various tasks (more may be
-     * added in the future)
+     * Initializes GeoTools for use. This convenience method performs various tasks (more may be added in the future)
      *
-     * <p>Primary task is setting up the {@linkplain java.util.logging Java logging framework} with
-     * a logging factory (if it has not been done already):
+     * <p>Primary task is setting up the {@linkplain java.util.logging Java logging framework} with a logging factory
+     * (if it has not been done already):
      *
      * <ul>
      *   <li>If Logging.ALL has already been configured no further work is required.
-     *   <li>Otherwise if <A HREF="https://logback.qos.ch/">Logback</A> is available, then messages
-     *       in {@code org.geotools} and {@code javax.media.jai} namespace sent to {@linkplain
-     *       java.util.logging.Logger logger} are redirected to SL4J API used by logback.
-     *   <li>Otherwise if <A HREF="http://logging.apache.org/log4j">Log4J</A> is available, then
-     *       messages in {@code org.geotools} and {@code javax.media.jai} namespace sent to Java
+     *   <li>Otherwise if <A HREF="https://logback.qos.ch/">Logback</A> is available, then messages in
+     *       {@code org.geotools} and {@code org.eclipse.imagen} namespace sent to {@linkplain java.util.logging.Logger
+     *       logger} are redirected to SL4J API used by logback.
+     *   <li>Otherwise if <A HREF="http://logging.apache.org/log4j">Log4J</A> is available, then messages in
+     *       {@code org.geotools} and {@code org.eclipse.imagen} namespace sent to Java
      *       {@linkplain java.util.logging.Logger logger} are redirected to Log4J API.
-     *   <li>Otherwise if <A HREF="http://logging.apache.org/log4j">Reload4J</A> is available, then
-     *       messages in {@code org.geotools} and {@code javax.media.jai} namespace sent to Java
-     *       {@linkplain java.util.logging.Logger logger} are redirected to Log4J 1 API used by
-     *       Reload4J.
-     *   <li>Otherwise if <A HREF="http://jakarta.apache.org/commons/logging/">Commons-logging</A>
-     *       is available, then messages in {@code org.geotools} and {@code javax.media.jai}
-     *       namespaces sent to the Java {@linkplain java.util.logging.Logger logger} are redirected
-     *       to Commons-logging.
-     *   <li>Otherwise, the Java logging {@linkplain java.util.logging.Formatter formatter} for
-     *       console output is replaced by a {@linkplain org.geotools.util.logging.MonolineFormatter
-     *       monoline formatter}.
+     *   <li>Otherwise if <A HREF="http://logging.apache.org/log4j">Reload4J</A> is available, then messages in
+     *       {@code org.geotools} and {@code org.eclipse.imagen} namespace sent to Java
+     *       {@linkplain java.util.logging.Logger logger} are redirected to Log4J 1 API used by Reload4J.
+     *   <li>Otherwise if <A HREF="http://jakarta.apache.org/commons/logging/">Commons-logging</A> is available, then
+     *       messages in {@code org.geotools} and {@code org.eclipse.imagen} namespaces sent to the Java
+     *       {@linkplain java.util.logging.Logger logger} are redirected to Commons-logging.
+     *   <li>Otherwise, the Java logging {@linkplain java.util.logging.Formatter formatter} for console output is
+     *       replaced by a {@linkplain org.geotools.util.logging.MonolineFormatter monoline formatter}.
      * </ul>
      *
-     * <p>Invoking this method is <strong>not</strong> required fpr the GeoTools library to
-     * function. It is just a convenience method for overwriting select Java and GeoTools default
-     * settings. Supplying these defaults is not always desirable, for example when quickly writing
-     * test cases.
+     * <p>Invoking this method is <strong>not</strong> required fpr the GeoTools library to function. It is just a
+     * convenience method for overwriting select Java and GeoTools default settings. Supplying these defaults is not
+     * always desirable, for example when quickly writing test cases.
      *
      * <p>
      *
@@ -780,12 +758,11 @@ public final class GeoTools {
             for (String factoryName : CANDIDATES) {
                 try {
                     Logging.ALL.setLoggerFactory(factoryName);
-                    if (factoryName == "org.geotools.util.logging.CommonsLoggerFactory") {
+                    if ("org.geotools.util.logging.CommonsLoggerFactory".equals(factoryName)) {
                         // check if delegating to jdk14logger
                         LoggerFactory factory = Logging.ALL.getLoggerFactory();
                         if (factory != null) {
-                            Logger logger =
-                                    Logging.ALL.getLoggerFactory().getLogger("org.geotools");
+                            Logger logger = Logging.ALL.getLoggerFactory().getLogger("org.geotools");
                             if (!(logger instanceof LoggerAdapter)) {
                                 continue; // configured to delegate to jdk14logger
                             }
@@ -818,14 +795,12 @@ public final class GeoTools {
     }
 
     /**
-     * Scans {@linkplain System#getProperties system properties} for any property keys defined in
-     * this class, and add their values to the specified map of hints. For example if the {@value
-     * #FORCE_LONGITUDE_FIRST_AXIS_ORDER} system property is defined, then the {@link
-     * Hints#FORCE_LONGITUDE_FIRST_AXIS_ORDER FORCE_LONGITUDE_FIRST_AXIS_ORDER} hint will be added
-     * to the set of hints.
+     * Scans {@linkplain System#getProperties system properties} for any property keys defined in this class, and add
+     * their values to the specified map of hints. For example if the {@value #FORCE_LONGITUDE_FIRST_AXIS_ORDER} system
+     * property is defined, then the {@link Hints#FORCE_LONGITUDE_FIRST_AXIS_ORDER FORCE_LONGITUDE_FIRST_AXIS_ORDER}
+     * hint will be added to the set of hints.
      *
-     * @return {@code true} if at least one hint changed as a result of this scan, or {@code false}
-     *     otherwise.
+     * @return {@code true} if at least one hint changed as a result of this scan, or {@code false} otherwise.
      */
     static boolean scanForSystemHints(final Map<RenderingHints.Key, Object> hints) {
         boolean changed = false;
@@ -877,32 +852,29 @@ public final class GeoTools {
     }
 
     /**
-     * Logs an exception as if it originated from {@link Hints#scanSystemProperties}, since it is
-     * the public API that may invokes this method.
+     * Logs an exception as if it originated from {@link Hints#scanSystemProperties}, since it is the public API that
+     * may invokes this method.
      */
     private static void unexpectedException(final Exception exception) {
         Logging.unexpectedException(Hints.class, "scanSystemProperties", exception);
     }
 
     /**
-     * Returns the default set of hints used for the various utility classes. This default set is
-     * determined by:
+     * Returns the default set of hints used for the various utility classes. This default set is determined by:
      *
      * <p>
      *
      * <ul>
-     *   <li>The {@linplain System#getProperties system properties} available. Some property keys
-     *       are enumerated in the {@link GeoTools} class.
+     *   <li>The {@linplain System#getProperties system properties} available. Some property keys are enumerated in the
+     *       {@link GeoTools} class.
      *   <li>Any hints added by call to the {@link Hints#putSystemDefault} or {@link #init} method.
      * </ul>
      *
-     * <p><b>Long term plan:</b> We would like to transition the utility classes to being injected
-     * with their required factories, either by taking Hints as part of their constructor, or
-     * otherwise. Making this change would be a three step process 1) create instance methods for
-     * each static final class method 2) create an singleton instance of the class 3) change each
-     * static final class method into a call to the singleton. With this in place we could then
-     * encourage client code to make use of utility class instances before eventually retiring the
-     * static final methods.
+     * <p><b>Long term plan:</b> We would like to transition the utility classes to being injected with their required
+     * factories, either by taking Hints as part of their constructor, or otherwise. Making this change would be a three
+     * step process 1) create instance methods for each static final class method 2) create an singleton instance of the
+     * class 3) change each static final class method into a call to the singleton. With this in place we could then
+     * encourage client code to make use of utility class instances before eventually retiring the static final methods.
      *
      * @return A copy of the default hints. It is safe to add to it.
      */
@@ -922,8 +894,7 @@ public final class GeoTools {
     /**
      * Returns the default entity resolver, used to configure {@link SAXParser}.
      *
-     * @param hints An optional set of hints, or {@code null} if none, see {@link
-     *     Hints#ENTITY_RESOLVER}.
+     * @param hints An optional set of hints, or {@code null} if none, see {@link Hints#ENTITY_RESOLVER}.
      * @return An entity resolver (never {@code null})
      */
     public static EntityResolver getEntityResolver(Hints hints) {
@@ -934,12 +905,10 @@ public final class GeoTools {
             Object hint = hints.get(Hints.ENTITY_RESOLVER);
             if (hint == null) {
                 return NullEntityResolver.INSTANCE;
-            } else if (hint instanceof EntityResolver) {
-                return (EntityResolver) hint;
-            } else if (hint instanceof String) {
-                String className = (String) hint;
-                return instantiate(
-                        className, EntityResolver.class, PreventLocalEntityResolver.INSTANCE);
+            } else if (hint instanceof EntityResolver resolver) {
+                return resolver;
+            } else if (hint instanceof String className) {
+                return instantiate(className, EntityResolver.class, PreventLocalEntityResolver.INSTANCE);
             }
         }
         return PreventLocalEntityResolver.INSTANCE;
@@ -951,8 +920,7 @@ public final class GeoTools {
      * @param className Class name to instantiate
      * @param type Class of object created
      * @param defaultValue Default to be provided, may be null
-     * @return EntityResolver, defaults to {@link PreventLocalEntityResolver#INSTANCE} if
-     *     unavailable.
+     * @return EntityResolver, defaults to {@link PreventLocalEntityResolver#INSTANCE} if unavailable.
      */
     static <T, D extends T> T instantiate(String className, Class<T> type, D defaultValue) {
         if (className == null) {
@@ -964,23 +932,16 @@ public final class GeoTools {
             // step 1 look for instance field
             for (Field field : kind.getDeclaredFields()) {
                 int modifier = field.getModifiers();
-                if ("INSTANCE".equals(field.getName())
-                        && Modifier.isStatic(modifier)
-                        && Modifier.isPublic(modifier)) {
+                if ("INSTANCE".equals(field.getName()) && Modifier.isStatic(modifier) && Modifier.isPublic(modifier)) {
                     try {
                         Object value = field.get(null);
                         if (value != null && value instanceof EntityResolver) {
                             return type.cast(value);
                         } else {
-                            LOGGER.log(
-                                    Level.FINER,
-                                    "Unable to use ENTITY_RESOLVER: " + className + ".INSTANCE");
+                            LOGGER.log(Level.FINER, "Unable to use ENTITY_RESOLVER: " + className + ".INSTANCE");
                         }
                     } catch (Throwable t) {
-                        LOGGER.log(
-                                Level.FINER,
-                                "Unable to instantiate ENTITY_RESOLVER: " + className + ".INSTANCE",
-                                t);
+                        LOGGER.log(Level.FINER, "Unable to instantiate ENTITY_RESOLVER: " + className + ".INSTANCE", t);
                     }
                     return defaultValue;
                 }
@@ -995,14 +956,10 @@ public final class GeoTools {
                     | IllegalAccessException
                     | NoSuchMethodException
                     | InvocationTargetException e) {
-                LOGGER.log(
-                        Level.FINER, "Unable to instantiate ENTITY_RESOLVER: " + e.getMessage(), e);
+                LOGGER.log(Level.FINER, "Unable to instantiate ENTITY_RESOLVER: " + e.getMessage(), e);
             }
         } catch (ClassNotFoundException notFound) {
-            LOGGER.log(
-                    Level.FINER,
-                    "Unable to instantiate ENTITY_RESOLVER: " + notFound.getMessage(),
-                    notFound);
+            LOGGER.log(Level.FINER, "Unable to instantiate ENTITY_RESOLVER: " + notFound.getMessage(), notFound);
         }
         return defaultValue;
     }
@@ -1012,8 +969,8 @@ public final class GeoTools {
      *
      * @return The initial context (never {@code null}).
      * @throws NamingException if the initial context can't be created.
-     * @deprecated Please use {@link #jndiLookup(String)} instead, or provide an {@link
-     *     InitialContext} to the {@link #init(InitialContext)} method and use it directly.
+     * @deprecated Please use {@link #jndiLookup(String)} instead, or provide an {@link InitialContext} to the
+     *     {@link #init(InitialContext)} method and use it directly.
      */
     @Deprecated
     public static synchronized InitialContext getInitialContext() throws NamingException {
@@ -1034,10 +991,7 @@ public final class GeoTools {
         return context;
     }
 
-    /**
-     * Checks if JNDI is available, either because it was initialized, or because it was possible to
-     * create one.
-     */
+    /** Checks if JNDI is available, either because it was initialized, or because it was possible to create one. */
     public static boolean isJNDIAvailable() {
         try {
             // see if we have a context, or can create one
@@ -1048,21 +1002,18 @@ public final class GeoTools {
     }
 
     /**
-     * Sets up a function that will be called to validate the JNDI lookups. If not set, the
-     * DEFAULT_JNDI_VALIDATOR is used. The function may want to log the reason why a given name was
-     * denied lookup.
+     * Sets up a function that will be called to validate the JNDI lookups. If not set, the DEFAULT_JNDI_VALIDATOR is
+     * used. The function may want to log the reason why a given name was denied lookup.
      *
-     * @param validator A function returning true if the lookups are meant to be performed, false
-     *     otherwise.
+     * @param validator A function returning true if the lookups are meant to be performed, false otherwise.
      */
     public static void setJNDINameValidator(Predicate<String> validator) {
         jndiValidator = validator;
     }
 
     /**
-     * Looks up an object from the JNDI {@link InitialContext}. By default, it only allows lookups
-     * with no scheme, or inside the <code>java</code> scheme. One can set up a custom name
-     * validation routine using
+     * Looks up an object from the JNDI {@link InitialContext}. By default, it only allows lookups with no scheme, or
+     * inside the <code>java</code> scheme. One can set up a custom name validation routine using
      *
      * @param name
      * @return
@@ -1092,18 +1043,13 @@ public final class GeoTools {
                     .append(contextFactory == null ? "" : (String) contextFactory)
                     .append("\n");
 
-            Enumeration<URL> urls =
-                    AccessController.doPrivileged(
-                            new PrivilegedAction<Enumeration<URL>>() {
-                                @Override
-                                public Enumeration<URL> run() {
-                                    try {
-                                        return ClassLoader.getSystemResources(propFileName);
-                                    } catch (IOException e) {
-                                        return null;
-                                    }
-                                }
-                            });
+            Enumeration<URL> urls;
+            try {
+                urls = ClassLoader.getSystemResources(propFileName);
+            } catch (IOException e1) {
+                urls = null;
+            }
+
             if (urls != null) {
                 sb.append("Or from these property files:\n");
                 while (urls.hasMoreElements()) {
@@ -1112,31 +1058,15 @@ public final class GeoTools {
                 sb.append("\n");
             }
 
-            String javaHome =
-                    AccessController.doPrivileged(
-                            new PrivilegedAction<String>() {
-                                @Override
-                                public String run() {
-                                    try {
-                                        String javahome = System.getProperty("java.home");
-                                        if (javahome == null) {
-                                            return null;
-                                        }
-                                        String pathname =
-                                                javahome
-                                                        + java.io.File.separator
-                                                        + "lib"
-                                                        + java.io.File.separator
-                                                        + propFileName;
-                                        return pathname;
-                                    } catch (Exception e) {
-                                        return null;
-                                    }
-                                }
-                            });
+            String javaHome = System.getProperty("java.home");
+            String pathname = null;
             if (javaHome != null) {
+                pathname = javaHome + java.io.File.separator + "lib" + java.io.File.separator + propFileName;
+            }
+
+            if (pathname != null) {
                 sb.append("Or from a file specified by system property java.home:\n")
-                        .append(javaHome)
+                        .append(pathname)
                         .append("\n");
             }
             LOGGER.log(Level.WARNING, sb.toString());
@@ -1159,19 +1089,17 @@ public final class GeoTools {
     }
 
     /**
-     * Converts a GeoTools name to the syntax used by the {@linkplain #getInitialContext GeoTools
-     * JNDI context}. Names may be constructed in a variety of ways depending on the implementation
-     * of {@link InitialContext}. GeoTools uses {@code "jdbc:EPSG"} internally, but many
-     * implementaitons use the form {@code "jdbc/EPSG"}. Calling this method before use will set the
-     * name right.
+     * Converts a GeoTools name to the syntax used by the {@linkplain #getInitialContext GeoTools JNDI context}. Names
+     * may be constructed in a variety of ways depending on the implementation of {@link InitialContext}. GeoTools uses
+     * {@code "jdbc:EPSG"} internally, but many implementaitons use the form {@code "jdbc/EPSG"}. Calling this method
+     * before use will set the name right.
      *
      * @param name Name of the form {@code "jdbc:EPSG"}, or {@code null}.
-     * @return Name fixed up with {@link Context#composeName(String,String)}, or {@code null} if the
-     *     given name was null.
+     * @return Name fixed up with {@link Context#composeName(String,String)}, or {@code null} if the given name was
+     *     null.
      * @since 2.4
-     * @deprecated With no replacement, GeoTools now uses JNDI lookups as instructed in {@link
-     *     #jndiLookup(String)}, but does not put any object in the contex, the downstream
-     *     application should do it if necessary instead.
+     * @deprecated With no replacement, GeoTools now uses JNDI lookups as instructed in {@link #jndiLookup(String)}, but
+     *     does not put any object in the contex, the downstream application should do it if necessary instead.
      */
     @Deprecated
     public static String fixName(final String name) {
@@ -1179,34 +1107,31 @@ public final class GeoTools {
     }
 
     /**
-     * Converts a GeoTools name to the syntax used by the specified JNDI context. This method is
-     * similar to {@link #fixName(String)}, but uses the specified context instead of the GeoTools
-     * one.
+     * Converts a GeoTools name to the syntax used by the specified JNDI context. This method is similar to
+     * {@link #fixName(String)}, but uses the specified context instead of the GeoTools one.
      *
      * @param context The context to use, or {@code null} if none.
      * @param name Name of the form {@code "jdbc:EPSG"}, or {@code null}.
-     * @return Name fixed up with {@link Context#composeName(String,String)}, or {@code null} if the
-     *     given name was null.
+     * @return Name fixed up with {@link Context#composeName(String,String)}, or {@code null} if the given name was
+     *     null.
      * @since 2.4
-     * @deprecated With no replacement, GeoTools now uses JNDI lookups as instructed in {@link *
-     *     #jndiLookup(String)}, but does not put any object in the contex, the downstream *
-     *     application should do it if necessary instead.
+     * @deprecated With no replacement, GeoTools now uses JNDI lookups as instructed in {@link * #jndiLookup(String)},
+     *     but does not put any object in the contex, the downstream * application should do it if necessary instead.
      */
     @Deprecated
     public static String fixName(final Context context, final String name) {
-        return (context != null) ? fixName(context, name, null) : name;
+        return context != null ? fixName(context, name, null) : name;
     }
 
     /**
-     * Implementation of {@code fixName} method. If the context is {@code null}, then the
-     * {@linkplain #getInitialContext GeoTools initial context} will be fetch only when first
-     * needed.
+     * Implementation of {@code fixName} method. If the context is {@code null}, then the {@linkplain #getInitialContext
+     * GeoTools initial context} will be fetch only when first needed.
      *
-     * @deprecated With no replacement, GeoTools now uses JNDI lookups as instructed in {@link *
-     *     #jndiLookup(String)}, but does not put any object in the contex, the downstream *
-     *     application should do it if necessary instead.
+     * @deprecated With no replacement, GeoTools now uses JNDI lookups as instructed in {@link * #jndiLookup(String)},
+     *     but does not put any object in the contex, the downstream * application should do it if necessary instead.
      */
     @Deprecated
+    @SuppressWarnings("UnusedVariable") // hints
     private static String fixName(Context context, final String name, final Hints hints) {
         String fixed = null;
         if (name != null) {
@@ -1231,11 +1156,10 @@ public final class GeoTools {
     }
 
     /**
-     * Adds an alternative way to search for factory implementations. {@link FactoryRegistry} has a
-     * default mechanism bundled in it, which uses the content of all {@code META-INF/services}
-     * directories found on the classpath. This {@code addFactoryIteratorProvider} method allows to
-     * specify additional discovery algorithms. It may be useful in the context of some frameworks
-     * that use the <cite>constructor injection</cite> pattern, like the <a
+     * Adds an alternative way to search for factory implementations. {@link FactoryRegistry} has a default mechanism
+     * bundled in it, which uses the content of all {@code META-INF/services} directories found on the classpath. This
+     * {@code addFactoryIteratorProvider} method allows to specify additional discovery algorithms. It may be useful in
+     * the context of some frameworks that use the <cite>constructor injection</cite> pattern, like the <a
      * href="http://www.springframework.org/">Spring framework</a>.
      *
      * @param provider A new provider for factory iterators.
@@ -1245,9 +1169,9 @@ public final class GeoTools {
     }
 
     /**
-     * Removes a provider that was previously {@linkplain #addFactoryIteratorProvider added}. Note
-     * that factories already obtained from the specified provider will not be {@linkplain
-     * FactoryRegistry#deregisterFactory deregistered} by this method.
+     * Removes a provider that was previously {@linkplain #addFactoryIteratorProvider added}. Note that factories
+     * already obtained from the specified provider will not be {@linkplain FactoryRegistry#deregisterFactory
+     * deregistered} by this method.
      *
      * @param provider The provider to remove.
      */
@@ -1256,8 +1180,7 @@ public final class GeoTools {
     }
 
     /**
-     * Adds the specified listener to the list of objects to inform when system-wide configuration
-     * changed.
+     * Adds the specified listener to the list of objects to inform when system-wide configuration changed.
      *
      * @param listener The listener to add.
      */
@@ -1267,8 +1190,7 @@ public final class GeoTools {
     }
 
     /**
-     * Removes the specified listener from the list of objects to inform when system-wide
-     * configuration changed.
+     * Removes the specified listener from the list of objects to inform when system-wide configuration changed.
      *
      * @param listener The listener to remove.
      */
@@ -1288,12 +1210,10 @@ public final class GeoTools {
     }
 
     /**
-     * Adds a class loader to be included in the list of class loaders that are used to locate
-     * GeoTools plug-ins.
+     * Adds a class loader to be included in the list of class loaders that are used to locate GeoTools plug-ins.
      *
-     * <p>Client code that calls this method may also need to call {@link
-     * FactoryRegistry#scanForPlugins()} on any existing registry to force it to clear its cache and
-     * use the added class loader to locate plugins.
+     * <p>Client code that calls this method may also need to call {@link FactoryRegistry#scanForPlugins()} on any
+     * existing registry to force it to clear its cache and use the added class loader to locate plugins.
      *
      * @param classLoader The class loader.
      */
@@ -1308,8 +1228,8 @@ public final class GeoTools {
     }
 
     /**
-     * Reports the GeoTools {@linkplain #getVersion version} number to the {@linkplain System#out
-     * standard output stream}.
+     * Reports the GeoTools {@linkplain #getVersion version} number to the {@linkplain System#out standard output
+     * stream}.
      *
      * @param args Command line arguments.
      */

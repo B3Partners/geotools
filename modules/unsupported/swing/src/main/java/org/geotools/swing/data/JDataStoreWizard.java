@@ -18,23 +18,24 @@
 package org.geotools.swing.data;
 
 import java.io.File;
+import java.io.Serial;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.DataAccessFactory.Param;
-import org.geotools.data.DataStoreFactorySpi;
-import org.geotools.data.FileDataStoreFinder;
+import org.geotools.api.data.DataAccessFactory.Param;
+import org.geotools.api.data.DataStoreFactorySpi;
+import org.geotools.api.data.FileDataStoreFinder;
 import org.geotools.swing.wizard.JWizard;
 import org.geotools.util.URLs;
 
 /**
  * Wizard prompting the user to enter or review connection parameters.
  *
- * <p>GeoTools DataStores that work with files are asked to provide a FileDataStoreFactorySpi
- * documenting what file extensions they support; and any additional parameters that may be
- * interesting etc.
+ * <p>GeoTools DataStores that work with files are asked to provide a FileDataStoreFactorySpi documenting what file
+ * extensions they support; and any additional parameters that may be interesting etc.
  */
 public class JDataStoreWizard extends JWizard {
+    @Serial
     private static final long serialVersionUID = -3788708439279424698L;
 
     DataStoreFactorySpi format;
@@ -53,11 +54,10 @@ public class JDataStoreWizard extends JWizard {
 
     /** Open up a wizard up with an initial page to choose a datastore factory. */
     public JDataStoreWizard() {
-        this(null, new HashMap<String, Object>());
+        this(null, new HashMap<>());
     }
     /**
-     * Quick transition from JFileDataStoreChooser; allowing applications to migrate to connection
-     * parameters.
+     * Quick transition from JFileDataStoreChooser; allowing applications to migrate to connection parameters.
      *
      * @param extension Extension used to look up FileDataStoreFactory
      */
@@ -67,7 +67,7 @@ public class JDataStoreWizard extends JWizard {
 
     /** Set up the wizard with a "default" set of parameters. */
     public JDataStoreWizard(DataStoreFactorySpi format) {
-        this(format, new HashMap<String, Object>());
+        this(format, new HashMap<>());
     }
 
     @SuppressWarnings("unchecked")

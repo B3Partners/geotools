@@ -20,20 +20,19 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_in3 extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "in3",
-                    Boolean.class,
-                    parameter("value", Object.class),
-                    parameter("in1", Object.class),
-                    parameter("in2", Object.class),
-                    parameter("in3", Object.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "in3",
+            Boolean.class,
+            parameter("value", Object.class),
+            parameter("in1", Object.class),
+            parameter("in2", Object.class),
+            parameter("in3", Object.class));
 
     public FilterFunction_in3() {
         super(NAME);

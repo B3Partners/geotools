@@ -23,6 +23,7 @@ import static org.junit.Assert.assertEquals;
 import java.awt.Rectangle;
 import java.awt.image.RenderedImage;
 import java.io.IOException;
+import org.geotools.api.parameter.GeneralParameterValue;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
@@ -30,7 +31,6 @@ import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.parameter.Parameter;
 import org.junit.Test;
-import org.opengis.parameter.GeneralParameterValue;
 
 public class TPKReaderTest {
 
@@ -39,10 +39,9 @@ public class TPKReaderTest {
         TPKReader reader = new TPKReader(getClass().getResource("sample_v2.tpkx"), null);
 
         GeneralParameterValue[] parameters = new GeneralParameterValue[1];
-        GridGeometry2D gg =
-                new GridGeometry2D(
-                        new GridEnvelope2D(new Rectangle(200, 200)),
-                        new ReferencedEnvelope(-180, 180.0, -85.0, 85.0, TPKReader.WGS_84));
+        GridGeometry2D gg = new GridGeometry2D(
+                new GridEnvelope2D(new Rectangle(200, 200)),
+                new ReferencedEnvelope(-180, 180.0, -85.0, 85.0, TPKReader.WGS_84));
         parameters[0] = new Parameter<>(AbstractGridFormat.READ_GRIDGEOMETRY2D, gg);
         GridCoverage2D gc = reader.read(parameters);
         RenderedImage img = gc.getRenderedImage();
@@ -59,10 +58,9 @@ public class TPKReaderTest {
         TPKReader reader = new TPKReader(getClass().getResource("sample_v2.tpkx"), null);
 
         GeneralParameterValue[] parameters = new GeneralParameterValue[1];
-        GridGeometry2D gg =
-                new GridGeometry2D(
-                        new GridEnvelope2D(new Rectangle(500, 500)),
-                        new ReferencedEnvelope(-180, 180.0, -85.0, 85.0, TPKReader.WGS_84));
+        GridGeometry2D gg = new GridGeometry2D(
+                new GridEnvelope2D(new Rectangle(500, 500)),
+                new ReferencedEnvelope(-180, 180.0, -85.0, 85.0, TPKReader.WGS_84));
         parameters[0] = new Parameter<>(AbstractGridFormat.READ_GRIDGEOMETRY2D, gg);
         GridCoverage2D gc = reader.read(parameters);
         RenderedImage img = gc.getRenderedImage();
@@ -79,10 +77,8 @@ public class TPKReaderTest {
         TPKReader reader = new TPKReader(getClass().getResource("sample_v2.tpkx"), null);
 
         GeneralParameterValue[] parameters = new GeneralParameterValue[1];
-        GridGeometry2D gg =
-                new GridGeometry2D(
-                        new GridEnvelope2D(new Rectangle(500, 500)),
-                        new ReferencedEnvelope(0, 45, 0, 45, TPKReader.WGS_84));
+        GridGeometry2D gg = new GridGeometry2D(
+                new GridEnvelope2D(new Rectangle(500, 500)), new ReferencedEnvelope(0, 45, 0, 45, TPKReader.WGS_84));
         parameters[0] = new Parameter<>(AbstractGridFormat.READ_GRIDGEOMETRY2D, gg);
         GridCoverage2D gc = reader.read(parameters);
         RenderedImage img = gc.getRenderedImage();

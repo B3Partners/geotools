@@ -16,24 +16,25 @@
  */
 package org.geotools.coverage.processing.operation;
 
-import it.geosolutions.jaiext.warp.WarpDescriptor;
 import java.awt.image.RenderedImage;
+import java.io.Serial;
 import java.util.HashMap;
 import java.util.Map;
-import javax.media.jai.ParameterBlockJAI;
-import javax.media.jai.PropertyGenerator;
-import javax.media.jai.ROI;
-import javax.media.jai.registry.RenderedRegistryMode;
+import org.eclipse.imagen.ParameterBlockImageN;
+import org.eclipse.imagen.PropertyGenerator;
+import org.eclipse.imagen.ROI;
+import org.eclipse.imagen.media.warp.WarpDescriptor;
+import org.eclipse.imagen.registry.RenderedRegistryMode;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.BaseScaleOperationJAI;
 import org.geotools.coverage.util.CoverageUtilities;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.util.InternationalString;
 
 /**
- * This operation is simply a wrapper for the JAI Warp operation
+ * This operation is simply a wrapper for the ImageN Warp operation
  *
  * @version $Id$
  * @author Simone Giannecchini
@@ -43,6 +44,7 @@ import org.opengis.util.InternationalString;
 public class Warp extends BaseScaleOperationJAI {
 
     /** serialVersionUID */
+    @Serial
     private static final long serialVersionUID = -9077795909705065389L;
 
     /** Default constructor. */
@@ -51,9 +53,9 @@ public class Warp extends BaseScaleOperationJAI {
     }
 
     @Override
-    protected void handleJAIEXTParams(
-            ParameterBlockJAI parameters, ParameterValueGroup parameters2) {
-        GridCoverage2D source = (GridCoverage2D) parameters2.parameter("source0").getValue();
+    protected void handleJAIEXTParams(ParameterBlockImageN parameters, ParameterValueGroup parameters2) {
+        GridCoverage2D source =
+                (GridCoverage2D) parameters2.parameter("source0").getValue();
         handleROINoDataInternal(parameters, source, WARP, 3, 4);
     }
 
@@ -75,18 +77,16 @@ public class Warp extends BaseScaleOperationJAI {
 
         // Setting NoData property if needed
         double[] background = (double[]) parameters.parameters.getObjectParameter(2);
-        if (parameters.parameters.getNumParameters() > 3
-                && parameters.parameters.getObjectParameter(4) != null) {
+        if (parameters.parameters.getNumParameters() > 3 && parameters.parameters.getObjectParameter(4) != null) {
             CoverageUtilities.setNoDataProperty(properties, background);
         }
 
         // Setting ROI if present
         PropertyGenerator propertyGenerator =
-                getOperationDescriptor(WARP)
-                        .getPropertyGenerators(RenderedRegistryMode.MODE_NAME)[0];
+                getOperationDescriptor(WARP).getPropertyGenerators(RenderedRegistryMode.MODE_NAME)[0];
         Object roiProp = propertyGenerator.getProperty(ROI, data);
-        if (roiProp != null && roiProp instanceof ROI) {
-            CoverageUtilities.setROIProperty(properties, (ROI) roiProp);
+        if (roiProp != null && roiProp instanceof ROI oI) {
+            CoverageUtilities.setROIProperty(properties, oI);
         }
 
         return properties;

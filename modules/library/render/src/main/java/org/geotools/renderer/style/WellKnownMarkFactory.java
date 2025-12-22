@@ -23,21 +23,20 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.Rectangle2D.Double;
 import java.util.logging.Logger;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.renderer.util.ExplicitBoundsShape;
-import org.opengis.feature.Feature;
-import org.opengis.filter.expression.Expression;
 
 /**
- * The WellKnownMarkFactory is used to hold the knolwedge of how to draw all the marks hardboiled
- * into the SLD specification (cross, arrow, triangle etc...)
+ * The WellKnownMarkFactory is used to hold the knolwedge of how to draw all the marks hardboiled into the SLD
+ * specification (cross, arrow, triangle etc...)
  *
  * @author James
  */
 public class WellKnownMarkFactory implements MarkFactory {
 
     /** The logger for the rendering module. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(WellKnownMarkFactory.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(WellKnownMarkFactory.class);
 
     /** Cross general path */
     static Shape cross;
@@ -154,8 +153,7 @@ public class WellKnownMarkFactory implements MarkFactory {
     }
 
     @Override
-    public Shape getShape(Graphics2D graphics, Expression symbolUrl, Feature feature)
-            throws Exception {
+    public Shape getShape(Graphics2D graphics, Expression symbolUrl, Feature feature) throws Exception {
         // cannot handle a null url
         if (symbolUrl == null) return null;
 

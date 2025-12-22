@@ -21,9 +21,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
+import org.geotools.api.style.FeatureTypeStyle;
 import org.geotools.mbstyle.MBStyle;
 import org.geotools.mbstyle.layer.SymbolMBLayer;
-import org.geotools.styling.FeatureTypeStyle;
 import org.geotools.xml.styling.SLDTransformer;
 import org.json.simple.JSONObject;
 import org.junit.Test;
@@ -117,7 +117,6 @@ public class MBLookupTest extends AbstractMBExpressionTest {
         List<FeatureTypeStyle> getFeatures = rgbLayer.transformInternal(getTest);
         String xml = new SLDTransformer().transform(getFeatures.get(0));
         assertTrue(
-                xml.contains(
-                        "<ogc:Function name=\"PropertyExists\"><ogc:Literal>name</ogc:Literal></ogc:Function>"));
+                xml.contains("<ogc:Function name=\"PropertyExists\"><ogc:Literal>name</ogc:Literal></ogc:Function>"));
     }
 }

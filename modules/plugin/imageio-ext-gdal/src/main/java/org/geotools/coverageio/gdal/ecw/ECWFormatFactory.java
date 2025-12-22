@@ -19,9 +19,9 @@ package org.geotools.coverageio.gdal.ecw;
 import it.geosolutions.imageio.plugins.ecw.ECWImageReaderSpi;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.coverage.grid.Format;
 import org.geotools.coverage.grid.io.GridFormatFactorySpi;
 import org.geotools.coverageio.BaseGridFormatFactorySPI;
-import org.opengis.coverage.grid.Format;
 
 /**
  * Implementation of the {@link Format} service provider interface for ECW files.
@@ -30,11 +30,9 @@ import org.opengis.coverage.grid.Format;
  * @author Simone Giannecchini (simboss), GeoSolutions
  * @since 2.5.x
  */
-public final class ECWFormatFactory extends BaseGridFormatFactorySPI
-        implements GridFormatFactorySpi {
+public final class ECWFormatFactory extends BaseGridFormatFactorySPI implements GridFormatFactorySpi {
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(ECWFormatFactory.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(ECWFormatFactory.class);
 
     /**
      * Tells me if the coverage plugin to access ECW is available or not.
@@ -46,7 +44,7 @@ public final class ECWFormatFactory extends BaseGridFormatFactorySPI
         boolean available = true;
 
         // if these classes are here, then the runtime environment has
-        // access to JAI and the JAI ImageI/O toolbox.
+        // access to ImageN and the ImageN ImageI/O toolbox.
         try {
             Class.forName("it.geosolutions.imageio.plugins.ecw.ECWImageReaderSpi");
             available = new ECWImageReaderSpi().isAvailable();

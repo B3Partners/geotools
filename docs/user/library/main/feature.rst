@@ -5,9 +5,9 @@ This page consists of a series of code examples showing how to do common tasks w
 
 Reference:
 
-* :doc:`../opengis/model` ``gt-opengis`` data model
-* :doc:`../opengis/type` ``gt-opengis`` feature type interfaces
-* :doc:`../opengis/feature` ``gt-opengis`` feature interfaces
+* :doc:`../api/model` ``gt-api`` data model
+* :doc:`../api/type` ``gt-api`` feature type interfaces
+* :doc:`../api/feature` ``gt-api`` feature interfaces
 
 Build a Feature Type
 ^^^^^^^^^^^^^^^^^^^^
@@ -169,9 +169,10 @@ DataUtilities
   
   final SimpleFeatureType FLAG = DataUtilities.createType("Flag","Location:Point,Name:String");
 
-You can define the Coordinate Reference System using::
+You can define the Coordinate Reference System using the following (authority is optional, should be specified if it's not ``EPSG``)::
   
-  final SimpleFeatureType FLAG = DataUtilities.createType("Flags","geom:MultiPoint:srid=4326,Name:String");
+  SimpleFeatureType FLAG = DataUtilities.createType("Flags","geom:MultiPoint:srid=4326,Name:String");
+  SimpleFeatureType FLAG_IAU = DataUtilities.createType("Flags","geom:Point:authority:IAU;srid=49900,Name:String");
 
 You can also ask for the String representation of a ``FeatureType``::
   
@@ -205,7 +206,7 @@ Using a ``TypeFactory``::
   Name name = new NameImpl( new URI("http://localhost/"), "Flag" );
   InternationalString description = new SimpleInternationalString("A Flag used to place a marker on the world");
   
-  AttributeDescriptor defaultGeoemtry = typeFactory.createAttributeDescriptor(GEOM, geomName, 1, 1, true, null );
+  AttributeDescriptor defaultGeometry = typeFactory.createAttributeDescriptor(GEOM, geomName, 1, 1, true, null );
   
   List<AttributeDescriptor> types = new ArrayList<AttributeDescriptor>();
   types.add( defaultGeometry );

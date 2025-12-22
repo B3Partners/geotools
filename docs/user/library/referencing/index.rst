@@ -5,7 +5,9 @@ Used to interpret referencing information allowing the determination of a locati
 coordinates. Includes implementation of ``CoordinateReferenceSystem`` (CRS), conversion and
 transformation services.
 
-.. image:: /images/gt-referencing.png
+.. figure:: /images/gt-referencing.svg
+   
+   gt-referencing module
 
 The gt-referencing module is our first example that makes use of the plugin system provided
 by :doc:`gt-metadata <../metadata/index>`. It does require a little bit of care when configuring
@@ -13,7 +15,7 @@ the module with appropriate EPSG authority.
 
 The ``gt-referencing`` module is responsible for:
 
-* Implementation of the referencing interfaces from :doc:`gt-opengis <../opengis/index>` such
+* Implementation of the referencing interfaces from :doc:`gt-api <../api/index>` such
   as ``CoordinateReferenceSystem`` and ``MathTransform``
 * Providing a definition for common spatial reference system codes using plugins available
   on the CLASSPATH
@@ -70,6 +72,17 @@ Contents
    parameter
    transform
    calculator
+   config_transformations
+
+EPSG core providers (choose only one to prevent conflict):
+
+.. toctree::
+   :maxdepth: 1
+   
+   hsql
+   postgresql
+   wkt
+
 
 Plugins:
 
@@ -77,17 +90,6 @@ Plugins:
    :maxdepth: 1
    
    extension
-
-EPSG plugins (choose only one to prevent conflict):
-
-.. toctree::
-   :maxdepth: 1
-   
-   hsql
-   access
-   postgresql
-   wkt
-   3d
-   extension
+   iau
 
 

@@ -18,7 +18,6 @@ package org.h2gis.geotools;
 
 import org.geotools.jdbc.JDBCJoinTestSetup;
 
-@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public class H2GISJoinTestSetup extends JDBCJoinTestSetup {
 
     protected H2GISJoinTestSetup() {
@@ -27,9 +26,8 @@ public class H2GISJoinTestSetup extends JDBCJoinTestSetup {
 
     @Override
     protected void createJoinTable() throws Exception {
-        run(
-                "CREATE TABLE \"geotools\".\"ftjoin\" ( \"id\" int PRIMARY KEY, "
-                        + "\"name\" VARCHAR, \"geom\" GEOMETRY(GEOMETRY, 4326), \"join1intProperty\" int)");
+        run("CREATE TABLE \"geotools\".\"ftjoin\" ( \"id\" int PRIMARY KEY, "
+                + "\"name\" VARCHAR, \"geom\" GEOMETRY(GEOMETRY, 4326), \"join1intProperty\" int)");
 
         run(
                 "INSERT INTO \"geotools\".\"ftjoin\" VALUES (0, 'zero', ST_GeomFromText('POLYGON ((-0.1 -0.1, -0.1 0.1, 0.1 0.1, 0.1 -0.1, -0.1 -0.1))', 4326), 0)");

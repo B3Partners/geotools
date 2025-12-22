@@ -17,16 +17,15 @@
 
 package org.geotools.referencing.factory;
 
+import java.text.MessageFormat;
 import org.apache.commons.lang3.StringUtils;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.util.Version;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
 
 /**
- * Split a URN into its {@link #type} and {@link #version} parts for {@link URN_AuthorityFactory}.
- * This class must be immutable in order to avoid the need for synchronization in the authority
- * factory.
+ * Split a URN into its {@link #type} and {@link #version} parts for {@link URN_AuthorityFactory}. This class must be
+ * immutable in order to avoid the need for synchronization in the authority factory.
  *
  * @author Martin Desruisseaux
  * @author Ben Caradoc-Davies (CSIRO Earth Science and Resource Engineering)
@@ -34,10 +33,10 @@ import org.opengis.referencing.NoSuchAuthorityCodeException;
 final class URN_Parser extends URI_Parser {
 
     /**
-     * The beginning parts of the URN, typically {@code "urn:ogc:def:"} and {@code
-     * "urn:x-ogc:def:"}. All elements in the array are treated as synonymous. Those parts are up
-     * to, but do not include, the type part ({@code "crs"}, {@code "cs"}, {@code "datum"},
-     * <cite>etc.</cite>). They must include a trailing (@value #URN_SEPARATOR} character.
+     * The beginning parts of the URN, typically {@code "urn:ogc:def:"} and {@code "urn:x-ogc:def:"}. All elements in
+     * the array are treated as synonymous. Those parts are up to, but do not include, the type part ({@code "crs"},
+     * {@code "cs"}, {@code "datum"}, <cite>etc.</cite>). They must include a trailing (@value #URN_SEPARATOR}
+     * character.
      */
     private static final String[] URN_BASES = {"urn:ogc:def:", "urn:x-ogc:def:"};
 
@@ -53,8 +52,7 @@ final class URN_Parser extends URI_Parser {
      * @param version the version of the resource or null if none
      * @param code the resource code
      */
-    protected URN_Parser(
-            String urn, URI_Type type, String authority, Version version, String code) {
+    URN_Parser(String urn, URI_Type type, String authority, Version version, String code) {
         super(urn, type, authority, version, code);
     }
 
@@ -63,9 +61,8 @@ final class URN_Parser extends URI_Parser {
      *
      * @param urn The URN to parse.
      * @throws NoSuchAuthorityCodeException if the URN syntax is invalid.
-     * @todo Implementation should be replaced by some mechanism using {@code GenericName} (at least
-     *     the call to {@code String.regionMatches}) otherwise this method will fails if there is
-     *     spaces around the separator.
+     * @todo Implementation should be replaced by some mechanism using {@code GenericName} (at least the call to
+     *     {@code String.regionMatches}) otherwise this method will fails if there is spaces around the separator.
      */
     public static URN_Parser buildParser(final String urn) throws NoSuchAuthorityCodeException {
         final String code = urn.trim();
@@ -86,24 +83,21 @@ final class URN_Parser extends URI_Parser {
                             String urnAuthority;
                             String urnCode;
                             if (versionEnd != lastEnd && versionEnd != -1) {
-                                urnVersion =
-                                        (lastEnd <= nameEnd)
-                                                ? null
-                                                : new Version(
-                                                        code.substring(nameEnd + 1, versionEnd));
+                                urnVersion = lastEnd <= nameEnd
+                                        ? null
+                                        : new Version(code.substring(nameEnd + 1, versionEnd));
                                 urnAuthority = code.substring(typeEnd + 1, nameEnd);
                                 urnCode = code.substring(versionEnd + 1).trim();
                                 urnCode = urnCode.replaceAll(String.valueOf(URN_SEPARATOR), ",");
                             } else {
                                 urnVersion =
-                                        (lastEnd <= nameEnd)
-                                                ? null
-                                                : new Version(code.substring(nameEnd + 1, lastEnd));
-                                urnAuthority = code.substring(typeEnd + 1, nameEnd).trim();
+                                        lastEnd <= nameEnd ? null : new Version(code.substring(nameEnd + 1, lastEnd));
+                                urnAuthority =
+                                        code.substring(typeEnd + 1, nameEnd).trim();
                                 urnCode = code.substring(lastEnd + 1).trim();
                             }
                             // handle empty version
-                            urnVersion = (StringUtils.isEmpty(urnVersion)) ? null : urnVersion;
+                            urnVersion = StringUtils.isEmpty(urnVersion) ? null : urnVersion;
                             if (urnCode.contains("CRS")) {
                                 urnAuthority = "CRS";
                                 urnCode = urnCode.substring(3);
@@ -119,6 +113,6 @@ final class URN_Parser extends URI_Parser {
             }
         }
         throw new NoSuchAuthorityCodeException(
-                Errors.format(ErrorKeys.ILLEGAL_IDENTIFIER_$1, type), "urn:ogc:def", type);
+                MessageFormat.format(ErrorKeys.ILLEGAL_IDENTIFIER_$1, type), "urn:ogc:def", type);
     }
 }

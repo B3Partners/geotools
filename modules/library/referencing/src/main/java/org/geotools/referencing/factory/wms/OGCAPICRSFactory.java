@@ -16,13 +16,12 @@
  */
 package org.geotools.referencing.factory.wms;
 
+import org.geotools.api.metadata.citation.Citation;
 import org.geotools.metadata.iso.citation.Citations;
-import org.opengis.metadata.citation.Citation;
 
 /**
- * Similar to the OGC CRS factory, but with a different authority name, designed to support URNs
- * coming from the OGC API - Features - Part 1: Core specification (e.g.,
- * "http://www.opengis.net/def/crs/OGC/1.3/CRS84").
+ * Similar to the OGC CRS factory, but with a different authority name, designed to support URNs coming from the OGC API
+ * - Features - Part 1: Core specification (e.g., "http://www.opengis.net/def/crs/OGC/1.3/CRS84").
  */
 public class OGCAPICRSFactory extends WebCRSFactory {
 

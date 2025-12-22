@@ -22,19 +22,19 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.feature.NameImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Literal;
 
 /**
  * Abstract class for a function expression implementation
  *
- * <p>By default this implementation returns the provided {@link #fallback} value. To implement a
- * function please override the {@link #evaluate(Object)} method.
+ * <p>By default this implementation returns the provided {@link #fallback} value. To implement a function please
+ * override the {@link #evaluate(Object)} method.
  *
  * @author James Macgill, PSU
  */
@@ -45,7 +45,7 @@ public abstract class FunctionExpressionImpl extends org.geotools.filter.Default
     protected String name;
 
     /** function params * */
-    protected List<org.opengis.filter.expression.Expression> params;
+    protected List<org.geotools.api.filter.expression.Expression> params;
 
     protected Literal fallback;
 
@@ -125,7 +125,7 @@ public abstract class FunctionExpressionImpl extends org.geotools.filter.Default
     }
     /** Returns the function parameters. */
     @Override
-    public List<org.opengis.filter.expression.Expression> getParameters() {
+    public List<org.geotools.api.filter.expression.Expression> getParameters() {
         return params;
     }
 
@@ -144,7 +144,7 @@ public abstract class FunctionExpressionImpl extends org.geotools.filter.Default
         this.params = new ArrayList<>(params);
     }
 
-    /** @see org.opengis.filter.expression.Expression#accept(ExpressionVisitor, Object) */
+    /** @see org.geotools.api.filter.expression.Expression#accept(ExpressionVisitor, Object) */
     @Override
     public Object accept(ExpressionVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
@@ -166,19 +166,18 @@ public abstract class FunctionExpressionImpl extends org.geotools.filter.Default
     }
 
     /**
-     * Creates a String representation of this Function with the function name and the arguments.
-     * The String created should be good for most subclasses
+     * Creates a String representation of this Function with the function name and the arguments. The String created
+     * should be good for most subclasses
      */
     @Override
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append(getName());
         sb.append("(");
-        List<org.opengis.filter.expression.Expression> params = getParameters();
+        List<org.geotools.api.filter.expression.Expression> params = getParameters();
         if (params != null) {
-            org.opengis.filter.expression.Expression exp;
-            for (Iterator<org.opengis.filter.expression.Expression> it = params.iterator();
-                    it.hasNext(); ) {
+            org.geotools.api.filter.expression.Expression exp;
+            for (Iterator<org.geotools.api.filter.expression.Expression> it = params.iterator(); it.hasNext(); ) {
                 exp = it.next();
                 sb.append("[");
                 sb.append(exp);
@@ -193,7 +192,7 @@ public abstract class FunctionExpressionImpl extends org.geotools.filter.Default
     }
 
     /** Utility method for subclasses to ask for an argument at a given index */
-    protected org.opengis.filter.expression.Expression getExpression(int index) {
+    protected org.geotools.api.filter.expression.Expression getExpression(int index) {
         Expression exp = getParameters().get(index);
         return exp;
     }
@@ -210,10 +209,10 @@ public abstract class FunctionExpressionImpl extends org.geotools.filter.Default
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((fallback == null) ? 0 : fallback.hashCode());
-        result = prime * result + ((functionName == null) ? 0 : functionName.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
-        result = prime * result + ((params == null) ? 0 : params.hashCode());
+        result = prime * result + (fallback == null ? 0 : fallback.hashCode());
+        result = prime * result + (functionName == null ? 0 : functionName.hashCode());
+        result = prime * result + (name == null ? 0 : name.hashCode());
+        result = prime * result + (params == null ? 0 : params.hashCode());
         return result;
     }
 

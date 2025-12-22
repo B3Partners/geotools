@@ -3,6 +3,7 @@ package org.geotools.kml.v22;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -13,7 +14,6 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeatureType;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -52,18 +52,14 @@ public class KMLEncodingTest extends KMLTestSupport {
     public void testEncodeSimpleFeaturecollection() throws Exception {
         GeometryFactory geomFactory = new GeometryFactory();
         DefaultFeatureCollection collection = new DefaultFeatureCollection("internal", null);
-        SimpleFeatureType type =
-                DataUtilities.createType("location", "geom:Point,name:String,attr2:Integer");
+        SimpleFeatureType type = DataUtilities.createType("location", "geom:Point,name:String,attr2:Integer");
 
         Point point1 = geomFactory.createPoint(new Coordinate(40, 50));
         Point point2 = geomFactory.createPoint(new Coordinate(30, 45));
         Point point3 = geomFactory.createPoint(new Coordinate(35, 46));
-        collection.add(
-                SimpleFeatureBuilder.build(type, new Object[] {point1, "first feat.", 17}, null));
-        collection.add(
-                SimpleFeatureBuilder.build(type, new Object[] {point2, "feature #2", 24}, null));
-        collection.add(
-                SimpleFeatureBuilder.build(type, new Object[] {point3, "third feature", 42}, null));
+        collection.add(SimpleFeatureBuilder.build(type, new Object[] {point1, "first feat.", 17}, null));
+        collection.add(SimpleFeatureBuilder.build(type, new Object[] {point2, "feature #2", 24}, null));
+        collection.add(SimpleFeatureBuilder.build(type, new Object[] {point3, "third feature", 42}, null));
 
         Encoder encoder = new Encoder(new KMLConfiguration());
         // Note: if indenting is set to true, this will give weird results
@@ -101,7 +97,8 @@ public class KMLEncodingTest extends KMLTestSupport {
         Node extData1 = Placemark1.getChildNodes().item(1);
         assertEquals(KML.ExtendedData.getLocalPart(), extData1.getLocalName());
 
-        Node data1 = extData1.getChildNodes().item(0), data2 = extData1.getChildNodes().item(1);
+        Node data1 = extData1.getChildNodes().item(0),
+                data2 = extData1.getChildNodes().item(1);
         assertEquals(KML.Data.getLocalPart(), data1.getLocalName());
         assertEquals(KML.Data.getLocalPart(), data2.getLocalName());
         // We cannot predict the features order, just check the name of the attribute columns.
@@ -116,17 +113,14 @@ public class KMLEncodingTest extends KMLTestSupport {
     public void testEncodeNullAttribute() throws Exception {
         GeometryFactory geomFactory = new GeometryFactory();
         DefaultFeatureCollection collection = new DefaultFeatureCollection("internal", null);
-        SimpleFeatureType type =
-                DataUtilities.createType("location", "geom:Point,name:String,attr2:Integer");
+        SimpleFeatureType type = DataUtilities.createType("location", "geom:Point,name:String,attr2:Integer");
 
         Point point1 = geomFactory.createPoint(new Coordinate(40, 50));
         Point point2 = geomFactory.createPoint(new Coordinate(30, 45));
         Point point3 = geomFactory.createPoint(new Coordinate(35, 46));
         collection.add(SimpleFeatureBuilder.build(type, new Object[] {point1, null, 17}, null));
-        collection.add(
-                SimpleFeatureBuilder.build(type, new Object[] {point2, "feature #2", null}, null));
-        collection.add(
-                SimpleFeatureBuilder.build(type, new Object[] {point3, "third feature", 42}, null));
+        collection.add(SimpleFeatureBuilder.build(type, new Object[] {point2, "feature #2", null}, null));
+        collection.add(SimpleFeatureBuilder.build(type, new Object[] {point3, "third feature", 42}, null));
 
         Encoder encoder = new Encoder(new KMLConfiguration());
         // Note: if indenting is set to true, this will give weird results

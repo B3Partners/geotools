@@ -28,8 +28,8 @@ import org.geotools.graph.traverse.GraphTraversal;
 import org.geotools.graph.traverse.basic.SourceGraphIterator;
 
 /**
- * A path iterator that uses a function (usually denoted f(x)) to determine the order in which the
- * algorithm visits nodes, f(x) is a sum of two functions:
+ * A path iterator that uses a function (usually denoted f(x)) to determine the order in which the algorithm visits
+ * nodes, f(x) is a sum of two functions:
  *
  * <ul>
  *   <li>The path-cost function (usually denoted g(x), which may or may not be a heuristic)
@@ -95,8 +95,8 @@ public class AStarIterator extends SourceGraphIterator {
     public void init(Graph graph, GraphTraversal traversal) {}
 
     /**
-     * Returns the next node in the priority queue. if the queue is empty then there is no path from
-     * the source to the destiny in this graph.
+     * Returns the next node in the priority queue. if the queue is empty then there is no path from the source to the
+     * destiny in this graph.
      *
      * @see org.geotools.graph.traverse.GraphIterator#next()
      */
@@ -106,14 +106,13 @@ public class AStarIterator extends SourceGraphIterator {
             return null;
         }
         AStarNode next = m_pqueue.remove();
-        return (next.getNode());
+        return next.getNode();
     }
 
     /**
-     * Makes a step of the A* algorithm. Takes the current node, looks for its neighbours. The ones
-     * which are closed are discarted. The ones "in" the opened queue are checked to see if its
-     * necessary to update them. The rest of the nodes are initialized as AStarNodes and inserted in
-     * the opened queue.
+     * Makes a step of the A* algorithm. Takes the current node, looks for its neighbours. The ones which are closed are
+     * discarted. The ones "in" the opened queue are checked to see if its necessary to update them. The rest of the
+     * nodes are initialized as AStarNodes and inserted in the opened queue.
      *
      * @see org.geotools.graph.traverse.GraphIterator#cont(Graphable)
      */
@@ -132,7 +131,7 @@ public class AStarIterator extends SourceGraphIterator {
             if (m_nodemap.containsKey(next)) {
                 nextAsn = m_nodemap.get(next);
                 if (!nextAsn.isClosed()) {
-                    if ((currAsn.getG() + m_afuncs.cost(currAsn, nextAsn)) < nextAsn.getG()) {
+                    if (currAsn.getG() + m_afuncs.cost(currAsn, nextAsn) < nextAsn.getG()) {
                         m_pqueue.remove(nextAsn);
                         nextAsn.setG(currAsn.getG() + m_afuncs.cost(currAsn, nextAsn));
                         nextAsn.setParent(currAsn);
@@ -162,24 +161,25 @@ public class AStarIterator extends SourceGraphIterator {
     /** */
     public Node getParent(Node n) {
         AStarNode asn = m_nodemap.get(n);
-        return (asn == null ? null : asn.getParent() == null ? null : asn.getParent().getNode());
+        return asn == null
+                ? null
+                : asn.getParent() == null ? null : asn.getParent().getNode();
     }
 
     protected Iterator<?> getRelated(Graphable current) {
-        if (current instanceof DirectedGraphable) {
-            return ((DirectedGraphable) current).getOutRelated();
+        if (current instanceof DirectedGraphable graphable) {
+            return graphable.getOutRelated();
         } else {
-            return (current.getRelated());
+            return current.getRelated();
         }
     }
 
     /** Decides which node has more priority */
-    private static Comparator<AStarNode> comparator =
-            (o1, o2) -> {
-                AStarNode n1 = o1;
-                AStarNode n2 = o2;
-                return (n1.getF() < n2.getF() ? -1 : n1.getF() > n2.getF() ? 1 : 0);
-            };
+    private static Comparator<AStarNode> comparator = (o1, o2) -> {
+        AStarNode n1 = o1;
+        AStarNode n2 = o2;
+        return n1.getF() < n2.getF() ? -1 : n1.getF() > n2.getF() ? 1 : 0;
+    };
 
     /**
      * Internal data structure used to track node costs, and parent nodes.
@@ -227,7 +227,7 @@ public class AStarIterator extends SourceGraphIterator {
         }
 
         public double getF() {
-            return (g + h);
+            return g + h;
         }
 
         public AStarNode getParent() {

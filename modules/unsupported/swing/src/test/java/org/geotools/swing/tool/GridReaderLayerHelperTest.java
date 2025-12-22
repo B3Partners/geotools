@@ -23,26 +23,26 @@ import static org.junit.Assert.assertNotNull;
 import java.io.File;
 import java.util.Map;
 import java.util.Random;
-import javax.media.jai.TiledImage;
+import org.eclipse.imagen.TiledImage;
+import org.eclipse.imagen.media.utilities.ImageUtilities;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.referencing.datum.PixelInCell;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.coverage.CoverageFactoryFinder;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
 import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.gce.geotiff.GeoTiffWriter;
-import org.geotools.geometry.DirectPosition2D;
+import org.geotools.geometry.Position2D;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.GridReaderLayer;
 import org.geotools.map.Layer;
 import org.geotools.map.MapContent;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.jaitools.imageutils.ImageUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.referencing.datum.PixelInCell;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
  * Unit tests for GridReaderLayerHelper.
@@ -87,7 +87,7 @@ public class GridReaderLayerHelperTest {
 
     @Test
     public void getInfo() throws Exception {
-        DirectPosition2D pos = new DirectPosition2D(WORLD.getCoordinateReferenceSystem());
+        Position2D pos = new Position2D(WORLD.getCoordinateReferenceSystem());
 
         for (int i = 0; i < NUM_TEST_POINTS; i++) {
             pos.x = WORLD.getMinX() + WORLD.getWidth() * rand.nextDouble();
@@ -106,23 +106,20 @@ public class GridReaderLayerHelperTest {
 
     @Test
     public void getInfoOutsideCoverageReturnsEmptyResult() throws Exception {
-        DirectPosition2D pos =
-                new DirectPosition2D(
-                        WORLD.getCoordinateReferenceSystem(),
-                        WORLD.getMaxX() + 1,
-                        WORLD.getMaxY() + 1);
+        Position2D pos = new Position2D(WORLD.getCoordinateReferenceSystem(), WORLD.getMaxX() + 1, WORLD.getMaxY() + 1);
 
         InfoToolResult info = helper.getInfo(pos);
         assertNotNull(info);
         assertEquals(0, info.getNumFeatures());
     }
 
-    private int[] getValues(DirectPosition pos) throws Exception {
+    private int[] getValues(Position pos) throws Exception {
         if (worldToGridTransform == null) {
-            worldToGridTransform = reader.getOriginalGridToWorld(PixelInCell.CELL_CORNER).inverse();
+            worldToGridTransform =
+                    reader.getOriginalGridToWorld(PixelInCell.CELL_CORNER).inverse();
         }
 
-        DirectPosition gridPos = worldToGridTransform.transform(pos, null);
+        Position gridPos = worldToGridTransform.transform(pos, null);
         int x = (int) gridPos.getOrdinate(0);
         int y = (int) gridPos.getOrdinate(1);
 
@@ -135,7 +132,7 @@ public class GridReaderLayerHelperTest {
     }
 
     private static void createImageAndReader() throws Exception {
-        image = ImageUtils.createConstantImage(WIDTH, HEIGHT, new Integer[] {0, 0, 0});
+        image = ImageUtilities.createConstantImage(WIDTH, HEIGHT, new Integer[] {0, 0, 0});
         for (int band = 0; band < image.getNumBands(); band++) {
             for (int y = 0; y < HEIGHT; y++) {
                 for (int x = 0; x < WIDTH; x++) {
@@ -149,7 +146,7 @@ public class GridReaderLayerHelperTest {
 
         File file = File.createTempFile("test-image", ".tiff");
         GeoTiffWriter writer = new GeoTiffWriter(file);
-        writer.write(coverage, null);
+        writer.write(coverage);
         writer.dispose();
 
         reader = new GeoTiffReader(file);

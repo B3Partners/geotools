@@ -19,9 +19,9 @@ package org.geotools.coverageio.gdal.nitf;
 import it.geosolutions.imageio.plugins.nitf.NITFImageReaderSpi;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.coverage.grid.Format;
 import org.geotools.coverage.grid.io.GridFormatFactorySpi;
 import org.geotools.coverageio.BaseGridFormatFactorySPI;
-import org.opengis.coverage.grid.Format;
 
 /**
  * Implementation of the {@link Format} service provider interface for NITF files.
@@ -30,11 +30,9 @@ import org.opengis.coverage.grid.Format;
  * @author Simone Giannecchini (simboss), GeoSolutions
  * @since 2.5.x
  */
-public final class NITFFormatFactory extends BaseGridFormatFactorySPI
-        implements GridFormatFactorySpi {
+public final class NITFFormatFactory extends BaseGridFormatFactorySPI implements GridFormatFactorySpi {
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(NITFFormatFactory.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(NITFFormatFactory.class);
 
     /**
      * Tells me if the coverage plugin to access Erdas imagine is available or not.
@@ -46,7 +44,7 @@ public final class NITFFormatFactory extends BaseGridFormatFactorySPI
         boolean available = true;
 
         // if these classes are here, then the runtime environment has
-        // access to JAI and the JAI ImageI/O toolbox.
+        // access to ImageN and the ImageN ImageI/O toolbox.
         try {
             Class.forName("it.geosolutions.imageio.plugins.nitf.NITFImageReaderSpi");
             available = new NITFImageReaderSpi().isAvailable();

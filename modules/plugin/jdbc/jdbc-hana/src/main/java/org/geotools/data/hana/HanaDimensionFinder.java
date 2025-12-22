@@ -27,9 +27,9 @@ import org.locationtech.jts.geom.Polygon;
 /**
  * Find the coordinate dimension of a geometry instance.
  *
- * <p>JTS coordinate sequences are often three-dimensional, but their coordinates don't have a third
- * ordinate (i.e. it is NaN). This class checks if all coordinate sequences in a geometry claiming
- * to be three-dimensional really have a third ordinate.
+ * <p>JTS coordinate sequences are often three-dimensional, but their coordinates don't have a third ordinate (i.e. it
+ * is NaN). This class checks if all coordinate sequences in a geometry claiming to be three-dimensional really have a
+ * third ordinate.
  *
  * @author Stefan Uhrig, SAP SE
  */
@@ -41,8 +41,8 @@ public class HanaDimensionFinder {
      * Finds the coordinate dimension of a geometry.
      *
      * @param g A geometry. Must not be null.
-     * @return Returns 3 iff all coordinate sequences in the geometry are three-dimensional and all
-     *     their coordinates have a third ordinate different from NaN. Returns 2 otherwise.
+     * @return Returns 3 iff all coordinate sequences in the geometry are three-dimensional and all their coordinates
+     *     have a third ordinate different from NaN. Returns 2 otherwise.
      */
     public static int findDimension(Geometry g) {
         return allPointsHave3Coordinates(g) ? 3 : 2;
@@ -52,14 +52,14 @@ public class HanaDimensionFinder {
         if (g.isEmpty()) {
             return true;
         }
-        if (g instanceof Point) {
-            return allPointsHave3Coordinates((Point) g);
-        } else if (g instanceof LineString) {
-            return allPointsHave3Coordinates((LineString) g);
-        } else if (g instanceof Polygon) {
-            return allPointsHave3Coordinates((Polygon) g);
-        } else if (g instanceof GeometryCollection) {
-            return allPointsHave3Coordinates((GeometryCollection) g);
+        if (g instanceof Point point) {
+            return allPointsHave3Coordinates(point);
+        } else if (g instanceof LineString string) {
+            return allPointsHave3Coordinates(string);
+        } else if (g instanceof Polygon polygon) {
+            return allPointsHave3Coordinates(polygon);
+        } else if (g instanceof GeometryCollection collection) {
+            return allPointsHave3Coordinates(collection);
         }
         throw new AssertionError();
     }

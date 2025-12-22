@@ -19,16 +19,16 @@ package org.geotools.data.hana;
 import static org.junit.Assert.assertEquals;
 
 import java.util.List;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.BBOX3D;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.ReferencedEnvelope3D;
 import org.geotools.jdbc.JDBCTestSetup;
 import org.geotools.jdbc.JDBCTestSupport;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.BBOX3D;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /** @author Stefan Uhrig, SAP SE */
 public class HanaBBOXFilterOnlineTest extends JDBCTestSupport {
@@ -47,9 +47,7 @@ public class HanaBBOXFilterOnlineTest extends JDBCTestSupport {
         FilterFactory ff = dataStore.getFilterFactory();
         BBOX filter = ff.bbox(aname("GEOM"), 1, 2, 3, 4, "EPSG:4326");
         String s = filterToSQL.encodeToString(filter);
-        assertEquals(
-                "WHERE GEOM.ST_IntersectsRectPlanar(ST_GeomFromWKB(?, -1), ST_GeomFromWKB(?, -1)) = 1",
-                s);
+        assertEquals("WHERE GEOM.ST_IntersectsRectPlanar(ST_GeomFromWKB(?, -1), ST_GeomFromWKB(?, -1)) = 1", s);
 
         GeometryFactory f = new GeometryFactory();
         List<Object> literals = filterToSQL.getLiteralValues();

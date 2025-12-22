@@ -18,31 +18,29 @@ package org.geotools.coverage.grid.io;
 
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
+import java.text.MessageFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.geometry.Bounds;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.NoninvertibleTransformException;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
-import org.geotools.data.DataSourceException;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.operation.LinearTransform;
 import org.geotools.referencing.operation.builder.GridToEnvelopeMapper;
 import org.geotools.referencing.operation.matrix.XAffineTransform;
 import org.geotools.util.Utilities;
 import org.geotools.util.logging.Logging;
-import org.opengis.geometry.Envelope;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.NoninvertibleTransformException;
-import org.opengis.referencing.operation.TransformException;
 
-/**
- * Class that supports readers in computing the proper reading resolution for a given grid geometry
- */
+/** Class that supports readers in computing the proper reading resolution for a given grid geometry */
 public class ReadResolutionCalculator {
 
     static final Logger LOGGER = Logging.getLogger(ReadResolutionCalculator.class);
@@ -69,13 +67,10 @@ public class ReadResolutionCalculator {
     private int maxOversamplingFactor = MAX_OVERSAMPLING_FACTOR_DEFAULT;
 
     public ReadResolutionCalculator(
-            GridGeometry2D requestedGridGeometry,
-            CoordinateReferenceSystem nativeCrs,
-            double[] fullResolution)
+            GridGeometry2D requestedGridGeometry, CoordinateReferenceSystem nativeCrs, double[] fullResolution)
             throws FactoryException {
         Utilities.ensureNonNull("gridGeometry", requestedGridGeometry);
-        this.requestedBBox =
-                new ReferencedEnvelope((Envelope) requestedGridGeometry.getEnvelope2D());
+        this.requestedBBox = new ReferencedEnvelope((Bounds) requestedGridGeometry.getEnvelope2D());
         this.requestedRasterArea = requestedGridGeometry.getGridRange2D().getBounds();
         this.requestedGridToWorld = (AffineTransform) requestedGridGeometry.getGridToCRS2D();
         this.fullResolution = fullResolution;
@@ -85,26 +80,23 @@ public class ReadResolutionCalculator {
             this.fullResolution = computeClassicResolution(requestedBBox);
             isFullResolutionInRequestedCRS = true;
         }
-        CoordinateReferenceSystem requestedCRS =
-                requestedGridGeometry.getCoordinateReferenceSystem();
+        CoordinateReferenceSystem requestedCRS = requestedGridGeometry.getCoordinateReferenceSystem();
         if (!CRS.equalsIgnoreMetadata(nativeCrs, requestedCRS)) {
             this.destinationToSourceTransform = CRS.findMathTransform(requestedCRS, nativeCrs);
         }
     }
 
     /**
-     * Computes the requested resolution which is going to be used for selecting overviews and or
-     * deciding decimation factors on the target coverage.
+     * Computes the requested resolution which is going to be used for selecting overviews and or deciding decimation
+     * factors on the target coverage.
      *
-     * <p>In case the requested envelope is in the same {@link CoordinateReferenceSystem} of the
-     * coverage we compute the resolution using the requested {@link MathTransform}. Notice that it
-     * must be a {@link LinearTransform} or else we fail.
+     * <p>In case the requested envelope is in the same {@link CoordinateReferenceSystem} of the coverage we compute the
+     * resolution using the requested {@link MathTransform}. Notice that it must be a {@link LinearTransform} or else we
+     * fail.
      *
-     * <p>In case the requested envelope is not in the same {@link CoordinateReferenceSystem} of the
-     * coverage we
+     * <p>In case the requested envelope is not in the same {@link CoordinateReferenceSystem} of the coverage we
      *
-     * @throws DataSourceException in case something bad happens during reprojections and/or
-     *     intersections.
+     * @throws DataSourceException in case something bad happens during reprojections and/or intersections.
      */
     public double[] computeRequestedResolution(ReferencedEnvelope readBounds) {
         try {
@@ -117,8 +109,7 @@ public class ReadResolutionCalculator {
                 // same and the conversion is not , we can get the resolution from envelope + raster
                 // directly
                 //
-                if (destinationToSourceTransform != null
-                        && !destinationToSourceTransform.isIdentity()) {
+                if (destinationToSourceTransform != null && !destinationToSourceTransform.isIdentity()) {
                     if (accurateResolution) {
                         return computeAccurateResolution(readBounds);
                     } else {
@@ -134,22 +125,17 @@ public class ReadResolutionCalculator {
                 }
             } else {
                 // should not happen
-                throw new UnsupportedOperationException(
-                        Errors.format(
-                                ErrorKeys.UNSUPPORTED_OPERATION_$1,
-                                requestedGridToWorld.toString()));
+                final Object arg0 = requestedGridToWorld.toString();
+                throw new UnsupportedOperationException(MessageFormat.format(ErrorKeys.UNSUPPORTED_OPERATION_$1, arg0));
             }
         } catch (Throwable e) {
-            if (LOGGER.isLoggable(Level.INFO))
-                LOGGER.log(Level.INFO, "Unable to compute requested resolution", e);
+            if (LOGGER.isLoggable(Level.INFO)) LOGGER.log(Level.INFO, "Unable to compute requested resolution", e);
         }
 
         //
         // use the coverage resolution since we cannot compute the requested one
         //
-        LOGGER.log(
-                Level.WARNING,
-                "Unable to compute requested resolution, the reader will pick the native one");
+        LOGGER.log(Level.WARNING, "Unable to compute requested resolution, the reader will pick the native one");
         return fullResolution;
     }
 
@@ -165,25 +151,21 @@ public class ReadResolutionCalculator {
     }
 
     /**
-     * Compute the resolutions through a more accurate logic: Compute the resolution in 9 points,
-     * the corners of the requested area and the middle points and take the better one. This will
-     * provide better results for cases where there is a lot more deformation on a subregion
-     * (top/bottom/sides) of the requested bbox with respect to others.
+     * Compute the resolutions through a more accurate logic: Compute the resolution in 9 points, the corners of the
+     * requested area and the middle points and take the better one. This will provide better results for cases where
+     * there is a lot more deformation on a subregion (top/bottom/sides) of the requested bbox with respect to others.
      */
     private double[] computeAccurateResolution(ReferencedEnvelope readBBox)
             throws TransformException, NoninvertibleTransformException, FactoryException {
-        final boolean isReprojected =
-                !CRS.equalsIgnoreMetadata(
-                        readBBox.getCoordinateReferenceSystem(),
-                        requestedBBox.getCoordinateReferenceSystem());
+        final boolean isReprojected = !CRS.equalsIgnoreMetadata(
+                readBBox.getCoordinateReferenceSystem(), requestedBBox.getCoordinateReferenceSystem());
         final ReferencedEnvelope originalReadBBox = readBBox;
         if (isReprojected) {
             readBBox = readBBox.transform(requestedBBox.getCoordinateReferenceSystem(), true);
         }
         double resX = XAffineTransform.getScaleX0(requestedGridToWorld);
         double resY = XAffineTransform.getScaleY0(requestedGridToWorld);
-        GeneralEnvelope cropBboxTarget =
-                CRS.transform(readBBox, requestedBBox.getCoordinateReferenceSystem());
+        GeneralBounds cropBboxTarget = CRS.transform(readBBox, requestedBBox.getCoordinateReferenceSystem());
         final int NPOINTS = 36;
         double[] points = new double[NPOINTS * 2];
         for (int i = 0; i < 3; i++) {
@@ -237,11 +219,9 @@ public class ReadResolutionCalculator {
             double y0 = requestedBBox.getMedian(1);
             double x1 = x0 + fullRes[0];
             double y1 = y0 + fullRes[1];
-            GeneralEnvelope envelope =
-                    new GeneralEnvelope(new double[] {x0, y0}, new double[] {x1, y1});
+            GeneralBounds envelope = new GeneralBounds(new double[] {x0, y0}, new double[] {x1, y1});
             envelope = CRS.transform(destinationToSourceTransform, envelope);
-            GridToEnvelopeMapper mapper =
-                    new GridToEnvelopeMapper(new GridEnvelope2D(0, 0, 1, 1), envelope);
+            GridToEnvelopeMapper mapper = new GridToEnvelopeMapper(new GridEnvelope2D(0, 0, 1, 1), envelope);
             AffineTransform transform = mapper.createAffineTransform();
             fullRes[0] = XAffineTransform.getScaleX0(transform);
             fullRes[1] = XAffineTransform.getScaleY0(transform);
@@ -273,11 +253,10 @@ public class ReadResolutionCalculator {
     }
 
     /**
-     * Sets the max oversampling factor for resolution calculation. That is, in case of high
-     * deformation on reprojection, how much higher the read resolution can be, compared to the
-     * known maximum resolution. This affects raster readers that can do internal resampling
-     * operations like a heterogeneous CRS mosaic, in which there is a resampling step to go from
-     * native CRS to the declared one.
+     * Sets the max oversampling factor for resolution calculation. That is, in case of high deformation on
+     * reprojection, how much higher the read resolution can be, compared to the known maximum resolution. This affects
+     * raster readers that can do internal resampling operations like a heterogeneous CRS mosaic, in which there is a
+     * resampling step to go from native CRS to the declared one.
      */
     public void setMaxOversamplingFactor(int maxOversamplingFactor) {
         this.maxOversamplingFactor = maxOversamplingFactor;

@@ -17,17 +17,17 @@
 package org.geotools.data.memory;
 
 import java.io.IOException;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
-import org.geotools.data.QueryCapabilities;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.QueryCapabilities;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureStore;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class MemoryFeatureStore extends ContentFeatureStore {
 
@@ -41,25 +41,24 @@ public class MemoryFeatureStore extends ContentFeatureStore {
     }
 
     @Override
-    protected FeatureWriter<SimpleFeatureType, SimpleFeature> getWriterInternal(
-            Query query, int flags) throws IOException {
+    protected FeatureWriter<SimpleFeatureType, SimpleFeature> getWriterInternal(Query query, int flags)
+            throws IOException {
         // TODO Auto-generated method stub
         return new MemoryFeatureWriter(getState(), query);
     }
 
     /**
-     * Delegate used for FeatureSource methods (We do this because Java cannot inherit from both
-     * ContentFeatureStore and CSVFeatureSource at the same time
+     * Delegate used for FeatureSource methods (We do this because Java cannot inherit from both ContentFeatureStore and
+     * CSVFeatureSource at the same time
      */
-    MemoryFeatureSource delegate =
-            new MemoryFeatureSource(entry, query) {
-                @Override
-                public void setTransaction(Transaction transaction) {
-                    super.setTransaction(transaction);
-                    MemoryFeatureStore.this.setTransaction(
-                            transaction); // Keep these two implementations on the same transaction
-                }
-            };
+    MemoryFeatureSource delegate = new MemoryFeatureSource(entry, query) {
+        @Override
+        public void setTransaction(Transaction transaction) {
+            super.setTransaction(transaction);
+            MemoryFeatureStore.this.setTransaction(
+                    transaction); // Keep these two implementations on the same transaction
+        }
+    };
 
     @Override
     public void setTransaction(Transaction transaction) {
@@ -89,8 +88,7 @@ public class MemoryFeatureStore extends ContentFeatureStore {
     }
 
     @Override
-    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query)
-            throws IOException {
+    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query) throws IOException {
         return delegate.getReaderInternal(query);
     }
 

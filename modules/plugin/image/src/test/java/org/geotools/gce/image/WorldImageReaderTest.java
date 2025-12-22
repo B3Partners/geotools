@@ -29,27 +29,26 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
-import javax.media.jai.ImageLayout;
-import javax.media.jai.RenderedOp;
+import org.eclipse.imagen.ImageLayout;
+import org.eclipse.imagen.RenderedOp;
+import org.geotools.api.data.CloseableIterator;
+import org.geotools.api.data.FileGroupProvider.FileGroup;
+import org.geotools.api.data.FileServiceInfo;
+import org.geotools.api.data.ServiceInfo;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.ParameterValue;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.OverviewPolicy;
-import org.geotools.data.CloseableIterator;
-import org.geotools.data.FileGroupProvider.FileGroup;
-import org.geotools.data.FileServiceInfo;
-import org.geotools.data.ServiceInfo;
-import org.geotools.geometry.Envelope2D;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.parameter.Parameter;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.test.TestData;
 import org.geotools.util.factory.Hints;
 import org.junit.Test;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.ParameterValue;
 
 /**
  * TestCase subclass for testing readingb capabilities
@@ -93,13 +92,13 @@ public class WorldImageReaderTest extends WorldImageBaseTestCase {
         final File file = TestData.file(this, "box_gcp.tif");
         WorldImageReader wiReader = new WorldImageReader(file);
         assertEquals(AbstractGridFormat.getDefaultCRS(), wiReader.getCoordinateReferenceSystem());
-        GeneralEnvelope ge = wiReader.getOriginalEnvelope();
+        GeneralBounds ge = wiReader.getOriginalEnvelope();
         assertEquals(0, ge.getMinimum(0), 1d);
         assertEquals(0, ge.getMinimum(1), 1d);
         assertEquals(300, ge.getSpan(0), 1d);
         assertEquals(300, ge.getSpan(0), 1d);
-        GridCoverage2D gc = wiReader.read(null);
-        Envelope2D envelope = gc.getEnvelope2D();
+        GridCoverage2D gc = wiReader.read();
+        ReferencedEnvelope envelope = gc.getEnvelope2D();
         assertEquals(0, envelope.getMinimum(0), 1d);
         assertEquals(0, envelope.getMinimum(1), 1d);
         assertEquals(300, envelope.getSpan(0), 1d);
@@ -145,8 +144,7 @@ public class WorldImageReaderTest extends WorldImageBaseTestCase {
         //
         ///////////////////////////////////////////////////////////////////////
         wiReader = new WorldImageReader(file);
-        final ParameterValue policy =
-                ((AbstractGridFormat) wiReader.getFormat()).OVERVIEW_POLICY.createValue();
+        final ParameterValue policy = ((AbstractGridFormat) wiReader.getFormat()).OVERVIEW_POLICY.createValue();
         policy.setValue(OverviewPolicy.NEAREST);
 
         // more than native resolution (250 pixel representation for 125 pixels image)
@@ -201,8 +199,7 @@ public class WorldImageReaderTest extends WorldImageBaseTestCase {
         // parameter ovverrides hints
         hints.put(Hints.OVERVIEW_POLICY, OverviewPolicy.NEAREST);
         wiReader = new WorldImageReader(file, hints);
-        final ParameterValue policy =
-                ((AbstractGridFormat) wiReader.getFormat()).OVERVIEW_POLICY.createValue();
+        final ParameterValue policy = ((AbstractGridFormat) wiReader.getFormat()).OVERVIEW_POLICY.createValue();
         policy.setValue(OverviewPolicy.QUALITY);
 
         // between 16 and 9, any value should report the match of 16
@@ -243,8 +240,7 @@ public class WorldImageReaderTest extends WorldImageBaseTestCase {
         // parameter overrides hints
         hints.put(Hints.OVERVIEW_POLICY, OverviewPolicy.NEAREST);
         wiReader = new WorldImageReader(file, hints);
-        final ParameterValue policy =
-                ((AbstractGridFormat) wiReader.getFormat()).OVERVIEW_POLICY.createValue();
+        final ParameterValue policy = ((AbstractGridFormat) wiReader.getFormat()).OVERVIEW_POLICY.createValue();
         policy.setValue(OverviewPolicy.SPEED);
         // between 16 and 9, any value should report the match of 16
         assertEquals(1, getChosenOverview(15, wiReader, policy));
@@ -261,14 +257,13 @@ public class WorldImageReaderTest extends WorldImageBaseTestCase {
         WorldImageReader reader = new WorldImageReader(file);
 
         // prepare to read an overview
-        final ParameterValue<GridGeometry2D> gg =
-                AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
-        final GeneralEnvelope envelope = reader.getOriginalEnvelope();
+        final ParameterValue<GridGeometry2D> gg = AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
+        final GeneralBounds envelope = reader.getOriginalEnvelope();
         final Dimension dim = new Dimension();
         dim.setSize(
                 reader.getOriginalGridRange().getSpan(0) / 64.0,
                 reader.getOriginalGridRange().getSpan(1) / 64.0);
-        final Rectangle rasterArea = ((GridEnvelope2D) reader.getOriginalGridRange());
+        final Rectangle rasterArea = (GridEnvelope2D) reader.getOriginalGridRange();
         rasterArea.setSize(dim);
         final GridEnvelope2D range = new GridEnvelope2D(rasterArea);
         GridGeometry2D gridGeometry = new GridGeometry2D(range, envelope);
@@ -282,28 +277,21 @@ public class WorldImageReaderTest extends WorldImageBaseTestCase {
         return getChosenOverview(size, wiReader, null);
     }
 
-    private int getChosenOverview(final int size, WorldImageReader wiReader, ParameterValue policy)
-            throws IOException {
+    private int getChosenOverview(final int size, WorldImageReader wiReader, ParameterValue policy) throws IOException {
         // get the coverage and then the rendered image
-        final Parameter<GridGeometry2D> readGG =
-                new Parameter<>(AbstractGridFormat.READ_GRIDGEOMETRY2D);
+        final Parameter<GridGeometry2D> readGG = new Parameter<>(AbstractGridFormat.READ_GRIDGEOMETRY2D);
 
-        readGG.setValue(
-                new GridGeometry2D(
-                        new GridEnvelope2D(
-                                new java.awt.Rectangle(size, (int) (164.0 / 125.0 * size))),
-                        new ReferencedEnvelope(
-                                118.8, 134.56, 47.819, 63.142, DefaultGeographicCRS.WGS84)));
-        final GridCoverage2D coverage =
-                wiReader.read(
-                        policy != null
-                                ? new GeneralParameterValue[] {readGG, policy}
-                                : new GeneralParameterValue[] {readGG});
+        readGG.setValue(new GridGeometry2D(
+                new GridEnvelope2D(new java.awt.Rectangle(size, (int) (164.0 / 125.0 * size))),
+                new ReferencedEnvelope(118.8, 134.56, 47.819, 63.142, DefaultGeographicCRS.WGS84)));
+        final GridCoverage2D coverage = wiReader.read(
+                policy != null ? new GeneralParameterValue[] {readGG, policy} : new GeneralParameterValue[] {readGG});
         assertNotNull(coverage);
-        assertNotNull((coverage).getRenderedImage());
+        assertNotNull(coverage.getRenderedImage());
 
         RenderedOp op = (RenderedOp) coverage.getRenderedImage();
-        while (!op.getOperationName().equals("ImageRead")) op = (RenderedOp) op.getSources().get(0);
+        while (!op.getOperationName().equals("ImageRead"))
+            op = (RenderedOp) op.getSources().get(0);
 
         Integer choice = (Integer) op.getParameterBlock().getObjectParameter(1);
         return choice.intValue();
@@ -314,8 +302,7 @@ public class WorldImageReaderTest extends WorldImageBaseTestCase {
      *
      * @param source Object
      */
-    private void read(Object source)
-            throws FileNotFoundException, IOException, IllegalArgumentException {
+    private void read(Object source) throws FileNotFoundException, IOException, IllegalArgumentException {
 
         // can we read it?
         assertTrue(new WorldImageFormat().accepts(source));
@@ -340,11 +327,11 @@ public class WorldImageReaderTest extends WorldImageBaseTestCase {
         assertTrue(layout.getTileWidth(null) > 0);
 
         // get the coverage
-        final GridCoverage2D coverage = wiReader.read(null);
+        final GridCoverage2D coverage = wiReader.read();
 
         // test the coverage
         assertNotNull(coverage);
-        assertNotNull((coverage).getRenderedImage());
+        assertNotNull(coverage.getRenderedImage());
         assertNotNull(coverage.getEnvelope());
 
         // log some information

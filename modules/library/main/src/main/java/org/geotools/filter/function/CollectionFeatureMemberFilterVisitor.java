@@ -16,14 +16,14 @@
  */
 package org.geotools.filter.function;
 
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.filter.visitor.DuplicatingFilterVisitor;
-import org.opengis.filter.expression.PropertyName;
 
 /**
  * Replace "featureMembers/ * /ATTRIBUTE" change with "ATTRIBUTE"
  *
- * <p>This is used to clean up xpath expressions prior to use by the various aggregate functions
- * such as Collection_AverageFunction.
+ * <p>This is used to clean up xpath expressions prior to use by the various aggregate functions such as
+ * Collection_AverageFunction.
  *
  * @since 8.0
  */

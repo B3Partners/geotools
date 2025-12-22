@@ -23,41 +23,38 @@ package org.geotools.referencing.operation.projection;
 import static java.lang.Math.toRadians;
 
 import java.awt.geom.Point2D;
+import java.io.Serial;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
  * Homolosine projection
  *
- * @see <A HREF="https://doi.org/10.2307%2F2560812">Goode, J.P. (1925). "The Homolosine projection -
- *     a new device for portraying the Earth's surface entire". Annals of the Association of
- *     American Geographers. 15 (3): 119–125</A>
- * @see <A HREF="https://en.wikipedia.org/wiki/Goode_homolosine_projection">The Homolosine
- *     projection on Wikipedia</A>
+ * @see <A HREF="https://doi.org/10.2307%2F2560812">Goode, J.P. (1925). "The Homolosine projection - a new device for
+ *     portraying the Earth's surface entire". Annals of the Association of American Geographers. 15 (3): 119–125</A>
+ * @see <A HREF="https://en.wikipedia.org/wiki/Goode_homolosine_projection">The Homolosine projection on Wikipedia</A>
  * @since 22.x
  * @author Luís M. de Sousa
  */
 public class Homolosine extends MapProjection {
     /** For cross-version compatibility. */
+    @Serial
     private static final long serialVersionUID = 4740760391570944118L;
 
     private static double LAT_THRESH = toRadians(40 + 44 / 60. + 11.8 / 3600.);
 
-    private static final double[] INTERRUP_NORTH = {
-        toRadians(-180), toRadians(-40), toRadians(180)
-    };
+    private static final double[] INTERRUP_NORTH = {toRadians(-180), toRadians(-40), toRadians(180)};
     private static final double[] INTERRUP_SOUTH = {
         toRadians(-180), toRadians(-100), toRadians(-20), toRadians(80), toRadians(180)
     };
 
     private static final double[] CENTRAL_MERID_NORTH = {toRadians(-100), toRadians(30)};
-    private static final double[] CENTRAL_MERID_SOUTH = {
-        toRadians(-160), toRadians(-60), toRadians(20), toRadians(140)
+    private static final double[] CENTRAL_MERID_SOUTH = {toRadians(-160), toRadians(-60), toRadians(20), toRadians(140)
     };
 
     ParameterDescriptorGroup descriptors;
@@ -72,17 +69,14 @@ public class Homolosine extends MapProjection {
      * @param parameters The parameter values in standard units.
      * @throws ParameterNotFoundException if a mandatory parameter is missing.
      */
-    protected Homolosine(
-            final ParameterDescriptorGroup descriptors, final ParameterValueGroup parameters)
+    protected Homolosine(final ParameterDescriptorGroup descriptors, final ParameterValueGroup parameters)
             throws ParameterNotFoundException {
 
         super(parameters, descriptors.descriptors());
         this.descriptors = descriptors;
         this.parameters = parameters;
         this.sinu = new Sinusoidal(this.parameters);
-        this.moll =
-                new Mollweide(
-                        Mollweide.ProjectionMode.Mollweide, this.descriptors, this.parameters);
+        this.moll = new Mollweide(Mollweide.ProjectionMode.Mollweide, this.descriptors, this.parameters);
     }
 
     /** {@inheritDoc} */
@@ -141,12 +135,11 @@ public class Homolosine extends MapProjection {
     }
 
     /**
-     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in
-     * radians) and stores the result in {@code ptDst} (linear distance on a unit sphere).
+     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in radians) and stores the
+     * result in {@code ptDst} (linear distance on a unit sphere).
      */
     @Override
-    protected Point2D transformNormalized(double lam, double phi, Point2D ptDst)
-            throws ProjectionException {
+    protected Point2D transformNormalized(double lam, double phi, Point2D ptDst) throws ProjectionException {
 
         double[] interruptions;
         double[] central_merids;
@@ -190,13 +183,9 @@ public class Homolosine extends MapProjection {
         }
     }
 
-    /**
-     * Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in
-     * {@code ptDst}.
-     */
+    /** Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in {@code ptDst}. */
     @Override
-    protected Point2D inverseTransformNormalized(double x, double y, final Point2D ptDst)
-            throws ProjectionException {
+    protected Point2D inverseTransformNormalized(double x, double y, final Point2D ptDst) throws ProjectionException {
 
         double[] interruptions;
         double[] central_merids;
@@ -209,13 +198,15 @@ public class Homolosine extends MapProjection {
             central_merids = CENTRAL_MERID_NORTH;
             interruptions = new double[INTERRUP_NORTH.length];
             for (int j = 0; j < INTERRUP_NORTH.length; j++)
-                interruptions[j] = sinu.transformNormalized(INTERRUP_NORTH[j], 0, null).getX();
+                interruptions[j] =
+                        sinu.transformNormalized(INTERRUP_NORTH[j], 0, null).getX();
         } else {
             central_merids = CENTRAL_MERID_SOUTH;
             offset = -offset;
             interruptions = new double[INTERRUP_SOUTH.length];
             for (int j = 0; j < INTERRUP_SOUTH.length; j++)
-                interruptions[j] = sinu.transformNormalized(INTERRUP_SOUTH[j], 0, null).getX();
+                interruptions[j] =
+                        sinu.transformNormalized(INTERRUP_SOUTH[j], 0, null).getX();
         }
 
         if (x >= interruptions[interruptions.length - 1]) i = interruptions.length - 1;
@@ -250,8 +241,8 @@ public class Homolosine extends MapProjection {
     //////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform
-     * provider} for the Homolosine projection (not part of the EPSG database).
+     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform provider} for the
+     * Homolosine projection (not part of the EPSG database).
      *
      * @since 22.x
      * @author Luís M. de Sousa
@@ -260,18 +251,17 @@ public class Homolosine extends MapProjection {
     public static class Provider extends AbstractProvider {
 
         /** For cross-version compatibility. */
+        @Serial
         private static final long serialVersionUID = -7345885830045627291L;
 
         /** The parameters group. */
-        static final ParameterDescriptorGroup PARAMETERS =
-                createDescriptorGroup(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(Citations.GEOTOOLS, "Goode_Homolosine"),
-                            new NamedIdentifier(Citations.ESRI, "Interrupted_Homolosine")
-                        },
-                        new ParameterDescriptor[] {
-                            SEMI_MAJOR, SEMI_MINOR, CENTRAL_MERIDIAN, FALSE_EASTING, FALSE_NORTHING
-                        });
+        static final ParameterDescriptorGroup PARAMETERS = createDescriptorGroup(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(Citations.GEOTOOLS, "Goode_Homolosine"),
+                    new NamedIdentifier(Citations.ESRI, "Interrupted_Homolosine"),
+                    new NamedIdentifier(Citations.PROJ, "goode")
+                },
+                new ParameterDescriptor[] {SEMI_MAJOR, SEMI_MINOR, CENTRAL_MERIDIAN, FALSE_EASTING, FALSE_NORTHING});
 
         /** Constructs a new provider. */
         public Provider() {

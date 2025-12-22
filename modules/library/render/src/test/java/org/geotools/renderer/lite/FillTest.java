@@ -27,8 +27,12 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.style.Symbolizer;
 import org.geotools.data.property.PropertyDataStore;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.image.test.ImageAssert;
@@ -36,14 +40,10 @@ import org.geotools.map.FeatureLayer;
 import org.geotools.map.MapContent;
 import org.geotools.renderer.style.FontCache;
 import org.geotools.styling.SLD;
-import org.geotools.styling.Stroke;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyleFactory;
-import org.geotools.styling.Symbolizer;
+import org.geotools.styling.StrokeImpl;
 import org.geotools.test.TestData;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.filter.FilterFactory2;
 
 public class FillTest {
     private static final long TIME = 40000;
@@ -64,10 +64,8 @@ public class FillTest {
         bounds.expandBy(0.2, 0.2);
 
         // load font
-        Font f =
-                Font.createFont(
-                        Font.TRUETYPE_FONT,
-                        TestData.getResource(this, "recreate.ttf").openStream());
+        Font f = Font.createFont(
+                Font.TRUETYPE_FONT, TestData.getResource(this, "recreate.ttf").openStream());
         FontCache.getDefaultInstance().registerFont(f);
 
         // System.setProperty("org.geotools.test.interactive", "true");
@@ -89,11 +87,7 @@ public class FillTest {
         renderer.setJava2DHints(new RenderingHints(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON));
 
         BufferedImage image = RendererBaseTest.showRender(styleName, renderer, TIME, bounds);
-        File reference =
-                new File(
-                        "./src/test/resources/org/geotools/renderer/lite/test-data/"
-                                + styleName
-                                + ".png");
+        File reference = new File("./src/test/resources/org/geotools/renderer/lite/test-data/" + styleName + ".png");
         ImageAssert.assertEquals(reference, image, threshold);
     }
 
@@ -150,6 +144,21 @@ public class FillTest {
     @Test
     public void testSlash() throws Exception {
         runSingleLayerTest("fillSlash.sld");
+    }
+
+    @Test
+    public void testSlashOffsetAbove() throws Exception {
+        runSingleLayerTest("fillSlashOffsetAbove.sld");
+    }
+
+    @Test
+    public void testSlashOffsetBelow() throws Exception {
+        runSingleLayerTest("fillSlashOffsetBelow.sld");
+    }
+
+    @Test
+    public void testSlashNonInt() throws Exception {
+        runSingleLayerTest("fillSlashNonInt.sld");
     }
 
     @Test
@@ -230,11 +239,9 @@ public class FillTest {
 
     @Test
     public void testGEOT3111() throws Exception {
-        FilterFactory2 ff2 = CommonFactoryFinder.getFilterFactory2(null);
+        FilterFactory ff2 = CommonFactoryFinder.getFilterFactory(null);
         StyleFactory sf = CommonFactoryFinder.getStyleFactory(null);
-        Symbolizer sym =
-                sf.createPolygonSymbolizer(
-                        Stroke.NULL, sf.createFill(ff2.literal(Color.CYAN)), null);
+        Symbolizer sym = sf.createPolygonSymbolizer(StrokeImpl.NULL, sf.createFill(ff2.literal(Color.CYAN)), null);
         Style style = SLD.wrapSymbolizers(sym);
 
         MapContent mc = new MapContent();

@@ -22,6 +22,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
@@ -44,25 +52,15 @@ import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.util.PolygonExtracter;
 import org.locationtech.jts.operation.buffer.BufferParameters;
 import org.locationtech.jts.simplify.DouglasPeuckerSimplifier;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 
 public class AzimulthalEquidistantProjectionHandlerFactory implements ProjectionHandlerFactory {
 
-    static final Logger LOGGER =
-            Logging.getLogger(AzimulthalEquidistantProjectionHandlerFactory.class);
+    static final Logger LOGGER = Logging.getLogger(AzimulthalEquidistantProjectionHandlerFactory.class);
 
     // longitude range goes beyond valid area to allow reading data that crosses the dateline,
     // extending for example between 0 and 360 (as used by GridCoverageReaderHelper)
     static final ReferencedEnvelope AZEQ_VALID_AREA =
-            new ReferencedEnvelope(
-                    Integer.MIN_VALUE, Integer.MAX_VALUE, -90, 90, DefaultGeographicCRS.WGS84);
+            new ReferencedEnvelope(Integer.MIN_VALUE, Integer.MAX_VALUE, -90, 90, DefaultGeographicCRS.WGS84);
 
     static final double EPS = 1e-3;
 
@@ -75,20 +73,17 @@ public class AzimulthalEquidistantProjectionHandlerFactory implements Projection
             boolean wrap,
             int wrapLimit)
             throws FactoryException {
-        MapProjection mapProjection =
-                CRS.getMapProjection(renderingEnvelope.getCoordinateReferenceSystem());
+        MapProjection mapProjection = CRS.getMapProjection(renderingEnvelope.getCoordinateReferenceSystem());
         if (renderingEnvelope != null && mapProjection instanceof AzimuthalEquidistant.Abstract) {
             try {
 
                 ProjectionHandler ph =
-                        new AzimuthalEquidistantProjectionHandler(
-                                sourceCRS, AZEQ_VALID_AREA, renderingEnvelope);
+                        new AzimuthalEquidistantProjectionHandler(sourceCRS, AZEQ_VALID_AREA, renderingEnvelope);
                 return ph;
             } catch (Exception e) {
                 LOGGER.log(
                         Level.WARNING,
-                        "Could not create an azimuthal equidistant projection handler, "
-                                + "rendering without it",
+                        "Could not create an azimuthal equidistant projection handler, " + "rendering without it",
                         e);
                 return null;
             }
@@ -113,14 +108,12 @@ public class AzimulthalEquidistantProjectionHandlerFactory implements Projection
         final Point south;
 
         public AzimuthalEquidistantProjectionHandler(
-                CoordinateReferenceSystem sourceCRS,
-                Envelope validAreaBounds,
-                ReferencedEnvelope renderingEnvelope)
+                CoordinateReferenceSystem sourceCRS, Envelope validAreaBounds, ReferencedEnvelope renderingEnvelope)
                 throws FactoryException, MismatchedDimensionException, TransformException {
             super(sourceCRS, validAreaBounds, renderingEnvelope);
 
             CoordinateReferenceSystem crs = renderingEnvelope.getCoordinateReferenceSystem();
-            Point2D.Double center = getCenter(crs);
+            Point2D.Double center = getCenter();
             initializeDatelineCutter(crs, center);
             double radius = getRadius(crs, center);
             renderingGeometry = JTS.toGeometry(renderingEnvelope);
@@ -149,8 +142,7 @@ public class AzimulthalEquidistantProjectionHandlerFactory implements Projection
             south = getAzeqPosition(mt, 0, -90);
         }
 
-        private Point getAzeqPosition(MathTransform mt, double lon, double lat)
-                throws TransformException {
+        private Point getAzeqPosition(MathTransform mt, double lon, double lat) throws TransformException {
             double[] source = {lon, lat};
             double[] target = new double[2];
             try {
@@ -167,7 +159,7 @@ public class AzimulthalEquidistantProjectionHandlerFactory implements Projection
             // the extreme points are sitting around 180 - center.x, -center.y, but each
             // need to be perturbated a bit to create the 4 cardinal points...
             double eps = 1e-3;
-            double x = center.x > 0 ? (-180 + center.x) : (180 + center.x);
+            double x = center.x > 0 ? -180 + center.x : 180 + center.x;
             double y = -center.y;
             final double[] line = {
                 center.x,
@@ -201,21 +193,19 @@ public class AzimulthalEquidistantProjectionHandlerFactory implements Projection
         }
 
         private double rollLongitude(final double x) {
-            return x - (((int) (x + Math.signum(x) * 180)) / 360) * 360.0;
+            return x - (int) (x + Math.signum(x) * 180) / 360.0 * 360.0;
         }
 
         private void initializeDatelineCutter(CoordinateReferenceSystem crs, Point2D.Double center)
                 throws TransformException, FactoryException {
             Geometry dateLine = getDateLine(center);
-            Geometry datelineAzeq =
-                    JTS.transform(dateLine, CRS.findMathTransform(DefaultGeographicCRS.WGS84, crs));
+            Geometry datelineAzeq = JTS.transform(dateLine, CRS.findMathTransform(DefaultGeographicCRS.WGS84, crs));
             simplifiedDateline = DouglasPeuckerSimplifier.simplify(datelineAzeq, 100);
             bufferedDateline = simplifiedDateline.buffer(100, 1, BufferParameters.CAP_SQUARE);
         }
 
         @Override
-        public List<ReferencedEnvelope> getQueryEnvelopes()
-                throws TransformException, FactoryException {
+        public List<ReferencedEnvelope> getQueryEnvelopes() throws TransformException, FactoryException {
             if (renderingGeometry == null) {
                 return Collections.emptyList();
             }
@@ -226,17 +216,14 @@ public class AzimulthalEquidistantProjectionHandlerFactory implements Projection
                 List<Polygon> polygons = PolygonExtracter.getPolygons(difference);
                 for (Polygon p : polygons) {
                     Geometry transformed =
-                            transformGeometry(
-                                    p, renderingEnvelope.getCoordinateReferenceSystem(), sourceCRS);
+                            transformGeometry(p, renderingEnvelope.getCoordinateReferenceSystem(), sourceCRS);
                     // the back-transform can literally make the inner rings bigger than the
                     // outer ones, be careful computing the envelope
                     Envelope envelope = getFullEnvelope(transformed);
                     results.add(new ReferencedEnvelope(envelope, sourceCRS));
                 }
             } else if (renderingGeometryReduced) {
-                MathTransform mt =
-                        CRS.findMathTransform(
-                                renderingEnvelope.getCoordinateReferenceSystem(), sourceCRS);
+                MathTransform mt = CRS.findMathTransform(renderingEnvelope.getCoordinateReferenceSystem(), sourceCRS);
                 Geometry transformed = JTS.transform(renderingGeometry, mt);
                 // the back-transform can literally make the inner rings bigger than the
                 // outer ones, be careful computing the envelope
@@ -247,11 +234,10 @@ public class AzimulthalEquidistantProjectionHandlerFactory implements Projection
                 results = super.getQueryEnvelopes();
             }
 
-            results.forEach(
-                    e -> {
-                        expandIfIncluded(e, north, 0, 90);
-                        expandIfIncluded(e, south, 0, -90);
-                    });
+            results.forEach(e -> {
+                expandIfIncluded(e, north, 0, 90);
+                expandIfIncluded(e, south, 0, -90);
+            });
 
             mergeEnvelopes(results);
             return results;
@@ -264,34 +250,24 @@ public class AzimulthalEquidistantProjectionHandlerFactory implements Projection
         }
 
         private Geometry transformGeometry(
-                Geometry g,
-                CoordinateReferenceSystem sourceCRS,
-                CoordinateReferenceSystem targetCRS)
+                Geometry g, CoordinateReferenceSystem sourceCRS, CoordinateReferenceSystem targetCRS)
                 throws FactoryException, TransformException {
             Geometry transformed = null;
             try {
                 transformed = JTS.transform(g, CRS.findMathTransform(sourceCRS, targetCRS));
             } catch (TransformException e) {
                 // uh oh, got into a special case of the target projection... go step by step
-                Geometry polygonWGS84 =
-                        JTS.transform(
-                                g,
-                                CRS.findMathTransform(
-                                        renderingEnvelope.getCoordinateReferenceSystem(),
-                                        DefaultGeographicCRS.WGS84));
-                ProjectionHandler handler =
-                        ProjectionHandlerFinder.getHandler(
-                                new ReferencedEnvelope(sourceCRS),
-                                DefaultGeographicCRS.WGS84,
-                                false);
+                Geometry polygonWGS84 = JTS.transform(
+                        g,
+                        CRS.findMathTransform(
+                                renderingEnvelope.getCoordinateReferenceSystem(), DefaultGeographicCRS.WGS84));
+                ProjectionHandler handler = ProjectionHandlerFinder.getHandler(
+                        new ReferencedEnvelope(sourceCRS), DefaultGeographicCRS.WGS84, false);
                 if (handler == null) throw e;
                 Geometry preProcessed = handler.preProcess(polygonWGS84);
-                transformed =
-                        JTS.transform(
-                                preProcessed,
-                                CRS.findMathTransform(
-                                        renderingEnvelope.getCoordinateReferenceSystem(),
-                                        sourceCRS));
+                transformed = JTS.transform(
+                        preProcessed,
+                        CRS.findMathTransform(renderingEnvelope.getCoordinateReferenceSystem(), sourceCRS));
             }
             return transformed;
         }
@@ -299,37 +275,25 @@ public class AzimulthalEquidistantProjectionHandlerFactory implements Projection
         private void expandToIncludeGeographic(ReferencedEnvelope env, double lon, double lat) {
             Point sourcepoint = GF.createPoint(new Coordinate(lon, lat));
             try {
-                Point transformed =
-                        (Point)
-                                transformGeometry(
-                                        sourcepoint,
-                                        DefaultGeographicCRS.WGS84,
-                                        env.getCoordinateReferenceSystem());
+                Point transformed = (Point)
+                        transformGeometry(sourcepoint, DefaultGeographicCRS.WGS84, env.getCoordinateReferenceSystem());
                 env.expandToInclude(transformed.getX(), transformed.getY());
             } catch (Exception e) {
                 LOGGER.log(
                         Level.FINE,
-                        "Failed to transform lon/lat point "
-                                + lon
-                                + ", "
-                                + lat
-                                + ", might not be a problem per se",
+                        "Failed to transform lon/lat point " + lon + ", " + lat + ", might not be a problem per se",
                         e);
             }
         }
 
         private Envelope getFullEnvelope(Geometry transformed) {
             final Envelope envelope = transformed.getEnvelopeInternal();
-            transformed.apply(
-                    (GeometryComponentFilter)
-                            geom -> envelope.expandToInclude(geom.getEnvelopeInternal()));
+            transformed.apply((GeometryComponentFilter) geom -> envelope.expandToInclude(geom.getEnvelopeInternal()));
 
             return envelope;
         }
 
-        /**
-         * Returns true if the rendering envelope is fully within the AZEQ projected max extension
-         */
+        /** Returns true if the rendering envelope is fully within the AZEQ projected max extension */
         public boolean checkRenderingWithinRadius(Point2D.Double center, double radius) {
             boolean renderingWithinRadius = true;
             double radiusSquared = radius * radius;
@@ -363,13 +327,10 @@ public class AzimulthalEquidistantProjectionHandlerFactory implements Projection
             return renderingWithinRadius;
         }
 
-        private Point2D.Double getCenter(CoordinateReferenceSystem crs) {
-            MapProjection mapProjection =
-                    CRS.getMapProjection(renderingEnvelope.getCoordinateReferenceSystem());
-            ParameterValue<?> centralMeridian =
-                    getParameter(mapProjection, AbstractProvider.CENTRAL_MERIDIAN);
-            ParameterValue<?> latitudeOfOrigin =
-                    getParameter(mapProjection, AbstractProvider.LATITUDE_OF_ORIGIN);
+        private Point2D.Double getCenter() {
+            MapProjection mapProjection = CRS.getMapProjection(renderingEnvelope.getCoordinateReferenceSystem());
+            ParameterValue<?> centralMeridian = getParameter(mapProjection, AbstractProvider.CENTRAL_MERIDIAN);
+            ParameterValue<?> latitudeOfOrigin = getParameter(mapProjection, AbstractProvider.LATITUDE_OF_ORIGIN);
             double centerLon = centralMeridian != null ? centralMeridian.doubleValue() : 0;
             double centerLat = latitudeOfOrigin != null ? latitudeOfOrigin.doubleValue() : 0;
             return new Point2D.Double(centerLon, centerLat);
@@ -387,20 +348,19 @@ public class AzimulthalEquidistantProjectionHandlerFactory implements Projection
             }
         }
 
-        private ParameterValue<?> getParameter(
-                MapProjection mapProjection, ParameterDescriptor<?> pd) {
+        private ParameterValue<?> getParameter(MapProjection mapProjection, ParameterDescriptor<?> pd) {
             ParameterValue<?> centralMeridian = null;
             try {
-                centralMeridian =
-                        mapProjection.getParameterValues().parameter(pd.getName().getCode());
+                centralMeridian = mapProjection
+                        .getParameterValues()
+                        .parameter(pd.getName().getCode());
             } catch (ParameterNotFoundException e) {
                 // ignore
             }
             return centralMeridian;
         }
 
-        private LineString sampleDateLineBetweenLatitudes(
-                GeometryFactory gf, double start, double end) {
+        private LineString sampleDateLineBetweenLatitudes(GeometryFactory gf, double start, double end) {
             List<Coordinate> coordinates = new ArrayList<>();
             for (double lat = start; lat < end; lat++) {
                 coordinates.add(new Coordinate(180, lat));
@@ -416,12 +376,9 @@ public class AzimulthalEquidistantProjectionHandlerFactory implements Projection
 
         public Polygon getAzeqProjectedExtents(double radius) {
             // might have false easting and northing
-            MapProjection mapProjection =
-                    CRS.getMapProjection(renderingEnvelope.getCoordinateReferenceSystem());
-            ParameterValue<?> falseEasting =
-                    getParameter(mapProjection, AbstractProvider.FALSE_EASTING);
-            ParameterValue<?> falseNorthing =
-                    getParameter(mapProjection, AbstractProvider.FALSE_NORTHING);
+            MapProjection mapProjection = CRS.getMapProjection(renderingEnvelope.getCoordinateReferenceSystem());
+            ParameterValue<?> falseEasting = getParameter(mapProjection, AbstractProvider.FALSE_EASTING);
+            ParameterValue<?> falseNorthing = getParameter(mapProjection, AbstractProvider.FALSE_NORTHING);
             double centerX = falseEasting != null ? falseEasting.doubleValue() : 0;
             double centerY = falseNorthing != null ? falseNorthing.doubleValue() : 0;
 

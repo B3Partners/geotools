@@ -18,7 +18,6 @@ package org.geotools.data.shapefile.shp;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
@@ -30,8 +29,8 @@ import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.GeometryFactory;
 
 /**
- * ShapefileWriter allows for the storage of geometries in esris shp format. During writing, an
- * index will also be created. To create a ShapefileWriter, do something like<br>
+ * ShapefileWriter allows for the storage of geometries in esris shp format. During writing, an index will also be
+ * created. To create a ShapefileWriter, do something like<br>
  * <code>
  *   GeometryCollection geoms;
  *   File shp = new File("myshape.shp");
@@ -99,7 +98,7 @@ public class ShapefileWriter implements Closeable {
 
     /** Drain internal buffers into underlying channels. */
     private void drain() throws IOException {
-        ((Buffer) shapeBuffer).flip();
+        shapeBuffer.flip();
         indexBuffer.flip();
         while (shapeBuffer.remaining() > 0) shpChannel.write(shapeBuffer);
         while (indexBuffer.remaining() > 0) shxChannel.write(indexBuffer);
@@ -127,16 +126,14 @@ public class ShapefileWriter implements Closeable {
             // if (size > largestShapeSize)
             // largestShapeSize = size;
         }
-        writeHeaders(
-                geometries.getEnvelopeInternal(), type, geometries.getNumGeometries(), fileLength);
+        writeHeaders(geometries.getEnvelopeInternal(), type, geometries.getNumGeometries(), fileLength);
     }
 
     /**
-     * Write the headers for this shapefile including the bounds, shape type, the number of
-     * geometries and the total fileLength (in actual bytes, NOT 16 bit words).
+     * Write the headers for this shapefile including the bounds, shape type, the number of geometries and the total
+     * fileLength (in actual bytes, NOT 16 bit words).
      */
-    public void writeHeaders(
-            Envelope bounds, ShapeType type, int numberOfGeometries, int fileLength)
+    public void writeHeaders(Envelope bounds, ShapeType type, int numberOfGeometries, int fileLength)
             throws IOException {
 
         try {
@@ -175,9 +172,8 @@ public class ShapefileWriter implements Closeable {
     }
 
     /**
-     * Allocate internal buffers and position the channels to the beginning or the record section of
-     * the shapefile. The headers MUST be rewritten after this operation, or the file may be
-     * corrupt...
+     * Allocate internal buffers and position the channels to the beginning or the record section of the shapefile. The
+     * headers MUST be rewritten after this operation, or the file may be corrupt...
      */
     public void skipHeaders() throws IOException {
         if (shapeBuffer == null) allocateBuffers();
@@ -186,8 +182,8 @@ public class ShapefileWriter implements Closeable {
     }
 
     /**
-     * Write a single Geometry to this shapefile. The Geometry must be compatable with the ShapeType
-     * assigned during the writing of the headers.
+     * Write a single Geometry to this shapefile. The Geometry must be compatable with the ShapeType assigned during the
+     * writing of the headers.
      */
     public void writeGeometry(Geometry g) throws IOException {
         if (shapeBuffer == null) throw new IOException("Must write headers first");
@@ -196,7 +192,7 @@ public class ShapefileWriter implements Closeable {
         if (g == null) length = writeNullGeometry();
         else length = writeNonNullGeometry(g);
 
-        assert (length * 2 == (shapeBuffer.position() - lp) - 8);
+        assert length * 2 == shapeBuffer.position() - lp - 8;
 
         lp = shapeBuffer.position();
 
@@ -206,7 +202,7 @@ public class ShapefileWriter implements Closeable {
         offset += length + 4;
 
         drain();
-        assert (shapeBuffer.position() == 0);
+        assert shapeBuffer.position() == 0;
     }
 
     private int writeNonNullGeometry(Geometry g) {
@@ -266,12 +262,8 @@ public class ShapefileWriter implements Closeable {
         shapeBuffer = null;
     }
 
-    /**
-     * Bulk write method for writing a collection of (hopefully) like geometries of the given
-     * ShapeType.
-     */
-    public void write(GeometryCollection geometries, ShapeType type)
-            throws IOException, ShapefileException {
+    /** Bulk write method for writing a collection of (hopefully) like geometries of the given ShapeType. */
+    public void write(GeometryCollection geometries, ShapeType type) throws IOException, ShapefileException {
         handler = type.getShapeHandler(gf);
 
         writeHeaders(geometries, type);

@@ -18,13 +18,20 @@ package org.geotools.data.wfs.internal.parsers;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.data.wfs.internal.GetParser;
 import org.geotools.data.wfs.internal.WFSConfig;
 import org.geotools.geometry.jts.GeometryCoordinateSequenceTransformer;
+import org.geotools.http.HTTPClient;
 import org.geotools.referencing.operation.transform.AffineTransform2D;
 import org.geotools.util.logging.Logging;
 import org.geotools.xsd.Configuration;
@@ -32,15 +39,11 @@ import org.geotools.xsd.PullParser;
 import org.geotools.xsd.impl.ParserHandler.ContextCustomizer;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.TransformException;
 import org.xml.sax.SAXException;
 
 /**
- * {@link GetParser<SimpleFeature>} for {@link WFSFeatureReader} that uses the geotools {@link
- * PullParser} to fetch Features out of a WFS GetFeature response.
+ * {@link GetParser<SimpleFeature>} for {@link org.geotools.data.wfs.WFSFeatureReader} that uses the geotools
+ * {@link PullParser} to fetch Features out of a WFS GetFeature response.
  *
  * @author Niels Charlier
  */
@@ -60,6 +63,8 @@ public class PullParserFeatureReader implements GetParser<SimpleFeature> {
     private long logCounter = 0;
     private final long WAIT_LOG = 5000;
 
+    private XsdHttpHandler httpHandler = null;
+
     public PullParserFeatureReader(
             final Configuration wfsConfiguration,
             final InputStream getFeatureResponseStream,
@@ -69,16 +74,28 @@ public class PullParserFeatureReader implements GetParser<SimpleFeature> {
         this.inputStream = getFeatureResponseStream;
         this.featureType = featureType;
         this.axisOrder = axisOrder;
-        this.parser =
-                new PullParser(
-                        wfsConfiguration,
-                        getFeatureResponseStream,
-                        new QName(
-                                featureType.getName().getNamespaceURI(),
-                                featureType.getName().getLocalPart()));
 
+        this.parser = new PullParser(
+                wfsConfiguration,
+                getFeatureResponseStream,
+                new QName(
+                        featureType.getName().getNamespaceURI(),
+                        featureType.getName().getLocalPart()));
         transformer = new GeometryCoordinateSequenceTransformer();
         transformer.setMathTransform(new AffineTransform2D(0, 1, 1, 0, 0, 0));
+    }
+
+    /** Initialise a feature reader with the used http client, to ensure reuse of the configuration. */
+    public PullParserFeatureReader(
+            final Configuration wfsConfiguration,
+            final InputStream getFeatureResponseStream,
+            final FeatureType featureType,
+            String axisOrder,
+            HTTPClient client)
+            throws IOException {
+        this(wfsConfiguration, getFeatureResponseStream, featureType, axisOrder);
+        this.httpHandler = new XsdHttpHandler(client);
+        this.parser.setURIHandler(httpHandler);
     }
 
     /** @see GetParser<SimpleFeature>#close() */
@@ -93,6 +110,10 @@ public class PullParserFeatureReader implements GetParser<SimpleFeature> {
                 parser = null;
             }
         }
+
+        if (httpHandler != null) {
+            httpHandler.dispose();
+        }
     }
 
     /** @see GetParser<SimpleFeature>#parse() */
@@ -101,23 +122,32 @@ public class PullParserFeatureReader implements GetParser<SimpleFeature> {
         Object parsed;
         try {
             parsed = parser.parse();
-            if (parsed != null && LOGGER.isLoggable(Level.FINE)) {
-                logCounter++;
-                long time = System.currentTimeMillis();
-                if (lastLogMessage == 0) {
-                    LOGGER.fine("First feature parsed.");
-                    lastLogMessage = time;
-                } else if (time - lastLogMessage > WAIT_LOG) {
-                    LOGGER.fine(String.format("Number of features parsed: %d", logCounter));
-                    lastLogMessage = time;
-                }
-            }
-
         } catch (XMLStreamException | SAXException e) {
-            throw new IOException(e);
+            throw new IOException(
+                    "Error parsing xml for features of type: "
+                            + (featureType == null ? "Unknown" : featureType.getName()),
+                    e);
+        }
+        if (parsed == null) {
+            return null;
+        }
+        if (LOGGER.isLoggable(Level.FINE)) {
+            logCounter++;
+            long time = System.currentTimeMillis();
+            if (lastLogMessage == 0) {
+                LOGGER.fine("First feature parsed.");
+                lastLogMessage = time;
+            } else if (time - lastLogMessage > WAIT_LOG) {
+                LOGGER.fine("Number of features parsed: %d".formatted(logCounter));
+                lastLogMessage = time;
+            }
+        }
+        if (!(parsed instanceof SimpleFeature)) {
+            throw new IOException(
+                    "Couldn't parse SimpleFeature of type " + featureType + " from xml.\n" + entriesInMap(parsed));
         }
         SimpleFeature feature = (SimpleFeature) parsed;
-        if (feature != null && feature.getDefaultGeometry() != null) {
+        if (feature.getDefaultGeometry() != null) {
             Geometry geometry = (Geometry) feature.getDefaultGeometry();
             if (geometry.getUserData() instanceof CoordinateReferenceSystem) {
                 CoordinateReferenceSystem crs = (CoordinateReferenceSystem) geometry.getUserData();
@@ -131,6 +161,17 @@ public class PullParserFeatureReader implements GetParser<SimpleFeature> {
             }
         }
         return feature;
+    }
+
+    @SuppressWarnings("unchecked")
+    private String entriesInMap(Object parsedMap) {
+        if (!(parsedMap instanceof Map)) {
+            return parsedMap.toString();
+        }
+        return ((Map<String, Object>) parsedMap)
+                .entrySet().stream()
+                        .map(e -> e.getKey() + "=" + e.getValue() + "\n")
+                        .collect(Collectors.joining());
     }
 
     private Geometry invertGeometryCoordinates(Geometry geometry) throws TransformException {

@@ -16,13 +16,13 @@
  */
 package org.geotools.filter.identity;
 
-import org.opengis.filter.identity.FeatureId;
+import org.geotools.api.filter.identity.FeatureId;
 
 /**
- * Implementation of {@link org.opengis.filter.identity.FeatureId}
+ * Implementation of {@link org.geotools.api.filter.identity.FeatureId}
  *
- * <p>This class is mutable under one condition only; during a commit a datastore can update the
- * internal fid to reflect the real identify assigned by the database or wfs.
+ * <p>This class is mutable under one condition only; during a commit a datastore can update the internal fid to reflect
+ * the real identify assigned by the database or wfs.
  *
  * <p>
  *
@@ -52,8 +52,8 @@ public class FeatureIdVersionedImpl extends FeatureIdImpl {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof FeatureId) {
-            return fid.equals(((FeatureId) obj).getID());
+        if (obj instanceof FeatureId id) {
+            return fid.equals(id.getID());
         }
         return false;
     }
@@ -65,7 +65,7 @@ public class FeatureIdVersionedImpl extends FeatureIdImpl {
 
     @Override
     public boolean equalsExact(FeatureId id) {
-        if (id instanceof FeatureId) {
+        if (id != null) {
             return fid.equals(id.getID())
                     && fid.equals(id.getRid())
                     && id.getPreviousRid() == null
@@ -83,12 +83,7 @@ public class FeatureIdVersionedImpl extends FeatureIdImpl {
 
     @Override
     public String getRid() {
-        return featureVersion == null
-                ? getID()
-                : new StringBuilder(getID())
-                        .append(VERSION_SEPARATOR)
-                        .append(featureVersion)
-                        .toString();
+        return featureVersion == null ? getID() : getID() + VERSION_SEPARATOR + featureVersion;
     }
 
     @Override

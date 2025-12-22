@@ -16,25 +16,24 @@
  */
 package org.geotools.feature.collection;
 
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.sort.SortBy;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.Query;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.store.EmptyFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.sort.SortBy;
 
 /**
- * Reasonable default implementation for subCollection making use of parent {@link
- * SimpleFeatureCollection#features()} and provided Filter.
+ * Reasonable default implementation for subCollection making use of parent {@link SimpleFeatureCollection#features()}
+ * and provided Filter.
  *
- * <p>This is only a reasonable implementation and is not optimal. It is recommended that
- * implementors construct a new {@link Query} and use {@link
- * SimpleFeatureSource#getFeatures(Query)}.
+ * <p>This is only a reasonable implementation and is not optimal. It is recommended that implementors construct a new
+ * {@link Query} and use {@link SimpleFeatureSource#getFeatures(Query)}.
  *
  * @author Jody Garnett, Refractions Research, Inc.
  */
@@ -59,11 +58,9 @@ public class SubFeatureCollection extends BaseSimpleFeatureCollection {
             subfilter = Filter.INCLUDE;
         }
         if (subfilter.equals(Filter.EXCLUDE)) {
-            throw new IllegalArgumentException(
-                    "A subcollection with Filter.EXCLUDE would be empty");
+            throw new IllegalArgumentException("A subcollection with Filter.EXCLUDE would be empty");
         }
-        if (collection instanceof SubFeatureCollection) {
-            SubFeatureCollection filtered = (SubFeatureCollection) collection;
+        if (collection instanceof SubFeatureCollection filtered) {
             if (subfilter.equals(Filter.INCLUDE)) {
                 this.collection = filtered.collection;
                 this.filter = filtered.filter();

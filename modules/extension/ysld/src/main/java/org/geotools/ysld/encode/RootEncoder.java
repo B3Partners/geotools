@@ -21,20 +21,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
-import org.geotools.styling.NamedLayer;
-import org.geotools.styling.RemoteOWS;
+import org.geotools.api.style.NamedLayer;
+import org.geotools.api.style.RemoteOWS;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyledLayer;
+import org.geotools.api.style.StyledLayerDescriptor;
+import org.geotools.api.style.UserLayer;
 import org.geotools.styling.SLD;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyledLayer;
-import org.geotools.styling.StyledLayerDescriptor;
-import org.geotools.styling.UserLayer;
 
 /**
- * Encodes a {@link StyledLayerDescriptor} as YSLD. Handles top-level elements such a name and
- * title, and delegates to {@link FeatureStyleEncoder} for the content.
+ * Encodes a {@link StyledLayerDescriptor} as YSLD. Handles top-level elements such a name and title, and delegates to
+ * {@link FeatureStyleEncoder} for the content.
  *
- * <p>YSLD focuses on SymbologyEncoding specification; encoding the default (or first) style found,
- * and treating surrounding StyleLayerDescriptor / NamedLayer as a wrapper.
+ * <p>YSLD focuses on SymbologyEncoding specification; encoding the default (or first) style found, and treating
+ * surrounding StyleLayerDescriptor / NamedLayer as a wrapper.
  */
 public class RootEncoder extends YsldEncodeHandler<StyledLayerDescriptor> {
 
@@ -45,15 +45,13 @@ public class RootEncoder extends YsldEncodeHandler<StyledLayerDescriptor> {
     /**
      * Encode sld as part of root-level information prefixed with {@code sld}.
      *
-     * <p>This method looks and encodes the {@link SLD#defaultStyle(StyledLayerDescriptor)} along
-     * with it's parent layer.
+     * <p>This method looks and encodes the {@link SLD#defaultStyle(StyledLayerDescriptor)} along with it's parent
+     * layer.
      *
      * @param sld
      */
     @Override
     protected void encode(StyledLayerDescriptor sld) {
-        StyledLayer[] layers = sld.getStyledLayers();
-
         put("sld-name", sld.getName());
         put("sld-title", sld.getTitle());
         put("sld-abstract", sld.getAbstract());
@@ -100,30 +98,28 @@ public class RootEncoder extends YsldEncodeHandler<StyledLayerDescriptor> {
         if (style == null) return null;
 
         return sld.layers().stream()
-                .filter(
-                        new Predicate<StyledLayer>() {
-                            @Override
-                            public boolean test(StyledLayer styledLayer) {
-                                List<Style> styles;
-                                if (styledLayer instanceof NamedLayer)
-                                    styles = ((NamedLayer) styledLayer).styles();
-                                else if (styledLayer instanceof UserLayer) {
-                                    styles = ((UserLayer) styledLayer).userStyles();
-                                } else {
-                                    styles = Collections.emptyList();
-                                }
-                                return styles.contains(style);
-                            }
-                        })
+                .filter(new Predicate<>() {
+                    @Override
+                    public boolean test(StyledLayer styledLayer) {
+                        List<Style> styles;
+                        if (styledLayer instanceof NamedLayer layer1) styles = layer1.styles();
+                        else if (styledLayer instanceof UserLayer layer) {
+                            styles = layer.userStyles();
+                        } else {
+                            styles = Collections.emptyList();
+                        }
+                        return styles.contains(style);
+                    }
+                })
                 .findFirst()
                 .orElse(null);
     }
 
     protected void encode(StyledLayer layer) {
-        if (layer instanceof UserLayer) {
-            encode((UserLayer) layer);
-        } else if (layer instanceof NamedLayer) {
-            encode((NamedLayer) layer);
+        if (layer instanceof UserLayer userLayer) {
+            encode(userLayer);
+        } else if (layer instanceof NamedLayer namedLayer) {
+            encode(namedLayer);
         }
     }
 

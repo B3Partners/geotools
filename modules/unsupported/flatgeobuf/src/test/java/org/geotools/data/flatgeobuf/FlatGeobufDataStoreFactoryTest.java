@@ -27,23 +27,22 @@ import java.io.Serializable;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.DataAccessFactory;
-import org.geotools.data.DataStore;
+import org.geotools.api.data.DataAccessFactory;
+import org.geotools.api.data.DataStore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 public class FlatGeobufDataStoreFactoryTest {
 
-    @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Test
     public void metadata() {
         FlatGeobufDataStoreFactory dataStoreFactory = new FlatGeobufDataStoreFactory();
         assertEquals("FlatGeobuf", dataStoreFactory.getDisplayName());
-        assertEquals(
-                "A DataStore for reading and writing FlatGeobuf files",
-                dataStoreFactory.getDescription());
+        assertEquals("A DataStore for reading and writing FlatGeobuf files", dataStoreFactory.getDescription());
         assertTrue(dataStoreFactory.isAvailable());
         assertNull(dataStoreFactory.getImplementationHints());
         DataAccessFactory.Param[] params = dataStoreFactory.getParametersInfo();

@@ -14,8 +14,14 @@ package org.geotools.tutorial.csv3.parse;
 import com.csvreader.CsvWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
 import org.geotools.feature.AttributeTypeBuilder;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
@@ -26,11 +32,6 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 import org.locationtech.jts.io.WKTWriter;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
 
 public class CSVSpecifiedWKTStrategy extends CSVStrategy {
 
@@ -75,7 +76,7 @@ public class CSVSpecifiedWKTStrategy extends CSVStrategy {
             }
         }
         // Write out header, producing an empty file of the correct type
-        CsvWriter writer = new CsvWriter(new FileWriter(this.csvFileState.getFile()), ',');
+        CsvWriter writer = new CsvWriter(new FileWriter(this.csvFileState.getFile(), StandardCharsets.UTF_8), ',');
         try {
             writer.writeRecord(header.toArray(new String[header.size()]));
         } finally {

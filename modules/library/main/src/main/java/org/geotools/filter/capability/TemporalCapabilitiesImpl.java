@@ -17,9 +17,9 @@
 package org.geotools.filter.capability;
 
 import java.util.Collection;
-import org.opengis.filter.capability.TemporalCapabilities;
-import org.opengis.filter.capability.TemporalOperator;
-import org.opengis.filter.capability.TemporalOperators;
+import org.geotools.api.filter.capability.TemporalCapabilities;
+import org.geotools.api.filter.capability.TemporalOperator;
+import org.geotools.api.filter.capability.TemporalOperators;
 
 public class TemporalCapabilitiesImpl implements TemporalCapabilities {
 
@@ -60,7 +60,7 @@ public class TemporalCapabilitiesImpl implements TemporalCapabilities {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((temporalOperators == null) ? 0 : temporalOperators.hashCode());
+        result = prime * result + (temporalOperators == null ? 0 : temporalOperators.hashCode());
         return result;
     }
 

@@ -35,25 +35,21 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.util.InternationalString;
 import org.geotools.process.ProcessFactory;
 import org.geotools.process.Processors;
 import org.geotools.swing.wizard.JPage;
-import org.opengis.feature.type.Name;
-import org.opengis.util.InternationalString;
 
 /**
- * This page is responsible for making a process selection widget that moves onto to the selected
- * process page.
+ * This page is responsible for making a process selection widget that moves onto to the selected process page.
  *
  * @author gdavis (Refractions)
  * @since 8.0
  * @version $Id$
  */
 public class ProcessSelectionPage extends JPage {
-    /**
-     * This is an initial set of input parameters; which can be used to help find an initial
-     * "matching" process.
-     */
+    /** This is an initial set of input parameters; which can be used to help find an initial "matching" process. */
     Map<String, Object> input;
 
     /** List of available processes */
@@ -143,19 +139,14 @@ public class ProcessSelectionPage extends JPage {
 
         processList.setFont(new Font("Arial", Font.PLAIN, 12));
         processList.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-        processList
-                .getSelectionModel()
-                .addTreeSelectionListener(
-                        e -> {
-                            TreePath path = e.getNewLeadSelectionPath();
-                            if (path.getLastPathComponent() instanceof Name) {
-                                Name name = (Name) path.getLastPathComponent();
-                                ProcessFactory factory =
-                                        (ProcessFactory)
-                                                path.getParentPath().getLastPathComponent();
-                                updateProcessDesc(factory, name);
-                            }
-                        });
+        processList.getSelectionModel().addTreeSelectionListener(e -> {
+            TreePath path = e.getNewLeadSelectionPath();
+            if (path.getLastPathComponent() instanceof Name) {
+                Name name = (Name) path.getLastPathComponent();
+                ProcessFactory factory = (ProcessFactory) path.getParentPath().getLastPathComponent();
+                updateProcessDesc(factory, name);
+            }
+        });
         c.gridx = 0;
         c.gridy = 3;
         gridBag.setConstraints(processList, c);
@@ -187,14 +178,12 @@ public class ProcessSelectionPage extends JPage {
         final Map<ProcessFactory, List<Name>> branch = new HashMap<>();
 
         root.addAll(factories);
-        Collections.sort(
-                root,
-                (o1, o2) -> {
-                    String s1 = o1.getTitle().toString();
-                    String s2 = o2.getTitle().toString();
+        Collections.sort(root, (o1, o2) -> {
+            String s1 = o1.getTitle().toString();
+            String s2 = o2.getTitle().toString();
 
-                    return s1.compareTo(s2);
-                });
+            return s1.compareTo(s2);
+        });
         return new TreeModel() {
             @Override
             public Object getRoot() {
@@ -207,13 +196,11 @@ public class ProcessSelectionPage extends JPage {
                     if (list == null) {
                         list = new ArrayList<>();
                         list.addAll(factory.getNames());
-                        Collections.sort(
-                                list,
-                                (o1, o2) -> {
-                                    String s1 = o1.toString();
-                                    String s2 = o2.toString();
-                                    return s1.compareTo(s2);
-                                });
+                        Collections.sort(list, (o1, o2) -> {
+                            String s1 = o1.toString();
+                            String s2 = o2.toString();
+                            return s1.compareTo(s2);
+                        });
                         branch.put(factory, list);
                     }
                     return list;
@@ -224,8 +211,7 @@ public class ProcessSelectionPage extends JPage {
             public Object getChild(Object parent, int index) {
                 if (parent == root) {
                     return root.get(index);
-                } else if (parent instanceof ProcessFactory) {
-                    ProcessFactory factory = (ProcessFactory) parent;
+                } else if (parent instanceof ProcessFactory factory) {
                     return getChildren(factory).get(index);
                 }
                 return null;
@@ -235,8 +221,7 @@ public class ProcessSelectionPage extends JPage {
             public int getChildCount(Object parent) {
                 if (parent == root) {
                     return root.size();
-                } else if (parent instanceof ProcessFactory) {
-                    ProcessFactory factory = (ProcessFactory) parent;
+                } else if (parent instanceof ProcessFactory factory) {
                     return getChildren(factory).size();
                 }
                 return 0;
@@ -263,8 +248,7 @@ public class ProcessSelectionPage extends JPage {
             public int getIndexOfChild(Object parent, Object child) {
                 if (parent == root) {
                     return root.indexOf(child);
-                } else if (parent instanceof ProcessFactory) {
-                    ProcessFactory factory = (ProcessFactory) parent;
+                } else if (parent instanceof ProcessFactory factory) {
                     return getChildren(factory).indexOf(child);
                 }
                 return 0;
@@ -297,8 +281,8 @@ public class ProcessSelectionPage extends JPage {
     }
 
     /**
-     * Update the wizard nav buttons based on what process factory is selected and if the form is
-     * validated to move to the next page or not
+     * Update the wizard nav buttons based on what process factory is selected and if the form is validated to move to
+     * the next page or not
      */
     private void updateNavButtons() {
         this.getJWizard().getController().syncButtonsToPage();

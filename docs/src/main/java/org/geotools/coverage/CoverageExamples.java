@@ -14,16 +14,16 @@ package org.geotools.coverage;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.File;
+import org.geotools.api.geometry.Bounds;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
 import org.geotools.coverage.grid.io.GridFormatFinder;
-import org.geotools.geometry.DirectPosition2D;
+import org.geotools.geometry.Position2D;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.geometry.Envelope;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Coverage Examples used for sphinx documentation.
@@ -41,7 +41,7 @@ public class CoverageExamples {
         AbstractGridFormat format = GridFormatFinder.findFormat(file);
         GridCoverage2DReader reader = format.getReader(file);
 
-        GridCoverage2D coverage = reader.read(null);
+        GridCoverage2D coverage = reader.read();
         // exampleGridFormat end
     }
 
@@ -62,10 +62,10 @@ public class CoverageExamples {
         AbstractGridFormat format = GridFormatFinder.findFormat(file);
         GridCoverage2DReader reader = format.getReader(file);
         // exampleGridCoverageUsing start
-        GridCoverage2D coverage = reader.read(null);
+        GridCoverage2D coverage = reader.read();
 
         CoordinateReferenceSystem crs = coverage.getCoordinateReferenceSystem2D();
-        Envelope env = coverage.getEnvelope();
+        Bounds env = coverage.getEnvelope();
         RenderedImage image = coverage.getRenderedImage();
         // exampleGridCoverageUsing end
     }
@@ -79,10 +79,10 @@ public class CoverageExamples {
         AbstractGridFormat format = GridFormatFinder.findFormat(file);
         GridCoverage2DReader reader = format.getReader(file);
         // exampleGridCoverageDirect start
-        GridCoverage2D coverage = reader.read(null);
+        GridCoverage2D coverage = reader.read();
 
         // direct access
-        DirectPosition position = new DirectPosition2D(crs, x, y);
+        Position position = new Position2D(crs, x, y);
 
         double[] sample = (double[]) coverage.evaluate(position); // assume double
 

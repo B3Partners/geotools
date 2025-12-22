@@ -28,7 +28,7 @@ import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
-import org.geotools.data.DataSourceException;
+import org.geotools.api.data.DataSourceException;
 import org.geotools.util.URLs;
 import org.geotools.util.Utilities;
 
@@ -54,12 +54,10 @@ class Utils {
         // /////////////////////////////////////////////////////////////////////
         // if it is a URL or a String let's try to see if we can get a file to
         // check if we have to build the index
-        if (source instanceof URL) {
-            sourceURL = ((URL) source);
+        if (source instanceof URL rL) {
+            sourceURL = rL;
             source = URLs.urlToFile(sourceURL);
-        } else if (source instanceof String) {
-            // is it a File?
-            final String tempSource = (String) source;
+        } else if (source instanceof String tempSource) {
             File tempFile = new File(tempSource);
             if (!tempFile.exists()) {
                 // is it a URL
@@ -74,40 +72,37 @@ class Utils {
                 sourceURL = URLs.fileToUrl(tempFile);
                 source = tempFile;
             }
-        } else if (source instanceof AccessibleStream
+        } else if (source instanceof AccessibleStream stream
                 && ((AccessibleStream) source).getTarget() instanceof File) {
-            final File inputFile = (File) ((AccessibleStream) source).getTarget();
+            final File inputFile = (File) stream.getTarget();
             source = inputFile;
         }
 
         // at this point we have tried to convert the thing to a File as hard as
         // we could, let's see what we can do
-        if (source instanceof File) {
-            final File sourceFile = (File) source;
-            if (!sourceFile.isDirectory()) sourceURL = ((File) source).toURI().toURL();
+        if (source instanceof File sourceFile) {
+            if (!sourceFile.isDirectory()) sourceURL = sourceFile.toURI().toURL();
         } else sourceURL = null;
         return sourceURL;
     }
 
     /**
-     * Look for an {@link ImageReader} instance that is able to read the provided {@link
-     * ImageInputStream}, which must be non null.
+     * Look for an {@link ImageReader} instance that is able to read the provided {@link ImageInputStream}, which must
+     * be non null.
      *
      * <p>In case no reader is found, <code>null</code> is returned.
      *
-     * @param inStream an instance of {@link ImageInputStream} for which we need to find a suitable
-     *     {@link ImageReader}.
-     * @return a suitable instance of {@link ImageReader} or <code>null</code> if one cannot be
-     *     found.
+     * @param inStream an instance of {@link ImageInputStream} for which we need to find a suitable {@link ImageReader}.
+     * @return a suitable instance of {@link ImageReader} or <code>null</code> if one cannot be found.
      */
     static ImageReader getReader(final ImageInputStream inStream) {
         Utilities.ensureNonNull("inStream", inStream);
         // get a reader
         //		inStream.mark();
         try {
-            if (inStream instanceof AccessibleStream
+            if (inStream instanceof AccessibleStream stream
                     && ((AccessibleStream) inStream).getTarget() instanceof File) {
-                final File file = (File) ((AccessibleStream) inStream).getTarget();
+                final File file = (File) stream.getTarget();
                 if (FILEFILTER.accept(file))
                     return JP2KFormatFactory.getCachedSpi().createReaderInstance();
             }
@@ -131,14 +126,14 @@ class Utils {
         final int length = 8;
         int count = 0;
         final byte[] tmp = new byte[length];
-        for (i = start; i < (start + length); i++) {
+        for (i = start; i < start + length; i++) {
             tmp[count] = bytes[i];
             count++;
         }
         long accum = 0;
         i = 0;
         for (int shiftBy = 0; shiftBy < 64; shiftBy += 8) {
-            accum |= ((long) (tmp[i] & 0xff)) << shiftBy;
+            accum |= (long) (tmp[i] & 0xff) << shiftBy;
             i++;
         }
         return Double.longBitsToDouble(accum);
@@ -150,31 +145,30 @@ class Utils {
         final int length = 4;
         int count = 0;
         final byte[] tmp = new byte[length];
-        for (i = start; i < (start + length); i++) {
+        for (i = start; i < start + length; i++) {
             tmp[count] = bytes[i];
             count++;
         }
         long accum = 0;
         i = 0;
         for (int shiftBy = 0; shiftBy < 32; shiftBy += 8) {
-            accum |= ((long) (tmp[i] & 0xff)) << shiftBy;
+            accum |= (long) (tmp[i] & 0xff) << shiftBy;
             i++;
         }
         return accum;
     }
 
     private static IOFileFilter createFilter() {
-        IOFileFilter fileFilter =
-                Utils.includeFilters(
-                        FileFilterUtils.suffixFileFilter("jp2"),
-                        FileFilterUtils.suffixFileFilter("JP2"),
-                        FileFilterUtils.suffixFileFilter("j2c"),
-                        FileFilterUtils.suffixFileFilter("J2C"),
-                        FileFilterUtils.suffixFileFilter("jpx"),
-                        FileFilterUtils.suffixFileFilter("JPX"),
-                        FileFilterUtils.suffixFileFilter("jp2k"),
-                        FileFilterUtils.suffixFileFilter("JP2K"),
-                        FileFilterUtils.nameFileFilter("jpeg2000"));
+        IOFileFilter fileFilter = Utils.includeFilters(
+                FileFilterUtils.suffixFileFilter("jp2"),
+                FileFilterUtils.suffixFileFilter("JP2"),
+                FileFilterUtils.suffixFileFilter("j2c"),
+                FileFilterUtils.suffixFileFilter("J2C"),
+                FileFilterUtils.suffixFileFilter("jpx"),
+                FileFilterUtils.suffixFileFilter("JPX"),
+                FileFilterUtils.suffixFileFilter("jp2k"),
+                FileFilterUtils.suffixFileFilter("JP2K"),
+                FileFilterUtils.nameFileFilter("jpeg2000"));
         return fileFilter;
     }
 

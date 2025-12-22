@@ -19,13 +19,13 @@ package org.geotools.util;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Locale;
 
 /**
- * A simple international string consisting of a single string for all locales. For such a
- * particular case, this implementation is the more effective than other implementations provided in
- * this package.
+ * A simple international string consisting of a single string for all locales. For such a particular case, this
+ * implementation is the more effective than other implementations provided in this package.
  *
  * @since 2.1
  * @version $Id$
@@ -33,6 +33,7 @@ import java.util.Locale;
  */
 public class SimpleInternationalString extends AbstractInternationalString implements Serializable {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 3543963804501667578L;
 
     /**
@@ -46,9 +47,8 @@ public class SimpleInternationalString extends AbstractInternationalString imple
     }
 
     /**
-     * If the specified string is null or an instance of {@link AbstractInternationalString},
-     * returns it unchanged. Otherwise, wraps the string value in a {@code
-     * SimpleInternationalString}.
+     * If the specified string is null or an instance of {@link AbstractInternationalString}, returns it unchanged.
+     * Otherwise, wraps the string value in a {@code SimpleInternationalString}.
      *
      * @param string The string to wrap.
      * @return The given string as an international string.

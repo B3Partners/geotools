@@ -16,6 +16,7 @@
  */
 package org.geotools.filter.text.cql2;
 
+import java.io.Serial;
 import org.geotools.filter.text.commons.IToken;
 import org.geotools.filter.text.generated.parsers.ParseException;
 
@@ -28,6 +29,7 @@ import org.geotools.filter.text.generated.parsers.ParseException;
  */
 public class CQLException extends ParseException {
     /** for interoperability */
+    @Serial
     private static final long serialVersionUID = 8873756073711225699L;
 
     protected Throwable cause = null;
@@ -42,11 +44,7 @@ public class CQLException extends ParseException {
      * @param cause the cause
      * @param cqlSource string analyzed
      */
-    public CQLException(
-            final String message,
-            final IToken token,
-            final Throwable cause,
-            final String cqlSource) {
+    public CQLException(final String message, final IToken token, final Throwable cause, final String cqlSource) {
         super(message);
 
         assert message != null : "message can not be null";

@@ -91,9 +91,9 @@ public class SchemaHandler extends XSIElementHandler {
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
     public int hashCode() {
         return LOCALNAME.hashCode()
-                * ((id == null) ? 1 : id.hashCode())
-                * ((version == null) ? 1 : version.hashCode())
-                * ((targetNamespace == null) ? 1 : targetNamespace.hashCode());
+                * (id == null ? 1 : id.hashCode())
+                * (version == null ? 1 : version.hashCode())
+                * (targetNamespace == null ? 1 : targetNamespace.hashCode());
     }
 
     /** @see org.xml.sax.ContentHandler#startPrefixMapping(java.lang.String, java.lang.String) */
@@ -103,8 +103,7 @@ public class SchemaHandler extends XSIElementHandler {
                 prefixCache = new HashMap<>();
             }
 
-            if ((pref != null && !pref.trim().equals("")) || !prefixCache.containsKey(uri1))
-                prefixCache.put(uri1, pref);
+            if (pref != null && !pref.trim().equals("") || !prefixCache.containsKey(uri1)) prefixCache.put(uri1, pref);
 
             if (this.uri == null && (pref == null || "".equals(pref)))
                 try {
@@ -121,12 +120,10 @@ public class SchemaHandler extends XSIElementHandler {
     }
 
     /**
-     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String,
-     *     org.xml.sax.Attributes)
+     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
-    public void startElement(String namespaceURI1, String localName, Attributes atts)
-            throws SAXException {
+    public void startElement(String namespaceURI1, String localName, Attributes atts) throws SAXException {
         // targetNamespace
         String targetNamespace1 = atts.getValue("", "targetNamespace");
 
@@ -141,10 +138,10 @@ public class SchemaHandler extends XSIElementHandler {
             throw new SAXException(e);
         }
 
-        if ((prefixCache != null) && (targetNamespace1 != null) && (!targetNamespace1.equals(""))) {
+        if (prefixCache != null && targetNamespace1 != null && !targetNamespace1.equals("")) {
             Iterator i = prefixCache.keySet().iterator();
 
-            while ((i != null) && i.hasNext()) {
+            while (i != null && i.hasNext()) {
                 String uriT = (String) i.next();
 
                 if (targetNamespace1.equals(uriT)) {
@@ -361,8 +358,7 @@ public class SchemaHandler extends XSIElementHandler {
 
             while (it.hasNext()) {
                 IncludeHandler inc = (IncludeHandler) it.next();
-                logger.finest(
-                        "compressing include " + (inc != null ? inc.getSchemaLocation() : null));
+                logger.finest("compressing include " + (inc != null ? inc.getSchemaLocation() : null));
 
                 if (inc != null && inc.getSchemaLocation() != null) {
                     URI incURI = null;
@@ -375,8 +371,7 @@ public class SchemaHandler extends XSIElementHandler {
                     } else {
                         incURI = thisURI.normalize().resolve(inc.getSchemaLocation());
                     }
-                    Schema cs =
-                            SchemaFactory.getInstance(targetNamespace, incURI, logger.getLevel());
+                    Schema cs = SchemaFactory.getInstance(targetNamespace, incURI, logger.getLevel());
 
                     if (uri != null) {
                         uri = incURI.resolve(uri);
@@ -401,8 +396,7 @@ public class SchemaHandler extends XSIElementHandler {
             while (it.hasNext()) {
                 Object obj = it.next();
 
-                if (obj instanceof ImportHandler) {
-                    ImportHandler imp = (ImportHandler) obj;
+                if (obj instanceof ImportHandler imp) {
                     URI incURI = null;
 
                     // if ((imp.getSchemaLocation() != null) && (thisURI != null)) {
@@ -421,9 +415,7 @@ public class SchemaHandler extends XSIElementHandler {
                         }
                     }
 
-                    Schema cs =
-                            SchemaFactory.getInstance(
-                                    imp.getNamespace(), incURI, logger.getLevel());
+                    Schema cs = SchemaFactory.getInstance(imp.getNamespace(), incURI, logger.getLevel());
 
                     imports1.add(cs);
                 } else {
@@ -462,8 +454,7 @@ public class SchemaHandler extends XSIElementHandler {
             Set<SimpleType> cache = new HashSet<>();
             while (it.hasNext()) {
                 Object t = it.next();
-                if (t instanceof SimpleTypeHandler) {
-                    SimpleTypeHandler tt = (SimpleTypeHandler) t;
+                if (t instanceof SimpleTypeHandler tt) {
                     cache.add(tt.compress(this));
                     it.remove();
                 }
@@ -482,8 +473,7 @@ public class SchemaHandler extends XSIElementHandler {
             HashSet<AttributeGroup> cache = new HashSet<>();
             while (it.hasNext()) {
                 Object t = it.next();
-                if (t instanceof AttributeGroupHandler) {
-                    AttributeGroupHandler tt = (AttributeGroupHandler) t;
+                if (t instanceof AttributeGroupHandler tt) {
                     cache.add(tt.compress(this));
                     it.remove();
                 }
@@ -502,8 +492,7 @@ public class SchemaHandler extends XSIElementHandler {
             HashSet<Attribute> cache = new HashSet<>();
             while (it.hasNext()) {
                 Object t = it.next();
-                if (t instanceof AttributeHandler) {
-                    AttributeHandler tt = (AttributeHandler) t;
+                if (t instanceof AttributeHandler tt) {
                     cache.add(tt.compress(this));
                     it.remove();
                 }
@@ -522,8 +511,7 @@ public class SchemaHandler extends XSIElementHandler {
             HashSet<ComplexType> cache = new HashSet<>();
             while (it.hasNext()) {
                 Object t = it.next();
-                if (t instanceof ComplexTypeHandler) {
-                    ComplexTypeHandler tt = (ComplexTypeHandler) t;
+                if (t instanceof ComplexTypeHandler tt) {
                     cache.add(tt.compress(this));
                 }
             }
@@ -542,8 +530,7 @@ public class SchemaHandler extends XSIElementHandler {
             HashSet<ElementGrouping> cache = new HashSet<>();
             while (it.hasNext()) {
                 Object t = it.next();
-                if (t instanceof ElementTypeHandler) {
-                    ElementTypeHandler tt = (ElementTypeHandler) t;
+                if (t instanceof ElementTypeHandler tt) {
                     cache.add(tt.compress(this));
                     it.remove();
                 }
@@ -562,8 +549,7 @@ public class SchemaHandler extends XSIElementHandler {
             Set<ElementGrouping> cache = new HashSet<>();
             while (it.hasNext()) {
                 Object t = it.next();
-                if (t instanceof GroupHandler) {
-                    GroupHandler tt = (GroupHandler) t;
+                if (t instanceof GroupHandler tt) {
                     cache.add(tt.compress(this));
                     it.remove();
                 }
@@ -578,10 +564,7 @@ public class SchemaHandler extends XSIElementHandler {
         }
 
         attributeGroups =
-                attributes =
-                        complexTypes =
-                                simpleTypes =
-                                        elements = groups = imports = includes = redefines = null;
+                attributes = complexTypes = simpleTypes = elements = groups = imports = includes = redefines = null;
 
         return schema1;
     }
@@ -599,7 +582,7 @@ public class SchemaHandler extends XSIElementHandler {
         if (s.getSimpleTypes() != null) {
             SimpleType[] sts = s.getSimpleTypes();
 
-            for (int i = 0; (sts != null) && (i < sts.length); i++) {
+            for (int i = 0; sts != null && i < sts.length; i++) {
                 if (localName.equalsIgnoreCase(sts[i].getName())) {
                     return sts[i];
                 }
@@ -609,7 +592,7 @@ public class SchemaHandler extends XSIElementHandler {
         if (s.getImports() != null) {
             Schema[] ss = s.getImports();
 
-            for (int i = 0; (ss != null) && (i < ss.length); i++) {
+            for (int i = 0; ss != null && i < ss.length; i++) {
                 if (!targets.contains(ss[i].getTargetNamespace())) {
                     SimpleType st = lookUpSimpleType(localName, ss[i], targets);
 
@@ -638,8 +621,7 @@ public class SchemaHandler extends XSIElementHandler {
         logger.finest("prefix is " + prefix1);
         logger.finest("localName is " + localName);
         Iterator it;
-        if ((this.prefix == null && prefix1 == null)
-                || (this.prefix != null && this.prefix.equals(prefix1))) {
+        if (this.prefix == null && prefix1 == null || this.prefix != null && this.prefix.equals(prefix1)) {
             if (schema != null) return lookUpSimpleType(localName, schema, new TreeSet<>());
         } else {
             if (imports != null) {
@@ -665,8 +647,7 @@ public class SchemaHandler extends XSIElementHandler {
             while (it.hasNext()) {
                 Object o = it.next();
 
-                if (o instanceof SimpleTypeHandler) {
-                    SimpleTypeHandler sst = (SimpleTypeHandler) o;
+                if (o instanceof SimpleTypeHandler sst) {
 
                     if (localName.equalsIgnoreCase(sst.getName())) {
                         return sst.compress(this);
@@ -703,7 +684,7 @@ public class SchemaHandler extends XSIElementHandler {
         if (s.getComplexTypes() != null) {
             ComplexType[] sts = s.getComplexTypes();
 
-            for (int i = 0; (sts != null) && (i < sts.length); i++) {
+            for (int i = 0; sts != null && i < sts.length; i++) {
                 String name = sts[i].getName();
                 if (localName.equalsIgnoreCase(name)) {
                     return sts[i];
@@ -714,7 +695,7 @@ public class SchemaHandler extends XSIElementHandler {
         if (s.getImports() != null) {
             Schema[] ss = s.getImports();
 
-            for (int i = 0; (ss != null) && (i < ss.length); i++) {
+            for (int i = 0; ss != null && i < ss.length; i++) {
                 if (!targets.contains(ss[i].getTargetNamespace())) {
                     ComplexType st = lookUpComplexType(localName, ss[i], targets);
 
@@ -744,8 +725,7 @@ public class SchemaHandler extends XSIElementHandler {
         logger.finest("localName is " + localName);
 
         Iterator it;
-        if ((this.prefix == null && prefix1 == null)
-                || (this.prefix != null && this.prefix.equals(prefix1))) {
+        if (this.prefix == null && prefix1 == null || this.prefix != null && this.prefix.equals(prefix1)) {
             if (schema != null) return lookUpComplexType(localName, schema, new TreeSet<>());
         } else {
             if (imports != null) {
@@ -770,8 +750,7 @@ public class SchemaHandler extends XSIElementHandler {
             while (it.hasNext()) {
                 Object o = it.next();
 
-                if (o instanceof ComplexTypeHandler) {
-                    ComplexTypeHandler sst = (ComplexTypeHandler) o;
+                if (o instanceof ComplexTypeHandler sst) {
 
                     if (localName.equalsIgnoreCase(sst.getName())) {
                         return sst.compress(this);
@@ -803,7 +782,7 @@ public class SchemaHandler extends XSIElementHandler {
         if (s.getElements() != null) {
             Element[] sts = s.getElements();
 
-            for (int i = 0; (sts != null) && (i < sts.length); i++) {
+            for (int i = 0; sts != null && i < sts.length; i++) {
                 String name = sts[i].getName();
                 logger.finest("checking element " + name);
 
@@ -816,7 +795,7 @@ public class SchemaHandler extends XSIElementHandler {
         if (s.getImports() != null) {
             Schema[] ss = s.getImports();
 
-            for (int i = 0; (ss != null) && (i < ss.length); i++) {
+            for (int i = 0; ss != null && i < ss.length; i++) {
                 if (!targets.contains(ss[i].getTargetNamespace())) {
                     Element st = lookupElement(localName, ss[i], targets);
 
@@ -846,8 +825,7 @@ public class SchemaHandler extends XSIElementHandler {
         logger.finest("localName is " + localName);
 
         Iterator it;
-        if ((this.prefix == null && prefix1 == null)
-                || (this.prefix != null && this.prefix.equals(prefix1))) {
+        if (this.prefix == null && prefix1 == null || this.prefix != null && this.prefix.equals(prefix1)) {
             if (schema != null) return lookupElement(localName, schema, new TreeSet<>());
         } else {
             if (imports != null) {
@@ -885,8 +863,7 @@ public class SchemaHandler extends XSIElementHandler {
         while (it.hasNext()) {
             Object o = it.next();
 
-            if (o instanceof ElementTypeHandler) {
-                ElementTypeHandler sst = (ElementTypeHandler) o;
+            if (o instanceof ElementTypeHandler sst) {
 
                 if (localName.equalsIgnoreCase(sst.getName())) {
                     return (Element) sst.compress(this);
@@ -915,7 +892,7 @@ public class SchemaHandler extends XSIElementHandler {
         if (s.getGroups() != null) {
             Group[] sts = s.getGroups();
 
-            for (int i = 0; (sts != null) && (i < sts.length); i++) {
+            for (int i = 0; sts != null && i < sts.length; i++) {
                 if (localName.equalsIgnoreCase(sts[i].getName())) {
                     return sts[i];
                 }
@@ -925,7 +902,7 @@ public class SchemaHandler extends XSIElementHandler {
         if (s.getImports() != null) {
             Schema[] ss = s.getImports();
 
-            for (int i = 0; (ss != null) && (i < ss.length); i++) {
+            for (int i = 0; ss != null && i < ss.length; i++) {
                 if (!targets.contains(ss[i].getTargetNamespace())) {
                     Group st = lookUpGroup(localName, ss[i], targets);
 
@@ -955,8 +932,7 @@ public class SchemaHandler extends XSIElementHandler {
         logger.finest("localName is " + localName);
 
         Iterator it;
-        if ((this.prefix == null && prefix1 == null)
-                || (this.prefix != null && this.prefix.equals(prefix1))) {
+        if (this.prefix == null && prefix1 == null || this.prefix != null && this.prefix.equals(prefix1)) {
             if (schema != null) return lookUpGroup(localName, schema, new TreeSet<>());
         } else {
             if (imports != null) {
@@ -981,8 +957,7 @@ public class SchemaHandler extends XSIElementHandler {
             while (it.hasNext()) {
                 Object o = it.next();
 
-                if (o instanceof GroupHandler) {
-                    GroupHandler sst = (GroupHandler) o;
+                if (o instanceof GroupHandler sst) {
 
                     if (localName.equalsIgnoreCase(sst.getName())) {
                         return (Group) sst.compress(this);
@@ -1013,7 +988,7 @@ public class SchemaHandler extends XSIElementHandler {
         if (s.getAttributeGroups() != null) {
             AttributeGroup[] sts = s.getAttributeGroups();
 
-            for (int i = 0; (sts != null) && (i < sts.length); i++) {
+            for (int i = 0; sts != null && i < sts.length; i++) {
                 if (localName.equalsIgnoreCase(sts[i].getName())) {
                     return sts[i];
                 }
@@ -1023,7 +998,7 @@ public class SchemaHandler extends XSIElementHandler {
         if (s.getImports() != null) {
             Schema[] ss = s.getImports();
 
-            for (int i = 0; (ss != null) && (i < ss.length); i++) {
+            for (int i = 0; ss != null && i < ss.length; i++) {
                 if (!targets.contains(ss[i].getTargetNamespace())) {
                     AttributeGroup st = lookUpAttributeGroup(localName, ss[i], targets);
 
@@ -1053,8 +1028,7 @@ public class SchemaHandler extends XSIElementHandler {
         logger.finest("localName is " + localName);
 
         Iterator it;
-        if ((this.prefix == null && prefix1 == null)
-                || (this.prefix != null && this.prefix.equals(prefix1))) {
+        if (this.prefix == null && prefix1 == null || this.prefix != null && this.prefix.equals(prefix1)) {
             if (schema != null) return lookUpAttributeGroup(localName, schema, new TreeSet<>());
         } else {
             if (imports != null) {
@@ -1079,8 +1053,7 @@ public class SchemaHandler extends XSIElementHandler {
             while (it.hasNext()) {
                 Object o = it.next();
 
-                if (o instanceof AttributeGroupHandler) {
-                    AttributeGroupHandler sst = (AttributeGroupHandler) o;
+                if (o instanceof AttributeGroupHandler sst) {
 
                     if (localName.equalsIgnoreCase(sst.getName())) {
                         return sst.compress(this);
@@ -1111,7 +1084,7 @@ public class SchemaHandler extends XSIElementHandler {
         if (s.getAttributes() != null) {
             Attribute[] sts = s.getAttributes();
 
-            for (int i = 0; (sts != null) && (i < sts.length); i++) {
+            for (int i = 0; sts != null && i < sts.length; i++) {
                 if (sts[i] != null && sts[i].getName() != null) {
                     if (localName.equalsIgnoreCase(sts[i].getName())) {
                         return sts[i];
@@ -1123,7 +1096,7 @@ public class SchemaHandler extends XSIElementHandler {
         if (s.getImports() != null) {
             Schema[] ss = s.getImports();
 
-            for (int i = 0; (ss != null) && (i < ss.length); i++) {
+            for (int i = 0; ss != null && i < ss.length; i++) {
                 if (!targets.contains(ss[i].getTargetNamespace())) {
                     Attribute st = lookUpAttribute(localName, ss[i], targets);
 
@@ -1153,8 +1126,7 @@ public class SchemaHandler extends XSIElementHandler {
         logger.finest("localName is " + localName);
 
         Iterator it;
-        if ((this.prefix == null && prefix1 == null)
-                || (this.prefix != null && this.prefix.equals(prefix1))) {
+        if (this.prefix == null && prefix1 == null || this.prefix != null && this.prefix.equals(prefix1)) {
             if (schema != null) return lookUpAttribute(localName, schema, new TreeSet<>());
         } else {
             if (imports != null) {
@@ -1179,8 +1151,7 @@ public class SchemaHandler extends XSIElementHandler {
             while (it.hasNext()) {
                 Object o = it.next();
 
-                if (o instanceof AttributeHandler) {
-                    AttributeHandler sst = (AttributeHandler) o;
+                if (o instanceof AttributeHandler sst) {
 
                     if (localName.equalsIgnoreCase(sst.getName())) {
                         return sst.compress(this);
@@ -1215,7 +1186,7 @@ public class SchemaHandler extends XSIElementHandler {
         Object[] objs = s.getAttributes();
 
         if (objs != null) {
-            if ((attributes == null) && (objs.length > 0)) {
+            if (attributes == null && objs.length > 0) {
                 attributes = new LinkedList<>();
             }
 
@@ -1225,7 +1196,7 @@ public class SchemaHandler extends XSIElementHandler {
         objs = s.getAttributeGroups();
 
         if (objs != null) {
-            if ((attributeGroups == null) && (objs.length > 0)) {
+            if (attributeGroups == null && objs.length > 0) {
                 attributeGroups = new LinkedList<>();
             }
 
@@ -1235,7 +1206,7 @@ public class SchemaHandler extends XSIElementHandler {
         objs = s.getComplexTypes();
 
         if (objs != null) {
-            if ((complexTypes == null) && (objs.length > 0)) {
+            if (complexTypes == null && objs.length > 0) {
                 complexTypes = new LinkedList<>();
             }
 
@@ -1245,7 +1216,7 @@ public class SchemaHandler extends XSIElementHandler {
         objs = s.getElements();
 
         if (objs != null) {
-            if ((elements == null) && (objs.length > 0)) {
+            if (elements == null && objs.length > 0) {
                 elements = new LinkedList<>();
             }
 
@@ -1255,7 +1226,7 @@ public class SchemaHandler extends XSIElementHandler {
         objs = s.getGroups();
 
         if (objs != null) {
-            if ((groups == null) && (objs.length > 0)) {
+            if (groups == null && objs.length > 0) {
                 groups = new LinkedList<>();
             }
 
@@ -1265,7 +1236,7 @@ public class SchemaHandler extends XSIElementHandler {
         objs = s.getImports();
 
         if (objs != null) {
-            if ((imports == null) && (objs.length > 0)) {
+            if (imports == null && objs.length > 0) {
                 imports = new LinkedList<>();
             }
 
@@ -1275,7 +1246,7 @@ public class SchemaHandler extends XSIElementHandler {
         objs = s.getSimpleTypes();
 
         if (objs != null) {
-            if ((simpleTypes == null) && (objs.length > 0)) {
+            if (simpleTypes == null && objs.length > 0) {
                 simpleTypes = new LinkedList<>();
             }
 
@@ -1448,11 +1419,10 @@ public class SchemaHandler extends XSIElementHandler {
     }
 
     /**
-     * This class breaks both the collections api and the comparable api. When an object is a temp
-     * ... thus we don't care ... it's always less than. Please do not use this unless you fully
-     * understand it. It is intended to be used for compressing two schemas and to remove duplicates
-     * resulting values (not placeholders). Making this evaluate place holders would cause the
-     * parser to fail !!!
+     * This class breaks both the collections api and the comparable api. When an object is a temp ... thus we don't
+     * care ... it's always less than. Please do not use this unless you fully understand it. It is intended to be used
+     * for compressing two schemas and to remove duplicates resulting values (not placeholders). Making this evaluate
+     * place holders would cause the parser to fail !!!
      *
      * @author dzwiers
      */
@@ -1470,26 +1440,25 @@ public class SchemaHandler extends XSIElementHandler {
         @Override
         public int compare(Object arg0, Object arg1) {
             // attribute
-            if (arg0 instanceof Attribute && arg1 instanceof Attribute)
-                return compareAttribute((Attribute) arg0, (Attribute) arg1);
+            if (arg0 instanceof Attribute attribute && arg1 instanceof Attribute attribute1)
+                return compareAttribute(attribute, attribute1);
             // attrbute group
-            if (arg0 instanceof AttributeGroup && arg1 instanceof AttributeGroup)
-                return compareAttributeGroup((AttributeGroup) arg0, (AttributeGroup) arg1);
+            if (arg0 instanceof AttributeGroup group && arg1 instanceof AttributeGroup group1)
+                return compareAttributeGroup(group, group1);
             // complex type
-            if (arg0 instanceof ComplexType && arg1 instanceof ComplexType)
-                return compareComplexType((ComplexType) arg0, (ComplexType) arg1);
+            if (arg0 instanceof ComplexType type && arg1 instanceof ComplexType type1)
+                return compareComplexType(type, type1);
             // simpletype
-            if (arg0 instanceof SimpleType && arg1 instanceof SimpleType)
-                return compareSimpleType((SimpleType) arg0, (SimpleType) arg1);
+            if (arg0 instanceof SimpleType type && arg1 instanceof SimpleType type1)
+                return compareSimpleType(type, type1);
             // group
-            if (arg0 instanceof Group && arg1 instanceof Group)
-                return compareGroup((Group) arg0, (Group) arg1);
+            if (arg0 instanceof Group group && arg1 instanceof Group group1) return compareGroup(group, group1);
             // element
-            if (arg0 instanceof Element && arg1 instanceof Element)
-                return compareElement((Element) arg0, (Element) arg1);
+            if (arg0 instanceof Element element && arg1 instanceof Element element1)
+                return compareElement(element, element1);
             // imports
-            if (arg0 instanceof Schema && arg1 instanceof Schema)
-                return compareImport((Schema) arg0, (Schema) arg1);
+            if (arg0 instanceof Schema schema1 && arg1 instanceof Schema schema2)
+                return compareImport(schema1, schema2);
 
             return -1; // hack for unresolved portions
             // throw new ClassCastException("Unknown type "+arg0.getClass().getName());
@@ -1499,15 +1468,13 @@ public class SchemaHandler extends XSIElementHandler {
             if (arg0 == arg1) return 0;
             if (arg0 == null) return 1;
             if (arg1 == null) return -1;
-            int i =
-                    arg0.getName() == null
-                            ? arg1.getName() == null ? 0 : 1
-                            : arg0.getName().compareTo(arg1.getName());
+            int i = arg0.getName() == null
+                    ? arg1.getName() == null ? 0 : 1
+                    : arg0.getName().compareTo(arg1.getName());
             if (i != 0) return i;
-            i =
-                    arg0.getNamespace() == null
-                            ? arg1.getNamespace() == null ? 0 : 1
-                            : arg0.getNamespace().compareTo(arg1.getNamespace());
+            i = arg0.getNamespace() == null
+                    ? arg1.getNamespace() == null ? 0 : 1
+                    : arg0.getNamespace().compareTo(arg1.getNamespace());
             if (i != 0) return i;
             i = arg0.getUse() - arg1.getUse();
             if (i != 0) return i;
@@ -1518,21 +1485,17 @@ public class SchemaHandler extends XSIElementHandler {
             if (arg0 == arg1) return 0;
             if (arg0 == null) return 1;
             if (arg1 == null) return -1;
-            int i =
-                    arg0.getName() == null
-                            ? arg1.getName() == null ? 0 : 1
-                            : arg0.getName().compareTo(arg1.getName());
+            int i = arg0.getName() == null
+                    ? arg1.getName() == null ? 0 : 1
+                    : arg0.getName().compareTo(arg1.getName());
             if (i != 0) return i;
-            i =
-                    arg0.getNamespace() == null
-                            ? arg1.getNamespace() == null ? 0 : 1
-                            : arg0.getNamespace().compareTo(arg1.getNamespace());
+            i = arg0.getNamespace() == null
+                    ? arg1.getNamespace() == null ? 0 : 1
+                    : arg0.getNamespace().compareTo(arg1.getNamespace());
             if (i != 0) return i;
-            i =
-                    arg0.getAnyAttributeNameSpace() == null
-                            ? arg1.getAnyAttributeNameSpace() == null ? 0 : 1
-                            : arg0.getAnyAttributeNameSpace()
-                                    .compareTo(arg1.getAnyAttributeNameSpace());
+            i = arg0.getAnyAttributeNameSpace() == null
+                    ? arg1.getAnyAttributeNameSpace() == null ? 0 : 1
+                    : arg0.getAnyAttributeNameSpace().compareTo(arg1.getAnyAttributeNameSpace());
             if (i != 0) return i;
 
             Attribute[] a0 = arg0.getAttributes();
@@ -1556,15 +1519,13 @@ public class SchemaHandler extends XSIElementHandler {
             if (arg0 == arg1) return 0;
             if (arg0 == null) return 1;
             if (arg1 == null) return -1;
-            int i =
-                    arg0.getName() == null
-                            ? arg1.getName() == null ? 0 : 1
-                            : arg0.getName().compareTo(arg1.getName());
+            int i = arg0.getName() == null
+                    ? arg1.getName() == null ? 0 : 1
+                    : arg0.getName().compareTo(arg1.getName());
             if (i != 0) return i;
-            i =
-                    arg0.getNamespace() == null
-                            ? arg1.getNamespace() == null ? 0 : 1
-                            : arg0.getNamespace().compareTo(arg1.getNamespace());
+            i = arg0.getNamespace() == null
+                    ? arg1.getNamespace() == null ? 0 : 1
+                    : arg0.getNamespace().compareTo(arg1.getNamespace());
             if (i != 0) return i;
 
             i = arg0.getMaxOccurs() - arg1.getMaxOccurs();
@@ -1587,15 +1548,13 @@ public class SchemaHandler extends XSIElementHandler {
             if (arg0 == arg1) return 0;
             if (arg0 == null) return 1;
             if (arg1 == null) return -1;
-            int i =
-                    arg0.getName() == null
-                            ? arg1.getName() == null ? 0 : 1
-                            : arg0.getName().compareTo(arg1.getName());
+            int i = arg0.getName() == null
+                    ? arg1.getName() == null ? 0 : 1
+                    : arg0.getName().compareTo(arg1.getName());
             if (i != 0) return i;
-            i =
-                    arg0.getNamespace() == null
-                            ? arg1.getNamespace() == null ? 0 : 1
-                            : arg0.getNamespace().compareTo(arg1.getNamespace());
+            i = arg0.getNamespace() == null
+                    ? arg1.getNamespace() == null ? 0 : 1
+                    : arg0.getNamespace().compareTo(arg1.getNamespace());
             if (i != 0) return i;
 
             i = arg0.getMaxOccurs() - arg1.getMaxOccurs();
@@ -1659,8 +1618,7 @@ public class SchemaHandler extends XSIElementHandler {
             if (eg0.length < eg1.length) return -1;
             if (eg0.length > eg1.length) return 1;
 
-            for (int j = 0; j < eg0.length && i != 0; j++)
-                i = compareElementGrouping(eg0[j], eg1[j]);
+            for (int j = 0; j < eg0.length && i != 0; j++) i = compareElementGrouping(eg0[j], eg1[j]);
             return 0;
         }
 
@@ -1668,15 +1626,13 @@ public class SchemaHandler extends XSIElementHandler {
             if (arg0 == arg1) return 0;
             if (arg0 == null) return 1;
             if (arg1 == null) return -1;
-            int i =
-                    arg0.getTargetNamespace() == null
-                            ? arg1.getTargetNamespace() == null ? 0 : 1
-                            : arg0.getTargetNamespace().compareTo(arg1.getTargetNamespace());
+            int i = arg0.getTargetNamespace() == null
+                    ? arg1.getTargetNamespace() == null ? 0 : 1
+                    : arg0.getTargetNamespace().compareTo(arg1.getTargetNamespace());
             if (i != 0) return i;
-            i =
-                    arg0.getURI() == null
-                            ? arg1.getURI() == null ? 0 : 1
-                            : arg0.getURI().compareTo(arg1.getURI());
+            i = arg0.getURI() == null
+                    ? arg1.getURI() == null ? 0 : 1
+                    : arg0.getURI().compareTo(arg1.getURI());
             if (i != 0) return i;
 
             i = arg0.getElements().length - arg1.getElements().length;
@@ -1706,15 +1662,13 @@ public class SchemaHandler extends XSIElementHandler {
             if (arg0 == arg1) return 0;
             if (arg0 == null) return 1;
             if (arg1 == null) return -1;
-            int i =
-                    arg0.getName() == null
-                            ? arg1.getName() == null ? 0 : 1
-                            : arg0.getName().compareTo(arg1.getName());
+            int i = arg0.getName() == null
+                    ? arg1.getName() == null ? 0 : 1
+                    : arg0.getName().compareTo(arg1.getName());
             if (i != 0) return i;
-            i =
-                    arg0.getNamespace() == null
-                            ? arg1.getNamespace() == null ? 0 : 1
-                            : arg0.getNamespace().compareTo(arg1.getNamespace());
+            i = arg0.getNamespace() == null
+                    ? arg1.getNamespace() == null ? 0 : 1
+                    : arg0.getNamespace().compareTo(arg1.getNamespace());
             if (i != 0) return i;
 
             SimpleType[] a0 = arg0.getParents();
@@ -1755,10 +1709,9 @@ public class SchemaHandler extends XSIElementHandler {
             int i = arg0.getFacetType() - arg1.getFacetType();
             if (i != 0) return i;
 
-            i =
-                    arg0.getValue() == null
-                            ? arg1.getValue() == null ? 0 : 1
-                            : arg0.getValue().compareTo(arg1.getValue());
+            i = arg0.getValue() == null
+                    ? arg1.getValue() == null ? 0 : 1
+                    : arg0.getValue().compareTo(arg1.getValue());
             return i;
         }
 
@@ -1766,15 +1719,13 @@ public class SchemaHandler extends XSIElementHandler {
             if (arg0 == arg1) return 0;
             if (arg0 == null) return 1;
             if (arg1 == null) return -1;
-            int i =
-                    arg0.getName() == null
-                            ? arg1.getName() == null ? 0 : 1
-                            : arg0.getName().compareTo(arg1.getName());
+            int i = arg0.getName() == null
+                    ? arg1.getName() == null ? 0 : 1
+                    : arg0.getName().compareTo(arg1.getName());
             if (i != 0) return i;
-            i =
-                    arg0.getNamespace() == null
-                            ? arg1.getNamespace() == null ? 0 : 1
-                            : arg0.getNamespace().compareTo(arg1.getNamespace());
+            i = arg0.getNamespace() == null
+                    ? arg1.getNamespace() == null ? 0 : 1
+                    : arg0.getNamespace().compareTo(arg1.getNamespace());
             if (i != 0) return i;
 
             Type a00 = arg0.getParent();
@@ -1787,11 +1738,9 @@ public class SchemaHandler extends XSIElementHandler {
             i = compare(a00, a01);
             if (i != 0) return i;
 
-            i =
-                    arg0.getAnyAttributeNameSpace() == null
-                            ? arg1.getAnyAttributeNameSpace() == null ? 0 : 1
-                            : arg0.getAnyAttributeNameSpace()
-                                    .compareTo(arg1.getAnyAttributeNameSpace());
+            i = arg0.getAnyAttributeNameSpace() == null
+                    ? arg1.getAnyAttributeNameSpace() == null ? 0 : 1
+                    : arg0.getAnyAttributeNameSpace().compareTo(arg1.getAnyAttributeNameSpace());
             if (i != 0) return i;
 
             Attribute[] a10 = arg0.getAttributes();

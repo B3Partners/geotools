@@ -16,14 +16,14 @@
  */
 package org.geotools.feature;
 
+import org.geotools.api.feature.Attribute;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.filter.identity.Identifier;
 import org.geotools.feature.type.AttributeDescriptorImpl;
 import org.geotools.feature.type.Types;
 import org.geotools.util.Converters;
 import org.geotools.util.Utilities;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.filter.identity.Identifier;
 
 /**
  * Simple, mutable class to store attributes.
@@ -79,7 +79,7 @@ public class AttributeImpl extends PropertyImpl implements Attribute {
      */
     @Override
     public int hashCode() {
-        return super.hashCode() + (37 * (id == null ? 0 : id.hashCode()));
+        return super.hashCode() + 37 * (id == null ? 0 : id.hashCode());
     }
 
     /**
@@ -135,10 +135,9 @@ public class AttributeImpl extends PropertyImpl implements Attribute {
     }
 
     /**
-     * Allows this Attribute to convert an argument to its prefered storage type. If no parsing is
-     * possible, returns the original value. If a parse is attempted, yet fails (i.e. a poor decimal
-     * format) throw the Exception. This is mostly for use internally in Features, but implementors
-     * should simply follow the rules to be safe.
+     * Allows this Attribute to convert an argument to its prefered storage type. If no parsing is possible, returns the
+     * original value. If a parse is attempted, yet fails (i.e. a poor decimal format) throw the Exception. This is
+     * mostly for use internally in Features, but implementors should simply follow the rules to be safe.
      *
      * @param value the object to attempt parsing of.
      * @return <code>value</code> converted to the preferred storage of this <code>AttributeType

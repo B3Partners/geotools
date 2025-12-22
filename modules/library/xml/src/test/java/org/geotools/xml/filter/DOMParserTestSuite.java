@@ -22,9 +22,13 @@ import java.io.File;
 import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import junit.framework.Test; // NOPMD
-import junit.framework.TestResult; // NOPMD
-import junit.framework.TestSuite; // NOPMD
+import junit.framework.Test;
+import junit.framework.TestResult;
+import junit.framework.TestSuite;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
@@ -33,21 +37,15 @@ import org.geotools.test.TestData;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-@SuppressWarnings("PMD.DisallowJUnit3") // weird stuff going on here
 public class DOMParserTestSuite extends TestSuite {
 
     /** Standard logging instance */
-    protected static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(DOMParserTestSuite.class);
+    protected static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(DOMParserTestSuite.class);
 
     /** Schema on which to preform tests */
     protected static SimpleFeatureType testSchema = null;
@@ -114,7 +112,6 @@ public class DOMParserTestSuite extends TestSuite {
      *
      * @return Test
      */
-    @SuppressWarnings("PMD.DisallowJunit3")
     public static Test suite() {
         DOMParserTestSuite suite = new DOMParserTestSuite();
 
@@ -125,7 +122,7 @@ public class DOMParserTestSuite extends TestSuite {
 
             File[] tests = dir.listFiles(pathname -> pathname.toString().endsWith("test20.xml"));
             for (File test : tests) {
-                suite.addTest(suite.new DomTestXml(test.getName()));
+                suite.addTest(new DomTestXml(test.getName()));
             }
             // .. etc..
         } catch (Exception e) {
@@ -136,8 +133,7 @@ public class DOMParserTestSuite extends TestSuite {
     }
 
     /** Quick test of a single xml document */
-    @SuppressWarnings("PMD.DisallowJunit3")
-    class DomTestXml implements Test {
+    static class DomTestXml implements Test {
         String document;
 
         public DomTestXml(String document) {
@@ -197,7 +193,7 @@ public class DOMParserTestSuite extends TestSuite {
                 for (int i = 0; i < list.getLength(); i++) {
                     child = list.item(i);
 
-                    if ((child == null) || (child.getNodeType() != Node.ELEMENT_NODE)) {
+                    if (child == null || child.getNodeType() != Node.ELEMENT_NODE) {
                         continue;
                     }
 

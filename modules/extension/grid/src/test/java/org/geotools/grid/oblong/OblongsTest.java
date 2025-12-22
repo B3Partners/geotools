@@ -21,8 +21,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.util.Map;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.grid.DefaultGridFeatureBuilder;
 import org.geotools.grid.GridElement;
@@ -32,10 +36,6 @@ import org.geotools.grid.TestBase;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Unit tests for the Oblongs class.
@@ -65,8 +65,7 @@ public class OblongsTest extends TestBase {
 
     @Test
     public void createGrid() throws Exception {
-        final SimpleFeatureType TYPE =
-                DataUtilities.createType("obtype", "oblong:Polygon,id:Integer");
+        final SimpleFeatureType TYPE = DataUtilities.createType("obtype", "oblong:Polygon,id:Integer");
 
         final double SPAN = 100;
         final ReferencedEnvelope bounds = new ReferencedEnvelope(0, SPAN, 0, SPAN, null);
@@ -100,8 +99,7 @@ public class OblongsTest extends TestBase {
 
     @Test(expected = IllegalArgumentException.class)
     public void createGrid_InvalidBounds() {
-        Oblongs.createGrid(
-                ReferencedEnvelope.EVERYTHING, 1.0, 1.0, new DefaultGridFeatureBuilder());
+        Oblongs.createGrid(ReferencedEnvelope.EVERYTHING, 1.0, 1.0, new DefaultGridFeatureBuilder());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -111,24 +109,18 @@ public class OblongsTest extends TestBase {
 
     @Test(expected = IllegalArgumentException.class)
     public void createGrid_badWidth() {
-        Oblongs.createGrid(
-                new ReferencedEnvelope(0, 10, 0, 10, null),
-                0,
-                1.0,
-                new DefaultGridFeatureBuilder());
+        Oblongs.createGrid(new ReferencedEnvelope(0, 10, 0, 10, null), 0, 1.0, new DefaultGridFeatureBuilder());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void createGrid_badHeight() {
-        Oblongs.createGrid(
-                new ReferencedEnvelope(0, 10, 0, 10, null), 1, 0, new DefaultGridFeatureBuilder());
+        Oblongs.createGrid(new ReferencedEnvelope(0, 10, 0, 10, null), 1, 0, new DefaultGridFeatureBuilder());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void createGrid_MisMatchedCRS() {
         try {
-            ReferencedEnvelope env =
-                    new ReferencedEnvelope(0, 10, 0, 10, DefaultGeographicCRS.WGS84);
+            ReferencedEnvelope env = new ReferencedEnvelope(0, 10, 0, 10, DefaultGeographicCRS.WGS84);
             CoordinateReferenceSystem otherCRS = CRS.parseWKT(getSydneyWKT());
             GridFeatureBuilder builder = new DefaultGridFeatureBuilder(otherCRS);
 

@@ -16,15 +16,15 @@
  */
 package org.geotools.coverage.grid.io;
 
+import org.geotools.api.parameter.GeneralParameterValue;
 import org.geotools.filter.function.RenderingTransformation;
-import org.opengis.parameter.GeneralParameterValue;
 
 /**
- * Marks a {@link RenderingTransformation} that is able to perform its own data read from a {@link
- * org.geotools.coverage.grid.io.GridCoverage2DReader} and an array of {@link
- * org.opengis.parameter.GeneralParameterValue}. The rendering machinery will then invoke the
- * transformation providing a ReaderAndParams object, rather than doing its own read and then
- * calling it with the resulting {@link org.opengis.coverage.grid.GridCoverage}
+ * Marks a {@link RenderingTransformation} that is able to perform its own data read from a
+ * {@link org.geotools.coverage.grid.io.GridCoverage2DReader} and an array of
+ * {@link org.geotools.api.parameter.GeneralParameterValue}. The rendering machinery will then invoke the transformation
+ * providing a ReaderAndParams object, rather than doing its own read and then calling it with the resulting
+ * {@link org.geotools.api.coverage.grid.GridCoverage}
  */
 public interface CoverageReadingTransformation extends RenderingTransformation {
 
@@ -32,8 +32,7 @@ public interface CoverageReadingTransformation extends RenderingTransformation {
         GridCoverage2DReader reader;
         GeneralParameterValue[] readParameters;
 
-        public ReaderAndParams(
-                GridCoverage2DReader reader, GeneralParameterValue[] readParameters) {
+        public ReaderAndParams(GridCoverage2DReader reader, GeneralParameterValue[] readParameters) {
             this.reader = reader;
             this.readParameters = readParameters;
         }

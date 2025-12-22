@@ -27,6 +27,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.identity.FeatureId;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.FilterDOMParser;
 import org.geotools.test.TestData;
@@ -36,10 +40,6 @@ import org.geotools.xml.XMLHandlerHints;
 import org.geotools.xml.filter.FilterSchema;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.identity.FeatureId;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -57,8 +57,7 @@ import org.w3c.dom.NodeList;
 public class XMLEncoderTest {
 
     /** Standard logging instance */
-    protected static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(XMLEncoderTest.class);
+    protected static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(XMLEncoderTest.class);
 
     /** Constructor with test name. */
     String dataFolder = "";
@@ -91,8 +90,7 @@ public class XMLEncoderTest {
         StringWriter output = new StringWriter();
         DocumentWriter.writeFragment(test, FilterSchema.getInstance(), output, null);
         // System.out.println( output );
-        InputStream stream =
-                new ByteArrayInputStream(output.toString().getBytes(StandardCharsets.UTF_8));
+        InputStream stream = new ByteArrayInputStream(output.toString().getBytes(StandardCharsets.UTF_8));
 
         Object o = DocumentFactory.getInstance(stream, new HashMap<>(), Level.FINEST);
         Assert.assertNotNull(o);
@@ -210,7 +208,7 @@ public class XMLEncoderTest {
                 child = list.item(i);
 
                 // _log.getLoggerRepository().setThreshold(Level.INFO);
-                if ((child == null) || (child.getNodeType() != Node.ELEMENT_NODE)) {
+                if (child == null || child.getNodeType() != Node.ELEMENT_NODE) {
                     continue;
                 }
 
@@ -229,7 +227,7 @@ public class XMLEncoderTest {
     // TODO test or ( null, and( fidFilter, null ) ) filter
     @Test
     public void testStrictHintComplexFilter() throws Exception {
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
         PropertyIsNull null1 = ff.isNull(ff.property("name"));
         PropertyIsNull null2 = ff.isNull(ff.property("geom"));
@@ -240,16 +238,13 @@ public class XMLEncoderTest {
 
         StringWriter output = new StringWriter();
         XMLHandlerHints hints = new XMLHandlerHints();
-        hints.put(
-                XMLHandlerHints.FILTER_COMPLIANCE_STRICTNESS,
-                XMLHandlerHints.VALUE_FILTER_COMPLIANCE_MEDIUM);
+        hints.put(XMLHandlerHints.FILTER_COMPLIANCE_STRICTNESS, XMLHandlerHints.VALUE_FILTER_COMPLIANCE_MEDIUM);
         DocumentWriter.writeFragment(filter, FilterSchema.getInstance(), output, hints);
         String string = output.toString().replaceAll("\\s", "");
-        String xml =
-                "<Filterxmlns=\"http://www.opengis.net/ogc\"xmlns:gml=\"http://www.opengis.net/gml\">"
-                        + "<PropertyIsNull><PropertyName>geom</PropertyName></PropertyIsNull>"
-                        + "<Filter><FeatureIdfid=\"FID.1\"/></Filter>"
-                        + "</Filter>";
+        String xml = "<Filterxmlns=\"http://www.opengis.net/ogc\"xmlns:gml=\"http://www.opengis.net/gml\">"
+                + "<PropertyIsNull><PropertyName>geom</PropertyName></PropertyIsNull>"
+                + "<Filter><FeatureIdfid=\"FID.1\"/></Filter>"
+                + "</Filter>";
         Assert.assertEquals(xml, string);
 
         // Note:  Round trip doesn't work in this case because request may returns more features
@@ -258,7 +253,7 @@ public class XMLEncoderTest {
 
     @Test
     public void testStrictHintOR() throws Exception {
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         HashSet<FeatureId> set = new HashSet<>();
         set.add(ff.featureId("FID.1"));
         set.add(ff.featureId("FID.2"));
@@ -266,9 +261,7 @@ public class XMLEncoderTest {
 
         StringWriter output = new StringWriter();
         XMLHandlerHints hints = new XMLHandlerHints();
-        hints.put(
-                XMLHandlerHints.FILTER_COMPLIANCE_STRICTNESS,
-                XMLHandlerHints.VALUE_FILTER_COMPLIANCE_MEDIUM);
+        hints.put(XMLHandlerHints.FILTER_COMPLIANCE_STRICTNESS, XMLHandlerHints.VALUE_FILTER_COMPLIANCE_MEDIUM);
         DocumentWriter.writeFragment(filter, FilterSchema.getInstance(), output, hints);
         String string = output.toString().replaceAll("\\s", "");
         // The following test fails with Java 1.6. May be caused by some iteration order dependent
@@ -279,7 +272,8 @@ public class XMLEncoderTest {
                             + ".net/gml\"><FeatureIdfid=\"FID.1\"/><FeatureIdfid=\"FID.2\"/></Filter>",
                     string);
         }
-        ByteArrayInputStream byteStream = new ByteArrayInputStream(output.toString().getBytes());
+        ByteArrayInputStream byteStream =
+                new ByteArrayInputStream(output.toString().getBytes(StandardCharsets.UTF_8));
         Filter roundTrip = (Filter) DocumentFactory.getInstance(byteStream, null, Level.OFF);
         Assert.assertEquals(filter, roundTrip);
     }

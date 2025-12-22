@@ -18,15 +18,15 @@
 package org.geotools.data.complex.expression;
 
 import java.util.Map;
-import org.apache.commons.jxpath.JXPathContext;
+import org.geotools.api.feature.IllegalAttributeException;
 import org.geotools.filter.expression.PropertyAccessor;
 import org.geotools.filter.expression.PropertyAccessorFactory;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.IllegalAttributeException;
+import org.geotools.xsd.impl.jxpath.JXPathUtils;
 
 /**
- * A {@link PropertyAccessorFactory} that returns a {@link PropertyAccessor} capable of evaluating
- * single attribute names from a {@link Map}.
+ * A {@link PropertyAccessorFactory} that returns a {@link PropertyAccessor} capable of evaluating single attribute
+ * names from a {@link Map}.
  *
  * @author Gabriel Roldan
  */
@@ -39,39 +39,34 @@ public class MapPropertyAccessorFactory implements PropertyAccessorFactory {
      * @param xpath The xpath expression to evaluate.
      * @param target The kind of result we are expecting (ie Geometry)
      * @param hints Hints to be used when creatign the accessor.
-     * @return The property accessor, or <code>null</code> if this factory cannot create an accessor
-     *     for the specified type.
+     * @return The property accessor, or <code>null</code> if this factory cannot create an accessor for the specified
+     *     type.
      */
     @Override
-    public PropertyAccessor createPropertyAccessor(
-            Class type, String xpath, Class target, Hints hints) {
+    public PropertyAccessor createPropertyAccessor(Class type, String xpath, Class target, Hints hints) {
         if (Map.class.isAssignableFrom(type)) {
             return MAP_ACCESSOR;
         }
         return null;
     }
 
-    private static PropertyAccessor MAP_ACCESSOR =
-            new PropertyAccessor() {
+    private static PropertyAccessor MAP_ACCESSOR = new PropertyAccessor() {
 
-                @Override
-                public boolean canHandle(Object object, String xpath, Class target) {
-                    return object instanceof Map;
-                }
+        @Override
+        public boolean canHandle(Object object, String xpath, Class target) {
+            return object instanceof Map;
+        }
 
-                @Override
-                @SuppressWarnings("unchecked")
-                public <T> T get(Object object, String xpath, Class<T> target)
-                        throws IllegalArgumentException {
-                    JXPathContext context = JXPathContext.newContext(object);
-                    context.setLenient(true);
-                    return (T) context.getValue(xpath);
-                }
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> T get(Object object, String xpath, Class<T> target) throws IllegalArgumentException {
+            return (T) JXPathUtils.newSafeContext(object, true).getValue(xpath);
+        }
 
-                @Override
-                public void set(Object object, String xpath, Object value, Class target)
-                        throws IllegalAttributeException, IllegalArgumentException {
-                    throw new IllegalAttributeException("not implemented");
-                }
-            };
+        @Override
+        public void set(Object object, String xpath, Object value, Class target)
+                throws IllegalAttributeException, IllegalArgumentException {
+            throw new IllegalAttributeException("not implemented");
+        }
+    };
 }

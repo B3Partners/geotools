@@ -33,11 +33,17 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-import org.geotools.data.DataAccess;
-import org.geotools.data.DataAccessFinder;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataAccessFinder;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.ComplexType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.Query;
 import org.geotools.data.complex.config.AppSchemaDataAccessConfigurator;
 import org.geotools.data.complex.config.AppSchemaDataAccessDTO;
 import org.geotools.data.complex.config.AppSchemaFeatureTypeRegistry;
@@ -50,12 +56,6 @@ import org.geotools.test.AppSchemaTestSupport;
 import org.geotools.xsd.SchemaIndex;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.ComplexType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
 
 /**
  * @author Rob Atkinson
@@ -90,8 +90,8 @@ public class GeoSciMLTest extends AppSchemaTestSupport {
     }
 
     /**
-     * Tests if the schema-to-FM parsing code developed for complex datastore configuration loading
-     * can parse the GeoSciML types
+     * Tests if the schema-to-FM parsing code developed for complex datastore configuration loading can parse the
+     * GeoSciML types
      */
     @Test
     public void testParseSchema() throws Exception {
@@ -223,8 +223,7 @@ public class GeoSciMLTest extends AppSchemaTestSupport {
     }
 
     /**
-     * Checks that declared namespaces are included on FeatureType's userData Map for the complex
-     * features collection.
+     * Checks that declared namespaces are included on FeatureType's userData Map for the complex features collection.
      */
     @Test
     public void testComplexFeatureNamespaces() throws Exception {
@@ -238,19 +237,16 @@ public class GeoSciMLTest extends AppSchemaTestSupport {
         try (final Stream<Feature> featureStream = toFeatureStream(features)) {
             Optional<Feature> first = featureStream.findFirst();
             @SuppressWarnings("unchecked")
-            Optional<Map<String, String>> mapOpt =
-                    first.map(Feature::getDescriptor)
-                            .map(AttributeDescriptor::getType)
-                            .map(AttributeType::getUserData)
-                            .map(m -> m.get(Types.DECLARED_NAMESPACES_MAP))
-                            .filter(v -> v instanceof Map)
-                            .map(x -> (Map<String, String>) x);
+            Optional<Map<String, String>> mapOpt = first.map(Feature::getDescriptor)
+                    .map(AttributeDescriptor::getType)
+                    .map(AttributeType::getUserData)
+                    .map(m -> m.get(Types.DECLARED_NAMESPACES_MAP))
+                    .filter(v -> v instanceof Map)
+                    .map(x -> (Map<String, String>) x);
             assertTrue(mapOpt.isPresent());
             final Map<String, String> namespacesMap = mapOpt.get();
             assertEquals(3, namespacesMap.keySet().size());
-            assertTrue(
-                    getExpectedNamespaces().stream()
-                            .allMatch(ns -> namespacesMap.containsValue(ns)));
+            assertTrue(getExpectedNamespaces().stream().allMatch(ns -> namespacesMap.containsValue(ns)));
         }
     }
 

@@ -24,7 +24,45 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.geotools.data.DataStore;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.AnchorPoint;
+import org.geotools.api.style.ChannelSelection;
+import org.geotools.api.style.ColorMap;
+import org.geotools.api.style.ContrastEnhancement;
+import org.geotools.api.style.Displacement;
+import org.geotools.api.style.ExternalGraphic;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Font;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.GraphicalSymbol;
+import org.geotools.api.style.Halo;
+import org.geotools.api.style.LabelPlacement;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.NamedLayer;
+import org.geotools.api.style.PointPlacement;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.RasterSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.SelectedChannelType;
+import org.geotools.api.style.SemanticType;
+import org.geotools.api.style.ShadedRelief;
+import org.geotools.api.style.Stroke;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.style.StyledLayer;
+import org.geotools.api.style.StyledLayerDescriptor;
+import org.geotools.api.style.Symbolizer;
+import org.geotools.api.style.TextSymbolizer;
+import org.geotools.api.style.UserLayer;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.Filters;
 import org.geotools.styling.visitor.DuplicatingStyleVisitor;
@@ -34,18 +72,10 @@ import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.GraphicalSymbol;
-import org.opengis.style.SemanticType;
 
 /**
- * Utility class that provides static helper methods for common operations on GeoTools styling
- * objects (e.g. StyledLayerDescriptor, Style, FeatureTypeStyle, Rule, Symbolizer, Stroke and Fill).
+ * Utility class that provides static helper methods for common operations on GeoTools styling objects (e.g.
+ * StyledLayerDescriptor, Style, FeatureTypeStyle, Rule, Symbolizer, Stroke and Fill).
  *
  * @author Jody Garnett
  * @version $Id$
@@ -111,8 +141,7 @@ public class SLD {
     /**
      * Updates the color for line symbolizers in the current style.
      *
-     * <p>This method will update the Style in place; some of the symbolizers will be replaced with
-     * modified copies.
+     * <p>This method will update the Style in place; some of the symbolizers will be replaced with modified copies.
      *
      * @param style the Style object to be updated
      * @param colour Color to to use
@@ -124,39 +153,38 @@ public class SLD {
         for (FeatureTypeStyle featureTypeStyle : style.featureTypeStyles()) {
             for (int i = 0; i < featureTypeStyle.rules().size(); i++) {
                 Rule rule = featureTypeStyle.rules().get(i);
-                DuplicatingStyleVisitor update =
-                        new DuplicatingStyleVisitor() {
+                DuplicatingStyleVisitor update = new DuplicatingStyleVisitor() {
 
-                            @Override
-                            public void visit(LineSymbolizer line) {
-                                String name = line.getGeometryPropertyName();
-                                Stroke stroke = update(line.getStroke());
-                                LineSymbolizer copy = sf.createLineSymbolizer(stroke, name);
-                                pages.push(copy);
-                            }
+                    @Override
+                    public void visit(LineSymbolizer line) {
+                        String name = line.getGeometryPropertyName();
+                        Stroke stroke = update(line.getStroke());
+                        LineSymbolizer copy = sf.createLineSymbolizer(stroke, name);
+                        pages.push(copy);
+                    }
 
-                            Stroke update(Stroke stroke) {
-                                Expression color = ff.literal(colour);
-                                Expression width = copy(stroke.getWidth());
-                                Expression opacity = copy(stroke.getOpacity());
-                                Expression lineJoin = copy(stroke.getLineJoin());
-                                Expression lineCap = copy(stroke.getLineCap());
-                                float[] dashArray = copy(stroke.getDashArray());
-                                Expression dashOffset = copy(stroke.getDashOffset());
-                                Graphic graphicStroke = copy(stroke.getGraphicStroke());
-                                Graphic graphicFill = copy(stroke.getGraphicFill());
-                                return sf.createStroke(
-                                        color,
-                                        width,
-                                        opacity,
-                                        lineJoin,
-                                        lineCap,
-                                        dashArray,
-                                        dashOffset,
-                                        graphicFill,
-                                        graphicStroke);
-                            }
-                        };
+                    Stroke update(Stroke stroke) {
+                        Expression color = ff.literal(colour);
+                        Expression width = copy(stroke.getWidth());
+                        Expression opacity = copy(stroke.getOpacity());
+                        Expression lineJoin = copy(stroke.getLineJoin());
+                        Expression lineCap = copy(stroke.getLineCap());
+                        float[] dashArray = copy(stroke.getDashArray());
+                        Expression dashOffset = copy(stroke.getDashOffset());
+                        Graphic graphicStroke = copy(stroke.getGraphicStroke());
+                        Graphic graphicFill = copy(stroke.getGraphicFill());
+                        return sf.createStroke(
+                                color,
+                                width,
+                                opacity,
+                                lineJoin,
+                                lineCap,
+                                dashArray,
+                                dashOffset,
+                                graphicFill,
+                                graphicStroke);
+                    }
+                };
                 rule.accept(update);
                 Rule updatedRule = (Rule) update.getCopy();
                 featureTypeStyle.rules().set(i, updatedRule);
@@ -173,7 +201,7 @@ public class SLD {
         Stroke stroke = symbolizer.getStroke();
 
         if (stroke == null) {
-            stroke = sf.createStroke(ff.literal(colour), Stroke.DEFAULT.getWidth());
+            stroke = sf.createStroke(ff.literal(colour), StrokeImpl.DEFAULT.getWidth());
             symbolizer.setStroke(stroke);
 
         } else {
@@ -294,7 +322,7 @@ public class SLD {
             return 1.0;
         }
         double value = Filters.asDouble(opacity);
-        return (Double.isNaN(value) ? 1.0 : value);
+        return Double.isNaN(value) ? 1.0 : value;
     }
 
     /**
@@ -383,12 +411,9 @@ public class SLD {
         }
 
         for (GraphicalSymbol gs : graphic.graphicalSymbols()) {
-            if (gs != null && gs instanceof ExternalGraphic) {
-                ExternalGraphic externalGraphic = (ExternalGraphic) gs;
+            if (gs != null && gs instanceof ExternalGraphic externalGraphic) {
                 try {
-                    URL location =
-                            externalGraphic
-                                    .getLocation(); // Should check format is supported by SWT
+                    URL location = externalGraphic.getLocation(); // Should check format is supported by SWT
                     if (location != null) {
                         return location;
                     }
@@ -437,8 +462,8 @@ public class SLD {
         }
 
         for (GraphicalSymbol gs : graphic.graphicalSymbols()) {
-            if (gs != null && gs instanceof Mark) {
-                return (Mark) gs;
+            if (gs != null && gs instanceof Mark mark) {
+                return mark;
             }
         }
 
@@ -496,8 +521,7 @@ public class SLD {
         }
 
         for (GraphicalSymbol gs : graphic.graphicalSymbols()) {
-            if (gs != null && gs instanceof Mark) {
-                Mark mark = (Mark) gs;
+            if (gs != null && gs instanceof Mark mark) {
                 String s = wellKnownName(mark);
                 if (s != null) {
                     return s;
@@ -529,8 +553,8 @@ public class SLD {
     }
 
     /**
-     * Retrieves the color of the first Mark in a PointSymbolizer object. This method is identical
-     * to {@linkplain #color(org.geotools.styling.PointSymbolizer)}.
+     * Retrieves the color of the first Mark in a PointSymbolizer object. This method is identical to
+     * {@linkplain #color(PointSymbolizer)}.
      *
      * <p>If you are using something fun like symbols you will need to do your own thing.
      *
@@ -568,12 +592,11 @@ public class SLD {
         }
 
         for (GraphicalSymbol gs : graphic.graphicalSymbols()) {
-            if (gs != null && gs instanceof Mark) {
-                Mark mark = (Mark) gs;
+            if (gs != null && gs instanceof Mark mark) {
 
                 Stroke stroke = mark.getStroke();
                 if (stroke == null) {
-                    stroke = sf.createStroke(ff.literal(Color.BLACK), Stroke.DEFAULT.getWidth());
+                    stroke = sf.createStroke(ff.literal(Color.BLACK), StrokeImpl.DEFAULT.getWidth());
                     mark.setStroke(stroke);
                 }
 
@@ -605,8 +628,7 @@ public class SLD {
         }
 
         for (GraphicalSymbol gs : graphic.graphicalSymbols()) {
-            if (gs != null && gs instanceof Mark) {
-                Mark mark = (Mark) gs;
+            if (gs != null && gs instanceof Mark mark) {
                 Stroke stroke = mark.getStroke();
                 if (stroke != null) {
                     Color colour = color(stroke);
@@ -640,8 +662,7 @@ public class SLD {
         }
 
         for (GraphicalSymbol gs : graphic.graphicalSymbols()) {
-            if (gs != null && gs instanceof Mark) {
-                Mark mark = (Mark) gs;
+            if (gs != null && gs instanceof Mark mark) {
                 Stroke stroke = mark.getStroke();
                 if (stroke != null) {
                     Expression exp = stroke.getWidth();
@@ -678,8 +699,7 @@ public class SLD {
         }
 
         for (GraphicalSymbol gs : graphic.graphicalSymbols()) {
-            if (gs != null && gs instanceof Mark) {
-                Mark mark = (Mark) gs;
+            if (gs != null && gs instanceof Mark mark) {
                 Stroke stroke = mark.getStroke();
                 if (stroke != null) {
                     Expression exp = stroke.getOpacity();
@@ -711,8 +731,7 @@ public class SLD {
         }
 
         for (GraphicalSymbol gs : graphic.graphicalSymbols()) {
-            if (gs != null && gs instanceof Mark) {
-                Mark mark = (Mark) gs;
+            if (gs != null && gs instanceof Mark mark) {
                 Fill fill = mark.getFill();
                 if (fill != null) {
                     Expression expr = fill.getOpacity();
@@ -746,8 +765,7 @@ public class SLD {
         }
 
         for (GraphicalSymbol gs : graphic.graphicalSymbols()) {
-            if (gs != null && gs instanceof Mark) {
-                Mark mark = (Mark) gs;
+            if (gs != null && gs instanceof Mark mark) {
                 Fill fill = mark.getFill();
                 if (fill != null) {
                     Color colour = color(fill.getColor());
@@ -813,9 +831,8 @@ public class SLD {
     /**
      * Updates the raster opacity in the current style
      *
-     * <p><b>Note:</b> This method will update the Style in place; some of the rules and symbolizers
-     * will be replaced with modified copies. All symbolizers associated with all rules are
-     * modified.
+     * <p><b>Note:</b> This method will update the Style in place; some of the rules and symbolizers will be replaced
+     * with modified copies. All symbolizers associated with all rules are modified.
      *
      * @param style the Style object to be updated
      * @param opacity - a new opacity value between 0 and 1
@@ -828,40 +845,36 @@ public class SLD {
             for (int i = 0; i < featureTypeStyle.rules().size(); i++) {
                 Rule rule = featureTypeStyle.rules().get(i);
 
-                DuplicatingStyleVisitor update =
-                        new DuplicatingStyleVisitor() {
-                            @Override
-                            public void visit(RasterSymbolizer raster) {
+                DuplicatingStyleVisitor update = new DuplicatingStyleVisitor() {
+                    @Override
+                    public void visit(RasterSymbolizer raster) {
 
-                                ChannelSelection channelSelection =
-                                        copy(raster.getChannelSelection());
-                                ColorMap colorMap = copy(raster.getColorMap());
-                                ContrastEnhancement ce = copy(raster.getContrastEnhancement());
-                                String geometryProperty = raster.getGeometryPropertyName();
-                                Symbolizer outline = copy(raster.getImageOutline());
-                                Expression overlap = copy(raster.getOverlap());
-                                ShadedRelief shadedRelief = copy(raster.getShadedRelief());
+                        ChannelSelection channelSelection = copy(raster.getChannelSelection());
+                        ColorMap colorMap = copy(raster.getColorMap());
+                        ContrastEnhancement ce = copy(raster.getContrastEnhancement());
+                        String geometryProperty = raster.getGeometryPropertyName();
+                        Symbolizer outline = copy(raster.getImageOutline());
+                        Expression overlap = copy(raster.getOverlap());
+                        ShadedRelief shadedRelief = copy(raster.getShadedRelief());
 
-                                Expression newOpacity = ff.literal(opacity);
+                        Expression newOpacity = ff.literal(opacity);
 
-                                RasterSymbolizer copy =
-                                        sf.createRasterSymbolizer(
-                                                geometryProperty,
-                                                newOpacity,
-                                                channelSelection,
-                                                overlap,
-                                                colorMap,
-                                                ce,
-                                                shadedRelief,
-                                                outline);
+                        RasterSymbolizer copy = sf.createRasterSymbolizer(
+                                geometryProperty,
+                                newOpacity,
+                                channelSelection,
+                                overlap,
+                                colorMap,
+                                ce,
+                                shadedRelief,
+                                outline);
 
-                                if (STRICT && !copy.equals(raster)) {
-                                    throw new IllegalStateException(
-                                            "Was unable to duplicate provided raster:" + raster);
-                                }
-                                pages.push(copy);
-                            }
-                        };
+                        if (STRICT && !copy.equals(raster)) {
+                            throw new IllegalStateException("Was unable to duplicate provided raster:" + raster);
+                        }
+                        pages.push(copy);
+                    }
+                };
 
                 rule.accept(update);
                 Rule updatedRule = (Rule) update.getCopy();
@@ -873,12 +886,11 @@ public class SLD {
     /**
      * Updates the raster channel selection in a Style object
      *
-     * <p>This method will update the Style in place; some of the rules & symbolizers will be
-     * replace with modified copies. All symbolizes associated with all rules are updated.
+     * <p>This method will update the Style in place; some of the rules & symbolizers will be replace with modified
+     * copies. All symbolizes associated with all rules are updated.
      *
      * @param style the Style object to be updated
-     * @param rgb - an array of the new red, green, blue channels or null if setting the gray
-     *     channel
+     * @param rgb - an array of the new red, green, blue channels or null if setting the gray channel
      * @param gray - the new gray channel; ignored if rgb is not null
      */
     public static void setChannelSelection(
@@ -890,48 +902,45 @@ public class SLD {
             for (int i = 0; i < featureTypeStyle.rules().size(); i++) {
                 Rule rule = featureTypeStyle.rules().get(i);
 
-                DuplicatingStyleVisitor update =
-                        new DuplicatingStyleVisitor() {
+                DuplicatingStyleVisitor update = new DuplicatingStyleVisitor() {
 
-                            @Override
-                            public void visit(RasterSymbolizer raster) {
+                    @Override
+                    public void visit(RasterSymbolizer raster) {
 
-                                ChannelSelection channelSelection = createChannelSelection();
+                        ChannelSelection channelSelection = createChannelSelection();
 
-                                ColorMap colorMap = copy(raster.getColorMap());
-                                ContrastEnhancement ce = copy(raster.getContrastEnhancement());
-                                String geometryProperty = raster.getGeometryPropertyName();
-                                Symbolizer outline = copy(raster.getImageOutline());
-                                Expression overlap = copy(raster.getOverlap());
-                                ShadedRelief shadedRelief = copy(raster.getShadedRelief());
+                        ColorMap colorMap = copy(raster.getColorMap());
+                        ContrastEnhancement ce = copy(raster.getContrastEnhancement());
+                        String geometryProperty = raster.getGeometryPropertyName();
+                        Symbolizer outline = copy(raster.getImageOutline());
+                        Expression overlap = copy(raster.getOverlap());
+                        ShadedRelief shadedRelief = copy(raster.getShadedRelief());
 
-                                Expression opacity = copy(raster.getOpacity());
+                        Expression opacity = copy(raster.getOpacity());
 
-                                RasterSymbolizer copy =
-                                        sf.createRasterSymbolizer(
-                                                geometryProperty,
-                                                opacity,
-                                                channelSelection,
-                                                overlap,
-                                                colorMap,
-                                                ce,
-                                                shadedRelief,
-                                                outline);
-                                if (STRICT && !copy.equals(raster)) {
-                                    throw new IllegalStateException(
-                                            "Was unable to duplicate provided raster:" + raster);
-                                }
-                                pages.push(copy);
-                            }
+                        RasterSymbolizer copy = sf.createRasterSymbolizer(
+                                geometryProperty,
+                                opacity,
+                                channelSelection,
+                                overlap,
+                                colorMap,
+                                ce,
+                                shadedRelief,
+                                outline);
+                        if (STRICT && !copy.equals(raster)) {
+                            throw new IllegalStateException("Was unable to duplicate provided raster:" + raster);
+                        }
+                        pages.push(copy);
+                    }
 
-                            private ChannelSelection createChannelSelection() {
-                                if (rgb != null) {
-                                    return sf.createChannelSelection(rgb);
-                                } else {
-                                    return sf.createChannelSelection(gray);
-                                }
-                            }
-                        };
+                    private ChannelSelection createChannelSelection() {
+                        if (rgb != null) {
+                            return sf.createChannelSelection(rgb);
+                        } else {
+                            return sf.createChannelSelection(gray);
+                        }
+                    }
+                };
 
                 rule.accept(update);
                 Rule updatedRule = (Rule) update.getCopy();
@@ -967,7 +976,7 @@ public class SLD {
         Expression colourExp = ff.literal(colour);
         Stroke stroke = symbolizer.getStroke();
         if (stroke == null) {
-            stroke = sf.createStroke(colourExp, Stroke.DEFAULT.getWidth());
+            stroke = sf.createStroke(colourExp, StrokeImpl.DEFAULT.getWidth());
             symbolizer.setStroke(stroke);
         } else {
             stroke.setColor(ff.literal(colour));
@@ -1047,12 +1056,12 @@ public class SLD {
      */
     public static double opacity(Fill fill) {
         if (fill == null) {
-            fill = Fill.DEFAULT;
+            fill = FillImpl.DEFAULT;
         }
 
         Expression opacityExp = fill.getOpacity();
         if (opacityExp == null) {
-            opacityExp = Fill.DEFAULT.getOpacity();
+            opacityExp = FillImpl.DEFAULT.getOpacity();
         }
 
         return Filters.asDouble(opacityExp);
@@ -1146,7 +1155,7 @@ public class SLD {
     public static String textLabelString(TextSymbolizer symbolizer) {
         Expression exp = textLabel(symbolizer);
 
-        return (exp == null) ? null : exp.toString();
+        return exp == null ? null : exp.toString();
     }
 
     /**
@@ -1347,7 +1356,7 @@ public class SLD {
     public static Stroke stroke(PointSymbolizer sym) {
         Mark mark = mark(sym);
 
-        return (mark == null) ? null : mark.getStroke();
+        return mark == null ? null : mark.getStroke();
     }
 
     /**
@@ -1373,7 +1382,7 @@ public class SLD {
     public static Fill fill(PointSymbolizer sym) {
         Mark mark = mark(sym);
 
-        return (mark == null) ? null : mark.getFill();
+        return mark == null ? null : mark.getFill();
     }
 
     /**
@@ -1428,7 +1437,7 @@ public class SLD {
             return null;
         }
 
-        if ((type == null) || (type.getTypeName() == null)) {
+        if (type == null || type.getTypeName() == null) {
             return null;
         }
 
@@ -1449,7 +1458,7 @@ public class SLD {
      * @return The first object to match the feature type, otherwise null if no match.
      */
     public static Style matchingStyle(Style[] styles, SimpleFeatureType schema) {
-        if ((styles == null) || (styles.length == 0)) {
+        if (styles == null || styles.length == 0) {
             return null;
         }
 
@@ -1466,8 +1475,8 @@ public class SLD {
      * Retrieve the first Symbolizer from the provided Style.
      *
      * @param style SLD style information.
-     * @param SYMBOLIZER LineSymbolizer.class, PointSymbolizer.class, PolygonSymbolizer.class,
-     *     RasterSymbolizer.class, or TextSymbolizer.class
+     * @param SYMBOLIZER LineSymbolizer.class, PointSymbolizer.class, PolygonSymbolizer.class, RasterSymbolizer.class,
+     *     or TextSymbolizer.class
      * @return symbolizer instance from style, or null if not found.
      */
     protected static Symbolizer symbolizer(Style style, final Class SYMBOLIZER) {
@@ -1489,8 +1498,8 @@ public class SLD {
      * Retrieve the first Symbolizer from the provided FeatureTypeStyle.
      *
      * @param fts the FeatureTypeStyle SLD style information.
-     * @param SYMBOLIZER LineSymbolizer.class, PointSymbolizer.class, PolygonSymbolizer.class,
-     *     RasterSymbolizer.class, or TextSymbolizer.class
+     * @param SYMBOLIZER LineSymbolizer.class, PointSymbolizer.class, PolygonSymbolizer.class, RasterSymbolizer.class,
+     *     or TextSymbolizer.class
      * @return symbolizer instance from fts, or null if not found.
      */
     protected static Symbolizer symbolizer(FeatureTypeStyle fts, final Class SYMBOLIZER) {
@@ -1530,12 +1539,10 @@ public class SLD {
         List<Style> styles = new ArrayList<>();
 
         for (StyledLayer styledLayer : layers) {
-            if (styledLayer instanceof UserLayer) {
-                UserLayer layer = (UserLayer) styledLayer;
+            if (styledLayer instanceof UserLayer layer) {
                 styles.addAll(layer.userStyles());
 
-            } else if (styledLayer instanceof NamedLayer) {
-                NamedLayer layer = (NamedLayer) styledLayer;
+            } else if (styledLayer instanceof NamedLayer layer) {
                 styles.addAll(layer.styles());
             }
         }
@@ -1559,15 +1566,14 @@ public class SLD {
     }
 
     /**
-     * Retrieve the first FeatureTypeStyle defined in the given StyledLayerDescriptor object that
-     * matches the specified feature type
+     * Retrieve the first FeatureTypeStyle defined in the given StyledLayerDescriptor object that matches the specified
+     * feature type
      *
      * @param sld a StyledLayerDescriptor object
      * @param type the feature type to match
      * @return a FeatureTypeStyle or null if there was no match
      */
-    public static FeatureTypeStyle featureTypeStyle(
-            StyledLayerDescriptor sld, SimpleFeatureType type) {
+    public static FeatureTypeStyle featureTypeStyle(StyledLayerDescriptor sld, SimpleFeatureType type) {
         // alternatively, we could use a StyleVisitor here
         Style[] styles = styles(sld);
         for (Style style : styles) {
@@ -1584,8 +1590,7 @@ public class SLD {
      * Retrieve the default style from the given StyledLayerDescriptor.
      *
      * @param sld the StyledLayerDescriptor object
-     * @return the default style; or the first style if no default is defined; or {@code null} if
-     *     there are no styles
+     * @return the default style; or the first style if no default is defined; or {@code null} if there are no styles
      */
     public static Style defaultStyle(StyledLayerDescriptor sld) {
         Style[] style = styles(sld);
@@ -1719,16 +1724,13 @@ public class SLD {
 
         Color color = null;
         for (Symbolizer sym : rule.symbolizers()) {
-            if (sym instanceof PolygonSymbolizer) {
-                PolygonSymbolizer symb = (PolygonSymbolizer) sym;
+            if (sym instanceof PolygonSymbolizer symb) {
                 color = polyFill(symb);
 
-            } else if (sym instanceof LineSymbolizer) {
-                LineSymbolizer symb = (LineSymbolizer) sym;
+            } else if (sym instanceof LineSymbolizer symb) {
                 color = color(symb);
 
-            } else if (sym instanceof PointSymbolizer) {
-                PointSymbolizer symb = (PointSymbolizer) sym;
+            } else if (sym instanceof PointSymbolizer symb) {
                 color = color(symb);
             }
 
@@ -1826,16 +1828,13 @@ public class SLD {
      * @param rotation rotation angle in degrees
      * @return a new PointPlacement object
      */
-    public static PointPlacement getPlacement(
-            double horizAlign, double vertAlign, double rotation) {
-        AnchorPoint anchorPoint =
-                sf.createAnchorPoint(ff.literal(horizAlign), ff.literal(vertAlign));
+    public static PointPlacement getPlacement(double horizAlign, double vertAlign, double rotation) {
+        AnchorPoint anchorPoint = sf.createAnchorPoint(ff.literal(horizAlign), ff.literal(vertAlign));
         return sf.createPointPlacement(anchorPoint, null, ff.literal(rotation));
     }
 
     /**
-     * Create a minimal style to render features of type {@code typeName} read from the given data
-     * store
+     * Create a minimal style to render features of type {@code typeName} read from the given data store
      *
      * @param store the data store containing the features
      * @param typeName the feature type to create the style for
@@ -1843,8 +1842,7 @@ public class SLD {
      * @return a new Style instance
      * @throws java.io.IOException if the data store cannot be accessed
      */
-    public static Style createSimpleStyle(DataStore store, String typeName, Color color)
-            throws IOException {
+    public static Style createSimpleStyle(DataStore store, String typeName, Color color) throws IOException {
         SimpleFeatureType type = store.getSchema(typeName);
         return createSimpleStyle(type, color);
     }
@@ -1880,12 +1878,10 @@ public class SLD {
             }
             return createPolygonStyle(color, fillColor, 0.5f);
 
-        } else if (LineString.class.isAssignableFrom(clazz)
-                || MultiLineString.class.isAssignableFrom(clazz)) {
+        } else if (LineString.class.isAssignableFrom(clazz) || MultiLineString.class.isAssignableFrom(clazz)) {
             return createLineStyle(color, 1.0f);
 
-        } else if (Point.class.isAssignableFrom(clazz)
-                || MultiPoint.class.isAssignableFrom(clazz)) {
+        } else if (Point.class.isAssignableFrom(clazz) || MultiPoint.class.isAssignableFrom(clazz)) {
             if (color.equals(Color.BLACK)) {
                 fillColor = null;
             } else {
@@ -1907,7 +1903,7 @@ public class SLD {
      */
     public static Style createPolygonStyle(Color outlineColor, Color fillColor, float opacity) {
         Stroke stroke = sf.createStroke(ff.literal(outlineColor), ff.literal(1.0f));
-        Fill fill = Fill.NULL;
+        Fill fill = FillImpl.NULL;
         if (fillColor != null) {
             fill = sf.createFill(ff.literal(fillColor), ff.literal(opacity));
         }
@@ -1920,16 +1916,15 @@ public class SLD {
      * @param outlineColor color of polygon outlines
      * @param fillColor color for the fill
      * @param opacity proportional opacity (0 to 1)
-     * @param labelField name of the feature field (attribute) to use for labelling; mauy be {@code
-     *     null} for no labels
-     * @param labelFont GeoTools Font object to use for labelling; if {@code null} and {@code
-     *     labelField} is not {@code null} the default font will be used
+     * @param labelField name of the feature field (attribute) to use for labelling; mauy be {@code null} for no labels
+     * @param labelFont GeoTools Font object to use for labelling; if {@code null} and {@code labelField} is not
+     *     {@code null} the default font will be used
      * @return a new Style instance
      */
     public static Style createPolygonStyle(
             Color outlineColor, Color fillColor, float opacity, String labelField, Font labelFont) {
         Stroke stroke = sf.createStroke(ff.literal(outlineColor), ff.literal(1.0f));
-        Fill fill = Fill.NULL;
+        Fill fill = FillImpl.NULL;
         if (fillColor != null) {
             fill = sf.createFill(ff.literal(fillColor), ff.literal(opacity));
         }
@@ -1939,17 +1934,11 @@ public class SLD {
             return wrapSymbolizers(polySym);
 
         } else {
-            Font font = (labelFont == null ? sf.getDefaultFont() : labelFont);
+            Font font = labelFont == null ? sf.getDefaultFont() : labelFont;
             Fill labelFill = sf.createFill(ff.literal(Color.BLACK));
 
             TextSymbolizer textSym =
-                    sf.createTextSymbolizer(
-                            labelFill,
-                            new Font[] {font},
-                            null,
-                            ff.property(labelField),
-                            null,
-                            null);
+                    sf.createTextSymbolizer(labelFill, new Font[] {font}, null, ff.property(labelField), null, null);
 
             return wrapSymbolizers(polySym, textSym);
         }
@@ -1972,14 +1961,12 @@ public class SLD {
      *
      * @param lineColor color of lines
      * @param width width of lines
-     * @param labelField name of the feature field (attribute) to use for labelling; mauy be {@code
-     *     null} for no labels
-     * @param labelFont GeoTools Font object to use for labelling; if {@code null} and {@code
-     *     labelField} is not {@code null} the default font will be used
+     * @param labelField name of the feature field (attribute) to use for labelling; mauy be {@code null} for no labels
+     * @param labelFont GeoTools Font object to use for labelling; if {@code null} and {@code labelField} is not
+     *     {@code null} the default font will be used
      * @return a new Style instance
      */
-    public static Style createLineStyle(
-            Color lineColor, float width, String labelField, Font labelFont) {
+    public static Style createLineStyle(Color lineColor, float width, String labelField, Font labelFont) {
         Stroke stroke = sf.createStroke(ff.literal(lineColor), ff.literal(width));
         LineSymbolizer lineSym = sf.createLineSymbolizer(stroke, null);
 
@@ -1987,17 +1974,11 @@ public class SLD {
             return wrapSymbolizers(lineSym);
 
         } else {
-            Font font = (labelFont == null ? sf.getDefaultFont() : labelFont);
+            Font font = labelFont == null ? sf.getDefaultFont() : labelFont;
             Fill labelFill = sf.createFill(ff.literal(Color.BLACK));
 
             TextSymbolizer textSym =
-                    sf.createTextSymbolizer(
-                            labelFill,
-                            new Font[] {font},
-                            null,
-                            ff.property(labelField),
-                            null,
-                            null);
+                    sf.createTextSymbolizer(labelFill, new Font[] {font}, null, ff.property(labelField), null, null);
 
             return wrapSymbolizers(lineSym, textSym);
         }
@@ -2027,10 +2008,9 @@ public class SLD {
      * @param fillColor color for the point symbol fill
      * @param opacity a value between 0 and 1 for the opacity of the fill
      * @param size size of the point symbol
-     * @param labelField name of the feature field (attribute) to use for labelling; mauy be {@code
-     *     null} for no labels
-     * @param labelFont GeoTools Font object to use for labelling; if {@code null} and {@code
-     *     labelField} is not {@code null} the default font will be used
+     * @param labelField name of the feature field (attribute) to use for labelling; mauy be {@code null} for no labels
+     * @param labelFont GeoTools Font object to use for labelling; if {@code null} and {@code labelField} is not
+     *     {@code null} the default font will be used
      * @return a new Style instance
      */
     public static Style createPointStyle(
@@ -2043,14 +2023,12 @@ public class SLD {
             Font labelFont) {
 
         Stroke stroke = sf.createStroke(ff.literal(lineColor), ff.literal(1.0f));
-        Fill fill = Fill.NULL;
+        Fill fill = FillImpl.NULL;
         if (fillColor != null) {
             fill = sf.createFill(ff.literal(fillColor), ff.literal(opacity));
         }
 
-        Mark mark =
-                sf.createMark(
-                        ff.literal(wellKnownName), stroke, fill, ff.literal(size), ff.literal(0));
+        Mark mark = sf.createMark(ff.literal(wellKnownName), stroke, fill, ff.literal(size), ff.literal(0));
 
         Graphic graphic = sf.createDefaultGraphic();
         graphic.graphicalSymbols().clear();
@@ -2063,20 +2041,14 @@ public class SLD {
             return wrapSymbolizers(pointSym);
 
         } else {
-            Font font = (labelFont == null ? sf.getDefaultFont() : labelFont);
+            Font font = labelFont == null ? sf.getDefaultFont() : labelFont;
             Fill labelFill = sf.createFill(ff.literal(Color.BLACK));
             AnchorPoint anchor = sf.createAnchorPoint(ff.literal(0.5), ff.literal(0.0));
             Displacement disp = sf.createDisplacement(ff.literal(0), ff.literal(5));
             LabelPlacement placement = sf.createPointPlacement(anchor, disp, ff.literal(0));
 
-            TextSymbolizer textSym =
-                    sf.createTextSymbolizer(
-                            labelFill,
-                            new Font[] {font},
-                            null,
-                            ff.property(labelField),
-                            placement,
-                            null);
+            TextSymbolizer textSym = sf.createTextSymbolizer(
+                    labelFill, new Font[] {font}, null, ff.property(labelField), placement, null);
 
             return wrapSymbolizers(pointSym, textSym);
         }

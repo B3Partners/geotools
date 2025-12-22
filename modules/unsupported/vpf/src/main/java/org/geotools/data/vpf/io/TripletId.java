@@ -16,6 +16,7 @@
  */
 package org.geotools.data.vpf.io;
 
+import java.io.Serial;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.geotools.data.vpf.VPFLogger;
@@ -33,6 +34,7 @@ import org.geotools.util.logging.Logging;
  */
 public class TripletId extends Number {
     /** serialVersionUID */
+    @Serial
     private static final long serialVersionUID = -3584133713173893007L;
     /** The raw data that can be decomposed into as many as three separate numbers */
     private byte[] rawData = null;
@@ -80,7 +82,7 @@ public class TripletId extends Number {
      * @return an <code>int</code> value
      */
     private int getIdLength() {
-        return (rawData[0] >> 6) & 3;
+        return rawData[0] >> 6 & 3;
     }
 
     /**
@@ -89,7 +91,7 @@ public class TripletId extends Number {
      * @return an <code>int</code> value
      */
     private int getTileIdLength() {
-        return (rawData[0] >> 4) & 3;
+        return rawData[0] >> 4 & 3;
     }
 
     /**
@@ -98,7 +100,7 @@ public class TripletId extends Number {
      * @return an <code>int</code> value
      */
     private int getNextIdLength() {
-        return (rawData[0] >> 2) & 3;
+        return rawData[0] >> 2 & 3;
     }
 
     /**
@@ -118,10 +120,10 @@ public class TripletId extends Number {
 
                     // Convert bytes from signed to unsigned
                     if (piece < 0) {
-                        piece += (-2 * (Byte.MIN_VALUE));
+                        piece += -2 * Byte.MIN_VALUE;
                     }
 
-                    result += (piece << (8 * inx));
+                    result += piece << 8 * inx;
                 }
             } catch (RuntimeException exp) {
                 LOGGER.log(Level.SEVERE, "", exp);
@@ -150,10 +152,10 @@ public class TripletId extends Number {
                     piece = rawData[inx + rowIdLength + 1];
 
                     if (piece < 0) {
-                        piece += (2 * Byte.MAX_VALUE);
+                        piece += 2 * Byte.MAX_VALUE;
                     }
 
-                    result += (piece << (8 * inx));
+                    result += piece << 8 * inx;
                 }
             } catch (RuntimeException exp) {
                 LOGGER.log(Level.SEVERE, "", exp);
@@ -182,10 +184,10 @@ public class TripletId extends Number {
                     piece = rawData[inx + prevLength + 1];
 
                     if (piece < 0) {
-                        piece += (2 * Byte.MAX_VALUE);
+                        piece += 2 * Byte.MAX_VALUE;
                     }
 
-                    result += (piece << (8 * inx));
+                    result += piece << 8 * inx;
                 }
             } catch (RuntimeException exp) {
                 LOGGER.log(Level.SEVERE, "", exp);
@@ -204,9 +206,9 @@ public class TripletId extends Number {
      */
     public static int calculateDataSize(byte definition) {
         int[] pieces = new int[3];
-        pieces[0] = (definition >> 2) & 3;
-        pieces[1] = (definition >> 4) & 3;
-        pieces[2] = (definition >> 6) & 3;
+        pieces[0] = definition >> 2 & 3;
+        pieces[1] = definition >> 4 & 3;
+        pieces[2] = definition >> 6 & 3;
 
         int size = 0;
 

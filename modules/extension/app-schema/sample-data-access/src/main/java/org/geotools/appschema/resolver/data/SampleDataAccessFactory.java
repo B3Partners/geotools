@@ -21,13 +21,12 @@ import java.awt.RenderingHints.Key;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.DataAccess;
-import org.geotools.data.DataAccessFactory;
-import org.geotools.data.Parameter;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataAccessFactory;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
 
 /**
  * Sample implementation of a {@link DataAccessFactory} for testing.
@@ -43,28 +42,22 @@ public class SampleDataAccessFactory implements DataAccessFactory {
     /** The "dbtype" connection string required to use this factory. */
     public static final String DBTYPE_STRING = "sample-data-access";
 
-    public static final DataAccessFactory.Param DBTYPE =
-            new DataAccessFactory.Param(
-                    "dbtype",
-                    String.class,
-                    "Fixed value '" + DBTYPE_STRING + "'",
-                    true,
-                    DBTYPE_STRING,
-                    Collections.singletonMap(Parameter.LEVEL, "program"));
+    public static final DataAccessFactory.Param DBTYPE = new DataAccessFactory.Param(
+            "dbtype",
+            String.class,
+            "Fixed value '" + DBTYPE_STRING + "'",
+            true,
+            DBTYPE_STRING,
+            Collections.singletonMap(Parameter.LEVEL, "program"));
 
     /** The connection parameters required to use this factory. */
-    @SuppressWarnings("serial")
-    public static final HashMap<String, Serializable> PARAMS =
-            new HashMap<String, Serializable>() {
-                {
-                    put(SampleDataAccessFactory.DBTYPE.key, SampleDataAccessFactory.DBTYPE_STRING);
-                }
-            };
+    public static final Map<String, Serializable> PARAMS =
+            Map.of(SampleDataAccessFactory.DBTYPE.key, SampleDataAccessFactory.DBTYPE_STRING);
 
     /**
      * Are these parameters for us?
      *
-     * @see org.geotools.data.DataAccessFactory#canProcess(java.util.Map)
+     * @see DataAccessFactory#canProcess(java.util.Map)
      */
     @Override
     public boolean canProcess(Map<String, ?> params) {
@@ -74,18 +67,18 @@ public class SampleDataAccessFactory implements DataAccessFactory {
     /**
      * Create a {@link SampleDataAccess}.
      *
-     * @see org.geotools.data.DataAccessFactory#createDataStore(java.util.Map)
+     * @see DataAccessFactory#createDataStore(java.util.Map)
      */
     @Override
-    public DataAccess<? extends FeatureType, ? extends Feature> createDataStore(
-            Map<String, ?> params) throws IOException {
+    public DataAccess<? extends FeatureType, ? extends Feature> createDataStore(Map<String, ?> params)
+            throws IOException {
         return new SampleDataAccess();
     }
 
     /**
      * Need to implement this.
      *
-     * @see org.geotools.data.DataAccessFactory#getDescription()
+     * @see DataAccessFactory#getDescription()
      */
     @Override
     public String getDescription() {
@@ -96,7 +89,7 @@ public class SampleDataAccessFactory implements DataAccessFactory {
     /**
      * Need to implement this.
      *
-     * @see org.geotools.data.DataAccessFactory#getDisplayName()
+     * @see DataAccessFactory#getDisplayName()
      */
     @Override
     public String getDisplayName() {
@@ -107,7 +100,7 @@ public class SampleDataAccessFactory implements DataAccessFactory {
     /**
      * Need to implement this.
      *
-     * @see org.geotools.data.DataAccessFactory#getParametersInfo()
+     * @see DataAccessFactory#getParametersInfo()
      */
     @Override
     public Param[] getParametersInfo() {
@@ -118,7 +111,7 @@ public class SampleDataAccessFactory implements DataAccessFactory {
     /**
      * Returns true, as this implementation is always available.
      *
-     * @see org.geotools.data.DataAccessFactory#isAvailable()
+     * @see DataAccessFactory#isAvailable()
      */
     @Override
     public boolean isAvailable() {

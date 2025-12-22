@@ -21,10 +21,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.capability.IdCapabilities;
 import org.geotools.filter.v1_1.OGC;
 import org.geotools.xsd.Binding;
 import org.junit.Test;
-import org.opengis.filter.capability.IdCapabilities;
 import org.w3c.dom.Document;
 
 /**
@@ -69,11 +69,8 @@ public class Id_CapabilitiesTypeBindingTest extends OGCTestSupport {
 
     @Test
     public void testEncode() throws Exception {
-        Document dom =
-                encode(
-                        FilterMockData.idCapabilities(),
-                        new QName(OGC.NAMESPACE, "IdCapabilities"),
-                        OGC.Id_CapabilitiesType);
+        Document dom = encode(
+                FilterMockData.idCapabilities(), new QName(OGC.NAMESPACE, "IdCapabilities"), OGC.Id_CapabilitiesType);
 
         assertNotNull(getElementsByQName(dom, OGC.FID));
         assertNotNull(getElementsByQName(dom, OGC.EID));

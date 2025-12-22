@@ -51,8 +51,7 @@ public class QNameValidatingHandler implements TransformerHandler {
     }
 
     @Override
-    public void startElement(String namespaceURI, String localName, String qName, Attributes atts)
-            throws SAXException {
+    public void startElement(String namespaceURI, String localName, String qName, Attributes atts) throws SAXException {
         if (!checkName(localName, qName) || !checkAtts(atts)) {
             throw new DOMException(
                     DOMException.INVALID_CHARACTER_ERR,
@@ -69,8 +68,7 @@ public class QNameValidatingHandler implements TransformerHandler {
             // unit tests that pass qualified names with an empty prefix when the test
             // only uses local names (e.g., ':Name' instead of 'Name' or 'sld:Name')
             String[] names = qName.split(":", 2);
-            return (names[0].isEmpty() || isValidNCName(names[0]))
-                    && (names.length == 1 || isValidNCName(names[1]));
+            return (names[0].isEmpty() || isValidNCName(names[0])) && (names.length == 1 || isValidNCName(names[1]));
         }
         return !isEmpty(localName);
     }
@@ -89,7 +87,7 @@ public class QNameValidatingHandler implements TransformerHandler {
                     return false;
                 } else if ("xmlns".equals(localName)
                         || "xmlns".equals(qName)
-                        || (qName != null && qName.startsWith("xmlns:"))) {
+                        || qName != null && qName.startsWith("xmlns:")) {
                     checkNamespaceUri(atts.getValue(i));
                 }
             }
@@ -100,9 +98,7 @@ public class QNameValidatingHandler implements TransformerHandler {
     private static void checkNamespaceUri(String uri) {
         // block the HTML namespace URI to prevent XSS
         if ("http://www.w3.org/1999/xhtml".equals(uri)) {
-            throw new DOMException(
-                    DOMException.NAMESPACE_ERR,
-                    "NAMESPACE_ERR: The XHTML namespace is not allowed.");
+            throw new DOMException(DOMException.NAMESPACE_ERR, "NAMESPACE_ERR: The XHTML namespace is not allowed.");
         }
     }
 
@@ -119,8 +115,7 @@ public class QNameValidatingHandler implements TransformerHandler {
     }
 
     @Override
-    public void endElement(String namespaceURI, String localName, String qName)
-            throws SAXException {
+    public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
         original.endElement(namespaceURI, localName, qName);
     }
 
@@ -156,95 +151,94 @@ public class QNameValidatingHandler implements TransformerHandler {
 
     @Override
     public void comment(char[] ch, int start, int length) throws SAXException {
-        if (original instanceof LexicalHandler) {
-            ((LexicalHandler) original).comment(ch, start, length);
+        if (original instanceof LexicalHandler handler) {
+            handler.comment(ch, start, length);
         }
     }
 
     @Override
     public void startCDATA() throws SAXException {
-        if (original instanceof LexicalHandler) {
-            ((LexicalHandler) original).startCDATA();
+        if (original instanceof LexicalHandler handler) {
+            handler.startCDATA();
         }
     }
 
     @Override
     public void endCDATA() throws SAXException {
-        if (original instanceof LexicalHandler) {
-            ((LexicalHandler) original).endCDATA();
+        if (original instanceof LexicalHandler handler) {
+            handler.endCDATA();
         }
     }
 
     @Override
     public void startDTD(String name, String publicId, String systemId) throws SAXException {
-        if (original instanceof LexicalHandler) {
-            ((LexicalHandler) original).startDTD(name, publicId, systemId);
+        if (original instanceof LexicalHandler handler) {
+            handler.startDTD(name, publicId, systemId);
         }
     }
 
     @Override
     public void endDTD() throws SAXException {
-        if (original instanceof LexicalHandler) {
-            ((LexicalHandler) original).endDTD();
+        if (original instanceof LexicalHandler handler) {
+            handler.endDTD();
         }
     }
 
     @Override
     public void startEntity(String name) throws SAXException {
-        if (original instanceof LexicalHandler) {
-            ((LexicalHandler) original).startEntity(name);
+        if (original instanceof LexicalHandler handler) {
+            handler.startEntity(name);
         }
     }
 
     @Override
     public void endEntity(String name) throws SAXException {
-        if (original instanceof LexicalHandler) {
-            ((LexicalHandler) original).endEntity(name);
+        if (original instanceof LexicalHandler handler) {
+            handler.endEntity(name);
         }
     }
 
     @Override
     public void notationDecl(String name, String publicId, String systemId) throws SAXException {
-        if (original instanceof DTDHandler) {
-            ((DTDHandler) original).notationDecl(name, publicId, systemId);
+        if (original instanceof DTDHandler handler) {
+            handler.notationDecl(name, publicId, systemId);
         }
     }
 
     @Override
-    public void unparsedEntityDecl(
-            String name, String publicId, String systemId, String notationName)
+    public void unparsedEntityDecl(String name, String publicId, String systemId, String notationName)
             throws SAXException {
-        if (original instanceof DTDHandler) {
-            ((DTDHandler) original).notationDecl(name, publicId, systemId);
+        if (original instanceof DTDHandler handler) {
+            handler.notationDecl(name, publicId, systemId);
         }
     }
 
     @Override
     public void setResult(Result result) throws IllegalArgumentException {
-        if (original instanceof TransformerHandler) {
-            ((TransformerHandler) original).setResult(result);
+        if (original instanceof TransformerHandler handler) {
+            handler.setResult(result);
         }
     }
 
     @Override
     public void setSystemId(String systemID) {
-        if (original instanceof TransformerHandler) {
-            ((TransformerHandler) original).setSystemId(systemID);
+        if (original instanceof TransformerHandler handler) {
+            handler.setSystemId(systemID);
         }
     }
 
     @Override
     public String getSystemId() {
-        if (original instanceof TransformerHandler) {
-            return ((TransformerHandler) original).getSystemId();
+        if (original instanceof TransformerHandler handler) {
+            return handler.getSystemId();
         }
         return null;
     }
 
     @Override
     public Transformer getTransformer() {
-        if (original instanceof TransformerHandler) {
-            return ((TransformerHandler) original).getTransformer();
+        if (original instanceof TransformerHandler handler) {
+            return handler.getTransformer();
         }
         return null;
     }

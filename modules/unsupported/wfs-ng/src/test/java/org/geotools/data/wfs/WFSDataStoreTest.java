@@ -36,6 +36,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import javax.xml.namespace.QName;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.data.wfs.internal.DescribeFeatureTypeRequest;
 import org.geotools.data.wfs.internal.DescribeFeatureTypeResponse;
@@ -45,8 +47,6 @@ import org.geotools.feature.NameImpl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
 
 public class WFSDataStoreTest {
 
@@ -77,16 +77,8 @@ public class WFSDataStoreTest {
         simpleTypeName1 = new NameImpl(TYPE1.getNamespaceURI(), config.localTypeName(TYPE1));
         simpleTypeName2 = new NameImpl(TYPE2.getNamespaceURI(), config.localTypeName(TYPE2));
 
-        featureType1 =
-                createType(
-                        "http://example.com/1",
-                        "prefix1_points",
-                        "name:String,geom:Point:srid=4326");
-        featureType2 =
-                createType(
-                        "http://example.com/2",
-                        "prefix2_points",
-                        "name:String,geom:Point:srid=3857");
+        featureType1 = createType("http://example.com/1", "prefix1_points", "name:String,geom:Point:srid=4326");
+        featureType2 = createType("http://example.com/2", "prefix2_points", "name:String,geom:Point:srid=3857");
 
         wfs = mock(WFSClient.class);
         when(wfs.getConfig()).thenReturn(config);
@@ -132,14 +124,8 @@ public class WFSDataStoreTest {
         final String nsOverride = "http://geotools.org";
         dataStore.setNamespaceURI(nsOverride);
 
-        assertEquals(
-                TYPE1,
-                dataStore.getRemoteTypeName(
-                        new NameImpl(nsOverride, simpleTypeName1.getLocalPart())));
-        assertEquals(
-                TYPE2,
-                dataStore.getRemoteTypeName(
-                        new NameImpl(nsOverride, simpleTypeName2.getLocalPart())));
+        assertEquals(TYPE1, dataStore.getRemoteTypeName(new NameImpl(nsOverride, simpleTypeName1.getLocalPart())));
+        assertEquals(TYPE2, dataStore.getRemoteTypeName(new NameImpl(nsOverride, simpleTypeName2.getLocalPart())));
         try {
             Name badName = new NameImpl(TYPE1.getNamespaceURI(), TYPE1.getLocalPart() + "2");
             dataStore.getRemoteTypeName(badName);
@@ -178,8 +164,7 @@ public class WFSDataStoreTest {
     @Test
     public void testGetFeatureSource() throws Exception {
 
-        ContentFeatureSource source =
-                (ContentFeatureSource) dataStore.getFeatureSource(simpleTypeName1);
+        ContentFeatureSource source = (ContentFeatureSource) dataStore.getFeatureSource(simpleTypeName1);
         assertNotNull(source);
         assertTrue(source instanceof WFSFeatureStore);
 

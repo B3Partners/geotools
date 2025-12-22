@@ -2,7 +2,7 @@
  *    GeoTools - The Open Source Java GIS Toolkit
  *    http://geotools.org
  *
- *    (C) 2002-2008, Open Source Geospatial Foundation (OSGeo)
+ *    (C) 2002-2025, Open Source Geospatial Foundation (OSGeo)
  *
  *    This library is free software; you can redistribute it and/or
  *    modify it under the terms of the GNU Lesser General Public
@@ -20,15 +20,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.PropertyIsEqualTo;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.NameImpl;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.PropertyIsEqualTo;
 
 /**
  * Tests data modification when the expose primary key flag is raised
@@ -46,8 +46,7 @@ public abstract class JDBCFeatureStoreExposePkOnlineTest extends JDBCFeatureStor
     @Test
     public void testModifyExposedPk() throws IOException {
         FilterFactory ff = CommonFactoryFinder.getFilterFactory();
-        PropertyIsEqualTo filter =
-                ff.equal(ff.property(aname("stringProperty")), ff.literal("zero"), false);
+        PropertyIsEqualTo filter = ff.equal(ff.property(aname("stringProperty")), ff.literal("zero"), false);
         featureStore.modifyFeatures(
                 new Name[] {new NameImpl(aname("stringProperty")), new NameImpl(aname("id"))},
                 new Object[] {"foo", 123},

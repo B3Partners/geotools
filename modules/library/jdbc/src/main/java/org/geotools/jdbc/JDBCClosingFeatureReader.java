@@ -19,13 +19,12 @@ package org.geotools.jdbc;
 import java.io.IOException;
 import java.sql.Connection;
 import java.util.NoSuchElementException;
-import org.geotools.data.DelegatingFeatureReader;
-import org.geotools.data.FeatureReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.data.DelegatingFeatureReader;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
-public class JDBCClosingFeatureReader
-        implements DelegatingFeatureReader<SimpleFeatureType, SimpleFeature> {
+public class JDBCClosingFeatureReader implements DelegatingFeatureReader<SimpleFeatureType, SimpleFeature> {
 
     FeatureReader<SimpleFeatureType, SimpleFeature> reader;
 
@@ -49,8 +48,7 @@ public class JDBCClosingFeatureReader
     }
 
     @Override
-    public SimpleFeature next()
-            throws IOException, IllegalArgumentException, NoSuchElementException {
+    public SimpleFeature next() throws IOException, IllegalArgumentException, NoSuchElementException {
         return reader.next();
     }
 
@@ -66,8 +64,7 @@ public class JDBCClosingFeatureReader
             r = ((DelegatingFeatureReader) r).getDelegate();
         }
 
-        if (r instanceof JDBCFeatureReader) {
-            JDBCFeatureReader jdbcReader = (JDBCFeatureReader) r;
+        if (r instanceof JDBCFeatureReader jdbcReader) {
             JDBCFeatureSource fs = jdbcReader.featureSource;
             Connection cx = jdbcReader.cx;
 

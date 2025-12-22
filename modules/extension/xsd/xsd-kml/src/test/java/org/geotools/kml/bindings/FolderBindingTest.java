@@ -6,12 +6,12 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.kml.Folder;
 import org.geotools.kml.v22.KML;
 import org.geotools.kml.v22.KMLTestSupport;
 import org.geotools.xsd.Binding;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
 
 public class FolderBindingTest extends KMLTestSupport {
     @Test
@@ -35,12 +35,11 @@ public class FolderBindingTest extends KMLTestSupport {
     @SuppressWarnings("unchecked")
     @Test
     public void testFolderHierarchy() throws Exception {
-        String xml =
-                "<Folder><name>foo</name>"
-                        + "<Folder><name>bar</name>"
-                        + "<Placemark><name>morx</name></Placemark>"
-                        + "</Folder>"
-                        + "</Folder>";
+        String xml = "<Folder><name>foo</name>"
+                + "<Folder><name>bar</name>"
+                + "<Placemark><name>morx</name></Placemark>"
+                + "</Folder>"
+                + "</Folder>";
         buildDocument(xml);
         SimpleFeature folder1 = (SimpleFeature) parse();
         List<SimpleFeature> features = (List<SimpleFeature>) folder1.getAttribute("Feature");

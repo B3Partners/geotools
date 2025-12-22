@@ -21,6 +21,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import org.eclipse.xsd.XSDElementDeclaration;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.gml2.GML;
 import org.geotools.gml2.GMLConfiguration;
@@ -37,8 +39,6 @@ import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.xml.sax.helpers.AttributesImpl;
 
 /**
@@ -55,8 +55,7 @@ public class GML2FeatureCollectionEncoderDelegate extends FeatureCollectionEncod
 
     public static class GML2Delegate implements GMLDelegate {
 
-        static final QualifiedName FEATURE_MEMBER =
-                new QualifiedName(GML.NAMESPACE, "featureMember", "gml");
+        static final QualifiedName FEATURE_MEMBER = new QualifiedName(GML.NAMESPACE, "featureMember", "gml");
 
         QualifiedName featureMember;
 
@@ -108,8 +107,8 @@ public class GML2FeatureCollectionEncoderDelegate extends FeatureCollectionEncod
 
         private GMLConfiguration getGMLConfiguration(Configuration configuration) {
             GMLConfiguration config;
-            if (configuration instanceof GMLConfiguration) {
-                config = (GMLConfiguration) configuration;
+            if (configuration instanceof GMLConfiguration lConfiguration) {
+                config = lConfiguration;
             } else {
                 config = configuration.getDependency(GMLConfiguration.class);
             }
@@ -117,8 +116,7 @@ public class GML2FeatureCollectionEncoderDelegate extends FeatureCollectionEncod
         }
 
         @Override
-        public List getFeatureProperties(
-                SimpleFeature f, XSDElementDeclaration element, Encoder e) {
+        public List getFeatureProperties(SimpleFeature f, XSDElementDeclaration element, Encoder e) {
             return GML2EncodingUtils.AbstractFeatureType_getProperties(
                     f,
                     element,
@@ -173,8 +171,7 @@ public class GML2FeatureCollectionEncoderDelegate extends FeatureCollectionEncod
             encoders.put(MultiLineString.class, new MultiLineStringEncoder(encoder, gmlPrefix));
             encoders.put(Polygon.class, new PolygonEncoder(encoder, gmlPrefix));
             encoders.put(MultiPolygon.class, new MultiPolygonEncoder(encoder, gmlPrefix));
-            encoders.put(
-                    GeometryCollection.class, new GeometryCollectionEncoder(encoder, gmlPrefix));
+            encoders.put(GeometryCollection.class, new GeometryCollectionEncoder(encoder, gmlPrefix));
         }
 
         @Override

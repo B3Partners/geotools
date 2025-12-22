@@ -16,16 +16,15 @@
  */
 package org.geotools.data.simple;
 
+import org.geotools.api.data.SimpleFeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.collection.DelegateFeatureReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
-public class DelegateSimpleFeatureReader
-        extends DelegateFeatureReader<SimpleFeatureType, SimpleFeature>
+public class DelegateSimpleFeatureReader extends DelegateFeatureReader<SimpleFeatureType, SimpleFeature>
         implements SimpleFeatureReader {
 
-    public DelegateSimpleFeatureReader(
-            SimpleFeatureType featureType, SimpleFeatureIterator features) {
+    public DelegateSimpleFeatureReader(SimpleFeatureType featureType, SimpleFeatureIterator features) {
         super(featureType, features);
     }
 }

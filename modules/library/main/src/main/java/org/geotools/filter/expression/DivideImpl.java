@@ -17,12 +17,12 @@
 package org.geotools.filter.expression;
 
 import java.util.Collection;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
 import org.geotools.filter.Filters;
 import org.geotools.filter.MathExpressionImpl;
 import org.geotools.util.Utilities;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
 
 /**
  * Implementation of divide expression.
@@ -64,8 +64,7 @@ public class DivideImpl extends MathExpressionImpl implements Divide {
      */
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof DivideImpl) {
-            DivideImpl other = (DivideImpl) obj;
+        if (obj instanceof DivideImpl other) {
 
             return Utilities.equals(getExpression1(), other.getExpression1())
                     && Utilities.equals(getExpression2(), other.getExpression2());
@@ -83,8 +82,8 @@ public class DivideImpl extends MathExpressionImpl implements Divide {
     public int hashCode() {
         int result = 23;
 
-        result = (37 * result) + getExpression1().hashCode();
-        result = (37 * result) + getExpression2().hashCode();
+        result = 37 * result + getExpression1().hashCode();
+        result = 37 * result + getExpression2().hashCode();
 
         return result;
     }

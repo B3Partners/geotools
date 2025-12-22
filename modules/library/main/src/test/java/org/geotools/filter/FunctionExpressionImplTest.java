@@ -22,33 +22,33 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.Multiply;
+import org.geotools.api.filter.expression.NilExpression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.Subtract;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.Multiply;
-import org.opengis.filter.expression.NilExpression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.expression.Subtract;
 
 /**
  * @author Gabriel Roldan, Axios Engineering
  * @version $Id$
  */
 public class FunctionExpressionImplTest {
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(FunctionExpressionImplTest.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(FunctionExpressionImplTest.class);
 
     FunctionExpressionImpl function;
 
@@ -56,10 +56,8 @@ public class FunctionExpressionImplTest {
 
     @Before
     public void setUp() throws Exception {
-        function =
-                new FunctionExpressionImpl(
-                        FunctionExpressionImpl.functionName(
-                                "testFunction", "test:String", "argument:String")) {};
+        function = new FunctionExpressionImpl(
+                FunctionExpressionImpl.functionName("testFunction", "test:String", "argument:String")) {};
         testVisitor = new TestExpressionVisitor();
     }
 
@@ -90,8 +88,7 @@ public class FunctionExpressionImplTest {
     @Test
     public void testGetName() {
         FunctionExpressionImpl anonymous =
-                new FunctionExpressionImpl(
-                        FunctionExpressionImpl.functionName("testFunction", "text:String")) {};
+                new FunctionExpressionImpl(FunctionExpressionImpl.functionName("testFunction", "text:String")) {};
         Assert.assertEquals("testFunction", anonymous.getName());
     }
 
@@ -141,14 +138,15 @@ public class FunctionExpressionImplTest {
 
     @Test
     public void testImplementations()
-            throws IOException, ClassNotFoundException, InstantiationException,
-                    IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+            throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException,
+                    NoSuchMethodException, InvocationTargetException {
 
         List<Class<?>> functionClasses = loadFunctionClasses();
 
         List<String> errors = new LinkedList<>();
         for (Class<?> functionClass : functionClasses) {
-            Function function = (Function) functionClass.getDeclaredConstructor().newInstance();
+            Function function =
+                    (Function) functionClass.getDeclaredConstructor().newInstance();
             testFunction(function, errors);
         }
         if (!errors.isEmpty()) {
@@ -163,8 +161,7 @@ public class FunctionExpressionImplTest {
      * @return a formatted error message
      */
     private String buildErrosMessage(List errors) {
-        StringBuffer sb =
-                new StringBuffer("Some function expression implementations violates contract:\n");
+        StringBuffer sb = new StringBuffer("Some function expression implementations violates contract:\n");
         int errorCount = 1;
         for (Object o : errors) {
             String error = (String) o;
@@ -177,8 +174,7 @@ public class FunctionExpressionImplTest {
 
     @SuppressWarnings("ReturnValueIgnored")
     private void testFunction(Function function, List<String> errors)
-            throws InstantiationException, IllegalAccessException, NoSuchMethodException,
-                    InvocationTargetException {
+            throws InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         final String functionClass = function.getClass().getName();
 
         if (null == function.getName()) {
@@ -190,13 +186,12 @@ public class FunctionExpressionImplTest {
         function.accept(testVisitor, extraData);
         Object[] functionVisited = testVisitor.functionVisited;
         if (Boolean.TRUE != functionVisited[0] || extraData != functionVisited[1]) {
-            errors.add(
-                    functionClass
-                            + ": accept didn't called visitor.visit(Function, extraData): "
-                            + " visited: "
-                            + functionVisited[0]
-                            + ", extraData: "
-                            + functionVisited[1]);
+            errors.add(functionClass
+                    + ": accept didn't called visitor.visit(Function, extraData): "
+                    + " visited: "
+                    + functionVisited[0]
+                    + ", extraData: "
+                    + functionVisited[1]);
         }
 
         try {
@@ -205,8 +200,8 @@ public class FunctionExpressionImplTest {
             addExceptionError(errors, functionClass, "toString", e);
         }
 
-        if (function instanceof FunctionExpression) {
-            testDeprecatedMethods((FunctionExpression) function, errors);
+        if (function instanceof FunctionExpression expression) {
+            testDeprecatedMethods(expression, errors);
         }
 
         List<Expression> parameters = function.getParameters();
@@ -215,8 +210,7 @@ public class FunctionExpressionImplTest {
         }
     }
 
-    private void addExceptionError(
-            List<String> errors, final String functionClass, final String method, Exception e) {
+    private void addExceptionError(List<String> errors, final String functionClass, final String method, Exception e) {
         /*
          * StringWriter stringWriter = new StringWriter(); e.printStackTrace(new
          * PrintWriter(stringWriter));
@@ -228,8 +222,7 @@ public class FunctionExpressionImplTest {
     }
 
     private void testDeprecatedMethods(FunctionExpression function, List<String> errors)
-            throws InstantiationException, IllegalAccessException, NoSuchMethodException,
-                    InvocationTargetException {
+            throws InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         final String functionClass = function.getClass().getName();
         int argCount = function.getFunctionName().getArgumentCount();
         if (argCount < 0) { // unlimited parameters
@@ -251,9 +244,8 @@ public class FunctionExpressionImplTest {
 
         List<Expression> returnedParams = function.getParameters();
         if (returnedParams == null) {
-            errors.add(
-                    functionClass
-                            + ".getParameters() returned null when parameters were set through setArgs(Expression[])");
+            errors.add(functionClass
+                    + ".getParameters() returned null when parameters were set through setArgs(Expression[])");
         } else if (!expected.equals(returnedParams)) {
             errors.add(
                     functionClass
@@ -265,9 +257,7 @@ public class FunctionExpressionImplTest {
 
         List<Expression> returnedArgs = function.getParameters();
         if (returnedArgs == null) {
-            errors.add(
-                    functionClass
-                            + ".getParameters() returns null then arguments set through setParameters()");
+            errors.add(functionClass + ".getParameters() returns null then arguments set through setParameters()");
         } else {
             returnedParams = new ArrayList<>(expected);
 
@@ -282,15 +272,14 @@ public class FunctionExpressionImplTest {
     }
 
     private List<Class<?>> loadFunctionClasses() throws IOException, ClassNotFoundException {
-        final String spiDefinitionResource =
-                "/META-INF/services/org.opengis.filter.expression.Function";
+        final String spiDefinitionResource = "/META-INF/services/org.geotools.api.filter.expression.Function";
         try (InputStream in = getClass().getResourceAsStream(spiDefinitionResource)) {
             if (in == null) {
                 throw new FileNotFoundException(spiDefinitionResource);
             }
 
             List<Class<?>> functionClasses = new LinkedList<>();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
                 String className;
                 while ((className = reader.readLine()) != null) {
                     Class<?> functionClazz = Class.forName(className);
@@ -302,8 +291,7 @@ public class FunctionExpressionImplTest {
     }
 
     /**
-     * An ExpressionVisitor for function expressions test purposes that stores the visited status in
-     * a public field
+     * An ExpressionVisitor for function expressions test purposes that stores the visited status in a public field
      *
      * @author Gabriel Roldan, Axios Engineering
      */

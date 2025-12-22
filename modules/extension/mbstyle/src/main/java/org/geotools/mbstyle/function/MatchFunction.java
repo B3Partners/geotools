@@ -18,20 +18,19 @@ package org.geotools.mbstyle.function;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.mbstyle.parse.MBFormatException;
 import org.json.simple.JSONArray;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
 
 /**
- * MapBox Expression function that will return the output expression evaluation result of the output
- * expression that is associated with the first label that matches the Input expression evaluation
- * value. Each provided label can be a single expression, or an array of expressions. If no label
- * matches or contains the Input expression evaluation value, the default expression value is
- * returned, if present. If no label matches or contains the Input expression evaluation value, and
- * no default expression is provided, null is returned.
+ * MapBox Expression function that will return the output expression evaluation result of the output expression that is
+ * associated with the first label that matches the Input expression evaluation value. Each provided label can be a
+ * single expression, or an array of expressions. If no label matches or contains the Input expression evaluation value,
+ * the default expression value is returned, if present. If no label matches or contains the Input expression evaluation
+ * value, and no default expression is provided, null is returned.
  *
  * <p>Format:
  *
@@ -91,12 +90,11 @@ class MatchFunction extends FunctionExpressionImpl {
         final Object inputType = params.get(0).evaluate(feature);
         // if it's not a Number or String, it's not formatted correctly
         if (inputType == null
-                || (!Number.class.isAssignableFrom(inputType.getClass())
-                        && !String.class.isAssignableFrom(inputType.getClass()))) {
+                || !Number.class.isAssignableFrom(inputType.getClass())
+                        && !String.class.isAssignableFrom(inputType.getClass())) {
             throw new MBFormatException(
-                    String.format(
-                            "MBDecision \"match\" requires a number or string expression for input type, found %s",
-                            inputType != null ? inputType.getClass().getName() : null));
+                    "MBDecision \"match\" requires a number or string expression for input type, found %s"
+                            .formatted(inputType != null ? inputType.getClass().getName() : null));
         }
         int labelIndex = 1;
         int outputIndex = 2;

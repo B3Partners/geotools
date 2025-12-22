@@ -21,56 +21,82 @@ import static org.easymock.EasyMock.createNiceMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.geotools.referencing.crs.DefaultGeographicCRS.WGS84;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import com.google.common.util.concurrent.AtomicDouble;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.media.jai.Interpolation;
-import javax.media.jai.JAI;
+import java.util.concurrent.atomic.AtomicReference;
+import org.eclipse.imagen.ImageN;
+import org.eclipse.imagen.Interpolation;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.Symbolizer;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
 import org.geotools.coverage.util.FeatureUtilities;
-import org.geotools.data.Query;
 import org.geotools.data.collection.CollectionFeatureSource;
 import org.geotools.data.property.PropertyDataStore;
 import org.geotools.data.property.PropertyFeatureSource;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureCollection;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.geometry.jts.LiteCoordinateSequence;
 import org.geotools.geometry.jts.LiteShape2;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.image.test.ImageAssert;
 import org.geotools.map.DirectLayer;
 import org.geotools.map.FeatureLayer;
 import org.geotools.map.GridCoverageLayer;
@@ -79,15 +105,15 @@ import org.geotools.map.MapContent;
 import org.geotools.map.MapViewport;
 import org.geotools.referencing.CRS;
 import org.geotools.renderer.RenderListener;
+import org.geotools.renderer.crs.ProjectionHandler;
 import org.geotools.renderer.lite.StreamingRenderer.RenderingRequest;
 import org.geotools.styling.DescriptionImpl;
-import org.geotools.styling.Rule;
-import org.geotools.styling.Style;
 import org.geotools.styling.StyleBuilder;
 import org.geotools.styling.StyleFactoryImpl;
 import org.geotools.styling.StyleImpl;
-import org.geotools.styling.Symbolizer;
 import org.geotools.test.TestData;
+import org.geotools.util.factory.Hints;
+import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -98,15 +124,6 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * Test the inner workings of StreamingRenderer.
@@ -116,6 +133,7 @@ import org.opengis.referencing.operation.TransformException;
  * @author Jody
  * @author PHustad
  */
+@SuppressWarnings("DirectInvocationOnMock")
 public class StreamingRendererTest {
 
     private SimpleFeatureType testLineFeatureType;
@@ -131,6 +149,7 @@ public class StreamingRendererTest {
         public MergeLayerRequestTester(Graphics2D graphics, List<LiteFeatureTypeStyle> styles) {
             super();
             this.graphics = graphics;
+            this.styles = styles;
             this.styles = styles;
         }
 
@@ -164,14 +183,12 @@ public class StreamingRendererTest {
 
     private SimpleFeature createLine(double x1, double y1, double x2, double y2) {
         Coordinate[] coords = {new Coordinate(x1, y1), new Coordinate(x2, y2)};
-        return SimpleFeatureBuilder.build(
-                testLineFeatureType, new Object[] {gf.createLineString(coords)}, null);
+        return SimpleFeatureBuilder.build(testLineFeatureType, new Object[] {gf.createLineString(coords)}, null);
     }
 
     private SimpleFeature createPoint(double x, double y) {
         Coordinate coord = new Coordinate(x, y);
-        return SimpleFeatureBuilder.build(
-                testPointFeatureType, new Object[] {gf.createPoint(coord)}, null);
+        return SimpleFeatureBuilder.build(testPointFeatureType, new Object[] {gf.createPoint(coord)}, null);
     }
 
     private Style createLineStyle() {
@@ -194,8 +211,7 @@ public class StreamingRendererTest {
         // build a feature source with two zig-zag line occupying the same position
         LiteCoordinateSequence cs = new LiteCoordinateSequence(new double[] {13, 10, 13, 40});
         SimpleFeature line =
-                SimpleFeatureBuilder.build(
-                        testLineFeatureType, new Object[] {gf.createLineString(cs)}, "zz1");
+                SimpleFeatureBuilder.build(testLineFeatureType, new Object[] {gf.createLineString(cs)}, "zz1");
         DefaultFeatureCollection fc = new DefaultFeatureCollection();
         fc.add(line);
         SimpleFeatureSource zzSource = new CollectionFeatureSource(fc);
@@ -211,8 +227,6 @@ public class StreamingRendererTest {
         sr.setRendererHints(hints);
         sr.setMapContent(mc);
 
-        /*BufferedImage bi = new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR);
-        Graphics2D graphics = bi.createGraphics();*/
         Graphics2D graphics = Mockito.mock(Graphics2D.class);
         CoordinateReferenceSystem utm32n = CRS.decode("EPSG:32632", true);
         ReferencedEnvelope env = new ReferencedEnvelope(10, 20, 0, 40, WGS84);
@@ -240,8 +254,7 @@ public class StreamingRendererTest {
         // build a feature source with two zig-zag line occupying the same position
         LiteCoordinateSequence cs = new LiteCoordinateSequence(new double[] {10, 10, 10, 40});
         SimpleFeature line =
-                SimpleFeatureBuilder.build(
-                        testLineFeatureType, new Object[] {gf.createLineString(cs)}, "zz1");
+                SimpleFeatureBuilder.build(testLineFeatureType, new Object[] {gf.createLineString(cs)}, "zz1");
         DefaultFeatureCollection fc = new DefaultFeatureCollection();
         fc.add(line);
         SimpleFeatureSource zzSource = new CollectionFeatureSource(fc);
@@ -271,36 +284,81 @@ public class StreamingRendererTest {
     }
 
     @Test
+    public void testDensificationSteps() throws Exception {
+        // create a line emanating from the origin
+        LiteCoordinateSequence cs = new LiteCoordinateSequence(new double[] {0, 80, 0, 81});
+        SimpleFeature line =
+                SimpleFeatureBuilder.build(testLineFeatureType, new Object[] {gf.createLineString(cs)}, "line");
+        DefaultFeatureCollection fc = new DefaultFeatureCollection();
+        fc.add(line);
+        SimpleFeatureSource lineSource = new CollectionFeatureSource(fc);
+        MapContent mc = new MapContent();
+        StyleBuilder sb = new StyleBuilder();
+        mc.addLayer(new FeatureLayer(lineSource, sb.createStyle(sb.createLineSymbolizer())));
+
+        // setup the streaming renderer
+        AtomicDouble densification = new AtomicDouble();
+        StreamingRenderer sr = new StreamingRenderer() {
+            @Override
+            void setupDensificationHints(
+                    CoordinateReferenceSystem mapCRS,
+                    CoordinateReferenceSystem featCrs,
+                    Rectangle screenSize,
+                    AffineTransform worldToScreenTransform,
+                    Map<String, Object> projectionHints,
+                    double tolerance,
+                    ReferencedEnvelope sourceEnvelope)
+                    throws NoninvertibleTransformException, FactoryException {
+                super.setupDensificationHints(
+                        mapCRS,
+                        featCrs,
+                        screenSize,
+                        worldToScreenTransform,
+                        projectionHints,
+                        tolerance,
+                        sourceEnvelope);
+                Object o = projectionHints.get(ProjectionHandler.ADVANCED_PROJECTION_DENSIFY);
+                assertThat(o, Matchers.instanceOf(Double.class));
+                densification.set((double) o);
+            }
+        };
+        Map<Object, Object> hints = new HashMap<>();
+        hints.put(StreamingRenderer.ADVANCED_PROJECTION_HANDLING_KEY, true);
+        hints.put(StreamingRenderer.ADVANCED_PROJECTION_DENSIFICATION_KEY, true);
+        sr.setRendererHints(hints);
+        sr.setMapContent(mc);
+
+        // call with just one meter width, thin but tall, envelope
+        CoordinateReferenceSystem webMercator = CRS.decode("EPSG:3857");
+        MathTransform mt = CRS.findMathTransform(WGS84, webMercator);
+        double[] point = {0, 80};
+        mt.transform(point, 0, point, 0, 1);
+        ReferencedEnvelope referencedEnvelope =
+                new ReferencedEnvelope(new Rectangle2D.Double(0, point[1], 1000, point[1] + 1000000), webMercator);
+        Graphics2D graphics = Mockito.mock(Graphics2D.class);
+        sr.paint(graphics, new Rectangle(0, 0, 1, 1000), referencedEnvelope);
+        // the minimum is taken from the width of the envelope, internally before it was
+        // computed with the rows and cols flipped, resulting in a different value
+        assertEquals(0.045, densification.get(), 1e-3);
+    }
+
+    @Test
     public void testInterpolationByLayer() throws Exception {
         StreamingRenderer sr = new StreamingRenderer();
         Layer layer = new FeatureLayer(createLineCollection(), createLineStyle());
         // default is nearest neighbor
-        assertEquals(
-                sr.getRenderingInterpolation(layer),
-                Interpolation.getInstance(Interpolation.INTERP_NEAREST));
+        assertEquals(sr.getRenderingInterpolation(layer), Interpolation.getInstance(Interpolation.INTERP_NEAREST));
 
         // test all possible values
         layer.getUserData()
-                .put(
-                        StreamingRenderer.BYLAYER_INTERPOLATION,
-                        Interpolation.getInstance(Interpolation.INTERP_BICUBIC));
-        assertEquals(
-                sr.getRenderingInterpolation(layer),
-                Interpolation.getInstance(Interpolation.INTERP_BICUBIC));
+                .put(StreamingRenderer.BYLAYER_INTERPOLATION, Interpolation.getInstance(Interpolation.INTERP_BICUBIC));
+        assertEquals(sr.getRenderingInterpolation(layer), Interpolation.getInstance(Interpolation.INTERP_BICUBIC));
         layer.getUserData()
-                .put(
-                        StreamingRenderer.BYLAYER_INTERPOLATION,
-                        Interpolation.getInstance(Interpolation.INTERP_BILINEAR));
-        assertEquals(
-                sr.getRenderingInterpolation(layer),
-                Interpolation.getInstance(Interpolation.INTERP_BILINEAR));
+                .put(StreamingRenderer.BYLAYER_INTERPOLATION, Interpolation.getInstance(Interpolation.INTERP_BILINEAR));
+        assertEquals(sr.getRenderingInterpolation(layer), Interpolation.getInstance(Interpolation.INTERP_BILINEAR));
         layer.getUserData()
-                .put(
-                        StreamingRenderer.BYLAYER_INTERPOLATION,
-                        Interpolation.getInstance(Interpolation.INTERP_NEAREST));
-        assertEquals(
-                sr.getRenderingInterpolation(layer),
-                Interpolation.getInstance(Interpolation.INTERP_NEAREST));
+                .put(StreamingRenderer.BYLAYER_INTERPOLATION, Interpolation.getInstance(Interpolation.INTERP_NEAREST));
+        assertEquals(sr.getRenderingInterpolation(layer), Interpolation.getInstance(Interpolation.INTERP_NEAREST));
     }
 
     @Test
@@ -316,17 +374,14 @@ public class StreamingRendererTest {
 
         // mocking a GridCoverageReader to wrap the testing coverage
         GridCoverage2DReader gridCoverageReader = Mockito.mock(GridCoverage2DReader.class);
-        Mockito.when(gridCoverageReader.getOriginalEnvelope())
-                .thenReturn(new GeneralEnvelope(reWgs));
+        Mockito.when(gridCoverageReader.getOriginalEnvelope()).thenReturn(new GeneralBounds(reWgs));
         Mockito.when(gridCoverageReader.getCoordinateReferenceSystem()).thenReturn(WGS84);
         Mockito.when(gridCoverageReader.read(Mockito.any(GeneralParameterValue[].class)))
                 .thenReturn(coverage);
 
-        Layer layer =
-                new FeatureLayer(
-                        FeatureUtilities.wrapGridCoverageReader(
-                                gridCoverageReader, new GeneralParameterValue[] {}),
-                        createRasterStyle());
+        Layer layer = new FeatureLayer(
+                FeatureUtilities.wrapGridCoverageReader(gridCoverageReader, new GeneralParameterValue[] {}),
+                createRasterStyle());
         layer.getUserData()
                 .put(
                         StreamingRenderer.BYLAYER_INTERPOLATION,
@@ -343,7 +398,7 @@ public class StreamingRendererTest {
         sr.paint(graphics, new Rectangle(200, 200), reWgs);
         // test right interpolation hint is set on Graphics2D
         assertEquals(
-                graphics.getRenderingHint(JAI.KEY_INTERPOLATION),
+                graphics.getRenderingHint(ImageN.KEY_INTERPOLATION),
                 Interpolation.getInstance(Interpolation.INTERP_BICUBIC_2));
 
         mc.dispose();
@@ -366,35 +421,32 @@ public class StreamingRendererTest {
 
         // setup the renderer and listen for errors
         final AtomicInteger commandsCount = new AtomicInteger(0);
-        final BlockingQueue<RenderingRequest> queue =
-                new ArrayBlockingQueue<RenderingRequest>(10) {
-                    @Override
-                    public void put(RenderingRequest e) throws InterruptedException {
-                        commandsCount.incrementAndGet();
-                        super.put(e);
-                    }
-                };
-        StreamingRenderer sr =
-                new StreamingRenderer() {
-                    @Override
-                    protected BlockingQueue<RenderingRequest> getRequestsQueue() {
-                        return queue;
-                    }
-                };
+        final BlockingQueue<RenderingRequest> queue = new ArrayBlockingQueue<>(10) {
+            @Override
+            public void put(RenderingRequest e) throws InterruptedException {
+                commandsCount.incrementAndGet();
+                super.put(e);
+            }
+        };
+        StreamingRenderer sr = new StreamingRenderer() {
+            @Override
+            protected BlockingQueue<RenderingRequest> getRequestsQueue() {
+                return queue;
+            }
+        };
         sr.setMapContent(mc);
-        sr.addRenderListener(
-                new RenderListener() {
-                    @Override
-                    public void featureRenderer(SimpleFeature feature) {
-                        assertTrue(commandsCount.get() > 0);
-                        features++;
-                    }
+        sr.addRenderListener(new RenderListener() {
+            @Override
+            public void featureRenderer(SimpleFeature feature) {
+                assertTrue(commandsCount.get() > 0);
+                features++;
+            }
 
-                    @Override
-                    public void errorOccurred(Exception e) {
-                        errors++;
-                    }
-                });
+            @Override
+            public void errorOccurred(Exception e) {
+                errors++;
+            }
+        });
         errors = 0;
         features = 0;
         sr.paint((Graphics2D) image.getGraphics(), new Rectangle(200, 200), reUtm);
@@ -407,8 +459,7 @@ public class StreamingRendererTest {
 
     @Test
     public void testInfiniteLoopAvoidance() throws Exception {
-        final Exception sentinel =
-                new RuntimeException("This is the one that should be thrown in hasNext()");
+        final Exception sentinel = new RuntimeException("This is the one that should be thrown in hasNext()");
 
         // setup the mock necessary to have the renderer hit into the exception in hasNext()
         @SuppressWarnings("PMD.CloseResource") // just a mock
@@ -435,28 +486,27 @@ public class StreamingRendererTest {
         // setup the renderer and listen for errors
         final StreamingRenderer sr = new StreamingRenderer();
         sr.setMapContent(mapContext);
-        sr.addRenderListener(
-                new RenderListener() {
-                    @Override
-                    public void featureRenderer(SimpleFeature feature) {
-                        features++;
-                    }
+        sr.addRenderListener(new RenderListener() {
+            @Override
+            public void featureRenderer(SimpleFeature feature) {
+                features++;
+            }
 
-                    @Override
-                    public void errorOccurred(Exception e) {
-                        errors++;
+            @Override
+            public void errorOccurred(Exception e) {
+                errors++;
 
-                        if (errors > 2) {
-                            // we dont' want to block the loop in case of regression on this bug
-                            sr.stopRendering();
-                        }
+                if (errors > 2) {
+                    // we dont' want to block the loop in case of regression on this bug
+                    sr.stopRendering();
+                }
 
-                        // but we want to make sure we're getting
-                        Throwable t = e;
-                        while (t != sentinel && t.getCause() != null) t = t.getCause();
-                        assertSame(sentinel, t);
-                    }
-                });
+                // but we want to make sure we're getting
+                Throwable t = e;
+                while (t != sentinel && t.getCause() != null) t = t.getCause();
+                assertSame(sentinel, t);
+            }
+        });
         errors = 0;
         features = 0;
         BufferedImage image = new BufferedImage(200, 200, BufferedImage.TYPE_4BYTE_ABGR);
@@ -478,14 +528,13 @@ public class StreamingRendererTest {
         // create the grid coverage that throws a OOM
         BufferedImage testImage = new BufferedImage(200, 200, BufferedImage.TYPE_4BYTE_ABGR);
         GridCoverage2D testCoverage = new GridCoverageFactory().create("test", testImage, reWgs);
-        GridCoverage2D oomCoverage =
-                new GridCoverage2D("test", testCoverage) {
+        GridCoverage2D oomCoverage = new GridCoverage2D("test", testCoverage) {
 
-                    @Override
-                    public RenderedImage getRenderedImage() {
-                        throw new OutOfMemoryError("Boom!");
-                    }
-                };
+            @Override
+            public RenderedImage getRenderedImage() {
+                throw new OutOfMemoryError("Boom!");
+            }
+        };
 
         // also have a collections of features to create the deadlock once the painter
         // thread is dead
@@ -498,30 +547,28 @@ public class StreamingRendererTest {
         mapContent.addLayer(new GridCoverageLayer(oomCoverage, rasterStyle));
         mapContent.addLayer(new FeatureLayer(lines, lineStyle));
 
-        final StreamingRenderer sr =
-                new StreamingRenderer() {
+        final StreamingRenderer sr = new StreamingRenderer() {
 
-                    // makes it easy to reproduce the deadlock, just two features are sufficient
-                    @Override
-                    protected RenderingBlockingQueue getRequestsQueue() {
-                        return new RenderingBlockingQueue(1);
-                    }
-                };
+            // makes it easy to reproduce the deadlock, just two features are sufficient
+            @Override
+            protected RenderingBlockingQueue getRequestsQueue() {
+                return new RenderingBlockingQueue(1);
+            }
+        };
         sr.setMapContent(mapContent);
         final List<Exception> exceptions = new ArrayList<>();
-        sr.addRenderListener(
-                new RenderListener() {
-                    @Override
-                    public void featureRenderer(SimpleFeature feature) {
-                        features++;
-                    }
+        sr.addRenderListener(new RenderListener() {
+            @Override
+            public void featureRenderer(SimpleFeature feature) {
+                features++;
+            }
 
-                    @Override
-                    public void errorOccurred(Exception e) {
-                        errors++;
-                        exceptions.add(e);
-                    }
-                });
+            @Override
+            public void errorOccurred(Exception e) {
+                errors++;
+                exceptions.add(e);
+            }
+        });
         errors = 0;
         features = 0;
         BufferedImage image = new BufferedImage(200, 200, BufferedImage.TYPE_4BYTE_ABGR);
@@ -537,49 +584,42 @@ public class StreamingRendererTest {
     }
 
     /**
-     * Test that point features are rendered at the expected image coordinates when the map is
-     * rotated. StreamingRenderer
+     * Test that point features are rendered at the expected image coordinates when the map is rotated.
+     * StreamingRenderer
      */
     @Test
     public void testRotatedTransform() throws Exception {
         // If we rotate the world rectangle + 90 degrees around (0,0), we get the screen rectangle
         final Rectangle screen = new Rectangle(0, 0, 100, 50);
         final Envelope world = new Envelope(0, 50, 0, -100);
-        final AffineTransform worldToScreen =
-                AffineTransform.getRotateInstance(Math.toRadians(90), 0, 0);
+        final AffineTransform worldToScreen = AffineTransform.getRotateInstance(Math.toRadians(90), 0, 0);
         DefaultFeatureCollection fc = new DefaultFeatureCollection();
         fc.add(createPoint(0, 0));
         fc.add(createPoint(world.getMaxX(), world.getMinY()));
         MapContent map = new MapContent();
         map.addLayer(new FeatureLayer(fc, createPointStyle()));
-        BufferedImage image =
-                new BufferedImage(screen.width, screen.height, BufferedImage.TYPE_4BYTE_ABGR);
+        BufferedImage image = new BufferedImage(screen.width, screen.height, BufferedImage.TYPE_4BYTE_ABGR);
         final StreamingRenderer sr = new StreamingRenderer();
         sr.setMapContent(map);
         sr.paint(image.createGraphics(), screen, map.getMaxBounds(), worldToScreen);
         assertNotEquals("Pixel should be drawn at 0,0 ", image.getRGB(0, 0), 0);
         assertEquals(
-                "Pixel should not be drawn in image centre ",
-                0,
-                image.getRGB(screen.width / 2, screen.height / 2));
+                "Pixel should not be drawn in image centre ", 0, image.getRGB(screen.width / 2, screen.height / 2));
         assertNotEquals(
-                "Pixel should be drawn at image max corner ",
-                image.getRGB(screen.width - 1, screen.height - 1),
-                0);
+                "Pixel should be drawn at image max corner ", image.getRGB(screen.width - 1, screen.height - 1), 0);
     }
 
     @Test
     public void testRepeatedEnvelopeExpansion() throws Exception {
         final List<Filter> filters = new ArrayList<>();
 
-        SimpleFeatureSource testSource =
-                new CollectionFeatureSource(createLineCollection()) {
-                    @Override
-                    public SimpleFeatureCollection getFeatures(Query query) {
-                        filters.add(query.getFilter());
-                        return super.getFeatures(query);
-                    }
-                };
+        SimpleFeatureSource testSource = new CollectionFeatureSource(createLineCollection()) {
+            @Override
+            public SimpleFeatureCollection getFeatures(Query query) {
+                filters.add(query.getFilter());
+                return super.getFeatures(query);
+            }
+        };
 
         StyleBuilder sb = new StyleBuilder();
         Style style20 = sb.createStyle(sb.createLineSymbolizer(20));
@@ -593,10 +633,7 @@ public class StreamingRendererTest {
         sr.setMapContent(mc);
         BufferedImage bi = new BufferedImage(100, 100, BufferedImage.TYPE_3BYTE_BGR);
         Graphics2D graphics = bi.createGraphics();
-        sr.paint(
-                graphics,
-                new Rectangle(0, 0, 100, 100),
-                new ReferencedEnvelope(0, 100, 0, 100, WGS84));
+        sr.paint(graphics, new Rectangle(0, 0, 100, 100), new ReferencedEnvelope(0, 100, 0, 100, WGS84));
         graphics.dispose();
         mc.dispose();
 
@@ -616,14 +653,11 @@ public class StreamingRendererTest {
     @Test
     public void testScreenMapMemory() {
         // build a feature source with two zig-zag line occupying the same position
-        LiteCoordinateSequence cs =
-                new LiteCoordinateSequence(new double[] {0, 0, 1, 1, 2, 0, 3, 1, 4, 0});
+        LiteCoordinateSequence cs = new LiteCoordinateSequence(new double[] {0, 0, 1, 1, 2, 0, 3, 1, 4, 0});
         SimpleFeature zigzag1 =
-                SimpleFeatureBuilder.build(
-                        testLineFeatureType, new Object[] {gf.createLineString(cs)}, "zz1");
+                SimpleFeatureBuilder.build(testLineFeatureType, new Object[] {gf.createLineString(cs)}, "zz1");
         SimpleFeature zigzag2 =
-                SimpleFeatureBuilder.build(
-                        testLineFeatureType, new Object[] {gf.createLineString(cs)}, "zz2");
+                SimpleFeatureBuilder.build(testLineFeatureType, new Object[] {gf.createLineString(cs)}, "zz2");
         DefaultFeatureCollection fc = new DefaultFeatureCollection();
         fc.add(zigzag1);
         fc.add(zigzag2);
@@ -638,19 +672,18 @@ public class StreamingRendererTest {
 
         // collect rendered features
         final List<SimpleFeature> features = new ArrayList<>();
-        RenderListener renderedFeaturesCollector =
-                new RenderListener() {
+        RenderListener renderedFeaturesCollector = new RenderListener() {
 
-                    @Override
-                    public void featureRenderer(SimpleFeature feature) {
-                        features.add(feature);
-                    }
+            @Override
+            public void featureRenderer(SimpleFeature feature) {
+                features.add(feature);
+            }
 
-                    @Override
-                    public void errorOccurred(Exception e) {
-                        // nothing to do
-                    }
-                };
+            @Override
+            public void errorOccurred(Exception e) {
+                // nothing to do
+            }
+        };
         sr.addRenderListener(renderedFeaturesCollector);
         BufferedImage bi = new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR);
         Graphics2D graphics = bi.createGraphics();
@@ -673,21 +706,20 @@ public class StreamingRendererTest {
     }
 
     /**
-     * Test that we don't have the geometry added twice by StreamingRenderer#findStyleAttributes
-     * when geofence is filtering a layer.
+     * Test that we don't have the geometry added twice by StreamingRenderer#findStyleAttributes when geofence is
+     * filtering a layer.
      */
     @Test
     public void testFindLineStyleAttributeWithAddedFilter() throws Exception {
         final List<Filter> filters = new ArrayList<>();
 
-        SimpleFeatureSource testSource =
-                new CollectionFeatureSource(createLineCollection()) {
-                    @Override
-                    public SimpleFeatureCollection getFeatures(Query query) {
-                        filters.add(query.getFilter());
-                        return super.getFeatures(query);
-                    }
-                };
+        SimpleFeatureSource testSource = new CollectionFeatureSource(createLineCollection()) {
+            @Override
+            public SimpleFeatureCollection getFeatures(Query query) {
+                filters.add(query.getFilter());
+                return super.getFeatures(query);
+            }
+        };
 
         Style style = createPointStyle();
         MapContent mc = new MapContent();
@@ -702,16 +734,7 @@ public class StreamingRendererTest {
         // simulate geofence adding a bbox
         BBOX bbox = StreamingRenderer.filterFactory.bbox("", 30, 60, 30, 60, "EPSG:4326");
         StyleFactoryImpl sf = new StyleFactoryImpl();
-        Rule bboxRule =
-                sf.createRule(
-                        new Symbolizer[0],
-                        new DescriptionImpl(),
-                        null,
-                        "bbox",
-                        bbox,
-                        false,
-                        1e12,
-                        0);
+        Rule bboxRule = sf.createRule(new Symbolizer[0], new DescriptionImpl(), null, "bbox", bbox, false, 1e12, 0);
         style.featureTypeStyles().get(0).rules().add(bboxRule);
 
         BufferedImage bi = new BufferedImage(100, 100, BufferedImage.TYPE_3BYTE_BGR);
@@ -742,20 +765,19 @@ public class StreamingRendererTest {
          * rendering code. These geometries are in EPSG:32717 because the 0,0 coordinate is in the
          * pole.
          */
-        File dir = new File(TestData.getResource(this, "empty-geom-rendering.properties").toURI());
-        PropertyDataStore dataStore =
-                new PropertyDataStore(dir.getParentFile()) {
+        File dir = new File(
+                TestData.getResource(this, "empty-geom-rendering.properties").toURI());
+        PropertyDataStore dataStore = new PropertyDataStore(dir.getParentFile()) {
+            @Override
+            protected ContentFeatureSource createFeatureSource(ContentEntry entry) throws IOException {
+                return new PropertyFeatureSource(entry, Query.ALL) {
                     @Override
-                    protected ContentFeatureSource createFeatureSource(ContentEntry entry)
-                            throws IOException {
-                        return new PropertyFeatureSource(entry, Query.ALL) {
-                            @Override
-                            protected boolean canFilter() {
-                                return true;
-                            }
-                        };
+                    protected boolean canFilter(Query query) {
+                        return true;
                     }
                 };
+            }
+        };
         /*
          * Set up the rendering of previous empty geometry
          */
@@ -773,20 +795,17 @@ public class StreamingRendererTest {
         double maxx = -8708634.6;
         double miny = -491855.7;
         double maxy = -271204.3;
-        ReferencedEnvelope referencedEnvelope =
-                new ReferencedEnvelope(
-                        new Rectangle2D.Double(minx, miny, maxx - minx, maxy - miny),
-                        CRS.decode("EPSG:3857"));
-        sr.addRenderListener(
-                new RenderListener() {
-                    @Override
-                    public void featureRenderer(SimpleFeature feature) {}
+        ReferencedEnvelope referencedEnvelope = new ReferencedEnvelope(
+                new Rectangle2D.Double(minx, miny, maxx - minx, maxy - miny), CRS.decode("EPSG:3857"));
+        sr.addRenderListener(new RenderListener() {
+            @Override
+            public void featureRenderer(SimpleFeature feature) {}
 
-                    @Override
-                    public void errorOccurred(Exception e) {
-                        errors++;
-                    }
-                });
+            @Override
+            public void errorOccurred(Exception e) {
+                errors++;
+            }
+        });
         errors = 0;
 
         sr.paint(graphics, paintArea, referencedEnvelope);
@@ -810,34 +829,10 @@ public class StreamingRendererTest {
         mapContent.addLayer(layer);
         StreamingRenderer gRender = new StreamingRenderer();
         gRender.setMapContent(mapContent);
-        gRender.addRenderListener(
-                new RenderListener() {
-                    @Override
-                    public void featureRenderer(SimpleFeature feature) {
-                        features++;
-                    }
-
-                    @Override
-                    public void errorOccurred(Exception e) {
-                        errors++;
-                    }
-                });
         features = 0;
         errors = 0;
         // defining the paint area and performing the rendering
-        BufferedImage image = new BufferedImage(40, 40, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D graphics = image.createGraphics();
-        Rectangle paintArea = new Rectangle(40, 40);
-        double minx = -2;
-        double maxx = 2;
-        double miny = -2;
-        double maxy = 2;
-        ReferencedEnvelope referencedEnvelope =
-                new ReferencedEnvelope(
-                        new Rectangle2D.Double(minx, miny, maxx - minx, maxy - miny),
-                        CRS.decode("EPSG:4326"));
-        gRender.paint(graphics, paintArea, referencedEnvelope);
-        mapContent.dispose();
+        renderLayer(gRender, mapContent);
         // checking that four features were rendered, if the default geometry attribute was not
         // correctly handled no geometries were selected and so no features were rendered
         Assert.assertEquals(features, 4);
@@ -852,24 +847,21 @@ public class StreamingRendererTest {
         finalGraphics.fillRect(0, 0, 100, 100);
 
         List<LiteFeatureTypeStyle> lfts = new ArrayList<>();
-        Layer layer =
-                new DirectLayer() {
+        Layer layer = new DirectLayer() {
 
-                    @Override
-                    public void draw(Graphics2D graphics, MapContent map, MapViewport viewport) {}
+            @Override
+            public void draw(Graphics2D graphics, MapContent map, MapViewport viewport) {}
 
-                    @Override
-                    public ReferencedEnvelope getBounds() {
-                        return null;
-                    }
-                };
+            @Override
+            public ReferencedEnvelope getBounds() {
+                return null;
+            }
+        };
 
         // style with empty (null) image
-        DelayedBackbufferGraphic graphics =
-                new DelayedBackbufferGraphic(finalGraphics, new Rectangle(100, 100));
+        DelayedBackbufferGraphic graphics = new DelayedBackbufferGraphic(finalGraphics, new Rectangle(100, 100));
         LiteFeatureTypeStyle style1 =
-                new LiteFeatureTypeStyle(
-                        layer, graphics, new ArrayList<>(), new ArrayList<>(), null);
+                new LiteFeatureTypeStyle(layer, graphics, new ArrayList<>(), new ArrayList<>(), null);
         style1.composite = AlphaComposite.DstIn;
         lfts.add(style1);
 
@@ -897,12 +889,11 @@ public class StreamingRendererTest {
         assertFalse(reprojected.isNull());
     }
 
-    private class StreamingRendererTester extends StreamingRenderer {
+    private static class StreamingRendererTester extends StreamingRenderer {
 
         /** This method is currently only used when densification is enabled */
         @Override
-        public ReferencedEnvelope transformEnvelope(
-                ReferencedEnvelope envelope, CoordinateReferenceSystem crs)
+        public ReferencedEnvelope transformEnvelope(ReferencedEnvelope envelope, CoordinateReferenceSystem crs)
                 throws TransformException, FactoryException {
             return super.transformEnvelope(envelope, crs);
         }
@@ -930,18 +921,17 @@ public class StreamingRendererTest {
         hints.put(StreamingRenderer.ADVANCED_PROJECTION_HANDLING_KEY, true);
         hints.put(StreamingRenderer.ADVANCED_PROJECTION_DENSIFICATION_KEY, true);
         sr.setRendererHints(hints);
-        sr.addRenderListener(
-                new RenderListener() {
-                    @Override
-                    public void featureRenderer(SimpleFeature feature) {
-                        features++;
-                    }
+        sr.addRenderListener(new RenderListener() {
+            @Override
+            public void featureRenderer(SimpleFeature feature) {
+                features++;
+            }
 
-                    @Override
-                    public void errorOccurred(Exception e) {
-                        errors++;
-                    }
-                });
+            @Override
+            public void errorOccurred(Exception e) {
+                errors++;
+            }
+        });
         errors = 0;
         sr.setMapContent(mapContent);
         BufferedImage image = new BufferedImage(200, 200, BufferedImage.TYPE_4BYTE_ABGR);
@@ -960,18 +950,17 @@ public class StreamingRendererTest {
         mapContent.addLayer(fred);
         StreamingRenderer gRender = new StreamingRenderer();
         gRender.setMapContent(mapContent);
-        gRender.addRenderListener(
-                new RenderListener() {
-                    @Override
-                    public void featureRenderer(SimpleFeature feature) {
-                        features++;
-                    }
+        gRender.addRenderListener(new RenderListener() {
+            @Override
+            public void featureRenderer(SimpleFeature feature) {
+                features++;
+            }
 
-                    @Override
-                    public void errorOccurred(Exception e) {
-                        errors++;
-                    }
-                });
+            @Override
+            public void errorOccurred(Exception e) {
+                errors++;
+            }
+        });
         features = 0;
         errors = 0;
         // defining the paint area and performing the rendering
@@ -984,5 +973,195 @@ public class StreamingRendererTest {
 
         Assert.assertEquals(0, errors);
         Assert.assertEquals(inFeatures.size(), features);
+    }
+
+    /**
+     * When a test point for simplfication spans cannot be reprojected back to source, a simplification distance of "0"
+     * is returned. It should not be sent down to the store.
+     */
+    @Test
+    public void testInvalidSimplificationDistance() throws Exception {
+        // TODO: advertise supported hints and cycle through the distance variations
+        Style lineStyle = createLineStyle();
+        testInvalidSimplificationDistance2(Hints.GEOMETRY_DISTANCE, lineStyle);
+        testInvalidSimplificationDistance2(Hints.GEOMETRY_SIMPLIFICATION, lineStyle);
+        testInvalidSimplificationDistance2(Hints.GEOMETRY_GENERALIZATION, lineStyle);
+        Style rtStyle = RendererBaseTest.loadStyle(this, "attributeRename.sld");
+        testInvalidSimplificationDistance2(Hints.GEOMETRY_DISTANCE, rtStyle);
+        testInvalidSimplificationDistance2(Hints.GEOMETRY_SIMPLIFICATION, rtStyle);
+        testInvalidSimplificationDistance2(Hints.GEOMETRY_GENERALIZATION, rtStyle);
+    }
+
+    /**
+     * Tests that the simplification distance is not sent to the store when it is zero. Allows to check different
+     * siplification hints, and vary the style.
+     */
+    void testInvalidSimplificationDistance2(final RenderingHints.Key hint, Style style) throws Exception {
+        AtomicReference<Object> reference = new AtomicReference<>();
+        SimpleFeatureSource testSource = new CollectionFeatureSource(createLineCollection()) {
+            @Override
+            public SimpleFeatureCollection getFeatures(Query query) {
+                reference.set(query.getHints().get(hint));
+                return super.getFeatures(query);
+            }
+
+            @Override
+            public synchronized Set<RenderingHints.Key> getSupportedHints() {
+                return Set.of(hint);
+            }
+        };
+
+        MapContent mc = new MapContent();
+        FeatureLayer layer = new FeatureLayer(testSource, style);
+        mc.addLayer(layer);
+
+        StreamingRenderer sr = new StreamingRenderer();
+        sr.setMapContent(mc);
+
+        ReferencedEnvelope envelope = new ReferencedEnvelope(-1e7, 1e7, -1e7, 1e7, CRS.decode("AUTO:42003,9001,45,0"));
+
+        BufferedImage bi = new BufferedImage(100, 100, BufferedImage.TYPE_3BYTE_BGR);
+        Graphics2D graphics = bi.createGraphics();
+        try {
+            sr.paint(graphics, new Rectangle(5, 5, 7, 7), envelope);
+        } finally {
+            graphics.dispose();
+            mc.dispose();
+        }
+        assertNull("Got a distance simplification reference, unexpected", reference.get());
+    }
+
+    @Test
+    public void testFeatureStyleScale() throws IOException, URISyntaxException, FactoryException {
+        Style style = RendererBaseTest.loadStyle(this, "genericLines-featurestylescale.sld");
+        assertNotNull(style);
+        assertEquals(1, style.featureTypeStyles().size());
+        FeatureTypeStyle fts = style.featureTypeStyles().get(0);
+        assertEquals("1000", fts.getOptions().get("minScaleDenominator"));
+        assertEquals("5000", fts.getOptions().get("maxScaleDenominator"));
+        // execute rendering expecting no features being rendered dur to the max/min scale denominator set on
+        // FeatureTypeStyle
+        File vectorDataFile =
+                new File(TestData.getResource(this, "genericLines.properties").toURI());
+        PropertyDataStore dataStore = new PropertyDataStore(vectorDataFile.getParentFile());
+        Layer layer = new FeatureLayer(dataStore.getFeatureSource("genericLines"), style);
+        // prepare map content and instantiate a streaming reader
+        MapContent mapContent = new MapContent();
+        mapContent.addLayer(layer);
+        StreamingRenderer gRender = new StreamingRenderer();
+        gRender.setMapContent(mapContent);
+        features = 0;
+        errors = 0;
+        renderLayer(gRender, mapContent);
+        // checking that no features were rendered, the max/min scale denominator set on FeatureTypeStyle
+        assertEquals(0, features);
+    }
+
+    private void renderLayer(StreamingRenderer gRender, MapContent mapContent) throws FactoryException {
+        gRender.addRenderListener(new RenderListener() {
+            @Override
+            public void featureRenderer(SimpleFeature feature) {
+                features++;
+            }
+
+            @Override
+            public void errorOccurred(Exception e) {
+                errors++;
+            }
+        });
+        // defining the paint area and performing the rendering
+        BufferedImage image = new BufferedImage(40, 40, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = image.createGraphics();
+        Rectangle paintArea = new Rectangle(40, 40);
+        double minx = -2;
+        double maxx = 2;
+        double miny = -2;
+        double maxy = 2;
+        ReferencedEnvelope referencedEnvelope = new ReferencedEnvelope(
+                new Rectangle2D.Double(minx, miny, maxx - minx, maxy - miny), CRS.decode("EPSG:4326"));
+        gRender.paint(graphics, paintArea, referencedEnvelope);
+        mapContent.dispose();
+    }
+
+    @Test
+    public void testNoFeatureStyleScale() throws IOException, URISyntaxException, FactoryException {
+        Style style = RendererBaseTest.loadStyle(this, "genericLines.sld");
+        assertNotNull(style);
+        assertEquals(1, style.featureTypeStyles().size());
+        // execute rendering expecting no features being rendered dur to the max/min scale denominator set on
+        // FeatureTypeStyle
+        File vectorDataFile =
+                new File(TestData.getResource(this, "genericLines.properties").toURI());
+        PropertyDataStore dataStore = new PropertyDataStore(vectorDataFile.getParentFile());
+        Layer layer = new FeatureLayer(dataStore.getFeatureSource("genericLines"), style);
+        // prepare map content and instantiate a streaming reader
+        MapContent mapContent = new MapContent();
+        mapContent.addLayer(layer);
+        StreamingRenderer gRender = new StreamingRenderer();
+        gRender.setMapContent(mapContent);
+        features = 0;
+        errors = 0;
+        // defining the paint area and performing the rendering
+        renderLayer(gRender, mapContent);
+        // checking that no features were rendered, the max/min scale denominator set on FeatureTypeStyle
+        assertEquals(4, features);
+    }
+
+    @Test
+    public void testGetMapRenderingPlateCarreeWrapping() throws IOException, URISyntaxException, FactoryException {
+        Style style = RendererBaseTest.loadStyle(this, "genericLines.sld");
+        File vectorDataFile =
+                new File(TestData.getResource(this, "dateline.shp").toURI());
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("url", vectorDataFile.toURI().toURL());
+        DataStore dataStore = null;
+        Graphics2D graphics = null;
+        MapContent mapContent = null;
+        try {
+            dataStore = DataStoreFinder.getDataStore(params);
+
+            SimpleFeatureSource fs = dataStore.getFeatureSource("dateline");
+            Layer layer = new FeatureLayer(fs, style);
+
+            // prepare map content and instantiate a streaming reader
+            mapContent = new MapContent();
+            mapContent.addLayer(layer);
+
+            // Renderer
+            StreamingRenderer renderer = new StreamingRenderer();
+            renderer.setMapContent(mapContent);
+            Map<Object, Object> rendererParams = new HashMap<>();
+            rendererParams.put(StreamingRenderer.ADVANCED_PROJECTION_HANDLING_KEY, true);
+            rendererParams.put(StreamingRenderer.CONTINUOUS_MAP_WRAPPING, true);
+            renderer.setRendererHints(rendererParams);
+
+            // Map extent
+            CoordinateReferenceSystem crs = CRS.decode("EPSG:32662", true);
+            ReferencedEnvelope mapExtent = new ReferencedEnvelope(
+                    -2.0435241595597245E7, 2.0435241595597245E7, -3210414.747827184, 1.0101091227930816E7, crs);
+
+            // Screen size
+            final int w = 768;
+            final int h = 256;
+            Rectangle screenSize = new Rectangle(0, 0, w, h);
+
+            // World to screen transform
+            AffineTransform worldToScreen = new AffineTransform(
+                    1.9231482934102992E-5, 0.0, 0.0, -1.9231482934102996E-5, 393.0, 194.25896356576897);
+            BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+            graphics = image.createGraphics();
+            renderer.paint(graphics, screenSize, mapExtent, worldToScreen);
+            // Check that the dateline request with map wrapping and advanced projection handling
+            // returns a raster with 2 lines at the edges and nothing in the middle
+            File reference =
+                    new File("./src/test/resources/org/geotools/renderer/lite/test-data/platecarreewrapping.png");
+            ImageAssert.assertEquals(reference, image, 20);
+
+        } finally {
+            if (graphics != null) graphics.dispose();
+            if (mapContent != null) mapContent.dispose();
+            if (dataStore != null) dataStore.dispose();
+        }
     }
 }

@@ -18,26 +18,20 @@ package org.geotools.filter;
 
 import java.util.Collections;
 import java.util.Date;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.parameter.Parameter;
 import org.junit.Assert;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.parameter.Parameter;
 
 public class FunctionImplTest {
 
     @Test
     public void testFunctionName() throws Exception {
-        FunctionName fn =
-                FunctionImpl.functionName(
-                        "foo",
-                        "bar:Integer",
-                        "a",
-                        "x:String:1,1",
-                        "y:MultiPolygon",
-                        "z:java.util.Date:1,");
+        FunctionName fn = FunctionImpl.functionName(
+                "foo", "bar:Integer", "a", "x:String:1,1", "y:MultiPolygon", "z:java.util.Date:1,");
 
         Assert.assertEquals("foo", fn.getName());
         check(fn.getReturn(), "bar", Integer.class, 1, 1);

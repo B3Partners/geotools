@@ -18,23 +18,20 @@
 package org.geotools.filter.visitor;
 
 import java.util.List;
-import org.opengis.annotation.XmlElement;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
 
 /**
- * Recoding: Transformation of discrete values to any other values. This is needed when integers
- * have to be translated into text or, reversely, text contents into other texts or numeric values
- * or colors.
+ * Recoding: Transformation of discrete values to any other values. This is needed when integers have to be translated
+ * into text or, reversely, text contents into other texts or numeric values or colors.
  *
- * <p>This function recodes values from a property or expression into corresponding values of
- * arbitrary type. The comparisons are performed checking for identical values.
+ * <p>This function recodes values from a property or expression into corresponding values of arbitrary type. The
+ * comparisons are performed checking for identical values.
  *
- * @version <A HREF="http://www.opengeospatial.org/standards/symbol">Symbology Encoding
- *     Implementation Specification 1.1.0</A>
+ * @version <A HREF="http://www.opengeospatial.org/standards/symbol">Symbology Encoding Implementation Specification
+ *     1.1.0</A>
  * @author Johann Sorel (Geomatys)
  */
-@XmlElement("Recode")
 public interface Recode extends Function {
 
     /**
@@ -42,7 +39,6 @@ public interface Recode extends Function {
      *
      * @return Expression
      */
-    @XmlElement("LookupValue")
     Expression getLookupValue();
 
     /** See {@link MapItem} for details. */

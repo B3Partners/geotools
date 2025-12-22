@@ -14,13 +14,17 @@ package org.geotools.jts;
 import java.io.File;
 import java.util.List;
 import java.util.Random;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.FileDataStore;
-import org.geotools.data.FileDataStoreFinder;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.FileDataStore;
+import org.geotools.api.data.FileDataStoreFinder;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.util.NullProgressListener;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.swing.data.JFileDataStoreChooser;
+import org.geotools.util.SuppressFBWarnings;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
@@ -30,10 +34,8 @@ import org.locationtech.jts.index.SpatialIndex;
 import org.locationtech.jts.index.strtree.STRtree;
 import org.locationtech.jts.linearref.LinearLocation;
 import org.locationtech.jts.linearref.LocationIndexedLine;
-import org.opengis.feature.Feature;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
 
+@SuppressFBWarnings("DMI_RANDOM_USED_ONLY_ONCE")
 public class SnapToLine {
 
     public static void main(String[] args) throws Exception {
@@ -52,11 +54,11 @@ public class SnapToLine {
         FeatureSource source = store.getFeatureSource();
 
         // Check that we have line features
-        Class<?> geomBinding = source.getSchema().getGeometryDescriptor().getType().getBinding();
-        boolean isLine =
-                geomBinding != null
-                        && (LineString.class.isAssignableFrom(geomBinding)
-                                || MultiLineString.class.isAssignableFrom(geomBinding));
+        Class<?> geomBinding =
+                source.getSchema().getGeometryDescriptor().getType().getBinding();
+        boolean isLine = geomBinding != null
+                && (LineString.class.isAssignableFrom(geomBinding)
+                        || MultiLineString.class.isAssignableFrom(geomBinding));
 
         if (!isLine) {
             System.out.println("This example needs a shapefile with line features");
@@ -97,10 +99,9 @@ public class SnapToLine {
         Coordinate[] points = new Coordinate[NUM_POINTS];
         Random rand = new Random(file.hashCode());
         for (int i = 0; i < NUM_POINTS; i++) {
-            points[i] =
-                    new Coordinate(
-                            bounds.getMinX() + rand.nextDouble() * bounds.getWidth(),
-                            bounds.getMinY() + rand.nextDouble() * bounds.getHeight());
+            points[i] = new Coordinate(
+                    bounds.getMinX() + rand.nextDouble() * bounds.getWidth(),
+                    bounds.getMinY() + rand.nextDouble() * bounds.getHeight());
         }
 
         // generate points end (docs marker)
@@ -119,8 +120,7 @@ public class SnapToLine {
         int pointsSnapped = 0;
         long elapsedTime = 0;
         long startTime = System.currentTimeMillis();
-        while (pointsProcessed < NUM_POINTS
-                && (elapsedTime = System.currentTimeMillis() - startTime) < DURATION) {
+        while (pointsProcessed < NUM_POINTS && (elapsedTime = System.currentTimeMillis() - startTime) < DURATION) {
 
             // Get point and create search envelope
             Coordinate pt = points[pointsProcessed++];
@@ -162,7 +162,11 @@ public class SnapToLine {
         }
 
         System.out.printf(
-                "Processed %d points (%.2f points per second). \n" + "Snapped %d points.\n\n",
+                """
+                Processed %d points (%.2f points per second).\s
+                Snapped %d points.
+
+                """,
                 pointsProcessed, 1000.0 * pointsProcessed / elapsedTime, pointsSnapped);
     }
 }

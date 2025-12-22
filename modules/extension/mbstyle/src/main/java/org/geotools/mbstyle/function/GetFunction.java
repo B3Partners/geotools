@@ -19,19 +19,18 @@ package org.geotools.mbstyle.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.json.simple.JSONObject;
-import org.opengis.filter.capability.FunctionName;
 
 /** Returns the value of a given object key in a JSONObject. */
 public class GetFunction extends FunctionExpressionImpl {
-    public static final FunctionName NAME =
-            new FunctionNameImpl(
-                    "get",
-                    parameter("value", String.class),
-                    parameter("object", JSONObject.class),
-                    parameter("fallback", Object.class));
+    public static final FunctionName NAME = new FunctionNameImpl(
+            "get",
+            parameter("value", String.class),
+            parameter("object", JSONObject.class),
+            parameter("fallback", Object.class));
 
     public GetFunction() {
         super(NAME);

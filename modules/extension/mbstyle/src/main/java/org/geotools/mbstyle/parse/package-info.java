@@ -18,13 +18,12 @@
  * JSON Parsing support for MapBox Style support.
  *
  * <ul>
- *   <li>This package contains {@link org.geotools.mbstyle.parse.MBStyleParser} to access JSON
- *       content.
- *   <li>Utility JSON wrappers {@link org.geotools.mbstyle.parse.MBObjectParser}, {@link
- *       org.geotools.mbstyle.parse.MBFunction} and {@link org.geotools.mbstyle.parse.MBFilter} are
- *       provided for use.
+ *   <li>This package contains {@link org.geotools.mbstyle.parse.MBStyleParser} to access JSON content.
+ *   <li>Utility JSON wrappers {@link org.geotools.mbstyle.parse.MBObjectParser},
+ *       {@link org.geotools.mbstyle.parse.MBFunction} and {@link org.geotools.mbstyle.parse.MBFilter} are provided for
+ *       use.
  * </ul>
  *
- * @see org.geotools.styling.StyledLayerDescriptor
+ * @see org.geotools.api.style.StyledLayerDescriptor
  */
 package org.geotools.mbstyle.parse;

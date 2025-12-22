@@ -66,10 +66,10 @@ public class SimpleTypeHandler extends XSIElementHandler {
     @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
     public int hashCode() {
-        return (LOCALNAME.hashCode()
-                        * ((id == null) ? 1 : id.hashCode())
-                        * ((finaL == 0) ? 1 : finaL)
-                        * ((name == null) ? 1 : name.hashCode()))
+        return LOCALNAME.hashCode()
+                        * (id == null ? 1 : id.hashCode())
+                        * (finaL == 0 ? 1 : finaL)
+                        * (name == null ? 1 : name.hashCode())
                 + hashCodeOffset;
     }
 
@@ -87,10 +87,7 @@ public class SimpleTypeHandler extends XSIElementHandler {
                     child = lh;
                 } else {
                     throw new SAXNotRecognizedException(
-                            getLocalName()
-                                    + " may only have one '"
-                                    + ListHandler.LOCALNAME
-                                    + "' declaration.");
+                            getLocalName() + " may only have one '" + ListHandler.LOCALNAME + "' declaration.");
                 }
 
                 return lh;
@@ -104,10 +101,7 @@ public class SimpleTypeHandler extends XSIElementHandler {
                     child = lh;
                 } else {
                     throw new SAXNotRecognizedException(
-                            getLocalName()
-                                    + " may only have one '"
-                                    + RestrictionHandler.LOCALNAME
-                                    + "' declaration.");
+                            getLocalName() + " may only have one '" + RestrictionHandler.LOCALNAME + "' declaration.");
                 }
 
                 return lh;
@@ -121,10 +115,7 @@ public class SimpleTypeHandler extends XSIElementHandler {
                     child = lh;
                 } else {
                     throw new SAXNotRecognizedException(
-                            getLocalName()
-                                    + " may only have one '"
-                                    + UnionHandler.LOCALNAME
-                                    + "' declaration.");
+                            getLocalName() + " may only have one '" + UnionHandler.LOCALNAME + "' declaration.");
                 }
 
                 return lh;
@@ -135,8 +126,7 @@ public class SimpleTypeHandler extends XSIElementHandler {
     }
 
     /**
-     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String,
-     *     org.xml.sax.Attributes)
+     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
     public void startElement(String namespaceURI, String localName, Attributes atts) {
@@ -163,7 +153,7 @@ public class SimpleTypeHandler extends XSIElementHandler {
 
     /** translates the final attribute to an integer mask */
     public static int findFinal(String finaL) {
-        if ((finaL == null) || "".equalsIgnoreCase(finaL)) {
+        if (finaL == null || "".equalsIgnoreCase(finaL)) {
             return NONE;
         }
 
@@ -219,15 +209,8 @@ public class SimpleTypeHandler extends XSIElementHandler {
 
         SimpleType[] simpleTypes = getSimpleTypes(child, parent);
 
-        cache =
-                new SimpleTypeGT(
-                        id,
-                        name,
-                        parent.getTargetNamespace(),
-                        child.getHandlerType(),
-                        simpleTypes,
-                        facets,
-                        finaL);
+        cache = new SimpleTypeGT(
+                id, name, parent.getTargetNamespace(), child.getHandlerType(), simpleTypes, facets, finaL);
 
         logger.info("End compressing SimpleType " + getName());
         id = null;
@@ -248,8 +231,7 @@ public class SimpleTypeHandler extends XSIElementHandler {
                 return getSimpleTypes((UnionHandler) child, parent);
 
             default:
-                throw new RuntimeException(
-                        "Should not be here ... child is one of the other three types.");
+                throw new RuntimeException("Should not be here ... child is one of the other three types.");
         }
     }
 
@@ -269,7 +251,7 @@ public class SimpleTypeHandler extends XSIElementHandler {
         SimpleType[] children = new SimpleType[1];
 
         if (rest.getSimpleType() != null) {
-            children[0] = (rest.getSimpleType()).compress(parent);
+            children[0] = rest.getSimpleType().compress(parent);
         } else {
             children[0] = parent.lookUpSimpleType(rest.getItemType());
         }
@@ -298,7 +280,7 @@ public class SimpleTypeHandler extends XSIElementHandler {
     static Facet[] getFacets(RestrictionHandler rh) {
         List constraints = rh.getConstraints();
 
-        if ((constraints == null) || (constraints.isEmpty())) {
+        if (constraints == null || constraints.isEmpty()) {
             return null;
         }
 

@@ -24,18 +24,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.data.ServiceInfo;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.coverage.io.CoverageAccess;
 import org.geotools.coverage.io.CoverageSource;
 import org.geotools.coverage.io.CoverageStore;
 import org.geotools.coverage.io.Driver;
 import org.geotools.coverage.io.metadata.MetadataNode;
-import org.geotools.data.Parameter;
-import org.geotools.data.ServiceInfo;
 import org.geotools.data.util.NullProgressListener;
 import org.geotools.util.SuppressFBWarnings;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.type.Name;
-import org.opengis.util.ProgressListener;
 
 /**
  * Default implementation of {@link CoverageAccess}.
@@ -71,38 +71,30 @@ public class DefaultCoverageAccess implements CoverageAccess {
 
     @Override
     public CoverageSource access(
-            Name name,
-            Map<String, Serializable> params,
-            AccessType accessType,
-            Hints hints,
-            ProgressListener listener)
+            Name name, Map<String, Serializable> params, AccessType accessType, Hints hints, ProgressListener listener)
             throws IOException {
         throw new UnsupportedOperationException("Operation not implemented");
     }
 
     @Override
-    public boolean canCreate(
-            Name name, Map<String, Serializable> params, Hints hints, ProgressListener listener)
+    public boolean canCreate(Name name, Map<String, Serializable> params, Hints hints, ProgressListener listener)
             throws IOException {
         return false;
     }
 
     @Override
-    public boolean canDelete(Name name, Map<String, Serializable> params, Hints hints)
-            throws IOException {
+    public boolean canDelete(Name name, Map<String, Serializable> params, Hints hints) throws IOException {
         return false;
     }
 
     @Override
-    public CoverageStore create(
-            Name name, Map<String, Serializable> params, Hints hints, ProgressListener listener)
+    public CoverageStore create(Name name, Map<String, Serializable> params, Hints hints, ProgressListener listener)
             throws IOException {
         throw new UnsupportedOperationException("Operation not implemented");
     }
 
     @Override
-    public boolean delete(Name name, Map<String, Serializable> params, Hints hints)
-            throws IOException {
+    public boolean delete(Name name, Map<String, Serializable> params, Hints hints) throws IOException {
         return false;
     }
 

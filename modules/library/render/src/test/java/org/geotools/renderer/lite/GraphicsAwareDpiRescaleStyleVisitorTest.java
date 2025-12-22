@@ -5,37 +5,36 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.PointSymbolizer;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
-import org.geotools.styling.Graphic;
-import org.geotools.styling.PointSymbolizer;
 import org.geotools.styling.StyleBuilder;
 import org.geotools.styling.visitor.RescaleStyleVisitor;
 import org.geotools.styling.visitor.UomRescaleStyleVisitor;
 import org.geotools.util.URLs;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
 
 public class GraphicsAwareDpiRescaleStyleVisitorTest {
 
     private StyleBuilder sb;
-    private FilterFactory2 ff;
+    private FilterFactory ff;
 
     @Before
     public void setup() {
         sb = new StyleBuilder();
-        ff = CommonFactoryFinder.getFilterFactory2(null);
+        ff = CommonFactoryFinder.getFilterFactory(null);
     }
 
     @Test
     public void testResizeMark() {
-        PointSymbolizer ps =
-                sb.createPointSymbolizer(sb.createGraphic(null, sb.createMark("square"), null));
+        PointSymbolizer ps = sb.createPointSymbolizer(sb.createGraphic(null, sb.createMark("square"), null));
         GraphicsAwareDpiRescaleStyleVisitor visitor = new GraphicsAwareDpiRescaleStyleVisitor(2);
         ps.accept(visitor);
         PointSymbolizer resized = (PointSymbolizer) visitor.getCopy();
@@ -47,14 +46,11 @@ public class GraphicsAwareDpiRescaleStyleVisitorTest {
     @Test
     public void testResizeExternalGraphic() throws IOException {
         File imageFile =
-                new File("./src/test/resources/org/geotools/renderer/lite/test-data/draw.png")
-                        .getCanonicalFile();
+                new File("./src/test/resources/org/geotools/renderer/lite/test-data/draw.png").getCanonicalFile();
         assertTrue(imageFile.exists());
         String fileUrl = URLs.fileToUrl(imageFile).toExternalForm();
         PointSymbolizer ps =
-                sb.createPointSymbolizer(
-                        sb.createGraphic(
-                                null, null, sb.createExternalGraphic(fileUrl, "image/png")));
+                sb.createPointSymbolizer(sb.createGraphic(null, null, sb.createExternalGraphic(fileUrl, "image/png")));
         GraphicsAwareDpiRescaleStyleVisitor visitor = new GraphicsAwareDpiRescaleStyleVisitor(2);
         ps.accept(visitor);
         PointSymbolizer resized = (PointSymbolizer) visitor.getCopy();
@@ -64,10 +60,7 @@ public class GraphicsAwareDpiRescaleStyleVisitorTest {
         assertEquals(44, size.evaluate(null, Integer.class).intValue());
     }
 
-    /**
-     * Tests size calculation of dynamically sized feature, using real-world units combined with
-     * DPI-based resizing.
-     */
+    /** Tests size calculation of dynamically sized feature, using real-world units combined with DPI-based resizing. */
     @Test
     public void testCombinedResizingDpiUom() {
         // given: Point with dynamic size in real-world  units

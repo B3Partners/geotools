@@ -28,15 +28,15 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.transform.TransformerException;
 import org.apache.commons.io.IOUtils;
+import org.geotools.api.style.NamedLayer;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyledLayer;
+import org.geotools.api.style.StyledLayerDescriptor;
+import org.geotools.api.style.UserLayer;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.renderer.GTRenderer;
 import org.geotools.renderer.RenderListener;
 import org.geotools.renderer.lite.RendererBaseTest;
-import org.geotools.styling.NamedLayer;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyledLayer;
-import org.geotools.styling.StyledLayerDescriptor;
-import org.geotools.styling.UserLayer;
 import org.geotools.util.logging.Logging;
 import org.geotools.xml.styling.SLDTransformer;
 import org.json.simple.JSONObject;
@@ -64,11 +64,7 @@ public class MapboxTestUtils {
     }
 
     public static BufferedImage showRender(
-            String testName,
-            GTRenderer renderer,
-            long timeOut,
-            ReferencedEnvelope[] bounds,
-            RenderListener listener)
+            String testName, GTRenderer renderer, long timeOut, ReferencedEnvelope[] bounds, RenderListener listener)
             throws Exception {
         return showRender(testName, renderer, timeOut, bounds, listener, 300, 300);
     }
@@ -99,7 +95,7 @@ public class MapboxTestUtils {
             }
         }
 
-        assert (hasData);
+        assert hasData;
         return image;
     }
 
@@ -116,8 +112,8 @@ public class MapboxTestUtils {
     }
 
     /**
-     * Returns the first style associated to the layer at <code>layerIndex</code>. An exception will
-     * be thrown if the layer is neither a {@link UserLayer} nor a {@link NamedLayer}.
+     * Returns the first style associated to the layer at <code>layerIndex</code>. An exception will be thrown if the
+     * layer is neither a {@link UserLayer} nor a {@link NamedLayer}.
      *
      * @param sld The full SLD style
      * @param layerIndex The layer to be considered for style extraction
@@ -125,10 +121,10 @@ public class MapboxTestUtils {
      */
     public static Style getStyle(StyledLayerDescriptor sld, int layerIndex) {
         StyledLayer styledLayer = sld.layers().get(layerIndex);
-        if (styledLayer instanceof UserLayer) {
-            return ((UserLayer) styledLayer).getUserStyles()[0];
-        } else if (styledLayer instanceof NamedLayer) {
-            return ((NamedLayer) styledLayer).getStyles()[0];
+        if (styledLayer instanceof UserLayer layer1) {
+            return layer1.getUserStyles()[0];
+        } else if (styledLayer instanceof NamedLayer layer) {
+            return layer.getStyles()[0];
         } else {
             throw new RuntimeException("Layer is neither a user layer nor a named layer");
         }

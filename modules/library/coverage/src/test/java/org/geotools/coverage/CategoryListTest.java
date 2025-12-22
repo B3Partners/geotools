@@ -25,10 +25,10 @@ import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.Random;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.util.Range;
 import org.geotools.util.XArray;
 import org.junit.Test;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * Tests the {@link CategoryList} implementation.
@@ -69,7 +69,7 @@ public final class CategoryListTest {
             for (int i = 0; i < categories.length; i++) {
                 categories[i] = new Category(String.valueOf(i), null, random.nextInt(100));
             }
-            Arrays.sort(categories, new CategoryList(new Category[0], null));
+            Arrays.sort(categories, CategoryList.COMPARATOR);
             assertTrue("isSorted", CategoryList.isSorted(categories));
             for (int i = 0; i < categories.length; i++) {
                 array[i] = categories[i].minimum;
@@ -110,8 +110,7 @@ public final class CategoryListTest {
     }
 
     /**
-     * Tests the {@link CategoryList#getCategory} method and a limited set of {@link
-     * CategoryList#transform} calls.
+     * Tests the {@link CategoryList#getCategory} method and a limited set of {@link CategoryList#transform} calls.
      *
      * @throws TransformException If an error occured while transforming a value.
      */

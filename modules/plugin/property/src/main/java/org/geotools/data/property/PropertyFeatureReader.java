@@ -20,12 +20,19 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.NoSuchElementException;
 import java.util.Properties;
 import java.util.logging.Logger;
-import org.geotools.data.DataSourceException;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureReader;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.geometry.jts.WKTReader2;
@@ -34,24 +41,18 @@ import org.geotools.util.logging.Logging;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.io.ParseException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Read a property file directly.
  *
- * <p>This implementation does not perform any filtering or processing; it leaves that up to
- * wrappers to manipulate the content into the format or projection requested by the user.
+ * <p>This implementation does not perform any filtering or processing; it leaves that up to wrappers to manipulate the
+ * content into the format or projection requested by the user.
  *
  * <p>
  *
- * <p>The content of this file should start with a the property "_" with the value being the
- * typeSpec describing the featureType. Thereafter each line will should have a FeatureID as the
- * property and the attributes as the value separated by | characters.
+ * <p>The content of this file should start with a the property "_" with the value being the typeSpec describing the
+ * featureType. Thereafter each line will should have a FeatureID as the property and the attributes as the value
+ * separated by | characters.
  *
  * <pre>
  * <code>
@@ -91,16 +92,15 @@ public class PropertyFeatureReader implements FeatureReader<SimpleFeatureType, S
         this(namespace, file, null);
     }
 
-    public PropertyFeatureReader(String namespace, File file, GeometryFactory geometryFactory)
-            throws IOException {
-        reader = new BufferedReader(new FileReader(file));
+    public PropertyFeatureReader(String namespace, File file, GeometryFactory geometryFactory) throws IOException {
+        reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8));
 
         // read until "_=";
         while ((line = reader.readLine()) != null) {
             if (line.startsWith("_=")) break;
         }
 
-        if ((line == null) || !line.startsWith("_=")) {
+        if (line == null || !line.startsWith("_=")) {
             throw new IOException("Property file schema not available found");
         }
         String typeSpec = line.substring(2);
@@ -140,18 +140,15 @@ public class PropertyFeatureReader implements FeatureReader<SimpleFeatureType, S
 
             int split = line.indexOf('=');
             fid = line.substring(0, split);
-            text =
-                    line.substring(split + 1)
-                            .split("\\|", -1); // use -1 as limit to include empty trailing spaces
+            text = line.substring(split + 1).split("\\|", -1); // use -1 as limit to include empty trailing spaces
             if (type.getAttributeCount() != text.length)
-                throw new DataSourceException(
-                        "Format error: expected "
-                                + type.getAttributeCount()
-                                + " attributes, but found "
-                                + text.length
-                                + ". ["
-                                + line
-                                + "]");
+                throw new DataSourceException("Format error: expected "
+                        + type.getAttributeCount()
+                        + " attributes, but found "
+                        + text.length
+                        + ". ["
+                        + line
+                        + "]");
         } else {
             throw new NoSuchElementException();
         }
@@ -202,9 +199,7 @@ public class PropertyFeatureReader implements FeatureReader<SimpleFeatureType, S
         Object value = null;
 
         // Use of Converters to convert from String to requested java binding
-        if (attType instanceof GeometryDescriptor
-                && stringValue != null
-                && !stringValue.isEmpty()) {
+        if (attType instanceof GeometryDescriptor && stringValue != null && !stringValue.isEmpty()) {
             try {
                 Geometry geometry = wktReader.read(stringValue);
                 value = Converters.convert(geometry, attType.getType().getBinding());
@@ -218,12 +213,11 @@ public class PropertyFeatureReader implements FeatureReader<SimpleFeatureType, S
 
         if (attType.getType() instanceof GeometryType) {
             // this is to be passed on in the geometry objects so the srs name gets encoded
-            CoordinateReferenceSystem crs =
-                    ((GeometryType) attType.getType()).getCoordinateReferenceSystem();
+            CoordinateReferenceSystem crs = ((GeometryType) attType.getType()).getCoordinateReferenceSystem();
             if (crs != null) {
                 // must be geometry, but check anyway
-                if (value != null && value instanceof Geometry) {
-                    ((Geometry) value).setUserData(crs);
+                if (value != null && value instanceof Geometry geometry) {
+                    geometry.setUserData(crs);
                 }
             }
         }
@@ -296,10 +290,7 @@ public class PropertyFeatureReader implements FeatureReader<SimpleFeatureType, S
         return txt.substring(start);
     }
 
-    /**
-     * Be sure to call close when you are finished with this reader; as it must close the file it
-     * has open.
-     */
+    /** Be sure to call close when you are finished with this reader; as it must close the file it has open. */
     @Override
     public void close() throws IOException {
         if (reader == null) {

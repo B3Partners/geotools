@@ -24,11 +24,15 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ByteArrayInStream;
@@ -37,9 +41,6 @@ import org.locationtech.jts.io.OutStream;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKBReader;
 import org.locationtech.jts.io.WKBWriter;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
 
 /**
  * Allows writing and reading features to/from the given file
@@ -50,6 +51,8 @@ public class SimpleFeatureIO {
 
     public static final int MAX_BYTES_LENGTH = 65535;
     public static final String BIG_STRING = "bigString";
+
+    public static final String ENABLE_DESERIALIZATION = "geotools.simplefeatureio.deserialization";
 
     RandomAccessFile raf;
 
@@ -65,11 +68,16 @@ public class SimpleFeatureIO {
     ByteArrayOutStream bos;
     byte[] buffer = new byte[8192]; // reusable buffer for small geometries
 
+    private final boolean initialFileEmpty;
+    private final String enableDeserialization;
+
     public SimpleFeatureIO(File file, SimpleFeatureType schema) throws FileNotFoundException {
         this.file = file;
         this.raf = new RandomAccessFile(file, "rw");
         this.schema = schema;
         this.builder = new SimpleFeatureBuilder(schema);
+        this.initialFileEmpty = this.file.length() <= 0;
+        this.enableDeserialization = System.getProperty(ENABLE_DESERIALIZATION);
     }
 
     /** Writes the feature to the file */
@@ -119,7 +127,7 @@ public class SimpleFeatureIO {
                     String strVal = (String) value;
                     List<String> values = new ArrayList<>();
                     // if bytes length is over the maximum allowed, calculate parts
-                    if (strVal.getBytes().length >= MAX_BYTES_LENGTH) {
+                    if (strVal.getBytes(StandardCharsets.UTF_8).length >= MAX_BYTES_LENGTH) {
                         values.addAll(split(strVal, 32767));
                     } else {
                         values.add(strVal);
@@ -163,7 +171,7 @@ public class SimpleFeatureIO {
         return ad.getUserData() != null
                 && ad.getUserData().containsKey(BIG_STRING)
                 && ad.getUserData().get(BIG_STRING) instanceof Boolean
-                && ((Boolean) ad.getUserData().get(BIG_STRING));
+                && (Boolean) ad.getUserData().get(BIG_STRING);
     }
 
     /** Reads the next feature form the file */
@@ -269,6 +277,11 @@ public class SimpleFeatureIO {
 
     @SuppressWarnings("BanSerializableRead")
     private Object readObject() throws IOException {
+        if ("false".equalsIgnoreCase(this.enableDeserialization)) {
+            throw new IllegalStateException("Object deserialization is not allowed");
+        } else if (!this.initialFileEmpty && !"true".equalsIgnoreCase(this.enableDeserialization)) {
+            throw new IllegalStateException("Object deserialization is only allowed when created with an empty file");
+        }
         int length = raf.readInt();
         byte[] buffer = new byte[length];
         raf.read(buffer);
@@ -328,10 +341,9 @@ public class SimpleFeatureIO {
     }
 
     /**
-     * Straight OutStream implementation on top of a byte[], can reuse the one given, or allocate a
-     * larger one if needed
+     * Straight OutStream implementation on top of a byte[], can reuse the one given, or allocate a larger one if needed
      */
-    private class ByteArrayOutStream implements OutStream {
+    private static class ByteArrayOutStream implements OutStream {
 
         byte[] buffer;
         int position;

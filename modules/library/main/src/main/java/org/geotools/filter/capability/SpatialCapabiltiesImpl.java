@@ -20,15 +20,15 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import org.opengis.filter.capability.GeometryOperand;
-import org.opengis.filter.capability.SpatialCapabilities;
-import org.opengis.filter.capability.SpatialOperators;
+import org.geotools.api.filter.capability.GeometryOperand;
+import org.geotools.api.filter.capability.SpatialCapabilities;
+import org.geotools.api.filter.capability.SpatialOperators;
 
 /**
  * Implementation of the SpatialCapabilities interface.
  *
- * <p>This class is "null safe" in that component classes will be created as needed if if they were
- * not provided during construction.
+ * <p>This class is "null safe" in that component classes will be created as needed if if they were not provided during
+ * construction.
  *
  * @author Justin Deoliveira, The Open Planning Project
  */
@@ -42,8 +42,7 @@ public class SpatialCapabiltiesImpl implements SpatialCapabilities {
         this.spatialOperators = new SpatialOperatorsImpl();
     }
 
-    public SpatialCapabiltiesImpl(
-            Collection<GeometryOperand> geometryOperands, SpatialOperators spatialOperators) {
+    public SpatialCapabiltiesImpl(Collection<GeometryOperand> geometryOperands, SpatialOperators spatialOperators) {
         this.geometryOperands = new HashSet<>();
         if (geometryOperands != null) {
             this.geometryOperands.addAll(geometryOperands);
@@ -51,8 +50,7 @@ public class SpatialCapabiltiesImpl implements SpatialCapabilities {
         this.spatialOperators = toSpatialOperatorsImpl(spatialOperators);
     }
 
-    public SpatialCapabiltiesImpl(
-            GeometryOperand[] geometryOperands, SpatialOperators spatialOperators) {
+    public SpatialCapabiltiesImpl(GeometryOperand[] geometryOperands, SpatialOperators spatialOperators) {
         this.geometryOperands = new HashSet<>();
         if (geometryOperands != null) {
             this.geometryOperands.addAll(Arrays.asList(geometryOperands));
@@ -71,8 +69,8 @@ public class SpatialCapabiltiesImpl implements SpatialCapabilities {
     private static SpatialOperatorsImpl toSpatialOperatorsImpl(SpatialOperators spatialOperators) {
         if (spatialOperators == null) {
             return new SpatialOperatorsImpl();
-        } else if (spatialOperators instanceof SpatialOperatorsImpl) {
-            return (SpatialOperatorsImpl) spatialOperators;
+        } else if (spatialOperators instanceof SpatialOperatorsImpl impl) {
+            return impl;
         }
         return new SpatialOperatorsImpl(spatialOperators);
     }
@@ -114,8 +112,8 @@ public class SpatialCapabiltiesImpl implements SpatialCapabilities {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((geometryOperands == null) ? 0 : geometryOperands.hashCode());
-        result = prime * result + ((spatialOperators == null) ? 0 : spatialOperators.hashCode());
+        result = prime * result + (geometryOperands == null ? 0 : geometryOperands.hashCode());
+        result = prime * result + (spatialOperators == null ? 0 : spatialOperators.hashCode());
         return result;
     }
 

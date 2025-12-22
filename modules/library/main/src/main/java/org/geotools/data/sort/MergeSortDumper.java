@@ -24,17 +24,17 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.filter.sort.SortBy;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.simple.DelegateSimpleFeatureReader;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureReader;
 import org.geotools.util.factory.Hints;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.filter.sort.SortBy;
 
 class MergeSortDumper {
 
@@ -60,8 +60,7 @@ class MergeSortDumper {
                     return false;
                 }
                 Class<?> binding = ad.getType().getBinding();
-                if (!Comparable.class.isAssignableFrom(binding)
-                        || Geometry.class.isAssignableFrom(binding)) {
+                if (!Comparable.class.isAssignableFrom(binding) || Geometry.class.isAssignableFrom(binding)) {
                     return false;
                 }
             }
@@ -70,8 +69,7 @@ class MergeSortDumper {
         return true;
     }
 
-    static SimpleFeatureReader getDelegateReader(SimpleFeatureReader reader, Query query)
-            throws IOException {
+    static SimpleFeatureReader getDelegateReader(SimpleFeatureReader reader, Query query) throws IOException {
         int maxFeatures = getMaxFeatures(query);
 
         return getDelegateReader(reader, query.getSortBy(), maxFeatures);
@@ -92,13 +90,12 @@ class MergeSortDumper {
         return maxFeatures;
     }
 
-    static SimpleFeatureReader getDelegateReader(
-            SimpleFeatureReader reader, SortBy[] sortBy, int maxFeatures) throws IOException {
+    static SimpleFeatureReader getDelegateReader(SimpleFeatureReader reader, SortBy[] sortBy, int maxFeatures)
+            throws IOException {
         if (maxFeatures < 0) {
             maxFeatures = getMaxFeatures(Query.ALL);
         }
-        Comparator<SimpleFeature> comparator =
-                SortedFeatureReader.getComparator(sortBy, reader.getFeatureType());
+        Comparator<SimpleFeature> comparator = SortedFeatureReader.getComparator(sortBy, reader.getFeatureType());
 
         // easy case, no sorting needed
         if (comparator == null) {
@@ -108,12 +105,11 @@ class MergeSortDumper {
         // double check
         SimpleFeatureType schema = reader.getFeatureType();
         if (!canSort(schema, sortBy)) {
-            throw new IllegalArgumentException(
-                    "The specified reader cannot be sorted, either the "
-                            + "sorting properties are not comparable or the attributes are not serializable: "
-                            + reader.getFeatureType().getTypeName()
-                            + "\n "
-                            + Arrays.toString(sortBy));
+            throw new IllegalArgumentException("The specified reader cannot be sorted, either the "
+                    + "sorting properties are not comparable or the attributes are not serializable: "
+                    + reader.getFeatureType().getTypeName()
+                    + "\n "
+                    + Arrays.toString(sortBy));
         }
 
         int count = 0;
@@ -122,7 +118,7 @@ class MergeSortDumper {
         List<SimpleFeature> features = new ArrayList<>();
         List<FeatureBlockReader> readers = new ArrayList<>();
         boolean cleanFile = true;
-        try {
+        try (reader) {
             // read and store into files as necessary
             while (reader.hasNext()) {
                 SimpleFeature f = reader.next();
@@ -157,7 +153,6 @@ class MergeSortDumper {
                 // reader based on the collection contents
                 Collections.sort(features, comparator);
 
-                @SuppressWarnings("PMD.CloseResource") // returned in wrapper
                 SimpleFeatureIterator fi = new ListFeatureCollection(schema, features).features();
                 return new DelegateSimpleFeatureReader(schema, fi);
             } else {
@@ -171,14 +166,11 @@ class MergeSortDumper {
                 io.close(true);
                 file.delete();
             }
-
-            reader.close();
         }
     }
 
     /** Writes the feature attributes to a binary file */
-    static FeatureBlockReader storeToFile(SimpleFeatureIO io, List<SimpleFeature> features)
-            throws IOException {
+    static FeatureBlockReader storeToFile(SimpleFeatureIO io, List<SimpleFeature> features) throws IOException {
         long start = io.getOffset();
 
         // write each attribute in the random access file

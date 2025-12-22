@@ -23,27 +23,26 @@ import java.net.URI;
 import javax.xml.namespace.QName;
 import net.opengis.wfs20.GetPropertyValueType;
 import net.opengis.wfs20.QueryType;
+import org.geotools.api.filter.Id;
 import org.geotools.wfs.v2_0.WFSTestSupport;
 import org.junit.Test;
-import org.opengis.filter.Id;
 
 public class GetPropertyValueTypeBindingTest extends WFSTestSupport {
     @Test
     public void testParse1() throws Exception {
-        String xml =
-                "<wfs:GetPropertyValue service='WFS' version='2.0.0' valueReference='foo'"
-                        + "   xmlns:myns='http://www.someserver.com/myns' "
-                        + "   xmlns:wfs='http://www.opengis.net/wfs/2.0' "
-                        + "   xmlns:fes='http://www.opengis.net/fes/2.0' "
-                        + "   xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
-                        + "   xsi:schemaLocation='http://www.opengis.net/wfs/2.0 "
-                        + "                       http://schemas.opengis.net/wfs/2.0/wfs.xsd'> "
-                        + "   <wfs:Query typeNames='myns:InWaterA_1M' srsName='epsg:4326'> "
-                        + "      <fes:Filter> "
-                        + "         <fes:ResourceId rid='InWaterA_1M.1234'/> "
-                        + "      </fes:Filter> "
-                        + "   </wfs:Query> "
-                        + "</wfs:GetPropertyValue> ";
+        String xml = "<wfs:GetPropertyValue service='WFS' version='2.0.0' valueReference='foo'"
+                + "   xmlns:myns='http://www.someserver.com/myns' "
+                + "   xmlns:wfs='http://www.opengis.net/wfs/2.0' "
+                + "   xmlns:fes='http://www.opengis.net/fes/2.0' "
+                + "   xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
+                + "   xsi:schemaLocation='http://www.opengis.net/wfs/2.0 "
+                + "                       http://schemas.opengis.net/wfs/2.0/wfs.xsd'> "
+                + "   <wfs:Query typeNames='myns:InWaterA_1M' srsName='epsg:4326'> "
+                + "      <fes:Filter> "
+                + "         <fes:ResourceId rid='InWaterA_1M.1234'/> "
+                + "      </fes:Filter> "
+                + "   </wfs:Query> "
+                + "</wfs:GetPropertyValue> ";
 
         buildDocument(xml);
 

@@ -20,20 +20,16 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.operation.distance3d.Distance3DOp;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_distance3D extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "distance3D",
-                    Double.class,
-                    parameter("geometry1", Geometry.class),
-                    parameter("geometry2", Geometry.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "distance3D", Double.class, parameter("geometry1", Geometry.class), parameter("geometry2", Geometry.class));
 
     public FilterFunction_distance3D() {
         super(NAME);

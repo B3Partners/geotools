@@ -26,6 +26,15 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.IdentifiedObject;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.DerivedCRS;
+import org.geotools.api.referencing.crs.GeographicCRS;
+import org.geotools.api.referencing.crs.ProjectedCRS;
+import org.geotools.api.referencing.crs.TemporalCRS;
+import org.geotools.api.referencing.datum.GeodeticDatum;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.referencing.crs.AbstractDerivedCRS;
 import org.geotools.referencing.crs.DefaultDerivedCRS;
@@ -33,15 +42,6 @@ import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.referencing.crs.DefaultProjectedCRS;
 import org.geotools.referencing.datum.DefaultGeodeticDatum;
 import org.junit.Test;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.IdentifiedObject;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.DerivedCRS;
-import org.opengis.referencing.crs.GeographicCRS;
-import org.opengis.referencing.crs.ProjectedCRS;
-import org.opengis.referencing.crs.TemporalCRS;
-import org.opengis.referencing.datum.GeodeticDatum;
 
 /**
  * Tests the {@link AuthorityFactoryProxy} implementation.
@@ -56,29 +56,23 @@ public final class AuthorityFactoryProxyTest {
         assertEquals(ProjectedCRS.class, AuthorityFactoryProxy.getType(ProjectedCRS.class));
         assertEquals(ProjectedCRS.class, AuthorityFactoryProxy.getType(DefaultProjectedCRS.class));
         assertEquals(GeographicCRS.class, AuthorityFactoryProxy.getType(GeographicCRS.class));
-        assertEquals(
-                GeographicCRS.class, AuthorityFactoryProxy.getType(DefaultGeographicCRS.class));
+        assertEquals(GeographicCRS.class, AuthorityFactoryProxy.getType(DefaultGeographicCRS.class));
         assertEquals(DerivedCRS.class, AuthorityFactoryProxy.getType(DefaultDerivedCRS.class));
-        assertEquals(
-                CoordinateReferenceSystem.class,
-                AuthorityFactoryProxy.getType(AbstractDerivedCRS.class));
-        assertEquals(
-                GeodeticDatum.class, AuthorityFactoryProxy.getType(DefaultGeodeticDatum.class));
+        assertEquals(CoordinateReferenceSystem.class, AuthorityFactoryProxy.getType(AbstractDerivedCRS.class));
+        assertEquals(GeodeticDatum.class, AuthorityFactoryProxy.getType(DefaultGeodeticDatum.class));
     }
 
     /** Tests {@link AuthorityFactoryProxy#create}. We uses the CRS factory for testing purpose. */
     @Test
     public void testCreate() throws FactoryException {
-        final CRSAuthorityFactory factory =
-                ReferencingFactoryFinder.getCRSAuthorityFactory("CRS", null);
+        final CRSAuthorityFactory factory = ReferencingFactoryFinder.getCRSAuthorityFactory("CRS", null);
         final CoordinateReferenceSystem expected = factory.createCoordinateReferenceSystem("83");
         /*
          * Try the proxy using the 'createGeographicCRS', 'createCoordinateReferenceSystem'
          * and 'createObject' methods. The later uses a generic implementation, while the
          * first two should use specialized implementations.
          */
-        AuthorityFactoryProxy proxy =
-                AuthorityFactoryProxy.getInstance(factory, GeographicCRS.class);
+        AuthorityFactoryProxy proxy = AuthorityFactoryProxy.getInstance(factory, GeographicCRS.class);
         assertTrue(proxy.getClass().getName().endsWith("Geographic"));
         assertSame(expected, proxy.create("83"));
         assertSame(expected, proxy.create("CRS:83"));
@@ -122,16 +116,11 @@ public final class AuthorityFactoryProxyTest {
         }
     }
 
-    /**
-     * Tests {@link IdentifiedObjectFinder#createFromCodes}. We uses the CRS factory for testing
-     * purpose.
-     */
+    /** Tests {@link IdentifiedObjectFinder#createFromCodes}. We uses the CRS factory for testing purpose. */
     @Test
     public void testCreateFromCodes() throws FactoryException {
-        final CRSAuthorityFactory factory =
-                ReferencingFactoryFinder.getCRSAuthorityFactory("CRS", null);
-        final IdentifiedObjectFinder proxy =
-                new IdentifiedObjectFinder(factory, GeographicCRS.class);
+        final CRSAuthorityFactory factory = ReferencingFactoryFinder.getCRSAuthorityFactory("CRS", null);
+        final IdentifiedObjectFinder proxy = new IdentifiedObjectFinder(factory, GeographicCRS.class);
         CoordinateReferenceSystem expected = factory.createCoordinateReferenceSystem("84");
         assertNotSame(expected, DefaultGeographicCRS.WGS84);
         assertSame(expected, proxy.createFromCodes(expected, false));

@@ -10,10 +10,10 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.DataStore;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.test.TestData;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /*
  *    GeoTools - The Open Source Java GIS Toolkit
@@ -60,7 +60,8 @@ public class NetCDFAuxiliaryTest {
         assertEquals(5, type.getAttributeCount());
 
         assertEquals("the_geom", type.getAttributeDescriptors().get(0).getName().getLocalPart());
-        assertEquals("imageindex", type.getAttributeDescriptors().get(1).getName().getLocalPart());
+        assertEquals(
+                "imageindex", type.getAttributeDescriptors().get(1).getName().getLocalPart());
         assertEquals("time", type.getAttributeDescriptors().get(2).getName().getLocalPart());
         assertEquals("z", type.getAttributeDescriptors().get(3).getName().getLocalPart());
         assertEquals("runtime", type.getAttributeDescriptors().get(4).getName().getLocalPart());

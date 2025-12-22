@@ -16,13 +16,13 @@
  */
 package org.geotools.gce.imagemosaic.catalog.index;
 
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.List;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlType;
 
 /**
  * Java class for domainType complex type.
@@ -55,14 +55,15 @@ public class DomainType {
     @XmlAttribute(required = true)
     protected String name;
 
-    @XmlAttribute protected String ref;
+    @XmlAttribute
+    protected String ref;
 
     /**
      * Gets the value of the attributes property.
      *
-     * <p>This accessor method returns a reference to the live list, not a snapshot. Therefore any
-     * modification you make to the returned list will be present inside the JAXB object. This is
-     * why there is not a <CODE>set</CODE> method for the attributes property.
+     * <p>This accessor method returns a reference to the live list, not a snapshot. Therefore any modification you make
+     * to the returned list will be present inside the JAXB object. This is why there is not a <CODE>set</CODE> method
+     * for the attributes property.
      *
      * <p>For example, to add a new item, do as follows:
      *

@@ -25,16 +25,57 @@ import static org.geotools.referencing.operation.ProjectionAnalyzer.createLinear
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import javax.measure.MetricPrefix;
 import javax.measure.Unit;
 import javax.measure.quantity.Angle;
 import javax.measure.quantity.Time;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.ReferenceIdentifier;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CRSFactory;
+import org.geotools.api.referencing.crs.CompoundCRS;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.GeneralDerivedCRS;
+import org.geotools.api.referencing.crs.GeocentricCRS;
+import org.geotools.api.referencing.crs.GeographicCRS;
+import org.geotools.api.referencing.crs.ProjectedCRS;
+import org.geotools.api.referencing.crs.SingleCRS;
+import org.geotools.api.referencing.crs.TemporalCRS;
+import org.geotools.api.referencing.crs.VerticalCRS;
+import org.geotools.api.referencing.cs.AxisDirection;
+import org.geotools.api.referencing.cs.CartesianCS;
+import org.geotools.api.referencing.cs.CoordinateSystem;
+import org.geotools.api.referencing.cs.CoordinateSystemAxis;
+import org.geotools.api.referencing.cs.EllipsoidalCS;
+import org.geotools.api.referencing.cs.TimeCS;
+import org.geotools.api.referencing.cs.VerticalCS;
+import org.geotools.api.referencing.datum.Datum;
+import org.geotools.api.referencing.datum.Ellipsoid;
+import org.geotools.api.referencing.datum.GeodeticDatum;
+import org.geotools.api.referencing.datum.PrimeMeridian;
+import org.geotools.api.referencing.datum.TemporalDatum;
+import org.geotools.api.referencing.datum.VerticalDatum;
+import org.geotools.api.referencing.datum.VerticalDatumType;
+import org.geotools.api.referencing.operation.ConcatenatedOperation;
+import org.geotools.api.referencing.operation.Conversion;
+import org.geotools.api.referencing.operation.CoordinateOperation;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.Matrix;
+import org.geotools.api.referencing.operation.NoninvertibleTransformException;
+import org.geotools.api.referencing.operation.Operation;
+import org.geotools.api.referencing.operation.OperationMethod;
+import org.geotools.api.referencing.operation.OperationNotFoundException;
+import org.geotools.api.referencing.operation.Transformation;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.referencing.AbstractIdentifiedObject;
+import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultCompoundCRS;
 import org.geotools.referencing.crs.DefaultEngineeringCRS;
 import org.geotools.referencing.cs.DefaultCartesianCS;
@@ -49,51 +90,15 @@ import org.geotools.referencing.operation.matrix.SingularMatrixException;
 import org.geotools.referencing.operation.matrix.XMatrix;
 import org.geotools.util.Classes;
 import org.geotools.util.factory.Hints;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.ReferenceIdentifier;
-import org.opengis.referencing.crs.CRSFactory;
-import org.opengis.referencing.crs.CompoundCRS;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.GeneralDerivedCRS;
-import org.opengis.referencing.crs.GeocentricCRS;
-import org.opengis.referencing.crs.GeographicCRS;
-import org.opengis.referencing.crs.ProjectedCRS;
-import org.opengis.referencing.crs.SingleCRS;
-import org.opengis.referencing.crs.TemporalCRS;
-import org.opengis.referencing.crs.VerticalCRS;
-import org.opengis.referencing.cs.AxisDirection;
-import org.opengis.referencing.cs.CartesianCS;
-import org.opengis.referencing.cs.CoordinateSystem;
-import org.opengis.referencing.cs.CoordinateSystemAxis;
-import org.opengis.referencing.cs.EllipsoidalCS;
-import org.opengis.referencing.cs.TimeCS;
-import org.opengis.referencing.cs.VerticalCS;
-import org.opengis.referencing.datum.Datum;
-import org.opengis.referencing.datum.Ellipsoid;
-import org.opengis.referencing.datum.GeodeticDatum;
-import org.opengis.referencing.datum.PrimeMeridian;
-import org.opengis.referencing.datum.TemporalDatum;
-import org.opengis.referencing.datum.VerticalDatum;
-import org.opengis.referencing.datum.VerticalDatumType;
-import org.opengis.referencing.operation.Conversion;
-import org.opengis.referencing.operation.CoordinateOperation;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.Matrix;
-import org.opengis.referencing.operation.NoninvertibleTransformException;
-import org.opengis.referencing.operation.Operation;
-import org.opengis.referencing.operation.OperationMethod;
-import org.opengis.referencing.operation.OperationNotFoundException;
-import org.opengis.referencing.operation.Transformation;
 import si.uom.NonSI;
 import si.uom.SI;
 
 /**
- * Creates {@linkplain CoordinateOperation coordinate operations}. This factory is capable to find
- * coordinate {@linkplain Transformation transformations} or {@linkplain Conversion conversions}
- * between two {@linkplain CoordinateReferenceSystem coordinate reference systems}. It delegates
- * most of its work to one or many of {@code createOperationStep} methods. Subclasses can override
- * those methods in order to extend the factory capability to some more CRS.
+ * Creates {@linkplain CoordinateOperation coordinate operations}. This factory is capable to find coordinate
+ * {@linkplain Transformation transformations} or {@linkplain Conversion conversions} between two
+ * {@linkplain CoordinateReferenceSystem coordinate reference systems}. It delegates most of its work to one or many of
+ * {@code createOperationStep} methods. Subclasses can override those methods in order to extend the factory capability
+ * to some more CRS.
  *
  * @since 2.1
  * @author Martin Desruisseaux (IRD)
@@ -109,8 +114,16 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     private static final Unit<Time> MILLISECOND = MetricPrefix.MILLI(SI.SECOND);
 
     /**
-     * The operation to use by {@link #createTransformationStep(GeographicCRS,GeographicCRS)} for
-     * datum shift. This string can have one of the following values:
+     * The cache of pivot CRSs. This cache is used for avoiding to search for pivot CRSs in the EPSG database every time
+     */
+    private static Set<CoordinateReferenceSystem> PIVOT_CRS_CACHE = null;
+
+    /** The key for enabling or disabling the pivot CRS checks. The default value is {@code true}. */
+    public static final String PIVOT_CRS_LIST_KEY = "org.geotools.referencing.pivots";
+
+    /**
+     * The operation to use by {@link #createTransformationStep(GeographicCRS,GeographicCRS)} for datum shift. This
+     * string can have one of the following values:
      *
      * <p>
      *
@@ -131,10 +144,9 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * Constructs a coordinate operation factory using the specified hints. This constructor
-     * recognizes the {@link Hints#CRS_FACTORY CRS}, {@link Hints#CS_FACTORY CS}, {@link
-     * Hints#DATUM_FACTORY DATUM} and {@link Hints#MATH_TRANSFORM_FACTORY MATH_TRANSFORM} {@code
-     * FACTORY} hints.
+     * Constructs a coordinate operation factory using the specified hints. This constructor recognizes the
+     * {@link Hints#CRS_FACTORY CRS}, {@link Hints#CS_FACTORY CS}, {@link Hints#DATUM_FACTORY DATUM} and
+     * {@link Hints#MATH_TRANSFORM_FACTORY MATH_TRANSFORM} {@code FACTORY} hints.
      *
      * @param userHints The hints, or {@code null} if none.
      */
@@ -143,14 +155,13 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * Constructs a coordinate operation factory using the specified hints and priority. This
-     * constructor recognizes the {@link Hints#CRS_FACTORY CRS}, {@link Hints#CS_FACTORY CS}, {@link
-     * Hints#DATUM_FACTORY DATUM} and {@link Hints#MATH_TRANSFORM_FACTORY MATH_TRANSFORM} {@code
-     * FACTORY} hints.
+     * Constructs a coordinate operation factory using the specified hints and priority. This constructor recognizes the
+     * {@link Hints#CRS_FACTORY CRS}, {@link Hints#CS_FACTORY CS}, {@link Hints#DATUM_FACTORY DATUM} and
+     * {@link Hints#MATH_TRANSFORM_FACTORY MATH_TRANSFORM} {@code FACTORY} hints.
      *
      * @param userHints The hints, or {@code null} if none.
-     * @param priority The priority for this factory, as a number between {@link #MINIMUM_PRIORITY
-     *     MINIMUM_PRIORITY} and {@link #MAXIMUM_PRIORITY MAXIMUM_PRIORITY} inclusive.
+     * @param priority The priority for this factory, as a number between {@link #MINIMUM_PRIORITY MINIMUM_PRIORITY} and
+     *     {@link #MAXIMUM_PRIORITY MAXIMUM_PRIORITY} inclusive.
      * @since 2.2
      */
     public DefaultCoordinateOperationFactory(final Hints userHints, final int priority) {
@@ -165,15 +176,15 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
         //
         if (userHints != null) {
             Object candidate = userHints.get(Hints.DATUM_SHIFT_METHOD);
-            if (candidate instanceof String) {
-                molodenskiMethod = (String) candidate;
+            if (candidate instanceof String string) {
+                molodenskiMethod = string;
                 if (molodenskiMethod.trim().equalsIgnoreCase("Geocentric")) {
                     molodenskiMethod = null;
                 }
             }
             candidate = userHints.get(Hints.LENIENT_DATUM_SHIFT);
-            if (candidate instanceof Boolean) {
-                lenientDatumShift = ((Boolean) candidate).booleanValue();
+            if (candidate instanceof Boolean boolean1) {
+                lenientDatumShift = boolean1.booleanValue();
             }
         }
         //
@@ -186,23 +197,21 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * Returns an operation for conversion or transformation between two coordinate reference
-     * systems. If an operation exists, it is returned. If more than one operation exists, the
-     * default is returned. If no operation exists, then the exception is thrown.
+     * Returns an operation for conversion or transformation between two coordinate reference systems. If an operation
+     * exists, it is returned. If more than one operation exists, the default is returned. If no operation exists, then
+     * the exception is thrown.
      *
-     * <p>The default implementation inspects the CRS and delegates the work to one or many {@code
-     * createOperationStep(...)} methods. This method fails if no path between the CRS is found.
+     * <p>The default implementation inspects the CRS and delegates the work to one or many
+     * {@code createOperationStep(...)} methods. This method fails if no path between the CRS is found.
      *
      * @param sourceCRS Input coordinate reference system.
      * @param targetCRS Output coordinate reference system.
      * @return A coordinate operation from {@code sourceCRS} to {@code targetCRS}.
-     * @throws OperationNotFoundException if no operation path was found from {@code sourceCRS} to
-     *     {@code targetCRS}.
+     * @throws OperationNotFoundException if no operation path was found from {@code sourceCRS} to {@code targetCRS}.
      * @throws FactoryException if the operation creation failed for some other reason.
      */
     @Override
-    public CoordinateOperation createOperation(
-            CoordinateReferenceSystem sourceCRS, CoordinateReferenceSystem targetCRS)
+    public CoordinateOperation createOperation(CoordinateReferenceSystem sourceCRS, CoordinateReferenceSystem targetCRS)
             throws OperationNotFoundException, FactoryException {
         Set<CoordinateOperation> operations = findOperations(sourceCRS, targetCRS, 1);
         for (CoordinateOperation op : operations) {
@@ -212,11 +221,11 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * Returns all the available operations for conversion or transformation between two coordinate
-     * reference systems. If no operation exists, then an empty set is returned.
+     * Returns all the available operations for conversion or transformation between two coordinate reference systems.
+     * If no operation exists, then an empty set is returned.
      *
-     * <p>The default implementation inspects the CRS and delegates the work to one or many {@code
-     * createOperationStep(...)} methods. This method fails if no path between the CRSs is found.
+     * <p>The default implementation inspects the CRS and delegates the work to one or many
+     * {@code createOperationStep(...)} methods. This method fails if no path between the CRSs is found.
      *
      * @param sourceCRS Input coordinate reference system.
      * @param targetCRS Output coordinate reference system.
@@ -231,24 +240,21 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * Returns all the available operations for conversion or transformation between two coordinate
-     * reference systems. If no operation exists, then an empty set is returned.
+     * Returns all the available operations for conversion or transformation between two coordinate reference systems.
+     * If no operation exists, then an empty set is returned.
      *
-     * <p>The default implementation inspects the CRS and delegates the work to one or many {@code
-     * createOperationStep(...)} methods. This method fails if no path between the CRSs is found.
+     * <p>The default implementation inspects the CRS and delegates the work to one or many
+     * {@code createOperationStep(...)} methods. This method fails if no path between the CRSs is found.
      *
      * @param sourceCRS Input coordinate reference system.
      * @param targetCRS Output coordinate reference system.
-     * @param limit The maximum number of operations to be returned. Use -1 to return all the
-     *     available operations. Use 1 to return just one operations. Currently, the behavior for
-     *     other values of {@code limit} is undefined.
+     * @param limit The maximum number of operations to be returned. Use -1 to return all the available operations. Use
+     *     1 to return just one operations. Currently, the behavior for other values of {@code limit} is undefined.
      * @return A {@code Set} of coordinate operations from {@code sourceCRS} to {@code targetCRS}.
      * @throws FactoryException if the operation creation failed for some other reason.
      */
     protected Set<CoordinateOperation> findOperations(
-            final CoordinateReferenceSystem sourceCRS,
-            final CoordinateReferenceSystem targetCRS,
-            int limit)
+            final CoordinateReferenceSystem sourceCRS, final CoordinateReferenceSystem targetCRS, int limit)
             throws FactoryException {
         ensureNonNull("sourceCRS", sourceCRS);
         ensureNonNull("targetCRS", targetCRS);
@@ -256,11 +262,10 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
             final int dim = getDimension(sourceCRS);
             assert dim == getDimension(targetCRS) : dim;
             CoordinateOperation op =
-                    createFromAffineTransform(
-                            IDENTITY, sourceCRS, targetCRS, MatrixFactory.create(dim + 1));
+                    createFromAffineTransform(IDENTITY, sourceCRS, targetCRS, MatrixFactory.create(dim + 1));
             return Collections.singleton(op);
         } else {
-            // Query the database (if any) before to try to find the operation by ourself.
+            // Query the database (if any) before to try to find the operation by ourselves.
             Set<CoordinateOperation> result = findFromDatabase(sourceCRS, targetCRS, limit);
             if (!result.isEmpty()) {
                 return result;
@@ -278,8 +283,7 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
             final int dimTarget = getDimension(targetCRS);
             if (dimTarget == dimSource) {
                 final Matrix matrix = MatrixFactory.create(dimTarget + 1, dimSource + 1);
-                CoordinateOperation op =
-                        createFromAffineTransform(IDENTITY, sourceCRS, targetCRS, matrix);
+                CoordinateOperation op = createFromAffineTransform(IDENTITY, sourceCRS, targetCRS, matrix);
                 return Collections.singleton(op);
             }
         }
@@ -292,17 +296,14 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
          * may become interleaved with more complex operation (e.g. projection followed by the
          * inverse projection, before they get simplified by DefaultConcatenatedOperation, etc.).
          */
-        if (sourceCRS instanceof CompoundCRS) {
+        if (sourceCRS instanceof CompoundCRS source) {
             final List<SingleCRS> sources = DefaultCompoundCRS.getSingleCRS(sourceCRS);
             final List<SingleCRS> targets = DefaultCompoundCRS.getSingleCRS(targetCRS);
             if (containsIgnoreMetadata(sources, targets)) {
-                final CompoundCRS source = (CompoundCRS) sourceCRS;
-                if (targetCRS instanceof CompoundCRS) {
-                    final CompoundCRS target = (CompoundCRS) targetCRS;
+                if (targetCRS instanceof CompoundCRS target) {
                     return findOperationSteps(source, target, limit);
                 }
-                if (targetCRS instanceof SingleCRS) {
-                    final SingleCRS target = (SingleCRS) targetCRS;
+                if (targetCRS instanceof SingleCRS target) {
                     return findOperationSteps(source, target, limit);
                 }
             }
@@ -312,22 +313,17 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
         ////     Geographic  -->  Geographic, Projected or Geocentric    ////
         ////                                                             ////
         /////////////////////////////////////////////////////////////////////
-        if (sourceCRS instanceof GeographicCRS) {
-            final GeographicCRS source = (GeographicCRS) sourceCRS;
-            if (targetCRS instanceof GeographicCRS) {
-                final GeographicCRS target = (GeographicCRS) targetCRS;
+        if (sourceCRS instanceof GeographicCRS source) {
+            if (targetCRS instanceof GeographicCRS target) {
                 return Collections.singleton(createOperationStep(source, target));
             }
-            if (targetCRS instanceof ProjectedCRS) {
-                final ProjectedCRS target = (ProjectedCRS) targetCRS;
+            if (targetCRS instanceof ProjectedCRS target) {
                 return findOperationSteps(source, target, limit);
             }
-            if (targetCRS instanceof GeocentricCRS) {
-                final GeocentricCRS target = (GeocentricCRS) targetCRS;
+            if (targetCRS instanceof GeocentricCRS target) {
                 return Collections.singleton(createOperationStep(source, target));
             }
-            if (targetCRS instanceof VerticalCRS) {
-                final VerticalCRS target = (VerticalCRS) targetCRS;
+            if (targetCRS instanceof VerticalCRS target) {
                 return Collections.singleton(createOperationStep(source, target));
             }
         }
@@ -336,14 +332,11 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
         ////     Projected  -->  Projected or Geographic     ////
         ////                                                 ////
         /////////////////////////////////////////////////////////
-        if (sourceCRS instanceof ProjectedCRS) {
-            final ProjectedCRS source = (ProjectedCRS) sourceCRS;
-            if (targetCRS instanceof ProjectedCRS) {
-                final ProjectedCRS target = (ProjectedCRS) targetCRS;
+        if (sourceCRS instanceof ProjectedCRS source) {
+            if (targetCRS instanceof ProjectedCRS target) {
                 return findOperationSteps(source, target, limit);
             }
-            if (targetCRS instanceof GeographicCRS) {
-                final GeographicCRS target = (GeographicCRS) targetCRS;
+            if (targetCRS instanceof GeographicCRS target) {
                 return findOperationSteps(source, target, limit);
             }
         }
@@ -352,14 +345,11 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
         ////     Geocentric  -->  Geocentric or Geographic    ////
         ////                                                  ////
         //////////////////////////////////////////////////////////
-        if (sourceCRS instanceof GeocentricCRS) {
-            final GeocentricCRS source = (GeocentricCRS) sourceCRS;
-            if (targetCRS instanceof GeocentricCRS) {
-                final GeocentricCRS target = (GeocentricCRS) targetCRS;
+        if (sourceCRS instanceof GeocentricCRS source) {
+            if (targetCRS instanceof GeocentricCRS target) {
                 return Collections.singleton(createOperationStep(source, target));
             }
-            if (targetCRS instanceof GeographicCRS) {
-                final GeographicCRS target = (GeographicCRS) targetCRS;
+            if (targetCRS instanceof GeographicCRS target) {
                 return Collections.singleton(createOperationStep(source, target));
             }
         }
@@ -368,10 +358,8 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
         ////     Vertical  -->  Vertical     ////
         ////                                 ////
         /////////////////////////////////////////
-        if (sourceCRS instanceof VerticalCRS) {
-            final VerticalCRS source = (VerticalCRS) sourceCRS;
-            if (targetCRS instanceof VerticalCRS) {
-                final VerticalCRS target = (VerticalCRS) targetCRS;
+        if (sourceCRS instanceof VerticalCRS source) {
+            if (targetCRS instanceof VerticalCRS target) {
                 return Collections.singleton(createOperationStep(source, target));
             }
         }
@@ -380,10 +368,8 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
         ////     Temporal  -->  Temporal     ////
         ////                                 ////
         /////////////////////////////////////////
-        if (sourceCRS instanceof TemporalCRS) {
-            final TemporalCRS source = (TemporalCRS) sourceCRS;
-            if (targetCRS instanceof TemporalCRS) {
-                final TemporalCRS target = (TemporalCRS) targetCRS;
+        if (sourceCRS instanceof TemporalCRS source) {
+            if (targetCRS instanceof TemporalCRS target) {
                 return Collections.singleton(createOperationStep(source, target));
             }
         }
@@ -392,11 +378,7 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
         ////     Any coordinate reference system -->  Derived CRS     ////
         ////                                                          ////
         //////////////////////////////////////////////////////////////////
-        if (targetCRS instanceof GeneralDerivedCRS) {
-            // Note: this code is identical to 'createOperationStep(GeographicCRS, ProjectedCRS)'
-            //       except that the later invokes directly the right method for 'step1' instead
-            //       of invoking 'createOperation' recursively.
-            final GeneralDerivedCRS target = (GeneralDerivedCRS) targetCRS;
+        if (targetCRS instanceof GeneralDerivedCRS target) {
             final CoordinateReferenceSystem base = target.getBaseCRS();
             final Set<CoordinateOperation> step1 = findOperations(sourceCRS, base, limit);
             final CoordinateOperation step2 = target.getConversionFromBase();
@@ -407,11 +389,7 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
         ////     Derived CRS -->  Any coordinate reference system     ////
         ////                                                          ////
         //////////////////////////////////////////////////////////////////
-        if (sourceCRS instanceof GeneralDerivedCRS) {
-            // Note: this code is identical to 'createOperationStep(ProjectedCRS, GeographicCRS)'
-            //       except that the later invokes directly the right method for 'step2' instead
-            //       of invoking 'createOperation' recursively.
-            final GeneralDerivedCRS source = (GeneralDerivedCRS) sourceCRS;
+        if (sourceCRS instanceof GeneralDerivedCRS source) {
             final CoordinateReferenceSystem base = source.getBaseCRS();
             final Set<CoordinateOperation> step2 = findOperations(base, targetCRS, limit);
             CoordinateOperation step1 = source.getConversionFromBase();
@@ -429,21 +407,16 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
         ////     Compound  -->  various CRS     ////
         ////                                    ////
         ////////////////////////////////////////////
-        if (sourceCRS instanceof CompoundCRS) {
-            final CompoundCRS source = (CompoundCRS) sourceCRS;
-            if (targetCRS instanceof CompoundCRS) {
-                final CompoundCRS target = (CompoundCRS) targetCRS;
+        if (sourceCRS instanceof CompoundCRS source) {
+            if (targetCRS instanceof CompoundCRS target) {
                 return findOperationSteps(source, target, limit);
             }
-            if (targetCRS instanceof SingleCRS) {
-                final SingleCRS target = (SingleCRS) targetCRS;
+            if (targetCRS instanceof SingleCRS target) {
                 return findOperationSteps(source, target, limit);
             }
         }
-        if (targetCRS instanceof CompoundCRS) {
-            final CompoundCRS target = (CompoundCRS) targetCRS;
-            if (sourceCRS instanceof SingleCRS) {
-                final SingleCRS source = (SingleCRS) sourceCRS;
+        if (targetCRS instanceof CompoundCRS target) {
+            if (sourceCRS instanceof SingleCRS source) {
                 return findOperationSteps(source, target, limit);
             }
         }
@@ -451,26 +424,23 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * Returns true if the the CRS is a {@link DefaultEngineeringCRS} wildcard one (like {@link
-     * DefaultEngineeringCRS#GENERIC_2D})
+     * Returns true if the the CRS is a {@link DefaultEngineeringCRS} wildcard one (like
+     * {@link DefaultEngineeringCRS#GENERIC_2D})
      */
     boolean isWildcard(final CoordinateReferenceSystem sourceCRS) {
-        return sourceCRS instanceof DefaultEngineeringCRS
-                && ((DefaultEngineeringCRS) sourceCRS).isWildcard();
+        return sourceCRS instanceof DefaultEngineeringCRS decrs && decrs.isWildcard();
     }
 
     /**
-     * Returns an operation using a particular method for conversion or transformation between two
-     * coordinate reference systems. If the operation exists on the implementation, then it is
-     * returned. If the operation does not exist on the implementation, then the implementation has
-     * the option of inferring the operation from the argument objects. If for whatever reason the
-     * specified operation will not be returned, then the exception is thrown.
+     * Returns an operation using a particular method for conversion or transformation between two coordinate reference
+     * systems. If the operation exists on the implementation, then it is returned. If the operation does not exist on
+     * the implementation, then the implementation has the option of inferring the operation from the argument objects.
+     * If for whatever reason the specified operation will not be returned, then the exception is thrown.
      *
      * @param sourceCRS Input coordinate reference system.
      * @param targetCRS Output coordinate reference system.
      * @param method the algorithmic method for conversion or transformation
-     * @throws OperationNotFoundException if no operation path was found from {@code sourceCRS} to
-     *     {@code targetCRS}.
+     * @throws OperationNotFoundException if no operation path was found from {@code sourceCRS} to {@code targetCRS}.
      * @throws FactoryException if the operation creation failed for some other reason.
      */
     @Override
@@ -491,17 +461,16 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     /////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Makes sure that the specified geocentric CRS uses standard axis, prime meridian and the
-     * specified datum. If {@code crs} already meets all those conditions, then it is returned
-     * unchanged. Otherwise, a new normalized geocentric CRS is created and returned.
+     * Makes sure that the specified geocentric CRS uses standard axis, prime meridian and the specified datum. If
+     * {@code crs} already meets all those conditions, then it is returned unchanged. Otherwise, a new normalized
+     * geocentric CRS is created and returned.
      *
      * @param crs The geocentric coordinate reference system to normalize.
      * @param datum The expected datum.
      * @return The normalized coordinate reference system.
      * @throws FactoryException if the construction of a new CRS was needed but failed.
      */
-    private GeocentricCRS normalize(final GeocentricCRS crs, final GeodeticDatum datum)
-            throws FactoryException {
+    private GeocentricCRS normalize(final GeocentricCRS crs, final GeodeticDatum datum) throws FactoryException {
         final CartesianCS STANDARD = DefaultCartesianCS.GEOCENTRIC;
         final GeodeticDatum candidate = crs.getDatum();
         if (equalsIgnorePrimeMeridian(candidate, datum)) {
@@ -517,25 +486,21 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * Makes sure that the specified geographic CRS uses standard axis (longitude and latitude in
-     * decimal degrees). Optionally, this method can also make sure that the CRS use the Greenwich
-     * prime meridian. Other datum properties are left unchanged. If {@code crs} already meets all
-     * those conditions, then it is returned unchanged. Otherwise, a new normalized geographic CRS
-     * is created and returned.
+     * Makes sure that the specified geographic CRS uses standard axis (longitude and latitude in decimal degrees).
+     * Optionally, this method can also make sure that the CRS use the Greenwich prime meridian. Other datum properties
+     * are left unchanged. If {@code crs} already meets all those conditions, then it is returned unchanged. Otherwise,
+     * a new normalized geographic CRS is created and returned.
      *
      * @param crs The geographic coordinate reference system to normalize.
      * @param forceGreenwich {@code true} for forcing the Greenwich prime meridian.
      * @return The normalized coordinate reference system.
      * @throws FactoryException if the construction of a new CRS was needed but failed.
      */
-    private GeographicCRS normalize(final GeographicCRS crs, final boolean forceGreenwich)
-            throws FactoryException {
+    private GeographicCRS normalize(final GeographicCRS crs, final boolean forceGreenwich) throws FactoryException {
         GeodeticDatum datum = crs.getDatum();
         final EllipsoidalCS cs = crs.getCoordinateSystem();
         final EllipsoidalCS STANDARD =
-                (cs.getDimension() <= 2)
-                        ? DefaultEllipsoidalCS.GEODETIC_2D
-                        : DefaultEllipsoidalCS.GEODETIC_3D;
+                cs.getDimension() <= 2 ? DefaultEllipsoidalCS.GEODETIC_2D : DefaultEllipsoidalCS.GEODETIC_3D;
         if (forceGreenwich && getGreenwichLongitude(datum.getPrimeMeridian()) != 0) {
             datum = new TemporaryDatum(datum);
         } else if (hasStandardAxis(cs, STANDARD)) {
@@ -550,8 +515,8 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * A datum identical to the specified datum except for the prime meridian, which is replaced by
-     * Greenwich. This datum is processed in a special way by {@link #equalsIgnorePrimeMeridian}.
+     * A datum identical to the specified datum except for the prime meridian, which is replaced by Greenwich. This
+     * datum is processed in a special way by {@link #equalsIgnorePrimeMeridian}.
      */
     private static final class TemporaryDatum extends DefaultGeodeticDatum {
         /** For cros-version compatibility. */
@@ -576,8 +541,7 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
 
         /** Compares this datum with the specified object for equality. */
         @Override
-        public boolean equals(
-                final AbstractIdentifiedObject object, final boolean compareMetadata) {
+        public boolean equals(final AbstractIdentifiedObject object, final boolean compareMetadata) {
             if (super.equals(object, compareMetadata)) {
                 final GeodeticDatum other = ((TemporaryDatum) object).datum;
                 return compareMetadata ? datum.equals(other) : equalsIgnoreMetadata(datum, other);
@@ -590,11 +554,10 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
      * Returns {@code true} if the specified coordinate system use standard axis and units.
      *
      * @param cs The coordinate system to test.
-     * @param standard The coordinate system that defines the standard. Usually {@link
-     *     DefaultEllipsoidalCS#GEODETIC_2D} or {@link DefaultCartesianCS#PROJECTED}.
+     * @param standard The coordinate system that defines the standard. Usually {@link DefaultEllipsoidalCS#GEODETIC_2D}
+     *     or {@link DefaultCartesianCS#PROJECTED}.
      */
-    private static boolean hasStandardAxis(
-            final CoordinateSystem cs, final CoordinateSystem standard) {
+    private static boolean hasStandardAxis(final CoordinateSystem cs, final CoordinateSystem standard) {
         final int dimension = standard.getDimension();
         if (cs.getDimension() != dimension) {
             return false;
@@ -602,8 +565,7 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
         for (int i = 0; i < dimension; i++) {
             final CoordinateSystemAxis a1 = cs.getAxis(i);
             final CoordinateSystemAxis a2 = standard.getAxis(i);
-            if (!a1.getDirection().equals(a2.getDirection())
-                    || !a1.getUnit().equals(a2.getUnit())) {
+            if (!a1.getDirection().equals(a2.getDirection()) || !a1.getUnit().equals(a2.getUnit())) {
                 return false;
             }
         }
@@ -619,16 +581,16 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     /////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Returns an affine transform between two ellipsoidal coordinate systems. Only units, axis
-     * order (e.g. transforming from (NORTH,WEST) to (EAST,NORTH)) and prime meridian are taken in
-     * account. Other attributes (especially the datum) must be checked before invoking this method.
+     * Returns an affine transform between two ellipsoidal coordinate systems. Only units, axis order (e.g. transforming
+     * from (NORTH,WEST) to (EAST,NORTH)) and prime meridian are taken in account. Other attributes (especially the
+     * datum) must be checked before invoking this method.
      *
      * @param sourceCS The source coordinate system.
      * @param targetCS The target coordinate system.
      * @param sourcePM The source prime meridian.
      * @param targetPM The target prime meridian.
-     * @return The transformation from {@code sourceCS} to {@code targetCS} as an affine transform.
-     *     Only axis orientation, units and prime meridian are taken in account.
+     * @return The transformation from {@code sourceCS} to {@code targetCS} as an affine transform. Only axis
+     *     orientation, units and prime meridian are taken in account.
      * @throws OperationNotFoundException If the affine transform can't be constructed.
      */
     private Matrix swapAndScaleAxis(
@@ -665,17 +627,12 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
         return matrix;
     }
 
-    /**
-     * Returns the longitude value relative to the Greenwich Meridian, expressed in the specified
-     * units.
-     */
+    /** Returns the longitude value relative to the Greenwich Meridian, expressed in the specified units. */
     private static double getGreenwichLongitude(final PrimeMeridian pm, final Unit<Angle> unit) {
         return pm.getAngularUnit().getConverterTo(unit).convert(pm.getGreenwichLongitude());
     }
 
-    /**
-     * Returns the longitude value relative to the Greenwich Meridian, expressed in decimal degrees.
-     */
+    /** Returns the longitude value relative to the Greenwich Meridian, expressed in decimal degrees. */
     private static double getGreenwichLongitude(final PrimeMeridian pm) {
         return getGreenwichLongitude(pm, NonSI.DEGREE_ANGLE);
     }
@@ -689,17 +646,16 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     /////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Creates an operation between two temporal coordinate reference systems. The default
-     * implementation checks if both CRS use the same datum, and then adjusts for axis direction,
-     * units and epoch.
+     * Creates an operation between two temporal coordinate reference systems. The default implementation checks if both
+     * CRS use the same datum, and then adjusts for axis direction, units and epoch.
      *
      * @param sourceCRS Input coordinate reference system.
      * @param targetCRS Output coordinate reference system.
      * @return A coordinate operation from {@code sourceCRS} to {@code targetCRS}.
      * @throws FactoryException If the operation can't be constructed.
      */
-    protected CoordinateOperation createOperationStep(
-            final TemporalCRS sourceCRS, final TemporalCRS targetCRS) throws FactoryException {
+    protected CoordinateOperation createOperationStep(final TemporalCRS sourceCRS, final TemporalCRS targetCRS)
+            throws FactoryException {
         final TemporalDatum sourceDatum = sourceCRS.getDatum();
         final TemporalDatum targetDatum = targetCRS.getDatum();
         if (!equalsIgnoreMetadata(sourceDatum, targetDatum)) {
@@ -715,7 +671,8 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
         final TimeCS targetCS = targetCRS.getCoordinateSystem();
         @SuppressWarnings("unchecked")
         final Unit<Time> targetUnit = (Unit<Time>) targetCS.getAxis(0).getUnit();
-        double epochShift = sourceDatum.getOrigin().getTime() - targetDatum.getOrigin().getTime();
+        double epochShift =
+                sourceDatum.getOrigin().getTime() - targetDatum.getOrigin().getTime();
         epochShift = MILLISECOND.getConverterTo(targetUnit).convert(epochShift);
         /*
          * Check axis orientation.  The method 'swapAndScaleAxis' should returns a matrix
@@ -738,17 +695,16 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * Creates an operation between two vertical coordinate reference systems. The default
-     * implementation checks if both CRS use the same datum, and then adjusts for axis direction and
-     * units.
+     * Creates an operation between two vertical coordinate reference systems. The default implementation checks if both
+     * CRS use the same datum, and then adjusts for axis direction and units.
      *
      * @param sourceCRS Input coordinate reference system.
      * @param targetCRS Output coordinate reference system.
      * @return A coordinate operation from {@code sourceCRS} to {@code targetCRS}.
      * @throws FactoryException If the operation can't be constructed.
      */
-    protected CoordinateOperation createOperationStep(
-            final VerticalCRS sourceCRS, final VerticalCRS targetCRS) throws FactoryException {
+    protected CoordinateOperation createOperationStep(final VerticalCRS sourceCRS, final VerticalCRS targetCRS)
+            throws FactoryException {
         final VerticalDatum sourceDatum = sourceCRS.getDatum();
         final VerticalDatum targetDatum = targetCRS.getDatum();
         if (!equalsIgnoreMetadata(sourceDatum, targetDatum)) {
@@ -761,11 +717,10 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * Creates an operation between a geographic and a vertical coordinate reference systems. The
-     * default implementation accepts the conversion only if the geographic CRS is a tri dimensional
-     * one and the vertical CRS is for {@linkplain VerticalDatumType#ELLIPSOIDAL height above the
-     * ellipsoid}. More elaborated operation, like transformation from ellipsoidal to geoidal
-     * height, should be implemented here.
+     * Creates an operation between a geographic and a vertical coordinate reference systems. The default implementation
+     * accepts the conversion only if the geographic CRS is a tri dimensional one and the vertical CRS is for
+     * {@linkplain VerticalDatumType#ELLIPSOIDAL height above the ellipsoid}. More elaborated operation, like
+     * transformation from ellipsoidal to geoidal height, should be implemented here.
      *
      * @param sourceCRS Input coordinate reference system.
      * @param targetCRS Output coordinate reference system.
@@ -773,32 +728,29 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
      * @throws FactoryException If the operation can't be constructed.
      * @todo Implement GEOT-352 here.
      */
-    protected CoordinateOperation createOperationStep(
-            final GeographicCRS sourceCRS, final VerticalCRS targetCRS) throws FactoryException {
+    protected CoordinateOperation createOperationStep(final GeographicCRS sourceCRS, final VerticalCRS targetCRS)
+            throws FactoryException {
         if (VerticalDatumType.ELLIPSOIDAL.equals(targetCRS.getDatum().getVerticalDatumType())) {
-            final Matrix matrix =
-                    swapAndScaleAxis(
-                            sourceCRS.getCoordinateSystem(), targetCRS.getCoordinateSystem());
+            final Matrix matrix = swapAndScaleAxis(sourceCRS.getCoordinateSystem(), targetCRS.getCoordinateSystem());
             return createFromAffineTransform(AXIS_CHANGES, sourceCRS, targetCRS, matrix);
         }
         throw new OperationNotFoundException(getErrorMessage(sourceCRS, targetCRS));
     }
 
     /**
-     * Creates an operation between two geographic coordinate reference systems. The default
-     * implementation can adjust axis order and orientation (e.g. transforming from {@code
-     * (NORTH,WEST)} to {@code (EAST,NORTH)}), performs units conversion and apply datum shifts if
-     * needed.
+     * Creates an operation between two geographic coordinate reference systems. The default implementation can adjust
+     * axis order and orientation (e.g. transforming from {@code (NORTH,WEST)} to {@code (EAST,NORTH)}), performs units
+     * conversion and apply datum shifts if needed.
      *
      * @param sourceCRS Input coordinate reference system.
      * @param targetCRS Output coordinate reference system.
      * @return A coordinate operation from {@code sourceCRS} to {@code targetCRS}.
      * @throws FactoryException If the operation can't be constructed.
-     * @todo When rotating the prime meridian, we should ensure that transformed longitudes stay in
-     *     the range [-180..+180°].
+     * @todo When rotating the prime meridian, we should ensure that transformed longitudes stay in the range
+     *     [-180..+180°].
      */
-    protected CoordinateOperation createOperationStep(
-            final GeographicCRS sourceCRS, final GeographicCRS targetCRS) throws FactoryException {
+    protected CoordinateOperation createOperationStep(final GeographicCRS sourceCRS, final GeographicCRS targetCRS)
+            throws FactoryException {
         final EllipsoidalCS sourceCS = sourceCRS.getCoordinateSystem();
         final EllipsoidalCS targetCS = targetCRS.getCoordinateSystem();
         final GeodeticDatum sourceDatum = sourceCRS.getDatum();
@@ -817,6 +769,11 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
             final Matrix matrix = swapAndScaleAxis(sourceCS, targetCS, sourcePM, targetPM);
             return createFromAffineTransform(AXIS_CHANGES, sourceCRS, targetCRS, matrix);
         }
+
+        /* If the implementation allows, try to go through well known pivots that might provide better accuracy */
+        CoordinateOperation pivotOperation = tryWellKnownPivots(sourceCRS, targetCRS);
+        if (pivotOperation != null) return pivotOperation;
+
         /*
          * The two geographic CRS use different datum. If Molodenski transformations
          * are allowed, try them first. Note that is some case if the datum shift can't
@@ -828,17 +785,15 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
         if (molodenskiMethod != null) {
             ReferenceIdentifier identifier = DATUM_SHIFT;
             BursaWolfParameters bursaWolf = null;
-            if (sourceDatum instanceof DefaultGeodeticDatum) {
-                bursaWolf =
-                        ((DefaultGeodeticDatum) sourceDatum).getBursaWolfParameters(targetDatum);
+            if (sourceDatum instanceof DefaultGeodeticDatum datum) {
+                bursaWolf = datum.getBursaWolfParameters(targetDatum);
             }
             if (bursaWolf == null) {
                 /*
                  * No direct path found. Try the more expensive matrix calculation, and
                  * see if we can retrofit the result in a BursaWolfParameters object.
                  */
-                final Matrix shift =
-                        DefaultGeodeticDatum.getAffineTransform(sourceDatum, targetDatum);
+                final Matrix shift = DefaultGeodeticDatum.getAffineTransform(sourceDatum, targetDatum);
                 if (shift != null)
                     try {
                         bursaWolf = new BursaWolfParameters(targetDatum);
@@ -870,15 +825,13 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
             if (bursaWolf != null && bursaWolf.isTranslation()) {
                 final Ellipsoid sourceEllipsoid = sourceDatum.getEllipsoid();
                 final Ellipsoid targetEllipsoid = targetDatum.getEllipsoid();
-                if (bursaWolf.isIdentity()
-                        && equalsIgnoreMetadata(sourceEllipsoid, targetEllipsoid)) {
+                if (bursaWolf.isIdentity() && equalsIgnoreMetadata(sourceEllipsoid, targetEllipsoid)) {
                     final Matrix matrix = swapAndScaleAxis(sourceCS, targetCS, sourcePM, targetPM);
                     return createFromAffineTransform(identifier, sourceCRS, targetCRS, matrix);
                 }
                 final int sourceDim = getDimension(sourceCRS);
                 final int targetDim = getDimension(targetCRS);
-                final ParameterValueGroup parameters =
-                        getMathTransformFactory().getDefaultParameters(molodenskiMethod);
+                final ParameterValueGroup parameters = getMathTransformFactory().getDefaultParameters(molodenskiMethod);
                 parameters.parameter("src_semi_major").setValue(sourceEllipsoid.getSemiMajorAxis());
                 parameters.parameter("src_semi_minor").setValue(sourceEllipsoid.getSemiMinorAxis());
                 parameters.parameter("tgt_semi_major").setValue(targetEllipsoid.getSemiMajorAxis());
@@ -892,8 +845,7 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
                     final GeographicCRS normTargetCRS = normalize(targetCRS, true);
                     final CoordinateOperation step1 = createOperationStep(sourceCRS, normSourceCRS);
                     final CoordinateOperation step2 =
-                            createFromParameters(
-                                    identifier, normSourceCRS, normTargetCRS, parameters);
+                            createFromParameters(identifier, normSourceCRS, normTargetCRS, parameters);
                     final CoordinateOperation step3 = createOperationStep(normTargetCRS, targetCRS);
                     return concatenate(step1, step2, step3);
                 }
@@ -914,13 +866,9 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
         final GeocentricCRS stepCRS;
         final CRSFactory crsFactory = getFactoryContainer().getCRSFactory();
         if (getGreenwichLongitude(targetPM) == 0) {
-            stepCRS =
-                    crsFactory.createGeocentricCRS(
-                            getTemporaryName(targetCRS), targetDatum, STANDARD);
+            stepCRS = crsFactory.createGeocentricCRS(getTemporaryName(targetCRS), targetDatum, STANDARD);
         } else {
-            stepCRS =
-                    crsFactory.createGeocentricCRS(
-                            getTemporaryName(sourceCRS), sourceDatum, STANDARD);
+            stepCRS = crsFactory.createGeocentricCRS(getTemporaryName(sourceCRS), sourceDatum, STANDARD);
         }
         final CoordinateOperation step1 = createOperationStep(sourceCRS, stepCRS);
         final CoordinateOperation step2 = createOperationStep(stepCRS, targetCRS);
@@ -928,15 +876,14 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * Creates an operation between two projected coordinate reference systems. The default
-     * implementation can adjust axis order and orientation. It also performs units conversion if it
-     * is the only extra change needed. Otherwise, it performs three steps:
+     * Creates an operation between two projected coordinate reference systems. The default implementation can adjust
+     * axis order and orientation. It also performs units conversion if it is the only extra change needed. Otherwise,
+     * it performs three steps:
      *
      * <ul>
      *   <li>Unproject from {@code sourceCRS} to its base {@linkplain GeographicCRS geographic CRS}.
      *   <li>Convert the source to target base geographic CRS.
-     *   <li>Project from the base {@linkplain GeographicCRS geographic CRS} to the {@code
-     *       targetCRS}.
+     *   <li>Project from the base {@linkplain GeographicCRS geographic CRS} to the {@code targetCRS}.
      * </ul>
      *
      * @param sourceCRS Input coordinate reference system.
@@ -944,8 +891,8 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
      * @return A coordinate operation from {@code sourceCRS} to {@code targetCRS}.
      * @throws FactoryException If the operation can't be constructed.
      */
-    protected CoordinateOperation createOperationStep(
-            final ProjectedCRS sourceCRS, final ProjectedCRS targetCRS) throws FactoryException {
+    protected CoordinateOperation createOperationStep(final ProjectedCRS sourceCRS, final ProjectedCRS targetCRS)
+            throws FactoryException {
         for (CoordinateOperation op : findOperationSteps(sourceCRS, targetCRS, 1)) {
             return op;
         }
@@ -953,28 +900,25 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * Returns all available operations between two projected coordinate reference systems. The
-     * default implementation can adjust axis order and orientation. It also performs units
-     * conversion if it is the only extra change needed. Otherwise, it performs three steps:
+     * Returns all available operations between two projected coordinate reference systems. The default implementation
+     * can adjust axis order and orientation. It also performs units conversion if it is the only extra change needed.
+     * Otherwise, it performs three steps:
      *
      * <ul>
      *   <li>Unproject from {@code sourceCRS} to its base {@linkplain GeographicCRS geographic CRS}.
      *   <li>Convert the source to target base geographic CRS.
-     *   <li>Project from the base {@linkplain GeographicCRS geographic CRS} to the {@code
-     *       targetCRS}.
+     *   <li>Project from the base {@linkplain GeographicCRS geographic CRS} to the {@code targetCRS}.
      * </ul>
      *
      * @param sourceCRS Input coordinate reference system.
      * @param targetCRS Output coordinate reference system.
-     * @param limit The maximum number of operations to be returned. Use -1 to return all the
-     *     available operations. Use 1 to return just one operation. Currently, the behavior for
-     *     other values of {@code limit} is undefined.
+     * @param limit The maximum number of operations to be returned. Use -1 to return all the available operations. Use
+     *     1 to return just one operation. Currently, the behavior for other values of {@code limit} is undefined.
      * @return A {@code Set} of coordinate operations from {@code sourceCRS} to {@code targetCRS}.
      * @throws FactoryException If the operation can't be constructed.
      */
     protected Set<CoordinateOperation> findOperationSteps(
-            final ProjectedCRS sourceCRS, final ProjectedCRS targetCRS, int limit)
-            throws FactoryException {
+            final ProjectedCRS sourceCRS, final ProjectedCRS targetCRS, int limit) throws FactoryException {
         /*
          * First, check if a linear path exists from sourceCRS to targetCRS.
          * If both projected CRS use the same projection and the same horizontal datum,
@@ -987,8 +931,7 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
          */
         final Matrix linear = createLinearConversion(sourceCRS, targetCRS, EPS);
         if (linear != null) {
-            return Collections.singleton(
-                    createFromAffineTransform(AXIS_CHANGES, sourceCRS, targetCRS, linear));
+            return Collections.singleton(createFromAffineTransform(AXIS_CHANGES, sourceCRS, targetCRS, linear));
         }
         /*
          * Apply the transformation in 3 steps (the 3 arrows below):
@@ -1004,16 +947,15 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
         Set<CoordinateOperation> step1 = tryDB(sourceCRS, sourceGeo, limit);
         if (step1.isEmpty()) step1 = findOperationSteps(sourceCRS, sourceGeo, limit);
         Set<CoordinateOperation> step2 = tryDB(sourceGeo, targetGeo, limit);
-        if (step2.isEmpty())
-            step2 = Collections.singleton(createOperationStep(sourceGeo, targetGeo));
+        if (step2.isEmpty()) step2 = Collections.singleton(createOperationStep(sourceGeo, targetGeo));
         Set<CoordinateOperation> step3 = tryDB(targetGeo, targetCRS, limit);
         if (step3.isEmpty()) step3 = findOperationSteps(targetGeo, targetCRS, limit);
         return concatenate(step1, step2, step3);
     }
 
     /**
-     * Creates an operation from a geographic to a projected coordinate reference system. The
-     * default implementation constructs the following operation chain:
+     * Creates an operation from a geographic to a projected coordinate reference system. The default implementation
+     * constructs the following operation chain:
      *
      * <blockquote>
      *
@@ -1032,8 +974,8 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
      * @return A coordinate operation from {@code sourceCRS} to {@code targetCRS}.
      * @throws FactoryException If the operation can't be constructed.
      */
-    protected CoordinateOperation createOperationStep(
-            final GeographicCRS sourceCRS, final ProjectedCRS targetCRS) throws FactoryException {
+    protected CoordinateOperation createOperationStep(final GeographicCRS sourceCRS, final ProjectedCRS targetCRS)
+            throws FactoryException {
         for (CoordinateOperation op : findOperationSteps(sourceCRS, targetCRS, 1)) {
             return op;
         }
@@ -1041,8 +983,8 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * Returns all available operations from a geographic to a projected coordinate reference
-     * system. The default implementation constructs the following operation chain:
+     * Returns all available operations from a geographic to a projected coordinate reference system. The default
+     * implementation constructs the following operation chain:
      *
      * <blockquote>
      *
@@ -1058,15 +1000,13 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
      *
      * @param sourceCRS Input coordinate reference system.
      * @param targetCRS Output coordinate reference system.
-     * @param limit The maximum number of operations to be returned. Use -1 to return all the
-     *     available operations. Use 1 to return just one operations. Currently, the behavior for
-     *     other values of {@code limit} is undefined.
+     * @param limit The maximum number of operations to be returned. Use -1 to return all the available operations. Use
+     *     1 to return just one operations. Currently, the behavior for other values of {@code limit} is undefined.
      * @return A {@code Set} of coordinate operations from {@code sourceCRS} to {@code targetCRS}.
      * @throws FactoryException If the operation can't be constructed.
      */
     protected Set<CoordinateOperation> findOperationSteps(
-            final GeographicCRS sourceCRS, final ProjectedCRS targetCRS, int limit)
-            throws FactoryException {
+            final GeographicCRS sourceCRS, final ProjectedCRS targetCRS, int limit) throws FactoryException {
         GeographicCRS base = targetCRS.getBaseCRS();
         CoordinateOperation step2 = targetCRS.getConversionFromBase();
         HashSet<CoordinateOperation> result = new HashSet<>();
@@ -1082,8 +1022,8 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * Creates an operation from a projected to a geographic coordinate reference system. The
-     * default implementation constructs the following operation chain:
+     * Creates an operation from a projected to a geographic coordinate reference system. The default implementation
+     * constructs the following operation chain:
      *
      * <blockquote>
      *
@@ -1093,8 +1033,8 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
      *
      * </blockquote>
      *
-     * where the conversion from {@code sourceCRS} to {@code baseCRS} is obtained from the inverse
-     * of <code>sourceCRS.{@linkplain ProjectedCRS#getConversionFromBase
+     * where the conversion from {@code sourceCRS} to {@code baseCRS} is obtained from the inverse of <code>
+     * sourceCRS.{@linkplain ProjectedCRS#getConversionFromBase
      * getConversionFromBase()}</code>.
      *
      * @param sourceCRS Input coordinate reference system.
@@ -1103,8 +1043,8 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
      * @throws FactoryException If the operation can't be constructed.
      * @todo Provides a non-null method.
      */
-    protected CoordinateOperation createOperationStep(
-            final ProjectedCRS sourceCRS, final GeographicCRS targetCRS) throws FactoryException {
+    protected CoordinateOperation createOperationStep(final ProjectedCRS sourceCRS, final GeographicCRS targetCRS)
+            throws FactoryException {
         for (CoordinateOperation op : findOperationSteps(sourceCRS, targetCRS, 1)) {
             return op;
         }
@@ -1112,8 +1052,8 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * Returns all available operations from a projected to a geographic coordinate reference
-     * system. The default implementation constructs the following operation chain:
+     * Returns all available operations from a projected to a geographic coordinate reference system. The default
+     * implementation constructs the following operation chain:
      *
      * <blockquote>
      *
@@ -1123,21 +1063,19 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
      *
      * </blockquote>
      *
-     * where the conversion from {@code sourceCRS} to {@code baseCRS} is obtained from the inverse
-     * of <code>sourceCRS.{@linkplain ProjectedCRS#getConversionFromBase
+     * where the conversion from {@code sourceCRS} to {@code baseCRS} is obtained from the inverse of <code>
+     * sourceCRS.{@linkplain ProjectedCRS#getConversionFromBase
      * getConversionFromBase()}</code>.
      *
      * @param sourceCRS Input coordinate reference system.
      * @param targetCRS Output coordinate reference system.
-     * @param limit The maximum number of operations to be returned. Use -1 to return all the
-     *     available operations. Use 1 to return just one operations. Currently, the behavior for
-     *     other values of {@code limit} is undefined.
+     * @param limit The maximum number of operations to be returned. Use -1 to return all the available operations. Use
+     *     1 to return just one operations. Currently, the behavior for other values of {@code limit} is undefined.
      * @return A {@code Set} of coordinate operations from {@code sourceCRS} to {@code targetCRS}.
      * @throws FactoryException If the operation can't be constructed.
      */
     protected Set<CoordinateOperation> findOperationSteps(
-            final ProjectedCRS sourceCRS, final GeographicCRS targetCRS, int limit)
-            throws FactoryException {
+            final ProjectedCRS sourceCRS, final GeographicCRS targetCRS, int limit) throws FactoryException {
         final GeographicCRS base = sourceCRS.getBaseCRS();
         CoordinateOperation step1 = sourceCRS.getConversionFromBase();
         HashSet<CoordinateOperation> result = new HashSet<>();
@@ -1160,9 +1098,8 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * Creates an operation between two geocentric coordinate reference systems. The default
-     * implementation can adjust for axis order and orientation, performs units conversion and apply
-     * Bursa Wolf transformation if needed.
+     * Creates an operation between two geocentric coordinate reference systems. The default implementation can adjust
+     * for axis order and orientation, performs units conversion and apply Bursa Wolf transformation if needed.
      *
      * @param sourceCRS Input coordinate reference system.
      * @param targetCRS Output coordinate reference system.
@@ -1171,8 +1108,8 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
      * @todo Rotation of prime meridian not yet implemented.
      * @todo Transformation version set to "(unknow)". We should search this information somewhere.
      */
-    protected CoordinateOperation createOperationStep(
-            final GeocentricCRS sourceCRS, final GeocentricCRS targetCRS) throws FactoryException {
+    protected CoordinateOperation createOperationStep(final GeocentricCRS sourceCRS, final GeocentricCRS targetCRS)
+            throws FactoryException {
         final GeodeticDatum sourceDatum = sourceCRS.getDatum();
         final GeodeticDatum targetDatum = targetCRS.getDatum();
         final CoordinateSystem sourceCS = sourceCRS.getCoordinateSystem();
@@ -1209,16 +1146,14 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
         final XMatrix matrix;
         ReferenceIdentifier identifier = DATUM_SHIFT;
         try {
-            Matrix datumShift =
-                    DefaultGeodeticDatum.getAffineTransform(
-                            TemporaryDatum.unwrap(sourceDatum), TemporaryDatum.unwrap(targetDatum));
+            Matrix datumShift = DefaultGeodeticDatum.getAffineTransform(
+                    TemporaryDatum.unwrap(sourceDatum), TemporaryDatum.unwrap(targetDatum));
             if (datumShift == null) {
                 if (lenientDatumShift) {
                     datumShift = new Matrix4(); // Identity transform.
                     identifier = ELLIPSOID_SHIFT;
                 } else {
-                    throw new OperationNotFoundException(
-                            Errors.format(ErrorKeys.BURSA_WOLF_PARAMETERS_REQUIRED));
+                    throw new OperationNotFoundException(ErrorKeys.BURSA_WOLF_PARAMETERS_REQUIRED);
                 }
             }
             final Matrix normalizeSource = swapAndScaleAxis(sourceCS, STANDARD);
@@ -1241,18 +1176,17 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * Creates an operation from a geographic to a geocentric coordinate reference systems. If the
-     * source CRS doesn't have a vertical axis, height above the ellipsoid will be assumed equals to
-     * zero everywhere. The default implementation uses the {@code "Ellipsoid_To_Geocentric"} math
-     * transform.
+     * Creates an operation from a geographic to a geocentric coordinate reference systems. If the source CRS doesn't
+     * have a vertical axis, height above the ellipsoid will be assumed equals to zero everywhere. The default
+     * implementation uses the {@code "Ellipsoid_To_Geocentric"} math transform.
      *
      * @param sourceCRS Input coordinate reference system.
      * @param targetCRS Output coordinate reference system.
      * @return A coordinate operation from {@code sourceCRS} to {@code targetCRS}.
      * @throws FactoryException If the operation can't be constructed.
      */
-    protected CoordinateOperation createOperationStep(
-            final GeographicCRS sourceCRS, final GeocentricCRS targetCRS) throws FactoryException {
+    protected CoordinateOperation createOperationStep(final GeographicCRS sourceCRS, final GeocentricCRS targetCRS)
+            throws FactoryException {
         /*
          * This transformation is a 3 steps process:
          *
@@ -1270,8 +1204,7 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
         final GeocentricCRS normTargetCRS = normalize(targetCRS, datum);
         final Ellipsoid ellipsoid = datum.getEllipsoid();
         final Unit unit = ellipsoid.getAxisUnit();
-        final ParameterValueGroup param =
-                getMathTransformFactory().getDefaultParameters("Ellipsoid_To_Geocentric");
+        final ParameterValueGroup param = getMathTransformFactory().getDefaultParameters("Ellipsoid_To_Geocentric");
         param.parameter("semi_major").setValue(ellipsoid.getSemiMajorAxis(), unit);
         param.parameter("semi_minor").setValue(ellipsoid.getSemiMinorAxis(), unit);
         param.parameter("dim").setValue(getDimension(normSourceCRS));
@@ -1284,23 +1217,22 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * Creates an operation from a geocentric to a geographic coordinate reference systems. The
-     * default implementation use the <code>"Geocentric_To_Ellipsoid"</code> math transform.
+     * Creates an operation from a geocentric to a geographic coordinate reference systems. The default implementation
+     * use the <code>"Geocentric_To_Ellipsoid"</code> math transform.
      *
      * @param sourceCRS Input coordinate reference system.
      * @param targetCRS Output coordinate reference system.
      * @return A coordinate operation from {@code sourceCRS} to {@code targetCRS}.
      * @throws FactoryException If the operation can't be constructed.
      */
-    protected CoordinateOperation createOperationStep(
-            final GeocentricCRS sourceCRS, final GeographicCRS targetCRS) throws FactoryException {
+    protected CoordinateOperation createOperationStep(final GeocentricCRS sourceCRS, final GeographicCRS targetCRS)
+            throws FactoryException {
         final GeographicCRS normTargetCRS = normalize(targetCRS, true);
         final GeodeticDatum datum = normTargetCRS.getDatum();
         final GeocentricCRS normSourceCRS = normalize(sourceCRS, datum);
         final Ellipsoid ellipsoid = datum.getEllipsoid();
         final Unit unit = ellipsoid.getAxisUnit();
-        final ParameterValueGroup param =
-                getMathTransformFactory().getDefaultParameters("Geocentric_To_Ellipsoid");
+        final ParameterValueGroup param = getMathTransformFactory().getDefaultParameters("Geocentric_To_Ellipsoid");
         param.parameter("semi_major").setValue(ellipsoid.getSemiMajorAxis(), unit);
         param.parameter("semi_minor").setValue(ellipsoid.getSemiMinorAxis(), unit);
         param.parameter("dim").setValue(getDimension(normTargetCRS));
@@ -1319,19 +1251,18 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
      * @param targetCRS Output coordinate reference system.
      * @return A coordinate operation from {@code sourceCRS} to {@code targetCRS}.
      * @throws FactoryException If the operation can't be constructed.
-     * @todo (GEOT-401) This method work for some simple cases (e.g. no datum change), and give up
-     *     otherwise. Before to give up at the end of this method, we should try the following:
+     * @todo (GEOT-401) This method work for some simple cases (e.g. no datum change), and give up otherwise. Before to
+     *     give up at the end of this method, we should try the following:
      *     <ul>
-     *       <li>Maybe {@code sourceCRS} uses a non-ellipsoidal height. We should replace the
-     *           non-ellipsoidal height by an ellipsoidal one, create a transformation step for that
-     *           (to be concatenated), and then try again this operation step.
-     *       <li>Maybe {@code sourceCRS} contains some extra axis, like a temporal CRS. We should
-     *           revisit this code in other to lets supplemental ordinates to be pass through or
-     *           removed.
+     *       <li>Maybe {@code sourceCRS} uses a non-ellipsoidal height. We should replace the non-ellipsoidal height by
+     *           an ellipsoidal one, create a transformation step for that (to be concatenated), and then try again this
+     *           operation step.
+     *       <li>Maybe {@code sourceCRS} contains some extra axis, like a temporal CRS. We should revisit this code in
+     *           other to lets supplemental ordinates to be pass through or removed.
      *     </ul>
      */
-    protected CoordinateOperation createOperationStep(
-            final CompoundCRS sourceCRS, final SingleCRS targetCRS) throws FactoryException {
+    protected CoordinateOperation createOperationStep(final CompoundCRS sourceCRS, final SingleCRS targetCRS)
+            throws FactoryException {
         for (CoordinateOperation op : findOperationSteps(sourceCRS, targetCRS, 1)) {
             return op;
         }
@@ -1343,25 +1274,22 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
      *
      * @param sourceCRS Input coordinate reference system.
      * @param targetCRS Output coordinate reference system.
-     * @param limit The maximum number of operations to be returned. Use -1 to return all the
-     *     available operations. Use 1 to return just one operations. Currently, the behavior for
-     *     other values of {@code limit} is undefined.
+     * @param limit The maximum number of operations to be returned. Use -1 to return all the available operations. Use
+     *     1 to return just one operations. Currently, the behavior for other values of {@code limit} is undefined.
      * @return A {@code Set} of coordinate operations from {@code sourceCRS} to {@code targetCRS}.
      * @throws FactoryException If the operation can't be constructed.
-     * @todo (GEOT-401) This method works for some simple cases (e.g. no datum change), and gives up
-     *     otherwise. Before to give up at the end of this method, we should try the following:
+     * @todo (GEOT-401) This method works for some simple cases (e.g. no datum change), and gives up otherwise. Before
+     *     to give up at the end of this method, we should try the following:
      *     <ul>
-     *       <li>Maybe {@code sourceCRS} uses a non-ellipsoidal height. We should replace the
-     *           non-ellipsoidal height by an ellipsoidal one, create a transformation step for that
-     *           (to be concatenated), and then try again this operation step.
-     *       <li>Maybe {@code sourceCRS} contains some extra axis, like a temporal CRS. We should
-     *           revisit this code in other to lets supplemental ordinates to be pass through or
-     *           removed.
+     *       <li>Maybe {@code sourceCRS} uses a non-ellipsoidal height. We should replace the non-ellipsoidal height by
+     *           an ellipsoidal one, create a transformation step for that (to be concatenated), and then try again this
+     *           operation step.
+     *       <li>Maybe {@code sourceCRS} contains some extra axis, like a temporal CRS. We should revisit this code in
+     *           other to lets supplemental ordinates to be pass through or removed.
      *     </ul>
      */
     protected Set<CoordinateOperation> findOperationSteps(
-            final CompoundCRS sourceCRS, final SingleCRS targetCRS, int limit)
-            throws FactoryException {
+            final CompoundCRS sourceCRS, final SingleCRS targetCRS, int limit) throws FactoryException {
         final List<SingleCRS> sources = DefaultCompoundCRS.getSingleCRS(sourceCRS);
         if (sources.size() == 1) {
             return findOperations(sources.get(0), targetCRS, limit);
@@ -1369,8 +1297,7 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
         if (!needsGeodetic3D(sources, targetCRS)) {
             // No need for a datum change (see 'needGeodetic3D' javadoc).
             final List<SingleCRS> targets = Collections.singletonList(targetCRS);
-            return Collections.singleton(
-                    createOperationStep(sourceCRS, sources, targetCRS, targets));
+            return Collections.singleton(createOperationStep(sourceCRS, sources, targetCRS, targets));
         }
         /*
          * There is a change of datum.  It may be a vertical datum change (for example from
@@ -1397,8 +1324,8 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
      * @return A coordinate operation from {@code sourceCRS} to {@code targetCRS}.
      * @throws FactoryException If the operation can't be constructed.
      */
-    protected CoordinateOperation createOperationStep(
-            final SingleCRS sourceCRS, final CompoundCRS targetCRS) throws FactoryException {
+    protected CoordinateOperation createOperationStep(final SingleCRS sourceCRS, final CompoundCRS targetCRS)
+            throws FactoryException {
         for (CoordinateOperation op : findOperationSteps(sourceCRS, targetCRS, 1)) {
             return op;
         }
@@ -1410,15 +1337,13 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
      *
      * @param sourceCRS Input coordinate reference system.
      * @param targetCRS Output coordinate reference system.
-     * @param limit The maximum number of operations to be returned. Use -1 to return all the
-     *     available operations. Use 1 to return just one operations. Currently, the behavior for
-     *     other values of {@code limit} is undefined.
+     * @param limit The maximum number of operations to be returned. Use -1 to return all the available operations. Use
+     *     1 to return just one operations. Currently, the behavior for other values of {@code limit} is undefined.
      * @return A {@code Set} of coordinate operations from {@code sourceCRS} to {@code targetCRS}.
      * @throws FactoryException If the operation can't be constructed.
      */
     protected Set<CoordinateOperation> findOperationSteps(
-            final SingleCRS sourceCRS, final CompoundCRS targetCRS, int limit)
-            throws FactoryException {
+            final SingleCRS sourceCRS, final CompoundCRS targetCRS, int limit) throws FactoryException {
         final List<SingleCRS> targets = DefaultCompoundCRS.getSingleCRS(targetCRS);
         if (targets.size() == 1) {
             return findOperations(sourceCRS, targets.get(0), limit);
@@ -1444,8 +1369,8 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
      * @return A coordinate operation from {@code sourceCRS} to {@code targetCRS}.
      * @throws FactoryException If the operation can't be constructed.
      */
-    protected CoordinateOperation createOperationStep(
-            final CompoundCRS sourceCRS, final CompoundCRS targetCRS) throws FactoryException {
+    protected CoordinateOperation createOperationStep(final CompoundCRS sourceCRS, final CompoundCRS targetCRS)
+            throws FactoryException {
         for (CoordinateOperation op : findOperationSteps(sourceCRS, targetCRS, 1)) {
             return op;
         }
@@ -1457,15 +1382,13 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
      *
      * @param sourceCRS Input coordinate reference system.
      * @param targetCRS Output coordinate reference system.
-     * @param limit The maximum number of operations to be returned. Use -1 to return all the
-     *     available operations. Use 1 to return just one operations. Currently, the behavior for
-     *     other values of {@code limit} is undefined.
+     * @param limit The maximum number of operations to be returned. Use -1 to return all the available operations. Use
+     *     1 to return just one operations. Currently, the behavior for other values of {@code limit} is undefined.
      * @return A {@code Set} of coordinate operations from {@code sourceCRS} to {@code targetCRS}.
      * @throws FactoryException If the operation can't be constructed.
      */
     protected Set<CoordinateOperation> findOperationSteps(
-            final CompoundCRS sourceCRS, final CompoundCRS targetCRS, int limit)
-            throws FactoryException {
+            final CompoundCRS sourceCRS, final CompoundCRS targetCRS, int limit) throws FactoryException {
         final List<SingleCRS> sources = DefaultCompoundCRS.getSingleCRS(sourceCRS);
         final List<SingleCRS> targets = DefaultCompoundCRS.getSingleCRS(targetCRS);
         if (targets.size() == 1) {
@@ -1502,12 +1425,11 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     /**
      * Implementation of transformation step on compound CRS.
      *
-     * <p><strong>NOTE:</strong> If there is a horizontal (geographic or projected) CRS together
-     * with a vertical CRS, then we can't performs the transformation since the vertical value has
-     * an impact on the horizontal value, and this impact is not taken in account if the horizontal
-     * and vertical components are not together in a 3D geographic CRS. This case occurs when the
-     * vertical CRS is not a height above the ellipsoid. It must be checked by the caller before
-     * this method is invoked.
+     * <p><strong>NOTE:</strong> If there is a horizontal (geographic or projected) CRS together with a vertical CRS,
+     * then we can't performs the transformation since the vertical value has an impact on the horizontal value, and
+     * this impact is not taken in account if the horizontal and vertical components are not together in a 3D geographic
+     * CRS. This case occurs when the vertical CRS is not a height above the ellipsoid. It must be checked by the caller
+     * before this method is invoked.
      *
      * @param sourceCRS Input coordinate reference system.
      * @param sources The source CRS components.
@@ -1590,10 +1512,7 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
             if (ordered.length == 1) {
                 sourceStepCRS = ordered[0];
             } else {
-                sourceStepCRS =
-                        factories
-                                .getCRSFactory()
-                                .createCompoundCRS(getTemporaryName(sourceCRS), ordered);
+                sourceStepCRS = factories.getCRSFactory().createCompoundCRS(getTemporaryName(sourceCRS), ordered);
             }
             operation = createFromAffineTransform(AXIS_CHANGES, sourceCRS, sourceStepCRS, select);
         }
@@ -1619,10 +1538,7 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
             } else if (ordered.length == 1) {
                 targetStepCRS = ordered[0];
             } else {
-                targetStepCRS =
-                        factories
-                                .getCRSFactory()
-                                .createCompoundCRS(getTemporaryName(target), ordered);
+                targetStepCRS = factories.getCRSFactory().createCompoundCRS(getTemporaryName(target), ordered);
             }
             lower = upper;
             upper += getDimension(source);
@@ -1633,23 +1549,18 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
                  */
                 if (!(step instanceof Operation)) {
                     final MathTransform stepMT = step.getMathTransform();
-                    step =
-                            DefaultOperation.create(
-                                    AbstractIdentifiedObject.getProperties(step),
-                                    step.getSourceCRS(),
-                                    step.getTargetCRS(),
-                                    stepMT,
-                                    new DefaultOperationMethod(stepMT),
-                                    step.getClass());
+                    step = DefaultOperation.create(
+                            AbstractIdentifiedObject.getProperties(step),
+                            step.getSourceCRS(),
+                            step.getTargetCRS(),
+                            stepMT,
+                            new DefaultOperationMethod(stepMT),
+                            step.getClass());
                 }
-                mt =
-                        getMathTransformFactory()
-                                .createPassThroughTransform(lower, mt, dimensions - upper);
-                step =
-                        new DefaultPassThroughOperation(
-                                properties, sourceStepCRS, targetStepCRS, (Operation) step, mt);
+                mt = getMathTransformFactory().createPassThroughTransform(lower, mt, dimensions - upper);
+                step = new DefaultPassThroughOperation(properties, sourceStepCRS, targetStepCRS, (Operation) step, mt);
             }
-            operation = (operation == null) ? step : concatenate(operation, step);
+            operation = operation == null ? step : concatenate(operation, step);
             sourceStepCRS = targetStepCRS;
         }
         assert upper == dimensions : upper;
@@ -1657,24 +1568,21 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * Returns {@code true} if a transformation path from {@code sourceCRS} to {@code targetCRS} is
-     * likely to requires a tri-dimensional geodetic CRS as an intermediate step. More specifically,
-     * this method returns {@code false} if at least one of the following conditions is meet:
+     * Returns {@code true} if a transformation path from {@code sourceCRS} to {@code targetCRS} is likely to requires a
+     * tri-dimensional geodetic CRS as an intermediate step. More specifically, this method returns {@code false} if at
+     * least one of the following conditions is meet:
      *
      * <ul>
-     *   <li>The target datum is not a vertical or geodetic one (the two datum that must work
-     *       together). Consequently, a potential datum change is not the caller's business. It will
-     *       be handled by the generic method above.
-     *   <li>The target datum is vertical or geodetic, but there is no datum change. It is better to
-     *       not try to create 3D-geodetic CRS, since they are more difficult to separate in the
-     *       generic method above. An exception to this rule occurs when the target datum is used in
-     *       a three-dimensional CRS.
-     *   <li>A datum change is required, but source CRS doesn't have both a geodetic and a vertical
-     *       CRS, so we can't apply a 3D datum shift anyway.
+     *   <li>The target datum is not a vertical or geodetic one (the two datum that must work together). Consequently, a
+     *       potential datum change is not the caller's business. It will be handled by the generic method above.
+     *   <li>The target datum is vertical or geodetic, but there is no datum change. It is better to not try to create
+     *       3D-geodetic CRS, since they are more difficult to separate in the generic method above. An exception to
+     *       this rule occurs when the target datum is used in a three-dimensional CRS.
+     *   <li>A datum change is required, but source CRS doesn't have both a geodetic and a vertical CRS, so we can't
+     *       apply a 3D datum shift anyway.
      * </ul>
      */
-    private static boolean needsGeodetic3D(
-            final List<SingleCRS> sourceCRS, final SingleCRS targetCRS) {
+    private static boolean needsGeodetic3D(final List<SingleCRS> sourceCRS, final SingleCRS targetCRS) {
         final boolean targetGeodetic;
         final Datum targetDatum = targetCRS.getDatum();
         if (targetDatum instanceof GeodeticDatum) {
@@ -1701,8 +1609,7 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
             }
             if (!shift && sourceGeodetic == targetGeodetic) {
                 shift = !equalsIgnoreMetadata(sourceDatum, targetDatum);
-                assert Classes.sameInterfaces(
-                        sourceDatum.getClass(), targetDatum.getClass(), Datum.class);
+                assert Classes.sameInterfaces(sourceDatum.getClass(), targetDatum.getClass(), Datum.class);
             }
         }
         return horizontal
@@ -1735,12 +1642,8 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
         return false;
     }
 
-    /**
-     * Returns {@code true} if {@code container} contains all CRS listed in {@code candidates},
-     * ignoring metadata.
-     */
-    private static boolean containsIgnoreMetadata(
-            final List<SingleCRS> container, final List<SingleCRS> candidates) {
+    /** Returns {@code true} if {@code container} contains all CRS listed in {@code candidates}, ignoring metadata. */
+    private static boolean containsIgnoreMetadata(final List<SingleCRS> container, final List<SingleCRS> candidates) {
         search:
         for (final SingleCRS crs : candidates) {
             for (final SingleCRS c : container) {
@@ -1754,18 +1657,15 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * Tries to get a coordinate operation from a database (typically EPSG). The exact behavior
-     * depends on the {@link AuthorityBackedFactory} implementation (the most typical subclass), but
-     * usually the database query is delegated to some instance of {@link
-     * org.opengis.referencing.operation.CoordinateOperationAuthorityFactory}. If no coordinate
-     * operation was found in the database, then this method returns {@code null}.
+     * Tries to get a coordinate operation from a database (typically EPSG). The exact behavior depends on the
+     * {@link AuthorityBackedFactory} implementation (the most typical subclass), but usually the database query is
+     * delegated to some instance of {@link org.geotools.api.referencing.operation.CoordinateOperationAuthorityFactory}.
+     * If no coordinate operation was found in the database, then this method returns {@code null}.
      *
-     * @param limit The maximum number of operations to be returned. Use -1 to return all the
-     *     available operations. Use 1 to return just one operations. Currently, the behavior for
-     *     other values of {@code limit} is undefined.
+     * @param limit The maximum number of operations to be returned. Use -1 to return all the available operations. Use
+     *     1 to return just one operations. Currently, the behavior for other values of {@code limit} is undefined.
      */
-    private final Set<CoordinateOperation> tryDB(
-            final SingleCRS sourceCRS, final SingleCRS targetCRS, int limit) {
+    private final Set<CoordinateOperation> tryDB(final SingleCRS sourceCRS, final SingleCRS targetCRS, int limit) {
         if (sourceCRS == targetCRS) {
             return Collections.emptySet();
         }
@@ -1773,30 +1673,27 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * If the coordinate operation is explicitly defined in some database (typically EPSG), returns
-     * it. Otherwise (if there is no database, or if the database doesn't contains an explicit
-     * operation from {@code sourceCRS} to {@code targetCRS}, or if this method failed to create an
-     * operation from the database), returns {@code null}.
+     * If the coordinate operation is explicitly defined in some database (typically EPSG), returns it. Otherwise (if
+     * there is no database, or if the database doesn't contains an explicit operation from {@code sourceCRS} to
+     * {@code targetCRS}, or if this method failed to create an operation from the database), returns {@code null}.
      *
-     * <p>The default implementation always returns {@code null}, since there is no database
-     * connected to a {@code DefaultCoordinateOperationFactory} instance. In other words, the
-     * default implementation is "standalone": it tries to figure out transformation paths by
-     * itself. Subclasses should override this method if they can fetch a more accurate operation
-     * from some database. The mean subclass doing so is {@link AuthorityBackedFactory}.
+     * <p>The default implementation always returns {@code null}, since there is no database connected to a
+     * {@code DefaultCoordinateOperationFactory} instance. In other words, the default implementation is "standalone":
+     * it tries to figure out transformation paths by itself. Subclasses should override this method if they can fetch a
+     * more accurate operation from some database. The mean subclass doing so is {@link AuthorityBackedFactory}.
      *
      * <p>This method is invoked by <code>{@linkplain #createOperation createOperation}(sourceCRS,
-     * targetCRS)</code> before to try to figure out a transformation path by itself. It is also
-     * invoked by various {@code createOperationStep(...)} methods when an intermediate CRS was
-     * obtained by {@link GeneralDerivedCRS#getBaseCRS()} (this case occurs especially during
-     * {@linkplain GeographicCRS geographic} from/to {@linkplain ProjectedCRS projected} CRS
-     * operations). This method is <strong>not</strong> invoked for synthetic CRS generated by
-     * {@code createOperationStep(...)}, since those temporary CRS are not expected to exist in a
-     * database.
+     * targetCRS)</code> before to try to figure out a transformation path by itself. It is also invoked by various
+     * {@code createOperationStep(...)} methods when an intermediate CRS was obtained by
+     * {@link GeneralDerivedCRS#getBaseCRS()} (this case occurs especially during {@linkplain GeographicCRS geographic}
+     * from/to {@linkplain ProjectedCRS projected} CRS operations). This method is <strong>not</strong> invoked for
+     * synthetic CRS generated by {@code createOperationStep(...)}, since those temporary CRS are not expected to exist
+     * in a database.
      *
      * @param sourceCRS Input coordinate reference system.
      * @param targetCRS Output coordinate reference system.
-     * @return A coordinate operation from {@code sourceCRS} to {@code targetCRS} if and only if one
-     *     is explicitly defined in some underlying database, or {@code null} otherwise.
+     * @return A coordinate operation from {@code sourceCRS} to {@code targetCRS} if and only if one is explicitly
+     *     defined in some underlying database, or {@code null} otherwise.
      * @since 2.3
      */
     protected CoordinateOperation createFromDatabase(
@@ -1805,39 +1702,89 @@ public class DefaultCoordinateOperationFactory extends AbstractCoordinateOperati
     }
 
     /**
-     * Returns a list of available coordinate operations explicitly defined in some database
-     * (typically EPSG), for the provided CRS pair. Otherwise (if there is no database, or if the
-     * database doesn't contains any explicit operation from {@code sourceCRS} to {@code targetCRS},
-     * or if this method failed to create the operations from the database), returns an empty {@link
-     * Set}.
+     * Returns a list of available coordinate operations explicitly defined in some database (typically EPSG), for the
+     * provided CRS pair. Otherwise (if there is no database, or if the database doesn't contains any explicit operation
+     * from {@code sourceCRS} to {@code targetCRS}, or if this method failed to create the operations from the
+     * database), returns an empty {@link Set}.
      *
-     * <p>The default implementation always returns an empty {@link Set}, since there is no database
-     * connected to a {@code DefaultCoordinateOperationFactory} instance. In other words, the
-     * default implementation is "standalone": it tries to figure out transformation paths by
-     * itself. Subclasses should override this method if they can fetch a more accurate operation
-     * from some database. The mean subclass doing so is {@link AuthorityBackedFactory}.
+     * <p>The default implementation always returns an empty {@link Set}, since there is no database connected to a
+     * {@code DefaultCoordinateOperationFactory} instance. In other words, the default implementation is "standalone":
+     * it tries to figure out transformation paths by itself. Subclasses should override this method if they can fetch a
+     * more accurate operation from some database. The mean subclass doing so is {@link AuthorityBackedFactory}.
      *
      * <p>This method is invoked by <code>{@linkplain #findOperations findOperations}(sourceCRS,
-     * targetCRS)</code> before to try to figure out a transformation path by itself. It is also
-     * invoked by various {@code findOperationSteps(...)} methods when an intermediate CRS was
-     * obtained by {@link GeneralDerivedCRS#getBaseCRS()} (this case occurs especially during
-     * {@linkplain GeographicCRS geographic} from/to {@linkplain ProjectedCRS projected} CRS
-     * operations). This method is <strong>not</strong> invoked for synthetic CRS generated by
-     * {@code createOperationStep(...)}, since those temporary CRS are not expected to exist in a
-     * database.
+     * targetCRS)</code> before to try to figure out a transformation path by itself. It is also invoked by various
+     * {@code findOperationSteps(...)} methods when an intermediate CRS was obtained by
+     * {@link GeneralDerivedCRS#getBaseCRS()} (this case occurs especially during {@linkplain GeographicCRS geographic}
+     * from/to {@linkplain ProjectedCRS projected} CRS operations). This method is <strong>not</strong> invoked for
+     * synthetic CRS generated by {@code createOperationStep(...)}, since those temporary CRS are not expected to exist
+     * in a database.
      *
      * @param sourceCRS Input coordinate reference system.
      * @param targetCRS Output coordinate reference system.
-     * @param limit The maximum number of operations to be returned. Use -1 to return all the
-     *     available operations. Use 1 to return just one operations. Currently, the behavior for
-     *     other values of {@code limit} is undefined.
-     * @return A set of coordinate operations from {@code sourceCRS} to {@code targetCRS} if and
-     *     only if one is explicitly defined in some underlying database, or an empty {@link Set}
-     *     otherwise.
+     * @param limit The maximum number of operations to be returned. Use -1 to return all the available operations. Use
+     *     1 to return just one operations. Currently, the behavior for other values of {@code limit} is undefined.
+     * @return A set of coordinate operations from {@code sourceCRS} to {@code targetCRS} if and only if one is
+     *     explicitly defined in some underlying database, or an empty {@link Set} otherwise.
      * @since 2.3
      */
-    protected Set<CoordinateOperation> findFromDatabase(
+    @Override
+    public Set<CoordinateOperation> findFromDatabase(
             CoordinateReferenceSystem sourceCRS, CoordinateReferenceSystem targetCRS, int limit) {
         return Collections.emptySet();
+    }
+
+    /*
+     * Before attempting the Molodenki, which would pivot over WGS84, we should check if there are
+     * operations in the database that can pivot over ETRS89 or NAD83. This is important because
+     * explicit routes in the EPSG database are more accurate than the Molodenki.
+     */
+    protected CoordinateOperation tryWellKnownPivots(GeographicCRS sourceCRS, GeographicCRS targetCRS)
+            throws FactoryException {
+        // Kill switch to disable the pivot CRS checks, in case this might cause regressions in some cases
+        Set<CoordinateReferenceSystem> pivots = getPivotCoordinateReferenceSystems();
+        for (CoordinateReferenceSystem pivot : pivots) {
+            // Check if the pivot CRS is the same as the source or target CRS, in that case we can skip
+            if (CRS.equalsIgnoreMetadata(sourceCRS, pivot) || CRS.equalsIgnoreMetadata(targetCRS, pivot)) return null;
+
+            // look for a direct source to pivot
+            CoordinateOperation sourceToPivot = createFromDatabase(sourceCRS, pivot);
+            if (sourceToPivot == null || sourceToPivot instanceof ConcatenatedOperation) continue;
+
+            // and a direct pivot to target
+            CoordinateOperation pivotToDest = createFromDatabase(pivot, targetCRS);
+            if (pivotToDest == null || pivotToDest instanceof ConcatenatedOperation) continue;
+            return concatenate(sourceToPivot, pivotToDest);
+        }
+
+        // no path through the pivot CRS found
+        return null;
+    }
+
+    /** Lazily computes the pivot CRSs. Not synchronized, there is no harm in computing the codes multiple times. */
+    private Set<CoordinateReferenceSystem> getPivotCoordinateReferenceSystems() throws FactoryException {
+        if (PIVOT_CRS_CACHE == null) {
+            try {
+                String list = System.getProperty(PIVOT_CRS_LIST_KEY, "4258,4269");
+                String[] codes = list.split("\\s*,\\s*");
+                Set<CoordinateReferenceSystem> pivots = new LinkedHashSet<>(codes.length);
+                CRSAuthorityFactory factory =
+                        CRS.getAuthorityFactory(Boolean.TRUE.equals(hints.get(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER)));
+                for (String code : codes) {
+                    if (!code.contains(":")) {
+                        code = "EPSG:" + code;
+                    }
+                    pivots.add((CoordinateReferenceSystem) factory.createObject(code));
+                }
+                PIVOT_CRS_CACHE = Collections.unmodifiableSet(pivots);
+            } catch (NoSuchAuthorityCodeException e) {
+                LOGGER.log(
+                        Level.SEVERE,
+                        "Failed to initialize pivot CRSs, please ensure you have a valid EPSG database",
+                        e);
+                PIVOT_CRS_CACHE = Collections.emptySet();
+            }
+        }
+        return PIVOT_CRS_CACHE;
     }
 }

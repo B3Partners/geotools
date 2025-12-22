@@ -16,13 +16,13 @@
  */
 package org.geotools.coverage.processing.operation;
 
-import javax.media.jai.operator.MaxFilterDescriptor;
-import javax.media.jai.operator.MaxFilterShape;
+import java.io.Serial;
+import org.eclipse.imagen.operator.MaxFilterDescriptor;
+import org.eclipse.imagen.operator.MaxFilterShape;
 import org.geotools.coverage.processing.OperationJAI;
 
 /**
- * For each position of the mask, replaces the center pixel by the maximum of the pixel values
- * covered by the mask.
+ * For each position of the mask, replaces the center pixel by the maximum of the pixel values covered by the mask.
  *
  * <p><STRONG>Name:</STRONG>&nbsp;<CODE>"MaxFilter"</CODE><br>
  * <STRONG>JAI operator:</STRONG>&nbsp;<CODE>"{@linkplain MaxFilterDescriptor MaxFilter}"</CODE><br>
@@ -65,6 +65,7 @@ import org.geotools.coverage.processing.OperationJAI;
  */
 public class MaxFilter extends OperationJAI {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 3368109980974496342L;
 
     /** Constructs a default {@code "MaxFilter"} operation. */

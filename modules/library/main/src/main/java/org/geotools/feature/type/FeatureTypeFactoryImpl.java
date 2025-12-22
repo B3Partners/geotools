@@ -18,32 +18,31 @@ package org.geotools.feature.type;
 
 import java.util.Collection;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AssociationDescriptor;
+import org.geotools.api.feature.type.AssociationType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.ComplexType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.FeatureTypeFactory;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.feature.type.Schema;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.referencing.crs.CRSFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.util.InternationalString;
 import org.geotools.feature.simple.SimpleFeatureTypeImpl;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AssociationDescriptor;
-import org.opengis.feature.type.AssociationType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.ComplexType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.FeatureTypeFactory;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.feature.type.Schema;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.referencing.crs.CRSFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.util.InternationalString;
 
 /**
- * This implementation is capable of creating a good default implementation of the Types used in the
- * feature model.
+ * This implementation is capable of creating a good default implementation of the Types used in the feature model.
  *
- * <p>The implementation focus here is on corretness rather then efficiency or even strict error
- * messages. The code serves as a good example, but is not optimized for any particular use.
+ * <p>The implementation focus here is on corretness rather then efficiency or even strict error messages. The code
+ * serves as a good example, but is not optimized for any particular use.
  *
  * @author Jody Garnett
  */
@@ -95,27 +94,15 @@ public class FeatureTypeFactoryImpl implements FeatureTypeFactory {
 
     @Override
     public AttributeDescriptor createAttributeDescriptor(
-            AttributeType type,
-            Name name,
-            int minOccurs,
-            int maxOccurs,
-            boolean isNillable,
-            Object defaultValue) {
+            AttributeType type, Name name, int minOccurs, int maxOccurs, boolean isNillable, Object defaultValue) {
 
-        return new AttributeDescriptorImpl(
-                type, name, minOccurs, maxOccurs, isNillable, defaultValue);
+        return new AttributeDescriptorImpl(type, name, minOccurs, maxOccurs, isNillable, defaultValue);
     }
 
     @Override
     public GeometryDescriptor createGeometryDescriptor(
-            GeometryType type,
-            Name name,
-            int minOccurs,
-            int maxOccurs,
-            boolean isNillable,
-            Object defaultValue) {
-        return new GeometryDescriptorImpl(
-                type, name, minOccurs, maxOccurs, isNillable, defaultValue);
+            GeometryType type, Name name, int minOccurs, int maxOccurs, boolean isNillable, Object defaultValue) {
+        return new GeometryDescriptorImpl(type, name, minOccurs, maxOccurs, isNillable, defaultValue);
     }
 
     @Override
@@ -127,8 +114,7 @@ public class FeatureTypeFactoryImpl implements FeatureTypeFactory {
             AssociationType superType,
             InternationalString description) {
 
-        return new AssociationTypeImpl(
-                name, relatedType, isAbstract, restrictions, superType, description);
+        return new AssociationTypeImpl(name, relatedType, isAbstract, restrictions, superType, description);
     }
 
     @Override
@@ -141,8 +127,7 @@ public class FeatureTypeFactoryImpl implements FeatureTypeFactory {
             AttributeType superType,
             InternationalString description) {
 
-        return new AttributeTypeImpl(
-                name, binding, isIdentifiable, isAbstract, restrictions, superType, description);
+        return new AttributeTypeImpl(name, binding, isIdentifiable, isAbstract, restrictions, superType, description);
     }
 
     @Override
@@ -154,8 +139,7 @@ public class FeatureTypeFactoryImpl implements FeatureTypeFactory {
             List<Filter> restrictions,
             AttributeType superType,
             InternationalString description) {
-        return new ComplexTypeImpl(
-                name, schema, isIdentifiable, isAbstract, restrictions, superType, description);
+        return new ComplexTypeImpl(name, schema, isIdentifiable, isAbstract, restrictions, superType, description);
     }
 
     @Override
@@ -170,14 +154,7 @@ public class FeatureTypeFactoryImpl implements FeatureTypeFactory {
             InternationalString description) {
 
         return new GeometryTypeImpl(
-                name,
-                binding,
-                crs,
-                isIdentifiable,
-                isAbstract,
-                restrictions,
-                superType,
-                description);
+                name, binding, crs, isIdentifiable, isAbstract, restrictions, superType, description);
     }
 
     @Override
@@ -190,8 +167,7 @@ public class FeatureTypeFactoryImpl implements FeatureTypeFactory {
             AttributeType superType,
             InternationalString description) {
 
-        return new FeatureTypeImpl(
-                name, schema, defaultGeometry, isAbstract, restrictions, superType, description);
+        return new FeatureTypeImpl(name, schema, defaultGeometry, isAbstract, restrictions, superType, description);
     }
 
     @Override

@@ -24,6 +24,9 @@ import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
@@ -32,9 +35,6 @@ import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.feature.visitor.NearestVisitor;
 import org.geotools.feature.visitor.UniqueVisitor;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.FilterFactory2;
 
 public class ReTypingFeatureCollectionTest extends FeatureCollectionWrapperTestSupport {
 
@@ -70,8 +70,7 @@ public class ReTypingFeatureCollectionTest extends FeatureCollectionWrapperTestS
         expectLastCall().once();
         replay(delegate);
 
-        ReTypingFeatureCollection rtc =
-                new ReTypingFeatureCollection(delegate, stb.buildFeatureType());
+        ReTypingFeatureCollection rtc = new ReTypingFeatureCollection(delegate, stb.buildFeatureType());
         rtc.accepts(vis, null);
         verify(delegate);
 
@@ -101,7 +100,7 @@ public class ReTypingFeatureCollectionTest extends FeatureCollectionWrapperTestS
         stb.add("foo", String.class);
         stb.add("bar", Integer.class);
 
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
         NearestVisitor vis = new NearestVisitor(ff.property("bar"), Integer.valueOf(0));
 
         SimpleFeatureCollection delegate = createMock(SimpleFeatureCollection.class);
@@ -109,8 +108,7 @@ public class ReTypingFeatureCollectionTest extends FeatureCollectionWrapperTestS
         expectLastCall().once();
         replay(delegate);
 
-        ReTypingFeatureCollection rtc =
-                new ReTypingFeatureCollection(delegate, stb.buildFeatureType());
+        ReTypingFeatureCollection rtc = new ReTypingFeatureCollection(delegate, stb.buildFeatureType());
         rtc.accepts(vis, null);
         verify(delegate);
 

@@ -23,30 +23,31 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.Displacement;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.SemanticType;
+import org.geotools.api.style.Stroke;
 import org.geotools.mbstyle.MBStyle;
 import org.geotools.mbstyle.parse.MBFilter;
 import org.geotools.mbstyle.parse.MBFormatException;
 import org.geotools.mbstyle.parse.MBObjectParser;
 import org.geotools.measure.Units;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.Fill;
-import org.geotools.styling.Graphic;
-import org.geotools.styling.Mark;
-import org.geotools.styling.PointSymbolizer;
-import org.geotools.styling.Rule;
-import org.geotools.styling.Stroke;
+import org.geotools.styling.StrokeImpl;
 import org.geotools.text.Text;
 import org.json.simple.JSONObject;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.Displacement;
-import org.opengis.style.SemanticType;
 
 /**
  * A filled circle.
  *
- * <p>MBLayer wrapper around a {@link JSONObject} representation of a "circle" type layer. All
- * methods act as accessors on provided JSON layer, no other state is maintained. This allows
- * modifications to be made cleanly with out chance of side-effect.
+ * <p>MBLayer wrapper around a {@link JSONObject} representation of a "circle" type layer. All methods act as accessors
+ * on provided JSON layer, no other state is maintained. This allows modifications to be made cleanly with out chance of
+ * side-effect.
  *
  * <ul>
  *   <li>get methods: access the json directly
@@ -113,8 +114,8 @@ public class CircleMBLayer extends MBLayer {
     }
 
     /**
-     * (Optional) Amount to blur the circle. 1 blurs the circle such that only the centerpoint is
-     * full opacity. Defaults to 0.
+     * (Optional) Amount to blur the circle. 1 blurs the circle such that only the centerpoint is full opacity. Defaults
+     * to 0.
      *
      * @return The amount to blur the circle.
      * @throws MBFormatException JSON provided inconsistent with specificaiton
@@ -154,8 +155,8 @@ public class CircleMBLayer extends MBLayer {
     }
 
     /**
-     * (Optional) The geometry's offset. Values are [x, y] where negatives indicate left and up,
-     * respectively. Units in pixels. Defaults to 0, 0.
+     * (Optional) The geometry's offset. Values are [x, y] where negatives indicate left and up, respectively. Units in
+     * pixels. Defaults to 0, 0.
      *
      * @return x and y offset in pixels.
      * @throws MBFormatException JSON provided inconsistent with specificaiton
@@ -189,15 +190,14 @@ public class CircleMBLayer extends MBLayer {
      * @return Displacement to offset symbol
      */
     public Displacement circleTranslateDisplacement() {
-        return parse.displacement(
-                paint, "circle-translate", sf.displacement(ff.literal(0), ff.literal(0)));
+        return parse.displacement(paint, "circle-translate", sf.displacement(ff.literal(0), ff.literal(0)));
     }
 
     /**
      * Controls the translation reference point.
      *
-     * <p>Map: The circle is translated relative to the map. Viewport: The circle is translated
-     * relative to the viewport.
+     * <p>Map: The circle is translated relative to the map. Viewport: The circle is translated relative to the
+     * viewport.
      */
     public enum CircleTranslateAnchor {
         MAP,
@@ -207,8 +207,8 @@ public class CircleMBLayer extends MBLayer {
     /**
      * (Optional) Controls the translation reference point.
      *
-     * <p>{@link CircleTranslateAnchor#MAP}: The circle is translated relative to the map. {@link
-     * CircleTranslateAnchor#VIEWPORT}: The circle is translated relative to the viewport.
+     * <p>{@link CircleTranslateAnchor#MAP}: The circle is translated relative to the map.
+     * {@link CircleTranslateAnchor#VIEWPORT}: The circle is translated relative to the viewport.
      *
      * <p>Defaults to {@link CircleTranslateAnchor#MAP}. Requires circle-translate.
      *
@@ -226,8 +226,8 @@ public class CircleMBLayer extends MBLayer {
     /**
      * Controls the translation reference point.
      *
-     * <p>Map: The circle is translated relative to the map. Viewport: The circle is translated
-     * relative to the viewport.
+     * <p>Map: The circle is translated relative to the map. Viewport: The circle is translated relative to the
+     * viewport.
      */
     public enum CirclePitchScale {
         MAP,
@@ -237,8 +237,8 @@ public class CircleMBLayer extends MBLayer {
     /**
      * (Optional) Controls the scaling behavior of the circle when the map is pitched.
      *
-     * <p>{@link CirclePitchScale#MAP}: Circles are scaled according to their apparent distance to
-     * the camera. {@link CirclePitchScale#VIEWPORT}: Circles are not scaled.
+     * <p>{@link CirclePitchScale#MAP}: Circles are scaled according to their apparent distance to the camera.
+     * {@link CirclePitchScale#VIEWPORT}: Circles are not scaled.
      *
      * <p>Defaults to {@link CirclePitchScale#MAP}.
      *
@@ -322,72 +322,56 @@ public class CircleMBLayer extends MBLayer {
     /**
      * Transform {@link CircleMBLayer} to GeoTools FeatureTypeStyle.
      *
-     * @param styleContext The MBStyle to which this layer belongs, used as a context for things
-     *     like resolving sprite and glyph names to full urls.
+     * @param styleContext The MBStyle to which this layer belongs, used as a context for things like resolving sprite
+     *     and glyph names to full urls.
      * @return FeatureTypeStyle
      */
     @Override
     public List<FeatureTypeStyle> transformInternal(MBStyle styleContext) {
         // default linecap because StrokeImpl.getOpacity has a bug. If lineCap == null, it returns a
         // default opacity.
-        Stroke s =
-                sf.stroke(
-                        circleStrokeColor(),
-                        circleStrokeOpacity(),
-                        circleStrokeWidth(),
-                        null,
-                        Stroke.DEFAULT.getLineCap(),
-                        null,
-                        null);
+        Stroke s = sf.stroke(
+                circleStrokeColor(),
+                circleStrokeOpacity(),
+                circleStrokeWidth(),
+                null,
+                StrokeImpl.DEFAULT.getLineCap(),
+                null,
+                null);
         Fill f = sf.fill(null, circleColor(), circleOpacity());
         Mark m = sf.mark(ff.literal("circle"), f, s);
 
-        Graphic gr =
-                sf.graphic(
-                        Arrays.asList(m),
-                        null,
-                        ff.multiply(ff.literal(2), circleRadius()),
-                        null,
-                        null,
-                        circleTranslateDisplacement());
+        Graphic gr = sf.graphic(
+                Arrays.asList(m),
+                null,
+                ff.multiply(ff.literal(2), circleRadius()),
+                null,
+                null,
+                circleTranslateDisplacement());
         gr.graphicalSymbols().clear();
         gr.graphicalSymbols().add(m);
 
-        PointSymbolizer ps =
-                sf.pointSymbolizer(
-                        getId(),
-                        ff.property((String) null),
-                        sf.description(
-                                Text.text("MBStyle " + getId()),
-                                Text.text("Generated for " + getSourceLayer())),
-                        Units.PIXEL,
-                        gr);
+        PointSymbolizer ps = sf.pointSymbolizer(
+                getId(),
+                ff.property((String) null),
+                sf.description(Text.text("MBStyle " + getId()), Text.text("Generated for " + getSourceLayer())),
+                Units.PIXEL,
+                gr);
 
         MBFilter filter = getFilter();
 
-        List<org.opengis.style.Rule> rules = new ArrayList<>();
-        Rule rule =
-                sf.rule(
-                        getId(),
-                        null,
-                        null,
-                        0.0,
-                        Double.POSITIVE_INFINITY,
-                        Arrays.asList(ps),
-                        filter.filter());
+        List<org.geotools.api.style.Rule> rules = new ArrayList<>();
+        Rule rule = sf.rule(getId(), null, null, 0.0, Double.POSITIVE_INFINITY, Arrays.asList(ps), filter.filter());
 
         rules.add(rule);
 
-        return Collections.singletonList(
-                sf.featureTypeStyle(
-                        getId(),
-                        sf.description(
-                                Text.text("MBStyle " + getId()),
-                                Text.text("Generated for " + getSourceLayer())),
-                        null,
-                        Collections.emptySet(),
-                        filter.semanticTypeIdentifiers(),
-                        rules));
+        return Collections.singletonList(sf.featureTypeStyle(
+                getId(),
+                sf.description(Text.text("MBStyle " + getId()), Text.text("Generated for " + getSourceLayer())),
+                null,
+                Collections.emptySet(),
+                filter.semanticTypeIdentifiers(),
+                rules));
     }
 
     /**

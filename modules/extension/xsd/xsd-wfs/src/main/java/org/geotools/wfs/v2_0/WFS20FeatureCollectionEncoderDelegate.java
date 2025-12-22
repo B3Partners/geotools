@@ -16,6 +16,8 @@
  */
 package org.geotools.wfs.v2_0;
 
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.FeatureType;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.gml2.simple.FeatureCollectionEncoderDelegate;
 import org.geotools.gml2.simple.GMLWriter;
@@ -23,8 +25,6 @@ import org.geotools.gml2.simple.QualifiedName;
 import org.geotools.gml3.simple.GML32FeatureCollectionEncoderDelegate;
 import org.geotools.gml3.v3_2.GML;
 import org.geotools.xsd.Encoder;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.FeatureType;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
@@ -36,20 +36,15 @@ import org.xml.sax.helpers.AttributesImpl;
  */
 class WFS20FeatureCollectionEncoderDelegate extends FeatureCollectionEncoderDelegate {
 
-    public WFS20FeatureCollectionEncoderDelegate(
-            SimpleFeatureCollection features, Encoder encoder) {
+    public WFS20FeatureCollectionEncoderDelegate(SimpleFeatureCollection features, Encoder encoder) {
         super(features, encoder, new WFS20EncoderDelegate(encoder));
         this.encodeGeometryIds = true;
     }
 
     @Override
     protected Attributes getPropertyAttributes(
-            QualifiedName name,
-            FeatureType featureType,
-            AttributeDescriptor attribute,
-            Object value) {
-        if ("identifier".equals(name.getLocalPart())
-                && GML.NAMESPACE.equals(name.getNamespaceURI())) {
+            QualifiedName name, FeatureType featureType, AttributeDescriptor attribute, Object value) {
+        if ("identifier".equals(name.getLocalPart()) && GML.NAMESPACE.equals(name.getNamespaceURI())) {
             AttributesImpl atts = new AttributesImpl();
             atts.addAttribute(
                     null, "codeSpace", "codeSpace", null, featureType.getName().getNamespaceURI());
@@ -61,8 +56,7 @@ class WFS20FeatureCollectionEncoderDelegate extends FeatureCollectionEncoderDele
 
     static class WFS20EncoderDelegate extends GML32FeatureCollectionEncoderDelegate.GML32Delegate {
 
-        static final QualifiedName MEMBER =
-                new QualifiedName(WFS.NAMESPACE, GML.member.getLocalPart(), "wfs");
+        static final QualifiedName MEMBER = new QualifiedName(WFS.NAMESPACE, GML.member.getLocalPart(), "wfs");
 
         static final QualifiedName TUPLE = new QualifiedName(WFS.NAMESPACE, "Tuple", "wfs");
 

@@ -23,14 +23,24 @@ import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.QueryCapabilities;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortOrder;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureReader;
 import org.geotools.data.FilteringFeatureReader;
-import org.geotools.data.Query;
-import org.geotools.data.QueryCapabilities;
 import org.geotools.data.ReTypeFeatureReader;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
@@ -41,14 +51,6 @@ import org.geotools.filter.FilterCapabilities;
 import org.geotools.filter.SortByImpl;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.sort.SortOrder;
 
 public class MongoFeatureSource extends ContentFeatureSource {
 
@@ -134,9 +136,7 @@ public class MongoFeatureSource extends ContentFeatureSource {
     }
 
     @Override
-    @SuppressWarnings("PMD.CloseResource") // r is re-assigned, but also wrapped
-    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query)
-            throws IOException {
+    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query) throws IOException {
 
         List<Filter> postFilterList = new ArrayList<>();
         List<String> postFilterAttributes = new ArrayList<>();
@@ -168,8 +168,7 @@ public class MongoFeatureSource extends ContentFeatureSource {
             return false;
         }
 
-        if (visitor instanceof MinVisitor) {
-            MinVisitor minVisitor = (MinVisitor) visitor;
+        if (visitor instanceof MinVisitor minVisitor) {
             List<Expression> expressions = minVisitor.getExpressions();
             if (expressions.size() != 1 || !(expressions.get(0) instanceof PropertyName)) {
                 return false;
@@ -191,8 +190,7 @@ public class MongoFeatureSource extends ContentFeatureSource {
                     minVisitor.setValue(propertyName.evaluate(reader.next()));
                 }
             }
-        } else if (visitor instanceof MaxVisitor) {
-            MaxVisitor maxVisitor = (MaxVisitor) visitor;
+        } else if (visitor instanceof MaxVisitor maxVisitor) {
             List<Expression> expressions = maxVisitor.getExpressions();
             if (expressions.size() != 1 || !(expressions.get(0) instanceof PropertyName)) {
                 return false;
@@ -222,27 +220,27 @@ public class MongoFeatureSource extends ContentFeatureSource {
     }
 
     @Override
-    protected boolean canOffset() {
+    protected boolean canOffset(Query query) {
         return true;
     }
 
     @Override
-    protected boolean canLimit() {
+    protected boolean canLimit(Query query) {
         return true;
     }
 
     @Override
-    protected boolean canRetype() {
+    protected boolean canRetype(Query query) {
         return true;
     }
 
     @Override
-    protected boolean canSort() {
+    protected boolean canSort(Query query) {
         return true;
     }
 
     @Override
-    protected boolean canFilter() {
+    protected boolean canFilter(Query query) {
         return true;
     }
 
@@ -278,12 +276,12 @@ public class MongoFeatureSource extends ContentFeatureSource {
                 keys.put(mapper.getGeometryPath(), 1);
             }
             if (LOG.isLoggable(Level.FINE)) {
-                LOG.fine(String.format("find(%s, %s)", query, keys));
+                LOG.fine("find(%s, %s)".formatted(query, keys));
             }
             c = collection.find(query, keys);
         } else {
             if (LOG.isLoggable(Level.FINE)) {
-                LOG.fine(String.format("find(%s)", query));
+                LOG.fine("find(%s)".formatted(query));
             }
             c = collection.find(query);
         }
@@ -327,9 +325,21 @@ public class MongoFeatureSource extends ContentFeatureSource {
 
     Filter[] splitFilter(Filter f) {
         FilterCapabilities filterCapabilities = getDataStore().getFilterCapabilities();
-        MongoFilterSplitter splitter = new MongoFilterSplitter(filterCapabilities, null, null);
+        MongoFilterSplitter splitter =
+                new MongoFilterSplitter(filterCapabilities, null, null, new MongoCollectionMeta(getIndexesInfoMap()));
         f.accept(splitter, null);
         return new Filter[] {splitter.getFilterPre(), splitter.getFilterPost()};
+    }
+
+    private Map<String, String> getIndexesInfoMap() {
+        Map<String, String> indexes = new HashMap<>();
+        for (DBObject object : collection.getIndexInfo()) {
+            BasicDBObject key = (BasicDBObject) object.get("key");
+            for (Map.Entry entry : key.entrySet()) {
+                indexes.put(entry.getKey().toString(), entry.getValue().toString());
+            }
+        }
+        return indexes;
     }
 
     @Override

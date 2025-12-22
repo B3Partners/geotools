@@ -94,7 +94,7 @@ public class ColorBinding extends AbstractSimpleBinding {
             color = color.substring(1);
         }
 
-        if ((color.length() < 6) || (color.length() > 8)) {
+        if (color.length() < 6 || color.length() > 8) {
             throw new IllegalArgumentException("illegal color: " + color);
         }
 
@@ -112,13 +112,9 @@ public class ColorBinding extends AbstractSimpleBinding {
 
         if (a != null) {
             return new Color(
-                    Integer.parseInt(r, 16),
-                    Integer.parseInt(g, 16),
-                    Integer.parseInt(b, 16),
-                    Integer.parseInt(a, 16));
+                    Integer.parseInt(r, 16), Integer.parseInt(g, 16), Integer.parseInt(b, 16), Integer.parseInt(a, 16));
         } else {
-            return new Color(
-                    Integer.parseInt(r, 16), Integer.parseInt(g, 16), Integer.parseInt(b, 16));
+            return new Color(Integer.parseInt(r, 16), Integer.parseInt(g, 16), Integer.parseInt(b, 16));
         }
     }
 }

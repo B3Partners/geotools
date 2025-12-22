@@ -20,14 +20,13 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_int2bbool extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl("int2bbool", Boolean.class, parameter("int", Integer.class));
+    public static FunctionName NAME = new FunctionNameImpl("int2bbool", Boolean.class, parameter("int", Integer.class));
 
     public FilterFunction_int2bbool() {
         super(NAME);
@@ -38,7 +37,7 @@ public class FilterFunction_int2bbool extends FunctionExpressionImpl {
         int arg0;
 
         try { // attempt to get value and perform conversion
-            arg0 = (getExpression(0).evaluate(feature, Integer.class)).intValue();
+            arg0 = getExpression(0).evaluate(feature, Integer.class).intValue();
         } catch (Exception e) // probably a type error
         {
             throw new IllegalArgumentException(

@@ -25,7 +25,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.data.joining.JoiningQuery;
 import org.geotools.data.oracle.OracleDialect;
 import org.geotools.data.postgis.PostGISDialect;
@@ -39,12 +41,10 @@ import org.geotools.jdbc.PreparedFilterToSQL;
 import org.geotools.jdbc.PrimaryKey;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.FilterFactory2;
 
 public class JoiningJDBCFeatureSourceTest {
 
-    private FilterFactory2 FF = CommonFactoryFinder.getFilterFactory2();
+    private FilterFactory FF = CommonFactoryFinder.getFilterFactory();
 
     @Test
     public void testMultipleIds() throws Exception {
@@ -60,13 +60,11 @@ public class JoiningJDBCFeatureSourceTest {
 
         JDBCDataStore mockStore = Mockito.mock(JDBCDataStore.class);
         ContentEntry mockEntry = Mockito.mock(ContentEntry.class);
-        Mockito.when(mockStore.getPrimaryKey(origType))
-                .thenReturn(new PrimaryKey(null, Collections.emptyList()));
+        Mockito.when(mockStore.getPrimaryKey(origType)).thenReturn(new PrimaryKey(null, Collections.emptyList()));
 
         Mockito.when(mockStore.getSQLDialect()).thenReturn(new PostGISDialect(mockStore));
         Mockito.when(mockEntry.getDataStore()).thenReturn(mockStore);
-        JoiningJDBCFeatureSource source =
-                new JoiningJDBCFeatureSource(new JDBCFeatureSource(mockEntry, null));
+        JoiningJDBCFeatureSource source = new JoiningJDBCFeatureSource(new JDBCFeatureSource(mockEntry, null));
         SimpleFeatureType type = source.getFeatureType(origType, query);
         assertNotNull(type);
         assertEquals("FOREIGN_ID_0_0", type.getDescriptor(0).getName().getLocalPart());
@@ -96,23 +94,18 @@ public class JoiningJDBCFeatureSourceTest {
         Mockito.when(mockEntry.getDataStore()).thenReturn(store);
         JDBCState state = Mockito.mock(JDBCState.class);
         Mockito.when(mockEntry.getState(Mockito.any(Transaction.class))).thenReturn(state);
-        Mockito.when(state.getPrimaryKey())
-                .thenReturn(new PrimaryKey(null, Collections.emptyList()));
+        Mockito.when(state.getPrimaryKey()).thenReturn(new PrimaryKey(null, Collections.emptyList()));
 
         JoiningJDBCFeatureSource source = Mockito.mock(JoiningJDBCFeatureSource.class);
         Mockito.when(source.getEntry()).thenReturn(mockEntry);
-        Mockito.when(source.createFilterToSQL(origType))
-                .thenReturn(new PreparedFilterToSQL(dialect));
-        Mockito.when(source.createFilterToSQL(origType, true))
-                .thenReturn(new PreparedFilterToSQL(dialect));
+        Mockito.when(source.createFilterToSQL(origType)).thenReturn(new PreparedFilterToSQL(dialect));
+        Mockito.when(source.createFilterToSQL(origType, true)).thenReturn(new PreparedFilterToSQL(dialect));
         Mockito.when(source.getDataStore()).thenReturn(store);
 
         // execute real createCountQuery method
         Set<String> columns = new HashSet<>(Arrays.asList("one", "two"));
         AtomicReference<PreparedFilterToSQL> toSQLRef = new AtomicReference<>();
-        Mockito.doCallRealMethod()
-                .when(source)
-                .createCountQuery(dialect, origType, query, columns, toSQLRef);
+        Mockito.doCallRealMethod().when(source).createCountQuery(dialect, origType, query, columns, toSQLRef);
 
         String sql = source.createCountQuery(dialect, origType, query, columns, toSQLRef);
         // assert that between table name and WHERE clause we have a space

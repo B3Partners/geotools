@@ -20,18 +20,17 @@ package org.geotools.filter.function.math;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.util.Converters;
 import org.geotools.util.factory.Hints;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_tan extends FunctionExpressionImpl {
 
     // public static FunctionName NAME = new FunctionNameImpl("tan","radians");
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "tan", parameter("tan", Double.class), parameter("radians", Number.class));
+            new FunctionNameImpl("tan", parameter("tan", Double.class), parameter("radians", Number.class));
 
     public FilterFunction_tan() {
         super(NAME);

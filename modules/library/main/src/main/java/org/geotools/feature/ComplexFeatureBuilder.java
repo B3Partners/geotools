@@ -21,18 +21,18 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.FeatureFactory;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
 import org.geotools.factory.CommonFactoryFinder;
-import org.opengis.feature.Feature;
-import org.opengis.feature.FeatureFactory;
-import org.opengis.feature.Property;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
 
 /**
- * The complex feature builder allows the construction of features by progressively appending their
- * components and deferring the construction till you're ready.
+ * The complex feature builder allows the construction of features by progressively appending their components and
+ * deferring the construction till you're ready.
  *
  * @author Adam Brown (Curtin University of Technology)
  */
@@ -59,8 +59,8 @@ public class ComplexFeatureBuilder extends FeatureBuilder<FeatureType, Feature> 
     }
 
     /**
-     * Build and return the feature you've been constructing. If the id is null it will be assigned
-     * from FeatureBuilder.createDefaultFeatureId().
+     * Build and return the feature you've been constructing. If the id is null it will be assigned from
+     * FeatureBuilder.createDefaultFeatureId().
      */
     @Override
     public Feature buildFeature(String id) {
@@ -89,14 +89,12 @@ public class ComplexFeatureBuilder extends FeatureBuilder<FeatureType, Feature> 
             if (numberOfProperties < minOccurs) {
                 // If the value is nillable anyway then just default it to null:
                 if (propertyDescriptor.isNillable()
-                        && AttributeDescriptor.class.isAssignableFrom(
-                                propertyDescriptor.getClass())) {
+                        && AttributeDescriptor.class.isAssignableFrom(propertyDescriptor.getClass())) {
                     do {
-                        Property nullProperty =
-                                new AttributeImpl(
-                                        propertyDescriptor.getType().getBinding().cast(null),
-                                        (AttributeDescriptor) propertyDescriptor,
-                                        null);
+                        Property nullProperty = new AttributeImpl(
+                                propertyDescriptor.getType().getBinding().cast(null),
+                                (AttributeDescriptor) propertyDescriptor,
+                                null);
 
                         properties.add(nullProperty);
                     } while (++numberOfProperties < minOccurs);
@@ -107,9 +105,8 @@ public class ComplexFeatureBuilder extends FeatureBuilder<FeatureType, Feature> 
                 // they're only present on the AttributeDescriptors...
                 else {
                     throw new IllegalStateException(
-                            String.format(
-                                    "Failed to build feature '%s'; its property '%s' requires at least %s occurrence(s) but number of occurrences was %s.",
-                                    featureType.getName(), name, minOccurs, numberOfProperties));
+                            "Failed to build feature '%s'; its property '%s' requires at least %s occurrence(s) but number of occurrences was %s."
+                                    .formatted(featureType.getName(), name, minOccurs, numberOfProperties));
                 }
             }
         }
@@ -130,8 +127,7 @@ public class ComplexFeatureBuilder extends FeatureBuilder<FeatureType, Feature> 
     }
 
     /**
-     * Append a property value to the complex feature under construction and associate it with the
-     * name specified.
+     * Append a property value to the complex feature under construction and associate it with the name specified.
      *
      * @param name The name of the property you wish to set.
      * @param value The value of the property to append.
@@ -141,10 +137,8 @@ public class ComplexFeatureBuilder extends FeatureBuilder<FeatureType, Feature> 
 
         // The 'name' must exist in the type, if not, throw an exception:
         if (propertyDescriptor == null) {
-            throw new IllegalArgumentException(
-                    String.format(
-                            "The name '%s' is not a valid descriptor name for the type '%s'.",
-                            name, this.featureType.getName()));
+            throw new IllegalArgumentException("The name '%s' is not a valid descriptor name for the type '%s'."
+                    .formatted(name, this.featureType.getName()));
         }
 
         Class<?> expectedClass = propertyDescriptor.getType().getBinding();
@@ -153,12 +147,10 @@ public class ComplexFeatureBuilder extends FeatureBuilder<FeatureType, Feature> 
 
             // Make sure that the provided class and the expected class match or
             // that the expectedClass is a base class of the providedClass:
-            if (!providedClass.equals(expectedClass)
-                    && !expectedClass.isAssignableFrom(providedClass)) {
+            if (!providedClass.equals(expectedClass) && !expectedClass.isAssignableFrom(providedClass)) {
                 throw new IllegalArgumentException(
-                        String.format(
-                                "The value provided contains an object of '%s' but the method expects an object of '%s'.",
-                                providedClass, expectedClass));
+                        "The value provided contains an object of '%s' but the method expects an object of '%s'."
+                                .formatted(providedClass, expectedClass));
             }
         } else { // value == null
             if (propertyDescriptor.isNillable()) {
@@ -181,9 +173,8 @@ public class ComplexFeatureBuilder extends FeatureBuilder<FeatureType, Feature> 
             int maxOccurs = propertyDescriptor.getMaxOccurs();
             if (valueList.size() == maxOccurs) {
                 throw new IndexOutOfBoundsException(
-                        String.format(
-                                "You can't add another object with the name of '%s' because you already have the maximum number (%s) allowed by the property descriptor.",
-                                name, maxOccurs));
+                        "You can't add another object with the name of '%s' because you already have the maximum number (%s) allowed by the property descriptor."
+                                .formatted(name, maxOccurs));
             }
         } else {
             valueList = new ArrayList<>();

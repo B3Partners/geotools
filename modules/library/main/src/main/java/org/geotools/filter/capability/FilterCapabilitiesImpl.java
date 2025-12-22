@@ -16,11 +16,11 @@
  */
 package org.geotools.filter.capability;
 
-import org.opengis.filter.capability.FilterCapabilities;
-import org.opengis.filter.capability.IdCapabilities;
-import org.opengis.filter.capability.ScalarCapabilities;
-import org.opengis.filter.capability.SpatialCapabilities;
-import org.opengis.filter.capability.TemporalCapabilities;
+import org.geotools.api.filter.capability.FilterCapabilities;
+import org.geotools.api.filter.capability.IdCapabilities;
+import org.geotools.api.filter.capability.ScalarCapabilities;
+import org.geotools.api.filter.capability.SpatialCapabilities;
+import org.geotools.api.filter.capability.TemporalCapabilities;
 
 /**
  * Implementation of the FilterCapabilities interface.
@@ -44,10 +44,7 @@ public class FilterCapabilitiesImpl implements FilterCapabilities {
     }
 
     public FilterCapabilitiesImpl(
-            String version,
-            ScalarCapabilities scalar,
-            SpatialCapabilities spatial,
-            IdCapabilities id) {
+            String version, ScalarCapabilities scalar, SpatialCapabilities spatial, IdCapabilities id) {
         this.version = version;
         this.id = toIdCapabilitiesImpl(id);
         this.scalar = toScalarCapabilitiesImpl(scalar);
@@ -70,10 +67,7 @@ public class FilterCapabilitiesImpl implements FilterCapabilities {
 
     public FilterCapabilitiesImpl(FilterCapabilities copy) {
         this.version = copy.getVersion();
-        this.id =
-                copy.getIdCapabilities() == null
-                        ? null
-                        : new IdCapabilitiesImpl(copy.getIdCapabilities());
+        this.id = copy.getIdCapabilities() == null ? null : new IdCapabilitiesImpl(copy.getIdCapabilities());
         this.scalar = toScalarCapabilitiesImpl(copy.getScalarCapabilities());
         this.spatial = toSpatialCapabiltiesImpl(copy.getSpatialCapabilities());
         this.temporal = toTemporalCapabilitiesImpl(copy.getTemporalCapabilities());
@@ -83,8 +77,8 @@ public class FilterCapabilitiesImpl implements FilterCapabilities {
         if (scalarCapabilities == null) {
             return new ScalarCapabilitiesImpl();
         }
-        if (scalarCapabilities instanceof ScalarCapabilitiesImpl) {
-            return (ScalarCapabilitiesImpl) scalarCapabilities;
+        if (scalarCapabilities instanceof ScalarCapabilitiesImpl impl) {
+            return impl;
         }
         return new ScalarCapabilitiesImpl(scalarCapabilities);
     }
@@ -93,30 +87,28 @@ public class FilterCapabilitiesImpl implements FilterCapabilities {
         if (idCapabilities == null) {
             return new IdCapabilitiesImpl();
         }
-        if (idCapabilities instanceof IdCapabilitiesImpl) {
-            return (IdCapabilitiesImpl) idCapabilities;
+        if (idCapabilities instanceof IdCapabilitiesImpl impl) {
+            return impl;
         }
         return new IdCapabilitiesImpl(idCapabilities);
     }
 
-    private static SpatialCapabiltiesImpl toSpatialCapabiltiesImpl(
-            SpatialCapabilities spatialCapabilities) {
+    private static SpatialCapabiltiesImpl toSpatialCapabiltiesImpl(SpatialCapabilities spatialCapabilities) {
         if (spatialCapabilities == null) {
             return new SpatialCapabiltiesImpl();
         }
-        if (spatialCapabilities instanceof SpatialCapabiltiesImpl) {
-            return (SpatialCapabiltiesImpl) spatialCapabilities;
+        if (spatialCapabilities instanceof SpatialCapabiltiesImpl impl) {
+            return impl;
         }
         return new SpatialCapabiltiesImpl(spatialCapabilities);
     }
 
-    private static TemporalCapabilitiesImpl toTemporalCapabilitiesImpl(
-            TemporalCapabilities temporalCapabilities) {
+    private static TemporalCapabilitiesImpl toTemporalCapabilitiesImpl(TemporalCapabilities temporalCapabilities) {
         if (temporalCapabilities == null) {
             return new TemporalCapabilitiesImpl();
         }
-        if (temporalCapabilities instanceof TemporalCapabilitiesImpl) {
-            return (TemporalCapabilitiesImpl) temporalCapabilities;
+        if (temporalCapabilities instanceof TemporalCapabilitiesImpl impl) {
+            return impl;
         }
         return new TemporalCapabilitiesImpl(temporalCapabilities);
     }
@@ -222,11 +214,11 @@ public class FilterCapabilitiesImpl implements FilterCapabilities {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((id == null) ? 0 : id.hashCode());
-        result = prime * result + ((scalar == null) ? 0 : scalar.hashCode());
-        result = prime * result + ((spatial == null) ? 0 : spatial.hashCode());
-        result = prime * result + ((temporal == null) ? 0 : temporal.hashCode());
-        result = prime * result + ((version == null) ? 0 : version.hashCode());
+        result = prime * result + (id == null ? 0 : id.hashCode());
+        result = prime * result + (scalar == null ? 0 : scalar.hashCode());
+        result = prime * result + (spatial == null ? 0 : spatial.hashCode());
+        result = prime * result + (temporal == null ? 0 : temporal.hashCode());
+        result = prime * result + (version == null ? 0 : version.hashCode());
         return result;
     }
 

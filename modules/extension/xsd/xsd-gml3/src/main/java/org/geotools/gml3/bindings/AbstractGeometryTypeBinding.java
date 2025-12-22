@@ -17,6 +17,7 @@
 package org.geotools.gml3.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.gml2.SrsSyntax;
 import org.geotools.gml2.bindings.GML2EncodingUtils;
@@ -26,7 +27,6 @@ import org.geotools.xsd.Configuration;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Binding object for the type http://www.opengis.net/gml:AbstractGeometryType.
@@ -107,11 +107,10 @@ public class AbstractGeometryTypeBinding extends AbstractComplexBinding {
     @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         // set the crs
-        if (value instanceof Geometry) {
+        if (value instanceof Geometry geometry) {
             CoordinateReferenceSystem crs = GML3ParsingUtils.crs(node);
 
             if (crs != null) {
-                Geometry geometry = (Geometry) value;
                 geometry.setUserData(crs);
             }
         }

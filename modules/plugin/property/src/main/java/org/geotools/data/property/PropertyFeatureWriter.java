@@ -23,10 +23,14 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
-import org.geotools.data.DataSourceException;
+import java.nio.charset.StandardCharsets;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.data.store.ContentState;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -36,9 +40,6 @@ import org.geotools.util.Converters;
 import org.geotools.util.factory.Hints;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTWriter;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Uses PropertyAttributeWriter to generate a property file on disk.
@@ -63,8 +64,7 @@ public class PropertyFeatureWriter implements FeatureWriter<SimpleFeatureType, S
     SimpleFeature live = null;
     private ContentState state;
 
-    public PropertyFeatureWriter(
-            ContentFeatureSource source, ContentState contentState, Query query, boolean append)
+    public PropertyFeatureWriter(ContentFeatureSource source, ContentState contentState, Query query, boolean append)
             throws IOException {
         this.state = contentState;
         this.featureSource = source;
@@ -81,7 +81,7 @@ public class PropertyFeatureWriter implements FeatureWriter<SimpleFeatureType, S
         type = delegate.getFeatureType();
 
         // open writer
-        writer = new BufferedWriter(new FileWriter(write));
+        writer = new BufferedWriter(new FileWriter(write, StandardCharsets.UTF_8));
         // write header
         writer.write("_=");
         writer.write(DataUtilities.encodeType(type));
@@ -147,14 +147,11 @@ public class PropertyFeatureWriter implements FeatureWriter<SimpleFeatureType, S
         writer.write(position == 0 ? "=" : "|");
         if (attribute == null) {
             writer.write("<null>"); // nothing!
-        } else if (attribute instanceof String) {
-            // encode newlines
-            String txt = (String) attribute;
+        } else if (attribute instanceof String txt) {
             txt = txt.replace("\n", "\\n");
             txt = txt.replace("\r", "\\r");
             writer.write(txt);
-        } else if (attribute instanceof Geometry) {
-            Geometry geometry = (Geometry) attribute;
+        } else if (attribute instanceof Geometry geometry) {
             wktWriter.write(geometry, writer);
         } else {
             String txt = Converters.convert(attribute, String.class);

@@ -12,11 +12,11 @@ package org.geotools.feature;
 import java.util.ArrayList;
 import java.util.Collection;
 import org.geotools.ExceptionChecker;
+import org.geotools.api.feature.Attribute;
+import org.geotools.api.feature.ComplexAttribute;
+import org.geotools.api.feature.Feature;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.ComplexAttribute;
-import org.opengis.feature.Feature;
 
 public class ComplexFeatureBuilderTest {
     private static ComplexAttribute getAMineNameProperty(String name, boolean isPreferred) {
@@ -57,8 +57,7 @@ public class ComplexFeatureBuilderTest {
 
     /** @throws Exception */
     @Test(expected = IllegalArgumentException.class)
-    public void append_validNameInvalidValueClass_throwsIllegalArgumentException()
-            throws Exception {
+    public void append_validNameInvalidValueClass_throwsIllegalArgumentException() throws Exception {
         // Arrange
         ComplexFeatureBuilder builder = new ComplexFeatureBuilder(FakeTypes.Mine.MINETYPE_TYPE);
 
@@ -102,8 +101,7 @@ public class ComplexFeatureBuilderTest {
         // Act
         try {
             builder.append(
-                    FakeTypes.Mine.NAME_mineName,
-                    getAMineNameProperty("mine 4", false)); // Add it once too many times.
+                    FakeTypes.Mine.NAME_mineName, getAMineNameProperty("mine 4", false)); // Add it once too many times.
         } catch (IndexOutOfBoundsException ioobe) {
             ExceptionChecker.assertExceptionMessage(
                     ioobe,
@@ -134,8 +132,7 @@ public class ComplexFeatureBuilderTest {
         ComplexAttribute mineNameProperty = getAMineNameProperty("Sharlston Colliery", true);
 
         // Act
-        ComplexFeatureBuilder complexFeatureBuilder =
-                new ComplexFeatureBuilder(FakeTypes.Mine.MINETYPE_TYPE);
+        ComplexFeatureBuilder complexFeatureBuilder = new ComplexFeatureBuilder(FakeTypes.Mine.MINETYPE_TYPE);
 
         complexFeatureBuilder.append(FakeTypes.Mine.NAME_mineName, mineNameProperty);
 

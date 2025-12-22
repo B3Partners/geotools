@@ -16,23 +16,26 @@
  */
 package org.geotools.renderer.lite.gridcoverage2d;
 
-import it.geosolutions.jaiext.range.NoDataContainer;
 import java.awt.RenderingHints;
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;
 import java.awt.image.ComponentColorModel;
 import java.awt.image.RenderedImage;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
-import javax.media.jai.ImageLayout;
-import javax.media.jai.JAI;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.ROI;
-import javax.media.jai.RenderedOp;
+import org.eclipse.imagen.ImageLayout;
+import org.eclipse.imagen.ImageN;
+import org.eclipse.imagen.PlanarImage;
+import org.eclipse.imagen.ROI;
+import org.eclipse.imagen.RenderedOp;
+import org.eclipse.imagen.media.range.NoDataContainer;
+import org.geotools.api.coverage.grid.GridCoverage;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.GridSampleDimension;
 import org.geotools.coverage.TypeMap;
 import org.geotools.coverage.grid.GridCoverage2D;
@@ -40,17 +43,14 @@ import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.util.CoverageUtilities;
 import org.geotools.image.ImageWorker;
 import org.geotools.renderer.i18n.ErrorKeys;
-import org.geotools.renderer.i18n.Errors;
 import org.geotools.renderer.i18n.Vocabulary;
 import org.geotools.renderer.i18n.VocabularyKeys;
 import org.geotools.util.SimpleInternationalString;
 import org.geotools.util.factory.Hints;
-import org.opengis.coverage.grid.GridCoverage;
-import org.opengis.util.InternationalString;
 
 /**
- * This {@link BandMergeNode} wraps a {@link JAI} {@link BandMergeDescriptor} operation for usage
- * withing SLD 1.0 processing.
+ * This {@link BandMergeNode} wraps a {@link JAI} {@link BandMergeDescriptor} operation for usage withing SLD 1.0
+ * processing.
  *
  * @author Simone Giannecchini, GeoSolutions. TODO we should preserve properties
  */
@@ -85,8 +85,8 @@ class BandMergeNode extends BaseCoverageProcessingNode implements CoverageProces
     }
 
     /**
-     * Holds the intermediate {@link RenderedOp} we create along the path for this {@link
-     * CoverageProcessingNode} in order to be able to dispose them later on.
+     * Holds the intermediate {@link RenderedOp} we create along the path for this {@link CoverageProcessingNode} in
+     * order to be able to dispose them later on.
      */
     private Stack<RenderedImage> intermediateOps = new Stack<>();
 
@@ -94,8 +94,7 @@ class BandMergeNode extends BaseCoverageProcessingNode implements CoverageProces
     private RenderedImage alpha;
 
     /**
-     * Default constructor for the {@link BandMergeNode} which merge multiple single bands into s
-     * single coverage.
+     * Default constructor for the {@link BandMergeNode} which merge multiple single bands into s single coverage.
      *
      * @param hints {@link Hints} to control this node behavior.
      */
@@ -105,8 +104,7 @@ class BandMergeNode extends BaseCoverageProcessingNode implements CoverageProces
                 3,
                 hints,
                 SimpleInternationalString.wrap("BandMergeNode"),
-                SimpleInternationalString.wrap(
-                        "Node which applies a BandMergeNode following SLD 1.0 spec."));
+                SimpleInternationalString.wrap("Node which applies a BandMergeNode following SLD 1.0 spec."));
     }
 
     @Override
@@ -127,7 +125,7 @@ class BandMergeNode extends BaseCoverageProcessingNode implements CoverageProces
             //
             // //
             final int size = sources.size();
-            final boolean hasAlpha = (alpha != null);
+            final boolean hasAlpha = alpha != null;
             if (size == 1 && !hasAlpha) {
                 // returns the source if we don't need to restore the alpha channel
                 return getSource(0).getOutput();
@@ -139,8 +137,7 @@ class BandMergeNode extends BaseCoverageProcessingNode implements CoverageProces
             // //
             if (size != 3 && size != 1) {
                 throw new IllegalArgumentException(
-                        Errors.format(
-                                ErrorKeys.INVALID_NUMBER_OF_SOURCES_$1, Integer.valueOf(size)));
+                        MessageFormat.format(ErrorKeys.INVALID_NUMBER_OF_SOURCES_$1, Integer.valueOf(size)));
             }
 
             // /////////////////////////////////////////////////////////////////////
@@ -162,8 +159,7 @@ class BandMergeNode extends BaseCoverageProcessingNode implements CoverageProces
                 //
                 // //
                 final CoverageProcessingNode currentSourceNode = it.next();
-                final GridCoverage2D currentSourceCoverage =
-                        (GridCoverage2D) currentSourceNode.getOutput();
+                final GridCoverage2D currentSourceCoverage = (GridCoverage2D) currentSourceNode.getOutput();
                 sourceGridCoverages.add(currentSourceCoverage);
                 final GridGeometry2D gg = currentSourceCoverage.getGridGeometry();
                 if (gridGeometry == null) {
@@ -171,27 +167,24 @@ class BandMergeNode extends BaseCoverageProcessingNode implements CoverageProces
                     gridGeometry = gg;
 
                     // color model
-                    final ColorSpace colorSpace =
-                            (size == 1 && hasAlpha)
-                                    ? ColorSpace.getInstance(ColorSpace.CS_GRAY)
-                                    : ColorSpace.getInstance(ColorSpace.CS_LINEAR_RGB);
-                    final int transparency =
-                            hasAlpha ? Transparency.TRANSLUCENT : Transparency.OPAQUE;
-                    final ComponentColorModel cm =
-                            new ComponentColorModel(
-                                    colorSpace,
-                                    hasAlpha,
-                                    false,
-                                    transparency,
-                                    currentSourceCoverage
-                                            .getRenderedImage()
-                                            .getSampleModel()
-                                            .getDataType());
+                    final ColorSpace colorSpace = size == 1 && hasAlpha
+                            ? ColorSpace.getInstance(ColorSpace.CS_GRAY)
+                            : ColorSpace.getInstance(ColorSpace.CS_LINEAR_RGB);
+                    final int transparency = hasAlpha ? Transparency.TRANSLUCENT : Transparency.OPAQUE;
+                    final ComponentColorModel cm = new ComponentColorModel(
+                            colorSpace,
+                            hasAlpha,
+                            false,
+                            transparency,
+                            currentSourceCoverage
+                                    .getRenderedImage()
+                                    .getSampleModel()
+                                    .getDataType());
                     layout = new ImageLayout();
                     layout.setColorModel(cm);
                 } else if (!gg.equals(gridGeometry))
                     throw new IllegalArgumentException(
-                            Errors.format(ErrorKeys.MUST_SHARE_GRIDGEOMETRY_$1, "BandMerge"));
+                            MessageFormat.format(ErrorKeys.MUST_SHARE_GRIDGEOMETRY_$1, "BandMerge"));
 
                 // //
                 //
@@ -203,8 +196,7 @@ class BandMergeNode extends BaseCoverageProcessingNode implements CoverageProces
                     op = currentSourceCoverage.getRenderedImage();
                     w.setImage(op);
                     w.setROI(CoverageUtilities.getROIProperty(currentSourceCoverage));
-                    NoDataContainer container =
-                            CoverageUtilities.getNoDataProperty(currentSourceCoverage);
+                    NoDataContainer container = CoverageUtilities.getNoDataProperty(currentSourceCoverage);
                     w.setNoData(container != null ? container.getAsRange() : null);
                 } else {
                     w.setRenderingHints(hints);
@@ -221,8 +213,7 @@ class BandMergeNode extends BaseCoverageProcessingNode implements CoverageProces
                     }
 
                     w.setROI(roi);
-                    NoDataContainer container =
-                            CoverageUtilities.getNoDataProperty(currentSourceCoverage);
+                    NoDataContainer container = CoverageUtilities.getNoDataProperty(currentSourceCoverage);
                     w.addBand(
                             currentSourceCoverage.getRenderedImage(),
                             false,
@@ -244,7 +235,7 @@ class BandMergeNode extends BaseCoverageProcessingNode implements CoverageProces
             // let's now create the output coverage and
             //
             // /////////////////////////////////////////////////////////////////////
-            if (layout != null) hints.add(new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout));
+            if (layout != null) hints.add(new RenderingHints(ImageN.KEY_IMAGE_LAYOUT, layout));
             if (hasAlpha && !op.getColorModel().hasAlpha()) {
                 // Only restore the alphaChannel if not already available
                 w.addBand(alpha, false, true, null);
@@ -255,9 +246,8 @@ class BandMergeNode extends BaseCoverageProcessingNode implements CoverageProces
             final GridSampleDimension[] sd =
                     new GridSampleDimension[op.getSampleModel().getNumBands()];
             for (int i = 0; i < sd.length; i++)
-                sd[i] =
-                        new GridSampleDimension(
-                                TypeMap.getColorInterpretation(op.getColorModel(), i).name());
+                sd[i] = new GridSampleDimension(
+                        TypeMap.getColorInterpretation(op.getColorModel(), i).name());
 
             // Defining NoData and ROI properties
             Map<String, Object> properties = new HashMap<>();
@@ -269,12 +259,10 @@ class BandMergeNode extends BaseCoverageProcessingNode implements CoverageProces
                             op,
                             gridGeometry,
                             sd,
-                            sourceGridCoverages.toArray(
-                                    new GridCoverage[sourceGridCoverages.size()]),
+                            sourceGridCoverages.toArray(new GridCoverage[sourceGridCoverages.size()]),
                             properties);
         }
-        throw new IllegalStateException(
-                Errors.format(ErrorKeys.SOURCE_CANT_BE_NULL_$1, "BandMergeNode"));
+        throw new IllegalStateException(MessageFormat.format(ErrorKeys.SOURCE_CANT_BE_NULL_$1, "BandMergeNode"));
     }
 
     /** If specified, the result of the bandMerge will contain the alpha channel. */

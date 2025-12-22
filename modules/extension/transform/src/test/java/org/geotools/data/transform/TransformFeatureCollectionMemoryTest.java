@@ -21,17 +21,17 @@ import static org.junit.Assert.assertNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.QueryCapabilities;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.Query;
-import org.geotools.data.QueryCapabilities;
 import org.geotools.data.collection.CollectionFeatureSource;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.store.FeatureCollectionWrapperTestSupport;
 import org.geotools.feature.NameImpl;
 import org.geotools.filter.text.ecql.ECQL;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
 
 public class TransformFeatureCollectionMemoryTest extends FeatureCollectionWrapperTestSupport {
 
@@ -59,14 +59,13 @@ public class TransformFeatureCollectionMemoryTest extends FeatureCollectionWrapp
         definitions.add(new Definition("att", ECQL.toExpression("someAtt")));
         definitions.add(new Definition("geom", ECQL.toExpression("buffer(defaultGeom, 1)")));
 
-        SimpleFeatureSource source =
-                new CollectionFeatureSource(delegate) {
-                    /** Return a query caps declaring offset is not supported */
-                    @Override
-                    public synchronized QueryCapabilities getQueryCapabilities() {
-                        return new QueryCapabilities();
-                    }
-                };
+        SimpleFeatureSource source = new CollectionFeatureSource(delegate) {
+            /** Return a query caps declaring offset is not supported */
+            @Override
+            public synchronized QueryCapabilities getQueryCapabilities() {
+                return new QueryCapabilities();
+            }
+        };
         TransformFeatureSource transformedSource =
                 new TransformFeatureSource(source, new NameImpl("Transformed"), definitions);
 
@@ -92,8 +91,7 @@ public class TransformFeatureCollectionMemoryTest extends FeatureCollectionWrapp
         definitions.add(new Definition("geom", ECQL.toExpression("buffer(defaultGeom, 1)")));
 
         TransformFeatureSource transformedSource =
-                new TransformFeatureSource(
-                        DataUtilities.source(delegate), new NameImpl("Transformed"), definitions);
+                new TransformFeatureSource(DataUtilities.source(delegate), new NameImpl("Transformed"), definitions);
 
         // try to transform a query with paging
         Query q = new Query();

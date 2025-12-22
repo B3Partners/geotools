@@ -20,7 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.awt.Color;
-import org.geotools.styling.Fill;
+import org.geotools.api.style.Fill;
 import org.junit.Test;
 
 public class SLDFillBindingTest extends SLDTestSupport {
@@ -48,7 +48,7 @@ public class SLDFillBindingTest extends SLDTestSupport {
 
         for (int i = 0; i < hex.length(); i++) {
             int k = Integer.parseInt(hex.charAt(hex.length() - i - 1) + "");
-            integer += (k * Math.pow(16, i));
+            integer += k * Math.pow(16, i);
         }
 
         return integer;

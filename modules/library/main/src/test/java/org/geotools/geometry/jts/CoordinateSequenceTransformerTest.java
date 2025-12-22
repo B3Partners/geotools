@@ -23,6 +23,11 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotSame;
 
 import java.util.Random;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.MathTransform2D;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
@@ -31,11 +36,6 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.CoordinateSequenceFactory;
 import org.locationtech.jts.geom.impl.CoordinateArraySequenceFactory;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.MathTransform2D;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * Tests the {@link DefaultCoordinateSequenceTransformer} implementation.
@@ -53,11 +53,9 @@ public class CoordinateSequenceTransformerTest {
     public void testTransform() throws FactoryException, TransformException {
         final CoordinateReferenceSystem crs =
                 ReferencingFactoryFinder.getCRSFactory(null).createFromWKT(JTSTest.UTM_ZONE_10N);
-        final MathTransform2D t =
-                (MathTransform2D)
-                        ReferencingFactoryFinder.getCoordinateOperationFactory(null)
-                                .createOperation(DefaultGeographicCRS.WGS84, crs)
-                                .getMathTransform();
+        final MathTransform2D t = (MathTransform2D) ReferencingFactoryFinder.getCoordinateOperationFactory(null)
+                .createOperation(DefaultGeographicCRS.WGS84, crs)
+                .getMathTransform();
         final Random random = new Random(546757437746704345L);
 
         // Tries with different coordinate sequence length.
@@ -65,11 +63,8 @@ public class CoordinateSequenceTransformerTest {
         for (int k : size) {
             final Coordinate[] source = new Coordinate[k];
             for (int i = 0; i < source.length; i++) {
-                source[i] =
-                        new Coordinate(
-                                -121 - 4 * random.nextDouble(),
-                                -45 + 90 * random.nextDouble(),
-                                500 * random.nextDouble());
+                source[i] = new Coordinate(
+                        -121 - 4 * random.nextDouble(), -45 + 90 * random.nextDouble(), 500 * random.nextDouble());
             }
             final CoordinateSequence sourceCS = csFactory.create(source);
             final CoordinateSequence targetCS = transform(sourceCS, t);
@@ -79,8 +74,7 @@ public class CoordinateSequenceTransformerTest {
                 assertNotEquals(sourceCS.getCoordinate(i), targetCS.getCoordinate(i));
             }
 
-            final CoordinateSequenceTransformer transformer =
-                    new DefaultCoordinateSequenceTransformer();
+            final CoordinateSequenceTransformer transformer = new DefaultCoordinateSequenceTransformer();
             final CoordinateSequence testCS = transformer.transform(sourceCS, t);
             assertNotSame(sourceCS, testCS);
             assertNotSame(targetCS, testCS);
@@ -130,7 +124,7 @@ public class CoordinateSequenceTransformerTest {
         double[] coords = new double[100];
         final Coordinate[] scs = cs.toCoordinateArray();
         final Coordinate[] tcs = new Coordinate[scs.length];
-        if (coords.length < (scs.length * 2)) {
+        if (coords.length < scs.length * 2) {
             coords = new double[scs.length * 2];
         }
         for (int i = 0; i < scs.length; i++) {

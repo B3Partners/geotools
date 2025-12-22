@@ -26,6 +26,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
 import org.geotools.data.shapefile.files.FileReader;
@@ -42,10 +43,8 @@ public class StorageFileTest implements FileReader {
 
     @Before
     public void setUp() throws Exception {
-        Map<ShpFileType, File> files1 =
-                ShpFilesTest.createFiles("Files1", ShpFileType.values(), false);
-        Map<ShpFileType, File> files2 =
-                ShpFilesTest.createFiles("Files2", ShpFileType.values(), false);
+        Map<ShpFileType, File> files1 = ShpFilesTest.createFiles("Files1", ShpFileType.values(), false);
+        Map<ShpFileType, File> files2 = ShpFilesTest.createFiles("Files2", ShpFileType.values(), false);
 
         shpFiles1 = new ShpFiles(files1.get(SHP));
         shpFiles2 = new ShpFiles(files2.get(SHP));
@@ -77,18 +76,17 @@ public class StorageFileTest implements FileReader {
         File file = storage.getFile();
         file.deleteOnExit();
 
-        try (FileWriter writer = new FileWriter(file)) {
+        try (FileWriter writer = new FileWriter(file, StandardCharsets.UTF_8)) {
             writer.write(writtenToStorageFile);
         }
     }
 
-    private void assertCorrectData(ShpFiles files1, ShpFileType type, String writtenToStorageFile)
-            throws IOException {
+    private void assertCorrectData(ShpFiles files1, ShpFileType type, String writtenToStorageFile) throws IOException {
         try (ReadableByteChannel channel = files1.getReadChannel(type, this)) {
             ByteBuffer buffer = ByteBuffer.allocate(20);
             channel.read(buffer);
             buffer.flip();
-            String data = new String(buffer.array()).trim();
+            String data = new String(buffer.array(), StandardCharsets.UTF_8).trim();
             assertEquals(writtenToStorageFile, data);
         }
     }
@@ -112,8 +110,7 @@ public class StorageFileTest implements FileReader {
             writeData(storagePRJ2, sPRJ2);
             writeData(storageSHP2, sSHP2);
 
-            StorageFile.replaceOriginals(
-                    storagePRJ1, storagePRJ2, storageSHP1, storageSHP2, storageSHP2);
+            StorageFile.replaceOriginals(storagePRJ1, storagePRJ2, storageSHP1, storageSHP2, storageSHP2);
 
             this.assertCorrectData(shpFiles1, PRJ, sPRJ1);
             this.assertCorrectData(shpFiles1, SHP, sSHP1);

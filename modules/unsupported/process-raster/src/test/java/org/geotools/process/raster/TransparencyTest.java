@@ -44,7 +44,7 @@ public class TransparencyTest {
 
             reader = new GeoTiffReader(file);
 
-            GridCoverage2D coverage = reader.read(null);
+            GridCoverage2D coverage = reader.read();
             RenderedImage ri = coverage.getRenderedImage();
             ImageWorker worker = new ImageWorker(ri);
             double[] mins = worker.retainLastBand().getMinimums();
@@ -70,10 +70,9 @@ public class TransparencyTest {
             TransparencyFillProcess process = new TransparencyFillProcess();
             coverage = process.execute(coverage, null, null);
 
-            worker =
-                    new ImageWorker(coverage.getRenderedImage())
-                            .crop(0, 0, 39, 19)
-                            .retainLastBand();
+            worker = new ImageWorker(coverage.getRenderedImage())
+                    .crop(0, 0, 39, 19)
+                    .retainLastBand();
             mins = worker.getMinimums();
             maxs = worker.getMaximums();
 
@@ -81,10 +80,9 @@ public class TransparencyTest {
             assertEquals(0, mins[0], 1E-6);
             assertEquals(0, maxs[0], 1E-6);
 
-            worker =
-                    new ImageWorker(coverage.getRenderedImage())
-                            .crop(0, 50, 100, 50)
-                            .retainLastBand();
+            worker = new ImageWorker(coverage.getRenderedImage())
+                    .crop(0, 50, 100, 50)
+                    .retainLastBand();
 
             // Make sure the area with white stripes is now fully opaque
             mins = worker.getMinimums();
@@ -117,7 +115,7 @@ public class TransparencyTest {
 
             reader = new GeoTiffReader(file);
 
-            GridCoverage2D coverage = reader.read(null);
+            GridCoverage2D coverage = reader.read();
             RenderedImage ri = coverage.getRenderedImage();
             ImageWorker worker = new ImageWorker(ri);
             double noData = (double) worker.getNoData().getMin();
@@ -134,10 +132,9 @@ public class TransparencyTest {
             TransparencyFillProcess process = new TransparencyFillProcess();
             coverage = process.execute(coverage, null, null);
 
-            worker =
-                    new ImageWorker(coverage.getRenderedImage())
-                            .crop(0, 0, 39, 19)
-                            .retainLastBand();
+            worker = new ImageWorker(coverage.getRenderedImage())
+                    .crop(0, 0, 39, 19)
+                    .retainLastBand();
 
             // Make sure the top left area is still transparent
             assertEquals(noData, worker.getMean()[0], 1E-6);
@@ -173,7 +170,7 @@ public class TransparencyTest {
 
             reader = new GeoTiffReader(file);
 
-            GridCoverage2D coverage = reader.read(null);
+            GridCoverage2D coverage = reader.read();
             RenderedImage ri = coverage.getRenderedImage();
             ImageWorker worker = new ImageWorker(ri);
             double noData = (double) worker.getNoData().getMin();
@@ -194,10 +191,9 @@ public class TransparencyTest {
             // set a width of 2
             coverage = process.execute(coverage, 2, null);
 
-            worker =
-                    new ImageWorker(coverage.getRenderedImage())
-                            .crop(0, 0, 39, 19)
-                            .retainLastBand();
+            worker = new ImageWorker(coverage.getRenderedImage())
+                    .crop(0, 0, 39, 19)
+                    .retainLastBand();
 
             // Make sure the top left area is still transparent
             assertEquals(noData, worker.getMean()[0], 1E-6);

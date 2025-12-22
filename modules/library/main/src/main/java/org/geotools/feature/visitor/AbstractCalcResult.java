@@ -28,8 +28,8 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 
 /**
- * An abstract implementation for CalcResults. Each subclass should implement its own getValue(),
- * merge(), and constructor methods.
+ * An abstract implementation for CalcResults. Each subclass should implement its own getValue(), merge(), and
+ * constructor methods.
  *
  * @author Cory Horner, Refractions
  * @since 2.2.M2
@@ -48,9 +48,8 @@ public class AbstractCalcResult implements CalcResult {
             if (!isCompatible(resultsToAdd)) {
                 throw new IllegalArgumentException("Parameter is not a compatible type");
             } else {
-                throw new IllegalArgumentException(
-                        "The CalcResults claim to be compatible, but the appropriate merge "
-                                + "method has not been implemented.");
+                throw new IllegalArgumentException("The CalcResults claim to be compatible, but the appropriate merge "
+                        + "method has not been implemented.");
             }
         }
     }
@@ -63,8 +62,7 @@ public class AbstractCalcResult implements CalcResult {
     @Override
     public int toInt() {
         Object value = getValue();
-        if (value instanceof Number) {
-            Number number = (Number) value;
+        if (value instanceof Number number) {
             return number.intValue();
         } else {
             return 0;
@@ -74,8 +72,7 @@ public class AbstractCalcResult implements CalcResult {
     @Override
     public double toDouble() {
         Object value = getValue();
-        if (value instanceof Number) {
-            Number number = (Number) value;
+        if (value instanceof Number number) {
             return number.doubleValue();
         } else {
             return 0;
@@ -85,8 +82,7 @@ public class AbstractCalcResult implements CalcResult {
     @Override
     public long toLong() {
         Object value = getValue();
-        if (value instanceof Number) {
-            Number number = (Number) value;
+        if (value instanceof Number number) {
             return number.longValue();
         } else {
             return 0;
@@ -96,11 +92,10 @@ public class AbstractCalcResult implements CalcResult {
     @Override
     public float toFloat() {
         Object value = getValue();
-        if (value instanceof Number) {
-            Number number = (Number) value;
+        if (value instanceof Number number) {
             return number.floatValue();
         } else {
-            return (float) 0;
+            return 0f;
         }
     }
 
@@ -114,7 +109,7 @@ public class AbstractCalcResult implements CalcResult {
     @Override
     public Envelope toEnvelope() {
         Object value = getValue();
-        if (value instanceof Envelope) return (Envelope) value;
+        if (value instanceof Envelope envelope) return envelope;
         else return null;
     }
 
@@ -132,8 +127,7 @@ public class AbstractCalcResult implements CalcResult {
             return null;
         }
 
-        if (value instanceof Set) {
-            Set set = (Set) value;
+        if (value instanceof Set set) {
 
             return set;
         }
@@ -157,7 +151,8 @@ public class AbstractCalcResult implements CalcResult {
     }
 
     @Override
-    public List toList() {
+    @SuppressWarnings("unchecked")
+    public List<Object> toList() {
         Object value = getValue();
 
         if (value == null) {
@@ -165,27 +160,14 @@ public class AbstractCalcResult implements CalcResult {
         }
 
         if (value instanceof List) {
-            List list = (List) value;
-
-            return list;
+            return (List<Object>) value;
         }
 
         if (value.getClass().isArray()) {
             return Arrays.asList((Object[]) value);
         }
 
-        if (value instanceof HashSet) {
-            Set set = (HashSet) value;
-            // Object[] values = set.toArray();
-            return Arrays.asList(set.toArray());
-            // List list = new ArrayList();
-            // for (int i = 0; i < values.length; i++)
-            // list.add(values[i]);
-            // return list;
-        }
-
         if (value instanceof Collection) {
-            @SuppressWarnings("unchecked")
             Collection<Object> cast = (Collection<Object>) value;
             return new ArrayList<>(cast);
         }
@@ -195,7 +177,7 @@ public class AbstractCalcResult implements CalcResult {
 
     @Override
     public Object[] toArray() {
-        List list = toList();
+        List<Object> list = toList();
 
         if (list == null) {
             return null;
@@ -205,15 +187,13 @@ public class AbstractCalcResult implements CalcResult {
     }
 
     public String[] toStringArray() {
-        List list = toList();
+        List<Object> list = toList();
 
         if (list == null) {
             return null;
         }
 
-        @SuppressWarnings("unchecked")
-        String[] strings = (String[]) list.toArray(new String[list.size()]);
-        return strings;
+        return list.stream().map(o -> o != null ? String.valueOf(o) : null).toArray(String[]::new);
     }
 
     @Override

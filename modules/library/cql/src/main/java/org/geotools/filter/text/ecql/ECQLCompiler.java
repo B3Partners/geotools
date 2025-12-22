@@ -18,6 +18,17 @@ package org.geotools.filter.text.ecql;
 
 import java.io.StringReader;
 import java.util.List;
+import org.geotools.api.filter.BinaryComparisonOperator;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.DistanceBufferOperator;
+import org.geotools.api.filter.temporal.After;
+import org.geotools.api.filter.temporal.Before;
+import org.geotools.api.filter.temporal.During;
 import org.geotools.filter.IllegalFilterException;
 import org.geotools.filter.text.commons.IToken;
 import org.geotools.filter.text.commons.Result;
@@ -27,17 +38,6 @@ import org.geotools.filter.text.generated.parsers.ECQLParser;
 import org.geotools.filter.text.generated.parsers.Node;
 import org.geotools.filter.text.generated.parsers.ParseException;
 import org.geotools.filter.text.generated.parsers.TokenMgrError;
-import org.opengis.filter.BinaryComparisonOperator;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.DistanceBufferOperator;
-import org.opengis.filter.temporal.After;
-import org.opengis.filter.temporal.Before;
-import org.opengis.filter.temporal.During;
 
 /**
  * ECQLCompiler
@@ -68,10 +68,7 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
         this.builder = new ECQLFilterBuilder(txtSource, filterFactory);
     }
 
-    /**
-     * compile source to produce a Filter. The filter result must be retrieved with {@link
-     * #getFilter()}.
-     */
+    /** compile source to produce a Filter. The filter result must be retrieved with {@link #getFilter()}. */
     @Override
     public void compileFilter() throws CQLException {
         try {
@@ -82,8 +79,7 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
             throw e;
 
         } catch (ParseException e) {
-            throw new CQLException(
-                    e.getMessage(), getTokenInPosition(0), e.getCause(), this.source);
+            throw new CQLException(e.getMessage(), getTokenInPosition(0), e.getCause(), this.source);
         }
     }
 
@@ -97,8 +93,7 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
         } catch (CQLException e) {
             throw e;
         } catch (ParseException e) {
-            throw new CQLException(
-                    e.getMessage(), getTokenInPosition(0), e.getCause(), this.source);
+            throw new CQLException(e.getMessage(), getTokenInPosition(0), e.getCause(), this.source);
         }
     }
 
@@ -112,8 +107,7 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
         } catch (CQLException e) {
             throw e;
         } catch (ParseException e) {
-            throw new CQLException(
-                    e.getMessage(), getTokenInPosition(0), e.getCause(), this.source);
+            throw new CQLException(e.getMessage(), getTokenInPosition(0), e.getCause(), this.source);
         }
     }
 
@@ -149,8 +143,7 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
     }
 
     /**
-     * Returns the list of Filters built as the result of calling {@link
-     * #FilterListCompilationUnit()()}
+     * Returns the list of Filters built as the result of calling {@link #FilterListCompilationUnit()()}
      *
      * @return List<Filter>
      * @throws CQLException if a ClassCastException occurs while casting a built item to a Filter.
@@ -182,8 +175,8 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
         }
     }
     /**
-     * This method is called when the parser close a node. Here is built the filters an expressions
-     * recognized in the parsing process.
+     * This method is called when the parser close a node. Here is built the filters an expressions recognized in the
+     * parsing process.
      *
      * @param n a Node instance
      * @return Filter or Expression
@@ -192,9 +185,9 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
 
         switch (n.getType()) {
 
-                // ----------------------------------------
-                // (+|-) Integer and Float
-                // ----------------------------------------
+            // ----------------------------------------
+            // (+|-) Integer and Float
+            // ----------------------------------------
             case JJTINTEGERNODE:
                 return this.builder.buildLiteralInteger(getTokenInPosition(0).toString());
             case JJTFLOATINGNODE:
@@ -202,34 +195,33 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
             case JJTNEGATIVENUMBER_NODE:
                 return this.builder.bulidNegativeNumber();
 
-                // ----------------------------------------
-                // String
-                // ----------------------------------------
+            // ----------------------------------------
+            // String
+            // ----------------------------------------
             case JJTSTRINGNODE:
                 return this.builder.buildLiteralString(getTokenInPosition(0).toString());
 
-                // ----------------------------------------
-                // Identifier
-                // ----------------------------------------
+            // ----------------------------------------
+            // Identifier
+            // ----------------------------------------
             case JJTIDENTIFIER_NODE:
                 return this.builder.buildIdentifier(JJTIDENTIFIER_PART_NODE);
 
             case JJTIDENTIFIER_PART_NODE:
                 return this.builder.buildIdentifierPart(getTokenInPosition(0));
 
-                // ----------------------------------------
-                // attribute
-                // ----------------------------------------
+            // ----------------------------------------
+            // attribute
+            // ----------------------------------------
             case JJTSIMPLE_ATTRIBUTE_NODE:
                 return this.builder.buildSimpleAttribute();
 
             case JJTCOMPOUND_ATTRIBUTE_NODE:
-                return this.builder.buildCompoundAttribute(
-                        JJTSIMPLE_ATTRIBUTE_NODE, ATTRIBUTE_PATH_SEPARATOR);
+                return this.builder.buildCompoundAttribute(JJTSIMPLE_ATTRIBUTE_NODE, ATTRIBUTE_PATH_SEPARATOR);
 
-                // ----------------------------------------
-                // function
-                // ----------------------------------------
+            // ----------------------------------------
+            // function
+            // ----------------------------------------
             case JJTFUNCTION_NODE:
                 return this.builder.buildFunction(JJTFUNCTIONNAME_NODE);
 
@@ -239,14 +231,14 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
             case JJTFUNCTIONARG_NODE:
                 return n; // used as mark of args in stack
 
-                // Math Nodes
+            // Math Nodes
             case JJTADDNODE:
             case JJTSUBTRACTNODE:
             case JJTMULNODE:
             case JJTDIVNODE:
                 return buildBinaryExpression(n.getType());
 
-                // Boolean expression
+            // Boolean expression
             case JJTBOOLEAN_AND_NODE:
                 return buildLogicFilter(JJTBOOLEAN_AND_NODE);
 
@@ -256,18 +248,18 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
             case JJTBOOLEAN_NOT_NODE:
                 return buildLogicFilter(JJTBOOLEAN_NOT_NODE);
 
-                // ----------------------------------------
-                // between predicate actions
-                // ----------------------------------------
+            // ----------------------------------------
+            // between predicate actions
+            // ----------------------------------------
             case JJTBETWEEN_NODE:
                 return this.builder.buildBetween();
 
             case JJTNOT_BETWEEN_NODE:
                 return this.builder.buildNotBetween();
 
-                // ----------------------------------------
-                // Compare predicate actions
-                // ----------------------------------------
+            // ----------------------------------------
+            // Compare predicate actions
+            // ----------------------------------------
             case JJTCOMPARISONPREDICATE_EQ_NODE:
             case JJTCOMPARISONPREDICATE_GT_NODE:
             case JJTCOMPARISONPREDICATE_LT_NODE:
@@ -281,36 +273,36 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
 
                 return notFilter;
 
-                // ----------------------------------------
-                // Text predicate (Like)
-                // ----------------------------------------
+            // ----------------------------------------
+            // Text predicate (Like)
+            // ----------------------------------------
             case JJTLIKE_NODE:
                 return this.builder.buildLikeFilter(true);
 
             case JJTNOT_LIKE_NODE:
                 return this.builder.buildNotLikeFilter(true);
 
-                // ----------------------------------------
-                // Text predicate (ILike)
-                // ----------------------------------------
+            // ----------------------------------------
+            // Text predicate (ILike)
+            // ----------------------------------------
             case JJTILIKE_NODE:
                 return this.builder.buildLikeFilter(false);
 
             case JJTNOT_ILIKE_NODE:
                 return this.builder.buildNotLikeFilter(false);
 
-                // ----------------------------------------
-                // Null predicate
-                // ----------------------------------------
+            // ----------------------------------------
+            // Null predicate
+            // ----------------------------------------
             case JJTNULLPREDICATENODE:
                 return this.builder.buildPropertyIsNull();
 
             case JJTNOTNULLPREDICATENODE:
                 return this.builder.buildPorpertyNotIsNull();
 
-                // ----------------------------------------
-                // temporal predicate actions
-                // ----------------------------------------
+            // ----------------------------------------
+            // temporal predicate actions
+            // ----------------------------------------
             case JJTDATE_NODE:
                 return this.builder.buildDateExpression(getTokenInPosition(0));
 
@@ -347,9 +339,9 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
             case JJTTPDURING_OR_AFTER_PERIOD_NODE:
                 return buildDuringOrAfter();
 
-                // ----------------------------------------
-                // existence predicate actions
-                // ----------------------------------------
+            // ----------------------------------------
+            // existence predicate actions
+            // ----------------------------------------
             case JJTEXISTENCE_PREDICATE_EXISTS_NODE:
                 return this.builder.buildPropertyExists();
 
@@ -359,9 +351,9 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
 
                 return filterPropNotExist;
 
-                // ----------------------------------------
-                // routine invocation Geo Operation
-                // ----------------------------------------
+            // ----------------------------------------
+            // routine invocation Geo Operation
+            // ----------------------------------------
             case JJTROUTINEINVOCATION_GEOOP_EQUAL_NODE:
             case JJTROUTINEINVOCATION_GEOOP_DISJOINT_NODE:
             case JJTROUTINEINVOCATION_GEOOP_INTERSECT_NODE:
@@ -382,9 +374,9 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
             case JJTDE9IM_NODE:
                 return this.builder.buildDE9IM(getToken(0).image);
 
-                // ----------------------------------------
-                // routine invocation RelGeo Operation
-                // ----------------------------------------
+            // ----------------------------------------
+            // routine invocation RelGeo Operation
+            // ----------------------------------------
             case JJTTOLERANCE_NODE:
                 return this.builder.buildTolerance();
 
@@ -395,9 +387,9 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
             case JJTROUTINEINVOCATION_RELOP_DWITHIN_NODE:
                 return buildDistanceBufferOperator(n.getType());
 
-                // ----------------------------------------
-                // Geometries:
-                // ----------------------------------------
+            // ----------------------------------------
+            // Geometries:
+            // ----------------------------------------
             case JJTPOINT_NODE:
                 return this.builder.buildCoordinate();
 
@@ -449,17 +441,17 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
             case JJTFALSENODE:
                 return this.builder.buildFalseLiteral();
 
-                // ----------------------------------------
-                //  ID Predicate
-                // ----------------------------------------
+            // ----------------------------------------
+            //  ID Predicate
+            // ----------------------------------------
             case JJTFEATURE_ID_NODE:
                 return this.builder.buildFeatureID(getTokenInPosition(0));
 
             case JJTID_PREDICATE_NODE:
                 return this.builder.buildFilterId(JJTFEATURE_ID_NODE);
-                // ----------------------------------------
-                //  IN Predicate
-                // ----------------------------------------
+            // ----------------------------------------
+            //  IN Predicate
+            // ----------------------------------------
             case JJTIN_PREDICATE_NODE:
                 return this.builder.buildInPredicate(JJTEXPRESSION_IN_LIST_NODE);
 
@@ -473,10 +465,10 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
         return null;
     }
 
-    private org.opengis.filter.expression.BinaryExpression buildBinaryExpression(int nodeType)
+    private org.geotools.api.filter.expression.BinaryExpression buildBinaryExpression(int nodeType)
             throws CQLException {
 
-        org.opengis.filter.expression.BinaryExpression expr = null;
+        org.geotools.api.filter.expression.BinaryExpression expr = null;
 
         switch (nodeType) {
             case JJTADDNODE:
@@ -523,15 +515,12 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
 
                 default:
                     throw new CQLException(
-                            "Expression not supported. And, Or, Not is required",
-                            getTokenInPosition(0),
-                            this.source);
+                            "Expression not supported. And, Or, Not is required", getTokenInPosition(0), this.source);
             }
 
             return logicFilter;
         } catch (IllegalFilterException ife) {
-            throw new CQLException(
-                    "Exception building LogicFilter", getTokenInPosition(0), ife, this.source);
+            throw new CQLException("Exception building LogicFilter", getTokenInPosition(0), ife, this.source);
         }
     }
 
@@ -540,8 +529,7 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
      *
      * @return BinarySpatialOperator
      */
-    private BinarySpatialOperator buildBinarySpatialOperator(final int nodeType)
-            throws CQLException {
+    private BinarySpatialOperator buildBinarySpatialOperator(final int nodeType) throws CQLException {
 
         BinarySpatialOperator filter = null;
 
@@ -578,7 +566,7 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
         return filter;
     }
 
-    private org.opengis.filter.spatial.BBOX buildBBox(int nodeType) throws CQLException {
+    private org.geotools.api.filter.spatial.BBOX buildBBox(int nodeType) throws CQLException {
 
         if (nodeType == JJTROUTINEINVOCATION_GEOOP_BBOX_SRS_NODE) {
             return this.builder.buildBBoxWithCRS();
@@ -592,8 +580,7 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
      *
      * @return DistanceBufferOperator dwithin and beyond filters
      */
-    private DistanceBufferOperator buildDistanceBufferOperator(final int nodeType)
-            throws CQLException {
+    private DistanceBufferOperator buildDistanceBufferOperator(final int nodeType) throws CQLException {
 
         DistanceBufferOperator filter = null;
 
@@ -613,8 +600,8 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
         return filter;
     }
 
-    private org.opengis.filter.Filter buildBeforeOrDuring() throws CQLException {
-        org.opengis.filter.Filter filter = null;
+    private org.geotools.api.filter.Filter buildBeforeOrDuring() throws CQLException {
+        org.geotools.api.filter.Filter filter = null;
 
         Result node = this.builder.peekResult();
 
@@ -627,9 +614,7 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
 
             default:
                 throw new CQLException(
-                        "unexpeted date time expression in temporal predicate.",
-                        node.getToken(),
-                        this.source);
+                        "unexpeted date time expression in temporal predicate.", node.getToken(), this.source);
         }
 
         return filter;
@@ -650,9 +635,7 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
 
             default:
                 throw new CQLException(
-                        "unexpeted date time expression in temporal predicate.",
-                        node.getToken(),
-                        this.source);
+                        "unexpeted date time expression in temporal predicate.", node.getToken(), this.source);
         }
 
         return filter;
@@ -682,9 +665,7 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
 
             default:
                 throw new CQLException(
-                        "unexpeted date time expression in temporal predicate.",
-                        node.getToken(),
-                        this.source);
+                        "unexpeted date time expression in temporal predicate.", node.getToken(), this.source);
         }
 
         return filter;
@@ -710,9 +691,7 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
 
             default:
                 throw new CQLException(
-                        "unexpeted period expression in temporal predicate.",
-                        node.getToken(),
-                        this.source);
+                        "unexpeted period expression in temporal predicate.", node.getToken(), this.source);
         }
 
         return filter;
@@ -742,9 +721,7 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
 
             default:
                 throw new CQLException(
-                        "unexpeted date time expression in temporal predicate.",
-                        node.getToken(),
-                        this.source);
+                        "unexpeted date time expression in temporal predicate.", node.getToken(), this.source);
         }
 
         return filter;
@@ -755,8 +732,7 @@ public class ECQLCompiler extends ECQLParser implements org.geotools.filter.text
      *
      * @return BinaryComparisonOperator
      */
-    private BinaryComparisonOperator buildBinaryComparasionOperator(int filterType)
-            throws CQLException {
+    private BinaryComparisonOperator buildBinaryComparasionOperator(int filterType) throws CQLException {
 
         switch (filterType) {
             case JJTCOMPARISONPREDICATE_EQ_NODE:

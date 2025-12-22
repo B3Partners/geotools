@@ -26,7 +26,8 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.feature.type.Name;
 import org.geotools.process.ProcessFactory;
 import org.geotools.swing.wizard.JDoubleField;
 import org.geotools.swing.wizard.JField;
@@ -34,7 +35,6 @@ import org.geotools.swing.wizard.JGeometryField;
 import org.geotools.swing.wizard.JPage;
 import org.geotools.swing.wizard.ParamField;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.type.Name;
 
 /**
  * This page is responsible making a user interface based on the provided ProcessFactory.
@@ -93,8 +93,8 @@ public class ProcessParameterPage extends JPage {
     }
 
     /**
-     * Run through the current values in the widgets and make a process param map out of them for
-     * running an actual process
+     * Run through the current values in the widgets and make a process param map out of them for running an actual
+     * process
      */
     private void createParamMap() {
         if (fields.isEmpty()) {

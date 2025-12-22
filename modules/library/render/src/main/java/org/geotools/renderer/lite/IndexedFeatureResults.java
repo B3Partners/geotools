@@ -20,7 +20,10 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
-import org.geotools.data.FeatureReader;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.store.DataFeatureCollection;
@@ -29,9 +32,6 @@ import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.index.strtree.STRtree;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * IndexedFeatureReader
@@ -44,8 +44,7 @@ public final class IndexedFeatureResults extends DataFeatureCollection {
     int count;
     private Envelope queryBounds;
 
-    public IndexedFeatureResults(SimpleFeatureCollection results)
-            throws IOException, IllegalAttributeException {
+    public IndexedFeatureResults(SimpleFeatureCollection results) throws IOException, IllegalAttributeException {
         // copy results attributes
         super(null, results.getSchema());
 
@@ -66,32 +65,30 @@ public final class IndexedFeatureResults extends DataFeatureCollection {
     }
 
     /** @see org.geotools.data.FeatureResults#reader() */
-    public FeatureReader<SimpleFeatureType, SimpleFeature> reader(Envelope envelope)
-            throws IOException {
+    public FeatureReader<SimpleFeatureType, SimpleFeature> reader(Envelope envelope) throws IOException {
         List results = index.query(envelope);
         final Iterator resultsIterator = results.iterator();
 
-        return new FeatureReader<SimpleFeatureType, SimpleFeature>() {
-            /** @see org.geotools.data.FeatureReader#getFeatureType() */
+        return new FeatureReader<>() {
+            /** @see FeatureReader#getFeatureType() */
             @Override
             public SimpleFeatureType getFeatureType() {
                 return getSchema();
             }
 
-            /** @see org.geotools.data.FeatureReader#next() */
+            /** @see FeatureReader#next() */
             @Override
-            public SimpleFeature next()
-                    throws IOException, IllegalAttributeException, NoSuchElementException {
+            public SimpleFeature next() throws IOException, IllegalAttributeException, NoSuchElementException {
                 return (SimpleFeature) resultsIterator.next();
             }
 
-            /** @see org.geotools.data.FeatureReader#hasNext() */
+            /** @see FeatureReader#hasNext() */
             @Override
             public boolean hasNext() throws IOException {
                 return resultsIterator.hasNext();
             }
 
-            /** @see org.geotools.data.FeatureReader#close() */
+            /** @see FeatureReader#close() */
             @Override
             public void close() throws IOException {}
         };

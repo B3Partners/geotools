@@ -17,15 +17,14 @@
 package org.geotools.gce.imagemosaic.catalog.oracle;
 
 import java.io.IOException;
-import org.geotools.data.DataStore;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
 /**
- * Specific Oracle implementation for a {@link DataStoreWrapper} Oracle DB has a couple of
- * limitations: 1) All attributes and type names are UPPERCASE 2) attribute and type names can't be
- * longer than 30 chars
+ * Specific Oracle implementation for a {@link DataStoreWrapper} Oracle DB has a couple of limitations: 1) All
+ * attributes and type names are UPPERCASE 2) attribute and type names can't be longer than 30 chars
  *
  * @author Daniele Romagnoli, GeoSolutions SAS
  */
@@ -36,21 +35,19 @@ public class OracleDatastoreWrapper extends DataStoreWrapper {
     }
 
     @Override
-    protected FeatureTypeMapper getFeatureTypeMapper(SimpleFeatureType featureType)
-            throws Exception {
+    protected FeatureTypeMapper getFeatureTypeMapper(SimpleFeatureType featureType) throws Exception {
         return new OracleFeatureTypeMapper(featureType);
     }
 
     @Override
-    protected SimpleFeatureSource transformFeatureStore(
-            SimpleFeatureStore store, FeatureTypeMapper mapper) throws IOException {
+    protected SimpleFeatureSource transformFeatureStore(SimpleFeatureStore store, FeatureTypeMapper mapper)
+            throws IOException {
         SimpleFeatureSource transformedSource = mapper.getSimpleFeatureSource();
         if (transformedSource != null) {
             return transformedSource;
         } else {
             transformedSource =
-                    new OracleTransformFeatureStore(
-                            store, mapper.getName(), mapper.getDefinitions(), datastore);
+                    new OracleTransformFeatureStore(store, mapper.getName(), mapper.getDefinitions(), datastore);
             ((OracleFeatureTypeMapper) mapper).setSimpleFeatureSource(transformedSource);
             return transformedSource;
         }

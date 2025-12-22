@@ -20,10 +20,10 @@ package org.geotools.filter.function.string;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.filter.FunctionImpl;
 import org.geotools.util.logging.Logging;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
 
 /**
  * The function concatenates strings.
@@ -41,8 +41,7 @@ public class ConcatenateFunction extends FunctionImpl {
     static final Logger LOGGER = Logging.getLogger(ConcatenateFunction.class);
 
     /** Make the instance of FunctionName available in a consistent spot. */
-    public static final FunctionName NAME =
-            functionName("Concatenate", "result:String", "text:String:2,");
+    public static final FunctionName NAME = functionName("Concatenate", "result:String", "text:String:2,");
 
     public ConcatenateFunction() {
         this.functionName = NAME;
@@ -67,10 +66,7 @@ public class ConcatenateFunction extends FunctionImpl {
                     text.append(str);
                 }
             } catch (Exception couldNotCompute) {
-                LOGGER.log(
-                        Level.FINE,
-                        "Failed to concatenate string in Concatenate function",
-                        couldNotCompute);
+                LOGGER.log(Level.FINE, "Failed to concatenate string in Concatenate function", couldNotCompute);
             }
         }
         return text.toString();

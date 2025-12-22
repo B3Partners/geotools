@@ -23,8 +23,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Iterator;
 import java.util.logging.Logger;
-import javax.media.jai.ImageLayout;
-import javax.media.jai.JAI;
+import org.eclipse.imagen.ImageLayout;
+import org.eclipse.imagen.ImageN;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
@@ -33,15 +37,11 @@ import org.geotools.coverage.grid.io.GridFormatFactorySpi;
 import org.geotools.coverage.grid.io.GridFormatFinder;
 import org.geotools.coverageio.gdal.BaseGDALGridCoverage2DReader;
 import org.geotools.coverageio.gdal.GDALTestCase;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.test.TestData;
 import org.geotools.util.factory.Hints;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
 
 /**
  * @author Daniele Romagnoli, GeoSolutions
@@ -49,8 +49,7 @@ import org.opengis.referencing.NoSuchAuthorityCodeException;
  *     <p>Testing {@link IDRISIReader}
  */
 public final class IDRISIImgTest extends GDALTestCase {
-    protected static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(IDRISIImgTest.class);
+    protected static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(IDRISIImgTest.class);
 
     /** file name of a valid Erdas Imagine sample data to be used for tests. */
     private static final String fileName = "idrisi.rst";
@@ -62,13 +61,10 @@ public final class IDRISIImgTest extends GDALTestCase {
 
     @Test
     public void testIsAvailable() throws NoSuchAuthorityCodeException, FactoryException {
-        if (!testingEnabled()) {
-            return;
-        }
-
         GridFormatFinder.scanForPlugins();
 
-        Iterator<GridFormatFactorySpi> list = GridFormatFinder.getAvailableFormats().iterator();
+        Iterator<GridFormatFactorySpi> list =
+                GridFormatFinder.getAvailableFormats().iterator();
         boolean found = false;
         GridFormatFactorySpi fac = null;
 
@@ -89,16 +85,12 @@ public final class IDRISIImgTest extends GDALTestCase {
 
     @Test
     public void test() throws Exception {
-        if (!testingEnabled()) {
-            return;
-        }
-
         // Preparing an useful layout in case the image is striped.
         final ImageLayout l = new ImageLayout();
         l.setTileGridXOffset(0).setTileGridYOffset(0).setTileHeight(512).setTileWidth(512);
 
         Hints hints = new Hints();
-        hints.add(new RenderingHints(JAI.KEY_IMAGE_LAYOUT, l));
+        hints.add(new RenderingHints(ImageN.KEY_IMAGE_LAYOUT, l));
 
         File file = null;
         try {
@@ -115,7 +107,7 @@ public final class IDRISIImgTest extends GDALTestCase {
         // read once
         //
         // /////////////////////////////////////////////////////////////////////
-        GridCoverage2D gc = reader.read(null);
+        GridCoverage2D gc = reader.read();
         forceDataLoading(gc);
 
         // /////////////////////////////////////////////////////////////////////
@@ -124,33 +116,24 @@ public final class IDRISIImgTest extends GDALTestCase {
         //
         // /////////////////////////////////////////////////////////////////////
         final double cropFactor = 2.0;
-        final Rectangle range = ((GridEnvelope2D) reader.getOriginalGridRange());
-        final GeneralEnvelope oldEnvelope = reader.getOriginalEnvelope();
-        final GeneralEnvelope cropEnvelope =
-                new GeneralEnvelope(
-                        new double[] {
-                            oldEnvelope.getLowerCorner().getOrdinate(0)
-                                    + (oldEnvelope.getSpan(0) / cropFactor),
-                            oldEnvelope.getLowerCorner().getOrdinate(1)
-                                    + (oldEnvelope.getSpan(1) / cropFactor)
-                        },
-                        new double[] {
-                            oldEnvelope.getUpperCorner().getOrdinate(0),
-                            oldEnvelope.getUpperCorner().getOrdinate(1)
-                        });
+        final Rectangle range = (GridEnvelope2D) reader.getOriginalGridRange();
+        final GeneralBounds oldEnvelope = reader.getOriginalEnvelope();
+        final GeneralBounds cropEnvelope = new GeneralBounds(
+                new double[] {
+                    oldEnvelope.getLowerCorner().getOrdinate(0) + oldEnvelope.getSpan(0) / cropFactor,
+                    oldEnvelope.getLowerCorner().getOrdinate(1) + oldEnvelope.getSpan(1) / cropFactor
+                },
+                new double[] {
+                    oldEnvelope.getUpperCorner().getOrdinate(0),
+                    oldEnvelope.getUpperCorner().getOrdinate(1)
+                });
         cropEnvelope.setCoordinateReferenceSystem(reader.getCoordinateReferenceSystem());
 
-        final ParameterValue gg =
-                ((AbstractGridFormat) reader.getFormat()).READ_GRIDGEOMETRY2D.createValue();
-        gg.setValue(
-                new GridGeometry2D(
-                        new GridEnvelope2D(
-                                new Rectangle(
-                                        0,
-                                        0,
-                                        (int) (range.width / 2.0 / cropFactor),
-                                        (int) (range.height / 2.0 / cropFactor))),
-                        cropEnvelope));
+        final ParameterValue gg = ((AbstractGridFormat) reader.getFormat()).READ_GRIDGEOMETRY2D.createValue();
+        gg.setValue(new GridGeometry2D(
+                new GridEnvelope2D(new Rectangle(
+                        0, 0, (int) (range.width / 2.0 / cropFactor), (int) (range.height / 2.0 / cropFactor))),
+                cropEnvelope));
         gc = reader.read(new GeneralParameterValue[] {gg});
         forceDataLoading(gc);
     }

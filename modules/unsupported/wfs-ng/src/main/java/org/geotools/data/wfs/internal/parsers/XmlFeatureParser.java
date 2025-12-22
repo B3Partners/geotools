@@ -26,7 +26,13 @@ import javax.xml.namespace.QName;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import org.geotools.data.DataSourceException;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.referencing.FactoryException;
 import org.geotools.data.wfs.internal.GetParser;
 import org.geotools.data.wfs.internal.Loggers;
 import org.geotools.data.wfs.internal.WFSStrategy;
@@ -35,20 +41,13 @@ import org.geotools.gml3.GML;
 import org.geotools.util.Converters;
 import org.geotools.wfs.WFS;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.referencing.FactoryException;
 
 /**
  * Abstract form of XmlFeatureParser. Mostly taken out from @{@link XmlSimpleFeatureParser}.
  *
  * @author Adam Brown (Curtin University of Technology)
  */
-public abstract class XmlFeatureParser<FT extends FeatureType, F extends Feature>
-        implements GetParser<F> {
+public abstract class XmlFeatureParser<FT extends FeatureType, F extends Feature> implements GetParser<F> {
 
     protected FT targetType;
 
@@ -97,10 +96,9 @@ public abstract class XmlFeatureParser<FT extends FeatureType, F extends Feature
                     break;
                 }
             }
-            final String namespace =
-                    (strategy == null
-                            ? WFS.NAMESPACE
-                            : strategy.getWfsConfiguration().getNamespaceURI());
+            final String namespace = strategy == null
+                    ? WFS.NAMESPACE
+                    : strategy.getWfsConfiguration().getNamespaceURI();
             parser.require(START_ELEMENT, namespace, WFS.FeatureCollection.getLocalPart());
 
             String nof = parser.getAttributeValue(null, "numberOfFeatures");
@@ -149,12 +147,8 @@ public abstract class XmlFeatureParser<FT extends FeatureType, F extends Feature
         }
     }
 
-    /**
-     * Parses the value of the current attribute, parser cursor shall be on a feature attribute
-     * START_ELEMENT event.
-     */
-    protected Object parseAttributeValue(AttributeDescriptor attribute)
-            throws XMLStreamException, IOException {
+    /** Parses the value of the current attribute, parser cursor shall be on a feature attribute START_ELEMENT event. */
+    protected Object parseAttributeValue(AttributeDescriptor attribute) throws XMLStreamException, IOException {
         final AttributeType type = attribute.getType();
         Object parsedValue;
         if (type instanceof GeometryType) {
@@ -188,9 +182,7 @@ public abstract class XmlFeatureParser<FT extends FeatureType, F extends Feature
                 String name = parser.getLocalName();
 
                 if (featureNamespace.equals(namespace) && featureName.equals(name)) {
-                    String featureId =
-                            parser.getAttributeValue(
-                                    GML.id.getNamespaceURI(), GML.id.getLocalPart());
+                    String featureId = parser.getAttributeValue(GML.id.getNamespaceURI(), GML.id.getLocalPart());
 
                     if (featureId == null) {
                         featureId = parser.getAttributeValue(null, "fid");

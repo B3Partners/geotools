@@ -18,14 +18,13 @@
 package org.geotools.data.complex;
 
 import java.util.NoSuchElementException;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.filter.Filter;
 import org.geotools.feature.FeatureIterator;
-import org.opengis.feature.Feature;
-import org.opengis.filter.Filter;
 
 /**
- * An extension to {@linkplain org.geotools.data.complex.DataAccessMappingFeatureIterator} where
- * filter is present. Unlike with FilteringMappingFeatureIterator The filter is applied on the
- * complex feature
+ * An extension to {@linkplain org.geotools.data.complex.DataAccessMappingFeatureIterator} where filter is present.
+ * Unlike with FilteringMappingFeatureIterator The filter is applied on the complex feature
  *
  * @author Niels Charlier (Curtin University of Technology)
  */

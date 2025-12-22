@@ -16,21 +16,27 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.geotools.api.data.BatchFeatureEvent;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.FeatureEvent;
+import org.geotools.api.data.FeatureListener;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.identity.FeatureId;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.geometry.jts.GeometryBuilder;
 import org.geotools.util.SuppressFBWarnings;
 import org.geotools.util.factory.GeoTools;
-import org.opengis.feature.Feature;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.identity.FeatureId;
 
 @SuppressWarnings("unused")
 @SuppressFBWarnings("UWF_NULL_FIELD")
@@ -94,15 +100,15 @@ public class SimpleFeatureStoreExamples {
         store.setTransaction(transaction);
 
         class CommitListener implements FeatureListener {
+            @Override
             public void changed(FeatureEvent featureEvent) {
-                if (featureEvent instanceof BatchFeatureEvent) {
-                    BatchFeatureEvent batchEvent = (BatchFeatureEvent) featureEvent;
+                if (featureEvent instanceof BatchFeatureEvent batchEvent) {
 
                     System.out.println("area changed:" + batchEvent.getBounds());
-                    System.out.println("created fids:" + batchEvent.fids);
+                    System.out.println("created fids:" + batchEvent.getCreatedFeatureIds());
                 } else {
                     System.out.println("bounds:" + featureEvent.getBounds());
-                    System.out.println("change:" + featureEvent.filter);
+                    System.out.println("change:" + featureEvent.getFilter());
                 }
             }
         }
@@ -145,10 +151,10 @@ public class SimpleFeatureStoreExamples {
         Filter filter = ff.id(Collections.singleton(ff.featureId("fred")));
         try {
             final Set<FeatureId> removed = new HashSet<>();
-            SimpleFeatureCollection collection =
-                    store.getFeatures(new Query(typeName, filter, Query.NO_NAMES));
+            SimpleFeatureCollection collection = store.getFeatures(new Query(typeName, filter, Query.NO_NAMES));
             collection.accepts(
                     new FeatureVisitor() {
+                        @Override
                         public void visit(Feature feature) {
                             removed.add(feature.getIdentifier());
                         }

@@ -19,21 +19,20 @@ package org.geotools.process.factory;
 import java.lang.reflect.Method;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.util.InternationalString;
 import org.geotools.feature.NameImpl;
-import org.opengis.feature.type.Name;
-import org.opengis.util.InternationalString;
 
 /**
- * Grabbed from Geotools and generalized a bit, should go back into GeoTools once improved enough.
- * ProcessFactory for classes exposing simple processes as static methods
+ * Grabbed from Geotools and generalized a bit, should go back into GeoTools once improved enough. ProcessFactory for
+ * classes exposing simple processes as static methods
  *
  * @since 2.7
  */
 public class StaticMethodsProcessFactory<T> extends AnnotationDrivenProcessFactory {
     Class<T> targetClass;
 
-    public StaticMethodsProcessFactory(
-            InternationalString title, String namespace, Class<T> targetClass) {
+    public StaticMethodsProcessFactory(InternationalString title, String namespace, Class<T> targetClass) {
         super(title, namespace);
         this.targetClass = targetClass;
     }
@@ -72,12 +71,11 @@ public class StaticMethodsProcessFactory<T> extends AnnotationDrivenProcessFacto
             if (dp != null) {
                 Name name = new NameImpl(namespace, method.getName());
                 if (names.contains(name)) {
-                    throw new IllegalStateException(
-                            targetClass.getName()
-                                    + " has two methods named "
-                                    + method.getName()
-                                    + ", both annotated with DescribeProcess, this is an ambiguity. "
-                                    + "Please a different name");
+                    throw new IllegalStateException(targetClass.getName()
+                            + " has two methods named "
+                            + method.getName()
+                            + ", both annotated with DescribeProcess, this is an ambiguity. "
+                            + "Please a different name");
                 }
                 names.add(name);
             }

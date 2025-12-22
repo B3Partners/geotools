@@ -28,12 +28,11 @@ import org.geotools.util.factory.GeoTools;
 import org.geotools.util.factory.Hints;
 
 /**
- * Factory finder for getting instances of HTTPClientFactory. All implementations should be
- * registered as a file with name org.geotools.http.HTTPClientFactory in META_INF/services of their
- * respective jar.
+ * Factory finder for getting instances of HTTPClientFactory. All implementations should be registered as a file with
+ * name org.geotools.http.HTTPClientFactory in META_INF/services of their respective jar.
  *
- * <p>To pick a particular implementation the hint HTTP_CLIENT_FACTORY could be set to the full
- * class name, either in the function call, or by Java property.
+ * <p>To pick a particular implementation the hint HTTP_CLIENT_FACTORY could be set to the full class name, either in
+ * the function call, or by Java property.
  *
  * @author Roar Brænden
  */
@@ -57,7 +56,7 @@ public class HTTPClientFinder extends FactoryFinder {
     /** Get default HTTP client. Can be adjusted by setting property "org.geotools.http.client". */
     public static HTTPClient createClient() {
         final Hints hints = GeoTools.getDefaultHints();
-        return lookupClient(hints, new LinkedList<Class<? extends HTTPBehavior>>());
+        return lookupClient(hints, new LinkedList<>());
     }
 
     /** Get HTTP client with the given behaviors. */
@@ -99,14 +98,11 @@ public class HTTPClientFinder extends FactoryFinder {
 
         return getServiceRegistry()
                 .getFactories(HTTPClientFactory.class, null, null)
-                .filter((fact) -> matchHttpFactoryHints(fact, hints))
-                .filter((fact) -> matchHttpClientHintsBehaviors(fact, hints, behaviors))
-                .filter((fact) -> matchDefault(fact, hints, behaviors))
+                .filter(fact -> matchHttpFactoryHints(fact, hints))
+                .filter(fact -> matchHttpClientHintsBehaviors(fact, hints, behaviors))
+                .filter(fact -> matchDefault(fact, hints, behaviors))
                 .findFirst()
-                .orElseThrow(
-                        () ->
-                                new HTTPFactoryException(
-                                        "Couldn't create HTTP client.", hints, behaviors))
+                .orElseThrow(() -> new HTTPFactoryException("Couldn't create HTTP client.", hints, behaviors))
                 .createClient(hints, behaviors);
     }
 
@@ -125,9 +121,9 @@ public class HTTPClientFinder extends FactoryFinder {
             return true;
         }
         Object val = hints.get(Hints.HTTP_CLIENT_FACTORY);
-        return (val instanceof String
-                ? fact.getClass().getName().equalsIgnoreCase((String) val)
-                : fact.getClass() == (Class<?>) val);
+        return val instanceof String s
+                ? fact.getClass().getName().equalsIgnoreCase(s)
+                : fact.getClass() == (Class<?>) val;
     }
 
     /** Check if any of then factory's clients can process the hints and behaviors */

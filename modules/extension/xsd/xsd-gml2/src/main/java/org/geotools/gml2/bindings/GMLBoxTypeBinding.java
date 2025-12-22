@@ -88,7 +88,7 @@ public class GMLBoxTypeBinding extends AbstractComplexBinding {
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         List coordinates = node.getChildren("coord");
 
-        if (!coordinates.isEmpty() && (coordinates.size() == 2)) {
+        if (!coordinates.isEmpty() && coordinates.size() == 2) {
             Node n1 = (Node) coordinates.get(0);
             Node n2 = (Node) coordinates.get(1);
             Coordinate c1 = (Coordinate) n1.getValue();
@@ -102,7 +102,8 @@ public class GMLBoxTypeBinding extends AbstractComplexBinding {
         }
 
         if (node.getChild("coordinates") != null) {
-            CoordinateSequence cs = (CoordinateSequence) node.getChild("coordinates").getValue();
+            CoordinateSequence cs =
+                    (CoordinateSequence) node.getChild("coordinates").getValue();
 
             if (cs.size() != 2) {
                 throw new RuntimeException("Envelope can have only two coordinates");
@@ -119,11 +120,10 @@ public class GMLBoxTypeBinding extends AbstractComplexBinding {
         Envelope e = (Envelope) object;
 
         if (GML.coord.equals(name)) {
-            return new Coordinate[] {
-                new Coordinate(e.getMinX(), e.getMinY()), new Coordinate(e.getMaxX(), e.getMaxY())
+            return new Coordinate[] {new Coordinate(e.getMinX(), e.getMinY()), new Coordinate(e.getMaxX(), e.getMaxY())
             };
-        } else if ("srsName".equals(name.getLocalPart()) && e instanceof ReferencedEnvelope) {
-            return GML2EncodingUtils.toURI(((ReferencedEnvelope) e).getCoordinateReferenceSystem());
+        } else if ("srsName".equals(name.getLocalPart()) && e instanceof ReferencedEnvelope envelope) {
+            return GML2EncodingUtils.toURI(envelope.getCoordinateReferenceSystem());
         }
 
         return null;

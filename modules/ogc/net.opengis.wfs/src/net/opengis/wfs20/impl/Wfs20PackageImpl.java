@@ -109,10 +109,10 @@ import org.eclipse.emf.ecore.xml.namespace.XMLNamespacePackage;
 import org.eclipse.emf.ecore.xml.type.XMLTypePackage;
 
 import org.geotools.feature.FeatureCollection;
-import org.opengis.filter.Filter;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.filter.sort.SortBy;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.filter.sort.SortBy;
 import org.w3.xlink.XlinkPackage;
 
 /**
@@ -712,7 +712,7 @@ public class Wfs20PackageImpl extends EPackageImpl implements Wfs20Package {
 
     // Obtain or create and register package
     Object registeredWfs20Package = EPackage.Registry.INSTANCE.get(eNS_URI);
-    Wfs20PackageImpl theWfs20Package = registeredWfs20Package instanceof Wfs20PackageImpl ? (Wfs20PackageImpl)registeredWfs20Package : new Wfs20PackageImpl();
+    Wfs20PackageImpl theWfs20Package = registeredWfs20Package instanceof Wfs20PackageImpl wpi ? wpi : new Wfs20PackageImpl();
 
     isInited = true;
 

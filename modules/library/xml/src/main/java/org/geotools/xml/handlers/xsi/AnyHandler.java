@@ -59,8 +59,7 @@ public class AnyHandler extends ElementGroupingHandler {
     @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
     public int hashCode() {
-        return (LOCALNAME.hashCode() * ((id == null) ? 1 : id.hashCode()))
-                + (minOccurs * maxOccurs);
+        return LOCALNAME.hashCode() * (id == null ? 1 : id.hashCode()) + minOccurs * maxOccurs;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandler(java.lang.String, java.lang.String) */
@@ -70,12 +69,10 @@ public class AnyHandler extends ElementGroupingHandler {
     }
 
     /**
-     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String,
-     *     org.xml.sax.Attributes)
+     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
-    public void startElement(String namespaceURI, String localName, Attributes atts)
-            throws SAXException {
+    public void startElement(String namespaceURI, String localName, Attributes atts) throws SAXException {
         id = atts.getValue("", "id");
 
         if (id == null) {
@@ -127,13 +124,13 @@ public class AnyHandler extends ElementGroupingHandler {
             throw new SAXException(e);
         }
 
-        if ((null == min) || "".equalsIgnoreCase(min)) {
+        if (null == min || "".equalsIgnoreCase(min)) {
             minOccurs = 1;
         } else {
             minOccurs = Integer.parseInt(min);
         }
 
-        if ((null == max) || "".equalsIgnoreCase(max)) {
+        if (null == max || "".equalsIgnoreCase(max)) {
             maxOccurs = 1;
         } else {
             if ("unbounded".equalsIgnoreCase(max)) {
@@ -152,7 +149,7 @@ public class AnyHandler extends ElementGroupingHandler {
 
     /** maps strings -> int constants for the 'process' attribute */
     public static int findProcess(String process) throws SAXException {
-        if ((process == null) || "".equalsIgnoreCase(process)) {
+        if (process == null || "".equalsIgnoreCase(process)) {
             return STRICT;
         }
 
@@ -171,10 +168,7 @@ public class AnyHandler extends ElementGroupingHandler {
         throw new SAXException("Unknown Process Type: '" + process + "'");
     }
 
-    /**
-     * reverses the findProcess method, converting from integers to String for the process
-     * attribute.
-     */
+    /** reverses the findProcess method, converting from integers to String for the process attribute. */
     public static String writeProcess(int process) {
         switch (process) {
             case LAX:
@@ -189,10 +183,7 @@ public class AnyHandler extends ElementGroupingHandler {
         }
     }
 
-    /**
-     * @see
-     *     org.geotools.xml.XSIHandlers.ElementGroupingHandler#compress(org.geotools.xml.XSIHandlers.SchemaHandler)
-     */
+    /** @see org.geotools.xml.XSIHandlers.ElementGroupingHandler#compress(org.geotools.xml.XSIHandlers.SchemaHandler) */
     @Override
     protected ElementGrouping compress(SchemaHandler parent) {
         synchronized (this) {

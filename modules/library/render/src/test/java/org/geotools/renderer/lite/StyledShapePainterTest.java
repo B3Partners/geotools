@@ -23,28 +23,36 @@ import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.net.URL;
 import javax.imageio.ImageIO;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.style.ExternalGraphic;
+import org.geotools.api.style.GraphicLegend;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.data.ows.MockURLChecker;
+import org.geotools.data.ows.URLCheckers;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.Decimator;
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.geotools.geometry.jts.LiteShape2;
 import org.geotools.referencing.operation.transform.ProjectiveTransform;
-import org.geotools.styling.ExternalGraphic;
 import org.geotools.styling.GraphicImpl;
-import org.geotools.styling.GraphicLegend;
-import org.geotools.styling.Rule;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyleFactory;
 import org.geotools.test.TestData;
 import org.geotools.util.factory.GeoTools;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.referencing.operation.MathTransform;
 
 public class StyledShapePainterTest {
+
+    @After
+    public void cleanupCheckers() {
+        URLCheckers.reset();
+    }
 
     @Test
     public void testGraphicLegendNullLegend() throws Exception {
@@ -59,8 +67,7 @@ public class StyledShapePainterTest {
             painter.paint(g2, pointShape, (GraphicLegend) null, 1, false);
             Assert.fail();
         } catch (NullPointerException e) {
-            Assert.assertEquals(
-                    "ShapePainter has been asked to paint a null legend!!", e.getMessage());
+            Assert.assertEquals("ShapePainter has been asked to paint a null legend!!", e.getMessage());
         }
     }
 
@@ -76,11 +83,10 @@ public class StyledShapePainterTest {
         // Get graphic legend from style
         final Style style = RendererBaseTest.loadStyle(this, "testGraphicLegend.sld");
         final Rule rule = style.featureTypeStyles().get(0).rules().get(0);
-        final GraphicLegend legend = (GraphicLegend) rule.getLegend();
+        final GraphicLegend legend = rule.getLegend();
 
         // Paint legend using StyledShapePainter
-        final Point point =
-                new GeometryFactory().createPoint(new Coordinate(width / 2, height / 2));
+        final Point point = new GeometryFactory().createPoint(new Coordinate(width / 2, height / 2));
         final LiteShape2 shape = new LiteShape2(point, null, null, false);
 
         int imageType = testImage.getType();
@@ -98,6 +104,26 @@ public class StyledShapePainterTest {
     }
 
     @Test
+    public void testGraphicLegendURLCheckerAllowed() throws Exception {
+        URLCheckers.register(new MockURLChecker(u -> u.contains("icon64.png")));
+        testGraphicLegend();
+    }
+
+    @Test
+    public void testGraphicLegendURLCheckerDisallowed() throws Exception {
+        URLCheckers.register(new MockURLChecker(u -> false));
+
+        // Get graphic legend from style
+        Style style = RendererBaseTest.loadStyle(this, "testGraphicLegend.sld");
+        Rule rule = style.featureTypeStyles().get(0).rules().get(0);
+        GraphicLegend legend = rule.getLegend();
+
+        // The painter has nothing to paint if the URL check fails so passing in a null graphics and
+        // shape won't throw an exception here
+        new StyledShapePainter().paint(null, null, legend, 1, false);
+    }
+
+    @Test
     public void testGraphicLegendNegativeScale() throws Exception {
 
         // Load image directly from file, for comparison with painter output
@@ -109,11 +135,10 @@ public class StyledShapePainterTest {
         // Get graphic legend from style
         final Style style = RendererBaseTest.loadStyle(this, "testGraphicLegend.sld");
         final Rule rule = style.featureTypeStyles().get(0).rules().get(0);
-        final GraphicLegend legend = (GraphicLegend) rule.getLegend();
+        final GraphicLegend legend = rule.getLegend();
 
         // Paint legend using StyledShapePainter
-        final Point point =
-                new GeometryFactory().createPoint(new Coordinate(width / 2, height / 2));
+        final Point point = new GeometryFactory().createPoint(new Coordinate(width / 2, height / 2));
         final LiteShape2 shape = new LiteShape2(point, null, null, false);
 
         int imageType = testImage.getType();
@@ -132,7 +157,7 @@ public class StyledShapePainterTest {
 
     @Test
     public void testGraphicLegendRotation() throws Exception {
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
         GeometryFactory gf = JTSFactoryFinder.getGeometryFactory();
 
         // Load image directly from file, for comparison with painter output
@@ -144,7 +169,7 @@ public class StyledShapePainterTest {
         // Get graphic legend from style
         final Style style = RendererBaseTest.loadStyle(this, "testGraphicLegend.sld");
         final Rule rule = style.featureTypeStyles().get(0).rules().get(0);
-        final GraphicLegend legend = (GraphicLegend) rule.getLegend();
+        final GraphicLegend legend = rule.getLegend();
 
         // Set rotation to 45 degrees
         legend.setRotation(ff.literal(45.0));
@@ -203,9 +228,8 @@ public class StyledShapePainterTest {
     public void testGraphicLegend2() throws Exception {
 
         StyledShapePainter painter = new StyledShapePainter();
-        GraphicImpl legend =
-                new GraphicImpl(CommonFactoryFinder.getFilterFactory(GeoTools.getDefaultHints()));
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        GraphicImpl legend = new GraphicImpl(CommonFactoryFinder.getFilterFactory(GeoTools.getDefaultHints()));
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
         legend.setRotation(ff.literal(0));
         legend.setOpacity(ff.literal(1));
         URL url = StreamingRenderer.class.getResource("test-data/");

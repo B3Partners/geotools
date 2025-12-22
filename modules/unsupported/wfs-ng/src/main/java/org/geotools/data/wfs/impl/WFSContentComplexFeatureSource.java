@@ -23,27 +23,30 @@ import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.xml.namespace.QName;
-import org.geotools.data.DataAccess;
-import org.geotools.data.FeatureListener;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.Query;
-import org.geotools.data.QueryCapabilities;
-import org.geotools.data.ResourceInfo;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.FeatureListener;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.QueryCapabilities;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.wfs.internal.GetFeatureRequest;
 import org.geotools.data.wfs.internal.WFSClient;
 import org.geotools.data.wfs.internal.WFSContentComplexFeatureCollection;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.util.logging.Logging;
 
 /**
- * Combines the WFSClient and DataAccess objects and exposes methods to access the features by using
- * the XmlComplexFeatureParser.
+ * Combines the WFSClient and DataAccess objects and exposes methods to access the features by using the
+ * XmlComplexFeatureParser.
  */
 public class WFSContentComplexFeatureSource implements FeatureSource<FeatureType, Feature> {
     /** The name of the feature type of the source. */
@@ -55,6 +58,8 @@ public class WFSContentComplexFeatureSource implements FeatureSource<FeatureType
     /** The data access object. */
     private WFSContentDataAccess dataAccess;
 
+    private static Logger LOGGER = Logging.getLogger(WFSContentComplexFeatureSource.class);
+
     /**
      * Initialises a new instance of the class WFSContentComplexFeatureSource.
      *
@@ -62,8 +67,7 @@ public class WFSContentComplexFeatureSource implements FeatureSource<FeatureType
      * @param client The WFSClient responsible for making the WFS requests.
      * @param dataAccess The data access object.
      */
-    public WFSContentComplexFeatureSource(
-            Name typeName, WFSClient client, WFSContentDataAccess dataAccess) {
+    public WFSContentComplexFeatureSource(Name typeName, WFSClient client, WFSContentDataAccess dataAccess) {
         this.typeName = typeName;
         this.client = client;
         this.dataAccess = dataAccess;
@@ -86,9 +90,8 @@ public class WFSContentComplexFeatureSource implements FeatureSource<FeatureType
     public FeatureCollection<FeatureType, Feature> getFeatures(Query query) throws IOException {
         if (query.getTypeName() != null && !typeName.getLocalPart().equals(query.getTypeName())) {
             throw new IllegalArgumentException(
-                    String.format(
-                            "Query's local typeName %s doesn't match the one of this feature source %s.",
-                            query.getTypeName(), typeName.getLocalPart()));
+                    "Query's local typeName %s doesn't match the one of this feature source %s."
+                            .formatted(query.getTypeName(), typeName.getLocalPart()));
         }
         GetFeatureRequest request = client.createGetFeatureRequest();
         FeatureType schema = dataAccess.getSchema(typeName);
@@ -99,8 +102,12 @@ public class WFSContentComplexFeatureSource implements FeatureSource<FeatureType
         request.setPropertyNames(query.getPropertyNames());
         request.setSortBy(query.getSortBy());
 
-        String srsName = null;
-        request.setSrsName(srsName);
+        if (query.getCoordinateSystem() != null) {
+            request.findSupportedSrsName(query.getCoordinateSystem());
+            if (request.getSrsName() == null) {
+                LOGGER.log(Level.WARNING, "WFS doesn't support the coordinate system: " + query.getCoordinateSystem());
+            }
+        }
 
         return new WFSContentComplexFeatureCollection(request, schema, name, client);
     }
@@ -131,9 +138,7 @@ public class WFSContentComplexFeatureSource implements FeatureSource<FeatureType
 
             @Override
             public CoordinateReferenceSystem getCRS() {
-                return WFSContentComplexFeatureSource.this
-                        .getSchema()
-                        .getCoordinateReferenceSystem();
+                return WFSContentComplexFeatureSource.this.getSchema().getCoordinateReferenceSystem();
             }
 
             @Override
@@ -213,10 +218,9 @@ public class WFSContentComplexFeatureSource implements FeatureSource<FeatureType
             return null;
         }
         QName name = dataAccess.getRemoteTypeName(typeName);
-        final CoordinateReferenceSystem targetCrs =
-                query.getCoordinateSystemReproject() != null
-                        ? query.getCoordinateSystemReproject()
-                        : client.getDefaultCRS(name);
+        final CoordinateReferenceSystem targetCrs = query.getCoordinateSystemReproject() != null
+                ? query.getCoordinateSystemReproject()
+                : client.getDefaultCRS(name);
 
         return client.getBounds(name, targetCrs);
     }

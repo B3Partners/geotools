@@ -18,24 +18,24 @@ package org.geotools.data.shapefile;
 
 import java.io.IOException;
 import java.util.Set;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.QueryCapabilities;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
 import org.geotools.data.FilteringFeatureWriter;
-import org.geotools.data.Query;
-import org.geotools.data.QueryCapabilities;
-import org.geotools.data.ResourceInfo;
-import org.geotools.data.Transaction;
 import org.geotools.data.shapefile.files.ShpFiles;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureStore;
 import org.geotools.data.store.ContentState;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.util.factory.Hints.Key;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
 
 /**
  * FeatureStore for the Shapefile store, based on the {@link ContentFeatureStore} framework
@@ -54,26 +54,20 @@ class ShapefileFeatureStore extends ContentFeatureStore {
     }
 
     @Override
-    protected FeatureWriter<SimpleFeatureType, SimpleFeature> getWriterInternal(
-            Query query, int flags) throws IOException {
+    protected FeatureWriter<SimpleFeatureType, SimpleFeature> getWriterInternal(Query query, int flags)
+            throws IOException {
         if (flags == 0) {
             throw new IllegalArgumentException("no write flags set");
         }
 
         @SuppressWarnings("PMD.CloseResource") // managed as part of the writer
-        ShapefileFeatureReader reader =
-                (ShapefileFeatureReader) delegate.getReaderInternal(Query.ALL);
+        ShapefileFeatureReader reader = (ShapefileFeatureReader) delegate.getReaderInternal(Query.ALL);
         ShapefileFeatureWriter writer;
         ShapefileDataStore ds = getDataStore();
-        if (ds.indexManager.hasFidIndex(false)
-                || ds.isFidIndexed() && ds.indexManager.hasFidIndex(true)) {
-            writer =
-                    new IndexedShapefileFeatureWriter(
-                            ds.indexManager, reader, ds.getCharset(), ds.getTimeZone());
+        if (ds.indexManager.hasFidIndex(false) || ds.isFidIndexed() && ds.indexManager.hasFidIndex(true)) {
+            writer = new IndexedShapefileFeatureWriter(ds.indexManager, reader, ds.getCharset(), ds.getTimeZone());
         } else {
-            writer =
-                    new ShapefileFeatureWriter(
-                            delegate.shpFiles, reader, ds.getCharset(), ds.getTimeZone());
+            writer = new ShapefileFeatureWriter(delegate.shpFiles, reader, ds.getCharset(), ds.getTimeZone());
         }
         writer.setMaxShpSize(getDataStore().getMaxShpSize());
         writer.setMaxDbfSize(getDataStore().getMaxDbfSize());
@@ -132,8 +126,7 @@ class ShapefileFeatureStore extends ContentFeatureStore {
     }
 
     @Override
-    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query)
-            throws IOException {
+    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query) throws IOException {
         return delegate.getReaderInternal(query);
     }
 
@@ -167,13 +160,13 @@ class ShapefileFeatureStore extends ContentFeatureStore {
     }
 
     @Override
-    protected boolean canFilter() {
-        return delegate.canFilter();
+    protected boolean canFilter(Query query) {
+        return delegate.canFilter(query);
     }
 
     @Override
-    protected boolean canRetype() {
-        return delegate.canRetype();
+    protected boolean canRetype(Query query) {
+        return delegate.canRetype(query);
     }
 
     @Override

@@ -18,26 +18,26 @@ package org.geotools.data.informix;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.DistanceBufferOperator;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
 import org.geotools.data.jdbc.FilterToSQL;
 import org.geotools.filter.FilterCapabilities;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LinearRing;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.DistanceBufferOperator;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
 
 /**
  * Encodes a filter into a SQL WHERE statement using Informix-appropriate syntax.
@@ -65,23 +65,18 @@ public class InformixFilterToSQL extends FilterToSQL {
     @Override
     protected void visitLiteralGeometry(Literal expression) throws IOException {
         Geometry g = (Geometry) evaluateLiteral(expression, Geometry.class);
-        if (g instanceof LinearRing) {
+        if (g instanceof LinearRing ring) {
             // WKT does not support linear rings
-            g = g.getFactory().createLineString(((LinearRing) g).getCoordinateSequence());
+            g = g.getFactory().createLineString(ring.getCoordinateSequence());
         }
         out.write("ST_GeomFromText('" + g.toText() + "', " + currentSRID + ")");
     }
 
     @Override
     protected Object visitBinarySpatialOperator(
-            BinarySpatialOperator filter,
-            PropertyName property,
-            Literal geometry,
-            boolean swapped,
-            Object extraData) {
+            BinarySpatialOperator filter, PropertyName property, Literal geometry, boolean swapped, Object extraData) {
 
-        return visitBinarySpatialOperatorEnhanced(
-                filter, (Expression) property, (Expression) geometry, swapped, extraData);
+        return visitBinarySpatialOperatorEnhanced(filter, property, geometry, swapped, extraData);
     }
 
     @Override
@@ -91,15 +86,11 @@ public class InformixFilterToSQL extends FilterToSQL {
     }
 
     protected Object visitBinarySpatialOperatorEnhanced(
-            BinarySpatialOperator filter,
-            Expression e1,
-            Expression e2,
-            boolean swapped,
-            Object extraData) {
+            BinarySpatialOperator filter, Expression e1, Expression e2, boolean swapped, Object extraData) {
 
         try {
 
-            if (filter instanceof DistanceBufferOperator) {
+            if (filter instanceof DistanceBufferOperator operator) {
                 out.write("ST_Distance(");
                 e1.accept(this, extraData);
                 out.write(", ");
@@ -113,7 +104,7 @@ public class InformixFilterToSQL extends FilterToSQL {
                 } else {
                     throw new RuntimeException("Unknown distance operator");
                 }
-                out.write(Double.toString(((DistanceBufferOperator) filter).getDistance()));
+                out.write(Double.toString(operator.getDistance()));
             } else {
                 if (filter instanceof Contains) {
                     out.write("ST_Contains(");
@@ -156,9 +147,8 @@ public class InformixFilterToSQL extends FilterToSQL {
 
     @Override
     protected void writeLiteral(Object literal) throws IOException {
-        LOGGER.fine(
-                "Writing literal of type "
-                        + (literal != null ? literal.getClass().getName() : null));
+        LOGGER.fine("Writing literal of type "
+                + (literal != null ? literal.getClass().getName() : null));
         if (literal instanceof java.sql.Time) {
             SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
             out.write("'" + format.format(literal) + "'");

@@ -25,14 +25,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.visitor.CalcResult;
 import org.geotools.feature.visitor.SumVisitor;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.IllegalFilterException;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Calculates the sum value of an attribute for a given FeatureCollection and Expression.
@@ -42,18 +42,14 @@ import org.opengis.filter.expression.Expression;
  */
 public class Collection_SumFunction extends FunctionExpressionImpl {
     /** The logger for the filter module. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(Collection_SumFunction.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(Collection_SumFunction.class);
 
     SimpleFeatureCollection previousFeatureCollection = null;
     Object sum = null;
 
     // public static FunctionName NAME = new FunctionNameImpl("Collection_Sum","expression");
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "Collection_Sum",
-                    parameter("sum", Number.class),
-                    parameter("expression", Number.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "Collection_Sum", parameter("sum", Number.class), parameter("expression", Number.class));
 
     /** Creates a new instance of Collection_SumFunction */
     public Collection_SumFunction() {
@@ -78,18 +74,17 @@ public class Collection_SumFunction extends FunctionExpressionImpl {
     /**
      * The provided arguments are evaulated with respect to the FeatureCollection.
      *
-     * <p>For an aggregate function (like sum) please use the WFS mandated XPath syntax to refer to
-     * featureMember content.
+     * <p>For an aggregate function (like sum) please use the WFS mandated XPath syntax to refer to featureMember
+     * content.
      *
      * <p>To refer to all 'X': <code>featureMember/asterisk/X</code>
      */
     @Override
     public void setParameters(List<Expression> args) {
         // if we see "featureMembers/*/ATTRIBUTE" change to "ATTRIBUTE"
-        org.opengis.filter.expression.Expression expr = args.get(0);
-        expr =
-                (org.opengis.filter.expression.Expression)
-                        expr.accept(new CollectionFeatureMemberFilterVisitor(), null);
+        org.geotools.api.filter.expression.Expression expr = args.get(0);
+        expr = (org.geotools.api.filter.expression.Expression)
+                expr.accept(new CollectionFeatureMemberFilterVisitor(), null);
         args.set(0, expr);
         super.setParameters(args);
     }

@@ -16,22 +16,21 @@
  */
 package org.geotools.coverage.processing.operation;
 
-// JAI dependencies (for javadoc)
+// ImageN dependencies (for javadoc)
 
-import it.geosolutions.jaiext.JAIExt;
-import it.geosolutions.jaiext.algebra.AlgebraDescriptor.Operator;
 import java.awt.image.RenderedImage;
+import java.io.Serial;
 import java.util.Collection;
 import java.util.Map;
-import javax.media.jai.ParameterBlockJAI;
-import javax.media.jai.operator.LogDescriptor;
+import org.eclipse.imagen.ParameterBlockImageN;
+import org.eclipse.imagen.media.algebra.AlgebraDescriptor.Operator;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.BaseMathOperationJAI;
 import org.geotools.util.NumberRange;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.util.InternationalString;
 
 // Geotools dependencies
 
@@ -67,11 +66,14 @@ import org.opengis.util.InternationalString;
  */
 public class Log extends BaseMathOperationJAI {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -3622176942444895367L;
+
+    private static final String ALGEBRIC = "algebric";
 
     /** Constructs a default {@code "Log"} operation. */
     public Log() {
-        super("Log", getOperationDescriptor(JAIExt.getOperationName("Log")));
+        super("Log", getOperationDescriptor(ALGEBRIC));
     }
 
     @Override
@@ -90,16 +92,13 @@ public class Log extends BaseMathOperationJAI {
     }
 
     @Override
-    protected void handleJAIEXTParams(
-            ParameterBlockJAI parameters, ParameterValueGroup parameters2) {
-        if (JAIExt.isJAIExtOperation("algebric")) {
-            parameters.set(Operator.LOG, 0);
-            @SuppressWarnings("unchecked")
-            Collection<GridCoverage2D> sources =
-                    (Collection<GridCoverage2D>) parameters2.parameter("sources").getValue();
-            for (GridCoverage2D source : sources) {
-                handleROINoDataInternal(parameters, source, "algebric", 1, 2);
-            }
+    protected void handleJAIEXTParams(ParameterBlockImageN parameters, ParameterValueGroup parameters2) {
+        parameters.set(Operator.LOG, 0);
+        @SuppressWarnings("unchecked")
+        Collection<GridCoverage2D> sources =
+                (Collection<GridCoverage2D>) parameters2.parameter("sources").getValue();
+        for (GridCoverage2D source : sources) {
+            handleROINoDataInternal(parameters, source, "algebric", 1, 2);
         }
     }
 
@@ -111,7 +110,6 @@ public class Log extends BaseMathOperationJAI {
             MathTransform gridToCRS,
             GridCoverage2D[] sources,
             Parameters parameters) {
-        return handleROINoDataProperties(
-                null, parameters.parameters, sources[0], "algebric", 1, 2, 3);
+        return handleROINoDataProperties(null, parameters.parameters, sources[0], "algebric", 1, 2, 3);
     }
 }

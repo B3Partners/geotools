@@ -17,6 +17,7 @@
 package org.geotools.filter.v2_0;
 
 import net.opengis.fes20.Fes20Factory;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.filter.FilterFactoryImpl;
 import org.geotools.filter.v1_1.SortOrderTypeBinding;
 import org.geotools.filter.v2_0.bindings.AfterBinding;
@@ -55,6 +56,7 @@ import org.geotools.filter.v2_0.bindings.GeometryOperandsType_GeometryOperandBin
 import org.geotools.filter.v2_0.bindings.Id_CapabilitiesTypeBinding;
 import org.geotools.filter.v2_0.bindings.IntersectsBinding;
 import org.geotools.filter.v2_0.bindings.LiteralBinding;
+import org.geotools.filter.v2_0.bindings.LowerBoundaryTypeBinding;
 import org.geotools.filter.v2_0.bindings.MatchActionBinding;
 import org.geotools.filter.v2_0.bindings.MeasureTypeBinding;
 import org.geotools.filter.v2_0.bindings.MeetsBinding;
@@ -84,6 +86,7 @@ import org.geotools.filter.v2_0.bindings.TContainsBinding;
 import org.geotools.filter.v2_0.bindings.TEqualsBinding;
 import org.geotools.filter.v2_0.bindings.TOverlapsBinding;
 import org.geotools.filter.v2_0.bindings.TouchesBinding;
+import org.geotools.filter.v2_0.bindings.UpperBoundaryTypeBinding;
 import org.geotools.filter.v2_0.bindings.ValueReferenceBinding;
 import org.geotools.filter.v2_0.bindings.VersionTypeBinding;
 import org.geotools.filter.v2_0.bindings.WithinBinding;
@@ -91,7 +94,6 @@ import org.geotools.filter.v2_0.bindings._LogicalOperatorsBinding;
 import org.geotools.gml3.v3_2.GMLConfiguration;
 import org.geotools.ows.v1_1.OWSConfiguration;
 import org.geotools.xsd.Configuration;
-import org.opengis.filter.FilterFactory;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -141,69 +143,51 @@ public class FESConfiguration extends Configuration {
 
         container.registerComponentImplementation(FES.ArgumentsType, ArgumentsTypeBinding.class);
         container.registerComponentImplementation(FES.ArgumentType, ArgumentTypeBinding.class);
-        container.registerComponentImplementation(
-                FES.AvailableFunctionsType, AvailableFunctionsTypeBinding.class);
-        container.registerComponentImplementation(
-                FES.AvailableFunctionType, AvailableFunctionTypeBinding.class);
+        container.registerComponentImplementation(FES.AvailableFunctionsType, AvailableFunctionsTypeBinding.class);
+        container.registerComponentImplementation(FES.AvailableFunctionType, AvailableFunctionTypeBinding.class);
         container.registerComponentImplementation(FES.BBOXType, BBOXTypeBinding.class);
-        container.registerComponentImplementation(
-                FES.BinaryComparisonOpType, BinaryComparisonOpTypeBinding.class);
-        container.registerComponentImplementation(
-                FES.BinaryLogicOpType, BinaryLogicOpTypeBinding.class);
-        container.registerComponentImplementation(
-                FES.BinarySpatialOpType, BinarySpatialOpTypeBinding.class);
-        container.registerComponentImplementation(
-                FES.BinaryTemporalOpType, BinaryTemporalOpTypeBinding.class);
+        container.registerComponentImplementation(FES.BinaryComparisonOpType, BinaryComparisonOpTypeBinding.class);
+        container.registerComponentImplementation(FES.BinaryLogicOpType, BinaryLogicOpTypeBinding.class);
+        container.registerComponentImplementation(FES.BinarySpatialOpType, BinarySpatialOpTypeBinding.class);
+        container.registerComponentImplementation(FES.BinaryTemporalOpType, BinaryTemporalOpTypeBinding.class);
         //
         // container.registerComponentImplementation(FES.ComparisonOperatorNameType,ComparisonOperatorNameTypeBinding.class);
-        container.registerComponentImplementation(
-                FES.ComparisonOperatorsType, ComparisonOperatorsTypeBinding.class);
-        container.registerComponentImplementation(
-                FES.ComparisonOperatorType, ComparisonOperatorTypeBinding.class);
+        container.registerComponentImplementation(FES.ComparisonOperatorsType, ComparisonOperatorsTypeBinding.class);
+        container.registerComponentImplementation(FES.ComparisonOperatorType, ComparisonOperatorTypeBinding.class);
         //
         // container.registerComponentImplementation(FES.ComparisonOpsType,ComparisonOpsTypeBinding.class);
-        container.registerComponentImplementation(
-                FES.ConformanceType, ConformanceTypeBinding.class);
-        container.registerComponentImplementation(
-                FES.DistanceBufferType, DistanceBufferTypeBinding.class);
+        container.registerComponentImplementation(FES.ConformanceType, ConformanceTypeBinding.class);
+        container.registerComponentImplementation(FES.DistanceBufferType, DistanceBufferTypeBinding.class);
         container.registerComponentImplementation(FES.MeasureType, MeasureTypeBinding.class);
         container.registerComponentImplementation(FES.FilterType, FilterTypeBinding.class);
         container.registerComponentImplementation(FES.FunctionType, FunctionTypeBinding.class);
-        container.registerComponentImplementation(
-                FES.GeometryOperandsType, GeometryOperandsTypeBinding.class);
-        container.registerComponentImplementation(
-                FES.Id_CapabilitiesType, Id_CapabilitiesTypeBinding.class);
+        container.registerComponentImplementation(FES.GeometryOperandsType, GeometryOperandsTypeBinding.class);
+        container.registerComponentImplementation(FES.Id_CapabilitiesType, Id_CapabilitiesTypeBinding.class);
         //
         // container.registerComponentImplementation(FES.LiteralType,LiteralTypeBinding.class);
         //
         // container.registerComponentImplementation(FES.LogicOpsType,LogicOpsTypeBinding.class);
         //
-        // container.registerComponentImplementation(FES.LowerBoundaryType,LowerBoundaryTypeBinding.class);
+        container.registerComponentImplementation(FES.LowerBoundaryType, LowerBoundaryTypeBinding.class);
         //
         // container.registerComponentImplementation(FES.MatchActionType,MatchActionTypeBinding.class);
 
         //
         // container.registerComponentImplementation(FES.PropertyIsNilType,PropertyIsNilTypeBinding.class);
 
-        container.registerComponentImplementation(
-                FES.ResourceIdentifierType, ResourceIdentifierTypeBinding.class);
+        container.registerComponentImplementation(FES.ResourceIdentifierType, ResourceIdentifierTypeBinding.class);
         container.registerComponentImplementation(FES.ResourceIdType, ResourceIdTypeBinding.class);
-        container.registerComponentImplementation(
-                FES.Scalar_CapabilitiesType, Scalar_CapabilitiesTypeBinding.class);
+        container.registerComponentImplementation(FES.Scalar_CapabilitiesType, Scalar_CapabilitiesTypeBinding.class);
         //
         // container.registerComponentImplementation(FES.SchemaElement,SchemaElementBinding.class);
         container.registerComponentImplementation(FES.SortByType, SortByTypeBinding.class);
         container.registerComponentImplementation(FES.SortOrderType, SortOrderTypeBinding.class);
-        container.registerComponentImplementation(
-                FES.SortPropertyType, SortPropertyTypeBinding.class);
-        container.registerComponentImplementation(
-                FES.Spatial_CapabilitiesType, Spatial_CapabilitiesTypeBinding.class);
+        container.registerComponentImplementation(FES.SortPropertyType, SortPropertyTypeBinding.class);
+        container.registerComponentImplementation(FES.Spatial_CapabilitiesType, Spatial_CapabilitiesTypeBinding.class);
         //
         // container.registerComponentImplementation(FES.SpatialOperatorNameType,SpatialOperatorNameTypeBinding.class);
-        container.registerComponentImplementation(
-                FES.SpatialOperatorsType, SpatialOperatorsTypeBinding.class);
-        container.registerComponentImplementation(
-                FES.SpatialOperatorType, SpatialOperatorTypeBinding.class);
+        container.registerComponentImplementation(FES.SpatialOperatorsType, SpatialOperatorsTypeBinding.class);
+        container.registerComponentImplementation(FES.SpatialOperatorType, SpatialOperatorTypeBinding.class);
         //
         // container.registerComponentImplementation(FES.SpatialOpsType,SpatialOpsTypeBinding.class);
         //
@@ -225,17 +209,14 @@ public class FESConfiguration extends Configuration {
         //
         // container.registerComponentImplementation(FES.UnaryLogicOpType,UnaryLogicOpTypeBinding.class);
         //
-        // container.registerComponentImplementation(FES.UpperBoundaryType,UpperBoundaryTypeBinding.class);
+        container.registerComponentImplementation(FES.UpperBoundaryType, UpperBoundaryTypeBinding.class);
         //
         // container.registerComponentImplementation(FES.VersionActionTokens,VersionActionTokensBinding.class);
         container.registerComponentImplementation(FES.VersionType, VersionTypeBinding.class);
+        container.registerComponentImplementation(FES._Filter_Capabilities, Filter_CapabilitiesTypeBinding.class);
+        container.registerComponentImplementation(FES._LogicalOperators, _LogicalOperatorsBinding.class);
         container.registerComponentImplementation(
-                FES._Filter_Capabilities, Filter_CapabilitiesTypeBinding.class);
-        container.registerComponentImplementation(
-                FES._LogicalOperators, _LogicalOperatorsBinding.class);
-        container.registerComponentImplementation(
-                FES.GeometryOperandsType_GeometryOperand,
-                GeometryOperandsType_GeometryOperandBinding.class);
+                FES.GeometryOperandsType_GeometryOperand, GeometryOperandsType_GeometryOperandBinding.class);
         //
         // container.registerComponentImplementation(FES.TemporalOperandsType_TemporalOperand,TemporalOperandsType_TemporalOperandBinding.class);
 
@@ -270,24 +251,17 @@ public class FESConfiguration extends Configuration {
         container.registerComponentImplementation(FES.TOverlaps, TOverlapsBinding.class);
 
         // comparison
-        container.registerComponentImplementation(
-                FES.PropertyIsEqualTo, PropertyIsEqualToBinding.class);
-        container.registerComponentImplementation(
-                FES.PropertyIsGreaterThan, PropertyIsGreaterThanBinding.class);
+        container.registerComponentImplementation(FES.PropertyIsEqualTo, PropertyIsEqualToBinding.class);
+        container.registerComponentImplementation(FES.PropertyIsGreaterThan, PropertyIsGreaterThanBinding.class);
         container.registerComponentImplementation(
                 FES.PropertyIsGreaterThanOrEqualTo, PropertyIsGreaterThanOrEqualToBinding.class);
-        container.registerComponentImplementation(
-                FES.PropertyIsLessThan, PropertyIsLessThanBinding.class);
+        container.registerComponentImplementation(FES.PropertyIsLessThan, PropertyIsLessThanBinding.class);
         container.registerComponentImplementation(
                 FES.PropertyIsLessThanOrEqualTo, PropertyIsLessThanOrEqualToBinding.class);
-        container.registerComponentImplementation(
-                FES.PropertyIsNotEqualTo, PropertyIsNotEqualToBinding.class);
-        container.registerComponentImplementation(
-                FES.PropertyIsBetweenType, PropertyIsBetweenTypeBinding.class);
-        container.registerComponentImplementation(
-                FES.PropertyIsLikeType, PropertyIsLikeTypeBinding.class);
-        container.registerComponentImplementation(
-                FES.PropertyIsNullType, PropertyIsNullTypeBinding.class);
+        container.registerComponentImplementation(FES.PropertyIsNotEqualTo, PropertyIsNotEqualToBinding.class);
+        container.registerComponentImplementation(FES.PropertyIsBetweenType, PropertyIsBetweenTypeBinding.class);
+        container.registerComponentImplementation(FES.PropertyIsLikeType, PropertyIsLikeTypeBinding.class);
+        container.registerComponentImplementation(FES.PropertyIsNullType, PropertyIsNullTypeBinding.class);
 
         // logical
         container.registerComponentImplementation(FES.And, AndBinding.class);

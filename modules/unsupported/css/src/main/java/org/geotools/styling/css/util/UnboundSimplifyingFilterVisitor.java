@@ -16,14 +16,14 @@
  */
 package org.geotools.styling.css.util;
 
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
 import org.geotools.filter.function.EnvFunction;
 import org.geotools.filter.visitor.SimplifyingFilterVisitor;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
 
 /**
- * A filter visitor subclass that does not consider the env function already bound, and thus,
- * assumes it's still variable
+ * A filter visitor subclass that does not consider the env function already bound, and thus, assumes it's still
+ * variable
  *
  * @author Andrea Aime - GeoSolutions
  */

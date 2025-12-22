@@ -17,16 +17,13 @@
 
 package org.geotools.filter.visitor;
 
-import org.opengis.annotation.XmlElement;
-
 /**
  * Interpolation method used by the Interpolate function.
  *
- * @version <A HREF="http://www.opengeospatial.org/standards/symbol">Symbology Encoding
- *     Implementation Specification 1.1.0</A>
+ * @version <A HREF="http://www.opengeospatial.org/standards/symbol">Symbology Encoding Implementation Specification
+ *     1.1.0</A>
  * @author Johann Sorel (Geomatys)
  */
-@XmlElement("Method")
 public enum Method {
     NUMERIC,
     COLOR

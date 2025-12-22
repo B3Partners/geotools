@@ -18,13 +18,13 @@ package org.geotools.coverage.io.catalog;
 
 import java.io.IOException;
 import java.util.List;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
 import org.geotools.coverage.grid.io.GranuleSource;
-import org.geotools.data.Query;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
 
 /**
  * A {@link GranuleSource} implementation wrapping a {@link CoverageSlicesCatalog}.
@@ -56,8 +56,7 @@ public class CoverageSlicesCatalogSource implements GranuleSource {
         Filter filter = q.getFilter();
         q.setFilter(filter);
         List<CoverageSlice> granules = innerCatalog.getGranules(q);
-        SimpleFeatureCollection collection =
-                new ListFeatureCollection(innerCatalog.getSchema(typeName));
+        SimpleFeatureCollection collection = new ListFeatureCollection(innerCatalog.getSchema(typeName));
         for (CoverageSlice granule : granules) {
             ((ListFeatureCollection) collection).add(granule.getOriginator());
         }

@@ -19,7 +19,6 @@ package org.geotools.data.postgis;
 import org.geotools.jdbc.JDBCGeometryTestSetup;
 import org.geotools.jdbc.JDBCTestSetup;
 
-@SuppressWarnings("PMD.JUnit4TestShouldUseAfterAnnotation") // not a test by itself
 public class PostgisGeometryTestSetup extends JDBCGeometryTestSetup {
 
     public PostgisGeometryTestSetup(JDBCTestSetup delegate) {
@@ -31,18 +30,16 @@ public class PostgisGeometryTestSetup extends JDBCGeometryTestSetup {
         super.setUpData();
 
         // create tables for dimension test
-        run(
-                "CREATE TABLE dim_point AS SELECT ST_GeomFromText('POINT(-120.0 40.0)',"
-                        + "4326) as geom;");
-        run(
-                "CREATE TABLE dim_line AS SELECT ST_GeomFromText('LINESTRING(-120.0 40.0,"
-                        + "-130.0 50.0)', 4326) as geom;");
-        run(
-                "CREATE TABLE dim_polygon AS SELECT ST_GeomFromText('POLYGON((-120.0 40.0,"
-                        + "-130.0 40.0, -130.0 50.0, -130.0 40.0, -120.0 40.0))', 4326) as geom;");
-        run(
-                "CREATE TABLE dim_collection AS SELECT ST_GeomFromText('GEOMETRYCOLLECTION("
-                        + "POINT(-120.0 40.0),LINESTRING(-120.0 40.0,-130.0 50.0))',4326) as geom");
+        run("CREATE TABLE dim_point AS SELECT ST_GeomFromText('POINT(-120.0 40.0)'," + "4326) as geom;");
+        run("CREATE TABLE dim_line AS SELECT ST_GeomFromText('LINESTRING(-120.0 40.0,"
+                + "-130.0 50.0)', 4326) as geom;");
+        run("CREATE TABLE dim_polygon AS SELECT ST_GeomFromText('POLYGON((-120.0 40.0,"
+                + "-130.0 40.0, -130.0 50.0, -130.0 40.0, -120.0 40.0))', 4326) as geom;");
+        run("CREATE TABLE dim_collection AS SELECT ST_GeomFromText('GEOMETRYCOLLECTION("
+                + "POINT(-120.0 40.0),LINESTRING(-120.0 40.0,-130.0 50.0))',4326) as geom");
+
+        run("CREATE TABLE dim_point3d (geom geometry(POINTZ, 3857));");
+        run("INSERT INTO dim_point3d (geom) VALUES (ST_GeomFromText('POINTZ(1 2 3)', 3857));");
     }
 
     @Override
@@ -51,6 +48,7 @@ public class PostgisGeometryTestSetup extends JDBCGeometryTestSetup {
         dropSpatialTable("dim_line");
         dropSpatialTable("dim_polygon");
         dropSpatialTable("dim_collection");
+        dropSpatialTable("dim_point3d");
     }
 
     @Override

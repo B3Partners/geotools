@@ -24,6 +24,20 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.feature.GeometryAttribute;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.filter.identity.Identifier;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.GeometryAttributeImpl;
 import org.geotools.feature.type.AttributeDescriptorImpl;
 import org.geotools.feature.type.Types;
@@ -35,20 +49,6 @@ import org.geotools.util.SuppressFBWarnings;
 import org.geotools.util.Utilities;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.GeometryAttribute;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.filter.identity.Identifier;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * An implementation of {@link SimpleFeature} geared towards speed and backed by an Object[].
@@ -80,19 +80,16 @@ public class SimpleFeatureImpl implements SimpleFeature {
     /**
      * Fast construction of a new feature.
      *
-     * <p>The object takes ownership of the provided value array, do not modify after calling the
-     * constructor
+     * <p>The object takes ownership of the provided value array, do not modify after calling the constructor
      */
-    public SimpleFeatureImpl(
-            Object[] values, SimpleFeatureType featureType, FeatureId id, boolean validating) {
+    public SimpleFeatureImpl(Object[] values, SimpleFeatureType featureType, FeatureId id, boolean validating) {
         this(values, featureType, id, validating, index(featureType));
     }
 
     /**
      * Fast construction of a new feature.
      *
-     * <p>The object takes ownership of the provided value array, do not modify after calling the
-     * constructor
+     * <p>The object takes ownership of the provided value array, do not modify after calling the constructor
      *
      * @param index - attribute name to value index mapping
      */
@@ -120,8 +117,7 @@ public class SimpleFeatureImpl implements SimpleFeature {
      * <ul>
      *   <li>SimpleFeatureTypeImpl.index; or
      *   <li>Check getUserData().get("indexLookup");
-     *   <li>or call {@link SimpleFeatureTypeImpl#buildIndex(SimpleFeatureType)} to generate the
-     *       required index
+     *   <li>or call {@link SimpleFeatureTypeImpl#buildIndex(SimpleFeatureType)} to generate the required index
      * </ul>
      *
      * @return mapping between attribute name to attribute index
@@ -129,8 +125,8 @@ public class SimpleFeatureImpl implements SimpleFeature {
     @SuppressWarnings("unchecked")
     private static Map<String, Integer> index(SimpleFeatureType featureType) {
         // in the most common case reuse the map cached in the feature type
-        if (featureType instanceof SimpleFeatureTypeImpl) {
-            return ((SimpleFeatureTypeImpl) featureType).index;
+        if (featureType instanceof SimpleFeatureTypeImpl impl) {
+            return impl.index;
         } else {
             synchronized (featureType) {
                 // if we're not lucky, rebuild the index completely...
@@ -138,8 +134,7 @@ public class SimpleFeatureImpl implements SimpleFeature {
                 if (cache instanceof Map) {
                     return (Map<String, Integer>) cache;
                 } else {
-                    Map<String, Integer> generatedIndex =
-                            SimpleFeatureTypeImpl.buildIndex(featureType);
+                    Map<String, Integer> generatedIndex = SimpleFeatureTypeImpl.buildIndex(featureType);
                     featureType.getUserData().put("indexLookup", generatedIndex);
                     return generatedIndex;
                 }
@@ -198,7 +193,8 @@ public class SimpleFeatureImpl implements SimpleFeature {
         if (defaultGeometry == null) {
             GeometryDescriptor geometryDescriptor = featureType.getGeometryDescriptor();
             if (geometryDescriptor != null) {
-                Integer defaultGeomIndex = index.get(geometryDescriptor.getName().getLocalPart());
+                Integer defaultGeomIndex =
+                        index.get(geometryDescriptor.getName().getLocalPart());
                 defaultGeometry = getAttribute(defaultGeomIndex.intValue());
             }
         }
@@ -219,9 +215,8 @@ public class SimpleFeatureImpl implements SimpleFeature {
     @Override
     public void setAttribute(int index, Object value) throws IndexOutOfBoundsException {
         // first do conversion
-        Object converted =
-                Converters.convert(
-                        value, getFeatureType().getDescriptor(index).getType().getBinding());
+        Object converted = Converters.convert(
+                value, getFeatureType().getDescriptor(index).getType().getBinding());
         // if necessary, validation too
         if (validating) Types.validate(featureType.getDescriptor(index), converted);
         // finally set the value into the feature
@@ -267,8 +262,7 @@ public class SimpleFeatureImpl implements SimpleFeature {
         Envelope bounds = ReferencedEnvelope.create(crs);
 
         for (Object o : values) {
-            if (o instanceof Geometry) {
-                Geometry g = (Geometry) o;
+            if (o instanceof Geometry g) {
                 // TODO: check userData for crs... and ensure its of the same
                 // crs as the feature type
                 if (bounds.isNull()) {
@@ -288,8 +282,7 @@ public class SimpleFeatureImpl implements SimpleFeature {
         GeometryAttribute geometryAttribute = null;
         if (geometryDescriptor != null) {
             Object defaultGeometry = getDefaultGeometry();
-            geometryAttribute =
-                    new GeometryAttributeImpl(defaultGeometry, geometryDescriptor, null);
+            geometryAttribute = new GeometryAttributeImpl(defaultGeometry, geometryDescriptor, null);
         }
         return geometryAttribute;
     }
@@ -335,9 +328,8 @@ public class SimpleFeatureImpl implements SimpleFeature {
         } else {
             int index = idx.intValue();
             AttributeDescriptor descriptor = featureType.getDescriptor(index);
-            if (descriptor instanceof GeometryDescriptor) {
-                return new GeometryAttributeImpl(
-                        values[index], (GeometryDescriptor) descriptor, null);
+            if (descriptor instanceof GeometryDescriptor geometryDescriptor) {
+                return new GeometryAttributeImpl(values[index], geometryDescriptor, null);
             } else {
                 return new Attribute(index);
             }
@@ -364,16 +356,15 @@ public class SimpleFeatureImpl implements SimpleFeature {
         setValue(converted);
     }
 
-    /** @see org.opengis.feature.Attribute#getDescriptor() */
+    /** @see org.geotools.api.feature.Attribute#getDescriptor() */
     @Override
     public AttributeDescriptor getDescriptor() {
-        return new AttributeDescriptorImpl(
-                featureType, featureType.getName(), 0, Integer.MAX_VALUE, true, null);
+        return new AttributeDescriptorImpl(featureType, featureType.getName(), 0, Integer.MAX_VALUE, true, null);
     }
 
     /**
      * @return same name than this feature's {@link SimpleFeatureType}
-     * @see org.opengis.feature.Property#getName()
+     * @see org.geotools.api.feature.Property#getName()
      */
     @Override
     public Name getName() {
@@ -453,11 +444,10 @@ public class SimpleFeatureImpl implements SimpleFeature {
                     return false;
                 }
             } else {
-                if (values[i] instanceof Geometry) {
+                if (values[i] instanceof Geometry geometry) {
                     if (!(otherAtt instanceof Geometry)) {
                         return false;
-                    } else if (!CoordinateSequences.equalsND(
-                            (Geometry) values[i], (Geometry) otherAtt)) {
+                    } else if (!CoordinateSequences.equalsND(geometry, (Geometry) otherAtt)) {
                         return false;
                     }
                 } else if (!values[i].equals(otherAtt)) {
@@ -511,7 +501,7 @@ public class SimpleFeatureImpl implements SimpleFeature {
     }
 
     /** Attribute that delegates directly to the value array */
-    class Attribute implements org.opengis.feature.Attribute {
+    class Attribute implements org.geotools.api.feature.Attribute {
         int index;
 
         Attribute(int index) {
@@ -571,7 +561,7 @@ public class SimpleFeatureImpl implements SimpleFeature {
         @Override
         public int hashCode() {
             return 37 * getDescriptor().hashCode()
-                    + (37 * (getValue() == null ? 0 : getValue().hashCode()));
+                    + 37 * (getValue() == null ? 0 : getValue().hashCode());
         }
 
         /**
@@ -645,11 +635,10 @@ public class SimpleFeatureImpl implements SimpleFeature {
 
         @Override
         public BoundingBox getBounds() {
-            ReferencedEnvelope bounds =
-                    new ReferencedEnvelope(featureType.getCoordinateReferenceSystem());
+            ReferencedEnvelope bounds = new ReferencedEnvelope(featureType.getCoordinateReferenceSystem());
             Object value = getAttribute(index);
-            if (value instanceof Geometry) {
-                bounds.init(((Geometry) value).getEnvelopeInternal());
+            if (value instanceof Geometry geometry) {
+                bounds.init(geometry.getEnvelopeInternal());
             }
             return bounds;
         }

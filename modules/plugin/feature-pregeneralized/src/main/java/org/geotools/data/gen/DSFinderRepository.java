@@ -30,17 +30,17 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.geotools.data.DataAccess;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFinder;
-import org.geotools.data.Repository;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.data.Repository;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.type.Name;
 
 /**
- * Implementation of {@link Repository} This class interprets the data source name as a file name or
- * an URL for a property file containing the ds creation parameters
+ * Implementation of {@link Repository} This class interprets the data source name as a file name or an URL for a
+ * property file containing the ds creation parameters
  *
  * <p>For shape files ending with .shp or SHP, the shape file could be passed as name
  *
@@ -75,8 +75,7 @@ public class DSFinderRepository implements Repository {
         return result;
     }
 
-    private Map<String, Serializable> getMapFromPropetryLocation(String location)
-            throws IOException {
+    private Map<String, Serializable> getMapFromPropetryLocation(String location) throws IOException {
 
         URL url = getURLForLocation(location);
 
@@ -122,7 +121,7 @@ public class DSFinderRepository implements Repository {
     }
 
     /* (non-Javadoc)
-     * @see org.geotools.data.Repository#getDataStores()
+     * @see org.geotools.api.data.Repository#getDataStores()
      *
      * These datastores are for internal use only
      */

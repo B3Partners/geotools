@@ -36,9 +36,9 @@ import java.util.Map;
 import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.geotools.TestData;
+import org.geotools.api.data.Query;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.HarvestedSource;
-import org.geotools.data.Query;
 import org.geotools.gce.imagemosaic.properties.PropertiesCollector;
 import org.geotools.gce.imagemosaic.properties.PropertiesCollectorFinder;
 import org.geotools.gce.imagemosaic.properties.PropertiesCollectorSPI;
@@ -71,8 +71,7 @@ public class PropertiesCollectorTest {
     public void test() {
 
         // get the spi
-        final Set<PropertiesCollectorSPI> spis =
-                PropertiesCollectorFinder.getPropertiesCollectorSPI();
+        final Set<PropertiesCollectorSPI> spis = PropertiesCollectorFinder.getPropertiesCollectorSPI();
         assertNotNull(spis);
         assertFalse(spis.isEmpty());
         assertEquals(15, spis.size());
@@ -82,8 +81,7 @@ public class PropertiesCollectorTest {
     public void testString() throws IOException {
 
         // get the spi
-        final Set<PropertiesCollectorSPI> spis =
-                PropertiesCollectorFinder.getPropertiesCollectorSPI();
+        final Set<PropertiesCollectorSPI> spis = PropertiesCollectorFinder.getPropertiesCollectorSPI();
         assertNotNull(spis);
         assertFalse(spis.isEmpty());
         URL testUrl = TestData.url(this, "time_geotiff/stringregex.properties");
@@ -106,8 +104,7 @@ public class PropertiesCollectorTest {
     public void testTime() throws IOException {
 
         // get the spi
-        final Set<PropertiesCollectorSPI> spis =
-                PropertiesCollectorFinder.getPropertiesCollectorSPI();
+        final Set<PropertiesCollectorSPI> spis = PropertiesCollectorFinder.getPropertiesCollectorSPI();
         assertNotNull(spis);
         assertFalse(spis.isEmpty());
         URL testUrl = TestData.url(this, "time_geotiff/timeregex.properties");
@@ -142,11 +139,8 @@ public class PropertiesCollectorTest {
         }
         FileUtils.copyDirectory(source, directory2);
         // remove all files but one from the source dir
-        for (File file :
-                directory1.listFiles(
-                        f ->
-                                !f.getName().startsWith("passA2006128193711.")
-                                        && !f.getName().endsWith(".properties"))) {
+        for (File file : directory1.listFiles(f ->
+                !f.getName().startsWith("passA2006128193711.") && !f.getName().endsWith(".properties"))) {
             assertTrue(file.delete());
         }
 
@@ -191,7 +185,8 @@ public class PropertiesCollectorTest {
                                 if (idxSlash > -1 || idxBackslash > -1) {
                                     name = location.substring(Math.max(idxSlash, idxBackslash) + 1);
                                 }
-                                Date ingest = (Date) feature.getProperty("ingestion").getValue();
+                                Date ingest =
+                                        (Date) feature.getProperty("ingestion").getValue();
                                 mappedDates.put(name, ingest);
                             },
                             null);
@@ -209,10 +204,7 @@ public class PropertiesCollectorTest {
             long now = System.currentTimeMillis();
             long oneHour = 1000 * 60 * 60;
             for (Date d : mappedDates.values()) {
-                assertThat(
-                        d + " vs " + new Date(),
-                        now - d.getTime(),
-                        Matchers.lessThanOrEqualTo(oneHour));
+                assertThat(d + " vs " + new Date(), now - d.getTime(), Matchers.lessThanOrEqualTo(oneHour));
             }
         } finally {
             reader.dispose();

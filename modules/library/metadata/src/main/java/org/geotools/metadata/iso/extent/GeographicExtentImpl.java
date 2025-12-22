@@ -19,8 +19,9 @@
  */
 package org.geotools.metadata.iso.extent;
 
+import java.io.Serial;
+import org.geotools.api.metadata.extent.GeographicExtent;
 import org.geotools.metadata.iso.MetadataEntity;
-import org.opengis.metadata.extent.GeographicExtent;
 
 /**
  * Base class for geographic area of the dataset.
@@ -32,11 +33,12 @@ import org.opengis.metadata.extent.GeographicExtent;
  */
 public class GeographicExtentImpl extends MetadataEntity implements GeographicExtent {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -8844015895495563161L;
 
     /**
-     * Indication of whether the bounding polygon encompasses an area covered by the data
-     * (<cite>inclusion</cite>) or an area where data is not present (<cite>exclusion</cite>).
+     * Indication of whether the bounding polygon encompasses an area covered by the data (<cite>inclusion</cite>) or an
+     * area where data is not present (<cite>exclusion</cite>).
      */
     private Boolean inclusion;
 
@@ -58,8 +60,8 @@ public class GeographicExtentImpl extends MetadataEntity implements GeographicEx
     }
 
     /**
-     * Indication of whether the bounding polygon encompasses an area covered by the data
-     * (<cite>inclusion</cite>) or an area where data is not present (<cite>exclusion</cite>).
+     * Indication of whether the bounding polygon encompasses an area covered by the data (<cite>inclusion</cite>) or an
+     * area where data is not present (<cite>exclusion</cite>).
      *
      * @return {@code true} for inclusion, or {@code false} for exclusion.
      */
@@ -69,8 +71,8 @@ public class GeographicExtentImpl extends MetadataEntity implements GeographicEx
     }
 
     /**
-     * Set whether the bounding polygon encompasses an area covered by the data
-     * (<cite>inclusion</cite>) or an area where data is not present (<cite>exclusion</cite>).
+     * Set whether the bounding polygon encompasses an area covered by the data (<cite>inclusion</cite>) or an area
+     * where data is not present (<cite>exclusion</cite>).
      */
     public void setInclusion(final Boolean newValue) {
         checkWritePermission();

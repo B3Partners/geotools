@@ -16,42 +16,38 @@
  */
 package org.geotools.jdbc;
 
+import java.io.Flushable;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureStore;
 import org.geotools.data.store.ContentState;
 import org.geotools.filter.identity.FeatureIdImpl;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
-/**
- * Inserts features in the database. Buffers the insertions until BUFFER_SIZE is reached or the
- * writer is closed.
- */
+/** Inserts features in the database. Buffers the insertions until BUFFER_SIZE is reached or the writer is closed. */
 public class JDBCInsertFeatureWriter extends JDBCFeatureReader
-        implements FeatureWriter<SimpleFeatureType, SimpleFeature> {
+        implements FeatureWriter<SimpleFeatureType, SimpleFeature>, Flushable {
     /** Grouping elements together in order to have a decent batch size. */
     private final ResultSetFeature[] buffer;
 
     private int curBufferPos = 0;
 
-    public JDBCInsertFeatureWriter(
-            String sql, Connection cx, JDBCFeatureSource featureSource, Query query)
+    public JDBCInsertFeatureWriter(String sql, Connection cx, JDBCFeatureSource featureSource, Query query)
             throws SQLException, IOException {
         super(sql, cx, featureSource, featureSource.getSchema(), query);
         md = rs.getMetaData();
         buffer = new ResultSetFeature[dataStore.getBatchInsertSize()];
     }
 
-    public JDBCInsertFeatureWriter(
-            PreparedStatement ps, Connection cx, JDBCFeatureSource featureSource, Query query)
+    public JDBCInsertFeatureWriter(PreparedStatement ps, Connection cx, JDBCFeatureSource featureSource, Query query)
             throws SQLException, IOException {
         super(ps, cx, featureSource, featureSource.getSchema(), query);
         md = rs.getMetaData();
@@ -119,14 +115,14 @@ public class JDBCInsertFeatureWriter extends JDBCFeatureReader
         }
     }
 
-    private void flush() throws IOException {
+    @Override
+    public void flush() throws IOException {
         if (curBufferPos == 0) {
             return;
         }
         try {
             // do the insert
-            Collection<ResultSetFeature> features =
-                    Arrays.asList(Arrays.copyOfRange(buffer, 0, curBufferPos));
+            Collection<ResultSetFeature> features = Arrays.asList(Arrays.copyOfRange(buffer, 0, curBufferPos));
             dataStore.insert(features, featureType, st.getConnection());
 
             for (ResultSetFeature cur : features) {
@@ -134,8 +130,7 @@ public class JDBCInsertFeatureWriter extends JDBCFeatureReader
                 final String fid = (String) cur.getUserData().get("fid");
                 cur.setID(fid);
                 final SimpleFeature orig =
-                        (SimpleFeature)
-                                cur.getUserData().get(ContentFeatureStore.ORIGINAL_FEATURE_KEY);
+                        (SimpleFeature) cur.getUserData().get(ContentFeatureStore.ORIGINAL_FEATURE_KEY);
                 if (orig != null) {
                     ((FeatureIdImpl) orig.getIdentifier()).setID(fid);
                     orig.getUserData().putAll(cur.getUserData());
@@ -154,6 +149,7 @@ public class JDBCInsertFeatureWriter extends JDBCFeatureReader
     }
 
     @Override
+    @SuppressWarnings("PMD.UseTryWithResources")
     public void close() throws IOException {
         try {
             flush();

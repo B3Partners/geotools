@@ -23,6 +23,8 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
 import java.util.logging.Logger;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -34,8 +36,6 @@ import org.geotools.renderer.lite.RendererUtilities;
 import org.geotools.tile.Tile;
 import org.geotools.tile.TileService;
 import org.geotools.util.logging.Logging;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * TileLayer is a direct map layer that does the mosaicking work for tiles of a given tile service.
@@ -99,8 +99,7 @@ public class TileLayer extends DirectLayer {
             ReferencedEnvelope viewportExtent,
             AffineTransform worldToImageTransform) {
 
-        g2d.setRenderingHint(
-                RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
         double[] points = new double[4];
 
@@ -109,9 +108,7 @@ public class TileLayer extends DirectLayer {
 
             ReferencedEnvelope tileEnvViewport;
             try {
-                tileEnvViewport =
-                        nativeTileEnvelope.transform(
-                                viewportExtent.getCoordinateReferenceSystem(), true);
+                tileEnvViewport = nativeTileEnvelope.transform(viewportExtent.getCoordinateReferenceSystem(), true);
             } catch (TransformException | FactoryException e) {
                 throw new RuntimeException(e);
             }
@@ -149,14 +146,8 @@ public class TileLayer extends DirectLayer {
         int scale = 0;
 
         try {
-            scale =
-                    (int)
-                            Math.round(
-                                    RendererUtilities.calculateScale(
-                                            extent,
-                                            screenArea.width,
-                                            screenArea.height,
-                                            this.resolution));
+            scale = (int) Math.round(
+                    RendererUtilities.calculateScale(extent, screenArea.width, screenArea.height, this.resolution));
         } catch (FactoryException | TransformException ex) {
             throw new RuntimeException("Failed to calculate scale", ex);
         }

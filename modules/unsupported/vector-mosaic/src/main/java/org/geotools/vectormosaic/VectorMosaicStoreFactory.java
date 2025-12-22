@@ -16,11 +16,16 @@
  */
 package org.geotools.vectormosaic;
 
+import static org.geotools.data.util.PropertiesTransformer.normalizePropertiesString;
+
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.Map;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFactorySpi;
-import org.geotools.data.Repository;
+import java.util.Properties;
+import org.geotools.api.data.DataAccessFactory;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFactorySpi;
+import org.geotools.api.data.Repository;
 import org.geotools.util.KVP;
 
 /** Factory for {@link VectorMosaicStore} instances. */
@@ -28,47 +33,50 @@ public class VectorMosaicStoreFactory implements DataStoreFactorySpi {
 
     private static final String DISPLAY_NAME = "Vector Mosaic Data Store";
     private static final String DESCRIPTION = "Creates Vector Mosaic from multiple sources";
-    public static final Param REPOSITORY_PARAM =
-            new Param(
-                    "repository",
-                    Repository.class,
-                    "The repository that will provide the store intances",
-                    true,
-                    null,
-                    new KVP(Param.LEVEL, "advanced"));
-    public static final Param NAMESPACE =
-            new Param("namespace", String.class, "Namespace prefix", false);
+    public static final Param REPOSITORY_PARAM = new Param(
+            "repository",
+            Repository.class,
+            "The repository that will provide the store instances",
+            true,
+            null,
+            new KVP(Param.LEVEL, "advanced"));
+    public static final Param NAMESPACE = new Param("namespace", String.class, "Namespace prefix", false);
 
-    public static final Param DELEGATE_STORE_NAME =
-            new Param(
-                    "delegateStoreName",
-                    String.class,
-                    "The name of the delegate store.  "
-                            + "The delegate store must point to vector features with the same attributes/schema.",
-                    true);
-    public static final Param PREFERRED_DATASTORE_SPI =
-            new Param(
-                    "preferredDataStoreSPI",
-                    String.class,
-                    "The preferred DataStoreSPI to test connection parameters against. "
-                            + "If not specified, the first DataStoreSPI found that accepts connection parameters will be used. "
-                            + "Default is org.geotools.data.shapefile.ShapefileDataStoreFactory",
-                    false);
+    public static final Param DELEGATE_STORE_NAME = new Param(
+            "delegateStoreName",
+            String.class,
+            "The name of the delegate store.  "
+                    + "The delegate store must point to vector features with the same attributes/schema.",
+            true);
+    public static final Param PREFERRED_DATASTORE_SPI = new Param(
+            "preferredDataStoreSPI",
+            String.class,
+            "The preferred DataStoreSPI to test connection parameters against. "
+                    + "If not specified, the first DataStoreSPI found that accepts connection parameters will be used. "
+                    + "Default is org.geotools.data.shapefile.ShapefileDataStoreFactory",
+            false);
 
-    public static final Param CONNECTION_PARAMETER_KEY =
-            new Param(
-                    "connectionParameterKey",
-                    String.class,
-                    "The key to use for the connection parameter.  Default is 'url'",
-                    false);
+    public static final Param COMMON_PARAMETERS = new Param(
+            "commonParameters",
+            String.class,
+            "All the needed parameters required by the Vector Mosaic store to handle the"
+                    + " underlying vector granules, like property collector configuration and shared delegate store"
+                    + " configurations, see also the GeoServer vector mosaic REST API",
+            false);
+
+    public static final Param CONNECTION_PARAMETER_KEY = new Param(
+            "connectionParameterKey",
+            String.class,
+            "The key to use for the connection parameter.  Default is 'url'",
+            false);
 
     @Override
     public DataStore createDataStore(Map<String, ?> params) throws IOException {
-        Repository repository = lookup(REPOSITORY_PARAM, params, Repository.class);
-        String namespace = lookup(NAMESPACE, params, String.class);
-        String delegateStoreName = lookup(DELEGATE_STORE_NAME, params, String.class);
-        String preferredDataStoreSPI = lookup(PREFERRED_DATASTORE_SPI, params, String.class);
-        String connectionParameterKey = lookup(CONNECTION_PARAMETER_KEY, params, String.class);
+        Repository repository = DataAccessFactory.lookup(REPOSITORY_PARAM, params);
+        String namespace = DataAccessFactory.lookup(NAMESPACE, params);
+        String delegateStoreName = DataAccessFactory.lookup(DELEGATE_STORE_NAME, params);
+        String preferredDataStoreSPI = DataAccessFactory.lookup(PREFERRED_DATASTORE_SPI, params);
+        String connectionParameterKey = DataAccessFactory.lookup(CONNECTION_PARAMETER_KEY, params);
         VectorMosaicStore vectorMosaicStore = new VectorMosaicStore(delegateStoreName, repository);
         vectorMosaicStore.setNamespaceURI(namespace);
         if (preferredDataStoreSPI != null) {
@@ -76,6 +84,14 @@ public class VectorMosaicStoreFactory implements DataStoreFactorySpi {
         }
         if (connectionParameterKey != null) {
             vectorMosaicStore.setConnectionParameterKey(connectionParameterKey);
+        }
+        String commonParameters = DataAccessFactory.lookup(COMMON_PARAMETERS, params);
+        if (commonParameters != null) {
+            Properties props = new Properties();
+            try (StringReader rawText = new StringReader(normalizePropertiesString(commonParameters))) {
+                props.load(rawText);
+            }
+            vectorMosaicStore.setCommonParameters(props);
         }
         return vectorMosaicStore;
     }
@@ -97,7 +113,8 @@ public class VectorMosaicStoreFactory implements DataStoreFactorySpi {
             NAMESPACE,
             DELEGATE_STORE_NAME,
             CONNECTION_PARAMETER_KEY,
-            PREFERRED_DATASTORE_SPI
+            PREFERRED_DATASTORE_SPI,
+            COMMON_PARAMETERS
         };
     }
 
@@ -109,15 +126,5 @@ public class VectorMosaicStoreFactory implements DataStoreFactorySpi {
     @Override
     public DataStore createNewDataStore(Map<String, ?> params) throws IOException {
         throw new UnsupportedOperationException();
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> T lookup(Param param, Map<String, ?> params, Class<T> target) throws IOException {
-        T result = (T) param.lookUp(params);
-        if (result == null) {
-            return (T) param.getDefaultValue();
-        } else {
-            return result;
-        }
     }
 }

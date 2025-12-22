@@ -20,18 +20,14 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_isLike extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "isLike",
-                    Boolean.class,
-                    parameter("string", String.class),
-                    parameter("regex", String.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "isLike", Boolean.class, parameter("string", String.class), parameter("regex", String.class));
 
     public FilterFunction_isLike() {
         super(NAME);

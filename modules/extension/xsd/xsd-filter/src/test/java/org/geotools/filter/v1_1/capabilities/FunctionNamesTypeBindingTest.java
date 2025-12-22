@@ -19,10 +19,10 @@ package org.geotools.filter.v1_1.capabilities;
 import static org.junit.Assert.assertEquals;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.v1_1.OGC;
 import org.geotools.xsd.Binding;
 import org.junit.Test;
-import org.opengis.filter.capability.FunctionName;
 import org.w3c.dom.Document;
 
 /**
@@ -67,12 +67,10 @@ public class FunctionNamesTypeBindingTest extends OGCTestSupport {
 
     @Test
     public void testEncode() throws Exception {
-        Document dom =
-                encode(
-                        FilterMockData.functionNames(),
-                        new QName(OGC.NAMESPACE, "FunctionNames"),
-                        OGC.FunctionNamesType);
+        Document dom = encode(
+                FilterMockData.functionNames(), new QName(OGC.NAMESPACE, "FunctionNames"), OGC.FunctionNamesType);
 
-        assertEquals(2, dom.getElementsByTagNameNS(OGC.NAMESPACE, "FunctionName").getLength());
+        assertEquals(
+                2, dom.getElementsByTagNameNS(OGC.NAMESPACE, "FunctionName").getLength());
     }
 }

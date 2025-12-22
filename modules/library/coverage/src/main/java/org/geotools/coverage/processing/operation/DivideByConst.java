@@ -16,29 +16,27 @@
  */
 package org.geotools.coverage.processing.operation;
 
-// JAI dependencies (for javadoc)
+// ImageN dependencies (for javadoc)
 
-import it.geosolutions.jaiext.JAIExt;
-import it.geosolutions.jaiext.algebra.AlgebraDescriptor.Operator;
 import java.awt.image.RenderedImage;
+import java.io.Serial;
 import java.util.Map;
-import javax.media.jai.ParameterBlockJAI;
-import javax.media.jai.operator.DivideByConstDescriptor;
+import org.eclipse.imagen.ParameterBlockImageN;
+import org.eclipse.imagen.media.algebra.AlgebraDescriptor.Operator;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.OperationJAI;
 import org.geotools.util.NumberRange;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.util.InternationalString;
 
 // Geotools dependencies
 
 /**
- * Divides every sample values of the source coverage by constants (one for each band). If the
- * number of constants supplied is less than the number of bands of the destination, then the
- * constant from entry 0 is applied to all the bands. Otherwise, a constant from a different entry
- * is applied to each band.
+ * Divides every sample values of the source coverage by constants (one for each band). If the number of constants
+ * supplied is less than the number of bands of the destination, then the constant from entry 0 is applied to all the
+ * bands. Otherwise, a constant from a different entry is applied to each band.
  *
  * <p><STRONG>Name:</STRONG>&nbsp;<CODE>"DivideByConst"</CODE><br>
  * <STRONG>JAI operator:</STRONG>&nbsp;<CODE>"{@linkplain DivideByConstDescriptor DivideByConst}"
@@ -81,11 +79,12 @@ public class DivideByConst extends OperationJAI {
     private static final String OPERATION_CONST = "operationConst";
     private static final String DIVIDE_BY_CONST = "DivideByConst";
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -3723238033407316564L;
 
     /** Constructs a default {@code "DivideByConst"} operation. */
     public DivideByConst() {
-        super(DIVIDE_BY_CONST, getOperationDescriptor(JAIExt.getOperationName(DIVIDE_BY_CONST)));
+        super(DIVIDE_BY_CONST, getOperationDescriptor(OPERATION_CONST));
     }
 
     @Override
@@ -103,18 +102,16 @@ public class DivideByConst extends OperationJAI {
             final NumberRange range = ranges[0];
             final double min = range.getMinimum() / c;
             final double max = range.getMaximum() / c;
-            return (max < min) ? NumberRange.create(max, min) : NumberRange.create(min, max);
+            return max < min ? NumberRange.create(max, min) : NumberRange.create(min, max);
         }
         return super.deriveRange(ranges, parameters);
     }
 
     @Override
-    protected void handleJAIEXTParams(
-            ParameterBlockJAI parameters, ParameterValueGroup parameters2) {
-        GridCoverage2D source = (GridCoverage2D) parameters2.parameter("source0").getValue();
-        if (JAIExt.isJAIExtOperation(OPERATION_CONST)) {
-            parameters.set(Operator.DIVIDE, 1);
-        }
+    protected void handleJAIEXTParams(ParameterBlockImageN parameters, ParameterValueGroup parameters2) {
+        GridCoverage2D source =
+                (GridCoverage2D) parameters2.parameter("source0").getValue();
+        parameters.set(Operator.DIVIDE, 1);
         handleROINoDataInternal(parameters, source, OPERATION_CONST, 2, 3);
     }
 
@@ -126,7 +123,6 @@ public class DivideByConst extends OperationJAI {
             MathTransform gridToCRS,
             GridCoverage2D[] sources,
             Parameters parameters) {
-        return handleROINoDataProperties(
-                null, parameters.parameters, sources[0], OPERATION_CONST, 2, 3, 4);
+        return handleROINoDataProperties(null, parameters.parameters, sources[0], OPERATION_CONST, 2, 3, 4);
     }
 }

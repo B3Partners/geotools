@@ -17,10 +17,15 @@
 
 package org.geotools.appschema.resolver.data;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
 import org.geotools.feature.AttributeImpl;
 import org.geotools.feature.ComplexAttributeImpl;
 import org.geotools.feature.FeatureImpl;
@@ -33,12 +38,6 @@ import org.geotools.xs.XSSchema;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.feature.Feature;
-import org.opengis.feature.Property;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
 
 /**
  * Constants and methods to create sample features for {@link SampleDataAccess}.
@@ -48,69 +47,48 @@ import org.opengis.feature.type.PropertyDescriptor;
  * @author Ben Caradoc-Davies (CSIRO Earth Science and Resource Engineering)
  * @since 2.6
  */
-@SuppressWarnings("serial")
 public class SampleDataAccessData {
 
     /** Namespace prefix for the sample feature type. */
     public static final String NAMESPACE_PREFIX = "gsml";
 
     /** Namespace URI for the sample feature type. */
-    public static final String NAMESPACE_URI =
-            "http://www.example.org/sample-data-access/GeoSciML-lite";
+    public static final String NAMESPACE_URI = "http://www.example.org/sample-data-access/GeoSciML-lite";
 
     public static final Name GEOLOGICUNIT_TYPE_NAME = new NameImpl(NAMESPACE_URI, "GeologicUnit");
 
-    public static final FeatureType GEOLOGICUNIT_TYPE =
-            new FeatureTypeImpl(
-                    GEOLOGICUNIT_TYPE_NAME,
-                    Collections.emptyList(),
-                    null,
-                    false,
-                    Collections.emptyList(),
-                    GMLSchema.ABSTRACTFEATURETYPE_TYPE,
-                    null);
+    public static final FeatureType GEOLOGICUNIT_TYPE = new FeatureTypeImpl(
+            GEOLOGICUNIT_TYPE_NAME,
+            Collections.emptyList(),
+            null,
+            false,
+            Collections.emptyList(),
+            GMLSchema.ABSTRACTFEATURETYPE_TYPE,
+            null);
 
-    public static final AttributeDescriptor SPECIFICATION_DESCRIPTOR =
-            new AttributeDescriptorImpl(
-                    GMLSchema.FEATUREPROPERTYTYPE_TYPE,
-                    new NameImpl(NAMESPACE_URI, "specification"),
-                    0,
-                    1,
-                    false,
-                    null);
+    public static final AttributeDescriptor SPECIFICATION_DESCRIPTOR = new AttributeDescriptorImpl(
+            GMLSchema.FEATUREPROPERTYTYPE_TYPE, new NameImpl(NAMESPACE_URI, "specification"), 0, 1, false, null);
 
     // FIXME should be Geometry*
-    public static final AttributeDescriptor SHAPE_DESCRIPTOR =
-            new AttributeDescriptorImpl(
-                    GMLSchema.GEOMETRYPROPERTYTYPE_TYPE,
-                    new NameImpl(NAMESPACE_URI, "shape"),
-                    1,
-                    1,
-                    false,
-                    null);
+    public static final AttributeDescriptor SHAPE_DESCRIPTOR = new AttributeDescriptorImpl(
+            GMLSchema.GEOMETRYPROPERTYTYPE_TYPE, new NameImpl(NAMESPACE_URI, "shape"), 1, 1, false, null);
 
     /** The schema of the sample feature type. */
     private static final List<PropertyDescriptor> MAPPEDFEATURE_TYPE_SCHEMA =
-            new ArrayList<PropertyDescriptor>() {
-                {
-                    add(SPECIFICATION_DESCRIPTOR);
-                    add(SHAPE_DESCRIPTOR);
-                }
-            };
+            List.of(SPECIFICATION_DESCRIPTOR, SHAPE_DESCRIPTOR);
 
     /** The qualified name of the sample feature type. */
     public static final Name MAPPEDFEATURE_TYPE_NAME = new NameImpl(NAMESPACE_URI, "MappedFeature");
 
     /** The type of the sample feature. */
-    public static final FeatureType MAPPEDFEATURE_TYPE =
-            new FeatureTypeImpl(
-                    MAPPEDFEATURE_TYPE_NAME,
-                    MAPPEDFEATURE_TYPE_SCHEMA,
-                    null,
-                    false,
-                    Collections.emptyList(),
-                    GMLSchema.ABSTRACTFEATURETYPE_TYPE,
-                    null);
+    public static final FeatureType MAPPEDFEATURE_TYPE = new FeatureTypeImpl(
+            MAPPEDFEATURE_TYPE_NAME,
+            MAPPEDFEATURE_TYPE_SCHEMA,
+            null,
+            false,
+            Collections.emptyList(),
+            GMLSchema.ABSTRACTFEATURETYPE_TYPE,
+            null);
 
     /**
      * Create a sample feature from primitive components.
@@ -127,65 +105,36 @@ public class SampleDataAccessData {
             final String specificationDescription,
             final Geometry shape) {
 
-        final Collection<Property> specificationFeatureProperties =
-                new ArrayList<Property>() {
-                    {
-                        add(
-                                new AttributeImpl(
-                                        specificationDescription,
-                                        new AttributeDescriptorImpl(
-                                                XSSchema.STRING_TYPE,
-                                                new NameImpl(
-                                                        "http://www.opengis.net/gml",
-                                                        "description"),
-                                                0,
-                                                1,
-                                                false,
-                                                null),
-                                        null));
-                    }
-                };
+        final Collection<Property> specificationFeatureProperties = List.of(new AttributeImpl(
+                specificationDescription,
+                new AttributeDescriptorImpl(
+                        XSSchema.STRING_TYPE,
+                        new NameImpl("http://www.opengis.net/gml", "description"),
+                        0,
+                        1,
+                        false,
+                        null),
+                null));
         final Feature specificationFeature =
-                new FeatureImpl(
-                        specificationFeatureProperties,
-                        GEOLOGICUNIT_TYPE,
-                        new FeatureIdImpl(id + ".spec"));
+                new FeatureImpl(specificationFeatureProperties, GEOLOGICUNIT_TYPE, new FeatureIdImpl(id + ".spec"));
 
-        Collection<Property> properties =
-                new ArrayList<Property>() {
-                    {
-                        // FIXME: should be GMLSchema.STRINGORREFTYPE_TYPE, but that is a
-                        // complexType with
-                        // simpleContent, not currently supported
-                        add(
-                                new AttributeImpl(
-                                        description,
-                                        new AttributeDescriptorImpl(
-                                                XSSchema.STRING_TYPE,
-                                                new NameImpl(
-                                                        "http://www.opengis.net/gml",
-                                                        "description"),
-                                                0,
-                                                1,
-                                                false,
-                                                null),
-                                        null));
-                        add(
-                                new ComplexAttributeImpl(
-                                        new ArrayList<Property>() {
-                                            {
-                                                add(specificationFeature);
-                                            }
-                                        },
-                                        SPECIFICATION_DESCRIPTOR,
-                                        null));
-                        add(
-                                new AttributeImpl(
-                                        shape,
-                                        SHAPE_DESCRIPTOR,
-                                        null)); // FIXME should be Geometry*
-                    }
-                };
+        Collection<Property> properties = List.of(
+                // FIXME: should be GMLSchema.STRINGORREFTYPE_TYPE, but that is a
+                // complexType with
+                // simpleContent, not currently supported
+                new AttributeImpl(
+                        description,
+                        new AttributeDescriptorImpl(
+                                XSSchema.STRING_TYPE,
+                                new NameImpl("http://www.opengis.net/gml", "description"),
+                                0,
+                                1,
+                                false,
+                                null),
+                        null),
+                new ComplexAttributeImpl(List.of(specificationFeature), SPECIFICATION_DESCRIPTOR, null),
+                new AttributeImpl(shape, SHAPE_DESCRIPTOR, null)); // FIXME should be Geometry*
+
         return new FeatureImpl(properties, MAPPEDFEATURE_TYPE, new FeatureIdImpl(id));
     }
 
@@ -195,28 +144,21 @@ public class SampleDataAccessData {
      * @return list of sample features
      */
     public static List<Feature> createMappedFeatures() {
-        return new ArrayList<Feature>() {
-            {
+        return List.of(
                 // Two sample MappedFeature from an old British Geological Survey test suite.
                 // See also mappedPolygons.properties and GeoSciMLTest.java in app-schema module.
-                add(
-                        createMappedFeature(
-                                "mf1",
-                                "651",
-                                "GUNTHORPE FORMATION",
-                                "Gunthorpe specification description",
-                                readGeometry(
-                                        "POLYGON((-1.2 52.5,-1.2 52.6,-1.1 52.6,-1.1 52.5,-1.2 52.5))")));
-                add(
-                        createMappedFeature(
-                                "mf2",
-                                "269",
-                                "MERCIA MUDSTONE GROUP",
-                                "Mercia specification description",
-                                readGeometry(
-                                        "POLYGON((-1.3 52.5,-1.3 52.6,-1.2 52.6,-1.2 52.5,-1.3 52.5))")));
-            }
-        };
+                createMappedFeature(
+                        "mf1",
+                        "651",
+                        "GUNTHORPE FORMATION",
+                        "Gunthorpe specification description",
+                        readGeometry("POLYGON((-1.2 52.5,-1.2 52.6,-1.1 52.6,-1.1 52.5,-1.2 52.5))")),
+                createMappedFeature(
+                        "mf2",
+                        "269",
+                        "MERCIA MUDSTONE GROUP",
+                        "Mercia specification description",
+                        readGeometry("POLYGON((-1.3 52.5,-1.3 52.6,-1.2 52.6,-1.2 52.5,-1.3 52.5))")));
     }
 
     /**
@@ -227,7 +169,7 @@ public class SampleDataAccessData {
      */
     public static Geometry readGeometry(String wellKnownText) {
         try {
-            return (new WKTReader()).read(wellKnownText);
+            return new WKTReader().read(wellKnownText);
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }

@@ -3,6 +3,9 @@ package org.geotools.data.complex.config;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.complex.util.EmfComplexFeatureReader;
 import org.geotools.feature.NameImpl;
 import org.geotools.gml3.v3_2.GML;
@@ -11,9 +14,6 @@ import org.geotools.xml.resolver.SchemaResolver;
 import org.geotools.xsd.SchemaIndex;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
 import org.xml.sax.helpers.NamespaceSupport;
 
 /**
@@ -34,8 +34,7 @@ public class AppSchemaFeatureTypeRegistryTest extends AppSchemaTestSupport {
     public static void oneTimeSetUp() throws IOException {
         SchemaResolver resolver = new SchemaResolver();
         String schemalocation =
-                SchemaResolver.resolveClasspathLocation(
-                        "http://schemas.geosciml.org/borehole/3.2/borehole.xsd");
+                SchemaResolver.resolveClasspathLocation("http://schemas.geosciml.org/borehole/3.2/borehole.xsd");
         EmfComplexFeatureReader schemaParser = EmfComplexFeatureReader.newInstance();
         schemaParser.setResolver(resolver);
         schemaIndex = schemaParser.parse(BOREHOLE_NS, schemalocation);

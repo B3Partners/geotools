@@ -19,15 +19,15 @@ package org.geotools.feature.collection;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
 
 /**
  * Implement a feature collection just based on provision of an {@link Iterator}.
@@ -39,11 +39,11 @@ import org.opengis.filter.sort.SortBy;
  *   <li>{@link #size()}
  *   <li>User interaction is provided by the public API for FeatureCollection:
  *       <ul>
- *         <li>{@link #features()}: makes use of {@link DelegateSimpleFeatureIterator} (if needed)
- *             to wrap your iterator up as a SimpleFeatureIterator for public use.
+ *         <li>{@link #features()}: makes use of {@link DelegateSimpleFeatureIterator} (if needed) to wrap your iterator
+ *             up as a SimpleFeatureIterator for public use.
  *       </ul>
- *       This is the origional implementation of FeatureCollection and is recommended when
- *       presenting {@link Collection} classes as a FeatureCollection.
+ *       This is the origional implementation of FeatureCollection and is recommended when presenting {@link Collection}
+ *       classes as a FeatureCollection.
  *
  * @author Jody Garnett (LISAsoft)
  */
@@ -64,8 +64,8 @@ public abstract class AbstractFeatureCollection implements SimpleFeatureCollecti
     @Override
     public SimpleFeatureIterator features() {
         Iterator<SimpleFeature> iterator = openIterator();
-        if (iterator instanceof SimpleFeatureIterator) {
-            return (SimpleFeatureIterator) iterator;
+        if (iterator instanceof SimpleFeatureIterator featureIterator) {
+            return featureIterator;
         } else {
             SimpleFeatureIterator iter = new DelegateSimpleFeatureIterator(iterator);
             return iter;
@@ -73,12 +73,12 @@ public abstract class AbstractFeatureCollection implements SimpleFeatureCollecti
     }
 
     /**
-     * Factory method used to open an iterator over collection contents for use by {@link
-     * #iterator()} and {@link #features()}.
+     * Factory method used to open an iterator over collection contents for use by {@link #iterator()} and
+     * {@link #features()}.
      *
-     * <p>If you return an instance of FeatureIterator some effort is taken to call the {@link
-     * FeatureIterator#close()} internally, however we cannot offer any assurance that client code
-     * using {@link #iterator()} will perform the same check.
+     * <p>If you return an instance of FeatureIterator some effort is taken to call the {@link FeatureIterator#close()}
+     * internally, however we cannot offer any assurance that client code using {@link #iterator()} will perform the
+     * same check.
      *
      * @return Iterator over collection contents
      */
@@ -95,13 +95,14 @@ public abstract class AbstractFeatureCollection implements SimpleFeatureCollecti
     /**
      * Returns <tt>true</tt> if this collection contains the specified element. <tt></tt>.
      *
-     * <p>This implementation iterates over the elements in the collection, checking each element in
-     * turn for equality with the specified element.
+     * <p>This implementation iterates over the elements in the collection, checking each element in turn for equality
+     * with the specified element.
      *
      * @param o object to be checked for containment in this collection.
      * @return <tt>true</tt> if this collection contains the specified element.
      */
     @Override
+    @SuppressWarnings({"PMD.UseTryWithResources", "PMD.CloseResource"})
     public boolean contains(Object o) {
         Iterator<SimpleFeature> e = iterator();
         try {
@@ -112,21 +113,19 @@ public abstract class AbstractFeatureCollection implements SimpleFeatureCollecti
             }
             return false;
         } finally {
-            if (e instanceof FeatureIterator) {
-                ((FeatureIterator<?>) e).close();
+            if (e instanceof FeatureIterator<?> iterator) {
+                iterator.close();
             }
         }
     }
 
     /**
-     * Returns <tt>true</tt> if this collection contains all of the elements in the specified
-     * collection.
+     * Returns <tt>true</tt> if this collection contains all of the elements in the specified collection.
      *
      * <p>
      *
      * @param c collection to be checked for containment in this collection.
-     * @return <tt>true</tt> if this collection contains all of the elements in the specified
-     *     collection.
+     * @return <tt>true</tt> if this collection contains all of the elements in the specified collection.
      * @throws NullPointerException if the specified collection is null.
      * @see #contains(Object)
      */
@@ -162,13 +161,14 @@ public abstract class AbstractFeatureCollection implements SimpleFeatureCollecti
 
     /** @return <tt>true</tt> if this collection contains no elements. */
     @Override
+    @SuppressWarnings({"PMD.UseTryWithResources", "PMD.CloseResource"})
     public boolean isEmpty() {
         Iterator<SimpleFeature> iterator = iterator();
         try {
             return !iterator.hasNext();
         } finally {
-            if (iterator instanceof FeatureIterator) {
-                ((FeatureIterator<?>) iterator).close();
+            if (iterator instanceof FeatureIterator<?> featureIterator) {
+                featureIterator.close();
             }
         }
     }
@@ -179,6 +179,7 @@ public abstract class AbstractFeatureCollection implements SimpleFeatureCollecti
      * @return an array containing all of the elements in this collection.
      */
     @Override
+    @SuppressWarnings({"PMD.UseTryWithResources", "PMD.CloseResource"})
     public Object[] toArray() {
         Object[] result = new Object[size()];
         Iterator<SimpleFeature> e = null;
@@ -187,14 +188,14 @@ public abstract class AbstractFeatureCollection implements SimpleFeatureCollecti
             for (int i = 0; e.hasNext(); i++) result[i] = e.next();
             return result;
         } finally {
-            if (e instanceof FeatureIterator) {
-                ((FeatureIterator<?>) e).close();
+            if (e instanceof FeatureIterator<?> iterator) {
+                iterator.close();
             }
         }
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "PMD.UseTryWithResources", "PMD.CloseResource"})
     public <O> O[] toArray(O[] a) {
         int size = size();
         if (a.length < size) {
@@ -207,15 +208,15 @@ public abstract class AbstractFeatureCollection implements SimpleFeatureCollecti
             if (a.length > size) a[size] = null;
             return a;
         } finally {
-            if (it instanceof FeatureIterator) {
-                ((FeatureIterator<?>) it).close();
+            if (it instanceof FeatureIterator<?> iterator) {
+                iterator.close();
             }
         }
     }
 
     @Override
     public void accepts(
-            org.opengis.feature.FeatureVisitor visitor, org.opengis.util.ProgressListener progress)
+            org.geotools.api.feature.FeatureVisitor visitor, org.geotools.api.util.ProgressListener progress)
             throws IOException {
         DataUtilities.visit(this, visitor, progress);
     }

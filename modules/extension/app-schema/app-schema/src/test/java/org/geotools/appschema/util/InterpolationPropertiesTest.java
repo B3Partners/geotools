@@ -25,6 +25,7 @@ import static org.junit.Assert.assertNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import org.geotools.data.complex.config.XMLConfigDigester;
 import org.geotools.test.AppSchemaTestSupport;
@@ -52,24 +53,21 @@ public class InterpolationPropertiesTest extends AppSchemaTestSupport {
     public static final String TEST_SYSTEM_PROPERTY_VALUE = "system";
 
     /** System property set to trigger file (not classpath) loading. */
-    public static final String TEST_FILE_SYSTEM_PROPERTY =
-            IDENTIFIER + "-file-identifier" + ".properties";
+    public static final String TEST_FILE_SYSTEM_PROPERTY = IDENTIFIER + "-file-identifier" + ".properties";
 
     @Before
     public void setUp() throws Exception {
         System.setProperty(TEST_SYSTEM_PROPERTY, TEST_SYSTEM_PROPERTY_VALUE);
         System.setProperty(
                 TEST_FILE_SYSTEM_PROPERTY,
-                URLs.urlToFile(
-                                InterpolationProperties.class.getResource(
-                                        "/" + IDENTIFIER + ".file.properties"))
+                URLs.urlToFile(InterpolationProperties.class.getResource("/" + IDENTIFIER + ".file.properties"))
                         .getPath());
     }
 
     /**
-     * Test for {@link PropertyInterpolationUtils#interpolate(Properties, String)} that properties
-     * are interpolated as expected. Note that this test includes multiple lines, and also
-     * opportunity for excessive regex greed, which must be avoided.
+     * Test for {@link PropertyInterpolationUtils#interpolate(Properties, String)} that properties are interpolated as
+     * expected. Note that this test includes multiple lines, and also opportunity for excessive regex greed, which must
+     * be avoided.
      */
     @Test
     public void testInterpolate() {
@@ -78,16 +76,17 @@ public class InterpolationPropertiesTest extends AppSchemaTestSupport {
         properties.put("foo.y", "abc");
         properties.put("foo.z", "bar");
         InterpolationProperties props = new InterpolationProperties(properties);
-        String result =
-                props.interpolate(
-                        "123ajh${foo.z} akl ${foo.y}${foo.y} laskj ${foo.x}\n"
-                                + "foo.x${foo.x}${foo.x} ${foo.z}${foo.y}");
+        String result = props.interpolate(
+                """
+                123ajh${foo.z} akl ${foo.y}${foo.y} laskj ${foo.x}
+                foo.x${foo.x}${foo.x} ${foo.z}${foo.y}\
+                """);
         assertEquals("123ajhbar akl abcabc laskj 123\nfoo.x123123 barabc", result);
     }
 
     /**
-     * Test for {@link PropertyInterpolationUtils#interpolate(Properties, String)} that
-     * interpolating a nonexistent property is an error.
+     * Test for {@link PropertyInterpolationUtils#interpolate(Properties, String)} that interpolating a nonexistent
+     * property is an error.
      */
     @Test
     public void testInterpolateNonexistent() {
@@ -102,10 +101,7 @@ public class InterpolationPropertiesTest extends AppSchemaTestSupport {
         assertFalse(interpolatedNonexistentProperty);
     }
 
-    /**
-     * Test that {@link PropertyInterpolationUtils#loadProperties(String)} can load properties from
-     * the classpath.
-     */
+    /** Test that {@link PropertyInterpolationUtils#loadProperties(String)} can load properties from the classpath. */
     @Test
     public void testLoadPropertiesFromClasspath() {
         InterpolationProperties props = new InterpolationProperties(IDENTIFIER);
@@ -114,8 +110,8 @@ public class InterpolationPropertiesTest extends AppSchemaTestSupport {
     }
 
     /**
-     * Test that in {@link PropertyInterpolationUtils#loadProperties(String)} only system properties
-     * are loaded when the properties files does not exist.
+     * Test that in {@link PropertyInterpolationUtils#loadProperties(String)} only system properties are loaded when the
+     * properties files does not exist.
      */
     @Test
     public void testLoadPropertiesDoesNotExist() {
@@ -125,8 +121,8 @@ public class InterpolationPropertiesTest extends AppSchemaTestSupport {
     }
 
     /**
-     * Test that {@link PropertyInterpolationUtils#loadProperties(String)} can load properties from
-     * the a file specified in a system property.
+     * Test that {@link PropertyInterpolationUtils#loadProperties(String)} can load properties from the a file specified
+     * in a system property.
      */
     @Test
     public void testLoadPropertiesFromFile() {
@@ -152,7 +148,7 @@ public class InterpolationPropertiesTest extends AppSchemaTestSupport {
     @Test
     public void testReadAll() {
         String s = "line one\nline two\n";
-        InputStream input = new ByteArrayInputStream("line one\nline two\n".getBytes());
+        InputStream input = new ByteArrayInputStream("line one\nline two\n".getBytes(StandardCharsets.UTF_8));
         assertEquals(s, InterpolationProperties.readAll(input));
     }
 }

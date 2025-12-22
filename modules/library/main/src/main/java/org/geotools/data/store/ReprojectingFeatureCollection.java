@@ -19,8 +19,21 @@ package org.geotools.data.store;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureReader;
 import org.geotools.data.collection.DelegateFeatureReader;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
@@ -39,28 +52,14 @@ import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
- * SimpleFeatureCollection decorator that reprojects all geometries of the features within the
- * feature collection.
+ * SimpleFeatureCollection decorator that reprojects all geometries of the features within the feature collection.
  *
  * @author Justin
  */
 public class ReprojectingFeatureCollection extends DecoratingSimpleFeatureCollection {
-    static final FilterFactory2 FF = CommonFactoryFinder.getFilterFactory2(null);
+    static final FilterFactory FF = CommonFactoryFinder.getFilterFactory(null);
 
     /** The transform to the target coordinate reference system */
     MathTransform transform;
@@ -75,17 +74,12 @@ public class ReprojectingFeatureCollection extends DecoratingSimpleFeatureCollec
     GeometryCoordinateSequenceTransformer transformer;
 
     public ReprojectingFeatureCollection(
-            FeatureCollection<SimpleFeatureType, SimpleFeature> delegate,
-            CoordinateReferenceSystem target) {
+            FeatureCollection<SimpleFeatureType, SimpleFeature> delegate, CoordinateReferenceSystem target) {
         this(DataUtilities.simple(delegate), target);
     }
 
-    public ReprojectingFeatureCollection(
-            SimpleFeatureCollection delegate, CoordinateReferenceSystem target) {
-        this(
-                delegate,
-                delegate.getSchema().getGeometryDescriptor().getCoordinateReferenceSystem(),
-                target);
+    public ReprojectingFeatureCollection(SimpleFeatureCollection delegate, CoordinateReferenceSystem target) {
+        this(delegate, delegate.getSchema().getGeometryDescriptor().getCoordinateReferenceSystem(), target);
     }
 
     public ReprojectingFeatureCollection(
@@ -96,9 +90,7 @@ public class ReprojectingFeatureCollection extends DecoratingSimpleFeatureCollec
     }
 
     public ReprojectingFeatureCollection(
-            SimpleFeatureCollection delegate,
-            CoordinateReferenceSystem source,
-            CoordinateReferenceSystem target) {
+            SimpleFeatureCollection delegate, CoordinateReferenceSystem source, CoordinateReferenceSystem target) {
         super(delegate);
         this.target = target;
         SimpleFeatureType schema = delegate.getSchema();
@@ -119,8 +111,7 @@ public class ReprojectingFeatureCollection extends DecoratingSimpleFeatureCollec
         this.transformer = transformer;
     }
 
-    private MathTransform transform(
-            CoordinateReferenceSystem source, CoordinateReferenceSystem target) {
+    private MathTransform transform(CoordinateReferenceSystem source, CoordinateReferenceSystem target) {
         try {
             return CRS.findMathTransform(source, target, true);
         } catch (FactoryException e) {
@@ -143,8 +134,7 @@ public class ReprojectingFeatureCollection extends DecoratingSimpleFeatureCollec
     @Override
     public SimpleFeatureIterator features() {
         try {
-            return new ReprojectingFeatureIterator(
-                    delegate.features(), transform, schema, transformer);
+            return new ReprojectingFeatureIterator(delegate.features(), transform, schema, transformer);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -164,8 +154,7 @@ public class ReprojectingFeatureCollection extends DecoratingSimpleFeatureCollec
             DefaultCRSFilterVisitor defaulter = new DefaultCRSFilterVisitor(FF, crs);
             filter = (Filter) filter.accept(defaulter, null);
             if (crsDelegate != null && !CRS.equalsIgnoreMetadata(crs, crsDelegate)) {
-                ReprojectingFilterVisitor reprojector =
-                        new ReprojectingFilterVisitor(FF, delegate.getSchema());
+                ReprojectingFilterVisitor reprojector = new ReprojectingFilterVisitor(FF, delegate.getSchema());
                 filter = (Filter) filter.accept(reprojector, null);
             }
         }
@@ -203,11 +192,10 @@ public class ReprojectingFeatureCollection extends DecoratingSimpleFeatureCollec
     }
 
     /**
-     * This method computes reprojected bounds the hard way, but computing them feature by feature.
-     * This method could be faster if computed the reprojected bounds by reprojecting the original
-     * feature bounds a Shape object, thus getting the true shape of the reprojected envelope, and
-     * then computing the minimum and maximum coordinates of that new shape. The result would not a
-     * true representation of the new bounds.
+     * This method computes reprojected bounds the hard way, but computing them feature by feature. This method could be
+     * faster if computed the reprojected bounds by reprojecting the original feature bounds a Shape object, thus
+     * getting the true shape of the reprojected envelope, and then computing the minimum and maximum coordinates of
+     * that new shape. The result would not a true representation of the new bounds.
      *
      * @see org.geotools.data.FeatureResults#getBounds()
      */
@@ -220,7 +208,7 @@ public class ReprojectingFeatureCollection extends DecoratingSimpleFeatureCollec
 
             while (r.hasNext()) {
                 feature = r.next();
-                final Geometry geom = ((Geometry) feature.getDefaultGeometry());
+                final Geometry geom = (Geometry) feature.getDefaultGeometry();
                 if (geom != null) {
                     internal = geom.getEnvelopeInternal();
                     newBBox.expandToInclude(internal);
@@ -238,14 +226,13 @@ public class ReprojectingFeatureCollection extends DecoratingSimpleFeatureCollec
     }
 
     /**
-     * Returns true if the visitor is geometryless, that is, it's not accessing a geometry field in
-     * the target schema
+     * Returns true if the visitor is geometryless, that is, it's not accessing a geometry field in the target schema
      */
     public static boolean isGeometryless(FeatureVisitor visitor, SimpleFeatureType schema) {
-        if (visitor instanceof FeatureAttributeVisitor) {
+        if (visitor instanceof FeatureAttributeVisitor attributeVisitor) {
             // pass through unless one of the expressions requires the geometry attribute
             FilterAttributeExtractor extractor = new FilterAttributeExtractor(schema);
-            for (Expression e : ((FeatureAttributeVisitor) visitor).getExpressions()) {
+            for (Expression e : attributeVisitor.getExpressions()) {
                 e.accept(extractor, null);
             }
 

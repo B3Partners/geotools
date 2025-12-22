@@ -20,17 +20,16 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_interiorPoint extends FunctionExpressionImpl {
 
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "interiorPoint", Point.class, parameter("geometry", Geometry.class));
+            new FunctionNameImpl("interiorPoint", Point.class, parameter("geometry", Geometry.class));
 
     public FilterFunction_interiorPoint() {
         super(NAME);
@@ -48,6 +47,6 @@ public class FilterFunction_interiorPoint extends FunctionExpressionImpl {
                     "Filter Function problem for function interiorPoint argument #0 - expected type Geometry");
         }
 
-        return (StaticGeometry.interiorPoint(arg0));
+        return StaticGeometry.interiorPoint(arg0);
     }
 }

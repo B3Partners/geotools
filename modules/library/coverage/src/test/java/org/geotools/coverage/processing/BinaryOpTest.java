@@ -18,17 +18,15 @@ package org.geotools.coverage.processing;
 
 import static org.junit.Assert.assertEquals;
 
-import it.geosolutions.jaiext.JAIExt;
 import java.awt.image.RenderedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import javax.media.jai.operator.ExtremaDescriptor;
+import org.geotools.api.parameter.ParameterValueGroup;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.image.ImageWorker;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.parameter.ParameterValueGroup;
 
 /**
  * Tests some binary operations like add and multiply.
@@ -69,35 +67,28 @@ public class BinaryOpTest extends GridProcessingTestBase {
         final GridCoverage2D floatCoverage = EXAMPLES.get(4);
         final GridCoverage2D result = doOp("Multiply", shortCoverage, floatCoverage);
         final RenderedImage image = result.getRenderedImage();
-        final RenderedImage extrema = ExtremaDescriptor.create(image, null, 1, 1, false, 1, null);
-        double[][] minMax = (double[][]) extrema.getProperty("Extrema");
-        assertEquals(minMax[0][0], 0.0, DELTA);
-        assertEquals(minMax[1][0], 6.5272192E7, DELTA);
+        final ImageWorker w = new ImageWorker(image);
+        double[] min = w.getMinimums();
+        double[] max = w.getMaximums();
+        assertEquals(min[0], 0.0, DELTA);
+        assertEquals(max[0], 6.5272192E7, DELTA);
     }
 
     /**
      * Applies the specified operation to the given coverages.
      *
      * @param coverage0 The coverage to scale.
-     * @param interp The interpolation to use.
      */
     private GridCoverage2D doOp(
-            final String operationName,
-            final GridCoverage2D coverage0,
-            final GridCoverage2D coverage1)
+            final String operationName, final GridCoverage2D coverage0, final GridCoverage2D coverage1)
             throws IOException {
 
         // Getting parameters for doing a scale.
         final ParameterValueGroup param = processor.getOperation(operationName).getParameters();
-        if (JAIExt.isJAIExtOperation(JAIExt.getOperationName(operationName))) {
-            List<GridCoverage2D> sources = new ArrayList<>();
-            sources.add(coverage0);
-            sources.add(coverage1);
-            param.parameter("Sources").setValue(sources);
-        } else {
-            param.parameter("Source0").setValue(coverage0);
-            param.parameter("Source1").setValue(coverage1);
-        }
+        List<GridCoverage2D> sources = new ArrayList<>();
+        sources.add(coverage0);
+        sources.add(coverage1);
+        param.parameter("Sources").setValue(sources);
 
         // Doing a first scale.
         GridCoverage2D result = (GridCoverage2D) processor.doOperation(param);

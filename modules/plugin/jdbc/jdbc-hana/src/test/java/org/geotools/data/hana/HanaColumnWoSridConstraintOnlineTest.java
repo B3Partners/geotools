@@ -20,13 +20,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
 import java.sql.Connection;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.spatial.BBOX;
 import org.geotools.data.store.ContentFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.jdbc.JDBCTestSetup;
 import org.geotools.jdbc.JDBCTestSupport;
 import org.junit.Test;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.spatial.BBOX;
 
 /** @author Stefan Uhrig, SAP SE */
 public class HanaColumnWoSridConstraintOnlineTest extends JDBCTestSupport {
@@ -37,8 +37,7 @@ public class HanaColumnWoSridConstraintOnlineTest extends JDBCTestSupport {
     }
 
     private boolean supportsColumnsWoSridConstraint(HanaVersion version) {
-        return ((version.getVersion() > 2)
-                || ((version.getVersion() == 2) && (version.getRevision() >= 60)));
+        return version.getVersion() > 2 || version.getVersion() == 2 && version.getRevision() >= 60;
     }
 
     @Test
@@ -50,8 +49,7 @@ public class HanaColumnWoSridConstraintOnlineTest extends JDBCTestSupport {
             HanaDialect dialect = (HanaDialect) this.dialect;
             dialect.initializeConnection(conn);
             Integer srid =
-                    dialect.getGeometrySRID(
-                            dataStore.getDatabaseSchema(), tname("tabwosc"), aname("geom"), conn);
+                    dialect.getGeometrySRID(dataStore.getDatabaseSchema(), tname("tabwosc"), aname("geom"), conn);
             assertEquals(Integer.valueOf(3857), srid);
         }
     }

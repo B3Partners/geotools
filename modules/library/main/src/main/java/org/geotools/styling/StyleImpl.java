@@ -22,9 +22,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.style.Description;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleVisitor;
+import org.geotools.api.style.Symbolizer;
+import org.geotools.api.style.TraversingStyleVisitor;
+import org.geotools.api.util.Cloneable;
 import org.geotools.util.Utilities;
-import org.opengis.style.Description;
-import org.opengis.util.Cloneable;
 
 /**
  * Implementation of style.
@@ -32,10 +38,9 @@ import org.opengis.util.Cloneable;
  * @author James Macgill, CCG
  * @version $Id$
  */
-public class StyleImpl implements org.geotools.styling.Style, Cloneable {
+public class StyleImpl implements Style, Cloneable {
     /** The logger for the default core module. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(StyleImpl.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(StyleImpl.class);
 
     private List<FeatureTypeStyle> featureTypeStyles = new ArrayList<>();
     private DescriptionImpl description = new DescriptionImpl();
@@ -56,9 +61,8 @@ public class StyleImpl implements org.geotools.styling.Style, Cloneable {
     public FeatureTypeStyle[] getFeatureTypeStyles() {
         FeatureTypeStyle[] ret = {new FeatureTypeStyleImpl()};
 
-        if ((featureTypeStyles != null) && (!featureTypeStyles.isEmpty())) {
-            if (LOGGER.isLoggable(Level.FINE))
-                LOGGER.fine("number of fts set " + featureTypeStyles.size());
+        if (featureTypeStyles != null && !featureTypeStyles.isEmpty()) {
+            if (LOGGER.isLoggable(Level.FINE)) LOGGER.fine("number of fts set " + featureTypeStyles.size());
 
             ret = featureTypeStyles.toArray(new FeatureTypeStyle[] {});
         }
@@ -77,7 +81,7 @@ public class StyleImpl implements org.geotools.styling.Style, Cloneable {
     }
 
     @Override
-    public void setDefaultSpecification(org.geotools.styling.Symbolizer defaultSymbolizer) {
+    public void setDefaultSpecification(Symbolizer defaultSymbolizer) {
         this.defaultSymbolizer = defaultSymbolizer;
     }
 
@@ -123,7 +127,7 @@ public class StyleImpl implements org.geotools.styling.Style, Cloneable {
      * Clones the Style. Creates deep copy clone of the style.
      *
      * @return the Clone of the style.
-     * @see org.geotools.styling.Style#clone()
+     * @see Style
      */
     @Override
     public Object clone() {
@@ -149,15 +153,13 @@ public class StyleImpl implements org.geotools.styling.Style, Cloneable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(
-                featureTypeStyles, description, name, defaultB, background, defaultSymbolizer);
+        return Objects.hash(featureTypeStyles, description, name, defaultB, background, defaultSymbolizer);
     }
 
     /**
      * Compares this Style with another.
      *
-     * <p>Two StyleImpl are equal if they have the same properties and the same list of
-     * FeatureTypeStyles.
+     * <p>Two StyleImpl are equal if they have the same properties and the same list of FeatureTypeStyles.
      *
      * @param oth The object to compare with this for equality.
      * @return True if this and oth are equal.
@@ -168,8 +170,7 @@ public class StyleImpl implements org.geotools.styling.Style, Cloneable {
             return true;
         }
 
-        if (oth instanceof StyleImpl) {
-            StyleImpl other = (StyleImpl) oth;
+        if (oth instanceof StyleImpl other) {
 
             return Utilities.equals(name, other.name)
                     && Utilities.equals(description, other.description)
@@ -203,7 +204,7 @@ public class StyleImpl implements org.geotools.styling.Style, Cloneable {
     }
 
     @Override
-    public Object accept(org.opengis.style.StyleVisitor visitor, Object extraData) {
+    public Object accept(TraversingStyleVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }
 

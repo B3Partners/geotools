@@ -19,9 +19,9 @@ package org.geotools.coverageio.gdal.jp2kak;
 import it.geosolutions.imageio.plugins.jp2kakadu.JP2GDALKakaduImageReaderSpi;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.coverage.grid.Format;
 import org.geotools.coverage.grid.io.GridFormatFactorySpi;
 import org.geotools.coverageio.BaseGridFormatFactorySPI;
-import org.opengis.coverage.grid.Format;
 
 /**
  * Implementation of the {@link Format} service provider interface for JP2K files.
@@ -30,11 +30,9 @@ import org.opengis.coverage.grid.Format;
  * @author Simone Giannecchini (simboss), GeoSolutions
  * @since 2.5.x
  */
-public final class JP2KFormatFactory extends BaseGridFormatFactorySPI
-        implements GridFormatFactorySpi {
+public final class JP2KFormatFactory extends BaseGridFormatFactorySPI implements GridFormatFactorySpi {
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(JP2KFormatFactory.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(JP2KFormatFactory.class);
 
     /**
      * Tells me if the coverage plugin to access JP2K is available or not.
@@ -46,7 +44,7 @@ public final class JP2KFormatFactory extends BaseGridFormatFactorySPI
         boolean available = true;
 
         // if these classes are here, then the runtime environment has
-        // access to JAI and the JAI ImageI/O toolbox.
+        // access to ImageN and the ImageN ImageI/O toolbox.
         try {
 
             Class.forName("it.geosolutions.imageio.plugins.jp2kakadu.JP2GDALKakaduImageReaderSpi");

@@ -21,12 +21,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 
 import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.PropertyIsLike;
 import org.geotools.xsd.Binding;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.Parser;
 import org.junit.Test;
-import org.opengis.filter.Filter;
-import org.opengis.filter.PropertyIsLike;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -104,9 +105,7 @@ public class OGCPropertyIsLikeTypeBindingTest extends FilterTestSupport {
         Document doc = encode(FilterMockData.propertyIsLike2(), OGC.Filter);
         // print(doc);
 
-        NodeList property =
-                doc.getDocumentElement()
-                        .getElementsByTagNameNS(OGC.NAMESPACE, OGC.Function.getLocalPart());
+        NodeList property = doc.getDocumentElement().getElementsByTagNameNS(OGC.NAMESPACE, OGC.Function.getLocalPart());
         assertEquals(1, property.getLength());
 
         assertNotNull(property.item(0).getChildNodes());
@@ -135,13 +134,14 @@ public class OGCPropertyIsLikeTypeBindingTest extends FilterTestSupport {
     @Test
     public void testBackwardLikeFilter() throws Exception {
         String f =
-                "<ogc:Filter  xmlns:ogc=\"http://www.opengis.net/ogc\"><ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escapeChar=\"!\">\n"
-                        + "<ogc:Literal>M*</ogc:Literal>\n"
-                        + "<ogc:PropertyName>gml:name</ogc:PropertyName>\n"
-                        + "</ogc:PropertyIsLike></ogc:Filter>";
+                """
+                <ogc:Filter  xmlns:ogc="http://www.opengis.net/ogc"><ogc:PropertyIsLike wildCard="*" singleChar="#" escapeChar="!">
+                <ogc:Literal>M*</ogc:Literal>
+                <ogc:PropertyName>gml:name</ogc:PropertyName>
+                </ogc:PropertyIsLike></ogc:Filter>""";
         Configuration configuration = new org.geotools.filter.v1_0.OGCConfiguration();
         Parser parser = new Parser(configuration);
-        Filter filter = (Filter) parser.parse(new ByteArrayInputStream(f.getBytes()));
+        Filter filter = (Filter) parser.parse(new ByteArrayInputStream(f.getBytes(StandardCharsets.UTF_8)));
         Document doc = encode(filter, OGC.Filter);
         // print(doc);
 
@@ -165,13 +165,14 @@ public class OGCPropertyIsLikeTypeBindingTest extends FilterTestSupport {
     @Test
     public void testBackwardLikeFilterWithFunction() throws Exception {
         String f =
-                "<ogc:Filter  xmlns:ogc=\"http://www.opengis.net/ogc\"><ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escapeChar=\"!\">\n"
-                        + "<ogc:Literal>M*</ogc:Literal>\n"
-                        + "<ogc:Function name=\"strToLowerCase\"><ogc:PropertyName>gml:name</ogc:PropertyName></ogc:Function>\n"
-                        + "</ogc:PropertyIsLike></ogc:Filter>";
+                """
+                <ogc:Filter  xmlns:ogc="http://www.opengis.net/ogc"><ogc:PropertyIsLike wildCard="*" singleChar="#" escapeChar="!">
+                <ogc:Literal>M*</ogc:Literal>
+                <ogc:Function name="strToLowerCase"><ogc:PropertyName>gml:name</ogc:PropertyName></ogc:Function>
+                </ogc:PropertyIsLike></ogc:Filter>""";
         Configuration configuration = new org.geotools.filter.v1_0.OGCConfiguration();
         Parser parser = new Parser(configuration);
-        Filter filter = (Filter) parser.parse(new ByteArrayInputStream(f.getBytes()));
+        Filter filter = (Filter) parser.parse(new ByteArrayInputStream(f.getBytes(StandardCharsets.UTF_8)));
         Document doc = encode(filter, OGC.Filter);
         // print(doc);
 

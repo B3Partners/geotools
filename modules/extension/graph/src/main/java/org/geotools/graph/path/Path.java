@@ -21,8 +21,7 @@ import java.util.HashSet;
 import org.geotools.graph.structure.Node;
 
 /**
- * Represents a path in a graph. A <B>path</B> P is defined as a <B>walk</B> in which there are no
- * node repetitions.
+ * Represents a path in a graph. A <B>path</B> P is defined as a <B>walk</B> in which there are no node repetitions.
  *
  * @author Justin Deoliveira, Refractions Research Inc, jdeolive@refractions.net
  */
@@ -47,9 +46,9 @@ public class Path extends Walk {
         if (super.isValid()) {
             // test repetitions
             HashSet<Node> s = new HashSet<>(this);
-            return (size() == s.size());
+            return size() == s.size();
         }
 
-        return (false);
+        return false;
     }
 }

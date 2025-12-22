@@ -22,16 +22,16 @@ import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import javax.media.jai.InterpolationBicubic;
-import javax.media.jai.InterpolationBilinear;
-import javax.media.jai.InterpolationNearest;
+import org.eclipse.imagen.InterpolationBicubic;
+import org.eclipse.imagen.InterpolationBilinear;
+import org.eclipse.imagen.InterpolationNearest;
 import org.geotools.TestData;
+import org.geotools.api.coverage.grid.GridCoverageReader;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.GridFormatFinder;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opengis.coverage.grid.GridCoverageReader;
 
 public class AffineProcessTest {
 
@@ -80,7 +80,7 @@ public class AffineProcessTest {
         // Get a reader for the selected format
         GridCoverageReader reader = format.getReader(tiff);
         // Read the input Coverage
-        coverage = (GridCoverage2D) reader.read(null);
+        coverage = (GridCoverage2D) reader.read();
         // Reader disposal
         reader.dispose();
 
@@ -107,8 +107,7 @@ public class AffineProcessTest {
         AffineProcess process = new AffineProcess();
 
         // Execution of the operation
-        GridCoverage2D result =
-                process.execute(coverage, m00, m11, m01, m10, m02, m12, nodata, null);
+        GridCoverage2D result = process.execute(coverage, m00, m11, m01, m10, m02, m12, nodata, null);
 
         // Check if the final image is correct
         ensureCorrectTransformation(result, m00, m11, m02, m12);
@@ -120,8 +119,7 @@ public class AffineProcessTest {
         AffineProcess process = new AffineProcess();
 
         // Execution of the operation
-        GridCoverage2D result =
-                process.execute(coverage, m00, m11, m01, m10, m02, m12, null, nearest);
+        GridCoverage2D result = process.execute(coverage, m00, m11, m01, m10, m02, m12, null, nearest);
 
         // Check if the final image is correct
         ensureCorrectTransformation(result, m00, m11, m02, m12);
@@ -133,8 +131,7 @@ public class AffineProcessTest {
         AffineProcess process = new AffineProcess();
 
         // Execution of the operation
-        GridCoverage2D result =
-                process.execute(coverage, null, null, null, null, null, null, nodata, nearest);
+        GridCoverage2D result = process.execute(coverage, null, null, null, null, null, null, nodata, nearest);
 
         // Check if the final image is correct
         ensureCorrectTransformation(result, 1, 1, 0, 0);
@@ -148,8 +145,7 @@ public class AffineProcessTest {
         // translated)
 
         // Execution of the operation
-        GridCoverage2D result =
-                process.execute(coverage, m00, m11, m01, m10, m02, m12, nodata, nearest);
+        GridCoverage2D result = process.execute(coverage, m00, m11, m01, m10, m02, m12, nodata, nearest);
 
         // Check if the final image is correct
         ensureCorrectTransformation(result, m00, m11, m02, m12);
@@ -163,8 +159,7 @@ public class AffineProcessTest {
         // translated)
 
         // Execution of the operation
-        GridCoverage2D result =
-                process.execute(coverage, m00, m11, m01, m10, m02, m12, nodata, bilinear);
+        GridCoverage2D result = process.execute(coverage, m00, m11, m01, m10, m02, m12, nodata, bilinear);
 
         // Check if the final image is correct
         ensureCorrectTransformation(result, m00, m11, m02, m12);
@@ -178,16 +173,14 @@ public class AffineProcessTest {
         // translated)
 
         // Execution of the operation
-        GridCoverage2D result =
-                process.execute(coverage, m00, m11, m01, m10, m02, m12, nodata, bicubic);
+        GridCoverage2D result = process.execute(coverage, m00, m11, m01, m10, m02, m12, nodata, bicubic);
 
         // Check if the final image is correct
         ensureCorrectTransformation(result, m00, m11, m02, m12);
     }
 
     /** Check if the Coverage is correctly transformed. */
-    private void ensureCorrectTransformation(
-            GridCoverage2D result, double m00, double m11, double m02, double m12) {
+    private void ensureCorrectTransformation(GridCoverage2D result, double m00, double m11, double m02, double m12) {
         // Selection of the RenderedImages associated to the coverages
         RenderedImage inputImage = coverage.getRenderedImage();
         RenderedImage outputImage = result.getRenderedImage();

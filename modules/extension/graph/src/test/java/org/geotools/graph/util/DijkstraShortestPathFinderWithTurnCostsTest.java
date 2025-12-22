@@ -64,8 +64,6 @@ public class DijkstraShortestPathFinderWithTurnCostsTest {
     @Test
     public void test1() {
 
-        double[] expected = {0.0, 1.0, 3.0, 3.0};
-
         List<Double> gotArray = new ArrayList<>(4);
 
         Iterator it = graph.getNodes().iterator();
@@ -73,8 +71,7 @@ public class DijkstraShortestPathFinderWithTurnCostsTest {
         Node source = (Node) it.next();
 
         // create the path finder
-        DijkstraShortestPathFinder pf =
-                new DijkstraShortestPathFinder(graph, source, costFunction(), tcostFunction());
+        DijkstraShortestPathFinder pf = new DijkstraShortestPathFinder(graph, source, costFunction(), tcostFunction());
 
         pf.calculate();
 
@@ -88,10 +85,10 @@ public class DijkstraShortestPathFinderWithTurnCostsTest {
     }
 
     protected DijkstraIterator.EdgeWeighter costFunction() {
-        return (e -> 1);
+        return e -> 1;
     }
 
     protected DijkstraIterator.NodeWeighter tcostFunction() {
-        return ((n, e1, e2) -> 1.0);
+        return (n, e1, e2) -> 1.0;
     }
 }

@@ -25,8 +25,8 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFactorySpi;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFactorySpi;
 import org.geotools.util.factory.FactoryCreator;
 import org.geotools.util.factory.FactoryRegistry;
 import org.junit.Assert;
@@ -34,8 +34,7 @@ import org.junit.Test;
 
 public class SolrDataStoreFinderTest {
 
-    protected static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(SolrDataStoreFinderTest.class);
+    protected static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(SolrDataStoreFinderTest.class);
 
     private DataStore source;
 
@@ -67,8 +66,7 @@ public class SolrDataStoreFinderTest {
     }
 
     private FactoryRegistry getServiceRegistry() {
-        FactoryRegistry registry =
-                new FactoryCreator(Arrays.asList(new Class<?>[] {DataStoreFactorySpi.class}));
+        FactoryRegistry registry = new FactoryCreator(Arrays.asList(new Class<?>[] {DataStoreFactorySpi.class}));
         return registry;
     }
 

@@ -21,7 +21,10 @@ import static org.junit.Assert.assertNotNull;
 
 import java.awt.geom.AffineTransform;
 import java.awt.image.RenderedImage;
-import javax.media.jai.RenderedOp;
+import org.eclipse.imagen.RenderedOp;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageTestBase;
 import org.geotools.coverage.grid.GridGeometry2D;
@@ -29,21 +32,18 @@ import org.geotools.coverage.grid.Viewer;
 import org.geotools.referencing.crs.DefaultDerivedCRS;
 import org.geotools.referencing.operation.transform.ProjectiveTransform;
 import org.geotools.util.factory.Hints;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
- * Base class for grid processing tests. This class provides a few convenience methods performing
- * some operations on {@link GridCoverage2D}.
+ * Base class for grid processing tests. This class provides a few convenience methods performing some operations on
+ * {@link GridCoverage2D}.
  *
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
  */
 public class GridProcessingTestBase extends GridCoverageTestBase {
     /**
-     * Rotates the given coverage by the given angle. This method replaces the coverage CRS by a
-     * derived one containing the rotated axes.
+     * Rotates the given coverage by the given angle. This method replaces the coverage CRS by a derived one containing
+     * the rotated axes.
      *
      * @param coverage The coverage to rotate.
      * @param angle The rotation angle, in degrees.
@@ -132,8 +132,8 @@ public class GridProcessingTestBase extends GridCoverageTestBase {
     }
 
     /**
-     * Projects the specified coverage to the specified CRS using the specified hints. The result
-     * will be displayed in a window if {@link #SHOW} is set to {@code true}.
+     * Projects the specified coverage to the specified CRS using the specified hints. The result will be displayed in a
+     * window if {@link #SHOW} is set to {@code true}.
      *
      * @param coverage The coverage to project.
      * @param targetCRS The target CRS, or {@code null} if the same.
@@ -149,9 +149,9 @@ public class GridProcessingTestBase extends GridCoverageTestBase {
         coverage = project(coverage, targetCRS, geometry, hints);
         final RenderedImage image = coverage.getRenderedImage();
         String operation = null;
-        if (image instanceof RenderedOp) {
-            operation = ((RenderedOp) image).getOperationName();
-            CoverageProcessor.LOGGER.fine("Applied \"" + operation + "\" JAI operation.");
+        if (image instanceof RenderedOp op) {
+            operation = op.getOperationName();
+            CoverageProcessor.LOGGER.fine("Applied \"" + operation + "\" ImageN operation.");
         }
         if (SHOW) {
             /*
@@ -168,15 +168,13 @@ public class GridProcessingTestBase extends GridCoverageTestBase {
     }
 
     /**
-     * Performs an affine transformation on the provided coverage. The transformation is a
-     * translation by 5 units along x and y axes. The result will be displayed in a window if {@link
-     * #SHOW} is set to {@code true}.
+     * Performs an affine transformation on the provided coverage. The transformation is a translation by 5 units along
+     * x and y axes. The result will be displayed in a window if {@link #SHOW} is set to {@code true}.
      *
      * @param coverage The coverage to apply the operation on.
      * @param hints An optional set of hints, or {@code null} if none.
      * @param asCRS The expected operation name if the resampling is performed as a CRS change.
-     * @param asGG The expected operation name if the resampling is perofrmed as a Grid Geometry
-     *     change.
+     * @param asGG The expected operation name if the resampling is perofrmed as a Grid Geometry change.
      */
     protected static void showTranslated(
             GridCoverage2D coverage, final Hints hints, final String asCRS, final String asGG) {

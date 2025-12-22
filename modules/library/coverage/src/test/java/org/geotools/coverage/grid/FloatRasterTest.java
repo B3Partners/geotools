@@ -19,14 +19,12 @@ package org.geotools.coverage.grid;
 import java.awt.Color;
 import java.awt.image.DataBuffer;
 import java.awt.image.WritableRaster;
-import javax.media.jai.RasterFactory;
+import org.eclipse.imagen.RasterFactory;
+import org.geotools.api.coverage.grid.GridCoverage;
+import org.geotools.api.geometry.Bounds;
 import org.geotools.coverage.CoverageFactoryFinder;
-import org.geotools.geometry.Envelope2D;
-import org.geotools.referencing.crs.DefaultGeographicCRS;
+import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.junit.Test;
-import org.opengis.coverage.grid.GridCoverage;
-import org.opengis.geometry.Envelope;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Tests the creation of a grid coverage using floating point value.
@@ -45,8 +43,7 @@ public final class FloatRasterTest extends GridCoverageTestBase {
          */
         final int width = 500;
         final int height = 500;
-        WritableRaster raster =
-                RasterFactory.createBandedRaster(DataBuffer.TYPE_FLOAT, width, height, 1, null);
+        WritableRaster raster = RasterFactory.createBandedRaster(DataBuffer.TYPE_FLOAT, width, height, 1, null);
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 raster.setSample(x, y, 0, x + y);
@@ -57,8 +54,7 @@ public final class FloatRasterTest extends GridCoverageTestBase {
          * The display may be slow, since the translation from floating-point values to some
          * color (or grayscale) is performed on the fly everytime the image is rendered.
          */
-        CoordinateReferenceSystem crs = DefaultGeographicCRS.WGS84;
-        Envelope envelope = new Envelope2D(crs, 0, 0, 30, 30);
+        Bounds envelope = ReferencedEnvelope.rect(0, 0, 30, 30);
         GridCoverageFactory factory = CoverageFactoryFinder.getGridCoverageFactory(null);
         GridCoverage gc = factory.create("My grayscale coverage", raster, envelope);
         if (SHOW) {
@@ -72,16 +68,7 @@ public final class FloatRasterTest extends GridCoverageTestBase {
          * default value.
          */
         Color[] colors = {Color.BLUE, Color.CYAN, Color.WHITE, Color.YELLOW, Color.RED};
-        gc =
-                factory.create(
-                        "My colored coverage",
-                        raster,
-                        envelope,
-                        null,
-                        null,
-                        null,
-                        new Color[][] {colors},
-                        null);
+        gc = factory.create("My colored coverage", raster, envelope, null, null, null, new Color[][] {colors}, null);
         if (SHOW) {
             ((GridCoverage2D) gc).show();
         }
@@ -98,8 +85,7 @@ public final class FloatRasterTest extends GridCoverageTestBase {
                 matrix[y][x] = x + y;
             }
         }
-        CoordinateReferenceSystem crs = DefaultGeographicCRS.WGS84;
-        Envelope envelope = new Envelope2D(crs, 0, 0, 30, 30);
+        Bounds envelope = ReferencedEnvelope.rect(0, 0, 30, 30);
         GridCoverageFactory factory = CoverageFactoryFinder.getGridCoverageFactory(null);
         GridCoverage gc = factory.create("My grayscale matrix", matrix, envelope);
         if (SHOW) {

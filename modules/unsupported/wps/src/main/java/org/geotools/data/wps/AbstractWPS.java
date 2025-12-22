@@ -28,8 +28,8 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.opengis.wps10.WPSCapabilitiesType;
-import org.geotools.data.ResourceInfo;
-import org.geotools.data.ServiceInfo;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.data.ServiceInfo;
 import org.geotools.data.ows.GetCapabilitiesRequest;
 import org.geotools.data.ows.Request;
 import org.geotools.data.ows.Response;
@@ -42,15 +42,14 @@ import org.geotools.ows.ServiceException;
 /**
  * This abstract class provides a building block for one to implement a WPS client.
  *
- * <p>This class provides version negotiation, Capabilities document retrieval, and a
- * request/response infrastructure. Implementing subclasses need to provide their own Specifications
+ * <p>This class provides version negotiation, Capabilities document retrieval, and a request/response infrastructure.
+ * Implementing subclasses need to provide their own Specifications
  *
  * @author gdavis
  */
-public abstract class AbstractWPS<C extends WPSCapabilitiesType, R extends Object> {
+public abstract class AbstractWPS<C extends WPSCapabilitiesType, R> {
 
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(AbstractWPS.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(AbstractWPS.class);
     protected HTTPClient httpClient;
     protected final URL serverURL;
     protected C capabilities;
@@ -119,11 +118,10 @@ public abstract class AbstractWPS<C extends WPSCapabilitiesType, R extends Objec
 
         if (specification == null) {
             specification = specs[specs.length - 1];
-            LOGGER.warning(
-                    "Unable to choose a specification based on cached capabilities. "
-                            + "Arbitrarily choosing spec '"
-                            + specification.getVersion()
-                            + "'.");
+            LOGGER.warning("Unable to choose a specification based on cached capabilities. "
+                    + "Arbitrarily choosing spec '"
+                    + specification.getVersion()
+                    + "'.");
         }
     }
 
@@ -138,8 +136,7 @@ public abstract class AbstractWPS<C extends WPSCapabilitiesType, R extends Objec
     /**
      * Description of this service.
      *
-     * <p>Provides a very quick description of the service, for more information please review the
-     * capabilitie document.
+     * <p>Provides a very quick description of the service, for more information please review the capabilitie document.
      *
      * <p>
      *
@@ -181,33 +178,30 @@ public abstract class AbstractWPS<C extends WPSCapabilitiesType, R extends Objec
      * Version number negotiation occurs as follows (credit OGC):
      *
      * <ul>
-     *   <li><b>1) </b> If the server implements the requested version number, the server shall send
-     *       that version.
-     *   <li><b>2a) </b> If a version unknown to the server is requested, the server shall send the
-     *       highest version less than the requested version.
-     *   <li><b>2b) </b> If the client request is for a version lower than any of those known to the
-     *       server, then the server shall send the lowest version it knows.
-     *   <li><b>3a) </b> If the client does not understand the new version number sent by the
-     *       server, it may either cease communicating with the server or send a new request with a
-     *       new version number that the client does understand but which is less than that sent by
-     *       the server (if the server had responded with a lower version).
-     *   <li><b>3b) </b> If the server had responded with a higher version (because the request was
-     *       for a version lower than any known to the server), and the client does not understand
-     *       the proposed higher version, then the client may send a new request with a version
-     *       number higher than that sent by the server.
+     *   <li><b>1) </b> If the server implements the requested version number, the server shall send that version.
+     *   <li><b>2a) </b> If a version unknown to the server is requested, the server shall send the highest version less
+     *       than the requested version.
+     *   <li><b>2b) </b> If the client request is for a version lower than any of those known to the server, then the
+     *       server shall send the lowest version it knows.
+     *   <li><b>3a) </b> If the client does not understand the new version number sent by the server, it may either
+     *       cease communicating with the server or send a new request with a new version number that the client does
+     *       understand but which is less than that sent by the server (if the server had responded with a lower
+     *       version).
+     *   <li><b>3b) </b> If the server had responded with a higher version (because the request was for a version lower
+     *       than any known to the server), and the client does not understand the proposed higher version, then the
+     *       client may send a new request with a version number higher than that sent by the server.
      * </ul>
      *
-     * <p>The OGC tells us to repeat this process (or give up). This means we are actually going to
-     * come up with a bit of setup cost in figuring out our GetCapabilities request. This means that
-     * it is possible that we may make multiple requests before being satisfied with a response.
+     * <p>The OGC tells us to repeat this process (or give up). This means we are actually going to come up with a bit
+     * of setup cost in figuring out our GetCapabilities request. This means that it is possible that we may make
+     * multiple requests before being satisfied with a response.
      *
-     * <p>Also, if we are unable to parse a given version for some reason, for example, malformed
-     * XML, we will request a lower version until we have run out of versions to request with. Thus,
-     * a server that does not play nicely may take some time to parse and might not even succeed.
+     * <p>Also, if we are unable to parse a given version for some reason, for example, malformed XML, we will request a
+     * lower version until we have run out of versions to request with. Thus, a server that does not play nicely may
+     * take some time to parse and might not even succeed.
      *
      * @return a capabilities object that represents the Capabilities on the server
-     * @throws IOException if there is an error communicating with the server, or the XML cannot be
-     *     parsed
+     * @throws IOException if there is an error communicating with the server, or the XML cannot be parsed
      * @throws ServiceException if the server returns a ServiceException
      */
     protected C negotiateVersion() throws IOException, ServiceException {
@@ -223,12 +217,11 @@ public abstract class AbstractWPS<C extends WPSCapabilitiesType, R extends Objec
 
         int test = maxClient;
 
-        while ((minClient <= test) && (test <= maxClient)) {
+        while (minClient <= test && test <= maxClient) {
             Specification tempSpecification = specs[test];
             String clientVersion = tempSpecification.getVersion();
 
-            GetCapabilitiesRequest request =
-                    tempSpecification.createGetCapabilitiesRequest(serverURL);
+            GetCapabilitiesRequest request = tempSpecification.createGetCapabilitiesRequest(serverURL);
 
             // Grab document
             C tempCapabilities;
@@ -258,7 +251,7 @@ public abstract class AbstractWPS<C extends WPSCapabilitiesType, R extends Objec
                 return tempCapabilities;
             }
 
-            if ((tempCapabilities != null) && versions.contains(serverVersion)) {
+            if (tempCapabilities != null && versions.contains(serverVersion)) {
                 // we can communicate with this server
                 int index = versions.indexOf(serverVersion);
                 this.specification = specs[index];
@@ -275,8 +268,8 @@ public abstract class AbstractWPS<C extends WPSCapabilitiesType, R extends Objec
 
                 if (clientVersion == null) {
                     if (exception != null) {
-                        if (exception instanceof ServiceException) {
-                            throw (ServiceException) exception;
+                        if (exception instanceof ServiceException serviceException) {
+                            throw serviceException;
                         }
 
                         IOException e = new IOException(exception.getMessage());
@@ -296,8 +289,8 @@ public abstract class AbstractWPS<C extends WPSCapabilitiesType, R extends Objec
 
                 if (clientVersion == null) {
                     if (exception != null) {
-                        if (exception instanceof ServiceException) {
-                            throw (ServiceException) exception;
+                        if (exception instanceof ServiceException serviceException) {
+                            throw serviceException;
                         }
 
                         IOException e = new IOException(exception.getMessage());
@@ -339,7 +332,7 @@ public abstract class AbstractWPS<C extends WPSCapabilitiesType, R extends Objec
 
             if (test.compareTo(version) < 0) {
 
-                if ((before == null) || (before.compareTo(test) < 0)) {
+                if (before == null || before.compareTo(test) < 0) {
                     before = test;
                 }
             }
@@ -366,7 +359,7 @@ public abstract class AbstractWPS<C extends WPSCapabilitiesType, R extends Objec
             String test = (String) o;
 
             if (test.compareTo(version) > 0) {
-                if ((after == null) || (after.compareTo(test) < 0)) {
+                if (after == null || after.compareTo(test) < 0) {
                     after = test;
                 }
             }
@@ -376,8 +369,8 @@ public abstract class AbstractWPS<C extends WPSCapabilitiesType, R extends Objec
     }
 
     /**
-     * Issues a request to the server and returns that server's response. It asks the server to send
-     * the response gzipped to provide a faster transfer time.
+     * Issues a request to the server and returns that server's response. It asks the server to send the response
+     * gzipped to provide a faster transfer time.
      *
      * @param request the request to be issued
      * @return a response from the server, which is created according to the specific Request

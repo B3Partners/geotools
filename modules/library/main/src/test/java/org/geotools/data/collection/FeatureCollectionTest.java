@@ -24,6 +24,10 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
@@ -43,13 +47,9 @@ import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
- * TestCase that can be extended to verify the functionality of different FeatureCollection
- * implementations.
+ * TestCase that can be extended to verify the functionality of different FeatureCollection implementations.
  *
  * @author Jody
  */
@@ -86,14 +86,13 @@ public abstract class FeatureCollectionTest {
      *
      * @return a new feature collection
      */
-    protected abstract SimpleFeatureCollection newCollection(
-            SimpleFeatureType schema, List<SimpleFeature> list);
+    protected abstract SimpleFeatureCollection newCollection(SimpleFeatureType schema, List<SimpleFeature> list);
 
     public Collection randomPiece(Collection original) {
-        LinkedList next = new LinkedList();
+        LinkedList next = new LinkedList<>();
         Iterator og = original.iterator();
         while (og.hasNext()) {
-            if (Math.random() > .5) {
+            if (ThreadLocalRandom.current().nextDouble() > .5) {
                 next.add(og.next());
             } else {
                 og.next();
@@ -106,7 +105,7 @@ public abstract class FeatureCollectionTest {
         LinkedList<F> next = new LinkedList<>();
         try (FeatureIterator<F> og = original.features()) {
             while (og.hasNext()) {
-                if (Math.random() > .5) {
+                if (ThreadLocalRandom.current().nextDouble() > .5) {
                     next.add(og.next());
                 } else {
                     og.next();
@@ -250,12 +249,11 @@ public abstract class FeatureCollectionTest {
     }
 
     /**
-     * A simple colleciton listener used to count change events to verify event handling during
-     * testing.
+     * A simple colleciton listener used to count change events to verify event handling during testing.
      *
      * @author Jody
      */
-    class ListenerProxy implements CollectionListener {
+    static class ListenerProxy implements CollectionListener {
         int changeEvents = 0;
 
         @Override

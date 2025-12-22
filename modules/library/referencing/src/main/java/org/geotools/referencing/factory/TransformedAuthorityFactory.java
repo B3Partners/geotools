@@ -16,6 +16,7 @@
  */
 package org.geotools.referencing.factory;
 
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -24,8 +25,50 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.measure.Unit;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.referencing.AuthorityFactory;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.IdentifiedObject;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CRSFactory;
+import org.geotools.api.referencing.crs.CompoundCRS;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.EngineeringCRS;
+import org.geotools.api.referencing.crs.GeneralDerivedCRS;
+import org.geotools.api.referencing.crs.GeocentricCRS;
+import org.geotools.api.referencing.crs.GeographicCRS;
+import org.geotools.api.referencing.crs.ImageCRS;
+import org.geotools.api.referencing.crs.ProjectedCRS;
+import org.geotools.api.referencing.crs.SingleCRS;
+import org.geotools.api.referencing.crs.TemporalCRS;
+import org.geotools.api.referencing.crs.VerticalCRS;
+import org.geotools.api.referencing.cs.AffineCS;
+import org.geotools.api.referencing.cs.AxisDirection;
+import org.geotools.api.referencing.cs.CSAuthorityFactory;
+import org.geotools.api.referencing.cs.CSFactory;
+import org.geotools.api.referencing.cs.CartesianCS;
+import org.geotools.api.referencing.cs.CoordinateSystem;
+import org.geotools.api.referencing.cs.CoordinateSystemAxis;
+import org.geotools.api.referencing.cs.CylindricalCS;
+import org.geotools.api.referencing.cs.EllipsoidalCS;
+import org.geotools.api.referencing.cs.LinearCS;
+import org.geotools.api.referencing.cs.PolarCS;
+import org.geotools.api.referencing.cs.SphericalCS;
+import org.geotools.api.referencing.cs.TimeCS;
+import org.geotools.api.referencing.cs.UserDefinedCS;
+import org.geotools.api.referencing.cs.VerticalCS;
+import org.geotools.api.referencing.datum.Datum;
+import org.geotools.api.referencing.datum.DatumAuthorityFactory;
+import org.geotools.api.referencing.datum.EngineeringDatum;
+import org.geotools.api.referencing.datum.GeodeticDatum;
+import org.geotools.api.referencing.datum.ImageDatum;
+import org.geotools.api.referencing.datum.TemporalDatum;
+import org.geotools.api.referencing.datum.VerticalDatum;
+import org.geotools.api.referencing.operation.Conversion;
+import org.geotools.api.referencing.operation.CoordinateOperation;
+import org.geotools.api.referencing.operation.CoordinateOperationAuthorityFactory;
+import org.geotools.api.referencing.operation.CoordinateOperationFactory;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.referencing.AbstractIdentifiedObject;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.referencing.cs.DefaultCoordinateSystemAxis;
@@ -35,70 +78,25 @@ import org.geotools.util.Classes;
 import org.geotools.util.Utilities;
 import org.geotools.util.factory.FactoryRegistryException;
 import org.geotools.util.factory.Hints;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.referencing.AuthorityFactory;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.IdentifiedObject;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CRSFactory;
-import org.opengis.referencing.crs.CompoundCRS;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.EngineeringCRS;
-import org.opengis.referencing.crs.GeneralDerivedCRS;
-import org.opengis.referencing.crs.GeocentricCRS;
-import org.opengis.referencing.crs.GeographicCRS;
-import org.opengis.referencing.crs.ImageCRS;
-import org.opengis.referencing.crs.ProjectedCRS;
-import org.opengis.referencing.crs.SingleCRS;
-import org.opengis.referencing.crs.TemporalCRS;
-import org.opengis.referencing.crs.VerticalCRS;
-import org.opengis.referencing.cs.AffineCS;
-import org.opengis.referencing.cs.AxisDirection;
-import org.opengis.referencing.cs.CSAuthorityFactory;
-import org.opengis.referencing.cs.CSFactory;
-import org.opengis.referencing.cs.CartesianCS;
-import org.opengis.referencing.cs.CoordinateSystem;
-import org.opengis.referencing.cs.CoordinateSystemAxis;
-import org.opengis.referencing.cs.CylindricalCS;
-import org.opengis.referencing.cs.EllipsoidalCS;
-import org.opengis.referencing.cs.LinearCS;
-import org.opengis.referencing.cs.PolarCS;
-import org.opengis.referencing.cs.SphericalCS;
-import org.opengis.referencing.cs.TimeCS;
-import org.opengis.referencing.cs.UserDefinedCS;
-import org.opengis.referencing.cs.VerticalCS;
-import org.opengis.referencing.datum.Datum;
-import org.opengis.referencing.datum.DatumAuthorityFactory;
-import org.opengis.referencing.datum.EngineeringDatum;
-import org.opengis.referencing.datum.GeodeticDatum;
-import org.opengis.referencing.datum.ImageDatum;
-import org.opengis.referencing.datum.TemporalDatum;
-import org.opengis.referencing.datum.VerticalDatum;
-import org.opengis.referencing.operation.Conversion;
-import org.opengis.referencing.operation.CoordinateOperation;
-import org.opengis.referencing.operation.CoordinateOperationAuthorityFactory;
-import org.opengis.referencing.operation.CoordinateOperationFactory;
 
 /**
- * An authority factory which returns modified {@linkplain CoordinateReferenceSystem CRS},
- * {@linkplain CoordinateSystem CS} or {@linkplain Datum datum} objects from other factory
- * implementations. This class provides a set of {@code replace(...)} methods to be overridden by
- * subclasses in order to replace some {@linkplain CoordinateReferenceSystem CRS}, {@linkplain
- * CoordinateSystem CS} or {@linkplain Datum datum} objects by other ones. The replacement rules are
- * determined by the subclass being used. For example the {@link OrderedAxisAuthorityFactory}
- * subclass can replace {@linkplain CoordinateSystem coordinate systems} using (<var>latitude</var>,
- * <var>longitude</var>) axis order by coordinate systems using (<var>longitude</var>,
+ * An authority factory which returns modified {@linkplain CoordinateReferenceSystem CRS}, {@linkplain CoordinateSystem
+ * CS} or {@linkplain Datum datum} objects from other factory implementations. This class provides a set of
+ * {@code replace(...)} methods to be overridden by subclasses in order to replace some
+ * {@linkplain CoordinateReferenceSystem CRS}, {@linkplain CoordinateSystem CS} or {@linkplain Datum datum} objects by
+ * other ones. The replacement rules are determined by the subclass being used. For example the
+ * {@link OrderedAxisAuthorityFactory} subclass can replace {@linkplain CoordinateSystem coordinate systems} using
+ * (<var>latitude</var>, <var>longitude</var>) axis order by coordinate systems using (<var>longitude</var>,
  * <var>latitude</var>) axis order.
  *
- * <p>All constructors are protected because this class must be subclassed in order to determine
- * which of the {@link DatumAuthorityFactory}, {@link CSAuthorityFactory} and {@link
- * CRSAuthorityFactory} interfaces to implement.
+ * <p>All constructors are protected because this class must be subclassed in order to determine which of the
+ * {@link DatumAuthorityFactory}, {@link CSAuthorityFactory} and {@link CRSAuthorityFactory} interfaces to implement.
  *
  * @since 2.3
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
- * @todo Use generic types for all {@code replace(...)} methods when we will be allowed to compile
- *     for J2SE 1.5, and remove casts in all {@code createXXX(...)} methods.
+ * @todo Use generic types for all {@code replace(...)} methods when we will be allowed to compile for J2SE 1.5, and
+ *     remove casts in all {@code createXXX(...)} methods.
  */
 public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
     /** Axis that need to be renamed if their direction changes. */
@@ -125,13 +123,11 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
     /**
      * Creates a wrapper around the specified factories.
      *
-     * @param crsFactory The {@linkplain CoordinateReferenceSystem coordinate reference system}
-     *     authority factory, or {@code null}.
-     * @param csFactory The {@linkplain CoordinateSystem coordinate system} authority factory, or
+     * @param crsFactory The {@linkplain CoordinateReferenceSystem coordinate reference system} authority factory, or
      *     {@code null}.
+     * @param csFactory The {@linkplain CoordinateSystem coordinate system} authority factory, or {@code null}.
      * @param datumFactory The {@linkplain Datum datum} authority factory, or {@code null}.
-     * @param opFactory The {@linkplain CoordinateOperation coordinate operation} authority factory,
-     *     or {@code null}.
+     * @param opFactory The {@linkplain CoordinateOperation coordinate operation} authority factory, or {@code null}.
      */
     protected TransformedAuthorityFactory(
             final CRSAuthorityFactory crsFactory,
@@ -142,11 +138,11 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
     }
 
     /**
-     * Creates a wrappers around the default factories for the specified authority. The factories
-     * are fetched using {@link ReferencingFactoryFinder}.
+     * Creates a wrappers around the default factories for the specified authority. The factories are fetched using
+     * {@link ReferencingFactoryFinder}.
      *
-     * @param authority The authority to wraps (example: {@code "EPSG"}). If {@code null}, then all
-     *     authority factories must be explicitly specified in the set of hints.
+     * @param authority The authority to wraps (example: {@code "EPSG"}). If {@code null}, then all authority factories
+     *     must be explicitly specified in the set of hints.
      * @param userHints An optional set of hints, or {@code null} if none.
      * @throws FactoryRegistryException if at least one factory can not be obtained.
      * @since 2.4
@@ -157,11 +153,10 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
     }
 
     /**
-     * Returns the priority for this factory. Priorities are used by {@link
-     * ReferencingFactoryFinder} for selecting a preferred factory when many are found for the same
-     * service. The default implementation returns <code>{@linkplain #priority priority} + 1</code>,
-     * which implies that this adapter has precedence over the wrapped factories. Subclasses should
-     * override this method if they want a different priority order for this instance.
+     * Returns the priority for this factory. Priorities are used by {@link ReferencingFactoryFinder} for selecting a
+     * preferred factory when many are found for the same service. The default implementation returns <code>
+     * {@linkplain #priority priority} + 1</code>, which implies that this adapter has precedence over the wrapped
+     * factories. Subclasses should override this method if they want a different priority order for this instance.
      */
     @Override
     public int getPriority() {
@@ -170,8 +165,7 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
 
     /**
      * Replaces the specified unit, if applicable. This method is invoked automatically by the
-     * {@link #replace(CoordinateSystem)} method. The default implementation returns the unit
-     * unchanged.
+     * {@link #replace(CoordinateSystem)} method. The default implementation returns the unit unchanged.
      *
      * @param units The units to replace.
      * @return The new units, or {@code units} if no change were needed.
@@ -184,8 +178,7 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
 
     /**
      * Replaces the specified direction, if applicable. This method is invoked automatically by the
-     * {@link #replace(CoordinateSystem)} method. The default implementation returns the axis
-     * direction unchanged.
+     * {@link #replace(CoordinateSystem)} method. The default implementation returns the axis direction unchanged.
      *
      * @param direction The axis direction to replace.
      * @return The new direction, or {@code direction} if no change were needed.
@@ -196,15 +189,14 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
     }
 
     /**
-     * Replaces (if needed) the specified axis by a new one. The default implementation invokes
-     * {@link #replace(Unit)} and {@link #replace(AxisDirection)}.
+     * Replaces (if needed) the specified axis by a new one. The default implementation invokes {@link #replace(Unit)}
+     * and {@link #replace(AxisDirection)}.
      *
      * @param axis The coordinate system axis to replace.
      * @return The new coordinate system axis, or {@code axis} if no change were needed.
      * @throws FactoryException if an error occured while creating the new coordinate system axis.
      */
     @Override
-    @SuppressWarnings("PMD.JumbledIncrementer")
     protected CoordinateSystemAxis replace(CoordinateSystemAxis axis) throws FactoryException {
         final AxisDirection oldDirection = axis.getDirection();
         final AxisDirection newDirection = replace(oldDirection);
@@ -237,18 +229,16 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
             final ReferencingFactoryContainer factories = getFactoryContainer(false);
             final CSFactory csFactory = factories.getCSFactory();
             final Map<String, ?> properties = getProperties(axis);
-            axis =
-                    csFactory.createCoordinateSystemAxis(
-                            properties, axis.getAbbreviation(), newDirection, newUnits);
+            axis = csFactory.createCoordinateSystemAxis(properties, axis.getAbbreviation(), newDirection, newUnits);
             axis = pool.unique(axis);
         }
         return axis;
     }
 
     /**
-     * Replaces (if needed) the specified coordinate system by a new one. The default implementation
-     * invokes {@link #replace(CoordinateSystemAxis) replace} for each axis. In addition, axis are
-     * sorted if this factory implements the {@link Comparator} interface.
+     * Replaces (if needed) the specified coordinate system by a new one. The default implementation invokes
+     * {@link #replace(CoordinateSystemAxis) replace} for each axis. In addition, axis are sorted if this factory
+     * implements the {@link Comparator} interface.
      *
      * @param cs The coordinate system to replace.
      * @return The new coordinate system, or {@code cs} if no change were needed.
@@ -263,14 +253,13 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
         for (int i = 0; i < dimension; i++) {
             orderedAxis[i] = replace(cs.getAxis(i));
         }
-        if (this instanceof Comparator) {
-            Arrays.sort(orderedAxis, (Comparator) this);
+        if (this instanceof Comparator comparator) {
+            Arrays.sort(orderedAxis, comparator);
         }
         for (int i = 0; i < dimension; i++) {
             if (!orderedAxis[i].equals(cs.getAxis(i))) {
                 CoordinateSystem modified = createCS(cs.getClass(), getProperties(cs), orderedAxis);
-                assert Classes.sameInterfaces(
-                        cs.getClass(), modified.getClass(), CoordinateSystem.class);
+                assert Classes.sameInterfaces(cs.getClass(), modified.getClass(), CoordinateSystem.class);
                 modified = pool.unique(modified);
                 return modified;
             }
@@ -280,9 +269,8 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
     }
 
     /**
-     * Replaces (if needed) the specified datum by a new one. The default implementation returns the
-     * datum unchanged. Subclasses should override this method if some datum replacements are
-     * desired.
+     * Replaces (if needed) the specified datum by a new one. The default implementation returns the datum unchanged.
+     * Subclasses should override this method if some datum replacements are desired.
      *
      * @param datum The datum to replace.
      * @return The new datum, or {@code datum} if no change were needed.
@@ -295,11 +283,10 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
     }
 
     /**
-     * Replaces (if needed) the specified coordinate reference system. The default implementation
-     * checks if there is a {@linkplain #replace(Datum) datum replacement} or a {@linkplain
-     * #replace(CoordinateSystem) coordinate system replacement}. If there is at least one of those,
-     * then this method returns a new coordinate reference system using the new datum and coordinate
-     * system.
+     * Replaces (if needed) the specified coordinate reference system. The default implementation checks if there is a
+     * {@linkplain #replace(Datum) datum replacement} or a {@linkplain #replace(CoordinateSystem) coordinate system
+     * replacement}. If there is at least one of those, then this method returns a new coordinate reference system using
+     * the new datum and coordinate system.
      *
      * @param crs The coordinate reference system to replace.
      * @return A new CRS, or {@code crs} if no change were needed.
@@ -307,16 +294,15 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
      */
     // @Override
     @Override
-    protected CoordinateReferenceSystem replace(final CoordinateReferenceSystem crs)
-            throws FactoryException {
+    protected CoordinateReferenceSystem replace(final CoordinateReferenceSystem crs) throws FactoryException {
         /*
          * Gets the replaced coordinate system and datum, and checks if there is any change.
          */
         final CoordinateSystem oldCS = crs.getCoordinateSystem();
         final CoordinateSystem cs = replace(oldCS);
         final Datum oldDatum, datum;
-        if (crs instanceof SingleCRS) {
-            oldDatum = ((SingleCRS) crs).getDatum();
+        if (crs instanceof SingleCRS rS) {
+            oldDatum = rS.getDatum();
             datum = replace(oldDatum);
         } else {
             datum = oldDatum = null;
@@ -328,8 +314,7 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
          * authority code.
          */
         CoordinateReferenceSystem modified;
-        if (crs instanceof GeneralDerivedCRS) {
-            final GeneralDerivedCRS derivedCRS = (GeneralDerivedCRS) crs;
+        if (crs instanceof GeneralDerivedCRS derivedCRS) {
             final CoordinateReferenceSystem oldBaseCRS = derivedCRS.getBaseCRS();
             final CoordinateReferenceSystem baseCRS = replace(oldBaseCRS);
             if (sameCS && Utilities.equals(baseCRS, oldBaseCRS)) {
@@ -339,19 +324,15 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
             final ReferencingFactoryContainer factories = getFactoryContainer(true);
             final CRSFactory crsFactory = factories.getCRSFactory();
             Conversion fromBase = derivedCRS.getConversionFromBase();
-            fromBase =
-                    new DefiningConversion(
-                            getProperties(fromBase),
-                            fromBase.getMethod(),
-                            fromBase.getParameterValues());
+            fromBase = new DefiningConversion(
+                    getProperties(fromBase), fromBase.getMethod(), fromBase.getParameterValues());
             if (crs instanceof ProjectedCRS) {
                 modified =
-                        crsFactory.createProjectedCRS(
-                                properties, (GeographicCRS) baseCRS, fromBase, (CartesianCS) cs);
+                        crsFactory.createProjectedCRS(properties, (GeographicCRS) baseCRS, fromBase, (CartesianCS) cs);
             } else {
                 // TODO: Need a createDerivedCRS method.
-                throw new FactoryException(
-                        Errors.format(ErrorKeys.UNSUPPORTED_CRS_$1, crs.getName().getCode()));
+                final Object arg0 = crs.getName().getCode();
+                throw new FactoryException(MessageFormat.format(ErrorKeys.UNSUPPORTED_CRS_$1, arg0));
             }
         } else if (sameCS) {
             return crs;
@@ -360,41 +341,32 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
             final ReferencingFactoryContainer factories = getFactoryContainer(true);
             final CRSFactory crsFactory = factories.getCRSFactory();
             if (crs instanceof GeographicCRS) {
-                modified =
-                        crsFactory.createGeographicCRS(
-                                properties, (GeodeticDatum) datum, (EllipsoidalCS) cs);
+                modified = crsFactory.createGeographicCRS(properties, (GeodeticDatum) datum, (EllipsoidalCS) cs);
             } else if (crs instanceof GeocentricCRS) {
                 final GeodeticDatum gd = (GeodeticDatum) datum;
-                if (cs instanceof CartesianCS) {
-                    modified = crsFactory.createGeocentricCRS(properties, gd, (CartesianCS) cs);
+                if (cs instanceof CartesianCS cS) {
+                    modified = crsFactory.createGeocentricCRS(properties, gd, cS);
                 } else {
                     modified = crsFactory.createGeocentricCRS(properties, gd, (SphericalCS) cs);
                 }
             } else if (crs instanceof VerticalCRS) {
-                modified =
-                        crsFactory.createVerticalCRS(
-                                properties, (VerticalDatum) datum, (VerticalCS) cs);
+                modified = crsFactory.createVerticalCRS(properties, (VerticalDatum) datum, (VerticalCS) cs);
             } else if (crs instanceof TemporalCRS) {
-                modified =
-                        crsFactory.createTemporalCRS(
-                                properties, (TemporalDatum) datum, (TimeCS) cs);
+                modified = crsFactory.createTemporalCRS(properties, (TemporalDatum) datum, (TimeCS) cs);
             } else if (crs instanceof ImageCRS) {
                 modified = crsFactory.createImageCRS(properties, (ImageDatum) datum, (AffineCS) cs);
             } else if (crs instanceof EngineeringCRS) {
-                modified =
-                        crsFactory.createEngineeringCRS(properties, (EngineeringDatum) datum, cs);
-            } else if (crs instanceof CompoundCRS) {
-                final List<CoordinateReferenceSystem> elements =
-                        ((CompoundCRS) crs).getCoordinateReferenceSystems();
-                final CoordinateReferenceSystem[] m =
-                        new CoordinateReferenceSystem[elements.size()];
+                modified = crsFactory.createEngineeringCRS(properties, (EngineeringDatum) datum, cs);
+            } else if (crs instanceof CompoundCRS rS) {
+                final List<CoordinateReferenceSystem> elements = rS.getCoordinateReferenceSystems();
+                final CoordinateReferenceSystem[] m = new CoordinateReferenceSystem[elements.size()];
                 for (int i = 0; i < m.length; i++) {
                     m[i] = replace(elements.get(i));
                 }
                 modified = crsFactory.createCompoundCRS(properties, m);
             } else {
-                throw new FactoryException(
-                        Errors.format(ErrorKeys.UNSUPPORTED_CRS_$1, crs.getName().getCode()));
+                final Object arg0 = crs.getName().getCode();
+                throw new FactoryException(MessageFormat.format(ErrorKeys.UNSUPPORTED_CRS_$1, arg0));
             }
         }
         modified = pool.unique(modified);
@@ -402,10 +374,9 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
     }
 
     /**
-     * Replaces (if needed) the specified coordinate operation. The default implementation checks if
-     * there is a source or target {@linkplain #replace(CoordinateReferenceSystem) CRS replacement}.
-     * If there is at least one of those, then this method returns a new coordinate operation using
-     * the new CRS.
+     * Replaces (if needed) the specified coordinate operation. The default implementation checks if there is a source
+     * or target {@linkplain #replace(CoordinateReferenceSystem) CRS replacement}. If there is at least one of those,
+     * then this method returns a new coordinate operation using the new CRS.
      *
      * @param operation The coordinate operation to replace.
      * @return A new operation, or {@code operation} if no change were needed.
@@ -413,12 +384,11 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
      */
     // @Override
     @Override
-    protected CoordinateOperation replace(final CoordinateOperation operation)
-            throws FactoryException {
+    protected CoordinateOperation replace(final CoordinateOperation operation) throws FactoryException {
         final CoordinateReferenceSystem oldSrcCRS = operation.getSourceCRS();
         final CoordinateReferenceSystem oldTgtCRS = operation.getTargetCRS();
-        final CoordinateReferenceSystem sourceCRS = (oldSrcCRS != null) ? replace(oldSrcCRS) : null;
-        final CoordinateReferenceSystem targetCRS = (oldTgtCRS != null) ? replace(oldTgtCRS) : null;
+        final CoordinateReferenceSystem sourceCRS = oldSrcCRS != null ? replace(oldSrcCRS) : null;
+        final CoordinateReferenceSystem targetCRS = oldTgtCRS != null ? replace(oldTgtCRS) : null;
         if (Utilities.equals(oldSrcCRS, sourceCRS) && Utilities.equals(oldTgtCRS, targetCRS)) {
             return operation;
         }
@@ -432,13 +402,13 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
     }
 
     /**
-     * Creates a new coordinate system of the specified kind. This method is invoked automatically
-     * by {@link #replace(CoordinateSystem)} after it determined that the axis need to be changed.
+     * Creates a new coordinate system of the specified kind. This method is invoked automatically by
+     * {@link #replace(CoordinateSystem)} after it determined that the axis need to be changed.
      *
      * @param type The coordinate system type to create.
      * @param properties The properties to gives to the new coordinate system.
-     * @param axis The axis to give to the new coordinate system. Subclasses are allowed to write
-     *     directly in this array (no need to copy it).
+     * @param axis The axis to give to the new coordinate system. Subclasses are allowed to write directly in this array
+     *     (no need to copy it).
      * @return A new coordinate system of the specified kind with the specified axis.
      * @throws FactoryException if the coordinate system can't be created.
      */
@@ -502,14 +472,13 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
                     return csFactory.createUserDefinedCS(properties, axis[0], axis[1], axis[2]);
             }
         }
-        throw new FactoryException(Errors.format(ErrorKeys.UNSUPPORTED_COORDINATE_SYSTEM_$1, type));
+        throw new FactoryException(MessageFormat.format(ErrorKeys.UNSUPPORTED_COORDINATE_SYSTEM_$1, type));
     }
 
     /**
-     * Returns the properties to be given to an object replacing an original one. If the new object
-     * keep the same authority, then all metadata are preserved. Otherwise (i.e. if a new authority
-     * is given to the new object), then the old identifiers will be removed from the new object
-     * metadata.
+     * Returns the properties to be given to an object replacing an original one. If the new object keep the same
+     * authority, then all metadata are preserved. Otherwise (i.e. if a new authority is given to the new object), then
+     * the old identifiers will be removed from the new object metadata.
      *
      * @param object The original object.
      * @return The properties to be given to the object created as a substitute of {@code object}.
@@ -524,9 +493,9 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
     }
 
     /**
-     * Creates an operation from coordinate reference system codes. The default implementation first
-     * invokes the same method from the {@linkplain #operationFactory underlying operation factory},
-     * and next invokes {@link #replace(CoordinateOperation) replace} for each operations.
+     * Creates an operation from coordinate reference system codes. The default implementation first invokes the same
+     * method from the {@linkplain #operationFactory underlying operation factory}, and next invokes
+     * {@link #replace(CoordinateOperation) replace} for each operations.
      */
     @Override
     @SuppressWarnings("PMD.ForLoopCanBeForeach")
@@ -534,16 +503,15 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
             final String sourceCode, final String targetCode) throws FactoryException {
         final Set<CoordinateOperation> operations =
                 super.createFromCoordinateReferenceSystemCodes(sourceCode, targetCode);
-        final Set<CoordinateOperation> modified =
-                new LinkedHashSet<>((int) (operations.size() / 0.75f) + 1);
+        final Set<CoordinateOperation> modified = new LinkedHashSet<>((int) (operations.size() / 0.75f) + 1);
         for (final Iterator<CoordinateOperation> it = operations.iterator(); it.hasNext(); ) {
             final CoordinateOperation operation;
             try {
                 operation = it.next();
             } catch (BackingStoreException exception) {
                 final Throwable cause = exception.getCause();
-                if (cause instanceof FactoryException) {
-                    throw (FactoryException) cause;
+                if (cause instanceof FactoryException factoryException) {
+                    throw factoryException;
                 } else {
                     throw exception;
                 }
@@ -554,9 +522,9 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
     }
 
     /**
-     * Releases resources immediately instead of waiting for the garbage collector. This method do
-     * <strong>not</strong> dispose the resources of wrapped factories (e.g. {@link #crsFactory
-     * crsFactory}), because they may still in use by other classes.
+     * Releases resources immediately instead of waiting for the garbage collector. This method do <strong>not</strong>
+     * dispose the resources of wrapped factories (e.g. {@link #crsFactory crsFactory}), because they may still in use
+     * by other classes.
      */
     @Override
     public synchronized void dispose() throws FactoryException {

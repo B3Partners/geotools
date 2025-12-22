@@ -18,12 +18,12 @@
 package org.geotools.data.vpf;
 
 import java.io.IOException;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.Query;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * VPFFeature Source
@@ -37,8 +37,7 @@ public class VPFLibFeatureSource extends VPFFeatureSource {
     }
 
     @Override
-    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query)
-            throws IOException {
+    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query) throws IOException {
 
         VPFLibrary vpf = (VPFLibrary) this.getDataStore();
         VPFFeatureType featureType = vpf.getFeatureType(this.entry);
@@ -50,10 +49,7 @@ public class VPFLibFeatureSource extends VPFFeatureSource {
         return -1; // feature by feature scan required to count records
     }
 
-    /**
-     * Implementation that generates the total bounds (many file formats record this information in
-     * the header)
-     */
+    /** Implementation that generates the total bounds (many file formats record this information in the header) */
     @Override
     protected ReferencedEnvelope getBoundsInternal(Query query) throws IOException {
         return null; // feature by feature scan required to establish bounds

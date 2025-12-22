@@ -20,21 +20,21 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.ObjectStreamException;
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * An immutable subclass of a {@link Rectangle2D} with bounds extending toward infinities. The
- * {@link #getMinX} and {@link #getMinY} methods return always {@link
- * java.lang.Double#NEGATIVE_INFINITY}, while the {@link #getMaxX} and {@link #getMaxY} methods
- * return always {@link java.lang.Double#POSITIVE_INFINITY}. This rectangle can be used as argument
- * in the {@link XRectangle2D} constructor for initializing a new {@code XRectangle2D} to infinite
- * bounds.
+ * An immutable subclass of a {@link Rectangle2D} with bounds extending toward infinities. The {@link #getMinX} and
+ * {@link #getMinY} methods return always {@link java.lang.Double#NEGATIVE_INFINITY}, while the {@link #getMaxX} and
+ * {@link #getMaxY} methods return always {@link java.lang.Double#POSITIVE_INFINITY}. This rectangle can be used as
+ * argument in the {@link XRectangle2D} constructor for initializing a new {@code XRectangle2D} to infinite bounds.
  *
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
  */
 final class InfiniteRectangle2D extends Rectangle2D implements Serializable {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 5281254268988984523L;
 
     /** A singleton instance of {@code InfiniteRectangle2D}. */
@@ -194,8 +194,8 @@ final class InfiniteRectangle2D extends Rectangle2D implements Serializable {
     }
 
     /**
-     * Returns {@code this}, since this rectangle can't be extended. No need to returns a clone,
-     * since this rectangle is immutable.
+     * Returns {@code this}, since this rectangle can't be extended. No need to returns a clone, since this rectangle is
+     * immutable.
      */
     @Override
     public Rectangle2D createUnion(Rectangle2D rect) {

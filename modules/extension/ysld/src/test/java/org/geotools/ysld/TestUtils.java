@@ -31,18 +31,17 @@ import static org.hamcrest.Matchers.nullValue;
 
 import java.awt.Color;
 import java.util.Arrays;
-import java.util.regex.Pattern;
-import org.geotools.styling.Rule;
-import org.geotools.ysld.parse.ScaleRange;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.NilExpression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.style.Rule;
+import org.geotools.styling.zoom.ScaleRange;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.NilExpression;
-import org.opengis.filter.expression.PropertyName;
 
 public enum TestUtils {
     ;
@@ -89,8 +88,7 @@ public enum TestUtils {
     /** Matches as an attribute expression for a named attribute. */
     public static Matcher<Expression> attribute(String name) {
         return Matchers.allOf(
-                Matchers.instanceOf(PropertyName.class),
-                Matchers.hasProperty("propertyName", equalTo(name)));
+                Matchers.instanceOf(PropertyName.class), Matchers.hasProperty("propertyName", equalTo(name)));
     }
 
     /** Matches a function with the given name and parameters matching the given matchers. */
@@ -100,8 +98,7 @@ public enum TestUtils {
     }
 
     /** Matches a function with the given name and a parameter list matching the given matcher. */
-    public static Matcher<Expression> function(
-            String name, Matcher<? extends Iterable<Expression>> parameters) {
+    public static Matcher<Expression> function(String name, Matcher<? extends Iterable<Expression>> parameters) {
         return allOf(
                 instanceOf(Function.class),
                 hasProperty("functionName", hasProperty("name", equalTo(name))),
@@ -110,7 +107,7 @@ public enum TestUtils {
 
     /** Compares the string representation of the object being matched to that of value. */
     public static Matcher<? extends Object> lexEqualTo(final Object value) {
-        return new BaseMatcher<Object>() {
+        return new BaseMatcher<>() {
 
             @Override
             public boolean matches(Object arg0) {
@@ -128,17 +125,17 @@ public enum TestUtils {
     }
 
     /**
-     * Converts a Number to double, otherwise converts to string and then parses as double then
-     * matches to the given value.
+     * Converts a Number to double, otherwise converts to string and then parses as double then matches to the given
+     * value.
      */
     public static Matcher<? extends Object> numEqualTo(final double value, final double epsilon) {
-        return new BaseMatcher<Object>() {
+        return new BaseMatcher<>() {
 
             @Override
             public boolean matches(Object obj) {
                 double num;
-                if (obj instanceof Number) {
-                    num = ((Number) obj).doubleValue();
+                if (obj instanceof Number number) {
+                    num = number.doubleValue();
                 } else {
                     num = Double.parseDouble(obj.toString());
                 }
@@ -154,17 +151,17 @@ public enum TestUtils {
     }
 
     /**
-     * Converts a Number to long, otherwise converts to string and then parses as double then
-     * matches to the given value.
+     * Converts a Number to long, otherwise converts to string and then parses as double then matches to the given
+     * value.
      */
     public static Matcher<? extends Object> numEqualTo(final long value) {
-        return new BaseMatcher<Object>() {
+        return new BaseMatcher<>() {
 
             @Override
             public boolean matches(Object obj) {
                 double num;
-                if (obj instanceof Number) {
-                    num = ((Number) obj).longValue();
+                if (obj instanceof Number number) {
+                    num = number.longValue();
                 } else {
                     num = Long.parseLong(obj.toString());
                 }
@@ -179,7 +176,7 @@ public enum TestUtils {
     }
 
     public static Matcher<String> asHexInt(final Matcher<Integer> m) {
-        return new BaseMatcher<String>() {
+        return new BaseMatcher<>() {
             @Override
             public boolean matches(Object arg0) {
                 return m.matches(Integer.parseInt((String) arg0, 16));
@@ -193,7 +190,7 @@ public enum TestUtils {
     }
 
     public static Matcher<String> asColor(final Matcher<Color> m) {
-        return new BaseMatcher<String>() {
+        return new BaseMatcher<>() {
             @Override
             public boolean matches(Object arg0) {
                 Color c;
@@ -214,14 +211,13 @@ public enum TestUtils {
 
     @SuppressWarnings("unchecked")
     public static Matcher<Object> isColor(Color c) {
-        String hex = String.format("#%06x", c.getRGB() & 0x00FFFFFF);
+        String hex = "#%06x".formatted(c.getRGB() & 0x00FFFFFF);
         return Matchers.describedAs(
                 "is the colour %0 %1",
                 anyOf(
                         (Matcher) allOf(instanceOf(String.class), asColor(equalTo(c))),
                         (Matcher) allOf(instanceOf(Color.class), equalTo(c)),
-                        (Matcher)
-                                allOf(instanceOf(Integer.class), equalTo(c.getRGB() & 0x00FFFFFF))),
+                        (Matcher) allOf(instanceOf(Integer.class), equalTo(c.getRGB() & 0x00FFFFFF))),
                 hex,
                 c);
     }
@@ -251,7 +247,7 @@ public enum TestUtils {
                         value = seq.get(i);
                     }
                 }
-                return (m.matches(value));
+                return m.matches(value);
             }
 
             @Override
@@ -285,7 +281,7 @@ public enum TestUtils {
                         value = map.get(key);
                     }
                 }
-                return (m.matches(value));
+                return m.matches(value);
             }
 
             @Override
@@ -303,10 +299,6 @@ public enum TestUtils {
         return yHasEntry(key, Matchers.any(Object.class));
     }
 
-    private static final Pattern TUPLE_STRIP = Pattern.compile("^\\s*\\(([^)]*)\\)\\s*$");
-
-    private static final Pattern TUPLE_SPLIT = Pattern.compile("\\s*,\\s*");
-
     /** Matches a YamlSeq */
     @SafeVarargs
     @SuppressWarnings("unchecked")
@@ -316,8 +308,8 @@ public enum TestUtils {
             @Override
             public boolean matches(Object obj) {
                 YamlSeq seq;
-                if (obj instanceof YamlSeq) {
-                    seq = (YamlSeq) obj;
+                if (obj instanceof YamlSeq yamlSeq) {
+                    seq = yamlSeq;
                 } else {
                     return false;
                 }
@@ -350,7 +342,7 @@ public enum TestUtils {
 
     /** Matches a YSLD Tuple with n values */
     @SuppressWarnings("unchecked")
-    public static Matcher<Object> yTuple(int n) {
+    public static Matcher<? extends Object> yTuple(int n) {
         Matcher[] matchers = new Matcher[n];
         Arrays.fill(matchers, anything());
         return Matchers.describedAs("A YSLD Tuple with %0 values", yTuple(matchers), n);
@@ -363,8 +355,7 @@ public enum TestUtils {
 
             @Override
             public boolean matches(Object obj) {
-                if (obj instanceof String) {
-                    String str = (String) obj;
+                if (obj instanceof String str) {
                     if (str.startsWith("'") && str.endsWith("'")) {
                         str = str.substring(1, str.length() - 1);
                     } else if (str.startsWith("\"") && str.endsWith("\"")) {

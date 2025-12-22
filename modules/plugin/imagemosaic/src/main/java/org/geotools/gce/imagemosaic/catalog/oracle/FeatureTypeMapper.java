@@ -17,15 +17,15 @@
 package org.geotools.gce.imagemosaic.catalog.oracle;
 
 import java.util.List;
-import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.transform.Definition;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * A simple interface which provides FeatureType mapping information such as the name of the
- * original type name and the mapped one, the wrapped feature type as well as the customized version
+ * A simple interface which provides FeatureType mapping information such as the name of the original type name and the
+ * mapped one, the wrapped feature type as well as the customized version
  *
  * @author Daniele Romagnoli, GeoSolutions SAS @TODO: Move that interface on gt-transform when ready
  */

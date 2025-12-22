@@ -23,10 +23,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.capability.ArithmeticOperators;
 import org.geotools.filter.v1_1.OGC;
 import org.geotools.xsd.Binding;
 import org.junit.Test;
-import org.opengis.filter.capability.ArithmeticOperators;
 import org.w3c.dom.Document;
 
 /**
@@ -52,7 +52,8 @@ public class ArithmeticOperatorsTypeBindingTest extends OGCTestSupport {
 
     @Test
     public void testType() {
-        assertEquals(ArithmeticOperators.class, binding(OGC.ArithmeticOperatorsType).getType());
+        assertEquals(
+                ArithmeticOperators.class, binding(OGC.ArithmeticOperatorsType).getType());
     }
 
     @Test
@@ -82,20 +83,18 @@ public class ArithmeticOperatorsTypeBindingTest extends OGCTestSupport {
 
     @Test
     public void testEncode() throws Exception {
-        Document dom =
-                encode(
-                        FilterMockData.arithmetic(true),
-                        new QName(OGC.NAMESPACE, "Arithmetic_Operators"),
-                        OGC.ArithmeticOperatorsType);
+        Document dom = encode(
+                FilterMockData.arithmetic(true),
+                new QName(OGC.NAMESPACE, "Arithmetic_Operators"),
+                OGC.ArithmeticOperatorsType);
 
         assertNotNull(getElementByQName(dom, OGC.SimpleArithmetic));
         assertNotNull(getElementByQName(dom, new QName(OGC.NAMESPACE, "Functions")));
 
-        dom =
-                encode(
-                        FilterMockData.arithmetic(false),
-                        new QName(OGC.NAMESPACE, "Arithmetic_Operators"),
-                        OGC.ArithmeticOperatorsType);
+        dom = encode(
+                FilterMockData.arithmetic(false),
+                new QName(OGC.NAMESPACE, "Arithmetic_Operators"),
+                OGC.ArithmeticOperatorsType);
         assertNull(getElementByQName(dom, OGC.SimpleArithmetic));
         assertNotNull(getElementByQName(dom, new QName(OGC.NAMESPACE, "Functions")));
     }

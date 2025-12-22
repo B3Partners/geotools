@@ -16,16 +16,16 @@
  */
 package org.geotools.renderer.lite;
 
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.style.ColorMapEntry;
 import org.geotools.filter.visitor.SimplifyingFilterVisitor;
 import org.geotools.renderer.style.ExpressionExtractor;
-import org.geotools.styling.ColorMapEntry;
 import org.geotools.styling.visitor.DuplicatingStyleVisitor;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
 
 /**
- * Simple support class created with the intention of expanding env function in raster symbolizer
- * before passing it to another thread for rendering
+ * Simple support class created with the intention of expanding env function in raster symbolizer before passing it to
+ * another thread for rendering
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -54,8 +54,7 @@ class ColorMapEntryResolver extends DuplicatingStyleVisitor {
         copy.setQuantity(copyCqlExpression(colorMapEntry.getQuantity()));
 
         if (STRICT && !copy.equals(colorMapEntry)) {
-            throw new IllegalStateException(
-                    "Was unable to duplicate provided ColorMapEntry:" + colorMapEntry);
+            throw new IllegalStateException("Was unable to duplicate provided ColorMapEntry:" + colorMapEntry);
         }
         pages.push(copy);
     }

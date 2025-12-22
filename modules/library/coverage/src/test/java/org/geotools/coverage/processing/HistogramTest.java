@@ -19,11 +19,11 @@ package org.geotools.coverage.processing;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import javax.media.jai.Histogram;
+import org.eclipse.imagen.Histogram;
+import org.geotools.api.parameter.ParameterValueGroup;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.parameter.ParameterValueGroup;
 
 public class HistogramTest extends GridProcessingTestBase {
     /** The grid coverage to test. */

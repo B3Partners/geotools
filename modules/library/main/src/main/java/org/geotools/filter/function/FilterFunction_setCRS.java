@@ -18,22 +18,18 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class FilterFunction_setCRS extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "setCRS",
-                    Geometry.class,
-                    parameter("geometry", Geometry.class),
-                    parameter("CRS", String.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "setCRS", Geometry.class, parameter("geometry", Geometry.class), parameter("CRS", String.class));
 
     public FilterFunction_setCRS() {
         super(NAME);
@@ -48,8 +44,7 @@ public class FilterFunction_setCRS extends FunctionExpressionImpl {
             geom = getExpression(0).evaluate(feature, Geometry.class);
         } catch (Exception e) // probably a type error
         {
-            throw new IllegalArgumentException(
-                    "Expected argument of type Geometry for argument #0");
+            throw new IllegalArgumentException("Expected argument of type Geometry for argument #0");
         }
 
         try { // try to parse the SRS

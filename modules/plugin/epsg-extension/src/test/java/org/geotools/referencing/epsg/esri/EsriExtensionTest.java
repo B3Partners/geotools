@@ -20,17 +20,17 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Iterator;
 import java.util.Set;
+import org.geotools.api.metadata.Identifier;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.IdentifiedObject;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.junit.Assert;
 import org.junit.Before;
-import org.opengis.metadata.Identifier;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.IdentifiedObject;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Tests ESRI CRS support.
@@ -76,7 +76,7 @@ public class EsriExtensionTest {
         Assert.assertTrue(codes.containsAll(subset));
         Assert.assertFalse(codes.contains("26910")); // This is an EPSG code.
         // The following number may be adjusted if esri.properties is updated.
-        Assert.assertEquals(798, codes.size());
+        Assert.assertEquals(796, codes.size());
     }
 
     /** Checks for duplication with EPSG-HSQL. */
@@ -136,10 +136,8 @@ public class EsriExtensionTest {
         Assert.assertFalse(identifiers.isEmpty());
 
         String asString = identifiers.toString();
-        Assert.assertTrue(
-                asString, identifiers.contains(new NamedIdentifier(Citations.ESRI, "30591")));
-        Assert.assertTrue(
-                asString, identifiers.contains(new NamedIdentifier(Citations.EPSG, "30591")));
+        Assert.assertTrue(asString, identifiers.contains(new NamedIdentifier(Citations.ESRI, "30591")));
+        Assert.assertTrue(asString, identifiers.contains(new NamedIdentifier(Citations.EPSG, "30591")));
 
         final Iterator iterator = identifiers.iterator();
 

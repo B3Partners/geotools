@@ -16,9 +16,11 @@
  */
 package org.geotools.coverageio;
 
+import it.geosolutions.imageio.gdalframework.GDALUtilities;
 import it.geosolutions.imageio.stream.input.FileImageInputStreamExtImpl;
-import it.geosolutions.jaiext.vectorbin.ROIGeometry;
+import java.awt.Color;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.image.ColorModel;
@@ -26,46 +28,53 @@ import java.awt.image.SampleModel;
 import java.awt.image.renderable.ParameterBlock;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.spi.ImageReaderSpi;
-import javax.media.jai.JAI;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.ROI;
+import org.eclipse.imagen.ImageLayout;
+import org.eclipse.imagen.ImageN;
+import org.eclipse.imagen.PlanarImage;
+import org.eclipse.imagen.ROI;
+import org.eclipse.imagen.media.range.NoDataContainer;
+import org.eclipse.imagen.media.vectorbin.ROIGeometry;
+import org.geotools.api.coverage.ColorInterpretation;
+import org.geotools.api.coverage.grid.GridCoverage;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.coverage.Category;
 import org.geotools.coverage.GridSampleDimension;
 import org.geotools.coverage.TypeMap;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.grid.io.footprint.FootprintBehavior;
 import org.geotools.coverage.grid.io.footprint.MultiLevelROI;
 import org.geotools.coverage.util.CoverageUtilities;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.metadata.i18n.Vocabulary;
+import org.geotools.metadata.i18n.VocabularyKeys;
 import org.geotools.referencing.operation.matrix.XAffineTransform;
 import org.geotools.referencing.operation.transform.ConcatenatedTransform;
 import org.geotools.referencing.operation.transform.ProjectiveTransform;
+import org.geotools.util.NumberRange;
 import org.geotools.util.factory.Hints;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.coverage.ColorInterpretation;
-import org.opengis.coverage.grid.GridCoverage;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
- * A RasterLayerResponse. An instance of this class is produced everytime a requestCoverage is
- * called to a reader.
+ * A RasterLayerResponse. An instance of this class is produced everytime a requestCoverage is called to a reader.
  *
  * @author Daniele Romagnoli, GeoSolutions
  */
 class RasterLayerResponse {
 
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(RasterLayerResponse.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(RasterLayerResponse.class);
 
     /** The GridCoverage produced after a {@link #compute()} method call */
     private GridCoverage gridCoverage;
@@ -91,7 +100,7 @@ class RasterLayerResponse {
     private MathTransform raster2Model;
 
     /** The base envelope related to the input coverage */
-    private GeneralEnvelope coverageEnvelope;
+    private GeneralBounds coverageEnvelope;
 
     /** The CRS of the input coverage */
     private CoordinateReferenceSystem coverageCRS;
@@ -105,19 +114,17 @@ class RasterLayerResponse {
     private FootprintBehavior footprintBehavior = FootprintBehavior.None;
 
     /**
-     * Construct a {@code RasterLayerResponse} given a specific {@link RasterLayerRequest}, a {@code
-     * GridCoverageFactory} to produce {@code GridCoverage}s and an {@code ImageReaderSpi} to be
-     * used for instantiating an Image Reader for a read operation,
+     * Construct a {@code RasterLayerResponse} given a specific {@link RasterLayerRequest}, a
+     * {@code GridCoverageFactory} to produce {@code GridCoverage}s and an {@code ImageReaderSpi} to be used for
+     * instantiating an Image Reader for a read operation,
      *
      * @param request a {@link RasterLayerRequest} originating this response.
-     * @param coverageFactory a {@code GridCoverageFactory} to produce a {@code GridCoverage} when
-     *     calling the {@link #compute()} method.
+     * @param coverageFactory a {@code GridCoverageFactory} to produce a {@code GridCoverage} when calling the
+     *     {@link #compute()} method.
      * @param readerSpi the Image Reader Service provider interface.
      */
     public RasterLayerResponse(
-            RasterLayerRequest request,
-            GridCoverageFactory coverageFactory,
-            ImageReaderSpi readerSpi) {
+            RasterLayerRequest request, GridCoverageFactory coverageFactory, ImageReaderSpi readerSpi) {
         originatingCoverageRequest = request;
         hints = request.getHints();
         coverageEnvelope = request.getCoverageEnvelope();
@@ -131,8 +138,7 @@ class RasterLayerResponse {
     }
 
     /**
-     * @return the {@link GridCoverage} produced as computation of this response using the {@link
-     *     #compute()} method.
+     * @return the {@link GridCoverage} produced as computation of this response using the {@link #compute()} method.
      * @uml.property name="gridCoverage"
      */
     public GridCoverage getGridCoverage() {
@@ -148,8 +154,8 @@ class RasterLayerResponse {
     }
 
     /**
-     * Compute the coverage request and produce a grid coverage which will be returned by {@link
-     * #getGridCoverage()}. The produced grid coverage may be {@code null} in case of empty request.
+     * Compute the coverage request and produce a grid coverage which will be returned by {@link #getGridCoverage()}.
+     * The produced grid coverage may be {@code null} in case of empty request.
      */
     public void compute() throws IOException {
         originatingCoverageRequest.prepare();
@@ -159,70 +165,55 @@ class RasterLayerResponse {
         } else {
             final ImageReadParam imageReadParam = originatingCoverageRequest.getImageReadParam();
             final File input = originatingCoverageRequest.getInput();
-            final boolean useMultithreading = originatingCoverageRequest.useMultithreading();
             final boolean newTransform = originatingCoverageRequest.isAdjustGridToWorldSet();
             final boolean useJAI = originatingCoverageRequest.useJAI();
-            gridCoverage =
-                    createCoverage(input, imageReadParam, useJAI, useMultithreading, newTransform);
+            gridCoverage = createCoverage(input, imageReadParam, useJAI, newTransform);
         }
     }
 
     /**
-     * This method creates the GridCoverage2D from the underlying file given a specified envelope,
-     * and a requested dimension.
+     * This method creates the GridCoverage2D from the underlying file given a specified envelope, and a requested
+     * dimension.
      *
-     * @param useJAI specify if the underlying read process should leverage on a JAI ImageRead
-     *     operation or a simple direct call to the {@code read} method of a proper {@code
-     *     ImageReader}.
-     * @param useMultithreading specify if the underlying read process should use multithreading
-     *     when a JAI ImageRead operation is requested
+     * @param useJAI specify if the underlying read process should leverage on a ImageN ImageRead operation or a simple
+     *     direct call to the {@code read} method of a proper {@code ImageReader}.
      * @return a {@code GridCoverage}
      * @throws java.io.IOException
      */
     private GridCoverage createCoverage(
-            File input,
-            ImageReadParam imageReadParam,
-            final boolean useJAI,
-            final boolean useMultithreading,
-            final boolean adjustGridToWorld)
+            File input, ImageReadParam imageReadParam, final boolean useJAI, final boolean adjustGridToWorld)
             throws IOException {
         // ////////////////////////////////////////////////////////////////////
         //
         // Doing an image read for reading the coverage.
         //
         // ////////////////////////////////////////////////////////////////////
-        PlanarImage raster = readRaster(input, useJAI, imageReadParam, useMultithreading);
+        PlanarImage raster = readRaster(input, useJAI, imageReadParam);
 
         final boolean useFootprint =
-                multiLevelRoi != null
-                        && footprintBehavior != null
-                        && footprintBehavior.handleFootprints();
+                multiLevelRoi != null && footprintBehavior != null && footprintBehavior.handleFootprints();
         Geometry inclusionGeometry = useFootprint ? multiLevelRoi.getFootprint() : null;
         ReferencedEnvelope granuleBBOX = originatingCoverageRequest.getCoverageBBOX();
-        ReferencedEnvelope cropBBox =
-                new ReferencedEnvelope(originatingCoverageRequest.getRequestedBBox());
-        final ReferencedEnvelope bbox =
-                useFootprint
-                        ? new ReferencedEnvelope(
-                                granuleBBOX.intersection(inclusionGeometry.getEnvelopeInternal()),
-                                granuleBBOX.getCoordinateReferenceSystem())
-                        : granuleBBOX;
+        ReferencedEnvelope cropBBox = new ReferencedEnvelope(originatingCoverageRequest.getRequestedBBox());
+        final ReferencedEnvelope bbox = useFootprint
+                ? new ReferencedEnvelope(
+                        granuleBBOX.intersection(inclusionGeometry.getEnvelopeInternal()),
+                        granuleBBOX.getCoordinateReferenceSystem())
+                : granuleBBOX;
 
         // intersection of this tile bound with the current crop bbox
         final ReferencedEnvelope intersection =
-                new ReferencedEnvelope(
-                        bbox.intersection(cropBBox), cropBBox.getCoordinateReferenceSystem());
+                new ReferencedEnvelope(bbox.intersection(cropBBox), cropBBox.getCoordinateReferenceSystem());
         if (intersection.isEmpty()
-                || (useFootprint
+                || useFootprint
                         && inclusionGeometry != null
-                        && !JTS.toGeometry(cropBBox).intersects(inclusionGeometry))) {
+                        && !JTS.toGeometry(cropBBox).intersects(inclusionGeometry)) {
             if (LOGGER.isLoggable(java.util.logging.Level.FINE)) {
-                LOGGER.fine(
-                        "Got empty intersection for granule "
-                                + this.toString()
-                                + " with request "
-                                + originatingCoverageRequest.toString()
-                                + " Resulting in no data loaded: Empty result");
+                LOGGER.fine("Got empty intersection for granule "
+                        + this.toString()
+                        + " with request "
+                        + originatingCoverageRequest.toString()
+                        + " Resulting in no data loaded: Empty result");
             }
             return null;
         }
@@ -235,19 +226,17 @@ class RasterLayerResponse {
                 // Getting Image Bounds
                 final int width = raster.getWidth();
                 final int height = raster.getHeight();
-                Rectangle imgBounds =
-                        new Rectangle(raster.getMinX(), raster.getMinY(), width, height);
+                Rectangle imgBounds = new Rectangle(raster.getMinX(), raster.getMinY(), width, height);
                 Rectangle sourceArea = imageReadParam.getSourceRegion();
 
                 // Getting Transformed ROI
                 final AffineTransform finalRaster2Model =
-                        new AffineTransform(
-                                (AffineTransform) originatingCoverageRequest.getRaster2Model());
+                        new AffineTransform((AffineTransform) originatingCoverageRequest.getRaster2Model());
                 finalRaster2Model.concatenate(CoverageUtilities.CENTER_TO_CORNER);
 
                 // Compute scale and translate factors
-                double decimationScaleX = ((1.0 * sourceArea.width) / width);
-                double decimationScaleY = ((1.0 * sourceArea.height) / height);
+                double decimationScaleX = 1.0 * sourceArea.width / width;
+                double decimationScaleY = 1.0 * sourceArea.height / height;
                 final AffineTransform decimationScaleTranform =
                         XAffineTransform.getScaleInstance(decimationScaleX, decimationScaleY);
                 final AffineTransform afterDecimationTranslateTranform =
@@ -257,26 +246,23 @@ class RasterLayerResponse {
                         afterDecimationTranslateTranform, CoverageUtilities.AFFINE_IDENTITY_EPS)) {
                     finalRaster2Model.concatenate(afterDecimationTranslateTranform);
                 }
-                if (!XAffineTransform.isIdentity(
-                        decimationScaleTranform, CoverageUtilities.AFFINE_IDENTITY_EPS)) {
+                if (!XAffineTransform.isIdentity(decimationScaleTranform, CoverageUtilities.AFFINE_IDENTITY_EPS)) {
                     finalRaster2Model.concatenate(decimationScaleTranform);
                 }
 
-                transformed =
-                        multiLevelRoi.getTransformedROI(
-                                finalRaster2Model.createInverse(),
-                                0,
-                                imgBounds,
-                                imageReadParam,
-                                originatingCoverageRequest.getReadType());
+                transformed = multiLevelRoi.getTransformedROI(
+                        finalRaster2Model.createInverse(),
+                        0,
+                        imgBounds,
+                        imageReadParam,
+                        originatingCoverageRequest.getReadType());
                 // Check for vectorial ROI
-                if (transformed instanceof ROIGeometry
-                        && ((ROIGeometry) transformed).getAsGeometry().isEmpty()) {
+                if (transformed instanceof ROIGeometry geometry
+                        && geometry.getAsGeometry().isEmpty()) {
                     // inset might have killed the geometry fully
                     if (LOGGER.isLoggable(Level.FINE)) {
-                        LOGGER.fine(
-                                "The transformed geometry became empty, maybe due to inset having "
-                                        + "wiped out the geometry. Returning null");
+                        LOGGER.fine("The transformed geometry became empty, maybe due to inset having "
+                                + "wiped out the geometry. Returning null");
                     }
                     return null;
                 }
@@ -284,20 +270,16 @@ class RasterLayerResponse {
                 PlanarImage pi = PlanarImage.wrapRenderedImage(raster);
                 if (!transformed.intersects(pi.getBounds())) {
                     if (LOGGER.isLoggable(Level.FINE)) {
-                        LOGGER.fine(
-                                "The transformed geometry doesn't intersect the image bounds. Returning null");
+                        LOGGER.fine("The transformed geometry doesn't intersect the image bounds. Returning null");
                     }
                     return null;
                 }
                 pi.setProperty("ROI", transformed);
-                raster =
-                        PlanarImage.wrapRenderedImage(
-                                footprintBehavior.postProcessMosaic(raster, transformed, hints));
+                raster = PlanarImage.wrapRenderedImage(footprintBehavior.postProcessMosaic(raster, transformed, hints));
 
             } catch (NoninvertibleTransformException e) {
                 if (LOGGER.isLoggable(java.util.logging.Level.INFO))
-                    LOGGER.info(
-                            "Unable to create inverse transformation from GridToWorld when managing the ROI");
+                    LOGGER.info("Unable to create inverse transformation from GridToWorld when managing the ROI");
                 return null;
             }
         }
@@ -313,8 +295,7 @@ class RasterLayerResponse {
             final int ssWidth = raster.getWidth();
             final int ssHeight = raster.getHeight();
             if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.log(
-                        Level.FINE, "Coverage read: width = " + ssWidth + " height = " + ssHeight);
+                LOGGER.log(Level.FINE, "Coverage read: width = " + ssWidth + " height = " + ssHeight);
             }
 
             // //
@@ -339,8 +320,7 @@ class RasterLayerResponse {
                     raster,
                     ConcatenatedTransform.create(
                             ProjectiveTransform.create(
-                                    new AffineTransform(
-                                            scaleX, 0, 0, scaleY, translateX, translateY)),
+                                    new AffineTransform(scaleX, 0, 0, scaleY, translateX, translateY)),
                             raster2Model));
         } else {
             // In case of no transformation is required (As an instance,
@@ -350,19 +330,29 @@ class RasterLayerResponse {
     }
 
     /**
-     * Creates a {@link GridCoverage} for the provided {@link PlanarImage} using the {@link
-     * #raster2Model} that was provided for this coverage.
+     * Creates a {@link GridCoverage} for the provided {@link PlanarImage} using the {@link #raster2Model} that was
+     * provided for this coverage.
      *
-     * <p>This method is vital when working with coverages that have a raster to model
-     * transformation that is not a simple scale and translate.
+     * <p>This method is vital when working with coverages that have a raster to model transformation that is not a
+     * simple scale and translate.
      *
      * @param image contains the data for the coverage to create.
-     * @param raster2Model is the {@link MathTransform} that maps from the raster space to the model
-     *     space.
+     * @param raster2Model is the {@link MathTransform} that maps from the raster space to the model space.
      * @return a {@link GridCoverage}
      */
-    protected GridCoverage createCoverageFromImage(PlanarImage image, MathTransform raster2Model)
-            throws IOException {
+    protected GridCoverage createCoverageFromImage(PlanarImage image, MathTransform raster2Model) throws IOException {
+        Double noData = originatingCoverageRequest.getNoData();
+        final Map<String, Object> properties = new HashMap<>();
+        Category noDataCategory = null;
+        if (noData != null && !noData.isInfinite()) {
+            noDataCategory = new Category(
+                    Vocabulary.formatInternational(VocabularyKeys.NODATA),
+                    new Color[] {new Color(0, 0, 0, 0)},
+                    NumberRange.create(noData, noData));
+            CoverageUtilities.setNoDataProperty(properties, Double.valueOf(noData));
+            image.setProperty(NoDataContainer.GC_NODATA, new NoDataContainer(noData));
+        }
+
         // creating bands
         final SampleModel sm = image.getSampleModel();
         final ColorModel cm = image.getColorModel();
@@ -381,22 +371,25 @@ class RasterLayerResponse {
             } else {
                 bandName = colorInterpretation.name();
             }
-            bands[i] = new GridSampleDimension(bandName);
+            Category[] categories = null;
+            if (noDataCategory != null) {
+                categories = new Category[] {noDataCategory};
+            }
+            bands[i] = new GridSampleDimension(bandName, categories, null);
         }
 
         // creating coverage
         if (raster2Model != null) {
-            return coverageFactory.create(
-                    coverageName, image, coverageCRS, raster2Model, bands, null, null);
+            return coverageFactory.create(coverageName, image, coverageCRS, raster2Model, bands, null, null);
         }
 
         return coverageFactory.create(
-                coverageName, image, new GeneralEnvelope(coverageEnvelope), bands, null, null);
+                coverageName, image, new GeneralBounds(coverageEnvelope), bands, null, properties);
     }
 
     /**
-     * Creates a {@link GridCoverage} for the provided {@link PlanarImage} using the {@link
-     * #coverageEnvelope} that was provided for this coverage.
+     * Creates a {@link GridCoverage} for the provided {@link PlanarImage} using the {@link #coverageEnvelope} that was
+     * provided for this coverage.
      *
      * @param image contains the data for the coverage to create.
      * @return a {@link GridCoverage}
@@ -406,22 +399,16 @@ class RasterLayerResponse {
     }
 
     /**
-     * Returns a {@code PlanarImage} given a set of parameter specifying the type of read operation
-     * to be performed.
+     * Returns a {@code PlanarImage} given a set of parameter specifying the type of read operation to be performed.
      *
      * @param input a File input to be used for reading the image.
-     * @param useJAI {@code true} if we need to use a JAI ImageRead operation, {@code false} if we
-     *     need a simple direct {@code ImageReader.read(...)} call.
-     * @param imageReadParam an {@code ImageReadParam} specifying the read parameters
-     * @param useMultithreading {@code true} if a JAI ImageRead operation is requested with support
-     *     for multithreading. This parameter will be ignored if requesting a direct read operation.
+     * @param useJAI {@code true} if we need to use a ImageN ImageRead operation, {@code false} if we need a simple
+     *     direct {@code ImageReader.read(...)} call.
+     * @param imageReadParam an {@code ImageReadParam} specifying the read parameters This parameter will be ignored if
+     *     requesting a direct read operation.
      * @return the read {@code PlanarImage}
      */
-    protected PlanarImage readRaster(
-            final File input,
-            final boolean useJAI,
-            final ImageReadParam imageReadParam,
-            final boolean useMultithreading)
+    protected PlanarImage readRaster(final File input, final boolean useJAI, final ImageReadParam imageReadParam)
             throws IOException {
         PlanarImage raster;
         final ImageReader reader;
@@ -429,7 +416,7 @@ class RasterLayerResponse {
             @SuppressWarnings("PMD.CloseResource") // wrapped and returned
             FileImageInputStreamExtImpl fiis = new FileImageInputStreamExtImpl(input);
             reader = readerSpi.createReaderInstance();
-
+            RenderingHints newRi = getHints(imageReadParam);
             final ParameterBlock pbjImageRead = new ParameterBlock();
             pbjImageRead.add(fiis);
             pbjImageRead.add(0);
@@ -441,13 +428,7 @@ class RasterLayerResponse {
             pbjImageRead.add(imageReadParam);
             pbjImageRead.add(reader);
 
-            // Check if to use a simple JAI ImageRead operation or a
-            // multithreaded one
-            final String jaiOperation =
-                    useMultithreading
-                            ? GridCoverageUtilities.IMAGEREADMT
-                            : GridCoverageUtilities.IMAGEREAD;
-            raster = JAI.create(jaiOperation, pbjImageRead, hints);
+            raster = ImageN.create(GridCoverageUtilities.IMAGEREAD, pbjImageRead, newRi);
         } else {
             reader = readerSpi.createReaderInstance();
             try (FileImageInputStreamExtImpl fiis = new FileImageInputStreamExtImpl(input)) {
@@ -465,5 +446,35 @@ class RasterLayerResponse {
             }
         }
         return raster;
+    }
+
+    private RenderingHints getHints(ImageReadParam imageReadParam) {
+        RenderingHints newRi = hints;
+        int[] srcBands = GDALUtilities.extractBands(imageReadParam);
+        int[] destBands = imageReadParam.getDestinationBands();
+        if (srcBands != null && destBands != null) {
+            ImageLayout layout = originatingCoverageRequest.getDatasetLayout();
+
+            if (layout != null) {
+                ColorModel cm = GDALUtilities.extractColorModel(
+                        layout.getColorModel(null), layout.getSampleModel(null), destBands.length);
+                SampleModel sm = cm.createCompatibleSampleModel(layout.getTileWidth(null), layout.getTileHeight(null));
+                final RenderingHints oldRi = hints;
+                newRi = (RenderingHints) oldRi.clone();
+                ImageLayout hintsLayout = (ImageLayout) oldRi.get(ImageN.KEY_IMAGE_LAYOUT);
+
+                ImageLayout newLayout = new ImageLayout();
+                if (hintsLayout != null) {
+                    newLayout.setTileGridXOffset(hintsLayout.getTileGridXOffset(null));
+                    newLayout.setTileGridYOffset(hintsLayout.getTileGridYOffset(null));
+                    newLayout.setTileWidth(hintsLayout.getTileWidth(null));
+                    newLayout.setTileHeight(hintsLayout.getTileHeight(null));
+                }
+                newLayout.setColorModel(cm);
+                newLayout.setSampleModel(sm);
+                newRi.add(new RenderingHints(ImageN.KEY_IMAGE_LAYOUT, newLayout));
+            }
+        }
+        return newRi;
     }
 }

@@ -27,7 +27,7 @@ public class CalcUtil {
      * @return the sum contained in the most appropriate number class
      */
     static Number sum(Number... numbers) {
-        Number newSum = (Number) getObject(numbers);
+        Number newSum = (Number) getObject((Object[]) numbers);
 
         if (newSum == null) {
             return null;
@@ -93,7 +93,7 @@ public class CalcUtil {
         both[0] = num1;
         both[1] = num2;
 
-        Number division = (Number) getObject(both);
+        Number division = (Number) getObject((Object[]) both);
 
         if (division == null) {
             return null;
@@ -165,9 +165,7 @@ public class CalcUtil {
 
     /** Casts an object to the specified type */
     static Object convert(Object var, Class type) {
-        if (var instanceof Number) { // use number conversion
-
-            Number newNum = (Number) var;
+        if (var instanceof Number newNum) {
 
             if (type == Integer.class) {
                 return Integer.valueOf(newNum.intValue());
@@ -178,7 +176,7 @@ public class CalcUtil {
             } else if (type == Double.class) {
                 return Double.valueOf(newNum.doubleValue());
             } else if (type == String.class) {
-                return new String(newNum.toString());
+                return newNum.toString();
             }
         } else { // direct cast
 
@@ -191,7 +189,7 @@ public class CalcUtil {
             } else if (type == Double.class) {
                 return Double.valueOf(((Double) var).doubleValue());
             } else if (type == String.class) {
-                return new String(var.toString());
+                return var.toString();
             }
         }
 
@@ -215,8 +213,8 @@ public class CalcUtil {
             } else {
                 return null;
             }
-        } else if (newVar instanceof String) {
-            return new String((String) newVar);
+        } else if (newVar instanceof String string) {
+            return string;
         } else {
             // TODO: add other classes
             return null;
@@ -224,8 +222,8 @@ public class CalcUtil {
     }
 
     /**
-     * Given an array of objects, traverses the array and determines the most suitable data type to
-     * perform the calculation in. An empty object of the correct class is returned;
+     * Given an array of objects, traverses the array and determines the most suitable data type to perform the
+     * calculation in. An empty object of the correct class is returned;
      */
     static Object getObject(Object... objects) {
         Class bestClass = bestClass(objects);
@@ -270,14 +268,13 @@ public class CalcUtil {
     }
 
     /**
-     * Utility method for {@link FeatureAttributeVisitor} implementations that are simply returnin
-     * the same type as the inputs
+     * Utility method for {@link FeatureAttributeVisitor} implementations that are simply returnin the same type as the
+     * inputs
      *
      * @param inputTypes
      * @return
      */
-    public static Optional<List<Class>> reflectInputTypes(
-            int expectedInputCount, List<Class> inputTypes) {
+    public static Optional<List<Class>> reflectInputTypes(int expectedInputCount, List<Class> inputTypes) {
         if (inputTypes == null || inputTypes.size() != expectedInputCount)
             throw new IllegalArgumentException(
                     "Expecting " + expectedInputCount + " types in input, but got " + inputTypes);

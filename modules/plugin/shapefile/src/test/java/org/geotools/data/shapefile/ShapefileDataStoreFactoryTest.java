@@ -30,19 +30,18 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import org.geotools.TestData;
-import org.geotools.data.DataStore;
-import org.geotools.data.QueryCapabilities;
-import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.QueryCapabilities;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortOrder;
 import org.junit.After;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.sort.SortOrder;
 
 /**
- * Test the functionality of ShapefileDataStoreFactory; specifically the handling of connection
- * parameters.
+ * Test the functionality of ShapefileDataStoreFactory; specifically the handling of connection parameters.
  *
  * @author Jody Garnett
  */
@@ -124,9 +123,7 @@ public class ShapefileDataStoreFactoryTest extends TestCaseSupport {
         Map<String, Serializable> params = map(URLP.key, remoteUrl, ENABLE_SPATIAL_INDEX.key, true);
         ShapefileDataStore ds = (ShapefileDataStore) factory.createDataStore(params);
         assertNotNull("Null datastore should not be returned", ds);
-        assertTrue(
-                "should be a non indexed shapefile",
-                ds instanceof org.geotools.data.shapefile.ShapefileDataStore);
+        assertTrue("should be a non indexed shapefile", ds instanceof org.geotools.data.shapefile.ShapefileDataStore);
         ds.dispose();
 
         // test default has spatial index enabled

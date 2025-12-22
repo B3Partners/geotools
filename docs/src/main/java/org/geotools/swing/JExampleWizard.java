@@ -11,6 +11,7 @@
  */
 package org.geotools.swing;
 
+import java.io.Serial;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -21,9 +22,9 @@ import org.geotools.swing.wizard.JWizard;
 /**
  * This is a quick example to show how JWizard works.
  *
- * <p>While having a Swing wizard is fun and everything; we would rather make use of an existing
- * library for this stuff (so if you can recommend something let us know). In the meantime we need
- * this class to show parameters can be handled.
+ * <p>While having a Swing wizard is fun and everything; we would rather make use of an existing library for this stuff
+ * (so if you can recommend something let us know). In the meantime we need this class to show parameters can be
+ * handled.
  *
  * <p>
  *
@@ -31,6 +32,7 @@ import org.geotools.swing.wizard.JWizard;
  */
 // example wizard start
 public class JExampleWizard extends JWizard {
+    @Serial
     private static final long serialVersionUID = 2103905729508952829L;
 
     /** Value collected by the first page */
@@ -84,13 +86,16 @@ public class JExampleWizard extends JWizard {
                 field.setText(x.toString());
             }
             field.addKeyListener(getJWizard().getController());
-        };
+        }
+        ;
 
         @Override
         public void preClosePanel() {
             field.removeKeyListener(getJWizard().getController());
-        };
+        }
+        ;
 
+        @Override
         public boolean isValid() {
             try {
                 String txt = field.getText();
@@ -99,8 +104,10 @@ public class JExampleWizard extends JWizard {
             } catch (NumberFormatException invalid) {
                 return false;
             }
-        };
-    };
+        }
+        ;
+    }
+    ;
     // page1 end
     // page2 start
     class Page2 extends JPage {
@@ -126,12 +133,14 @@ public class JExampleWizard extends JWizard {
                 field.setText(y.toString());
             }
             field.addKeyListener(getJWizard().getController());
-        };
+        }
+        ;
 
         @Override
         public void preClosePanel() {
             field.removeKeyListener(getJWizard().getController());
-        };
+        }
+        ;
 
         @Override
         public boolean isValid() {
@@ -142,8 +151,10 @@ public class JExampleWizard extends JWizard {
             } catch (NumberFormatException invalid) {
                 return false;
             }
-        };
-    };
+        }
+        ;
+    }
+    ;
     // page2 end
 
     public static void main(String[] args) {

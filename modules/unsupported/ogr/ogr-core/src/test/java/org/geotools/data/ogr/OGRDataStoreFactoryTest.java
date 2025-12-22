@@ -26,10 +26,10 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFinder;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public abstract class OGRDataStoreFactoryTest extends TestCaseSupport {
 
@@ -67,9 +67,7 @@ public abstract class OGRDataStoreFactoryTest extends TestCaseSupport {
         try {
             store = dataStoreFactory.createDataStore(map);
             SimpleFeatureType schema =
-                    store.getSchema(
-                            STATE_POP.substring(
-                                    STATE_POP.lastIndexOf('/') + 1, STATE_POP.lastIndexOf('.')));
+                    store.getSchema(STATE_POP.substring(STATE_POP.lastIndexOf('/') + 1, STATE_POP.lastIndexOf('.')));
             assertEquals(namespace.toString(), schema.getName().getNamespaceURI());
         } finally {
             disposeQuietly(store);

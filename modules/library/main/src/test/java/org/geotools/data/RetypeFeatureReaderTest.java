@@ -21,12 +21,13 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class RetypeFeatureReaderTest {
 
@@ -37,10 +38,8 @@ public class RetypeFeatureReaderTest {
     public void testRetypeUserData() throws Exception {
         // create base and derived feature type
         SimpleFeatureType featureType =
-                DataUtilities.createType(
-                        "feature", "id:string,name:String,geometry:Point:srid=4326");
-        SimpleFeatureType targetType =
-                SimpleFeatureTypeBuilder.retype(featureType, "id", "geometry");
+                DataUtilities.createType("feature", "id:string,name:String,geometry:Point:srid=4326");
+        SimpleFeatureType targetType = SimpleFeatureTypeBuilder.retype(featureType, "id", "geometry");
         // create a feature collection wit a single feature
         SimpleFeature feature = DataUtilities.createFeature(featureType, "1|foobar|POINT(1 2)");
         feature.getUserData().put(UD_KEY, UD_VALUE);

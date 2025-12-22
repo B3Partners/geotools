@@ -22,6 +22,15 @@ import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.style.ChannelSelection;
+import org.geotools.api.style.ContrastEnhancement;
+import org.geotools.api.style.ContrastMethod;
+import org.geotools.api.style.RasterSymbolizer;
+import org.geotools.api.style.SelectedChannelType;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.coverage.CoverageFactoryFinder;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
@@ -35,17 +44,8 @@ import org.geotools.referencing.crs.DefaultEngineeringCRS;
 import org.geotools.renderer.RenderListener;
 import org.geotools.renderer.lite.RendererBaseTest;
 import org.geotools.renderer.lite.StreamingRenderer;
-import org.geotools.styling.ChannelSelection;
-import org.geotools.styling.ContrastEnhancement;
-import org.geotools.styling.RasterSymbolizer;
 import org.geotools.styling.SLD;
-import org.geotools.styling.SelectedChannelType;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyleFactory;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.style.ContrastMethod;
 
 /**
  * Tests rendering a GridCoverage2D object directly (ie. not via a coverage reader).
@@ -66,11 +66,11 @@ public class DisplayCoverageTest {
     }
 
     /**
-     * This test was added after changes to the render module broke direct rendering of
-     * GridCoverage2D objects in GridCoverageLayers.
+     * This test was added after changes to the render module broke direct rendering of GridCoverage2D objects in
+     * GridCoverageLayers.
      *
-     * <p>It does not compare the rendering to the coverage data. Rather it just checks that
-     * rendering is done without error.
+     * <p>It does not compare the rendering to the coverage data. Rather it just checks that rendering is done without
+     * error.
      *
      * <p>The test is skipped in a headless build.
      */
@@ -126,25 +126,20 @@ public class DisplayCoverageTest {
         context.addLayer(new GridCoverageLayer(coverage, style));
         renderer.setMapContent(context);
 
-        RenderListener listener =
-                new RenderListener() {
-                    @Override
-                    public void featureRenderer(SimpleFeature feature) {}
+        RenderListener listener = new RenderListener() {
+            @Override
+            public void featureRenderer(SimpleFeature feature) {}
 
-                    @Override
-                    public void errorOccurred(Exception e) {
-                        java.util.logging.Logger.getGlobal()
-                                .log(java.util.logging.Level.INFO, "", e);
-                        fail("Failed to render coverage");
-                    }
-                };
+            @Override
+            public void errorOccurred(Exception e) {
+                java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
+                fail("Failed to render coverage");
+            }
+        };
         BufferedImage image = RendererBaseTest.renderImage(renderer, env, listener);
 
         File reference =
-                new File(
-                        "./src/test/resources/org/geotools/renderer/lite/gridcoverage2d/"
-                                + styleName
-                                + ".png");
+                new File("./src/test/resources/org/geotools/renderer/lite/gridcoverage2d/" + styleName + ".png");
 
         ImageAssert.assertEquals(reference, image, 0);
     }
@@ -163,7 +158,7 @@ public class DisplayCoverageTest {
 
     private Style createCoverageStyle(String bandName) {
         StyleFactory sf = CommonFactoryFinder.getStyleFactory(null);
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
         ContrastEnhancement ce = sf.contrastEnhancement(ff.literal(1.0), ContrastMethod.NORMALIZE);
         SelectedChannelType sct = sf.createSelectedChannelType(bandName, ce);
@@ -177,12 +172,10 @@ public class DisplayCoverageTest {
 
     private Style createEnvCoverageStyle(String bandName) {
         StyleFactory sf = CommonFactoryFinder.getStyleFactory(null);
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
-        ContrastEnhancement ce =
-                sf.contrastEnhancement(
-                        ff.function("env", ff.literal("gamma"), ff.literal(1)),
-                        ContrastMethod.NORMALIZE);
+        ContrastEnhancement ce = sf.contrastEnhancement(
+                ff.function("env", ff.literal("gamma"), ff.literal(1)), ContrastMethod.NORMALIZE);
         SelectedChannelType sct = sf.createSelectedChannelType(bandName, ce);
 
         RasterSymbolizer sym = sf.getDefaultRasterSymbolizer();
@@ -194,7 +187,7 @@ public class DisplayCoverageTest {
 
     private Style createEnvMinMaxCoverageStyle(String bandName) {
         StyleFactory sf = CommonFactoryFinder.getStyleFactory(null);
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
         ContrastEnhancement ce = sf.contrastEnhancement(ff.literal(1.0), ContrastMethod.NORMALIZE);
         ce.addOption("algorithm", ff.literal("StretchToMinimumMaximum"));

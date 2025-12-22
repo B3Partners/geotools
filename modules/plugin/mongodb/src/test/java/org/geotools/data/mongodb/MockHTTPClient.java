@@ -44,8 +44,7 @@ public class MockHTTPClient implements HTTPClient {
     }
 
     @Override
-    public HTTPResponse post(URL url, InputStream postContent, String postContentType)
-            throws IOException {
+    public HTTPResponse post(URL url, InputStream postContent, String postContentType) throws IOException {
         // TODO Auto-generated method stub
         return null;
     }
@@ -70,6 +69,14 @@ public class MockHTTPClient implements HTTPClient {
 
     @Override
     public void setPassword(String password) {}
+
+    @Override
+    public Map<String, String> getExtraParams() {
+        return null;
+    }
+
+    @Override
+    public void setExtraParams(Map<String, String> extraParams) {}
 
     @Override
     public int getConnectTimeout() {

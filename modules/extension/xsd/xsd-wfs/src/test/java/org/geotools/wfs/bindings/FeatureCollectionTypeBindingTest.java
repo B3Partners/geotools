@@ -21,8 +21,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.net.URL;
+import java.util.Map;
 import net.opengis.wfs.FeatureCollectionType;
 import net.opengis.wfs.WfsFactory;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
@@ -37,7 +39,6 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -49,11 +50,14 @@ public class FeatureCollectionTypeBindingTest extends WFSTestSupport {
     }
 
     @Override
+    protected Map<String, String> getNamespaces() {
+        return namespaces(Namespace("geotools", "http://geotools.org"));
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     @Test
     public void testEncode() throws Exception {
-
-        namespaceMappings.put("geotools", "http://geotools.org");
 
         DefaultFeatureCollection features = new DefaultFeatureCollection(null, null);
 

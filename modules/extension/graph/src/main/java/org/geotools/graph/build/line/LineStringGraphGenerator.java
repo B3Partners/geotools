@@ -30,12 +30,11 @@ import org.locationtech.jts.geom.MultiLineString;
 import org.locationtech.jts.geom.Point;
 
 /**
- * Builds a graph representing a line network in which edges in the network are represented by
- * LineString geometries. This implementation is a wrapper around a LineGraphGenerator which sets
- * underlying edge objects to be LineString objects, and underlying Node objects to be Point
- * objects. While generating the graph, the generator uses the visited flag of created components to
- * determine when to create underlying objects. For this reason it is not recommended to modify the
- * visited flag of any graph components.
+ * Builds a graph representing a line network in which edges in the network are represented by LineString geometries.
+ * This implementation is a wrapper around a LineGraphGenerator which sets underlying edge objects to be LineString
+ * objects, and underlying Node objects to be Point objects. While generating the graph, the generator uses the visited
+ * flag of created components to determine when to create underlying objects. For this reason it is not recommended to
+ * modify the visited flag of any graph components.
  *
  * @see org.locationtech.jts.geom.LineString
  * @see org.locationtech.jts.geom.Point
@@ -55,19 +54,14 @@ public class LineStringGraphGenerator extends BasicLineGraphGenerator {
     @Override
     public Graphable add(Object obj) {
         LineString ls = null;
-        if (obj instanceof MultiLineString) {
-            ls = (LineString) ((MultiLineString) obj).getGeometryN(0);
+        if (obj instanceof MultiLineString string) {
+            ls = (LineString) string.getGeometryN(0);
         } else {
             ls = (LineString) obj;
         }
 
         // parent class expects a line segment
-        Edge e =
-                (Edge)
-                        super.add(
-                                new LineSegment(
-                                        ls.getCoordinateN(0),
-                                        ls.getCoordinateN(ls.getNumPoints() - 1)));
+        Edge e = (Edge) super.add(new LineSegment(ls.getCoordinateN(0), ls.getCoordinateN(ls.getNumPoints() - 1)));
         // check if the LineSegment has been changed
         if (useTolerance()) {
             LineSegment lineSegment = (LineSegment) e.getObject();
@@ -80,19 +74,18 @@ public class LineStringGraphGenerator extends BasicLineGraphGenerator {
             } else if (!ls.getCoordinateN(ls.getNumPoints() - 1).equals(lineSegment.p1)) {
                 nCoordinateList.add(lineSegment.p1);
             }
-            Coordinate[] newCoordinates =
-                    nCoordinateList.toArray(new Coordinate[nCoordinateList.size()]);
+            Coordinate[] newCoordinates = nCoordinateList.toArray(new Coordinate[nCoordinateList.size()]);
             ls = gf.createLineString(newCoordinates);
         }
         // over write object to be the linestring
         e.setObject(ls);
-        return (e);
+        return e;
     }
 
     @Override
     protected LineSegment alterLine(LineSegment line, Node n1, Node n2) {
-        Point c1added = ((Point) n1.getObject());
-        Point c2added = ((Point) n2.getObject());
+        Point c1added = (Point) n1.getObject();
+        Point c2added = (Point) n2.getObject();
         if (!c1added.getCoordinate().equals(line.p0) || c2added.getCoordinate().equals(line.p1)) {
             line = new LineSegment(c1added.getCoordinate(), c2added.getCoordinate());
         }
@@ -104,8 +97,7 @@ public class LineStringGraphGenerator extends BasicLineGraphGenerator {
         LineString ls = (LineString) obj;
 
         // parent ecpexts a line segment
-        return (super.remove(
-                new LineSegment(ls.getCoordinateN(0), ls.getCoordinateN(ls.getNumPoints() - 1))));
+        return super.remove(new LineSegment(ls.getCoordinateN(0), ls.getCoordinateN(ls.getNumPoints() - 1)));
     }
 
     @Override
@@ -113,8 +105,7 @@ public class LineStringGraphGenerator extends BasicLineGraphGenerator {
         LineString ls = (LineString) obj;
 
         // parent ecpexts a line segment
-        return (super.get(
-                new LineSegment(ls.getCoordinateN(0), ls.getCoordinateN(ls.getNumPoints() - 1))));
+        return super.get(new LineSegment(ls.getCoordinateN(0), ls.getCoordinateN(ls.getNumPoints() - 1)));
     }
 
     @Override

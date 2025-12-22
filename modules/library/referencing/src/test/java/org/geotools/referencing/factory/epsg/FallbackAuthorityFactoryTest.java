@@ -24,21 +24,21 @@ import static org.junit.Assert.fail;
 
 import java.net.URL;
 import java.util.Set;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.ProjectedCRS;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.referencing.WKT;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.ProjectedCRS;
 
 /**
- * Checks the exception thrown by the fallback system do report actual errors when the code is
- * available but for some reason broken, and not "code not found" ones.
+ * Checks the exception thrown by the fallback system do report actual errors when the code is available but for some
+ * reason broken, and not "code not found" ones.
  *
  * @version $Id$
  * @author Andrea Aime (TOPP)
@@ -66,14 +66,10 @@ public final class FallbackAuthorityFactoryTest {
         extra = null;
     }
 
-    /**
-     * Makes sure that the testing {@link FactoryEPSGExtra} has precedence over {@link
-     * FactoryUsingWKT}.
-     */
+    /** Makes sure that the testing {@link FactoryEPSGExtra} has precedence over {@link FactoryUsingWKT}. */
     @Test
     public void testFactoryOrdering() {
-        Set<CRSAuthorityFactory> factories =
-                ReferencingFactoryFinder.getCRSAuthorityFactories(null);
+        Set<CRSAuthorityFactory> factories = ReferencingFactoryFinder.getCRSAuthorityFactories(null);
         boolean foundWkt = false;
         boolean foundExtra = false;
         for (CRSAuthorityFactory factory : factories) {
@@ -82,8 +78,7 @@ public final class FallbackAuthorityFactoryTest {
                 foundExtra = true;
             } else if (type == FactoryUsingWKT.class) {
                 foundWkt = true;
-                assertTrue(
-                        "We should have encountered WKT factory after the extra one", foundExtra);
+                assertTrue("We should have encountered WKT factory after the extra one", foundExtra);
             }
         }
         assertTrue(foundWkt);
@@ -91,8 +86,8 @@ public final class FallbackAuthorityFactoryTest {
     }
 
     /**
-     * Tests the {@code 42101} code. The purpose of this test is mostly to make sure that {@link
-     * FactoryUsingWKT} is in the chain.
+     * Tests the {@code 42101} code. The purpose of this test is mostly to make sure that {@link FactoryUsingWKT} is in
+     * the chain.
      *
      * @throws FactoryException If the CRS can't be created.
      */
@@ -107,6 +102,7 @@ public final class FallbackAuthorityFactoryTest {
      * @throws FactoryException If the CRS can't be created.
      */
     @Test
+    @SuppressWarnings("CatchFail")
     public void test00001() throws FactoryException {
         try {
             CRS.decode("EPSG:00001");
@@ -119,8 +115,7 @@ public final class FallbackAuthorityFactoryTest {
     }
 
     /**
-     * GEOT-1702, make sure looking up for an existing code does not result in a {@link
-     * StackOverflowException}.
+     * GEOT-1702, make sure looking up for an existing code does not result in a {@link StackOverflowException}.
      *
      * @throws FactoryException If the CRS can't be created.
      */
@@ -132,8 +127,7 @@ public final class FallbackAuthorityFactoryTest {
     }
 
     /**
-     * GEOT-1702, make sure looking up for a non existing code does not result in a {@link
-     * StackOverflowException}.
+     * GEOT-1702, make sure looking up for a non existing code does not result in a {@link StackOverflowException}.
      *
      * @throws FactoryException If the CRS can't be created.
      */
@@ -144,15 +138,13 @@ public final class FallbackAuthorityFactoryTest {
     }
 
     /**
-     * Extra class used to make sure we have {@link FactoryUsingWKT} among the fallbacks (used to
-     * check the fallback mechanism).
+     * Extra class used to make sure we have {@link FactoryUsingWKT} among the fallbacks (used to check the fallback
+     * mechanism).
      *
      * @author Andrea Aime (TOPP)
      */
     private static class FactoryEPSGExtra extends FactoryUsingWKT {
-        /**
-         * Creates a factory to be registered before {@link FactoryUsingWKT} in the fallback chain.
-         */
+        /** Creates a factory to be registered before {@link FactoryUsingWKT} in the fallback chain. */
         public FactoryEPSGExtra() {
             // make sure we are before FactoryUsingWKT in the fallback chain
             super(null, DEFAULT_PRIORITY + 5);

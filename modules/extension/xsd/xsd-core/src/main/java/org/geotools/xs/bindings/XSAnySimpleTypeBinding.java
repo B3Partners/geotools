@@ -78,8 +78,7 @@ public class XSAnySimpleTypeBinding implements SimpleBinding {
     /**
      *
      * <!-- begin-user-doc -->
-     * This method returns the value paramter, which is the facet parsed string passed in from the
-     * framework.
+     * This method returns the value paramter, which is the facet parsed string passed in from the framework.
      * <!-- end-user-doc -->
      *
      * @generated modifiable
@@ -98,6 +97,6 @@ public class XSAnySimpleTypeBinding implements SimpleBinding {
      */
     @Override
     public String encode(Object object, String value) {
-        return (object == null) ? null : String.valueOf(object);
+        return object == null ? null : String.valueOf(object);
     }
 }

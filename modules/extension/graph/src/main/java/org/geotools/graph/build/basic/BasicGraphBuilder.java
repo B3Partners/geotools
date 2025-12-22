@@ -29,10 +29,10 @@ import org.geotools.graph.structure.basic.BasicGraph;
 import org.geotools.graph.structure.basic.BasicNode;
 
 /**
- * Basic implementation of GraphBuilder. This implementation of builder creates the graph when the
- * builder is created. The underlying graph implementation makes copies of the references to the
- * node and edge collections, not copies of the underlying collections themselves. In this way as
- * nodes and edges are added to the builder, it is reflected in the built graph.
+ * Basic implementation of GraphBuilder. This implementation of builder creates the graph when the builder is created.
+ * The underlying graph implementation makes copies of the references to the node and edge collections, not copies of
+ * the underlying collections themselves. In this way as nodes and edges are added to the builder, it is reflected in
+ * the built graph.
  *
  * @author Justin Deoliveira, Refractions Research Inc, jdeolive@refractions.net
  */
@@ -57,13 +57,13 @@ public class BasicGraphBuilder implements GraphBuilder {
     /** @see GraphBuilder#buildNode() */
     @Override
     public Node buildNode() {
-        return (new BasicNode());
+        return new BasicNode();
     }
 
     /** @see GraphBuilder#buildEdge(Node, Node) */
     @Override
     public Edge buildEdge(Node nodeA, Node nodeB) {
-        return (new BasicEdge(nodeA, nodeB));
+        return new BasicEdge(nodeA, nodeB);
     }
 
     /** @see GraphBuilder#addNode(Node) */
@@ -73,8 +73,8 @@ public class BasicGraphBuilder implements GraphBuilder {
     }
 
     /**
-     * Checks for loops in which case it only added the edge to the adjacency list of one of the
-     * nodes (both of its nodes are the same node).
+     * Checks for loops in which case it only added the edge to the adjacency list of one of the nodes (both of its
+     * nodes are the same node).
      *
      * @see GraphBuilder#addEdge(Edge)
      */
@@ -125,7 +125,7 @@ public class BasicGraphBuilder implements GraphBuilder {
     /** @see GraphBuilder#getGraph() */
     @Override
     public Graph getGraph() {
-        return (m_graph);
+        return m_graph;
     }
 
     /** @see GraphBuilder#clone(boolean) */
@@ -134,7 +134,7 @@ public class BasicGraphBuilder implements GraphBuilder {
         GraphBuilder builder = getClass().getDeclaredConstructor().newInstance();
         if (deep) builder.importGraph(getGraph());
 
-        return (builder);
+        return builder;
     }
 
     /** @see GraphBuilder#importGraph(Graph) */
@@ -151,7 +151,7 @@ public class BasicGraphBuilder implements GraphBuilder {
      * @return A collection of nodes.
      */
     public Collection<Node> getNodes() {
-        return (m_nodes);
+        return m_nodes;
     }
 
     /**
@@ -160,7 +160,7 @@ public class BasicGraphBuilder implements GraphBuilder {
      * @return A collection of edges.
      */
     public Collection<Edge> getEdges() {
-        return (m_edges);
+        return m_edges;
     }
 
     /**
@@ -169,6 +169,6 @@ public class BasicGraphBuilder implements GraphBuilder {
      * @return A Graph object.
      */
     protected Graph buildGraph() {
-        return (new BasicGraph(m_nodes, m_edges));
+        return new BasicGraph(m_nodes, m_edges);
     }
 }

@@ -26,6 +26,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.NameImpl;
 import org.geotools.filter.FunctionExpression;
@@ -33,19 +39,12 @@ import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.FunctionFactory;
 import org.geotools.filter.FunctionImpl;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
 
 /**
- * Filter function factory that uses the service provider interface (SPI) lookup mechanism to create
- * functions.
+ * Filter function factory that uses the service provider interface (SPI) lookup mechanism to create functions.
  *
- * <p>DefaultFunctionFactory is responsible for collection {@link FunctionExpression}
- * implementations into a FunctionFactory.
+ * <p>DefaultFunctionFactory is responsible for collection {@link FunctionExpression} implementations into a
+ * FunctionFactory.
  *
  * @author Justin Deoliveira, OpenGeo
  */
@@ -120,19 +119,16 @@ public class DefaultFunctionFactory implements FunctionFactory {
             functionName = filterFactory.functionName(name, argc);
             if (!functionName.getName().equals(name)) {
                 LOGGER.warning(
-                        function.getClass()
-                                + " FunctionName was null, used for etArgumentCount(): "
-                                + functionName);
+                        function.getClass() + " FunctionName was null, used for etArgumentCount(): " + functionName);
             }
         } else {
             if (!functionName.getName().equals(name)) {
-                LOGGER.warning(
-                        function.getClass()
-                                + " has name conflict betwee '"
-                                + name
-                                + "' and '"
-                                + functionName.getName()
-                                + "'");
+                LOGGER.warning(function.getClass()
+                        + " has name conflict betwee '"
+                        + name
+                        + "' and '"
+                        + functionName.getName()
+                        + "'");
             }
         }
         return functionName;
@@ -153,13 +149,12 @@ public class DefaultFunctionFactory implements FunctionFactory {
             if (functionMap.containsKey(key)) {
                 // conflicted name - probably a cut and paste error when creating functionName
                 FunctionDescriptor conflict = functionMap.get(key);
-                LOGGER.warning(
-                        "Function "
-                                + key
-                                + " clash between "
-                                + conflict.clazz.getSimpleName()
-                                + " and "
-                                + function.getClass().getSimpleName());
+                LOGGER.warning("Function "
+                        + key
+                        + " clash between "
+                        + conflict.clazz.getSimpleName()
+                        + " and "
+                        + function.getClass().getSimpleName());
             }
             functionMap.put(key, fd);
         }
@@ -211,7 +206,8 @@ public class DefaultFunctionFactory implements FunctionFactory {
                 return function;
             }
             if (FunctionImpl.class.isAssignableFrom(clazz)) {
-                FunctionImpl function = (FunctionImpl) clazz.getDeclaredConstructor().newInstance();
+                FunctionImpl function =
+                        (FunctionImpl) clazz.getDeclaredConstructor().newInstance();
                 if (parameters != null) {
                     function.setParameters(parameters);
                 }
@@ -221,8 +217,7 @@ public class DefaultFunctionFactory implements FunctionFactory {
                 return function;
             }
             // Function function = (Function) functionClass.newInstance();
-            Constructor<? extends Function> constructor =
-                    clazz.getConstructor(new Class[] {List.class, Literal.class});
+            Constructor<? extends Function> constructor = clazz.getConstructor(new Class[] {List.class, Literal.class});
             return constructor.newInstance(parameters, fallback);
         }
     }

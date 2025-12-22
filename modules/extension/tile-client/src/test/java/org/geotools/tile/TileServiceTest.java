@@ -18,12 +18,12 @@ package org.geotools.tile;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.http.MockHttpClient;
 import org.geotools.tile.impl.ZoomLevel;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Tests for implemented function's of TileService
@@ -62,8 +62,7 @@ public class TileServiceTest {
         }
 
         @Override
-        public TileIdentifier identifyTileAtCoordinate(
-                double lon, double lat, ZoomLevel zoomLevel) {
+        public TileIdentifier identifyTileAtCoordinate(double lon, double lat, ZoomLevel zoomLevel) {
             return MINE_TILE;
         }
 
@@ -100,8 +99,7 @@ public class TileServiceTest {
         }
 
         @Override
-        public Tile findTileAtCoordinate(
-                double lon, double lat, ZoomLevel zoomLevel, TileService service) {
+        public Tile findTileAtCoordinate(double lon, double lat, ZoomLevel zoomLevel, TileService service) {
             return null;
         }
 

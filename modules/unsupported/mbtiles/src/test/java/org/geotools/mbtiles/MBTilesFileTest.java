@@ -8,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
@@ -78,22 +79,20 @@ public class MBTilesFileTest {
             final File journal = new File(temp.getAbsolutePath() + "-journal");
             // Initialize the journal file
             // Define a counter thread
-            Thread th =
-                    new Thread(
-                            () -> {
-                                while (true) {
-                                    if (journal.exists()) {
-                                        counter.incrementAndGet();
-                                    }
-                                }
-                            });
+            Thread th = new Thread(() -> {
+                while (true) {
+                    if (journal.exists()) {
+                        counter.incrementAndGet();
+                    }
+                }
+            });
             // launch the thread
             th.start();
             // add data to the mbtile
             for (int i = 0; i < 10; i++) {
                 for (int j = 0; j < 10; j++) {
                     MBTilesTile tile1 = new MBTilesTile(1, i, j);
-                    tile1.setData("dummy data 1".getBytes());
+                    tile1.setData("dummy data 1".getBytes(StandardCharsets.UTF_8));
                     file.saveTile(tile1);
                 }
             }
@@ -131,9 +130,9 @@ public class MBTilesFileTest {
             file.init();
 
             MBTilesTile tile1 = new MBTilesTile(1, 0, 0);
-            tile1.setData("dummy data 1".getBytes());
+            tile1.setData("dummy data 1".getBytes(StandardCharsets.UTF_8));
             MBTilesTile tile2 = new MBTilesTile(2, 0, 1);
-            tile2.setData("dummy data 2".getBytes());
+            tile2.setData("dummy data 2".getBytes(StandardCharsets.UTF_8));
 
             file.saveTile(tile1);
             file.saveTile(tile2);
@@ -172,13 +171,13 @@ public class MBTilesFileTest {
             file.init();
 
             MBTilesGrid grid1 = new MBTilesGrid(1, 0, 0);
-            grid1.setGrid("dummy data 1".getBytes());
+            grid1.setGrid("dummy data 1".getBytes(StandardCharsets.UTF_8));
             grid1.setGridDataKey("key1", "dummy value1");
             grid1.setGridDataKey("key2", "dummy value2");
             MBTilesGrid grid2 = new MBTilesGrid(2, 0, 1);
             grid2.setGridDataKey("key3", "dummy value3");
             grid2.setGridDataKey("key4", "dummy value4");
-            grid2.setGrid("dummy data 2".getBytes());
+            grid2.setGrid("dummy data 2".getBytes(StandardCharsets.UTF_8));
 
             file.saveGrid(grid1);
             file.saveGrid(grid2);
@@ -199,8 +198,7 @@ public class MBTilesFileTest {
     public void testMBTilesBounds() throws IOException, SQLException {
         // this one has different bounds per zoom level, even in geographic terms
         try (MBTilesFile mbTilesFile =
-                new MBTilesFile(
-                        new File("./src/test/resources/org/geotools/mbtiles/madagascar.mbtiles"))) {
+                new MBTilesFile(new File("./src/test/resources/org/geotools/mbtiles/madagascar.mbtiles"))) {
             RectangleLong bounds = mbTilesFile.getTileBounds(7, true);
             assertEquals(79, bounds.getMinX());
             assertEquals(82, bounds.getMaxX());
@@ -217,8 +215,7 @@ public class MBTilesFileTest {
     @Test
     public void testMBTilesMetadataCenter() throws IOException, SQLException {
         try (MBTilesFile mbTilesFile =
-                new MBTilesFile(
-                        new File("./src/test/resources/org/geotools/mbtiles/madagascar.mbtiles"))) {
+                new MBTilesFile(new File("./src/test/resources/org/geotools/mbtiles/madagascar.mbtiles"))) {
             MBTilesMetadata metadata = mbTilesFile.loadMetaData();
             double[] center = metadata.getCenter();
             assertEquals(-12.2168, center[0], DELTA);
@@ -230,8 +227,7 @@ public class MBTilesFileTest {
     @Test
     public void testWorldEnvelopeToTiles() throws IOException, SQLException {
         try (MBTilesFile mbTilesFile =
-                new MBTilesFile(
-                        new File("./src/test/resources/org/geotools/mbtiles/madagascar.mbtiles"))) {
+                new MBTilesFile(new File("./src/test/resources/org/geotools/mbtiles/madagascar.mbtiles"))) {
             RectangleLong bounds = mbTilesFile.toTilesRectangle(MBTilesFile.WORLD_ENVELOPE, 7);
             assertEquals(0, bounds.getMinX());
             assertEquals(128, bounds.getMaxX());
@@ -243,8 +239,7 @@ public class MBTilesFileTest {
     @Test
     public void testLocalEnvelopeToTiles() throws IOException, SQLException {
         try (MBTilesFile mbTilesFile =
-                new MBTilesFile(
-                        new File("./src/test/resources/org/geotools/mbtiles/madagascar.mbtiles"))) {
+                new MBTilesFile(new File("./src/test/resources/org/geotools/mbtiles/madagascar.mbtiles"))) {
             ReferencedEnvelope envelope =
                     new ReferencedEnvelope(0, 5000000, 0, 5000000, MBTilesFile.SPHERICAL_MERCATOR);
             RectangleLong bounds = mbTilesFile.toTilesRectangle(envelope, 7);

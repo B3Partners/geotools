@@ -19,17 +19,17 @@ package org.geotools.swt.tool;
 
 import java.lang.ref.WeakReference;
 import java.util.logging.Logger;
-import org.geotools.geometry.DirectPosition2D;
+import org.geotools.geometry.Position2D;
 import org.geotools.map.MapContent;
 import org.geotools.referencing.CRS;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
 
 /**
  * Abstract base class for helper classes used by {@code InfoTool} to query {@code MapLayers}.
  *
  * <p>The primary reason for having this class is to avoid loading grid coverage classes unless they
- * are really needed, and thus avoid the need for users to have JAI in the classpath when working
+ * are really needed, and thus avoid the need for users to have ImageN in the classpath when working
  * with vector data.
  *
  * <p>The type parameter <code>&lt;T&gt;</code> defines the return type of the {@linkplain #getInfo}
@@ -68,7 +68,7 @@ public abstract class InfoToolHelper<T> {
      * @return data of type {@code T} as defined by the sub-class
      * @see #isValid()
      */
-    public abstract T getInfo(DirectPosition2D pos, Object... params) throws Exception;
+    public abstract T getInfo(Position2D pos, Object... params) throws Exception;
 
     /**
      * Query if this helper has a reference to a {@code MapContext} and {@code MapLayer}.

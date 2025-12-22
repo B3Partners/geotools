@@ -16,6 +16,8 @@
  */
 package org.geotools.util;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -35,9 +37,9 @@ import org.junit.Test;
  */
 public final class KeySortedListTest {
     /**
-     * Inserts random floating point numbers into the list. The key is the integer part of the
-     * floating point number. This means that the number should be sorted in such a way that their
-     * integer part are in increasing order, while the fractional part remains in random order.
+     * Inserts random floating point numbers into the list. The key is the integer part of the floating point number.
+     * This means that the number should be sorted in such a way that their integer part are in increasing order, while
+     * the fractional part remains in random order.
      */
     @Test
     public void testAdd() {
@@ -76,13 +78,13 @@ public final class KeySortedListTest {
         /*
          * Checks the iteration from a middle point.
          */
-        final Integer midKey = (maxElements / 10) / 2;
+        final Integer midKey = maxElements / 10 / 2;
         final KeySortedList<Integer, Double> head = list.headList(midKey);
         final KeySortedList<Integer, Double> tail = list.tailList(midKey);
         final Collection<Double> rebuild = new ArrayList<>(head);
         rebuild.addAll(tail);
         assertEquals(list.size(), head.size() + tail.size());
-        assertEquals(list, rebuild);
+        assertThat(rebuild, equalTo(list));
         assertSame(list.listIterator(midKey).next(), tail.listIterator().next());
     }
 }

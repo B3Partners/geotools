@@ -22,8 +22,10 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.util.Collections;
 import java.util.Map;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.jdbc.JDBCDataStore;
@@ -33,8 +35,6 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class GeoPkgSpecialSRIDTest {
 
@@ -74,13 +74,12 @@ public class GeoPkgSpecialSRIDTest {
         SimpleFeatureType roadType = tb.buildFeatureType();
         GeometryFactory gf = new GeometryFactory();
         SimpleFeature[] roadFeatures = new SimpleFeature[3];
-        roadFeatures[0] =
-                SimpleFeatureBuilder.build(
-                        roadType,
-                        new Object[] {
-                            Integer.valueOf(1), line(gf, new int[] {1, 1, 2, 2, 4, 2, 5, 1}), "r1",
-                        },
-                        "road.rd1");
+        roadFeatures[0] = SimpleFeatureBuilder.build(
+                roadType,
+                new Object[] {
+                    Integer.valueOf(1), line(gf, new int[] {1, 1, 2, 2, 4, 2, 5, 1}), "r1",
+                },
+                "road.rd1");
 
         Map<String, File> params = Collections.singletonMap("database", GENERIC_CRS_GPKG);
         JDBCDataStore store = new GeoPkgDataStoreFactory().createDataStore(params);
@@ -97,8 +96,8 @@ public class GeoPkgSpecialSRIDTest {
     }
 
     /**
-     * Creates a line from the specified (<var>x</var>,<var>y</var>) coordinates. The coordinates
-     * are stored in a flat array.
+     * Creates a line from the specified (<var>x</var>,<var>y</var>) coordinates. The coordinates are stored in a flat
+     * array.
      */
     public LineString line(GeometryFactory gf, int[] xy) {
         Coordinate[] coords = new Coordinate[xy.length / 2];

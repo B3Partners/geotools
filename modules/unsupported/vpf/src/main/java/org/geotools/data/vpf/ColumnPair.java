@@ -17,9 +17,8 @@
 package org.geotools.data.vpf;
 
 /**
- * This class encapsulates a join between two columns. It was originally intended to join two
- * VPFColumn types, but there should not be anything about it which constrains it to those two
- * types.
+ * This class encapsulates a join between two columns. It was originally intended to join two VPFColumn types, but there
+ * should not be anything about it which constrains it to those two types.
  *
  * @author <a href="mailto:jeff@ionicenterprise.com">Jeff Yutzler</a>
  * @source $URL$
@@ -65,7 +64,7 @@ class ColumnPair {
         } else {
             ColumnPair columnPair = (ColumnPair) arg0;
 
-            if ((columnPair != null)
+            if (columnPair != null
                     && columnPair.column1.equals(this.column1)
                     && columnPair.column2.equals(this.column2)) {
                 result = true;

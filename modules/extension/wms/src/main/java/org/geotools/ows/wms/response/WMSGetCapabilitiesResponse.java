@@ -55,12 +55,11 @@ public class WMSGetCapabilitiesResponse extends GetCapabilitiesResponse {
             try (InputStream inputStream = response.getResponseStream()) {
                 object = DocumentFactory.getInstance(inputStream, hints, Level.WARNING);
             } catch (SAXException e) {
-                throw (ServiceException)
-                        new ServiceException("Error while parsing XML.").initCause(e);
+                throw (ServiceException) new ServiceException("Error while parsing XML.").initCause(e);
             }
 
-            if (object instanceof ServiceException) {
-                throw (ServiceException) object;
+            if (object instanceof ServiceException exception) {
+                throw exception;
             }
 
             this.capabilities = (Capabilities) object;

@@ -18,17 +18,17 @@
 package org.geotools.referencing.factory.epsg.hsql;
 
 import java.util.Set;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.factory.OrderedAxisAuthorityFactory;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 @SuppressWarnings("PMD.SystemPrintln")
 public class Decoder {
 
     public static void main(String[] args) throws FactoryException {
-        final CRSAuthorityFactory factory = new OrderedAxisAuthorityFactory("EPSG", null, null);
+        final CRSAuthorityFactory factory = new OrderedAxisAuthorityFactory("EPSG", null);
         final Set codes = factory.getAuthorityCodes(CoordinateReferenceSystem.class);
 
         System.out.println("About to decode " + codes.size() + " codes");

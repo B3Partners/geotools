@@ -21,6 +21,9 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptor;
 import org.geotools.coverage.io.netcdf.NetCDFFormat;
 import org.geotools.imageio.netcdf.utilities.NetCDFUtilities;
 import org.geotools.parameter.DefaultParameterDescriptor;
@@ -29,9 +32,6 @@ import org.geotools.parameter.ParameterGroup;
 import org.geotools.util.URLs;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
-import org.opengis.filter.Filter;
-import org.opengis.parameter.GeneralParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptor;
 
 public class GRIBFormat extends NetCDFFormat {
 
@@ -57,12 +57,9 @@ public class GRIBFormat extends NetCDFFormat {
 
         // reading parameters
         readParameters =
-                new ParameterGroup(
-                        new DefaultParameterDescriptorGroup(
-                                mInfo,
-                                new GeneralParameterDescriptor[] {
-                                    READ_GRIDGEOMETRY2D, TIME, ELEVATION, FILTER,
-                                }));
+                new ParameterGroup(new DefaultParameterDescriptorGroup(mInfo, new GeneralParameterDescriptor[] {
+                    READ_GRIDGEOMETRY2D, TIME, ELEVATION, FILTER,
+                }));
 
         // reading parameters
         writeParameters = null;
@@ -71,10 +68,10 @@ public class GRIBFormat extends NetCDFFormat {
     @Override
     public boolean accepts(Object source, Hints hints) {
         File file = null;
-        if (source instanceof URL) {
-            file = URLs.urlToFile((URL) source);
-        } else if (source instanceof File) {
-            file = (File) source;
+        if (source instanceof URL rL) {
+            file = URLs.urlToFile(rL);
+        } else if (source instanceof File file1) {
+            file = file1;
         }
         if (file != null) {
             if (file.isDirectory()) {
@@ -84,8 +81,7 @@ public class GRIBFormat extends NetCDFFormat {
 
             // Check if it is a GRIB data and if the GRIB library is available
             boolean gribExtension =
-                    NetCDFUtilities.isGribAvailable()
-                            && (fileName.contains("grb") || fileName.contains("grib"));
+                    NetCDFUtilities.isGribAvailable() && (fileName.contains("grb") || fileName.contains("grib"));
 
             if (fileName.endsWith("ncml") || gribExtension) {
                 if (LOGGER.isLoggable(Level.FINEST)) {

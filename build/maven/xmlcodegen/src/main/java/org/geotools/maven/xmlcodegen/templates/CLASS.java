@@ -18,16 +18,24 @@
 
 package org.geotools.maven.xmlcodegen.templates;
 
-import org.geotools.maven.xmlcodegen.*;
-import java.util.*;
-import javax.xml.transform.*; 
-import javax.xml.transform.sax.*;
-import javax.xml.transform.dom.*;
-import javax.xml.transform.stream.*; 
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.eclipse.xsd.*;
-import java.io.*;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
 
+import org.eclipse.xsd.XSDAttributeDeclaration;
+import org.eclipse.xsd.XSDElementDeclaration;
+import org.eclipse.xsd.XSDNamedComponent;
+import org.eclipse.xsd.XSDSchema;
+import org.eclipse.xsd.XSDSimpleTypeDefinition;
+import org.eclipse.xsd.XSDTypeDefinition;
+import org.geotools.maven.xmlcodegen.BindingConstructorArgument;
 import org.geotools.xsd.Schemas;
 
 public class CLASS
@@ -41,7 +49,7 @@ public class CLASS
     return result;
   }
 
-  public final String NL = nl == null ? (System.getProperties().getProperty("line.separator")) : nl;
+  public final String NL = nl == null ? System.getProperties().getProperty("line.separator") : nl;
   protected final String TEXT_1 = NL + "import org.geotools.xml.*;" + NL + "import ";
   protected final String TEXT_2 = ";" + NL;
   protected final String TEXT_3 = NL + "import ";
@@ -79,16 +87,16 @@ public class CLASS
 	XSDSchema schema = named.getSchema();
 	XSDTypeDefinition type = null;
 	String desc = null;
-	if (named instanceof XSDTypeDefinition) {
-		type = (XSDTypeDefinition)named;
+	if (named instanceof XSDTypeDefinition definition) {
+		type = definition;
 		desc = "type";
 	}
-	if (named instanceof XSDElementDeclaration) {
-		type = ((XSDElementDeclaration)named).getTypeDefinition();
+	if (named instanceof XSDElementDeclaration declaration) {
+		type = declaration.getTypeDefinition();
 		desc = "element";
 	}
-	if (named instanceof XSDAttributeDeclaration) {
-		type = ((XSDAttributeDeclaration)named).getTypeDefinition();
+	if (named instanceof XSDAttributeDeclaration declaration) {
+		type = declaration.getTypeDefinition();
 		desc = "attribute";
 	}
 	

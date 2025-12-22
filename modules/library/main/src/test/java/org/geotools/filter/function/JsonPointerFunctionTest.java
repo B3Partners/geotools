@@ -19,10 +19,10 @@ package org.geotools.filter.function;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Function;
 import org.geotools.factory.CommonFactoryFinder;
 import org.junit.Test;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Function;
 
 public class JsonPointerFunctionTest {
 
@@ -30,15 +30,14 @@ public class JsonPointerFunctionTest {
 
     @Test
     public void testSimplePointers() {
-        String json =
-                "{\n" //
-                        + "    \"foo\" : [\"bar\", \"baz\"],\n" //
-                        + "    \"nested\" : {\"a\" : 1, \"b\": 2},\n" //
-                        + "    \"pi\" : 3.1416,\n" //
-                        + "    \"v\" : 1234,\n" //
-                        + "    \"t\" : true,\n" //
-                        + "    \"f\" : false\n" //
-                        + "}";
+        String json = "{\n" //
+                + "    \"foo\" : [\"bar\", \"baz\"],\n" //
+                + "    \"nested\" : {\"a\" : 1, \"b\": 2},\n" //
+                + "    \"pi\" : 3.1416,\n" //
+                + "    \"v\" : 1234,\n" //
+                + "    \"t\" : true,\n" //
+                + "    \"f\" : false\n" //
+                + "}";
 
         assertEquals("bar", pointer(json, "/foo/0").evaluate(null));
         assertEquals("baz", pointer(json, "/foo/1").evaluate(null));
@@ -55,18 +54,20 @@ public class JsonPointerFunctionTest {
     @Test
     public void testNestArrayObjects() {
         String json =
-                "{\n"
-                        + "  \"prop\": {\n" //
-                        + "    \"a\": [\n" //
-                        + "      {\n" //
-                        + "        \"b\": 10\n" //
-                        + "      },\n" //
-                        + "      {\n" //
-                        + "        \"b\": 20\n" //
-                        + "      }\n" //
-                        + "    ]\n" //
-                        + "  }\n" //
-                        + "}";
+                """
+                {
+                  "prop": {
+                    "a": [
+                      {
+                        "b": 10
+                      },
+                      {
+                        "b": 20
+                      }
+                    ]
+                  }
+                }\
+                """;
 
         assertEquals(Integer.valueOf(10), pointer(json, "/prop/a/0/b").evaluate(null));
         assertEquals(Integer.valueOf(20), pointer(json, "/prop/a/1/b").evaluate(null));
@@ -87,17 +88,19 @@ public class JsonPointerFunctionTest {
     @Test
     public void testExtractComplex() {
         String json =
-                "{\"menu\": {\n"
-                        + "  \"id\": \"file\",\n"
-                        + "  \"value\": \"File\",\n"
-                        + "  \"popup\": {\n"
-                        + "    \"menuitem\": [\n"
-                        + "      {\"value\": \"New\", \"onclick\": \"CreateNewDoc()\"},\n"
-                        + "      {\"value\": \"Open\", \"onclick\": \"OpenDoc()\"},\n"
-                        + "      {\"value\": \"Close\", \"onclick\": \"CloseDoc()\"}\n"
-                        + "    ]\n"
-                        + "  }\n"
-                        + "}}";
+                """
+                {"menu": {
+                  "id": "file",
+                  "value": "File",
+                  "popup": {
+                    "menuitem": [
+                      {"value": "New", "onclick": "CreateNewDoc()"},
+                      {"value": "Open", "onclick": "OpenDoc()"},
+                      {"value": "Close", "onclick": "CloseDoc()"}
+                    ]
+                  }
+                }}\
+                """;
 
         assertEquals(
                 "{\"menuitem\":[{\"value\":\"New\",\"onclick\":\"CreateNewDoc()\"},{\"value\":\"Open\",\"onclick\":\"OpenDoc()\"},{\"value\":\"Close\",\"onclick\":\"CloseDoc()\"}]}",

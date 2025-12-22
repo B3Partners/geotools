@@ -18,11 +18,11 @@ package org.geotools.filter;
 
 import static org.geotools.filter.Filters.getExpressionType;
 
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.util.Converters;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Literal;
 
 /**
  * Defines an expression that holds a literal for return.
@@ -49,8 +49,8 @@ public class LiteralExpressionImpl extends DefaultExpression implements Literal 
     }
 
     /**
-     * Constructor with literal. This alternative constructor is a convinience one for integers an
-     * Integer object will be constructed, and no IllegalFilterException can ever be thrown.
+     * Constructor with literal. This alternative constructor is a convinience one for integers an Integer object will
+     * be constructed, and no IllegalFilterException can ever be thrown.
      *
      * @param value The integer to store inside this expression.
      */
@@ -75,8 +75,8 @@ public class LiteralExpressionImpl extends DefaultExpression implements Literal 
     }
 
     /**
-     * Constructor with literal. This alternative constructor is a convinience one for doubles an
-     * Double object will be constructed, and no IllegalFilterException can ever be thrown.
+     * Constructor with literal. This alternative constructor is a convinience one for doubles an Double object will be
+     * constructed, and no IllegalFilterException can ever be thrown.
      *
      * @param value The double to store inside this expression.
      */
@@ -91,8 +91,8 @@ public class LiteralExpressionImpl extends DefaultExpression implements Literal 
     }
 
     /**
-     * Constructor with literal. This alternative constructor is a convinience one for doubles an
-     * Double object will be constructed, and no IllegalFilterException can ever be thrown.
+     * Constructor with literal. This alternative constructor is a convinience one for doubles an Double object will be
+     * constructed, and no IllegalFilterException can ever be thrown.
      *
      * @param value The double to store inside this expression.
      */
@@ -147,19 +147,17 @@ public class LiteralExpressionImpl extends DefaultExpression implements Literal 
     }
 
     /**
-     * Compares this filter to the specified object. Returns true if the passed in object is the
-     * same as this expression. Checks to make sure the expression types are the same as well as the
-     * literals.
+     * Compares this filter to the specified object. Returns true if the passed in object is the same as this
+     * expression. Checks to make sure the expression types are the same as well as the literals.
      *
      * @param obj - the object to compare this ExpressionLiteral against.
      * @return true if specified object is equal to this expression; false otherwise.
-     * @task REVISIT: missmatched types now considered not equal. This may be a problem when
-     *     comparing Doubles and Integers
+     * @task REVISIT: missmatched types now considered not equal. This may be a problem when comparing Doubles and
+     *     Integers
      */
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof LiteralExpressionImpl) {
-            LiteralExpressionImpl expLit = (LiteralExpressionImpl) obj;
+        if (obj instanceof LiteralExpressionImpl expLit) {
             // This is a problem.  The Expression with type String of "2.0"
             // should be equals to the Expression with type Integer of "2.0"
             // Same thing with doubles and integers (as noted in the javadocs)
@@ -180,11 +178,9 @@ public class LiteralExpressionImpl extends DefaultExpression implements Literal 
 
             // do the conversion dance
             int expressionType = getExpressionType(this);
-            if (expressionType == ExpressionType.LITERAL_GEOMETRY
-                    && this.literal instanceof Geometry) {
-                return ((Geometry) this.literal).equalsExact(expLit.evaluate(null, Geometry.class));
-            } else if (expressionType == ExpressionType.LITERAL_GEOMETRY
-                    && this.literal instanceof Envelope) {
+            if (expressionType == ExpressionType.LITERAL_GEOMETRY && this.literal instanceof Geometry geometry) {
+                return geometry.equalsExact(expLit.evaluate(null, Geometry.class));
+            } else if (expressionType == ExpressionType.LITERAL_GEOMETRY && this.literal instanceof Envelope) {
                 return this.literal.equals(expLit.evaluate(null, Envelope.class));
             } else if (expressionType == ExpressionType.LITERAL_INTEGER) {
                 return this.literal.equals(expLit.evaluate(null, Integer.class));
@@ -209,11 +205,9 @@ public class LiteralExpressionImpl extends DefaultExpression implements Literal 
                 // final attemp with a string to string comparison
                 String str1 = this.evaluate(null, String.class);
                 String str2 = expLit.evaluate(null, String.class);
-                return str1 != null && str2 != null && str1.equals(str2);
+                return str1 != null && str1.equals(str2);
             }
-        } else if (obj instanceof Literal) {
-            // some other Literal implementation like ConstantExpression
-            Literal other = (Literal) obj;
+        } else if (obj instanceof Literal other) {
             return equals(new LiteralExpressionImpl(other.getValue()));
         } else {
             return false;
@@ -229,20 +223,19 @@ public class LiteralExpressionImpl extends DefaultExpression implements Literal 
     public int hashCode() {
         int result = 17;
 
-        result = (37 * result) + ((literal == null) ? 0 : literal.hashCode());
-        result = (37 * result) + Filters.getExpressionType(this);
+        result = 37 * result + (literal == null ? 0 : literal.hashCode());
+        result = 37 * result + Filters.getExpressionType(this);
 
         return result;
     }
 
     /**
-     * Used by FilterVisitors to perform some action on this filter instance. Typicaly used by
-     * Filter decoders, but may also be used by any thing which needs infomration from filter
-     * structure. Implementations should always call: visitor.visit(this); It is importatant that
-     * this is not left to a parent class unless the parents API is identical.
+     * Used by FilterVisitors to perform some action on this filter instance. Typicaly used by Filter decoders, but may
+     * also be used by any thing which needs infomration from filter structure. Implementations should always call:
+     * visitor.visit(this); It is importatant that this is not left to a parent class unless the parents API is
+     * identical.
      *
-     * @param visitor The visitor which requires access to this filter, the method must call
-     *     visitor.visit(this);
+     * @param visitor The visitor which requires access to this filter, the method must call visitor.visit(this);
      */
     @Override
     public Object accept(ExpressionVisitor visitor, Object extraData) {

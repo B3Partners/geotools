@@ -19,6 +19,7 @@ package org.geotools.coverage.io.netcdf;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
@@ -33,17 +34,23 @@ import java.util.TimeZone;
 import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.geotools.api.data.CloseableIterator;
+import org.geotools.api.data.FileGroupProvider.FileGroup;
+import org.geotools.api.data.FileResourceInfo;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.sort.SortOrder;
 import org.geotools.coverage.grid.io.GranuleSource;
 import org.geotools.coverage.grid.io.HarvestedSource;
 import org.geotools.coverage.io.catalog.CoverageSlice;
 import org.geotools.coverage.io.catalog.CoverageSlicesCatalog;
 import org.geotools.coverage.io.netcdf.crs.NetCDFCRSAuthorityFactory;
-import org.geotools.data.CloseableIterator;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FileGroupProvider.FileGroup;
-import org.geotools.data.FileResourceInfo;
-import org.geotools.data.Query;
-import org.geotools.data.ResourceInfo;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.factory.CommonFactoryFinder;
@@ -60,12 +67,6 @@ import org.geotools.util.DateRange;
 import org.geotools.util.NumberRange;
 import org.geotools.util.factory.Hints;
 import org.junit.Test;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.sort.SortOrder;
 
 /**
  * Testing Low level index based on PostGis
@@ -78,8 +79,7 @@ public final class PostGisIndexTest extends OnlineTestCase {
     public void setUpInternal() throws Exception {
         String netcdfPropertiesPath =
                 TestData.file(this, "netcdf.projections.properties").getCanonicalPath();
-        System.setProperty(
-                NetCDFCRSAuthorityFactory.SYSTEM_DEFAULT_USER_PROJ_FILE, netcdfPropertiesPath);
+        System.setProperty(NetCDFCRSAuthorityFactory.SYSTEM_DEFAULT_USER_PROJ_FILE, netcdfPropertiesPath);
         Hints.putSystemDefault(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER, Boolean.TRUE);
     }
 
@@ -207,10 +207,9 @@ public final class PostGisIndexTest extends OnlineTestCase {
         }
     }
 
-    private File createDatastoreProperties(File dir, Map<String, String> override)
-            throws IOException {
+    private File createDatastoreProperties(File dir, Map<String, String> override) throws IOException {
         File outFile = new File(dir, "mddatastore.properties");
-        try (FileWriter out = new FileWriter(outFile)) {
+        try (FileWriter out = new FileWriter(outFile, StandardCharsets.UTF_8)) {
             // Preparing custom multidim datastore properties
             final Properties props = createExampleFixture();
             if (override != null && !override.isEmpty()) {
@@ -268,8 +267,7 @@ public final class PostGisIndexTest extends OnlineTestCase {
             final String[] typeNames = cs.getTypeNames();
             for (String typeName : typeNames) {
 
-                final List<CoverageSlice> granules =
-                        cs.getGranules(new Query(typeName, Filter.INCLUDE));
+                final List<CoverageSlice> granules = cs.getGranules(new Query(typeName, Filter.INCLUDE));
                 checkGranules(granules);
             }
             // dipose reader and read it again once the catalog has been created
@@ -278,8 +276,7 @@ public final class PostGisIndexTest extends OnlineTestCase {
             cs = reader.getCatalog();
             String typeName = cs.getTypeNames()[0];
             assertNotNull(cs);
-            final List<CoverageSlice> granules =
-                    cs.getGranules(new Query(typeName, Filter.INCLUDE));
+            final List<CoverageSlice> granules = cs.getGranules(new Query(typeName, Filter.INCLUDE));
             checkGranules(granules);
 
         } finally {
@@ -306,9 +303,10 @@ public final class PostGisIndexTest extends OnlineTestCase {
 
         // The indexer
         String indexer =
-                "TimeAttribute=time\n"
-                        + "Schema=the_geom:Polygon,location:String,imageindex:Integer,time:java.util.Date\n"
-                        + "AuxiliaryDatastoreFile=mddatastore.properties";
+                """
+                TimeAttribute=time
+                Schema=the_geom:Polygon,location:String,imageindex:Integer,time:java.util.Date
+                AuxiliaryDatastoreFile=mddatastore.properties""";
         FileUtils.writeStringToFile(new File(mosaic, "indexer.properties"), indexer, "UTF-8");
 
         // using an H2 based datastore for imageMosaic index
@@ -329,7 +327,7 @@ public final class PostGisIndexTest extends OnlineTestCase {
 
             // check we have the two granules we expect
             GranuleSource source = reader.getGranules("O3", true);
-            FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+            FilterFactory ff = CommonFactoryFinder.getFilterFactory();
             Query q = new Query(Query.ALL);
             q.setSortBy(ff.sort("time", SortOrder.ASCENDING));
             SimpleFeatureCollection granules = source.getGranules(q);
@@ -339,16 +337,12 @@ public final class PostGisIndexTest extends OnlineTestCase {
                 SimpleFeature f = it.next();
                 assertEquals("polyphemus_20130301_test.nc", f.getAttribute("location"));
                 assertEquals(0, f.getAttribute("imageindex"));
-                assertEquals(
-                        "2013-03-01T00:00:00.000Z",
-                        ConvertersHack.convert(f.getAttribute("time"), String.class));
+                assertEquals("2013-03-01T00:00:00.000Z", ConvertersHack.convert(f.getAttribute("time"), String.class));
                 assertTrue(it.hasNext());
                 f = it.next();
                 assertEquals("polyphemus_20130301_test.nc", f.getAttribute("location"));
                 assertEquals(1, f.getAttribute("imageindex"));
-                assertEquals(
-                        "2013-03-01T01:00:00.000Z",
-                        ConvertersHack.convert(f.getAttribute("time"), String.class));
+                assertEquals("2013-03-01T01:00:00.000Z", ConvertersHack.convert(f.getAttribute("time"), String.class));
             }
 
             // close the reader and re-open it
@@ -376,7 +370,7 @@ public final class PostGisIndexTest extends OnlineTestCase {
             granules = source.getGranules(q);
             assertEquals(4, granules.size());
 
-            assertNotNull(reader.read("O3", null));
+            assertNotNull(reader.read("O3"));
         } finally {
             reader.dispose();
         }
@@ -405,8 +399,7 @@ public final class PostGisIndexTest extends OnlineTestCase {
 
             for (File f : files) {
                 cleanupFolders(f);
-                if (f.getName().equalsIgnoreCase(GOME_DIR)
-                        || f.getName().equalsIgnoreCase(UTM_DIR)) {
+                if (f.getName().equalsIgnoreCase(GOME_DIR) || f.getName().equalsIgnoreCase(UTM_DIR)) {
 
                     f.delete();
                 }
@@ -426,18 +419,15 @@ public final class PostGisIndexTest extends OnlineTestCase {
     private void removeTables(String[] tables, String database) throws Exception {
         // delete tables
         Class.forName("org.postgresql.Driver");
-        try (Connection connection =
-                        DriverManager.getConnection(
-                                "jdbc:postgresql://"
-                                        + fixture.getProperty("host")
-                                        + ":"
-                                        + fixture.getProperty("port")
-                                        + "/"
-                                        + (database != null
-                                                ? database
-                                                : fixture.getProperty("database")),
-                                fixture.getProperty("user"),
-                                fixture.getProperty("passwd"));
+        try (Connection connection = DriverManager.getConnection(
+                        "jdbc:postgresql://"
+                                + fixture.getProperty("host")
+                                + ":"
+                                + fixture.getProperty("port")
+                                + "/"
+                                + (database != null ? database : fixture.getProperty("database")),
+                        fixture.getProperty("user"),
+                        fixture.getProperty("passwd"));
                 Statement st = connection.createStatement()) {
             for (String table : tables) {
                 st.execute("DROP TABLE IF EXISTS \"" + table + "\"");

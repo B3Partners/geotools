@@ -17,6 +17,7 @@
 
 package org.geotools.data.complex.config;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,6 +30,7 @@ import org.geotools.util.CheckedHashMap;
  * @since 2.4
  */
 public class SourceDataStore implements Serializable {
+    @Serial
     private static final long serialVersionUID = 8540617713675342340L;
 
     private String id;
@@ -36,9 +38,8 @@ public class SourceDataStore implements Serializable {
     private Map<String, Serializable> params = Collections.emptyMap();
 
     /**
-     * True if we have the data store connection params but we want to connect to a data access
-     * that's connected to the data store. This requires the data access to be registered in
-     * DataAccessRegistry upon creation.
+     * True if we have the data store connection params but we want to connect to a data access that's connected to the
+     * data store. This requires the data access to be registered in DataAccessRegistry upon creation.
      */
     private boolean isDataAccess;
 

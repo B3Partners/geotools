@@ -39,14 +39,14 @@ import net.opengis.wps10.ProcessOutputsType1;
 import net.opengis.wps10.ProcessStartedType;
 import net.opengis.wps10.StatusType;
 import net.opengis.wps10.Wps10Factory;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.Encoder;
 import org.geotools.xsd.Parser;
 import org.geotools.xsd.test.XMLTestSupport;
 import org.junit.Test;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -133,11 +133,7 @@ public class ExecuteTest extends XMLTestSupport {
     public void testParserDelegateNamespaces() throws Exception {
         Parser p = new Parser(new WPSConfiguration());
         ExecuteType exec =
-                (ExecuteType)
-                        p.parse(
-                                getClass()
-                                        .getResourceAsStream(
-                                                "wpsExecute_inlineGetFeature_request.xml"));
+                (ExecuteType) p.parse(getClass().getResourceAsStream("wpsExecute_inlineGetFeature_request.xml"));
         assertNotNull(exec);
         assertEquals(1, exec.getDataInputs().getInput().size());
 
@@ -148,7 +144,8 @@ public class ExecuteTest extends XMLTestSupport {
         assertTrue(ref.getBody() instanceof GetFeatureType);
         GetFeatureType gft = (GetFeatureType) ref.getBody();
 
-        QName typeName = (QName) ((QueryType) gft.getQuery().get(0)).getTypeName().get(0);
+        QName typeName =
+                (QName) ((QueryType) gft.getQuery().get(0)).getTypeName().get(0);
         assertEquals("states", typeName.getLocalPart());
         assertEquals("http://usa.org", typeName.getNamespaceURI());
     }
@@ -156,8 +153,7 @@ public class ExecuteTest extends XMLTestSupport {
     @Test
     public void testFilterParserDelegate() throws Exception {
         Parser p = new Parser(new WPSConfiguration());
-        ExecuteType exec =
-                (ExecuteType) p.parse(getClass().getResourceAsStream("wpsExecuteFilterInline.xml"));
+        ExecuteType exec = (ExecuteType) p.parse(getClass().getResourceAsStream("wpsExecuteFilterInline.xml"));
         assertNotNull(exec);
         assertEquals(1, exec.getDataInputs().getInput().size());
 
@@ -165,11 +161,10 @@ public class ExecuteTest extends XMLTestSupport {
         ComplexDataType cd = in.getData().getComplexData();
         assertNotNull(cd);
         Filter filter = (Filter) cd.getData().get(0);
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
-        Filter expected =
-                ff.or(
-                        ff.greaterOrEqual(ff.property("PERSONS"), ff.literal("10000000")),
-                        ff.lessOrEqual(ff.property("PERSONS"), ff.literal("20000000")));
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
+        Filter expected = ff.or(
+                ff.greaterOrEqual(ff.property("PERSONS"), ff.literal("10000000")),
+                ff.lessOrEqual(ff.property("PERSONS"), ff.literal("20000000")));
         assertEquals(expected, filter);
     }
 

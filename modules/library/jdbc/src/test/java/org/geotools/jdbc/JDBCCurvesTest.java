@@ -24,11 +24,18 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.List;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.PropertyIsEqualTo;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.Query;
 import org.geotools.data.store.ContentFeatureCollection;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.data.store.ContentFeatureStore;
+import org.geotools.feature.simple.SimpleFeatureBuilder;
+import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.jts.CircularArc;
 import org.geotools.geometry.jts.CircularRing;
 import org.geotools.geometry.jts.CircularString;
@@ -37,6 +44,7 @@ import org.geotools.geometry.jts.CurvePolygon;
 import org.geotools.geometry.jts.CurvedGeometries;
 import org.geotools.geometry.jts.CurvedGeometry;
 import org.geotools.geometry.jts.SingleCurvedGeometry;
+import org.geotools.referencing.CRS;
 import org.geotools.util.factory.Hints;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
@@ -44,11 +52,8 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.PropertyIsEqualTo;
 
 public abstract class JDBCCurvesTest extends JDBCTestSupport {
 
@@ -68,8 +73,8 @@ public abstract class JDBCCurvesTest extends JDBCTestSupport {
     }
 
     /**
-     * All write tests follow the same pattern: grab the feature we want, delete everything, insert
-     * back, and run its read test again
+     * All write tests follow the same pattern: grab the feature we want, delete everything, insert back, and run its
+     * read test again
      */
     @Test
     public void testWriteSingleArc() throws Exception {
@@ -114,8 +119,7 @@ public abstract class JDBCCurvesTest extends JDBCTestSupport {
         assertEquals(new Coordinate(20, 45), ls1.getCoordinateN(1));
 
         CircularString cs = (CircularString) components.get(1);
-        assertArrayEquals(
-                new double[] {20.0, 45.0, 23.0, 48.0, 20.0, 51.0}, cs.getControlPoints(), 0d);
+        assertArrayEquals(new double[] {20.0, 45.0, 23.0, 48.0, 20.0, 51.0}, cs.getControlPoints(), 0d);
 
         LineString ls2 = components.get(2);
         assertEquals(2, ls2.getNumPoints());
@@ -274,14 +278,25 @@ public abstract class JDBCCurvesTest extends JDBCTestSupport {
 
         Polygon p1 = (Polygon) mp.getGeometryN(0);
         assertTrue(p1.getExteriorRing() instanceof CompoundCurvedGeometry<?>);
-        assertEquals(2, ((CompoundCurvedGeometry<?>) p1.getExteriorRing()).getComponents().size());
+        assertEquals(
+                2,
+                ((CompoundCurvedGeometry<?>) p1.getExteriorRing())
+                        .getComponents()
+                        .size());
         assertEquals(1, p1.getNumInteriorRing());
         assertEquals(
-                2, ((CompoundCurvedGeometry<?>) p1.getInteriorRingN(0)).getComponents().size());
+                2,
+                ((CompoundCurvedGeometry<?>) p1.getInteriorRingN(0))
+                        .getComponents()
+                        .size());
 
         Polygon p2 = (Polygon) mp.getGeometryN(1);
         assertTrue(p2.getExteriorRing() instanceof CompoundCurvedGeometry<?>);
-        assertEquals(2, ((CompoundCurvedGeometry<?>) p2.getExteriorRing()).getComponents().size());
+        assertEquals(
+                2,
+                ((CompoundCurvedGeometry<?>) p2.getExteriorRing())
+                        .getComponents()
+                        .size());
         assertEquals(0, p2.getNumInteriorRing());
     }
 
@@ -353,12 +368,37 @@ public abstract class JDBCCurvesTest extends JDBCTestSupport {
         testClosedCompoundCurve();
     }
 
+    @Test
+    public void testMultiSurfaceLinearized() throws Exception {
+        SimpleFeature feature = getSingleFeatureByName("curves", "Multipolygon with curves");
+
+        String featureTypeName = "curves";
+
+        SimpleFeatureTypeBuilder ftb = new SimpleFeatureTypeBuilder();
+        ftb.setName("multiPolygon");
+        ftb.add(aname("id"), Integer.class);
+        ftb.add(aname("name"), String.class);
+        ftb.add(aname("geometry"), MultiPolygon.class, CRS.decode("EPSG:4326"));
+
+        SimpleFeatureType ft = ftb.buildFeatureType();
+
+        SimpleFeatureBuilder sfb = new SimpleFeatureBuilder(ft);
+        sfb.set("name", "multipolygon_linearized");
+        sfb.set("geometry", feature.getDefaultGeometry());
+
+        ContentFeatureStore store = (ContentFeatureStore) dataStore.getFeatureSource(featureTypeName);
+        store.addFeatures(DataUtilities.collection(sfb.buildFeature("1")));
+        SimpleFeature retrievedFeature = getSingleFeatureByName("multipolygon_linearized");
+        Geometry g = (Geometry) retrievedFeature.getDefaultGeometry();
+        assertNotNull(g);
+        assertThat(g, CoreMatchers.instanceOf(MultiPolygon.class));
+    }
+
     protected SimpleFeature getSingleFeatureByName(String name) throws IOException {
         return getSingleFeatureByName("curves", name);
     }
 
-    protected SimpleFeature getSingleFeatureByName(String tableName, String name)
-            throws IOException {
+    protected SimpleFeature getSingleFeatureByName(String tableName, String name) throws IOException {
         ContentFeatureSource fs = dataStore.getFeatureSource(tname(tableName));
         FilterFactory ff = dataStore.getFilterFactory();
         PropertyIsEqualTo filter = ff.equal(ff.property(aname("name")), ff.literal(name), true);
@@ -371,8 +411,7 @@ public abstract class JDBCCurvesTest extends JDBCTestSupport {
     }
 
     protected ContentFeatureStore cleanTable(String tableName) throws IOException {
-        ContentFeatureStore store =
-                (ContentFeatureStore) dataStore.getFeatureSource(tname(tableName));
+        ContentFeatureStore store = (ContentFeatureStore) dataStore.getFeatureSource(tname(tableName));
         store.removeFeatures(Filter.INCLUDE);
         return store;
     }

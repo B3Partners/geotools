@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
@@ -39,8 +38,7 @@ import org.locationtech.jts.geom.Envelope;
 
 /** @author Tommaso Nolli */
 public class FileSystemIndexStore implements FileReader, IndexStore {
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(FileSystemIndexStore.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(FileSystemIndexStore.class);
     private File file;
     private byte byteOrder;
     private ShpFiles shpFiles;
@@ -64,9 +62,7 @@ public class FileSystemIndexStore implements FileReader, IndexStore {
         this.byteOrder = byteOrder;
     }
 
-    /**
-     * @see org.geotools.index.quadtree.IndexStore#dataStore(org.geotools.index.quadtree.QuadTree)
-     */
+    /** @see org.geotools.index.quadtree.IndexStore#dataStore(org.geotools.index.quadtree.QuadTree) */
     @Override
     public void store(QuadTree tree) throws StoreException {
         // For efficiency, trim the tree
@@ -111,11 +107,10 @@ public class FileSystemIndexStore implements FileReader, IndexStore {
      * @param node The node
      * @param order byte order
      */
-    private void writeNode(Node node, FileChannel channel, ByteOrder order)
-            throws IOException, StoreException {
+    private void writeNode(Node node, FileChannel channel, ByteOrder order) throws IOException, StoreException {
         int offset = this.getSubNodeOffset(node);
 
-        ByteBuffer buf = ByteBuffer.allocate((4 * 8) + (3 * 4) + (node.getNumShapeIds() * 4));
+        ByteBuffer buf = ByteBuffer.allocate(4 * 8 + 3 * 4 + node.getNumShapeIds() * 4);
 
         buf.order(order);
         buf.putInt(offset);
@@ -149,8 +144,8 @@ public class FileSystemIndexStore implements FileReader, IndexStore {
 
         for (int i = 0; i < node.getNumSubNodes(); i++) {
             tmp = node.getSubNode(i);
-            offset += (4 * 8); // Envelope size
-            offset += ((tmp.getNumShapeIds() + 3) * 4); // Entries size + 3
+            offset += 4 * 8; // Envelope size
+            offset += (tmp.getNumShapeIds() + 3) * 4; // Entries size + 3
             offset += this.getSubNodeOffset(tmp);
         }
 
@@ -158,14 +153,14 @@ public class FileSystemIndexStore implements FileReader, IndexStore {
     }
 
     /**
-     * Loads a quadrtee stored in a '.qix' file. <b>WARNING:</b> The resulting quadtree will be
-     * immutable; if you perform an insert, an <code>UnsupportedOperationException</code> will be
-     * thrown.
+     * Loads a quadrtee stored in a '.qix' file. <b>WARNING:</b> The resulting quadtree will be immutable; if you
+     * perform an insert, an <code>UnsupportedOperationException</code> will be thrown.
      *
      * @see org.geotools.index.quadtree.IndexStore#load()
      */
     @Override
-    @SuppressWarnings("PMD.CloseResource") // channel is managed in the returned value
+    // channel is managed in the returned value
+    @SuppressWarnings("PMD.UseTryWithResources")
     public QuadTree load(IndexFile indexfile, boolean useMemoryMapping) throws StoreException {
         boolean initialized = false;
         FileInputStream fis = null;
@@ -212,8 +207,7 @@ public class FileSystemIndexStore implements FileReader, IndexStore {
         }
     }
 
-    private QuadTree doLoad(
-            FileInputStream fis, FileChannel channel, IndexFile indexfile, boolean useMemoryMapping)
+    private QuadTree doLoad(FileInputStream fis, FileChannel channel, IndexFile indexfile, boolean useMemoryMapping)
             throws IOException {
         IndexHeader header = new IndexHeader(channel);
 
@@ -221,33 +215,32 @@ public class FileSystemIndexStore implements FileReader, IndexStore {
         ByteBuffer buf = ByteBuffer.allocate(8);
         buf.order(order);
         channel.read(buf);
-        ((Buffer) buf).flip();
+        buf.flip();
 
-        QuadTree tree =
-                new QuadTree(buf.getInt(), buf.getInt(), indexfile) {
-                    @Override
-                    public void insert(int recno, Envelope bounds) {
-                        throw new UnsupportedOperationException("File quadtrees are immutable");
-                    }
+        QuadTree tree = new QuadTree(buf.getInt(), buf.getInt(), indexfile) {
+            @Override
+            public void insert(int recno, Envelope bounds) {
+                throw new UnsupportedOperationException("File quadtrees are immutable");
+            }
 
-                    @Override
-                    public boolean trim() {
-                        return false;
-                    }
+            @Override
+            public boolean trim() {
+                return false;
+            }
 
-                    @Override
-                    public void close() throws StoreException {
-                        super.close();
-                        try {
-                            channel.close();
-                            if (fis != null) {
-                                fis.close();
-                            }
-                        } catch (IOException e) {
-                            throw new StoreException(e);
-                        }
+            @Override
+            public void close() throws StoreException {
+                super.close();
+                try {
+                    channel.close();
+                    if (fis != null) {
+                        fis.close();
                     }
-                };
+                } catch (IOException e) {
+                    throw new StoreException(e);
+                }
+            }
+        };
 
         tree.setRoot(FileSystemNode.readNode(0, null, channel, order, useMemoryMapping));
 

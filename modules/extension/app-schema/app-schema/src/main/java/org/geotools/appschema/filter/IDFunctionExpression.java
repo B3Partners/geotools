@@ -17,8 +17,8 @@
 
 package org.geotools.appschema.filter;
 
+import org.geotools.api.feature.Attribute;
 import org.geotools.filter.FunctionExpressionImpl;
-import org.opengis.feature.Attribute;
 
 public class IDFunctionExpression extends FunctionExpressionImpl {
     public IDFunctionExpression() {
@@ -27,8 +27,7 @@ public class IDFunctionExpression extends FunctionExpressionImpl {
 
     @Override
     public Object evaluate(Object obj) {
-        if (obj instanceof Attribute) {
-            Attribute att = (Attribute) obj;
+        if (obj instanceof Attribute att) {
             return att.getIdentifier();
         }
         return null;

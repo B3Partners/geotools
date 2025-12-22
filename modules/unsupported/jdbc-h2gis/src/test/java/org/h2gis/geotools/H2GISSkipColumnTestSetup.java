@@ -3,7 +3,6 @@ package org.h2gis.geotools;
 import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.jdbc.JDBCSkipColumnTestSetup;
 
-@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public class H2GISSkipColumnTestSetup extends JDBCSkipColumnTestSetup {
 
     protected H2GISSkipColumnTestSetup() {
@@ -18,12 +17,9 @@ public class H2GISSkipColumnTestSetup extends JDBCSkipColumnTestSetup {
 
     @Override
     protected void createSkipColumnTable() throws Exception {
-        run(
-                "CREATE TABLE \"skipcolumn\" (\"fid\" int AUTO_INCREMENT(1) PRIMARY KEY, "
-                        + "\"id\" int, \"geom\" GEOMETRY(POINT, 4326), \"weird\" INTEGER array, \"name\" varchar)");
-        run(
-                "INSERT INTO \"skipcolumn\" VALUES ("
-                        + "0, 0, ST_GeomFromText('POINT(0 0)',4326), null, 'GeoTools')");
+        run("CREATE TABLE \"skipcolumn\" (\"fid\" int AUTO_INCREMENT(1) PRIMARY KEY, "
+                + "\"id\" int, \"geom\" GEOMETRY(POINT, 4326), \"weird\" INTEGER array, \"name\" varchar)");
+        run("INSERT INTO \"skipcolumn\" VALUES (" + "0, 0, ST_GeomFromText('POINT(0 0)',4326), null, 'GeoTools')");
     }
 
     @Override

@@ -25,7 +25,7 @@ import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
-import org.geotools.styling.Fill;
+import org.geotools.api.style.Fill;
 import org.geotools.styling.SLD;
 import org.geotools.styling.StyleBuilder;
 import org.geotools.swt.utils.Messages;
@@ -72,15 +72,15 @@ public class FillViewer {
     private class Listener implements SelectionListener, ModifyListener {
         public void widgetSelected(SelectionEvent e) {
             sync(e);
-        };
+        }
 
         public void widgetDefaultSelected(SelectionEvent e) {
             sync(e);
-        };
+        }
 
         public void modifyText(ModifyEvent e) {
             sync(AbstractSimpleConfigurator.selectionEvent(e));
-        };
+        }
 
         private void sync(SelectionEvent selectionEvent) {
             try {
@@ -109,7 +109,7 @@ public class FillViewer {
                 FillViewer.this.percent.setEnabled(FillViewer.this.enabled);
             }
         }
-    };
+    }
 
     Listener sync = new Listener();
     private SelectionListener listener;

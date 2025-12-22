@@ -44,14 +44,18 @@ import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
 import org.apache.commons.io.FileUtils;
 import org.geotools.TestData;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
 import org.geotools.coverage.io.CoverageSourceDescriptor;
 import org.geotools.coverage.io.RasterLayoutTest;
 import org.geotools.coverage.io.TestCoverageSourceDescriptor;
 import org.geotools.coverage.io.catalog.CoverageSlicesCatalog;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
 import org.geotools.feature.NameImpl;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
@@ -60,10 +64,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.PrecisionModel;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
 
 /** @author Nicola Lagomarsini Geosolutions */
 public class GeoSpatialImageReaderTest {
@@ -167,13 +167,8 @@ public class GeoSpatialImageReaderTest {
         }
     }
 
-    /**
-     * A simple GeoSpatialImageReader only supporting 2 testCoverages: testCoverage1, testCoverage2
-     */
+    /** A simple GeoSpatialImageReader only supporting 2 testCoverages: testCoverage1, testCoverage2 */
     public static class TestGeospatialImageReader extends GeoSpatialImageReader {
-
-        /** Default Logger * */
-        private static final Logger LOGGER = Logging.getLogger(TestGeospatialImageReader.class);
 
         protected TestGeospatialImageReader() {
             super(new TestGeospatialImageReaderSpi());
@@ -187,8 +182,7 @@ public class GeoSpatialImageReaderTest {
             coverageNames.add(new NameImpl("testCoverage1"));
             coverageNames.add(new NameImpl("testCoverage2"));
             for (Name coverageName : coverageNames) {
-                descriptors.put(
-                        coverageName, new TestCoverageSourceDescriptor(coverageName.toString()));
+                descriptors.put(coverageName, new TestCoverageSourceDescriptor(coverageName.toString()));
             }
         }
 
@@ -254,8 +248,7 @@ public class GeoSpatialImageReaderTest {
 
     public static class TestGeospatialImageReaderSpi extends ImageReaderSpi {
 
-        public static final Class<?>[] STANDARD_INPUT_TYPES = {
-            ImageInputStream.class, File.class, URL.class, URI.class
+        public static final Class<?>[] STANDARD_INPUT_TYPES = {ImageInputStream.class, File.class, URL.class, URI.class
         };
 
         public static final String VENDOR_NAME = "GeoTools";

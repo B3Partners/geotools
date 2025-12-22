@@ -18,8 +18,8 @@ package org.geotools.filter;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.filter.PropertyIsLike;
 import org.geotools.util.logging.Logging;
-import org.opengis.filter.PropertyIsLike;
 
 /**
  * Helper class that takes a LikeFilter and generates the equivalent Java Pattern syntax
@@ -72,8 +72,7 @@ public class LikeToRegexConverter {
                 chr = pattern.charAt(i);
             }
 
-            if (pattern.regionMatches(
-                    false, i, wildcardMulti, 0, wildcardMulti.length())) { // replace
+            if (pattern.regionMatches(false, i, wildcardMulti, 0, wildcardMulti.length())) { // replace
                 // with
                 // java
                 // wildcard
@@ -86,7 +85,7 @@ public class LikeToRegexConverter {
                     tmp.append(".*");
                 }
 
-                i += (wildcardMulti.length() - 1);
+                i += wildcardMulti.length() - 1;
                 escapedMode = false;
 
                 continue;
@@ -105,7 +104,7 @@ public class LikeToRegexConverter {
                     tmp.append(".{1}");
                 }
 
-                i += (wildcardSingle.length() - 1);
+                i += wildcardSingle.length() - 1;
                 escapedMode = false;
 
                 continue;
@@ -138,19 +137,18 @@ public class LikeToRegexConverter {
      * @return is the character a special character.
      */
     private boolean isSpecial(final char chr) {
-        return ((chr == '.')
-                || (chr == '?')
-                || (chr == '*')
-                || (chr == '^')
-                || (chr == '$')
-                || (chr == '+')
-                || (chr == '[')
-                || (chr == ']')
-                || (chr == '(')
-                || (chr == ')')
-                || (chr == '|')
-                || (chr == '\\')
-                || (chr == '&'));
+        return chr == '.'
+                || chr == '?'
+                || chr == '*'
+                || chr == '^'
+                || chr == '$'
+                || chr == '+'
+                || chr == '['
+                || chr == ']'
+                || chr == '('
+                || chr == ')'
+                || chr == '|'
+                || chr == '\\';
     }
 
     /**

@@ -20,15 +20,15 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.LinkedList;
 import java.util.List;
+import org.geotools.api.geometry.Position;
 import org.geotools.data.vpf.VPFLogger;
 import org.geotools.data.vpf.ifc.DataTypesDefinition;
 import org.geotools.data.vpf.ifc.FileConstants;
 import org.geotools.data.vpf.ifc.VPFHeader;
 import org.geotools.data.vpf.ifc.VPFRow;
 import org.geotools.data.vpf.util.DataUtils;
-import org.geotools.geometry.DirectPosition2D;
-import org.geotools.geometry.GeneralDirectPosition;
-import org.opengis.geometry.DirectPosition;
+import org.geotools.geometry.GeneralPosition;
+import org.geotools.geometry.Position2D;
 
 /**
  * VPFInputStream.java Created: Mon Feb 24 22:39:57 2003
@@ -49,7 +49,7 @@ public abstract class VPFInputStream implements FileConstants, DataTypesDefiniti
     protected String streamFile = null;
 
     /** Describe variable <code>rowsReadAhead</code> here. */
-    private List rowsReadAhead = new LinkedList();
+    private List rowsReadAhead = new LinkedList<>();
 
     /** Describe variable <code>variableIndex</code> here. */
     private VPFInputStream variableIndex = null;
@@ -74,8 +74,7 @@ public abstract class VPFInputStream implements FileConstants, DataTypesDefiniti
         //     condeb("("+streamFile+
         //            ") header.getRecordSize()="+header.getRecordSize());
         if (header.getRecordSize() < 0) {
-            variableIndex =
-                    new VariableIndexInputStream(getVariableIndexFileName(), getByteOrder());
+            variableIndex = new VariableIndexInputStream(getVariableIndexFileName(), getByteOrder());
         }
 
         // end of if (header.getRecordSize() == -1)
@@ -199,7 +198,7 @@ public abstract class VPFInputStream implements FileConstants, DataTypesDefiniti
 
             //       condeb("seek: "+varRow.getOffset());
         } else {
-            seek(header.getLength() + ((pos - 1) * header.getRecordSize()));
+            seek(header.getLength() + (pos - 1) * header.getRecordSize());
 
             //       condeb("seek: "+(header.getLength()+(pos-1)*header.getRecordSize()));
         }
@@ -253,7 +252,7 @@ public abstract class VPFInputStream implements FileConstants, DataTypesDefiniti
         int counter = 0;
         VPFRow row = readRow();
 
-        while ((row != null) && (counter < rows.length)) {
+        while (row != null && counter < rows.length) {
             rows[counter++] = row;
             row = readRow();
         }
@@ -478,41 +477,41 @@ public abstract class VPFInputStream implements FileConstants, DataTypesDefiniti
         return new TripletId(tripletData);
     }
 
-    protected DirectPosition[] readCoord3DFloat(int instancesCount) throws IOException {
-        DirectPosition[] result = new DirectPosition[instancesCount];
+    protected Position[] readCoord3DFloat(int instancesCount) throws IOException {
+        Position[] result = new Position[instancesCount];
 
         for (int inx = 0; inx < instancesCount; inx++) {
-            result[inx] = new GeneralDirectPosition(readFloat(), readFloat(), readFloat());
+            result[inx] = new GeneralPosition(readFloat(), readFloat(), readFloat());
         }
 
         return result;
     }
 
-    protected DirectPosition[] readCoord2DFloat(int instancesCount) throws IOException {
-        DirectPosition[] result = new DirectPosition[instancesCount];
+    protected Position[] readCoord2DFloat(int instancesCount) throws IOException {
+        Position[] result = new Position[instancesCount];
 
         for (int inx = 0; inx < instancesCount; inx++) {
-            result[inx] = new DirectPosition2D(readFloat(), readFloat());
+            result[inx] = new Position2D(readFloat(), readFloat());
         }
 
         return result;
     }
 
-    protected DirectPosition[] readCoord2DDouble(int instancesCount) throws IOException {
-        DirectPosition[] result = new DirectPosition[instancesCount];
+    protected Position[] readCoord2DDouble(int instancesCount) throws IOException {
+        Position[] result = new Position[instancesCount];
 
         for (int inx = 0; inx < instancesCount; inx++) {
-            result[inx] = new DirectPosition2D(readDouble(), readDouble());
+            result[inx] = new Position2D(readDouble(), readDouble());
         }
 
         return result;
     }
 
-    protected DirectPosition[] readCoord3DDouble(int instancesCount) throws IOException {
-        DirectPosition[] result = new DirectPosition[instancesCount];
+    protected Position[] readCoord3DDouble(int instancesCount) throws IOException {
+        Position[] result = new Position[instancesCount];
 
         for (int inx = 0; inx < instancesCount; inx++) {
-            result[inx] = new GeneralDirectPosition(readDouble(), readDouble(), readDouble());
+            result[inx] = new GeneralPosition(readDouble(), readDouble(), readDouble());
         }
 
         return result;
@@ -524,7 +523,7 @@ public abstract class VPFInputStream implements FileConstants, DataTypesDefiniti
      * @return an <code>int</code> value
      */
     public int availableRows() {
-        return (rowsReadAhead != null) ? rowsReadAhead.size() : 0;
+        return rowsReadAhead != null ? rowsReadAhead.size() : 0;
     }
 
     /**

@@ -20,9 +20,9 @@ package org.geotools.ysld.parse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import org.geotools.styling.PointSymbolizer;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.StyledLayerDescriptor;
 import org.geotools.styling.SLD;
-import org.geotools.styling.StyledLayerDescriptor;
 import org.geotools.ysld.Ysld;
 import org.junit.Test;
 
@@ -31,24 +31,20 @@ public class YsldParsePartialsTest {
     @Test
     public void testParseRules() throws Exception {
         String ysld =
-                "rules:\n"
-                        + "- symbolizers:\n"
-                        + "  - point:\n"
-                        + "      symbols:\n"
-                        + "      - mark:\n"
-                        + "         shape: triangle";
+                """
+                rules:
+                - symbolizers:
+                  - point:
+                      symbols:
+                      - mark:
+                         shape: triangle""";
 
         assertSLD(Ysld.parse(ysld));
     }
 
     @Test
     public void testParseSymbolizers() throws Exception {
-        String ysld =
-                "symbolizers:\n"
-                        + "- point:\n"
-                        + "    symbols:\n"
-                        + "    - mark:\n"
-                        + "       shape: triangle";
+        String ysld = "symbolizers:\n" + "- point:\n" + "    symbols:\n" + "    - mark:\n" + "       shape: triangle";
 
         assertSLD(Ysld.parse(ysld));
     }

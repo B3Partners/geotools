@@ -31,6 +31,7 @@ import org.assertj.swing.driver.FrameDriver;
 import org.assertj.swing.edt.GuiActionRunner;
 import org.assertj.swing.edt.GuiQuery;
 import org.assertj.swing.fixture.FrameFixture;
+import org.geotools.api.geometry.Bounds;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.swing.testutils.GraphicsTestBase;
 import org.geotools.swing.testutils.GraphicsTestRunner;
@@ -39,7 +40,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opengis.geometry.Envelope;
 
 /**
  * Unit tests for MapPaneKeyHandler. Requires graphics environment.
@@ -59,20 +59,18 @@ public class MapPaneKeyHandlerTest extends GraphicsTestBase<FrameFixture, Frame,
 
     @Before
     public void setup() {
-        TestFrame frame =
-                GuiActionRunner.execute(
-                        new GuiQuery<TestFrame>() {
-                            @Override
-                            protected TestFrame executeInEDT() throws Throwable {
-                                mapPane = new MockMapPane2();
-                                mapPane.setName("pane");
-                                handler = new MapPaneKeyHandler(mapPane);
-                                mapPane.addKeyListener(handler);
+        TestFrame frame = GuiActionRunner.execute(new GuiQuery<>() {
+            @Override
+            protected TestFrame executeInEDT() throws Throwable {
+                mapPane = new MockMapPane2();
+                mapPane.setName("pane");
+                handler = new MapPaneKeyHandler(mapPane);
+                mapPane.addKeyListener(handler);
 
-                                TestFrame frame = new TestFrame(mapPane);
-                                return frame;
-                            }
-                        });
+                TestFrame frame = new TestFrame(mapPane);
+                return frame;
+            }
+        });
 
         windowFixture = new FrameFixture(frame);
         windowFixture.show(new Dimension(WIDTH, HEIGHT));
@@ -112,8 +110,7 @@ public class MapPaneKeyHandlerTest extends GraphicsTestBase<FrameFixture, Frame,
         assertEquals(-1, sign(endEnv.getWidth() - startEnv.getWidth()));
     }
 
-    private void assertScroll(MapPaneKeyHandler.Action action, int expectedDx, int expectedDy)
-            throws Exception {
+    private void assertScroll(MapPaneKeyHandler.Action action, int expectedDx, int expectedDy) throws Exception {
 
         KeyPressInfo info = getKeyPressInfo(action);
         windowFixture.panel("pane").pressAndReleaseKey(info);
@@ -124,7 +121,7 @@ public class MapPaneKeyHandlerTest extends GraphicsTestBase<FrameFixture, Frame,
     }
 
     private int sign(int i) {
-        return (i < 0 ? -1 : (i > 0 ? 1 : 0));
+        return i < 0 ? -1 : i > 0 ? 1 : 0;
     }
 
     private int sign(double d) {
@@ -155,7 +152,6 @@ public class MapPaneKeyHandlerTest extends GraphicsTestBase<FrameFixture, Frame,
         ReferencedEnvelope env = new ReferencedEnvelope(0, 100, 0, 100, null);
         int dx = 0;
         int dy = 0;
-        private boolean gotReset = false;
 
         @Override
         public void moveImage(int dx, int dy) {
@@ -170,14 +166,13 @@ public class MapPaneKeyHandlerTest extends GraphicsTestBase<FrameFixture, Frame,
         }
 
         @Override
-        public void setDisplayArea(Envelope envelope) {
+        public void setDisplayArea(Bounds envelope) {
             this.env = new ReferencedEnvelope(envelope);
             latch.countDown();
         }
 
         @Override
         public void reset() {
-            gotReset = true;
             latch.countDown();
         }
     }

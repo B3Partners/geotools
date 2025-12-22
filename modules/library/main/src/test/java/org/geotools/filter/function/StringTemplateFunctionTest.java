@@ -4,15 +4,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import java.util.ArrayList;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.data.DataUtilities;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
 
 public class StringTemplateFunctionTest extends SEFunctionTestBase {
 
@@ -68,23 +68,16 @@ public class StringTemplateFunctionTest extends SEFunctionTestBase {
         parameters.add(ff2.property("template"));
         Function fn = finder.findFunction("stringTemplate", parameters, fallback);
 
-        SimpleFeatureType type =
-                DataUtilities.createType("test", "input:string,pattern:string,template:string");
+        SimpleFeatureType type = DataUtilities.createType("test", "input:string,pattern:string,template:string");
         SimpleFeature f1 =
-                SimpleFeatureBuilder.build(
-                        type,
-                        new Object[] {"abc123_567", ".*(\\d{3})_(\\d{3})", "${1}|${2}"},
-                        null);
+                SimpleFeatureBuilder.build(type, new Object[] {"abc123_567", ".*(\\d{3})_(\\d{3})", "${1}|${2}"}, null);
         assertEquals("123|567", fn.evaluate(f1));
 
         SimpleFeature f2 =
-                SimpleFeatureBuilder.build(
-                        type, new Object[] {"abc12_67", "(.*)_(\\d{3})", "${1}_${2}"}, null);
+                SimpleFeatureBuilder.build(type, new Object[] {"abc12_67", "(.*)_(\\d{3})", "${1}_${2}"}, null);
         assertNull(fn.evaluate(f2));
 
-        SimpleFeature f3 =
-                SimpleFeatureBuilder.build(
-                        type, new Object[] {"abc12_67", "(.*)_(.*)", "${1}|${2}"}, null);
+        SimpleFeature f3 = SimpleFeatureBuilder.build(type, new Object[] {"abc12_67", "(.*)_(.*)", "${1}|${2}"}, null);
         assertEquals("abc12|67", fn.evaluate(f3));
     }
 
@@ -96,13 +89,9 @@ public class StringTemplateFunctionTest extends SEFunctionTestBase {
         parameters.add(ff2.literal("(a+)+"));
         parameters.add(ff2.literal(""));
         Function fn = finder.findFunction("stringTemplate", parameters, fallback);
-        SimpleFeatureType type =
-                DataUtilities.createType("test", "input:string,pattern:string,template:string");
+        SimpleFeatureType type = DataUtilities.createType("test", "input:string,pattern:string,template:string");
         SimpleFeature f1 =
-                SimpleFeatureBuilder.build(
-                        type,
-                        new Object[] {"abc123_567", ".*(\\d{3})_(\\d{3})", "${1}|${2}"},
-                        null);
+                SimpleFeatureBuilder.build(type, new Object[] {"abc123_567", ".*(\\d{3})_(\\d{3})", "${1}|${2}"}, null);
         fn.evaluate(f1);
     }
 }

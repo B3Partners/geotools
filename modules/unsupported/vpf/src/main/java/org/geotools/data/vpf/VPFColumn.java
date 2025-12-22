@@ -31,12 +31,12 @@ import static org.geotools.data.vpf.ifc.DataTypesDefinition.DATA_SHORT_INTEGER;
 import static org.geotools.data.vpf.ifc.DataTypesDefinition.DATA_TEXT;
 import static org.geotools.data.vpf.ifc.DataTypesDefinition.DATA_TRIPLET_ID;
 
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
 import org.geotools.data.vpf.io.TripletId;
 import org.geotools.data.vpf.util.DataUtils;
 import org.geotools.feature.AttributeTypeBuilder;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
 
 /**
  * A column in a VPF File.
@@ -45,10 +45,7 @@ import org.opengis.feature.type.GeometryDescriptor;
  * @source $URL$
  */
 public class VPFColumn {
-    /**
-     * If the value is a short integer, that often means it has an accompanying value in a string
-     * lookup table.
-     */
+    /** If the value is a short integer, that often means it has an accompanying value in a string lookup table. */
     private boolean attemptLookup = false;
 
     /** Attribute descriptor generated from this column definition. */
@@ -90,13 +87,12 @@ public class VPFColumn {
         this.thematicIdx = thematicIdx;
         this.narrTable = narrTable;
         // VPFLogger.log("buildDescriptor: " + name);
-        descriptor =
-                new AttributeTypeBuilder()
-                        .length(getColumnSize())
-                        .description(colDesc)
-                        .binding(getColumnClass())
-                        .nillable(true)
-                        .buildDescriptor(name);
+        descriptor = new AttributeTypeBuilder()
+                .length(getColumnSize())
+                .description(colDesc)
+                .binding(getColumnClass())
+                .nillable(true)
+                .buildDescriptor(name);
         descriptor.getUserData().put("column", this);
     }
 
@@ -159,10 +155,10 @@ public class VPFColumn {
 
                 break;
 
-                // Short integers are usually coded values
+            // Short integers are usually coded values
             case DATA_SHORT_INTEGER:
                 attemptLookup = true;
-                // Fall through
+            // Fall through
             case DATA_TEXT:
             case DATA_NULL_FIELD:
             case DATA_LEVEL1_TEXT:

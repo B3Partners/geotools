@@ -19,9 +19,13 @@ package org.geotools.coverage.processing.operation;
 import java.awt.image.ColorModel;
 import java.awt.image.IndexColorModel;
 import java.awt.image.RenderedImage;
-import javax.media.jai.ImageLayout;
-import javax.media.jai.NullOpImage;
-import javax.media.jai.OpImage;
+import java.text.MessageFormat;
+import org.eclipse.imagen.ImageLayout;
+import org.eclipse.imagen.media.nullop.NullOpImage;
+import org.geotools.api.coverage.Coverage;
+import org.geotools.api.coverage.SampleDimension;
+import org.geotools.api.coverage.grid.GridCoverage;
+import org.geotools.api.parameter.ParameterValueGroup;
 import org.geotools.coverage.CoverageFactoryFinder;
 import org.geotools.coverage.GridSampleDimension;
 import org.geotools.coverage.grid.GridCoverage2D;
@@ -29,19 +33,13 @@ import org.geotools.coverage.processing.Operation2D;
 import org.geotools.coverage.util.CoverageUtilities;
 import org.geotools.image.util.ColorUtilities;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.parameter.DefaultParameterDescriptorGroup;
 import org.geotools.util.Classes;
 import org.geotools.util.factory.GeoTools;
 import org.geotools.util.factory.Hints;
-import org.opengis.coverage.Coverage;
-import org.opengis.coverage.SampleDimension;
-import org.opengis.coverage.grid.GridCoverage;
-import org.opengis.parameter.ParameterValueGroup;
 
 /**
- * Operation applied only on image's colors. This operation work only for source image using an
- * {@link IndexColorModel}.
+ * Operation applied only on image's colors. This operation work only for source image using an {@link IndexColorModel}.
  *
  * @version $Id$
  * @author Martin Desruisseaux
@@ -54,18 +52,17 @@ abstract class IndexColorOperation extends Operation2D {
     }
 
     /**
-     * Performs the color transformation. This method invokes the {@link #transformColormap
-     * transformColormap(...)} method with current RGB colormap, the source {@link SampleDimension}
-     * and the supplied parameters.
+     * Performs the color transformation. This method invokes the {@link #transformColormap transformColormap(...)}
+     * method with current RGB colormap, the source {@link SampleDimension} and the supplied parameters.
      *
      * @param parameters The parameters.
      * @param hints Rendering hints (ignored in this implementation).
-     * @throws IllegalArgumentException if the candidate image do not use an {@link
-     *     IndexColorModel}.
+     * @throws IllegalArgumentException if the candidate image do not use an {@link IndexColorModel}.
      */
     @Override
     public Coverage doOperation(final ParameterValueGroup parameters, final Hints hints) {
-        final GridCoverage2D source = (GridCoverage2D) parameters.parameter("Source").getValue();
+        final GridCoverage2D source =
+                (GridCoverage2D) parameters.parameter("Source").getValue();
         final GridCoverage2D visual = source;
         final RenderedImage image = visual.getRenderedImage();
         final GridSampleDimension[] bands = visual.getSampleDimensions();
@@ -78,15 +75,11 @@ abstract class IndexColorOperation extends Operation2D {
              * transformColormap(...) method, which needs to be defined by subclasses.
              */
             GridSampleDimension band = bands[i];
-            final ColorModel candidate =
-                    (i == visibleBand) ? image.getColorModel() : band.getColorModel();
+            final ColorModel candidate = i == visibleBand ? image.getColorModel() : band.getColorModel();
             if (!(candidate instanceof IndexColorModel)) {
                 // Current implementation supports only sources that use an index color model.
-                throw new IllegalArgumentException(
-                        Errors.format(
-                                ErrorKeys.ILLEGAL_CLASS_$2,
-                                Classes.getClass(candidate),
-                                IndexColorModel.class));
+                throw new IllegalArgumentException(MessageFormat.format(
+                        ErrorKeys.ILLEGAL_CLASS_$2, Classes.getClass(candidate), IndexColorModel.class));
             }
             final IndexColorModel colors = (IndexColorModel) candidate;
             final int mapSize = colors.getMapSize();
@@ -115,7 +108,7 @@ abstract class IndexColorOperation extends Operation2D {
              * color model for this band. The new color model will be given later to the
              * image operator.
              */
-            if (colorChanged && (i == visibleBand)) {
+            if (colorChanged && i == visibleBand) {
                 model = ColorUtilities.getIndexColorModel(ARGB, bands.length, visibleBand);
             }
         }
@@ -128,34 +121,31 @@ abstract class IndexColorOperation extends Operation2D {
          * unmodified (except for the ColorModel given in the layout in this case).
          */
         final ImageLayout layout = new ImageLayout().setColorModel(model);
-        final RenderedImage newImage =
-                new NullOpImage(image, layout, null, OpImage.OP_COMPUTE_BOUND);
-        final GridCoverage2D target =
-                CoverageFactoryFinder.getGridCoverageFactory(GeoTools.getDefaultHints())
-                        .create(
-                                visual.getName(),
-                                newImage,
-                                visual.getCoordinateReferenceSystem2D(),
-                                visual.getGridGeometry().getGridToCRS(),
-                                bands,
-                                new GridCoverage[] {visual},
-                                null);
+        final RenderedImage newImage = new NullOpImage(image, layout, null);
+        final GridCoverage2D target = CoverageFactoryFinder.getGridCoverageFactory(GeoTools.getDefaultHints())
+                .create(
+                        visual.getName(),
+                        newImage,
+                        visual.getCoordinateReferenceSystem2D(),
+                        visual.getGridGeometry().getGridToCRS(),
+                        bands,
+                        new GridCoverage[] {visual},
+                        null);
 
         return target;
     }
 
     /**
-     * Transforms the supplied RGB colors. This method is automatically invoked by {@link
-     * #doOperation(ParameterList)} for each band in the source {@link GridCoverage2D}. The {@code
-     * ARGB} array contains the ARGB values from the current source and should be overridden with
-     * new ARGB values for the destination image.
+     * Transforms the supplied RGB colors. This method is automatically invoked by {@link #doOperation(ParameterList)}
+     * for each band in the source {@link GridCoverage2D}. The {@code ARGB} array contains the ARGB values from the
+     * current source and should be overridden with new ARGB values for the destination image.
      *
      * @param ARGB Alpha, Red, Green and Blue components to transform.
      * @param band The band number, from 0 to the number of bands in the image -1.
      * @param sampleDimension The sample dimension of band {@code band}.
      * @param parameters The user-supplied parameters.
-     * @return A sample dimension identical to {@code sampleDimension} except for the colors.
-     *     Subclasses may conservatively returns {@code sampleDimension}.
+     * @return A sample dimension identical to {@code sampleDimension} except for the colors. Subclasses may
+     *     conservatively returns {@code sampleDimension}.
      */
     protected abstract GridSampleDimension transformColormap(
             final int[] ARGB,

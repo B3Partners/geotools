@@ -32,19 +32,20 @@ import static java.lang.Math.sin;
 import static java.lang.Math.tan;
 
 import java.awt.geom.Point2D;
+import java.io.Serial;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
 
 /**
- * The USGS oblique/equatorial case of the Stereographic projection. This is similar but
- * <strong>NOT</strong> equal to EPSG code 9809 ({@code "Oblique_Stereographic"} EPSG name). The
- * later is rather implemented by {@link ObliqueStereographic}.
+ * The USGS oblique/equatorial case of the Stereographic projection. This is similar but <strong>NOT</strong> equal to
+ * EPSG code 9809 ({@code "Oblique_Stereographic"} EPSG name). The later is rather implemented by
+ * {@link ObliqueStereographic}.
  *
- * <p>This class is not public in order to keep names that closely match the ones in common usage
- * (i.e. this projection is called just "Stereographic" in ESRI). Furthermore, the "USGS" name is
- * not really accurate for a class to be extended by {@link ObliqueStereographic}.
+ * <p>This class is not public in order to keep names that closely match the ones in common usage (i.e. this projection
+ * is called just "Stereographic" in ESRI). Furthermore, the "USGS" name is not really accurate for a class to be
+ * extended by {@link ObliqueStereographic}.
  *
  * @since 2.4
  * @version $Id$
@@ -55,6 +56,7 @@ import org.opengis.parameter.ParameterValueGroup;
  */
 class StereographicUSGS extends Stereographic {
     /** For compatibility with different versions during deserialization. */
+    @Serial
     private static final long serialVersionUID = 948619442800459871L;
 
     /** Maximum number of iterations for iterative computations. */
@@ -68,8 +70,8 @@ class StereographicUSGS extends Stereographic {
 
     /**
      * Constants used for the oblique projections. All those constants are completly determined by
-     * {@link #latitudeOfOrigin}. Concequently, there is no need to test them in {@link #hashCode}
-     * or {@link #equals} methods.
+     * {@link #latitudeOfOrigin}. Concequently, there is no need to test them in {@link #hashCode} or {@link #equals}
+     * methods.
      */
     final double k0, sinphi0, cosphi0, chi1, sinChi1, cosChi1;
 
@@ -79,8 +81,7 @@ class StereographicUSGS extends Stereographic {
      * @param parameters The group of parameter values.
      * @throws ParameterNotFoundException if a required parameter was not found.
      */
-    protected StereographicUSGS(final ParameterValueGroup parameters)
-            throws ParameterNotFoundException {
+    protected StereographicUSGS(final ParameterValueGroup parameters) throws ParameterNotFoundException {
         this(parameters, Provider.PARAMETERS);
     }
 
@@ -91,8 +92,7 @@ class StereographicUSGS extends Stereographic {
      * @param descriptor The expected parameter descriptor.
      * @throws ParameterNotFoundException if a required parameter was not found.
      */
-    StereographicUSGS(
-            final ParameterValueGroup parameters, final ParameterDescriptorGroup descriptor)
+    StereographicUSGS(final ParameterValueGroup parameters, final ParameterDescriptorGroup descriptor)
             throws ParameterNotFoundException {
         super(parameters, descriptor);
         if (abs(latitudeOfOrigin) < EPSILON) { // Equatorial
@@ -114,12 +114,11 @@ class StereographicUSGS extends Stereographic {
     }
 
     /**
-     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in
-     * radians) and stores the result in {@code ptDst} (linear distance on a unit sphere).
+     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in radians) and stores the
+     * result in {@code ptDst} (linear distance on a unit sphere).
      */
     @Override
-    protected Point2D transformNormalized(double x, double y, Point2D ptDst)
-            throws ProjectionException {
+    protected Point2D transformNormalized(double x, double y, Point2D ptDst) throws ProjectionException {
         final double chi = 2.0 * atan(ssfn(y, sin(y))) - PI / 2;
         final double sinChi = sin(chi);
         final double cosChi = cos(chi);
@@ -135,19 +134,15 @@ class StereographicUSGS extends Stereographic {
         return new Point2D.Double(x, y);
     }
 
-    /**
-     * Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in
-     * {@code ptDst}.
-     */
+    /** Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in {@code ptDst}. */
     @Override
-    protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst)
-            throws ProjectionException {
+    protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst) throws ProjectionException {
         final double rho = hypot(x, y);
         final double ce = 2.0 * atan2(rho * cosChi1, k0);
         final double cosce = cos(ce);
         final double since = sin(ce);
         final boolean rhoIs0 = abs(rho) < EPSILON;
-        final double chi = rhoIs0 ? chi1 : asin(cosce * sinChi1 + (y * since * cosChi1 / rho));
+        final double chi = rhoIs0 ? chi1 : asin(cosce * sinChi1 + y * since * cosChi1 / rho);
         final double tp = tan(PI / 4.0 + chi / 2.0);
 
         // parts of (21-36) used to calculate longitude
@@ -162,7 +157,7 @@ class StereographicUSGS extends Stereographic {
             final double phi = 2 * atan(tp * pow((1 + esinphi) / (1 - esinphi), halfe)) - PI / 2;
             if (abs(phi - phi0) < ITERATION_TOLERANCE) {
                 // TODO: checking rho may be redundant
-                x = rhoIs0 || (abs(t) < EPSILON && abs(ct) < EPSILON) ? 0.0 : atan2(t, ct);
+                x = rhoIs0 || abs(t) < EPSILON && abs(ct) < EPSILON ? 0.0 : atan2(t, ct);
                 y = phi;
                 break;
             }
@@ -181,8 +176,7 @@ class StereographicUSGS extends Stereographic {
     /** Maximal error (in metres) tolerated for assertions, if enabled. */
     @Override
     protected double getToleranceForAssertions(final double longitude, final double latitude) {
-        final double delta =
-                abs(longitude - centralMeridian) / 2 + abs(latitude - latitudeOfOrigin);
+        final double delta = abs(longitude - centralMeridian) / 2 + abs(latitude - latitudeOfOrigin);
         if (delta > 40) {
             return 0.5;
         }
@@ -207,13 +201,13 @@ class StereographicUSGS extends Stereographic {
      */
     static final class Spherical extends StereographicUSGS {
         /** For compatibility with different versions during deserialization. */
+        @Serial
         private static final long serialVersionUID = -8558594307755820783L;
 
         /**
-         * A constant used in the transformations. This constant hides the {@code k0} constant from
-         * the ellipsoidal case. The spherical and ellipsoidal {@code k0} are not computed in the
-         * same way, and we preserve the ellipsoidal {@code k0} in {@link Stereographic} in order to
-         * allow assertions to work.
+         * A constant used in the transformations. This constant hides the {@code k0} constant from the ellipsoidal
+         * case. The spherical and ellipsoidal {@code k0} are not computed in the same way, and we preserve the
+         * ellipsoidal {@code k0} in {@link Stereographic} in order to allow assertions to work.
          */
         private static final double k0 = 2;
 
@@ -231,12 +225,11 @@ class StereographicUSGS extends Stereographic {
         }
 
         /**
-         * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in
-         * radians) and stores the result in {@code ptDst} (linear distance on a unit sphere).
+         * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in radians) and stores the
+         * result in {@code ptDst} (linear distance on a unit sphere).
          */
         @Override
-        protected Point2D transformNormalized(double x, double y, Point2D ptDst)
-                throws ProjectionException {
+        protected Point2D transformNormalized(double x, double y, Point2D ptDst) throws ProjectionException {
             // Compute using ellipsoidal formulas, for comparaison later.
             assert (ptDst = super.transformNormalized(x, y, ptDst)) != null;
 
@@ -259,13 +252,9 @@ class StereographicUSGS extends Stereographic {
             return new Point2D.Double(x, y);
         }
 
-        /**
-         * Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in
-         * {@code ptDst}.
-         */
+        /** Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in {@code ptDst}. */
         @Override
-        protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst)
-                throws ProjectionException {
+        protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst) throws ProjectionException {
             // Compute using ellipsoidal formulas, for comparaison later.
             assert (ptDst = super.inverseTransformNormalized(x, y, ptDst)) != null;
 
@@ -280,7 +269,7 @@ class StereographicUSGS extends Stereographic {
                 final double ct = rho * cosphi0 * cosc - y * sinphi0 * sinc; // (20-15)
                 final double t = x * sinc; // (20-15)
                 y = asin(cosc * sinphi0 + y * sinc * cosphi0 / rho); // (20-14)
-                x = (abs(ct) < EPSILON && abs(t) < EPSILON) ? 0.0 : atan2(t, ct);
+                x = abs(ct) < EPSILON && abs(t) < EPSILON ? 0.0 : atan2(t, ct);
             }
             assert checkInverseTransform(x, y, ptDst);
             if (ptDst != null) {

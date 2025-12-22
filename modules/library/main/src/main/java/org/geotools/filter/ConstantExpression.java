@@ -19,17 +19,16 @@ package org.geotools.filter;
 import java.awt.Color;
 import java.math.BigDecimal;
 import java.util.Date;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.util.Converters;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Literal;
 
 /**
  * The Expression class is not immutable!
  *
- * <p>However we do have a need for immutable literal expressions when defining our API for SLD, and
- * any other standards based on Expression.
+ * <p>However we do have a need for immutable literal expressions when defining our API for SLD, and any other standards
+ * based on Expression.
  *
  * @author Jody Garnett, Refractions Research
  */
@@ -52,10 +51,6 @@ public class ConstantExpression implements Literal, Cloneable {
         this.value = value;
     }
 
-    public Object evaluate(SimpleFeature feature) {
-        return getValue();
-    }
-
     @Override
     public Object evaluate(Object object) {
         return getValue();
@@ -73,10 +68,6 @@ public class ConstantExpression implements Literal, Cloneable {
 
     public void setValue(Object constant) {
         throw new UnsupportedOperationException("Default value is immutable");
-    }
-
-    public short getType() {
-        return type;
     }
 
     @Override
@@ -107,9 +98,8 @@ public class ConstantExpression implements Literal, Cloneable {
         }
 
         if (value instanceof Number) {
-            if (otherLiteral instanceof Number) {
+            if (otherLiteral instanceof Number otherNumber) {
                 Number myNumber = (Number) value;
-                Number otherNumber = (Number) otherLiteral;
 
                 return myNumber.doubleValue() == otherNumber.doubleValue();
             }
@@ -129,13 +119,12 @@ public class ConstantExpression implements Literal, Cloneable {
             return value.hashCode();
         }
 
-        return (value == null) ? 0 : value.toString().hashCode();
+        return value == null ? 0 : value.toString().hashCode();
     }
 
     @Override
     public String toString() {
-        if (value instanceof Color) {
-            Color color = (Color) value;
+        if (value instanceof Color color) {
             String redCode = Integer.toHexString(color.getRed());
             String greenCode = Integer.toHexString(color.getGreen());
             String blueCode = Integer.toHexString(color.getBlue());
@@ -153,7 +142,7 @@ public class ConstantExpression implements Literal, Cloneable {
             }
         }
 
-        return (value == null) ? "NULL" : value.toString();
+        return value == null ? "NULL" : value.toString();
     }
 
     /** Encode provided color as a String */

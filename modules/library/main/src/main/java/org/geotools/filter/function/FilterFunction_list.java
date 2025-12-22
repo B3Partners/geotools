@@ -23,10 +23,10 @@ import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
 
 /**
  * A simple function that creates a list of values of any number of arguments
@@ -36,8 +36,7 @@ import org.opengis.filter.expression.Expression;
 public class FilterFunction_list extends FunctionExpressionImpl {
 
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "list", parameter("list", List.class), parameter("item", Object.class, 1, -1));
+            new FunctionNameImpl("list", parameter("list", List.class), parameter("item", Object.class, 1, -1));
 
     public FilterFunction_list() {
         super(NAME);
@@ -51,8 +50,8 @@ public class FilterFunction_list extends FunctionExpressionImpl {
         for (Expression expr : getParameters()) {
             try {
                 Object value = expr.evaluate(feature);
-                if (value instanceof Collection) {
-                    for (Object item : (Collection) value) {
+                if (value instanceof Collection collection) {
+                    for (Object item : collection) {
                         result.add(item);
                     }
                 } else {

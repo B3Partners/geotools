@@ -20,29 +20,30 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFinder;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
 
 @SuppressWarnings("PMD.SystemPrintln")
 public class PropertyExamples {
@@ -65,7 +66,7 @@ public class PropertyExamples {
             }
             File example = new File(tmp, "example.properties");
 
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(example))) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(example, StandardCharsets.UTF_8))) {
                 writer.write("_=id:Integer,name:String,geom:Point");
                 writer.newLine();
                 writer.write("fid1=1|jody garnett|POINT(0 0)");
@@ -127,24 +128,18 @@ public class PropertyExamples {
                 Transaction t2 = new DefaultTransaction("transactoin 2")) {
 
             SimpleFeatureType type = store.getSchema("example");
-            SimpleFeatureStore featureStore =
-                    (SimpleFeatureStore) store.getFeatureSource("example");
-            SimpleFeatureStore featureStore1 =
-                    (SimpleFeatureStore) store.getFeatureSource("example");
-            SimpleFeatureStore featureStore2 =
-                    (SimpleFeatureStore) store.getFeatureSource("example");
+            SimpleFeatureStore featureStore = (SimpleFeatureStore) store.getFeatureSource("example");
+            SimpleFeatureStore featureStore1 = (SimpleFeatureStore) store.getFeatureSource("example");
+            SimpleFeatureStore featureStore2 = (SimpleFeatureStore) store.getFeatureSource("example");
 
             featureStore1.setTransaction(t1);
             featureStore2.setTransaction(t2);
 
             System.out.println("Step 1");
             System.out.println("------");
-            System.out.println(
-                    "start     auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
-            System.out.println(
-                    "start              t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
-            System.out.println(
-                    "start              t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
+            System.out.println("start     auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
+            System.out.println("start              t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
+            System.out.println("start              t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
 
             // select feature to remove
             FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
@@ -154,16 +149,12 @@ public class PropertyExamples {
             System.out.println();
             System.out.println("Step 2 transaction 1 removes feature 'fid1'");
             System.out.println("------");
-            System.out.println(
-                    "t1 remove auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
-            System.out.println(
-                    "t1 remove          t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
-            System.out.println(
-                    "t1 remove          t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
+            System.out.println("t1 remove auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
+            System.out.println("t1 remove          t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
+            System.out.println("t1 remove          t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
 
             // new feature to add!
-            SimpleFeature feature =
-                    SimpleFeatureBuilder.build(type, new Object[] {5, "chris", null}, "fid5");
+            SimpleFeature feature = SimpleFeatureBuilder.build(type, new Object[] {5, "chris", null}, "fid5");
             feature.getUserData().put(Hints.USE_PROVIDED_FID, true);
             feature.getUserData().put(Hints.PROVIDED_FID, "fid5");
 
@@ -173,12 +164,9 @@ public class PropertyExamples {
             System.out.println();
             System.out.println("Step 3 transaction 2 adds a new feature '" + feature.getID() + "'");
             System.out.println("------");
-            System.out.println(
-                    "t2 add    auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
-            System.out.println(
-                    "t2 add             t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
-            System.out.println(
-                    "t1 add             t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
+            System.out.println("t2 add    auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
+            System.out.println("t2 add             t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
+            System.out.println("t1 add             t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
 
             // commit transaction one
             t1.commit();
@@ -186,26 +174,19 @@ public class PropertyExamples {
             System.out.println();
             System.out.println("Step 4 transaction 1 commits the removal of feature 'fid1'");
             System.out.println("------");
-            System.out.println(
-                    "t1 commit auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
-            System.out.println(
-                    "t1 commit          t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
-            System.out.println(
-                    "t1 commit          t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
+            System.out.println("t1 commit auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
+            System.out.println("t1 commit          t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
+            System.out.println("t1 commit          t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
 
             // commit transaction two
             t2.commit();
 
             System.out.println();
-            System.out.println(
-                    "Step 5 transaction 2 commits the addition of '" + feature.getID() + "'");
+            System.out.println("Step 5 transaction 2 commits the addition of '" + feature.getID() + "'");
             System.out.println("------");
-            System.out.println(
-                    "t2 commit auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
-            System.out.println(
-                    "t2 commit          t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
-            System.out.println(
-                    "t2 commit          t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
+            System.out.println("t2 commit auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
+            System.out.println("t2 commit          t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
+            System.out.println("t2 commit          t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
         }
         store.dispose(); // clear out any listeners
         // transactionExample end
@@ -295,8 +276,7 @@ public class PropertyExamples {
         SimpleFeature feature, newFeature;
 
         SimpleFeatureType type = store.getSchema("example");
-        SimpleFeatureType type2 =
-                DataUtilities.createType("duplicate", "id:Integer,geom:Geometry,name:String");
+        SimpleFeatureType type2 = DataUtilities.createType("duplicate", "id:Integer,geom:Geometry,name:String");
 
         Query query = new Query(type.getTypeName(), Filter.INCLUDE);
         store.createSchema(type2);

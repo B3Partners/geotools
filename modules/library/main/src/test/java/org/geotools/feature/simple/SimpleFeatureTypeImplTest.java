@@ -25,14 +25,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.type.FeatureTypeFactoryImpl;
 import org.junit.Assert;
 import org.junit.Test;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Tests for {@link SimpleFeatureImpl}.
@@ -42,16 +41,15 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 public class SimpleFeatureTypeImplTest {
 
     /**
-     * Test that properties returned by getAttributeDescriptors() and getDescriptors() are the same
-     * and in the same order.
+     * Test that properties returned by getAttributeDescriptors() and getDescriptors() are the same and in the same
+     * order.
      */
     @Test
     public void testConsistentIterationOrder() {
         SimpleFeatureType type = buildLocationCountType();
         Assert.assertEquals(
-                "FeatureType and SimpleFeatureType APIs must return the same descriptors in the "
-                        + "same order",
-                new ArrayList<PropertyDescriptor>(type.getAttributeDescriptors()),
+                "FeatureType and SimpleFeatureType APIs must return the same descriptors in the " + "same order",
+                new ArrayList<>(type.getAttributeDescriptors()),
                 new ArrayList<>(type.getDescriptors()));
     }
 
@@ -61,32 +59,26 @@ public class SimpleFeatureTypeImplTest {
         SimpleFeatureType type1 = buildLocationCountType();
         SimpleFeatureType type2 = buildCountLocationType();
         assertNotEquals(
-                "Simple feature types with properties in a different order must not be " + "equal",
-                type1,
-                type2);
+                "Simple feature types with properties in a different order must not be " + "equal", type1, type2);
     }
 
     /** Test that distinct instances identically constructed are equal (location/count version). */
     @Test
     public void testLocationCountEquals() {
         Assert.assertEquals(
-                "Identical simple feature types must be equal",
-                buildLocationCountType(),
-                buildLocationCountType());
+                "Identical simple feature types must be equal", buildLocationCountType(), buildLocationCountType());
     }
 
     /** Test that distinct instances identically constructed are equal (count/location version). */
     @Test
     public void testCountLocationEquals() {
         Assert.assertEquals(
-                "Identical simple feature types must be equal",
-                buildCountLocationType(),
-                buildCountLocationType());
+                "Identical simple feature types must be equal", buildCountLocationType(), buildCountLocationType());
     }
 
     /**
-     * Test that calls to getType(int) from multiple threads will not throw an
-     * IndexOutOfBoundsException due to poor synchronization
+     * Test that calls to getType(int) from multiple threads will not throw an IndexOutOfBoundsException due to poor
+     * synchronization
      */
     @Test
     public void testGetTypeThreadSafety() {
@@ -145,43 +137,24 @@ public class SimpleFeatureTypeImplTest {
         return builder.buildFeatureType();
     }
 
-    /**
-     * @return a simple feature type builder that is ready for the addition of location and count
-     *     properties
-     */
+    /** @return a simple feature type builder that is ready for the addition of location and count properties */
     private SimpleFeatureTypeBuilder buildPartialBuilder() {
         String uri = "http://example.org/things";
         FeatureTypeFactoryImpl typeFactory = new FeatureTypeFactoryImpl();
         SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder(typeFactory);
-        builder.addBinding(
-                typeFactory.createGeometryType(
-                        new NameImpl(uri, "description"),
-                        String.class,
-                        null,
-                        false,
-                        false,
-                        Collections.emptyList(),
-                        null,
-                        null));
-        builder.addBinding(
-                typeFactory.createGeometryType(
-                        new NameImpl(uri, "location"),
-                        Point.class,
-                        null,
-                        false,
-                        false,
-                        Collections.emptyList(),
-                        null,
-                        null));
-        builder.addBinding(
-                typeFactory.createAttributeType(
-                        new NameImpl(uri, "count"),
-                        Integer.class,
-                        false,
-                        false,
-                        Collections.emptyList(),
-                        null,
-                        null));
+        builder.addBinding(typeFactory.createGeometryType(
+                new NameImpl(uri, "description"),
+                String.class,
+                null,
+                false,
+                false,
+                Collections.emptyList(),
+                null,
+                null));
+        builder.addBinding(typeFactory.createGeometryType(
+                new NameImpl(uri, "location"), Point.class, null, false, false, Collections.emptyList(), null, null));
+        builder.addBinding(typeFactory.createAttributeType(
+                new NameImpl(uri, "count"), Integer.class, false, false, Collections.emptyList(), null, null));
         builder.setName("ThingsType");
         builder.setNamespaceURI(uri);
         builder.add("description", String.class);

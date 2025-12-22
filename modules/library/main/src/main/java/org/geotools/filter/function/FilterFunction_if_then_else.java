@@ -20,19 +20,18 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_if_then_else extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "if_then_else",
-                    Object.class,
-                    parameter("condition", Boolean.class),
-                    parameter("then", Object.class),
-                    parameter("else", Object.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "if_then_else",
+            Object.class,
+            parameter("condition", Boolean.class),
+            parameter("then", Object.class),
+            parameter("else", Object.class));
 
     public FilterFunction_if_then_else() {
         super(NAME);
@@ -45,7 +44,7 @@ public class FilterFunction_if_then_else extends FunctionExpressionImpl {
         Object arg2;
 
         try { // attempt to get value and perform conversion
-            select = (getExpression(0).evaluate(feature, Boolean.class));
+            select = getExpression(0).evaluate(feature, Boolean.class);
         } catch (Exception e) // probably a type error
         {
             throw new IllegalArgumentException(

@@ -20,9 +20,9 @@ package org.geotools.data.mongodb;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import java.io.IOException;
-import org.geotools.data.simple.SimpleFeatureWriter;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.data.SimpleFeatureWriter;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
 public class MongoFeatureWriter implements SimpleFeatureWriter {
 
@@ -32,10 +32,7 @@ public class MongoFeatureWriter implements SimpleFeatureWriter {
     private final CollectionMapper mapper;
     private MongoDBObjectFeature current;
 
-    public MongoFeatureWriter(
-            DBCollection collection,
-            SimpleFeatureType featureType,
-            MongoFeatureStore featureStore) {
+    public MongoFeatureWriter(DBCollection collection, SimpleFeatureType featureType, MongoFeatureStore featureStore) {
         this.collection = collection;
         this.featureType = featureType;
         mapper = featureStore.getMapper();

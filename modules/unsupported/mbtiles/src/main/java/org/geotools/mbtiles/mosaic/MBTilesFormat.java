@@ -24,6 +24,8 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.coverage.grid.GridCoverageWriter;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
 import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.imageio.GeoToolsWriteParams;
@@ -32,8 +34,6 @@ import org.geotools.parameter.ParameterGroup;
 import org.geotools.util.URLs;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
-import org.opengis.coverage.grid.GridCoverageWriter;
-import org.opengis.parameter.GeneralParameterDescriptor;
 
 public class MBTilesFormat extends AbstractGridFormat {
 
@@ -47,14 +47,14 @@ public class MBTilesFormat extends AbstractGridFormat {
         File sourceFile = null;
 
         try {
-            if (source instanceof File) {
-                sourceFile = (File) source;
-            } else if (source instanceof URL) {
-                if (((URL) source).getProtocol().equals("file")) {
-                    sourceFile = URLs.urlToFile((URL) source);
+            if (source instanceof File file) {
+                sourceFile = file;
+            } else if (source instanceof URL rL) {
+                if (rL.getProtocol().equals("file")) {
+                    sourceFile = URLs.urlToFile(rL);
                 }
-            } else if (source instanceof String) {
-                sourceFile = new File((String) source);
+            } else if (source instanceof String string) {
+                sourceFile = new File(string);
             }
         } catch (Exception e) {
             if (LOGGER.isLoggable(Level.FINE)) {
@@ -129,14 +129,11 @@ public class MBTilesFormat extends AbstractGridFormat {
         mInfo = info;
 
         // reading parameters
-        readParameters =
-                new ParameterGroup(
-                        new DefaultParameterDescriptorGroup(
-                                mInfo,
-                                new GeneralParameterDescriptor[] {READ_GRIDGEOMETRY2D /*,
+        readParameters = new ParameterGroup(new DefaultParameterDescriptorGroup(
+                mInfo, new GeneralParameterDescriptor[] {READ_GRIDGEOMETRY2D /*,
                        INPUT_TRANSPARENT_COLOR,
                 OUTPUT_TRANSPARENT_COLOR,
-                USE_JAI_IMAGEREAD,
+                USE_IMAGEN_IMAGEREAD,
                 BACKGROUND_VALUES,
                 SUGGESTED_TILE_SIZE,
                 ALLOW_MULTITHREADING,

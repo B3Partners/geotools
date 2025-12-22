@@ -24,7 +24,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
-import org.geotools.data.DataSourceException;
+import org.geotools.api.data.DataSourceException;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.io.InStream;
@@ -53,10 +53,9 @@ public class WKBAttributeIO {
     /**
      * This method will convert a Well Known Binary representation to a JTS Geometry object.
      *
-     * @return a JTS Geometry object that is equivalent to the WTB representation passed in by param
-     *     wkb
-     * @throws IOException if more than one geometry object was found in the WTB representation, or
-     *     if the parser could not parse the WKB representation.
+     * @return a JTS Geometry object that is equivalent to the WTB representation passed in by param wkb
+     * @throws IOException if more than one geometry object was found in the WTB representation, or if the parser could
+     *     not parse the WKB representation.
      */
     public Geometry wkb2Geometry(byte[] wkbBytes) throws IOException {
         if (wkbBytes == null) // DJB: null value from database --> null geometry
@@ -87,17 +86,14 @@ public class WKBAttributeIO {
         }
     }
 
-    /** @see org.geotools.data.jdbc.attributeio.AttributeIO#read(java.sql.ResultSet, int) */
     public Geometry read(ResultSet rs, String columnName) throws IOException {
         try {
             return read(rs, rs.findColumn(columnName));
         } catch (SQLException e) {
-            throw new IllegalArgumentException(
-                    "columnName " + e + " is not a column in result set");
+            throw new IllegalArgumentException("columnName " + e + " is not a column in result set");
         }
     }
 
-    /** @see org.geotools.data.jdbc.attributeio.AttributeIO#read(java.sql.ResultSet, int) */
     public Geometry read(ResultSet rs, int columnIndex) throws IOException {
         try {
             switch (rs.getMetaData().getColumnType(columnIndex)) {
@@ -111,7 +107,6 @@ public class WKBAttributeIO {
         }
     }
 
-    /** @see org.geotools.data.jdbc.attributeio.AttributeIO#read(java.sql.ResultSet, int) */
     private Geometry readFromBytes(ResultSet rs, int columnIndex) throws IOException {
         try {
             return wkb2Geometry(rs.getBytes(columnIndex));
@@ -143,10 +138,6 @@ public class WKBAttributeIO {
         }
     }
 
-    /**
-     * @see org.geotools.data.jdbc.attributeio.AttributeIO#write(java.sql.PreparedStatement, int,
-     *     java.lang.Object)
-     */
     public void write(PreparedStatement ps, int position, Object value) throws IOException {
         try {
             if (value == null) {

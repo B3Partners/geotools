@@ -21,7 +21,8 @@ import java.io.Serializable;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.DataStore;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.data.DefaultRepository;
 import org.geotools.data.property.PropertyDataStore;
 import org.geotools.data.property.PropertyDataStoreFactory;
@@ -29,7 +30,6 @@ import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
 import org.geotools.factory.CommonFactoryFinder;
 import org.junit.Before;
-import org.opengis.filter.FilterFactory2;
 
 public class VectorMosaicTest {
     public static DefaultRepository REPOSITORY;
@@ -41,19 +41,16 @@ public class VectorMosaicTest {
     protected static final String MOSAIC_TYPE_NAME = "mosaic_delegate_mosaic";
     protected static final String MOSAIC_PROPERTIES_TYPE_NAME = "mosaic_delegate_mosaic";
 
-    protected static FilterFactory2 FF = CommonFactoryFinder.getFilterFactory2();
+    protected static FilterFactory FF = CommonFactoryFinder.getFilterFactory();
 
     public static void initialize() {
         if (initialized) return;
         try {
             REPOSITORY = new DefaultRepository();
-            File delegate =
-                    new File(
-                            "src/test/resources/org.geotools.vectormosaic.data/mosaic_delegate.shp");
+            File delegate = new File("src/test/resources/org.geotools.vectormosaic.data/mosaic_delegate.shp");
             URL url = delegate.toURI().toURL();
 
-            ShapefileDataStore ds =
-                    (ShapefileDataStore) new ShapefileDataStoreFactory().createDataStore(url);
+            ShapefileDataStore ds = (ShapefileDataStore) new ShapefileDataStoreFactory().createDataStore(url);
             REPOSITORY.register("delegate", ds);
             VECTOR_MOSAIC_STORE_FACTORY = new VectorMosaicStoreFactory();
             Map<String, Object> params = new HashMap<>();
@@ -70,8 +67,7 @@ public class VectorMosaicTest {
             File directory = new File("src/test/resources/org.geotools.vectormosaic.data/");
             propertyParams.put("directory", directory);
             PropertyDataStore propertyDataStore =
-                    (PropertyDataStore)
-                            new PropertyDataStoreFactory().createDataStore(propertyParams);
+                    (PropertyDataStore) new PropertyDataStoreFactory().createDataStore(propertyParams);
             REPOSITORY.register("propertyDelegate", propertyDataStore);
             params.put(VectorMosaicStoreFactory.DELEGATE_STORE_NAME.getName(), "propertyDelegate");
             MOSAIC_STORE_FROM_PROPERTIES = VECTOR_MOSAIC_STORE_FACTORY.createDataStore(params);

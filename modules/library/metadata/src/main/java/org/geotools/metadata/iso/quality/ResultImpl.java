@@ -19,8 +19,9 @@
  */
 package org.geotools.metadata.iso.quality;
 
+import java.io.Serial;
+import org.geotools.api.metadata.quality.Result;
 import org.geotools.metadata.iso.MetadataEntity;
-import org.opengis.metadata.quality.Result;
 
 /**
  * Type of test applied to the data specified by a data quality scope.
@@ -32,6 +33,7 @@ import org.opengis.metadata.quality.Result;
  */
 public class ResultImpl extends MetadataEntity implements Result {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 2961355780515174732L;
 
     /** Constructs an initially empty result. */

@@ -16,6 +16,12 @@
  */
 package org.geotools.data;
 
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import java.awt.RenderingHints.Key;
 import java.io.IOException;
 import java.io.Serializable;
@@ -25,17 +31,30 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataAccessFactory;
+import org.geotools.api.data.DataAccessFinder;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFactorySpi;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.LockingManager;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.ServiceInfo;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
 
 /**
  * @author Gabriel Roldan (TOPP)
@@ -143,8 +162,7 @@ public class DataAccessFinderTest {
 
     @Test
     public void testGetAvailableDataStores() {
-        Iterator<DataStoreFactorySpi> availableDataStores =
-                DataStoreFinder.getAvailableDataStores();
+        Iterator<DataStoreFactorySpi> availableDataStores = DataStoreFinder.getAvailableDataStores();
 
         Assert.assertNotNull(availableDataStores);
         Assert.assertTrue(availableDataStores.hasNext());
@@ -156,10 +174,7 @@ public class DataAccessFinderTest {
         Assert.assertTrue(dsf instanceof MockDataStoreFactory);
     }
 
-    /**
-     * Does DataAccessFinder.getAvailableDataStores() return both the available DataStore and
-     * DataAccess factories?
-     */
+    /** Does DataAccessFinder.getAvailableDataStores() return both the available DataStore and DataAccess factories? */
     @Test
     public void testGetAvailableDataAccess() {
         Iterator<DataAccessFactory> availableDataAccess = DataAccessFinder.getAvailableDataStores();
@@ -184,6 +199,32 @@ public class DataAccessFinderTest {
         Assert.assertTrue(classes.contains(MockDataAccessFactory.class));
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testDynamicRegistration() throws Exception {
+        // setting up the mocks
+        Map<String, ?> params = Map.of("testKey", "testValue");
+        DataAccessFactory mockFactory = createMock(DataAccessFactory.class);
+        expect(mockFactory.isAvailable()).andReturn(true).anyTimes();
+        expect(mockFactory.canProcess(params)).andReturn(true).anyTimes();
+        DataAccess mockAccess = createMock(DataAccess.class);
+        expect(mockFactory.createDataStore(params)).andReturn(mockAccess).anyTimes();
+        replay(mockFactory);
+
+        // first lookup attempt, not registered
+        assertNull(DataAccessFinder.getDataStore(params));
+
+        // register and second lookup
+        DataAccessFinder.registerFactory(mockFactory);
+        try {
+            assertEquals(mockAccess, DataAccessFinder.getDataStore(params));
+        } finally {
+            // unregister, should stop working
+            DataAccessFinder.deregisterFactory(mockFactory);
+        }
+        assertNull(DataAccessFinder.getDataStore(params));
+    }
+
     /**
      * @author Gabriel Roldan (TOPP)
      * @version $Id$
@@ -196,8 +237,7 @@ public class DataAccessFinderTest {
         }
 
         /**
-         * returns true if the {@link DataAccessFinderTest#MOCK_DS_PARAM_KEY mock param} contains
-         * this class as value
+         * returns true if the {@link DataAccessFinderTest#MOCK_DS_PARAM_KEY mock param} contains this class as value
          */
         @Override
         public boolean canProcess(Map<String, ?> params) {
@@ -206,8 +246,7 @@ public class DataAccessFinderTest {
 
         /** @return {@link DataAccessFinderTest#MOCK_DATAACCESS} */
         @Override
-        public DataAccess<FeatureType, Feature> createDataStore(Map<String, ?> params)
-                throws IOException {
+        public DataAccess<FeatureType, Feature> createDataStore(Map<String, ?> params) throws IOException {
             return MOCK_DATAACCESS;
         }
 
@@ -222,7 +261,7 @@ public class DataAccessFinderTest {
         }
 
         @Override
-        public org.geotools.data.DataAccessFactory.Param[] getParametersInfo() {
+        public DataAccessFactory.Param[] getParametersInfo() {
             return null;
         }
 
@@ -246,8 +285,7 @@ public class DataAccessFinderTest {
         }
 
         /**
-         * returns true if the {@link DataAccessFinderTest#MOCK_DS_PARAM_KEY mock param} contains
-         * this class as value
+         * returns true if the {@link DataAccessFinderTest#MOCK_DS_PARAM_KEY mock param} contains this class as value
          */
         @Override
         public boolean canProcess(Map<String, ?> params) {
@@ -276,7 +314,7 @@ public class DataAccessFinderTest {
         }
 
         @Override
-        public org.geotools.data.DataAccessFactory.Param[] getParametersInfo() {
+        public DataAccessFactory.Param[] getParametersInfo() {
             return null;
         }
 
@@ -302,131 +340,124 @@ public class DataAccessFinderTest {
     }
 
     /** Fake DataAccess returned by {@link MockDataAccessFactory} */
-    private static final DataAccess<FeatureType, Feature> MOCK_DATAACCESS =
-            new DataAccess<FeatureType, Feature>() {
+    private static final DataAccess<FeatureType, Feature> MOCK_DATAACCESS = new DataAccess<>() {
 
-                @Override
-                public void createSchema(FeatureType featureType) throws IOException {}
+        @Override
+        public void createSchema(FeatureType featureType) throws IOException {}
 
-                @Override
-                public void dispose() {}
+        @Override
+        public void dispose() {}
 
-                @Override
-                public FeatureSource<FeatureType, Feature> getFeatureSource(Name typeName)
-                        throws IOException {
-                    return null;
-                }
+        @Override
+        public FeatureSource<FeatureType, Feature> getFeatureSource(Name typeName) throws IOException {
+            return null;
+        }
 
-                @Override
-                public ServiceInfo getInfo() {
-                    return null;
-                }
+        @Override
+        public ServiceInfo getInfo() {
+            return null;
+        }
 
-                @Override
-                public List<Name> getNames() throws IOException {
-                    return null;
-                }
+        @Override
+        public List<Name> getNames() throws IOException {
+            return null;
+        }
 
-                @Override
-                public FeatureType getSchema(Name name) throws IOException {
-                    return null;
-                }
+        @Override
+        public FeatureType getSchema(Name name) throws IOException {
+            return null;
+        }
 
-                @Override
-                public void updateSchema(Name typeName, FeatureType featureType)
-                        throws IOException {}
+        @Override
+        public void updateSchema(Name typeName, FeatureType featureType) throws IOException {}
 
-                @Override
-                public void removeSchema(Name typeName) throws IOException {}
-            };
+        @Override
+        public void removeSchema(Name typeName) throws IOException {}
+    };
 
     /** Fake datastore returned by {@link MockDataStoreFactory} */
-    private static final DataStore MOCK_DATASTORE =
-            new DataStore() {
+    private static final DataStore MOCK_DATASTORE = new DataStore() {
 
-                @Override
-                public FeatureReader<SimpleFeatureType, SimpleFeature> getFeatureReader(
-                        Query query, Transaction transaction) throws IOException {
-                    return null;
-                }
+        @Override
+        public FeatureReader<SimpleFeatureType, SimpleFeature> getFeatureReader(Query query, Transaction transaction)
+                throws IOException {
+            return null;
+        }
 
-                @Override
-                public SimpleFeatureSource getFeatureSource(String typeName) throws IOException {
-                    return null;
-                }
+        @Override
+        public SimpleFeatureSource getFeatureSource(String typeName) throws IOException {
+            return null;
+        }
 
-                @Override
-                public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriter(
-                        String typeName, Filter filter, Transaction transaction)
-                        throws IOException {
-                    return null;
-                }
+        @Override
+        public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriter(
+                String typeName, Filter filter, Transaction transaction) throws IOException {
+            return null;
+        }
 
-                @Override
-                public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriter(
-                        String typeName, Transaction transaction) throws IOException {
-                    return null;
-                }
+        @Override
+        public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriter(
+                String typeName, Transaction transaction) throws IOException {
+            return null;
+        }
 
-                @Override
-                public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriterAppend(
-                        String typeName, Transaction transaction) throws IOException {
-                    return null;
-                }
+        @Override
+        public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriterAppend(
+                String typeName, Transaction transaction) throws IOException {
+            return null;
+        }
 
-                @Override
-                public LockingManager getLockingManager() {
-                    return null;
-                }
+        @Override
+        public LockingManager getLockingManager() {
+            return null;
+        }
 
-                @Override
-                public SimpleFeatureType getSchema(String typeName) throws IOException {
-                    return null;
-                }
+        @Override
+        public SimpleFeatureType getSchema(String typeName) throws IOException {
+            return null;
+        }
 
-                @Override
-                public String[] getTypeNames() throws IOException {
-                    return null;
-                }
+        @Override
+        public String[] getTypeNames() throws IOException {
+            return null;
+        }
 
-                @Override
-                public void updateSchema(String typeName, SimpleFeatureType featureType)
-                        throws IOException {}
+        @Override
+        public void updateSchema(String typeName, SimpleFeatureType featureType) throws IOException {}
 
-                @Override
-                public void removeSchema(String typeName) throws IOException {}
+        @Override
+        public void removeSchema(String typeName) throws IOException {}
 
-                @Override
-                public void createSchema(SimpleFeatureType featureType) throws IOException {}
+        @Override
+        public void createSchema(SimpleFeatureType featureType) throws IOException {}
 
-                @Override
-                public void dispose() {}
+        @Override
+        public void dispose() {}
 
-                @Override
-                public SimpleFeatureSource getFeatureSource(Name typeName) throws IOException {
-                    return null;
-                }
+        @Override
+        public SimpleFeatureSource getFeatureSource(Name typeName) throws IOException {
+            return null;
+        }
 
-                @Override
-                public ServiceInfo getInfo() {
-                    return null;
-                }
+        @Override
+        public ServiceInfo getInfo() {
+            return null;
+        }
 
-                @Override
-                public List<Name> getNames() throws IOException {
-                    return null;
-                }
+        @Override
+        public List<Name> getNames() throws IOException {
+            return null;
+        }
 
-                @Override
-                public SimpleFeatureType getSchema(Name name) throws IOException {
-                    return null;
-                }
+        @Override
+        public SimpleFeatureType getSchema(Name name) throws IOException {
+            return null;
+        }
 
-                @Override
-                public void updateSchema(Name typeName, SimpleFeatureType featureType)
-                        throws IOException {}
+        @Override
+        public void updateSchema(Name typeName, SimpleFeatureType featureType) throws IOException {}
 
-                @Override
-                public void removeSchema(Name typeName) throws IOException {}
-            };
+        @Override
+        public void removeSchema(Name typeName) throws IOException {}
+    };
 }

@@ -19,16 +19,16 @@ package org.geotools.jdbc;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public abstract class JDBCEmptyGeometryOnlineTest extends JDBCTestSupport {
 
@@ -69,13 +69,14 @@ public abstract class JDBCEmptyGeometryOnlineTest extends JDBCTestSupport {
         WKTReader reader = new WKTReader();
         Geometry emptyGeometry = reader.read(type.toUpperCase() + " EMPTY");
 
+        String emptyGeometryName = aname("geom_" + type.toLowerCase());
         try (Transaction tx = new DefaultTransaction();
                 FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
                         dataStore.getFeatureWriterAppend(tname("empty"), tx)) {
             SimpleFeature feature = writer.next();
             feature.setAttribute(aname("id"), Integer.valueOf(100));
-            feature.setAttribute(aname("geom_" + type.toLowerCase()), emptyGeometry);
-            feature.setAttribute(aname("name"), new String("empty " + type));
+            feature.setAttribute(emptyGeometryName, emptyGeometry);
+            feature.setAttribute(aname("name"), "empty " + type);
             writer.write();
             writer.close();
             tx.commit();
@@ -85,9 +86,13 @@ public abstract class JDBCEmptyGeometryOnlineTest extends JDBCTestSupport {
         assertEquals(1, fc.size());
         try (SimpleFeatureIterator fi = fc.features()) {
             SimpleFeature nf = fi.next();
-            Geometry geometry = (Geometry) nf.getDefaultGeometry();
-            // either null or empty, we don't really care
-            assertTrue(geometry == null || geometry.isEmpty());
+            Geometry geometry = (Geometry) nf.getAttribute(emptyGeometryName);
+            assertEmptyGeometry(geometry);
         }
+    }
+
+    /** By default checks the geometry is either null or empty, subclasses can change this behavior */
+    protected void assertEmptyGeometry(Geometry geometry) {
+        assertTrue(geometry == null || geometry.isEmpty());
     }
 }

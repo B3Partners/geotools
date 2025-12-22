@@ -1,7 +1,26 @@
+/*
+ *    GeoTools - The Open Source Java GIS Toolkit
+ *    http://geotools.org
+ *
+ *    (C) 2018, Open Source Geospatial Foundation (OSGeo)
+ *
+ *    This library is free software; you can redistribute it and/or
+ *    modify it under the terms of the GNU Lesser General Public
+ *    License as published by the Free Software Foundation;
+ *    version 2.1 of the License.
+ *
+ *    This library is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    Lesser General Public License for more details.
+ *
+ */
+
 package org.geotools.data.arcgisrest.schema.services;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import java.util.Objects;
 
 public class Service {
 
@@ -93,9 +112,8 @@ public class Service {
             return false;
         }
         Service rhs = ((Service) other);
-        return ((((this.name == rhs.name) || ((this.name != null) && this.name.equals(rhs.name)))
-                        && ((this.type == rhs.type)
-                                || ((this.type != null) && this.type.equals(rhs.type))))
-                && ((this.url == rhs.url) || ((this.url != null) && this.url.equals(rhs.url))));
+        return Objects.equals(this.name, rhs.name)
+                && Objects.equals(this.type, rhs.type)
+                && Objects.equals(this.url, rhs.url);
     }
 }

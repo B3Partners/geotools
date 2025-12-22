@@ -20,6 +20,7 @@ package org.geotools.swing.menu;
 import java.awt.Component;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.CRS;
 import org.geotools.swing.MapPane;
@@ -27,11 +28,10 @@ import org.geotools.swing.dialog.JCRSChooser;
 import org.geotools.swing.dialog.JExceptionReporter;
 import org.geotools.swing.dialog.JTextReporter;
 import org.geotools.swing.locale.LocaleUtils;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * A pop-up menu that can be used with a {@code MapPane} for coordinate reference system operations.
- * It has the following items:
+ * A pop-up menu that can be used with a {@code MapPane} for coordinate reference system operations. It has the
+ * following items:
  *
  * <ul>
  *   <li>Set the CRS for the map pane
@@ -88,12 +88,12 @@ public class JCRSPopupMenu extends JPopupMenu {
     }
 
     /**
-     * {@inheritDoc} The menu items will only be enabled when both the {@code MapPane} associated
-     * with this menu, and its {@code MapContent}, are set.
+     * {@inheritDoc} The menu items will only be enabled when both the {@code MapPane} associated with this menu, and
+     * its {@code MapContent}, are set.
      */
     @Override
     public void show(Component invoker, int x, int y) {
-        boolean enabled = (mapPane != null && mapPane.getMapContent() != null);
+        boolean enabled = mapPane != null && mapPane.getMapContent() != null;
         for (Component c : getComponents()) {
             if (c instanceof JMenuItem) {
                 c.setEnabled(enabled);
@@ -132,8 +132,7 @@ public class JCRSPopupMenu extends JPopupMenu {
     private void showCRS() {
         if (mapPane != null && mapPane.getMapContent() != null) {
             CoordinateReferenceSystem crs = mapPane.getMapContent().getCoordinateReferenceSystem();
-            JTextReporter.showDialog(
-                    "Coordinate reference system", crs.toWKT(), JTextReporter.FLAG_MODAL);
+            JTextReporter.showDialog("Coordinate reference system", crs.toWKT(), JTextReporter.FLAG_MODAL);
         }
     }
 }

@@ -38,8 +38,7 @@ public class RegexpValidator implements Validator {
     @Override
     public void validate(String value) throws IllegalArgumentException {
         if (!pattern.matcher(value).matches()) {
-            throw new IllegalArgumentException(
-                    "Value " + value + " does not match " + pattern.pattern());
+            throw new IllegalArgumentException("Value " + value + " does not match " + pattern.pattern());
         }
     }
 
@@ -51,7 +50,7 @@ public class RegexpValidator implements Validator {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((pattern == null) ? 0 : pattern.pattern().hashCode());
+        result = prime * result + (pattern == null ? 0 : pattern.pattern().hashCode());
         return result;
     }
 

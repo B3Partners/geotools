@@ -16,13 +16,13 @@
  */
 package org.geotools.geometry.jts;
 
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
 import org.locationtech.jts.geom.CoordinateSequence;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 
 /**
- * Interface that should be implemented by classes able to apply the provided {@linkplain
- * MathTransform transformation} to a {@linkplain CoordinateSequence coordinate sequence}.
+ * Interface that should be implemented by classes able to apply the provided {@linkplain MathTransform transformation}
+ * to a {@linkplain CoordinateSequence coordinate sequence}.
  *
  * @since 2.1
  * @version $Id$
@@ -36,6 +36,5 @@ public interface CoordinateSequenceTransformer {
      * @param transform The transformation to apply.
      * @throws TransformException if at least one coordinate can't be transformed.
      */
-    public CoordinateSequence transform(CoordinateSequence sequence, MathTransform transform)
-            throws TransformException;
+    public CoordinateSequence transform(CoordinateSequence sequence, MathTransform transform) throws TransformException;
 }

@@ -29,9 +29,9 @@ import org.eclipse.xsd.util.XSDSchemaLocator;
 import org.geotools.xsd.Schemas;
 
 /**
- * A singleton registry to store all XSD schema's that are created by app-schema. This registry has
- * two purposes: (1) Reusing schema's that have already been built previously, so that schema
- * content in memory isn't cluttered with multiple versions of the same schema (with respect to .
+ * A singleton registry to store all XSD schema's that are created by app-schema. This registry has two purposes: (1)
+ * Reusing schema's that have already been built previously, so that schema content in memory isn't cluttered with
+ * multiple versions of the same schema (with respect to .
  *
  * @author Niels Charlier (Curtin University of Technology)
  */
@@ -87,32 +87,24 @@ public final class AppSchemaXSDRegistry implements XSDSchemaLocator {
     /** Implements schema locator... creates and registers new schema if necessary */
     @Override
     public synchronized XSDSchema locateSchema(
-            XSDSchema xsdSchema,
-            String namespaceURI,
-            String rawSchemaLocationURI,
-            String resolvedSchemaLocationURI) {
+            XSDSchema xsdSchema, String namespaceURI, String rawSchemaLocationURI, String resolvedSchemaLocationURI) {
 
         if (xsdSchema != null) {
             // first see if the schema can already be found in same resource set
             // (to avoid infinite loop)
             ResourceSet resourceSet = xsdSchema.eResource().getResourceSet();
-            Resource resolvedResource =
-                    resourceSet.getResource(
-                            URI.createURI(
-                                    resolvedSchemaLocationURI == null
-                                            ? ""
-                                            : resolvedSchemaLocationURI),
-                            false);
+            Resource resolvedResource = resourceSet.getResource(
+                    URI.createURI(resolvedSchemaLocationURI == null ? "" : resolvedSchemaLocationURI), false);
 
-            if (resolvedResource != null && resolvedResource instanceof XSDResourceImpl) {
-                return ((XSDResourceImpl) resolvedResource).getSchema();
+            if (resolvedResource != null && resolvedResource instanceof XSDResourceImpl impl) {
+                return impl.getSchema();
             } else {
                 // try getting from registry
                 XSDSchema schema = lookUp(resolvedSchemaLocationURI);
                 if (schema == null) { // build new one
                     try {
-                        // use same resource set to avoid infinite loop
-                        schema = Schemas.parse(resolvedSchemaLocationURI, resourceSet);
+                        // use same resource set to avoid infinite loop, assume schemas are not malicious
+                        schema = Schemas.parse(resolvedSchemaLocationURI, resourceSet, null);
                         register(schema);
                     } catch (IOException e) {
                         schema = null;

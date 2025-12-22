@@ -21,6 +21,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Iterator;
 import java.util.logging.Logger;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
@@ -28,14 +32,10 @@ import org.geotools.coverage.grid.io.GridFormatFactorySpi;
 import org.geotools.coverage.grid.io.GridFormatFinder;
 import org.geotools.coverageio.gdal.BaseGDALGridCoverage2DReader;
 import org.geotools.coverageio.gdal.GDALTestCase;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.test.TestData;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
 
 /**
  * @author Daniele Romagnoli, GeoSolutions
@@ -43,8 +43,7 @@ import org.opengis.referencing.NoSuchAuthorityCodeException;
  *     <p>Testing {@link JP2KReader}
  */
 public final class JP2KTest extends GDALTestCase {
-    protected static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(JP2KTest.class);
+    protected static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(JP2KTest.class);
 
     /** file name of a valid JP2K sample data to be used for tests. */
     private static final String fileName = "sample.jp2";
@@ -56,17 +55,15 @@ public final class JP2KTest extends GDALTestCase {
 
     @Test
     public void test() throws Exception {
-        if (!testingEnabled()) {
-            return;
-        }
-
         // read in the grid coverage
         if (fileName.equalsIgnoreCase("")) {
             LOGGER.info(
-                    "===================================================================\n"
-                            + " Warning! No valid test File has been yet specified.\n"
-                            + " Please provide a valid sample in the source code and repeat this test!\n"
-                            + "========================================================================");
+                    """
+                    ===================================================================
+                     Warning! No valid test File has been yet specified.
+                     Please provide a valid sample in the source code and repeat this test!
+                    ========================================================================\
+                    """);
 
             return;
         }
@@ -79,9 +76,8 @@ public final class JP2KTest extends GDALTestCase {
         }
 
         final BaseGDALGridCoverage2DReader reader = new JP2KReader(file);
-        final ParameterValue gg =
-                ((AbstractGridFormat) reader.getFormat()).READ_GRIDGEOMETRY2D.createValue();
-        final GeneralEnvelope oldEnvelope = reader.getOriginalEnvelope();
+        final ParameterValue gg = ((AbstractGridFormat) reader.getFormat()).READ_GRIDGEOMETRY2D.createValue();
+        final GeneralBounds oldEnvelope = reader.getOriginalEnvelope();
         gg.setValue(new GridGeometry2D(reader.getOriginalGridRange(), oldEnvelope));
 
         final GridCoverage2D gc = reader.read(new GeneralParameterValue[] {gg});
@@ -96,10 +92,6 @@ public final class JP2KTest extends GDALTestCase {
 
     @Test
     public void testIsAvailable() throws NoSuchAuthorityCodeException, FactoryException {
-        if (!testingEnabled()) {
-            return;
-        }
-
         GridFormatFinder.scanForPlugins();
 
         Iterator list = GridFormatFinder.getAvailableFormats().iterator();

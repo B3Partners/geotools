@@ -13,12 +13,19 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.FeatureStore;
-import org.geotools.data.Join;
-import org.geotools.data.Query;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.FeatureStore;
+import org.geotools.api.data.Join;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.sort.SortOrder;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.FeatureIterator;
@@ -27,13 +34,6 @@ import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
 import org.junit.Test;
 import org.locationtech.jts.geom.LineString;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.Id;
-import org.opengis.filter.sort.SortOrder;
 
 public abstract class JDBCVirtualTableOnlineTest extends JDBCTestSupport {
     protected String dbSchemaName = null;
@@ -116,8 +116,7 @@ public abstract class JDBCVirtualTableOnlineTest extends JDBCTestSupport {
         sb.append(" %where%");
         vt = new VirtualTable("riverParam", sb.toString());
         vt.addGeometryMetadatata(aname("geom"), LineString.class, 4326);
-        vt.addParameter(
-                new VirtualTableParameter("mul", "1", new RegexpValidator("[\\d\\.e\\+-]+")));
+        vt.addParameter(new VirtualTableParameter("mul", "1", new RegexpValidator("[\\d\\.e\\+-]+")));
         vt.addParameter(new VirtualTableParameter("where", ""));
         dataStore.createVirtualTable(vt);
     }
@@ -161,9 +160,7 @@ public abstract class JDBCVirtualTableOnlineTest extends JDBCTestSupport {
         assertTrue(Number.class.isAssignableFrom(doubleFlow.getType().getBinding()));
 
         // check srid and dimension are set as expected
-        assertEquals(
-                4326,
-                type.getGeometryDescriptor().getUserData().get(JDBCDataStore.JDBC_NATIVE_SRID));
+        assertEquals(4326, type.getGeometryDescriptor().getUserData().get(JDBCDataStore.JDBC_NATIVE_SRID));
         assertEquals(2, type.getGeometryDescriptor().getUserData().get(Hints.COORDINATE_DIMENSION));
     }
 
@@ -255,10 +252,7 @@ public abstract class JDBCVirtualTableOnlineTest extends JDBCTestSupport {
         sb.append(" where ");
         dialect.encodeColumnName(null, aname("flow"), sb);
         sb.append(" > 4");
-        q.setHints(
-                new Hints(
-                        Hints.VIRTUAL_TABLE_PARAMETERS,
-                        Collections.singletonMap("where", sb.toString())));
+        q.setHints(new Hints(Hints.VIRTUAL_TABLE_PARAMETERS, Collections.singletonMap("where", sb.toString())));
         assertEquals(1, fsView.getCount(q));
     }
 
@@ -269,8 +263,7 @@ public abstract class JDBCVirtualTableOnlineTest extends JDBCTestSupport {
 
         // let's change the mul param
         Query q = new Query(Query.ALL);
-        q.setHints(
-                new Hints(Hints.VIRTUAL_TABLE_PARAMETERS, Collections.singletonMap("mul", "10")));
+        q.setHints(new Hints(Hints.VIRTUAL_TABLE_PARAMETERS, Collections.singletonMap("mul", "10")));
         q.setSortBy(ff.sort(aname("mulflow"), SortOrder.ASCENDING));
         try (FeatureIterator fi = fsView.getFeatures(q).features()) {
             assertTrue(fi.hasNext());
@@ -288,8 +281,7 @@ public abstract class JDBCVirtualTableOnlineTest extends JDBCTestSupport {
 
         // let's set an invalid mul param
         Query q = new Query(Query.ALL);
-        q.setHints(
-                new Hints(Hints.VIRTUAL_TABLE_PARAMETERS, Collections.singletonMap("mul", "abc")));
+        q.setHints(new Hints(Hints.VIRTUAL_TABLE_PARAMETERS, Collections.singletonMap("mul", "abc")));
         try {
             fsView.getFeatures(q).features();
             fail("Should have thrown an exception!");
@@ -299,6 +291,7 @@ public abstract class JDBCVirtualTableOnlineTest extends JDBCTestSupport {
     }
 
     @Test
+    @SuppressWarnings("PMD.UnusedLocalVariable")
     public void testInvalidView() throws Exception {
         StringBuffer sb = new StringBuffer();
         sb.append("select ");
@@ -313,25 +306,24 @@ public abstract class JDBCVirtualTableOnlineTest extends JDBCTestSupport {
         dialect.encodeTableName(tname("river"), sb);
         VirtualTable vt = new VirtualTable("invalid_attribute", sb.toString());
 
-        Handler handler =
-                new Handler() {
-                    @Override
-                    public synchronized void publish(LogRecord record) {
-                        if (!record.getMessage().contains("Failed to execute statement")) {
-                            fail("We should not have received any log statement");
-                        }
-                    }
+        Handler handler = new Handler() {
+            @Override
+            public synchronized void publish(LogRecord record) {
+                if (!record.getMessage().contains("Failed to execute statement")) {
+                    fail("We should not have received any log statement");
+                }
+            }
 
-                    @Override
-                    public void flush() {
-                        // nothing to do
-                    }
+            @Override
+            public void flush() {
+                // nothing to do
+            }
 
-                    @Override
-                    public void close() throws SecurityException {
-                        // nothing to do
-                    }
-                };
+            @Override
+            public void close() throws SecurityException {
+                // nothing to do
+            }
+        };
         handler.setLevel(Level.WARNING);
         Logger logger = Logging.getLogger(JDBCVirtualTableOnlineTest.class);
         Level oldLevel = logger.getLevel();
@@ -374,13 +366,8 @@ public abstract class JDBCVirtualTableOnlineTest extends JDBCTestSupport {
     public void testJoinViews() throws Exception {
         Query joinQuery = new Query("riverFull");
         FilterFactory ff = dataStore.getFilterFactory();
-        Join join =
-                new Join(
-                        "riverReduced",
-                        ff.equal(
-                                ff.property("a." + aname("river")),
-                                ff.property(aname("river")),
-                                false));
+        Join join = new Join(
+                "riverReduced", ff.equal(ff.property("a." + aname("river")), ff.property(aname("river")), false));
         join.setAlias("a");
         joinQuery.getJoins().add(join);
 
@@ -399,24 +386,18 @@ public abstract class JDBCVirtualTableOnlineTest extends JDBCTestSupport {
     public void testJoinViewsWithPlaceHolder() {
         Query joinQuery = new Query("riverFullPlaceHolder");
         FilterFactory ff = dataStore.getFilterFactory();
-        Join join =
-                new Join(
-                        "riverFullPlaceHolder",
-                        ff.equal(
-                                ff.property("a." + aname("river")),
-                                ff.property(aname("river")),
-                                false));
+        Join join = new Join(
+                "riverFullPlaceHolder",
+                ff.equal(ff.property("a." + aname("river")), ff.property(aname("river")), false));
         join.setAlias("a");
         joinQuery.getJoins().add(join);
         try {
             dataStore.getFeatureSource("riverFullPlaceHolder").getCount(joinQuery);
         } catch (Exception exception) {
-            assertTrue(
-                    exception
-                            .getMessage()
-                            .contains(
-                                    "Joins between virtual tables that provide a "
-                                            + ":where_placeholder: are not supported"));
+            assertTrue(exception
+                    .getMessage()
+                    .contains(
+                            "Joins between virtual tables that provide a " + ":where_placeholder: are not supported"));
             return;
         }
         fail("count query should have fail with an exception");

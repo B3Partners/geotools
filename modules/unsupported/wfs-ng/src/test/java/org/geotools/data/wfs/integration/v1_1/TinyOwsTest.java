@@ -30,11 +30,16 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.commons.io.IOUtils;
-import org.custommonkey.xmlunit.XMLAssert;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.identity.FeatureId;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.wfs.TestHttpResponse;
 import org.geotools.data.wfs.WFSDataStore;
 import org.geotools.data.wfs.WFSTestData;
@@ -46,30 +51,22 @@ import org.geotools.http.AbstractHttpClient;
 import org.geotools.http.HTTPClient;
 import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
+import org.geotools.test.xml.XmlTestSupport;
 import org.geotools.util.factory.GeoTools;
+import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.identity.FeatureId;
-import org.xml.sax.SAXException;
+import org.xmlunit.diff.Diff;
 
-public class TinyOwsTest {
+public class TinyOwsTest extends XmlTestSupport {
 
     private Name typeName = new NameImpl("http://www.tinyows.org/", "comuni_comuni11");
 
-    private WFSDataStore getWFSDataStore(HTTPClient httpClient)
-            throws IOException, ServiceException {
+    private WFSDataStore getWFSDataStore(HTTPClient httpClient) throws IOException, ServiceException {
         URL capabilitiesUrl =
-                new URL(
-                        "http://127.0.0.1:8888/cgi-bin/tinyows?service=WFS&version=1.1.0&REQUEST=GetCapabilities");
+                new URL("http://127.0.0.1:8888/cgi-bin/tinyows?service=WFS&version=1.1.0&REQUEST=GetCapabilities");
 
         WFSDataStore wfs =
-                new WFSDataStore(
-                        new WFSClient(
-                                capabilitiesUrl, httpClient, WFSTestData.getGmlCompatibleConfig()));
+                new WFSDataStore(new WFSClient(capabilitiesUrl, httpClient, WFSTestData.getGmlCompatibleConfig()));
         return wfs;
     }
 
@@ -84,14 +81,13 @@ public class TinyOwsTest {
     AtomicLong reqHandleSeq = new AtomicLong();
 
     public String newRequestHandle() {
-        StringBuilder handle =
-                new StringBuilder("GeoTools ")
-                        .append(GeoTools.getVersion())
-                        .append("(")
-                        .append(GeoTools.getBuildRevision())
-                        .append(") WFS ")
-                        .append("1.1.0")
-                        .append(" DataStore @");
+        StringBuilder handle = new StringBuilder("GeoTools ")
+                .append(GeoTools.getVersion())
+                .append("(")
+                .append(GeoTools.getBuildRevision())
+                .append(") WFS ")
+                .append("1.1.0")
+                .append(" DataStore @");
         try {
             handle.append(InetAddress.getLocalHost().getHostName());
         } catch (Exception ignore) {
@@ -105,102 +101,65 @@ public class TinyOwsTest {
     private void assertXMLEqual(String expectedXmlResource, String actualXml) throws IOException {
         String control = IOUtils.toString(url(expectedXmlResource), UTF_8);
         control = control.replace("${getfeature.handle}", newRequestHandle());
-        try {
-            XMLAssert.assertXMLEqual(control, actualXml);
-        } catch (SAXException e) {
-            java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
-            throw new IOException(e);
-        }
+
+        Diff diff = diffSimilar(control, actualXml);
+        Assert.assertFalse(diff.toString(), diff.hasDifferences());
     }
 
     @Test
     public void testGetFirstFeatures() throws Exception {
-        final String queryXml =
-                "<wfs:Query srsName=\"urn:ogc:def:crs:EPSG::3857\" typeName=\"comuni:comuni11\"/>";
+        final String queryXml = "<wfs:Query srsName=\"urn:ogc:def:crs:EPSG::3857\" typeName=\"comuni:comuni11\"/>";
         // final String queryXml = "<wfs:Query srsName=\"urn:ogc:def:crs:EPSG::3857\"
         // typeName=\"comuni_comuni11\"/>";
-        WFSDataStore wfs =
-                getWFSDataStore(
-                        new TinyOwsMockHttpClient() {
-                            @Override
-                            public HTTPResponse post(
-                                    URL url, InputStream postContent, String postContentType)
-                                    throws IOException {
-                                String request =
-                                        new String(IOUtils.toByteArray(postContent), UTF_8);
-                                if (stringContains(
-                                        request,
-                                        "<wfs:GetFeature",
-                                        "maxFeatures=\"20\"",
-                                        "resultType=\"hits\"",
-                                        queryXml)) {
-                                    assertXMLEqual(
-                                            "tinyows/CountFirstFeaturesRequest.xml", request);
-                                    return new TestHttpResponse(
-                                            url("tinyows/CountFirstFeatures.xml"), "text/xml");
-                                } else if (stringContains(
-                                        request,
-                                        "<wfs:GetFeature",
-                                        "maxFeatures=\"20\"",
-                                        "resultType=\"results\"",
-                                        queryXml)) {
-                                    assertXMLEqual("tinyows/GetFirstFeaturesRequest.xml", request);
-                                    return new TestHttpResponse(
-                                            url("tinyows/GetFirstFeatures.xml"), "text/xml");
-                                } else {
-                                    return super.post(
-                                            url,
-                                            new ByteArrayInputStream(request.getBytes(UTF_8)),
-                                            postContentType);
-                                }
-                            }
-                        });
+        WFSDataStore wfs = getWFSDataStore(new TinyOwsMockHttpClient() {
+            @Override
+            public HTTPResponse post(URL url, InputStream postContent, String postContentType) throws IOException {
+                String request = new String(IOUtils.toByteArray(postContent), UTF_8);
+                if (stringContains(request, "<wfs:GetFeature", "maxFeatures=\"20\"", "resultType=\"hits\"", queryXml)) {
+                    assertXMLEqual("tinyows/CountFirstFeaturesRequest.xml", request);
+                    return new TestHttpResponse(url("tinyows/CountFirstFeatures.xml"), "text/xml");
+                } else if (stringContains(
+                        request, "<wfs:GetFeature", "maxFeatures=\"20\"", "resultType=\"results\"", queryXml)) {
+                    assertXMLEqual("tinyows/GetFirstFeaturesRequest.xml", request);
+                    return new TestHttpResponse(url("tinyows/GetFirstFeatures.xml"), "text/xml");
+                } else {
+                    return super.post(url, new ByteArrayInputStream(request.getBytes(UTF_8)), postContentType);
+                }
+            }
+        });
 
         SimpleFeatureSource source = wfs.getFeatureSource(typeName);
 
-        Query query =
-                new Query(typeName.getLocalPart(), Filter.INCLUDE, 20, Query.ALL_NAMES, "my query");
+        Query query = new Query(typeName.getLocalPart(), Filter.INCLUDE, 20, Query.ALL_NAMES, "my query");
         iterate(source.getFeatures(query), 20, true);
     }
 
     @Test
     public void testGetFeatureByIncludeAndOperatorAndInclude() throws Exception {
-        WFSDataStore wfs =
-                getWFSDataStore(
-                        new TinyOwsMockHttpClient() {
-                            @Override
-                            public HTTPResponse post(
-                                    URL url, InputStream postContent, String postContentType)
-                                    throws IOException {
-                                String request =
-                                        new String(IOUtils.toByteArray(postContent), UTF_8);
-                                if (isResultsRequest(
-                                        request,
-                                        "<wfs:GetFeature",
-                                        "maxFeatures=\"20\"",
-                                        "resultType=\"results\"",
-                                        "<ogc:PropertyIsGreaterThan")) {
-                                    assertXMLEqual(
-                                            "tinyows/GetFeatureIncludeAndPropertyGreaterThanAndIncludeRequest.xml",
-                                            request);
-                                    return new TestHttpResponse(
-                                            url("tinyows/GetFirstFeatures.xml"), "text/xml");
-                                } else {
-                                    postContent.reset();
-                                    return super.post(url, postContent, postContentType);
-                                }
-                            }
-                        });
+        WFSDataStore wfs = getWFSDataStore(new TinyOwsMockHttpClient() {
+            @Override
+            public HTTPResponse post(URL url, InputStream postContent, String postContentType) throws IOException {
+                String request = new String(IOUtils.toByteArray(postContent), UTF_8);
+                if (isResultsRequest(
+                        request,
+                        "<wfs:GetFeature",
+                        "maxFeatures=\"20\"",
+                        "resultType=\"results\"",
+                        "<ogc:PropertyIsGreaterThan")) {
+                    assertXMLEqual("tinyows/GetFeatureIncludeAndPropertyGreaterThanAndIncludeRequest.xml", request);
+                    return new TestHttpResponse(url("tinyows/GetFirstFeatures.xml"), "text/xml");
+                } else {
+                    postContent.reset();
+                    return super.post(url, postContent, postContentType);
+                }
+            }
+        });
 
         SimpleFeatureSource source = wfs.getFeatureSource(typeName);
 
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
         Filter and =
-                ff.and(
-                        Arrays.asList(
-                                Filter.INCLUDE,
-                                ff.greater(ff.property("gid"), ff.literal(0)),
-                                Filter.INCLUDE));
+                ff.and(Arrays.asList(Filter.INCLUDE, ff.greater(ff.property("gid"), ff.literal(0)), Filter.INCLUDE));
         Query query = new Query(typeName.getLocalPart(), and, 20, Query.ALL_NAMES, "my query");
         iterate(source.getFeatures(query), 20, false);
     }
@@ -211,7 +170,7 @@ public class TinyOwsTest {
 
         SimpleFeatureSource source = wfs.getFeatureSource(typeName);
 
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
         Set<FeatureId> fids = new HashSet<>();
         fids.add(new FeatureIdImpl("comuni11.2671"));
         Query query = new Query(typeName.getLocalPart(), ff.id(fids));
@@ -227,37 +186,26 @@ public class TinyOwsTest {
             "<gml:lowerCorner>4623055 815134</gml:lowerCorner>",
             "<gml:upperCorner>4629904 820740</gml:upperCorner>"
         };
-        WFSDataStore wfs =
-                getWFSDataStore(
-                        new TinyOwsMockHttpClient() {
-                            @Override
-                            public HTTPResponse post(
-                                    URL url, InputStream postContent, String postContentType)
-                                    throws IOException {
-                                String request =
-                                        new String(IOUtils.toByteArray(postContent), UTF_8);
-                                if (isHitsRequest(request, queryTokens)) {
-                                    assertXMLEqual(
-                                            "tinyows/CountFeaturesByBBoxRequest.xml", request);
-                                    return new TestHttpResponse(
-                                            url("tinyows/CountFeaturesByBBox.xml"), "text/xml");
-                                } else if (isResultsRequest(request, queryTokens)) {
-                                    assertXMLEqual("tinyows/GetFeaturesByBBoxRequest.xml", request);
-                                    return new TestHttpResponse(
-                                            url("tinyows/GetFeaturesByBBox.xml"), "text/xml");
-                                } else {
-                                    return super.post(
-                                            url,
-                                            new ByteArrayInputStream(request.getBytes(UTF_8)),
-                                            postContentType);
-                                }
-                            }
-                        });
+        WFSDataStore wfs = getWFSDataStore(new TinyOwsMockHttpClient() {
+            @Override
+            public HTTPResponse post(URL url, InputStream postContent, String postContentType) throws IOException {
+                String request = new String(IOUtils.toByteArray(postContent), UTF_8);
+                if (isHitsRequest(request, queryTokens)) {
+                    assertXMLEqual("tinyows/CountFeaturesByBBoxRequest.xml", request);
+                    return new TestHttpResponse(url("tinyows/CountFeaturesByBBox.xml"), "text/xml");
+                } else if (isResultsRequest(request, queryTokens)) {
+                    assertXMLEqual("tinyows/GetFeaturesByBBoxRequest.xml", request);
+                    return new TestHttpResponse(url("tinyows/GetFeaturesByBBox.xml"), "text/xml");
+                } else {
+                    return super.post(url, new ByteArrayInputStream(request.getBytes(UTF_8)), postContentType);
+                }
+            }
+        });
 
         SimpleFeatureSource source = wfs.getFeatureSource(typeName);
         SimpleFeature sf = getSampleSimpleFeature(source);
 
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
         PropertyName bboxProperty = ff.property(sf.getDefaultGeometryProperty().getName());
         Query query = new Query(typeName.getLocalPart(), ff.bbox(bboxProperty, sf.getBounds()));
         iterate(source.getFeatures(query), 6, true);
@@ -272,27 +220,18 @@ public class TinyOwsTest {
             "<gml:lowerCorner>4623055.0 815134.0</gml:lowerCorner>",
             "<gml:upperCorner>4629904.0 820740.0</gml:upperCorner>"
         };
-        WFSDataStore wfs =
-                getWFSDataStore(
-                        new TinyOwsMockHttpClient() {
-                            @Override
-                            public HTTPResponse post(
-                                    URL url, InputStream postContent, String postContentType)
-                                    throws IOException {
-                                String request =
-                                        new String(IOUtils.toByteArray(postContent), UTF_8);
-                                if (isResultsRequest(request, queryTokens)) {
-                                    assertXMLEqual("tinyows/GetFeaturesByBBoxRequest.xml", request);
-                                    return new TestHttpResponse(
-                                            url("tinyows/GetFeaturesByBBox.xml"), "text/xml");
-                                } else {
-                                    return super.post(
-                                            url,
-                                            new ByteArrayInputStream(request.getBytes(UTF_8)),
-                                            postContentType);
-                                }
-                            }
-                        });
+        WFSDataStore wfs = getWFSDataStore(new TinyOwsMockHttpClient() {
+            @Override
+            public HTTPResponse post(URL url, InputStream postContent, String postContentType) throws IOException {
+                String request = new String(IOUtils.toByteArray(postContent), UTF_8);
+                if (isResultsRequest(request, queryTokens)) {
+                    assertXMLEqual("tinyows/GetFeaturesByBBoxRequest.xml", request);
+                    return new TestHttpResponse(url("tinyows/GetFeaturesByBBox.xml"), "text/xml");
+                } else {
+                    return super.post(url, new ByteArrayInputStream(request.getBytes(UTF_8)), postContentType);
+                }
+            }
+        });
 
         SimpleFeatureSource source = wfs.getFeatureSource(typeName);
         SimpleFeature sf = getSampleSimpleFeature(source);
@@ -300,12 +239,9 @@ public class TinyOwsTest {
         Set<FeatureId> fids = new HashSet<>();
         fids.add(new FeatureIdImpl("comuni11.2671"));
 
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
         PropertyName bboxProperty = ff.property(sf.getDefaultGeometryProperty().getName());
-        Query query =
-                new Query(
-                        typeName.getLocalPart(),
-                        ff.and(ff.id(fids), ff.bbox(bboxProperty, sf.getBounds())));
+        Query query = new Query(typeName.getLocalPart(), ff.and(ff.id(fids), ff.bbox(bboxProperty, sf.getBounds())));
         iterate(source.getFeatures(query), 1, false);
     }
 
@@ -318,27 +254,18 @@ public class TinyOwsTest {
             "<gml:lowerCorner>4623055.0 815134.0</gml:lowerCorner>",
             "<gml:upperCorner>4629904.0 820740.0</gml:upperCorner>"
         };
-        WFSDataStore wfs =
-                getWFSDataStore(
-                        new TinyOwsMockHttpClient() {
-                            @Override
-                            public HTTPResponse post(
-                                    URL url, InputStream postContent, String postContentType)
-                                    throws IOException {
-                                String request =
-                                        new String(IOUtils.toByteArray(postContent), UTF_8);
-                                if (isResultsRequest(request, queryTokens)) {
-                                    assertXMLEqual("tinyows/GetFeaturesByBBoxRequest.xml", request);
-                                    return new TestHttpResponse(
-                                            url("tinyows/GetFeaturesByBBox.xml"), "text/xml");
-                                } else {
-                                    return super.post(
-                                            url,
-                                            new ByteArrayInputStream(request.getBytes(UTF_8)),
-                                            postContentType);
-                                }
-                            }
-                        });
+        WFSDataStore wfs = getWFSDataStore(new TinyOwsMockHttpClient() {
+            @Override
+            public HTTPResponse post(URL url, InputStream postContent, String postContentType) throws IOException {
+                String request = new String(IOUtils.toByteArray(postContent), UTF_8);
+                if (isResultsRequest(request, queryTokens)) {
+                    assertXMLEqual("tinyows/GetFeaturesByBBoxRequest.xml", request);
+                    return new TestHttpResponse(url("tinyows/GetFeaturesByBBox.xml"), "text/xml");
+                } else {
+                    return super.post(url, new ByteArrayInputStream(request.getBytes(UTF_8)), postContentType);
+                }
+            }
+        });
 
         SimpleFeatureSource source = wfs.getFeatureSource(typeName);
         SimpleFeature sf = getSampleSimpleFeature(source);
@@ -346,12 +273,9 @@ public class TinyOwsTest {
         Set<FeatureId> fids = new HashSet<>();
         fids.add(new FeatureIdImpl("comuni11.2671"));
 
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
         PropertyName bboxProperty = ff.property(sf.getDefaultGeometryProperty().getName());
-        Query query =
-                new Query(
-                        typeName.getLocalPart(),
-                        ff.and(ff.bbox(bboxProperty, sf.getBounds()), ff.id(fids)));
+        Query query = new Query(typeName.getLocalPart(), ff.and(ff.bbox(bboxProperty, sf.getBounds()), ff.id(fids)));
         iterate(source.getFeatures(query), 1, false);
     }
 
@@ -365,32 +289,21 @@ public class TinyOwsTest {
             "<gml:lowerCorner>4623055.0 815134.0</gml:lowerCorner>",
             "<gml:upperCorner>4629904.0 820740.0</gml:upperCorner>"
         };
-        WFSDataStore wfs =
-                getWFSDataStore(
-                        new TinyOwsMockHttpClient() {
-                            @Override
-                            public HTTPResponse post(
-                                    URL url, InputStream postContent, String postContentType)
-                                    throws IOException {
-                                String request =
-                                        new String(IOUtils.toByteArray(postContent), UTF_8);
-                                if (isHitsRequest(request, idQueryTokens)) {
-                                    return new TestHttpResponse(
-                                            url("tinyows/CountFeatureById.xml"), "text/xml");
-                                } else if (isResultsRequest(request, idQueryTokens)) {
-                                    return new TestHttpResponse(
-                                            url("tinyows/GetFeatureById.xml"), "text/xml");
-                                } else if (isResultsRequest(request, bboxQueryTokens)) {
-                                    return new TestHttpResponse(
-                                            url("tinyows/GetFeaturesByBBox.xml"), "text/xml");
-                                } else {
-                                    return super.post(
-                                            url,
-                                            new ByteArrayInputStream(request.getBytes(UTF_8)),
-                                            postContentType);
-                                }
-                            }
-                        });
+        WFSDataStore wfs = getWFSDataStore(new TinyOwsMockHttpClient() {
+            @Override
+            public HTTPResponse post(URL url, InputStream postContent, String postContentType) throws IOException {
+                String request = new String(IOUtils.toByteArray(postContent), UTF_8);
+                if (isHitsRequest(request, idQueryTokens)) {
+                    return new TestHttpResponse(url("tinyows/CountFeatureById.xml"), "text/xml");
+                } else if (isResultsRequest(request, idQueryTokens)) {
+                    return new TestHttpResponse(url("tinyows/GetFeatureById.xml"), "text/xml");
+                } else if (isResultsRequest(request, bboxQueryTokens)) {
+                    return new TestHttpResponse(url("tinyows/GetFeaturesByBBox.xml"), "text/xml");
+                } else {
+                    return super.post(url, new ByteArrayInputStream(request.getBytes(UTF_8)), postContentType);
+                }
+            }
+        });
 
         SimpleFeatureSource source = wfs.getFeatureSource(typeName);
         SimpleFeature sf = getSampleSimpleFeature(source);
@@ -398,14 +311,13 @@ public class TinyOwsTest {
         Set<FeatureId> fids = new HashSet<>();
         fids.add(new FeatureIdImpl("comuni11.2671"));
 
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
         PropertyName bboxProperty = ff.property(sf.getDefaultGeometryProperty().getName());
-        Query query =
-                new Query(
-                        typeName.getLocalPart(),
-                        ff.and(
-                                ff.greater(ff.property("cod_reg"), ff.literal(0)),
-                                ff.and(ff.bbox(bboxProperty, sf.getBounds()), ff.id(fids))));
+        Query query = new Query(
+                typeName.getLocalPart(),
+                ff.and(
+                        ff.greater(ff.property("cod_reg"), ff.literal(0)),
+                        ff.and(ff.bbox(bboxProperty, sf.getBounds()), ff.id(fids))));
         iterate(source.getFeatures(query), 1, true);
 
         // disabled for now: not compliant
@@ -418,7 +330,7 @@ public class TinyOwsTest {
     }
 
     private SimpleFeature getSampleSimpleFeature(SimpleFeatureSource source) throws IOException {
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
         Set<FeatureId> fids = new HashSet<>();
         fids.add(new FeatureIdImpl("comuni11.2671"));
         Query query = new Query(typeName.getLocalPart(), ff.id(fids));
@@ -458,8 +370,7 @@ public class TinyOwsTest {
         return true;
     }
 
-    private static SimpleFeature iterate(
-            SimpleFeatureCollection features, int expectedSize, boolean getSize) {
+    private static SimpleFeature iterate(SimpleFeatureCollection features, int expectedSize, boolean getSize) {
         int size = -1;
         if (getSize) {
             size = features.size();
@@ -498,8 +409,7 @@ public class TinyOwsTest {
         }
 
         @Override
-        public HTTPResponse post(URL url, InputStream postContent, String postContentType)
-                throws IOException {
+        public HTTPResponse post(URL url, InputStream postContent, String postContentType) throws IOException {
             String query = "<ogc:FeatureId fid=\"comuni11.2671\"/>";
             String request = new String(IOUtils.toByteArray(postContent), UTF_8);
             if (isHitsRequest(request, query)) {

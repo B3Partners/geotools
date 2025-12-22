@@ -19,12 +19,12 @@ package org.geotools.data.teradata;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.jdbc.JDBCFeatureStore;
 import org.geotools.jdbc.JDBCPrimaryKeyFinderOnlineTest;
 import org.geotools.jdbc.JDBCPrimaryKeyFinderTestSetup;
 import org.geotools.jdbc.NonIncrementingPrimaryKeyColumn;
-import org.opengis.feature.simple.SimpleFeature;
 
 public class TeradataPrimaryKeyFinderOnlineTest extends JDBCPrimaryKeyFinderOnlineTest {
 
@@ -40,14 +40,11 @@ public class TeradataPrimaryKeyFinderOnlineTest extends JDBCPrimaryKeyFinderOnli
 
     @Override
     public void testAssignedMultiPKeyView() throws Exception {
-        JDBCFeatureStore fs =
-                (JDBCFeatureStore) dataStore.getFeatureSource(tname("assignedmultipk"));
+        JDBCFeatureStore fs = (JDBCFeatureStore) dataStore.getFeatureSource(tname("assignedmultipk"));
 
         assertEquals(2, fs.getPrimaryKey().getColumns().size());
-        assertTrue(
-                fs.getPrimaryKey().getColumns().get(0) instanceof NonIncrementingPrimaryKeyColumn);
-        assertTrue(
-                fs.getPrimaryKey().getColumns().get(1) instanceof NonIncrementingPrimaryKeyColumn);
+        assertTrue(fs.getPrimaryKey().getColumns().get(0) instanceof NonIncrementingPrimaryKeyColumn);
+        assertTrue(fs.getPrimaryKey().getColumns().get(1) instanceof NonIncrementingPrimaryKeyColumn);
 
         try (FeatureIterator<?> i = fs.getFeatures().features()) {
             // On Teradata it's undered !!

@@ -26,28 +26,28 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.TextSymbolizer;
 import org.geotools.mbstyle.MBStyle;
 import org.geotools.mbstyle.MapboxTestUtils;
 import org.geotools.mbstyle.expression.MBColor;
 import org.geotools.mbstyle.expression.MBExpression;
 import org.geotools.mbstyle.expression.MBString;
 import org.geotools.mbstyle.layer.SymbolMBLayer;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.TextSymbolizer;
 import org.geotools.xml.styling.SLDTransformer;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
 
 public class MBExpressionParseTest {
     Map<String, JSONObject> testLayersById = new HashMap<>();
     MBObjectParser parse;
-    FilterFactory2 ff;
+    FilterFactory ff;
     JSONObject mbstyle;
 
     @Before
@@ -63,9 +63,7 @@ public class MBExpressionParseTest {
     }
 
     // ---- MAPBOX EXPRESSIONS BASE ---------------------------------------------------------
-    /**
-     * Verify that an expression can be parsed correctly from Layout, Paint, and Filter properties.
-     */
+    /** Verify that an expression can be parsed correctly from Layout, Paint, and Filter properties. */
     @Test
     public void testParseExpressions() {
 
@@ -82,8 +80,7 @@ public class MBExpressionParseTest {
         assertEquals(upper, parse.string(layout, "text-field", "fallback"));
 
         // Testing parsing expression out of filter JSONArray
-        Function cat =
-                ff.function("Concatenate", ff.literal("P"), ff.literal("o"), ff.literal("int"));
+        Function cat = ff.function("Concatenate", ff.literal("P"), ff.literal("o"), ff.literal("int"));
         assertEquals(cat, parse.string(filter, 2));
 
         // Testing parsing expression out of paint JSONObject
@@ -224,19 +221,17 @@ public class MBExpressionParseTest {
         MBStyle rgbTest = MBStyle.create(mbstyle);
         SymbolMBLayer rgbLayer = (SymbolMBLayer) rgbTest.layer("rgbExpression");
         List<FeatureTypeStyle> rgbFeatures = rgbLayer.transformInternal(rgbTest);
-        Color sldColor =
-                (((TextSymbolizer) rgbFeatures.get(0).rules().get(0).symbolizers().get(0))
-                        .getFill()
-                        .getColor()
-                        .evaluate(null, Color.class));
+        Color sldColor = ((TextSymbolizer)
+                        rgbFeatures.get(0).rules().get(0).symbolizers().get(0))
+                .getFill()
+                .getColor()
+                .evaluate(null, Color.class);
         assertEquals(new Color(0, 111, 222), sldColor);
         String xml = new SLDTransformer().transform(rgbFeatures.get(0));
-        assertTrue(
-                xml.contains(
-                        "<sld:Fill><sld:CssParameter name=\"fill\"><ogc:Function name=\"torgb\">"
-                                + "<ogc:Function name=\"round_2\"><ogc:Literal>0</ogc:Literal></ogc:Function>"
-                                + "<ogc:Function name=\"round_2\"><ogc:Literal>111</ogc:Literal></ogc:Function><ogc:Function name=\"round_2\">"
-                                + "<ogc:Literal>222</ogc:Literal></ogc:Function></ogc:Function></sld:CssParameter></sld:Fill>"));
+        assertTrue(xml.contains("<sld:Fill><sld:CssParameter name=\"fill\"><ogc:Function name=\"torgb\">"
+                + "<ogc:Function name=\"round_2\"><ogc:Literal>0</ogc:Literal></ogc:Function>"
+                + "<ogc:Function name=\"round_2\"><ogc:Literal>111</ogc:Literal></ogc:Function><ogc:Function name=\"round_2\">"
+                + "<ogc:Literal>222</ogc:Literal></ogc:Function></ogc:Function></sld:CssParameter></sld:Fill>"));
     }
 
     // ---- DECISION EXPRESSIONS ---------------------------------------------------------
@@ -259,8 +254,8 @@ public class MBExpressionParseTest {
     // ---- ZOOM EXPRESSIONS ---------------------------------------------------------
 
     /**
-     * Traverse a nested map using the array of strings, and cast the result to the provided class,
-     * or return {@link Optional#empty()}.
+     * Traverse a nested map using the array of strings, and cast the result to the provided class, or return
+     * {@link Optional#empty()}.
      *
      * @param clazz expected type
      * @param path used to access map
@@ -273,8 +268,7 @@ public class MBExpressionParseTest {
 
         Object value = map;
         for (String key : path) {
-            if (value instanceof JSONObject) {
-                JSONObject m = (JSONObject) value;
+            if (value instanceof JSONObject m) {
                 if (m.containsKey(key)) {
                     value = m.get(key);
                 }

@@ -17,8 +17,8 @@
 package org.geotools.gce.imagemosaic.catalog;
 
 import java.util.NoSuchElementException;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * A feature iterator allowing to push back one feature (will be used to map the results of a join)
@@ -55,9 +55,8 @@ class PushbackFeatureIterator implements SimpleFeatureIterator {
     }
 
     /**
-     * Pushes back the last feature returned by next(). Will throw an {@link IllegalStateException}
-     * if there is no feature to push back. Only a single pushBack call can be performed between two
-     * calls to next()
+     * Pushes back the last feature returned by next(). Will throw an {@link IllegalStateException} if there is no
+     * feature to push back. Only a single pushBack call can be performed between two calls to next()
      */
     public void pushBack() {
         if (last != null) {

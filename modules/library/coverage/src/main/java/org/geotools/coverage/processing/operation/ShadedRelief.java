@@ -16,17 +16,18 @@
  */
 package org.geotools.coverage.processing.operation;
 
-import it.geosolutions.jaiext.JAIExt;
 import java.awt.image.RenderedImage;
+import java.io.Serial;
 import java.util.Map;
-import javax.media.jai.ParameterBlockJAI;
+import org.eclipse.imagen.ParameterBlockImageN;
+import org.eclipse.imagen.media.shadedrelief.ShadedReliefDescriptor;
+import org.geotools.api.coverage.processing.OperationNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.OperationJAI;
-import org.opengis.coverage.processing.OperationNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.util.InternationalString;
 
 /**
  * A simple wrapper for the jai-ext ShadedRelief operation.
@@ -55,14 +56,14 @@ import org.opengis.util.InternationalString;
  *   </tr>
  *   <tr>
  *     <td>{@code "roi"}</td>
- *     <td>{@code javax.media.jai.ROI}</td>
+ *     <td>{@code org.eclipse.imagen.ROI}</td>
  *     <td align="center"></td>
  *     <td align="center">N/A</td>
  *     <td align="center"></td>
  *   </tr>
  *   <tr>
  *     <td>{@code "srcNoData"}</td>
- *     <td>{@code it.geosolutions.jaiext.range.Range}</td>
+ *     <td>{@code org.eclipse.imagen.media.range.Range}</td>
  *     <td align="center"></td>
  *     <td align="center"></td>
  *     <td align="center"></td>
@@ -118,7 +119,7 @@ import org.opengis.util.InternationalString;
  *   </tr>
  *   <tr>
  *     <td>{@code "algorithm"}</td>
- *     <td>{@code it.geosolutions.jaiext.shadedrelief.ShadedReliefAlgorithm}</td>
+ *     <td>{@code org.eclipse.imagen.media.shadedrelief.ShadedReliefAlgorithm}</td>
  *     <td align="center">COMBINED</td>
  *     <td align="center">ZEVENBERGEN_THORNE, ZEVENBERGEN_THORNE_COMBINED, COMBINED</td>
  *     <td align="center">JAI-EXT.shadedrelief.algorithm</td>
@@ -129,6 +130,7 @@ import org.opengis.util.InternationalString;
  */
 public class ShadedRelief extends OperationJAI {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -1077713495023498436L;
 
     /** ShadedRelief property name */
@@ -145,12 +147,10 @@ public class ShadedRelief extends OperationJAI {
     public static final String PARAM_AZIMUTH = "azimuth";
     public static final String PARAM_ALGORITHM = "algorithm";
 
-    public static final String[] CUSTOMIZABLE_PARAMS = {
-        PARAM_ALTITUDE, PARAM_AZIMUTH, PARAM_ALGORITHM
-    };
+    public static final String[] CUSTOMIZABLE_PARAMS = {PARAM_ALTITUDE, PARAM_AZIMUTH, PARAM_ALGORITHM};
 
     public ShadedRelief() throws OperationNotFoundException {
-        super("ShadedRelief", getOperationDescriptor(JAIExt.getOperationName("ShadedRelief")));
+        super("ShadedRelief", getOperationDescriptor("ShadedRelief"));
     }
 
     @Override
@@ -159,7 +159,7 @@ public class ShadedRelief extends OperationJAI {
     }
 
     @Override
-    protected void handleJAIEXTParams(ParameterBlockJAI jaiParams, ParameterValueGroup params) {
+    protected void handleJAIEXTParams(ParameterBlockImageN jaiParams, ParameterValueGroup params) {
         GridCoverage2D source = (GridCoverage2D) params.parameter("source0").getValue();
 
         // Handle ROI and NoData
@@ -183,7 +183,6 @@ public class ShadedRelief extends OperationJAI {
             MathTransform gridToCRS,
             GridCoverage2D[] sources,
             OperationJAI.Parameters parameters) {
-        return handleROINoDataProperties(
-                null, parameters.parameters, sources[0], "ShadedRelief", 0, 1, 2);
+        return handleROINoDataProperties(null, parameters.parameters, sources[0], "ShadedRelief", 0, 1, 2);
     }
 }

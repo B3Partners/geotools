@@ -17,6 +17,7 @@
 package org.geotools.styling.visitor;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -26,53 +27,54 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import javax.swing.Icon;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.style.AnchorPoint;
+import org.geotools.api.style.ColorMapEntry;
+import org.geotools.api.style.ContrastEnhancement;
+import org.geotools.api.style.ContrastMethod;
+import org.geotools.api.style.Displacement;
+import org.geotools.api.style.ExternalGraphic;
+import org.geotools.api.style.ExternalMark;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Font;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.Halo;
+import org.geotools.api.style.LabelPlacement;
+import org.geotools.api.style.LinePlacement;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.OverlapBehaviorEnum;
+import org.geotools.api.style.PointPlacement;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.RasterSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.SelectedChannelType;
+import org.geotools.api.style.SemanticType;
+import org.geotools.api.style.Stroke;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.style.Symbolizer;
+import org.geotools.api.style.TextSymbolizer;
+import org.geotools.api.util.Cloneable;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.NameImpl;
 import org.geotools.filter.IllegalFilterException;
 import org.geotools.metadata.iso.citation.OnLineResourceImpl;
-import org.geotools.styling.AnchorPoint;
-import org.geotools.styling.ColorMapEntry;
-import org.geotools.styling.ContrastEnhancement;
-import org.geotools.styling.Displacement;
-import org.geotools.styling.ExternalGraphic;
-import org.geotools.styling.ExternalMark;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.Fill;
-import org.geotools.styling.Font;
-import org.geotools.styling.Graphic;
 import org.geotools.styling.GraphicImpl;
-import org.geotools.styling.Halo;
-import org.geotools.styling.LabelPlacement;
-import org.geotools.styling.LinePlacement;
-import org.geotools.styling.LineSymbolizer;
-import org.geotools.styling.Mark;
 import org.geotools.styling.OtherTextImpl;
-import org.geotools.styling.PointPlacement;
-import org.geotools.styling.PointSymbolizer;
-import org.geotools.styling.PolygonSymbolizer;
-import org.geotools.styling.RasterSymbolizer;
-import org.geotools.styling.Rule;
-import org.geotools.styling.SelectedChannelType;
-import org.geotools.styling.Stroke;
-import org.geotools.styling.Style;
 import org.geotools.styling.StyleBuilder;
-import org.geotools.styling.StyleFactory;
-import org.geotools.styling.Symbolizer;
-import org.geotools.styling.TextSymbolizer;
-import org.geotools.styling.TextSymbolizer2;
 import org.geotools.styling.UomOgcMapping;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.style.ContrastMethod;
-import org.opengis.style.OverlapBehavior;
-import org.opengis.style.SemanticType;
-import org.opengis.util.Cloneable;
 
 /**
  * Unit test for DuplicatorStyleVisitor.
@@ -82,13 +84,13 @@ import org.opengis.util.Cloneable;
 public class DuplicatingStyleVisitorTest {
     StyleBuilder sb;
     StyleFactory sf;
-    FilterFactory2 ff;
+    FilterFactory ff;
     DuplicatingStyleVisitor visitor;
 
     @Before
     public void setUp() throws Exception {
         sf = CommonFactoryFinder.getStyleFactory(null);
-        ff = CommonFactoryFinder.getFilterFactory2(null);
+        ff = CommonFactoryFinder.getFilterFactory(null);
         sb = new StyleBuilder(sf, ff);
         visitor = new DuplicatingStyleVisitor(sf, ff);
     }
@@ -114,17 +116,15 @@ public class DuplicatingStyleVisitorTest {
         oldStyle.featureTypeStyles()
                 .get(0)
                 .semanticTypeIdentifiers()
-                .addAll(
-                        Arrays.asList(
-                                SemanticType.valueOf("simple"),
-                                SemanticType.valueOf("generic:geometry")));
+                .addAll(Arrays.asList(SemanticType.valueOf("simple"), SemanticType.valueOf("generic:geometry")));
         // duplicate it
         oldStyle.accept(visitor);
         Style newStyle = (Style) visitor.getCopy();
 
         // compare it
         Assert.assertNotNull(newStyle);
-        assertEquals(2, newStyle.featureTypeStyles().get(0).semanticTypeIdentifiers().size());
+        assertEquals(
+                2, newStyle.featureTypeStyles().get(0).semanticTypeIdentifiers().size());
     }
 
     @Test
@@ -203,8 +203,7 @@ public class DuplicatingStyleVisitorTest {
     public void testRule() throws Exception {
         Symbolizer symb1 = sf.createLineSymbolizer(sf.getDefaultStroke(), "geometry");
 
-        Symbolizer symb2 =
-                sf.createPolygonSymbolizer(sf.getDefaultStroke(), sf.getDefaultFill(), "shape");
+        Symbolizer symb2 = sf.createPolygonSymbolizer(sf.getDefaultStroke(), sf.getDefaultFill(), "shape");
 
         Rule rule = sf.createRule();
         rule.symbolizers().addAll(Arrays.asList(symb1, symb2));
@@ -260,14 +259,14 @@ public class DuplicatingStyleVisitorTest {
     @Test
     public void testRasterSymbolizerWithOverlapBehavior() throws Exception {
         RasterSymbolizer rasterSymb1 = sf.createRasterSymbolizer();
-        rasterSymb1.setOverlapBehavior(OverlapBehavior.AVERAGE);
+        rasterSymb1.setOverlapBehavior(OverlapBehaviorEnum.AVERAGE);
         rasterSymb1.accept(visitor);
         RasterSymbolizer clone1 = (RasterSymbolizer) visitor.getCopy();
         assertEquals(clone1.getOverlapBehavior(), rasterSymb1.getOverlapBehavior());
 
         // Try literal expression
         RasterSymbolizer rasterSymbLiteral = sf.createRasterSymbolizer();
-        rasterSymbLiteral.setOverlap(ff.literal(OverlapBehavior.EARLIEST_ON_TOP.toString()));
+        rasterSymbLiteral.setOverlap(ff.literal(OverlapBehaviorEnum.EARLIEST_ON_TOP.toString()));
         rasterSymbLiteral.accept(visitor);
         RasterSymbolizer cloneLiteral = (RasterSymbolizer) visitor.getCopy();
 
@@ -287,6 +286,20 @@ public class DuplicatingStyleVisitorTest {
         // Compare rastersymbolizer overlap behaviour
         RasterSymbolizer notEq = sf.createRasterSymbolizer();
         Assert.assertNotEquals(notEq.getOverlapBehavior(), rasterSymb1.getOverlapBehavior());
+    }
+
+    @Test
+    public void testRasterSymbolizerOptions() throws Exception {
+        Map<String, String> options = new HashMap<>();
+        options.put("k1", "v1");
+        options.put("k2", "v2");
+        RasterSymbolizer rasterSymb = sf.createRasterSymbolizer();
+        rasterSymb.getOptions().putAll(options);
+        rasterSymb.accept(visitor);
+        RasterSymbolizer clone = (RasterSymbolizer) visitor.getCopy();
+
+        assertEquals(rasterSymb.getOptions(), clone.getOptions());
+        assertNotSame(rasterSymb.getOptions(), clone.getOptions());
     }
 
     @Test
@@ -376,12 +389,7 @@ public class DuplicatingStyleVisitorTest {
         assertCopy(font, clone);
         assertEqualsContract(font, clone);
 
-        Font other =
-                sf.createFont(
-                        ff.literal("other"),
-                        ff.literal("normal"),
-                        ff.literal("BOLD"),
-                        ff.literal(12));
+        Font other = sf.createFont(ff.literal("other"), ff.literal("normal"), ff.literal("BOLD"), ff.literal(12));
 
         assertEqualsContract(clone, other, font);
     }
@@ -536,21 +544,20 @@ public class DuplicatingStyleVisitorTest {
 
     @Test
     public void testExternalGraphicWithInlineContent() {
-        Icon icon =
-                new Icon() {
-                    @Override
-                    public void paintIcon(Component c, Graphics g, int x, int y) {}
+        Icon icon = new Icon() {
+            @Override
+            public void paintIcon(Component c, Graphics g, int x, int y) {}
 
-                    @Override
-                    public int getIconWidth() {
-                        return 16;
-                    }
+            @Override
+            public int getIconWidth() {
+                return 16;
+            }
 
-                    @Override
-                    public int getIconHeight() {
-                        return 16;
-                    }
-                };
+            @Override
+            public int getIconHeight() {
+                return 16;
+            }
+        };
 
         ExternalGraphic exGraphic = sf.createExternalGraphic(icon, "image/png");
         ExternalGraphic clone = visitor.copy(exGraphic);
@@ -684,8 +691,7 @@ public class DuplicatingStyleVisitorTest {
                 "Gamma value incorrest after duplication",
                 ((Literal) ce.getGammaValue()).getValue(),
                 ((Literal) ce2.getGammaValue()).getValue());
-        assertEquals(
-                "ContrastMethod must be equal after duplication ", ce.getMethod(), ce2.getMethod());
+        assertEquals("ContrastMethod must be equal after duplication ", ce.getMethod(), ce2.getMethod());
     }
 
     @Test
@@ -701,22 +707,10 @@ public class DuplicatingStyleVisitorTest {
 
         ColorMapEntry cme2 = (ColorMapEntry) visitor.getCopy();
 
-        assertEquals(
-                "Colormaps LABEL must be equal after duplication ",
-                cme.getLabel(),
-                cme2.getLabel());
-        assertEquals(
-                "Colormaps QUANTITY must be equal after duplication ",
-                cme.getQuantity(),
-                cme2.getQuantity());
-        assertEquals(
-                "Colormaps COLOR must be equal after duplication ",
-                cme.getColor(),
-                cme2.getColor());
-        assertEquals(
-                "Colormaps OPACITY must be equal after duplication ",
-                cme.getOpacity(),
-                cme2.getOpacity());
+        assertEquals("Colormaps LABEL must be equal after duplication ", cme.getLabel(), cme2.getLabel());
+        assertEquals("Colormaps QUANTITY must be equal after duplication ", cme.getQuantity(), cme2.getQuantity());
+        assertEquals("Colormaps COLOR must be equal after duplication ", cme.getColor(), cme2.getColor());
+        assertEquals("Colormaps OPACITY must be equal after duplication ", cme.getOpacity(), cme2.getOpacity());
     }
 
     @Test
@@ -733,10 +727,7 @@ public class DuplicatingStyleVisitorTest {
         pointSymb.accept(visitor);
         PointSymbolizer copy = (PointSymbolizer) visitor.getCopy();
 
-        assertEquals(
-                "Any Expression set as Geometry must be correctly replicated",
-                geomFunc,
-                copy.getGeometry());
+        assertEquals("Any Expression set as Geometry must be correctly replicated", geomFunc, copy.getGeometry());
     }
 
     @Test
@@ -753,10 +744,7 @@ public class DuplicatingStyleVisitorTest {
         RasterSymbolizer copy = (RasterSymbolizer) visitor.getCopy();
 
         // compare it
-        assertEquals(
-                "Any Expression set as Geometry must be correctly replicated",
-                geomFunc,
-                copy.getGeometry());
+        assertEquals("Any Expression set as Geometry must be correctly replicated", geomFunc, copy.getGeometry());
     }
 
     @Test
@@ -770,10 +758,7 @@ public class DuplicatingStyleVisitorTest {
         LineSymbolizer copy = (LineSymbolizer) visitor.copy(lineSymb);
 
         // compare it
-        assertEquals(
-                "Any Expression set as Geometry must be correctly replicated",
-                geomFunc,
-                copy.getGeometry());
+        assertEquals("Any Expression set as Geometry must be correctly replicated", geomFunc, copy.getGeometry());
     }
 
     @Test
@@ -787,10 +772,7 @@ public class DuplicatingStyleVisitorTest {
         PolygonSymbolizer copy = (PolygonSymbolizer) visitor.copy(symb);
 
         // compare it
-        assertEquals(
-                "Any Expression set as Geometry must be correctly replicated",
-                geomFunc,
-                copy.getGeometry());
+        assertEquals("Any Expression set as Geometry must be correctly replicated", geomFunc, copy.getGeometry());
     }
 
     @Test
@@ -804,20 +786,17 @@ public class DuplicatingStyleVisitorTest {
         TextSymbolizer copy = (TextSymbolizer) visitor.copy(symb);
 
         // compare it
-        assertEquals(
-                "Any Expression set as Geometry must be correctly replicated",
-                geomFunc,
-                copy.getGeometry());
+        assertEquals("Any Expression set as Geometry must be correctly replicated", geomFunc, copy.getGeometry());
     }
 
     /**
-     * Test that {@link TextSymbolizer2} is correctly duplicated.
+     * Test that TextSymbolizer2 is correctly duplicated.
      *
      * @author Stefan Tzeggai, June 29th 2010
      */
     @Test
     public void testTextSymbolizer2() {
-        TextSymbolizer2 symb = (TextSymbolizer2) sf.createTextSymbolizer();
+        TextSymbolizer symb = sf.createTextSymbolizer();
 
         // Create a Graphic with two recognizable values
         GraphicImpl gr = new GraphicImpl(ff);
@@ -834,13 +813,10 @@ public class DuplicatingStyleVisitorTest {
         symb.setOtherText(otherText);
 
         // copy it
-        TextSymbolizer2 copy = (TextSymbolizer2) visitor.copy(symb);
+        TextSymbolizer copy = (TextSymbolizer) visitor.copy(symb);
 
         // compare it
-        assertEquals(
-                "Graphic of TextSymbolizer2 has not been correctly duplicated",
-                gr,
-                copy.getGraphic());
+        assertEquals("Graphic of TextSymbolizer2 has not been correctly duplicated", gr, copy.getGraphic());
         assertEquals(
                 "Graphic of TextSymbolizer2 has not been correctly duplicated",
                 gr.getOpacity(),
@@ -849,10 +825,7 @@ public class DuplicatingStyleVisitorTest {
                 "Graphic of TextSymbolizer2 has not been correctly duplicated",
                 gr.getSize(),
                 copy.getGraphic().getSize());
-        assertEquals(
-                "Snippet of TextSymbolizer2 has not been correctly duplicated",
-                snippet,
-                copy.getSnippet());
+        assertEquals("Snippet of TextSymbolizer2 has not been correctly duplicated", snippet, copy.getSnippet());
         assertEquals(
                 "FeatureDescription of TextSymbolizer2 has not been correctly duplicated",
                 fD,
@@ -890,10 +863,8 @@ public class DuplicatingStyleVisitorTest {
     public void testSelectedChannelTypeDuplication() throws Exception {
         final String b1 = "b1";
 
-        SelectedChannelType sct =
-                sf.createSelectedChannelType(
-                        ff.function("env", ff.literal(b1), ff.literal("1")),
-                        sf.createContrastEnhancement());
+        SelectedChannelType sct = sf.createSelectedChannelType(
+                ff.function("env", ff.literal(b1), ff.literal("1")), sf.createContrastEnhancement());
         sct.accept(visitor);
         SelectedChannelType clone = (SelectedChannelType) visitor.getCopy();
 

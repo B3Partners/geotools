@@ -19,19 +19,19 @@ package org.geotools.coverage.processing;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import it.geosolutions.jaiext.utilities.ImageLayout2;
 import java.awt.geom.AffineTransform;
 import java.awt.image.RenderedImage;
-import javax.media.jai.Interpolation;
-import javax.media.jai.JAI;
-import javax.media.jai.WarpAffine;
+import org.eclipse.imagen.ImageN;
+import org.eclipse.imagen.Interpolation;
+import org.eclipse.imagen.WarpAffine;
+import org.eclipse.imagen.media.utilities.ImageLayout2;
+import org.geotools.api.parameter.ParameterValueGroup;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.Viewer;
 import org.geotools.coverage.processing.operation.Warp;
 import org.geotools.util.factory.Hints;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.parameter.ParameterValueGroup;
 
 /**
  * Tests the {@link Warp} operation.
@@ -121,8 +121,7 @@ public class WarpTest extends GridProcessingTestBase {
         // Doing a first scale.
         final ImageLayout2 layout = new ImageLayout2(0, 0, (int) (w / 2.0), (int) (h / 2.0));
         GridCoverage2D scaled =
-                (GridCoverage2D)
-                        processor.doOperation(param, new Hints(JAI.KEY_IMAGE_LAYOUT, layout));
+                (GridCoverage2D) processor.doOperation(param, new Hints(ImageN.KEY_IMAGE_LAYOUT, layout));
         assertEnvelopeEquals(coverage, scaled);
         RenderedImage scaledImage = scaled.getRenderedImage();
         assertEquals(w / 2.0, scaledImage.getWidth(), EPS);

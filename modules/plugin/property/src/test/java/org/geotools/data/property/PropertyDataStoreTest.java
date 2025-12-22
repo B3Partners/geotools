@@ -18,15 +18,18 @@ package org.geotools.data.property;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,18 +37,28 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFinder;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.filter.sort.SortOrder;
+import org.geotools.api.referencing.FactoryException;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.data.store.ContentFeatureCollection;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
@@ -53,6 +66,7 @@ import org.geotools.feature.NameImpl;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.geometry.jts.WKTReader2;
+import org.geotools.referencing.CRS;
 import org.geotools.util.factory.Hints;
 import org.junit.After;
 import org.junit.Assert;
@@ -65,14 +79,6 @@ import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
 import org.locationtech.jts.geom.impl.PackedCoordinateSequence;
 import org.locationtech.jts.geom.impl.PackedCoordinateSequenceFactory;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.filter.sort.SortOrder;
 
 /**
  * Test functioning of PropertyDataStore.
@@ -81,7 +87,7 @@ import org.opengis.filter.sort.SortOrder;
  */
 public class PropertyDataStoreTest {
     private PropertyDataStore store;
-    static FilterFactory2 ff = (FilterFactory2) CommonFactoryFinder.getFilterFactory(null);
+    static FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
     @Before
     public void setUp() throws Exception {
@@ -92,7 +98,7 @@ public class PropertyDataStoreTest {
         if (file.exists()) {
             file.delete();
         }
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
             writer.write("_=id:Integer,name:String,geom:Point");
             writer.newLine();
             writer.write("fid1=1|jody|POINT(0 0)");
@@ -110,7 +116,7 @@ public class PropertyDataStoreTest {
         if (file.exists()) {
             file.delete();
         }
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
             writer.write("_=id:Integer,name:String");
             writer.newLine();
             writer.write("fid1=1|jody");
@@ -126,7 +132,7 @@ public class PropertyDataStoreTest {
         if (file.exists()) {
             file.delete();
         }
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
             writer.write("_=id:Integer,name:String");
             writer.newLine();
             writer.write("fid1=1|jody \\");
@@ -144,7 +150,7 @@ public class PropertyDataStoreTest {
         if (file.exists()) {
             file.delete();
         }
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
             writer.write("_=description:String,name:String");
             writer.newLine();
             writer.write("GenericEntity.f004=description-f004|name-f004");
@@ -154,6 +160,23 @@ public class PropertyDataStoreTest {
             writer.write("GenericEntity.f007=description-f007|");
             writer.newLine();
             writer.write("  GenericEntity.f009=description-f009| ");
+            writer.newLine();
+        }
+
+        file = new File(dir, "mars.properties");
+        if (file.exists()) {
+            file.delete();
+        }
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
+            writer.write("_=geom:Point:authority=IAU;srid=49900,name:String,diameter:Double");
+            writer.newLine();
+            writer.write("mars.1=POINT (-36.897 -27.2282)|Blunck|66.485");
+            writer.newLine();
+            writer.write("mars.2=POINT (-36.4134 -30.3621)|Martynov|61");
+            writer.newLine();
+            writer.write("mars.3=POINT (-2.75999999999999 -86.876)|Australe Mensa|172");
+            writer.newLine();
+            writer.write("mars.4=POINT (-65 -9.885)|Ophir|0.000000000000000");
             writer.newLine();
         }
 
@@ -178,29 +201,63 @@ public class PropertyDataStoreTest {
     public void testGetNames() throws IOException {
         String[] names = store.getTypeNames();
         Arrays.sort(names);
-        Assert.assertEquals(4, names.length);
-        Assert.assertEquals("dots.in.name", names[0]);
-        Assert.assertEquals("multiline", names[1]);
-        Assert.assertEquals("road", names[2]);
-        Assert.assertEquals("table", names[3]);
+        assertEquals(5, names.length);
+        assertEquals("dots.in.name", names[0]);
+        assertEquals("mars", names[1]);
+        assertEquals("multiline", names[2]);
+        assertEquals("road", names[3]);
+        assertEquals("table", names[4]);
     }
 
     @Test
     public void testGetSchema() throws IOException {
         SimpleFeatureType type = store.getSchema("road");
-        Assert.assertNotNull(type);
-        Assert.assertEquals("road", type.getTypeName());
-        Assert.assertEquals("propertyTestData", type.getName().getNamespaceURI().toString());
-        Assert.assertEquals(3, type.getAttributeCount());
+        assertNotNull(type);
+        assertEquals("road", type.getTypeName());
+        assertEquals("propertyTestData", type.getName().getNamespaceURI().toString());
+        assertEquals(3, type.getAttributeCount());
 
         AttributeDescriptor id = type.getDescriptor(0);
         AttributeDescriptor name = type.getDescriptor(1);
 
-        Assert.assertEquals("id", id.getLocalName());
-        Assert.assertEquals("class java.lang.Integer", id.getType().getBinding().toString());
+        assertEquals("id", id.getLocalName());
+        assertEquals("class java.lang.Integer", id.getType().getBinding().toString());
 
-        Assert.assertEquals("name", name.getLocalName());
-        Assert.assertEquals("class java.lang.String", name.getType().getBinding().toString());
+        assertEquals("name", name.getLocalName());
+        assertEquals("class java.lang.String", name.getType().getBinding().toString());
+    }
+
+    @Test
+    public void testMarsSchema() throws IOException, FactoryException {
+        SimpleFeatureType type = store.getSchema("mars");
+        assertNotNull(type);
+        assertEquals("mars", type.getTypeName());
+        assertEquals("propertyTestData", type.getName().getNamespaceURI().toString());
+        assertEquals(3, type.getAttributeCount());
+
+        GeometryDescriptor geom = (GeometryDescriptor) type.getDescriptor(0);
+        AttributeDescriptor name = type.getDescriptor(1);
+        AttributeDescriptor diameter = type.getDescriptor(2);
+
+        assertEquals("geom", geom.getLocalName());
+        assertEquals(Point.class, geom.getType().getBinding());
+        assertEquals(CRS.decode("IAU:49900"), geom.getCoordinateReferenceSystem());
+
+        assertEquals("name", name.getLocalName());
+        assertEquals(String.class, name.getType().getBinding());
+
+        assertEquals("diameter", diameter.getLocalName());
+        assertEquals(Double.class, diameter.getType().getBinding());
+    }
+
+    @Test
+    public void testMarsData() throws IOException, FactoryException {
+        ContentFeatureSource source = store.getFeatureSource("mars");
+        SimpleFeature feature = DataUtilities.first(source.getFeatures());
+
+        assertEquals("Blunck", feature.getAttribute("name"));
+        Point point = (Point) feature.getDefaultGeometry();
+        assertEquals(CRS.decode("IAU:49900"), point.getUserData());
     }
 
     @Test
@@ -213,19 +270,19 @@ public class PropertyDataStoreTest {
                 reader.next();
                 count++;
             }
-            Assert.assertEquals(5, count);
+            assertEquals(5, count);
         }
 
         Filter selectFid1 = ff.id(Collections.singleton(ff.featureId("fid1")));
         try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
                 store.getFeatureReader(new Query("road", selectFid1), Transaction.AUTO_COMMIT)) {
-            Assert.assertEquals(1, count(reader));
+            assertEquals(1, count(reader));
         }
 
         try (Transaction transaction = new DefaultTransaction()) {
             try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
                     store.getFeatureReader(roadQuery, transaction)) {
-                Assert.assertEquals(5, count(reader));
+                assertEquals(5, count(reader));
             }
 
             try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
@@ -234,7 +291,7 @@ public class PropertyDataStoreTest {
                 while (reader.hasNext()) {
                     list.add(reader.next().getID());
                 }
-                Assert.assertEquals("[fid1, fid2, fid3, fid4, fid5]", list.toString());
+                assertEquals("[fid1, fid2, fid3, fid4, fid5]", list.toString());
             }
         }
     }
@@ -243,8 +300,7 @@ public class PropertyDataStoreTest {
      * Test for  FeatureReader<SimpleFeatureType, SimpleFeature> getFeatureReader(String)
      */
     @Test
-    public void testGetFeatureReaderString()
-            throws NoSuchElementException, IOException, IllegalAttributeException {
+    public void testGetFeatureReaderString() throws NoSuchElementException, IOException, IllegalAttributeException {
         Query query = new Query("road");
         int count = 0;
         try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
@@ -254,18 +310,16 @@ public class PropertyDataStoreTest {
                 count++;
             }
         }
-        Assert.assertEquals(5, count);
+        assertEquals(5, count);
     }
 
     private int count(FeatureReader<SimpleFeatureType, SimpleFeature> reader) throws Exception {
         int count = 0;
-        try {
+        try (reader) {
             while (reader.hasNext()) {
                 reader.next();
                 count++;
             }
-        } finally {
-            reader.close();
         }
         return count;
     }
@@ -282,8 +336,7 @@ public class PropertyDataStoreTest {
     public void testWriterSkipThrough() throws Exception {
         Query query = new Query("road");
         PropertyFeatureStore featureStore = (PropertyFeatureStore) store.getFeatureSource("road");
-        try (PropertyFeatureWriter writer =
-                (PropertyFeatureWriter) featureStore.getWriterInternal(query, 0x01 << 0)) {
+        try (PropertyFeatureWriter writer = (PropertyFeatureWriter) featureStore.getWriterInternal(query, 0x01 << 0)) {
 
             File in = writer.read;
             File out = writer.write;
@@ -293,21 +346,20 @@ public class PropertyDataStoreTest {
                 writer.next();
                 count++;
             }
-            Assert.assertEquals(5, count);
+            assertEquals(5, count);
             Assert.assertTrue(in.exists());
             Assert.assertTrue(out.exists());
             Assert.assertTrue(in.exists());
         }
 
-        Assert.assertEquals(5, count("road"));
+        assertEquals(5, count("road"));
     }
 
     @Test
     public void testWriterChangeName() throws Exception {
         Query query = new Query("road");
         PropertyFeatureStore featureStore = (PropertyFeatureStore) store.getFeatureSource("road");
-        try (PropertyFeatureWriter writer =
-                (PropertyFeatureWriter) featureStore.getWriterInternal(query, 0x01 << 0)) {
+        try (PropertyFeatureWriter writer = (PropertyFeatureWriter) featureStore.getWriterInternal(query, 0x01 << 0)) {
 
             int count = 0;
             while (writer.hasNext()) {
@@ -316,32 +368,30 @@ public class PropertyDataStoreTest {
                 writer.write();
                 count++;
             }
-            Assert.assertEquals(5, count);
+            assertEquals(5, count);
         }
 
-        Assert.assertEquals(5, count("road"));
+        assertEquals(5, count("road"));
     }
 
     @Test
     public void testWriterChangeFirstName() throws Exception {
         Query query = new Query("road");
         PropertyFeatureStore featureStore = (PropertyFeatureStore) store.getFeatureSource("road");
-        try (PropertyFeatureWriter writer =
-                (PropertyFeatureWriter) featureStore.getWriterInternal(query, 0x01 << 0)) {
+        try (PropertyFeatureWriter writer = (PropertyFeatureWriter) featureStore.getWriterInternal(query, 0x01 << 0)) {
 
             SimpleFeature f = writer.next();
             f.setAttribute(1, "changed");
             writer.write();
         }
-        Assert.assertEquals(5, count("road"));
+        assertEquals(5, count("road"));
     }
 
     @Test
     public void testWriterChangeLastName() throws Exception {
         Query query = new Query("road");
         PropertyFeatureStore featureStore = (PropertyFeatureStore) store.getFeatureSource("road");
-        try (PropertyFeatureWriter writer =
-                (PropertyFeatureWriter) featureStore.getWriterInternal(query, 0x01 << 0)) {
+        try (PropertyFeatureWriter writer = (PropertyFeatureWriter) featureStore.getWriterInternal(query, 0x01 << 0)) {
 
             writer.next();
             writer.next();
@@ -350,15 +400,14 @@ public class PropertyDataStoreTest {
             f.setAttribute(1, "changed");
             writer.write();
         }
-        Assert.assertEquals(5, count("road"));
+        assertEquals(5, count("road"));
     }
 
     @Test
     public void testWriterChangeAppend() throws Exception {
         Query query = new Query("road");
         PropertyFeatureStore featureStore = (PropertyFeatureStore) store.getFeatureSource("road");
-        try (PropertyFeatureWriter writer =
-                (PropertyFeatureWriter) featureStore.getWriterInternal(query, 0x01 << 0)) {
+        try (PropertyFeatureWriter writer = (PropertyFeatureWriter) featureStore.getWriterInternal(query, 0x01 << 0)) {
 
             writer.next();
             writer.next();
@@ -367,12 +416,12 @@ public class PropertyDataStoreTest {
             writer.next();
             Assert.assertFalse(writer.hasNext());
             SimpleFeature f = writer.next();
-            Assert.assertNotNull(f);
+            assertNotNull(f);
             f.setAttribute(0, Integer.valueOf(-1));
             f.setAttribute(1, "new");
             writer.write();
         }
-        Assert.assertEquals(6, count("road"));
+        assertEquals(6, count("road"));
     }
 
     @Test
@@ -382,48 +431,45 @@ public class PropertyDataStoreTest {
 
             Assert.assertFalse(writer.hasNext());
             SimpleFeature f = writer.next();
-            Assert.assertNotNull(f);
+            assertNotNull(f);
             f.setAttribute(0, Integer.valueOf(-1));
             f.setAttribute(1, null); // this made the datastore break
             writer.write();
         }
-        Assert.assertEquals(6, count("road"));
+        assertEquals(6, count("road"));
     }
 
     @Test
     public void testWriterChangeRemoveFirst() throws Exception {
         Query query = new Query("road");
         PropertyFeatureStore featureStore = (PropertyFeatureStore) store.getFeatureSource("road");
-        try (PropertyFeatureWriter writer =
-                (PropertyFeatureWriter) featureStore.getWriterInternal(query, 0x01 << 0)) {
+        try (PropertyFeatureWriter writer = (PropertyFeatureWriter) featureStore.getWriterInternal(query, 0x01 << 0)) {
 
             writer.next();
             writer.remove();
         }
-        Assert.assertEquals(4, count("road"));
+        assertEquals(4, count("road"));
     }
 
     @Test
     public void testWriterChangeRemoveLast() throws Exception {
         Query query = new Query("road");
         PropertyFeatureStore featureStore = (PropertyFeatureStore) store.getFeatureSource("road");
-        try (PropertyFeatureWriter writer =
-                (PropertyFeatureWriter) featureStore.getWriterInternal(query, 0x01 << 0)) {
+        try (PropertyFeatureWriter writer = (PropertyFeatureWriter) featureStore.getWriterInternal(query, 0x01 << 0)) {
 
             writer.next();
             writer.next();
             writer.next();
             writer.remove();
         }
-        Assert.assertEquals(4, count("road"));
+        assertEquals(4, count("road"));
     }
 
     @Test
     public void testWriterChangeRemoveAppend() throws Exception {
         Query query = new Query("road");
         PropertyFeatureStore featureStore = (PropertyFeatureStore) store.getFeatureSource("road");
-        try (PropertyFeatureWriter writer =
-                (PropertyFeatureWriter) featureStore.getWriterInternal(query, 0x01 << 0)) {
+        try (PropertyFeatureWriter writer = (PropertyFeatureWriter) featureStore.getWriterInternal(query, 0x01 << 0)) {
 
             writer.next();
             writer.next();
@@ -433,20 +479,19 @@ public class PropertyDataStoreTest {
 
             Assert.assertFalse(writer.hasNext());
             SimpleFeature f = writer.next();
-            Assert.assertNotNull(f);
+            assertNotNull(f);
             f.setAttribute(0, Integer.valueOf(-1));
             f.setAttribute(1, "new");
             writer.remove();
         }
-        Assert.assertEquals(5, count("road"));
+        assertEquals(5, count("road"));
     }
 
     @Test
     public void testWriterChangeIgnoreAppend() throws Exception {
         Query query = new Query("road");
         PropertyFeatureStore featureStore = (PropertyFeatureStore) store.getFeatureSource("road");
-        try (PropertyFeatureWriter writer =
-                (PropertyFeatureWriter) featureStore.getWriterInternal(query, 0x01 << 0)) {
+        try (PropertyFeatureWriter writer = (PropertyFeatureWriter) featureStore.getWriterInternal(query, 0x01 << 0)) {
 
             writer.next();
             writer.next();
@@ -455,11 +500,11 @@ public class PropertyDataStoreTest {
             writer.next();
             Assert.assertFalse(writer.hasNext());
             SimpleFeature f = writer.next();
-            Assert.assertNotNull(f);
+            assertNotNull(f);
             f.setAttribute(0, Integer.valueOf(-1));
             f.setAttribute(1, "new");
         }
-        Assert.assertEquals(5, count("road"));
+        assertEquals(5, count("road"));
     }
 
     @Test
@@ -473,21 +518,21 @@ public class PropertyDataStoreTest {
                 list.add(next.getID());
             }
         }
-        Assert.assertEquals("[fid1, fid2, fid3, fid4, fid5]", list.toString());
+        assertEquals("[fid1, fid2, fid3, fid4, fid5]", list.toString());
 
         int count = road.getCount(Query.ALL);
-        Assert.assertEquals(5, count);
+        assertEquals(5, count);
 
         Assert.assertFalse(road.getBounds(Query.ALL).isNull());
-        Assert.assertEquals(5, features.size());
+        assertEquals(5, features.size());
 
         Assert.assertFalse(features.getBounds().isNull());
-        Assert.assertEquals(5, features.size());
+        assertEquals(5, features.size());
     }
 
     /**
-     * In response to <a href="https://jira.codehaus.org/browse/GEOT-1409">GEOT-1409 Property
-     * datastore ruins the property file if a string attribute has newlines</a>.
+     * In response to <a href="https://jira.codehaus.org/browse/GEOT-1409">GEOT-1409 Property datastore ruins the
+     * property file if a string attribute has newlines</a>.
      */
     @Test
     public void testMultiLine() throws Exception {
@@ -499,15 +544,14 @@ public class PropertyDataStoreTest {
                 f -> {
                     SimpleFeature feature = (SimpleFeature) f;
                     String name = (String) feature.getAttribute("name");
-                    Assert.assertEquals("jody \ngarnett", name);
+                    assertEquals("jody \ngarnett", name);
                 },
                 null);
     }
 
     @Test
     public void testGeometryFactoryHint() throws Exception {
-        final GeometryFactory gf =
-                new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING), 1234);
+        final GeometryFactory gf = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING), 1234);
         SimpleFeatureSource road = store.getFeatureSource("road");
         FeatureId fid1 = ff.featureId("fid1");
         Filter select = ff.id(Collections.singleton(fid1));
@@ -518,7 +562,7 @@ public class PropertyDataStoreTest {
                 f -> {
                     SimpleFeature feature = (SimpleFeature) f;
                     Geometry g = (Geometry) feature.getDefaultGeometry();
-                    Assert.assertEquals(1234, g.getSRID());
+                    assertEquals(1234, g.getSRID());
                 },
                 null);
     }
@@ -536,17 +580,16 @@ public class PropertyDataStoreTest {
                 f -> {
                     SimpleFeature feature = (SimpleFeature) f;
                     Point p = (Point) feature.getDefaultGeometry();
-                    assertThat(
-                            p.getCoordinateSequence(), instanceOf(PackedCoordinateSequence.class));
+                    assertThat(p.getCoordinateSequence(), instanceOf(PackedCoordinateSequence.class));
                 },
                 null);
     }
 
     /**
-     * In response to <a href="http://jira.codehaus.org/browse/GEOT-3540">GEOT-3540
-     * PropertyDataStore doesn't support empty trailing spaces</a>.
+     * In response to <a href="http://jira.codehaus.org/browse/GEOT-3540">GEOT-3540 PropertyDataStore doesn't support
+     * empty trailing spaces</a>.
      *
-     * <p>Table with no geoemtry, containing null and empty strings at end of line
+     * <p>Table with no geometry, containing null and empty strings at end of line.
      */
     @Test
     public void testTable() throws Exception {
@@ -559,7 +602,7 @@ public class PropertyDataStoreTest {
                 f -> {
                     SimpleFeature feature = (SimpleFeature) f;
                     String name = (String) feature.getAttribute("name");
-                    Assert.assertEquals("name-f004", name);
+                    assertEquals("name-f004", name);
                 },
                 null);
         // GenericEntity.f003=description-f003|<null>
@@ -581,7 +624,7 @@ public class PropertyDataStoreTest {
                 f -> {
                     SimpleFeature feature = (SimpleFeature) f;
                     String name = (String) feature.getAttribute("name");
-                    Assert.assertEquals("represent empty string", "", name);
+                    assertEquals("represent empty string", "", name);
                 },
                 null);
         // "  GenericEntity.f009=description-f009| "
@@ -592,7 +635,7 @@ public class PropertyDataStoreTest {
                 f -> {
                     SimpleFeature feature = (SimpleFeature) f;
                     String name = (String) feature.getAttribute("name");
-                    Assert.assertEquals("represent empty string", " ", name);
+                    assertEquals("represent empty string", " ", name);
                 },
                 null);
     }
@@ -601,11 +644,8 @@ public class PropertyDataStoreTest {
     public void testTransactionIndependence() throws Exception {
         WKTReader2 wkt = new WKTReader2();
         SimpleFeatureType ROAD = store.getSchema("road");
-        SimpleFeature chrisFeature =
-                SimpleFeatureBuilder.build(
-                        ROAD,
-                        new Object[] {Integer.valueOf(5), "chris", wkt.read("POINT(6 6)")},
-                        "fid5");
+        SimpleFeature chrisFeature = SimpleFeatureBuilder.build(
+                ROAD, new Object[] {Integer.valueOf(5), "chris", wkt.read("POINT(6 6)")}, "fid5");
 
         SimpleFeatureStore roadAuto = (SimpleFeatureStore) store.getFeatureSource("road");
 
@@ -614,62 +654,60 @@ public class PropertyDataStoreTest {
                 Transaction transaction2 = new DefaultTransaction("Transaction Used by Client 2")) {
             roadFromClient1.setTransaction(transaction1);
 
-            SimpleFeatureStore roadFromClient2 =
-                    (SimpleFeatureStore) store.getFeatureSource("road");
+            SimpleFeatureStore roadFromClient2 = (SimpleFeatureStore) store.getFeatureSource("road");
 
             roadFromClient2.setTransaction(transaction2);
 
-            FilterFactory2 ff = (FilterFactory2) CommonFactoryFinder.getFilterFactory(null);
+            FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
             Filter selectFid1 = ff.id(Collections.singleton(ff.featureId("fid1")));
 
             // Before we edit everything should be the same
-            Assert.assertEquals("auto before", 5, roadAuto.getFeatures().size());
-            Assert.assertEquals("client 1 before", 5, roadFromClient1.getFeatures().size());
-            Assert.assertEquals("client 2 before", 5, roadFromClient2.getFeatures().size());
-            Assert.assertEquals("client 1 before", 5, roadFromClient1.getCount(Query.ALL));
-            Assert.assertEquals("client 2 before", 5, roadFromClient2.getCount(Query.ALL));
+            assertEquals("auto before", 5, roadAuto.getFeatures().size());
+            assertEquals("client 1 before", 5, roadFromClient1.getFeatures().size());
+            assertEquals("client 2 before", 5, roadFromClient2.getFeatures().size());
+            assertEquals("client 1 before", 5, roadFromClient1.getCount(Query.ALL));
+            assertEquals("client 2 before", 5, roadFromClient2.getCount(Query.ALL));
 
             ReferencedEnvelope bounds = roadAuto.getFeatures().getBounds();
             ReferencedEnvelope client1Bounds = roadFromClient1.getFeatures().getBounds();
             ReferencedEnvelope client2Bounds = roadFromClient2.getFeatures().getBounds();
-            Assert.assertEquals("client 1 before", bounds, client1Bounds);
-            Assert.assertEquals("client 2 before", bounds, client2Bounds);
+            assertEquals("client 1 before", bounds, client1Bounds);
+            assertEquals("client 2 before", bounds, client2Bounds);
 
             // Remove Feature with Fid1
             roadFromClient1.removeFeatures(selectFid1); // road1 removes fid1 on t1
 
-            Assert.assertEquals(
-                    "auto after client 1 removes fid1", 5, roadAuto.getFeatures().size());
-            Assert.assertEquals(
+            assertEquals(
+                    "auto after client 1 removes fid1",
+                    5,
+                    roadAuto.getFeatures().size());
+            assertEquals(
                     "client 1 after client 1 removes fid1",
                     4,
                     roadFromClient1.getFeatures().size());
-            Assert.assertEquals(
+            assertEquals(
                     "client 2 after client 1 removes fid1",
                     5,
                     roadFromClient2.getFeatures().size());
-            Assert.assertEquals(
-                    "client 1 after client 1 removes fid1", 4, roadFromClient1.getCount(Query.ALL));
-            Assert.assertEquals(
-                    "client 2 after client 1 removes fid1", 5, roadFromClient2.getCount(Query.ALL));
+            assertEquals("client 1 after client 1 removes fid1", 4, roadFromClient1.getCount(Query.ALL));
+            assertEquals("client 2 after client 1 removes fid1", 5, roadFromClient2.getCount(Query.ALL));
 
             bounds = roadAuto.getFeatures().getBounds();
             client1Bounds = roadFromClient1.getFeatures().getBounds();
             client2Bounds = roadFromClient2.getFeatures().getBounds();
             assertNotEquals("client 1 after client 1 removes fid1", bounds, client1Bounds);
-            Assert.assertEquals("client 2 after client 1 removes fid1", bounds, client2Bounds);
+            assertEquals("client 2 after client 1 removes fid1", bounds, client2Bounds);
 
-            roadFromClient2.addFeatures(
-                    DataUtilities.collection(chrisFeature)); // road2 adds fid5 on t2
-            Assert.assertEquals(
+            roadFromClient2.addFeatures(DataUtilities.collection(chrisFeature)); // road2 adds fid5 on t2
+            assertEquals(
                     "auto after client 1 removes fid1 and client 2 adds fid5",
                     5,
                     roadAuto.getFeatures().size());
-            Assert.assertEquals(
+            assertEquals(
                     "client 1 after client 1 removes fid1 and client 2 adds fid5",
                     4,
                     roadFromClient1.getFeatures().size());
-            Assert.assertEquals(
+            assertEquals(
                     "client 2 after client 1 removes fid1 and client 2 adds fid5",
                     6,
                     roadFromClient2.getFeatures().size());
@@ -677,25 +715,19 @@ public class PropertyDataStoreTest {
             bounds = roadAuto.getFeatures().getBounds();
             client1Bounds = roadFromClient1.getFeatures().getBounds();
             client2Bounds = roadFromClient2.getFeatures().getBounds();
-            assertNotEquals(
-                    "client 1 after client 1 removes fid1 and client 2 adds fid5",
-                    bounds,
-                    client1Bounds);
-            assertNotEquals(
-                    "client 2 after client 1 removes fid1 and client 2 adds fid5",
-                    bounds,
-                    client2Bounds);
+            assertNotEquals("client 1 after client 1 removes fid1 and client 2 adds fid5", bounds, client1Bounds);
+            assertNotEquals("client 2 after client 1 removes fid1 and client 2 adds fid5", bounds, client2Bounds);
 
             transaction1.commit();
-            Assert.assertEquals(
+            assertEquals(
                     "auto after client 1 commits removal of fid1 (client 2 has added fid5)",
                     4,
                     roadAuto.getFeatures().size());
-            Assert.assertEquals(
+            assertEquals(
                     "client 1 after commiting removal of fid1 (client 2 has added fid5)",
                     4,
                     roadFromClient1.getFeatures().size());
-            Assert.assertEquals(
+            assertEquals(
                     "client 2 after client 1 commits removal of fid1 (client 2 has added fid5)",
                     5,
                     roadFromClient2.getFeatures().size());
@@ -703,26 +735,22 @@ public class PropertyDataStoreTest {
             bounds = roadAuto.getFeatures().getBounds();
             client1Bounds = roadFromClient1.getFeatures().getBounds();
             client2Bounds = roadFromClient2.getFeatures().getBounds();
-            Assert.assertEquals(
-                    "client 1 after commiting removal of fid1 (client 2 has added fid5)",
-                    bounds,
-                    client1Bounds);
+            assertEquals("client 1 after commiting removal of fid1 (client 2 has added fid5)", bounds, client1Bounds);
             assertNotEquals(
-                    "client 2 after client 1 commits removal of fid1 (client 2 has added "
-                            + "fid5)",
+                    "client 2 after client 1 commits removal of fid1 (client 2 has added " + "fid5)",
                     bounds,
                     client2Bounds);
 
             transaction2.commit();
-            Assert.assertEquals(
+            assertEquals(
                     "auto after client 2 commits addition of fid5 (fid1 previously removed)",
                     5,
                     roadAuto.getFeatures().size());
-            Assert.assertEquals(
+            assertEquals(
                     "client 1 after client 2 commits addition of fid5 (fid1 previously removed)",
                     5,
                     roadFromClient1.getFeatures().size());
-            Assert.assertEquals(
+            assertEquals(
                     "client 2 after commiting addition of fid5 (fid1 previously removed)",
                     5,
                     roadFromClient2.getFeatures().size());
@@ -730,14 +758,8 @@ public class PropertyDataStoreTest {
             bounds = roadAuto.getFeatures().getBounds();
             client1Bounds = roadFromClient1.getFeatures().getBounds();
             client2Bounds = roadFromClient2.getFeatures().getBounds();
-            Assert.assertEquals(
-                    "client 1 after commiting addition of fid5 (fid1 previously removed)",
-                    bounds,
-                    client1Bounds);
-            Assert.assertEquals(
-                    "client 2 after commiting addition of fid5 (fid1 previously removed)",
-                    bounds,
-                    client2Bounds);
+            assertEquals("client 1 after commiting addition of fid5 (fid1 previously removed)", bounds, client1Bounds);
+            assertEquals("client 2 after commiting addition of fid5 (fid1 previously removed)", bounds, client2Bounds);
         }
     }
 
@@ -745,8 +767,7 @@ public class PropertyDataStoreTest {
     public void testUseExistingFid() throws Exception {
         SimpleFeatureType ROAD = store.getSchema("road");
         SimpleFeature chrisFeature =
-                SimpleFeatureBuilder.build(
-                        ROAD, new Object[] {Integer.valueOf(5), "chris"}, "fid5");
+                SimpleFeatureBuilder.build(ROAD, new Object[] {Integer.valueOf(5), "chris"}, "fid5");
         chrisFeature.getUserData().put(Hints.USE_PROVIDED_FID, Boolean.TRUE);
 
         SimpleFeatureStore roadAuto = (SimpleFeatureStore) store.getFeatureSource("road");
@@ -754,7 +775,7 @@ public class PropertyDataStoreTest {
         List<FeatureId> fids = roadAuto.addFeatures(addCollection);
 
         // check the id was preserved
-        Assert.assertEquals(1, fids.size());
+        assertEquals(1, fids.size());
         FeatureId fid = SimpleFeatureBuilder.createDefaultFeatureIdentifier("fid5");
         Assert.assertTrue(fids.contains(fid));
 
@@ -763,7 +784,7 @@ public class PropertyDataStoreTest {
                 roadAuto.getFeatures(ff.id(Collections.singleton(fid))).features()) {
             Assert.assertTrue(it.hasNext());
             SimpleFeature sf = it.next();
-            Assert.assertEquals(fid, sf.getIdentifier());
+            assertEquals(fid, sf.getIdentifier());
         }
     }
 
@@ -782,7 +803,7 @@ public class PropertyDataStoreTest {
                 SimpleFeature feature = fi.next();
                 String name = (String) feature.getAttribute("name");
                 String expectedName = expectedNames[i];
-                Assert.assertEquals(expectedName, name);
+                assertEquals(expectedName, name);
                 i++;
             }
         }
@@ -791,12 +812,12 @@ public class PropertyDataStoreTest {
     @Test
     public void testRemoveSchema() throws Exception {
         File dir = Files.createTempDirectory("layers").toFile();
-        File file1 =
-                Files.createFile(Paths.get(dir.getAbsolutePath(), "points.properties")).toFile();
-        File file2 =
-                Files.createFile(Paths.get(dir.getAbsolutePath(), "lines.properties")).toFile();
-        File file3 =
-                Files.createFile(Paths.get(dir.getAbsolutePath(), "polygon.properties")).toFile();
+        File file1 = Files.createFile(Path.of(dir.getAbsolutePath(), "points.properties"))
+                .toFile();
+        File file2 = Files.createFile(Path.of(dir.getAbsolutePath(), "lines.properties"))
+                .toFile();
+        File file3 = Files.createFile(Path.of(dir.getAbsolutePath(), "polygon.properties"))
+                .toFile();
         Map<String, Serializable> params = new HashMap<>();
         params.put("directory", dir);
         DataStore store = DataStoreFinder.getDataStore(params);

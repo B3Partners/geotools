@@ -17,23 +17,25 @@
 package org.geotools.swing.table;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.swing.SwingWorker;
 import javax.swing.table.AbstractTableModel;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.util.NullProgressListener;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
- * A Swing {@code TableModel} to retrieve attribute values from each feature in a feature collection
- * and cache them for a {@code JTable}
+ * A Swing {@code TableModel} to retrieve attribute values from each feature in a feature collection and cache them for
+ * a {@code JTable}
  *
  * <p>
  */
 public class FeatureCollectionTableModel extends AbstractTableModel {
+    @Serial
     private static final long serialVersionUID = -7119885084300393935L;
 
     private SimpleFeatureType schema;
@@ -43,8 +45,8 @@ public class FeatureCollectionTableModel extends AbstractTableModel {
     public IOException exception;
 
     /**
-     * A worker class to get the attributes of each feature and load them into the {@code
-     * TableModel}. The work is performed on a background thread.
+     * A worker class to get the attributes of each feature and load them into the {@code TableModel}. The work is
+     * performed on a background thread.
      */
     class TableWorker extends SwingWorker<List<Object[]>, Object[]> {
         SimpleFeatureCollection features;

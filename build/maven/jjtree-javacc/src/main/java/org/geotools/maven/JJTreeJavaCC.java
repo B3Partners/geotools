@@ -37,9 +37,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -56,30 +58,28 @@ import org.javacc.parser.Main;
 // Note: javadoc in class and fields descriptions must be XHTML.
 /**
  * Generates <code>.java</code> sources from <code>.jjt</code> files during Geotools build. This <A
- * HREF="http://maven.apache.org/maven2/">Maven 2</A> plugin executes <code>jjtree</code> first,
- * followed by <code>javacc</code>. Both of them are part of the <A
- * HREF="https://javacc.dev.java.net/">JavaCC</A> project.
+ * HREF="http://maven.apache.org/maven2/">Maven 2</A> plugin executes <code>jjtree</code> first, followed by <code>
+ * javacc</code>. Both of them are part of the <A HREF="https://javacc.dev.java.net/">JavaCC</A> project.
  *
  * <p>This code is a derived work from the Mojo <code>
- * <A HREF="http://mojo.codehaus.org/maven-javacc-plugin/">maven-javacc-plugin</A></code>, which
- * explain why we retains the Apache copyright header. We didn't used The Mojo JavaCC plugin
- * because:
+ * <A HREF="http://mojo.codehaus.org/maven-javacc-plugin/">maven-javacc-plugin</A></code>, which explain why we retains
+ * the Apache copyright header. We didn't used The Mojo JavaCC plugin because:
  *
  * <p>
  *
  * <ul>
  *   <li>It seems easier to control execution order in a single plugin (obviously <code>jjtree
- *       </code> must be executed before <code>javacc</code>, but I don't know how to enforce this
- *       order if both of them are independent plugins registered in the <code>generate-sources
+ *       </code> must be executed before <code>javacc</code>, but I don't know how to enforce this order if both of them
+ *       are independent plugins registered in the <code>generate-sources
  *       </code> build phase).
- *   <li><code>maven-javacc-plugin</code> overwrites the values specified in the <code>.jjt</code>
- *       file with its own default values, even if no such values were specified in the <code>
+ *   <li><code>maven-javacc-plugin</code> overwrites the values specified in the <code>.jjt</code> file with its own
+ *       default values, even if no such values were specified in the <code>
  *       pom.xml</code> file. This behavior conflicts with Geotools setting for the <code>STATIC
  *       </code> option.
  * </ul>
  *
- * Note: The default directories in this plugin are Maven default, even if this plugin target
- * Geotools build (which use a different directory structure).
+ * Note: The default directories in this plugin are Maven default, even if this plugin target Geotools build (which use
+ * a different directory structure).
  *
  * @goal generate
  * @phase generate-sources
@@ -99,8 +99,8 @@ public class JJTreeJavaCC extends AbstractMojo {
     private String nodePackage;
 
     /**
-     * Directory where user-specified <code>Node.java</code> and <code>SimpleNode.java</code> files
-     * are located. If no node exist, JJTree will create ones.
+     * Directory where user-specified <code>Node.java</code> and <code>SimpleNode.java</code> files are located. If no
+     * node exist, JJTree will create ones.
      *
      * @parameter expression="${basedir}/src/main/jjtree"
      * @required
@@ -123,9 +123,7 @@ public class JJTreeJavaCC extends AbstractMojo {
      */
     private String outputDirectory;
 
-    /**
-     * Concatenation of {@link #outputDirectory} with {@link #nodePackage}. For internal use only.
-     */
+    /** Concatenation of {@link #outputDirectory} with {@link #nodePackage}. For internal use only. */
     private File outputPackageDirectory;
 
     /**
@@ -136,8 +134,7 @@ public class JJTreeJavaCC extends AbstractMojo {
     private String timestampDirectory;
 
     /**
-     * The granularity in milliseconds of the last modification date for testing whether a source
-     * needs recompilation
+     * The granularity in milliseconds of the last modification date for testing whether a source needs recompilation
      *
      * @parameter expression="${lastModGranularityMs}" default-value="0"
      */
@@ -152,9 +149,8 @@ public class JJTreeJavaCC extends AbstractMojo {
     private MavenProject project;
 
     /**
-     * Generates the source code from all {@code .jjt} and {@code .jj} files found in the source
-     * directory. First, all {@code .jjt} files are processed using {@code jjtree}. Then, all
-     * generated {@code .jj} files are processed.
+     * Generates the source code from all {@code .jjt} and {@code .jj} files found in the source directory. First, all
+     * {@code .jjt} files are processed using {@code jjtree}. Then, all generated {@code .jj} files are processed.
      *
      * @throws MojoExecutionException if the plugin execution failed.
      */
@@ -234,18 +230,23 @@ public class JJTreeJavaCC extends AbstractMojo {
         }
         /*
          * Reprocess generated java files so that they won't contain invalid escape characters
+         * and add @SuppressWarnings annotations for Java 17 compatibility
          */
-        if (windowsOs) {
-            try {
-                String[] files =
-                        FileUtils.getFilesFromExtension(outputDirectory, new String[] {"java"});
-                for (String file : files) {
+        try {
+            String[] files = FileUtils.getFilesFromExtension(outputDirectory, new String[] {"java"});
+            for (String file : files) {
+                if (windowsOs) {
                     System.out.println("Fixing " + file);
                     fixHeader(new File(file));
                 }
-            } catch (IOException e) {
-                throw new MojoExecutionException("Failed to fix header for java file.", e);
+                // Add @SuppressWarnings for generated parser files to fix Java 17 warnings
+                if (file.endsWith("Parser.java")) {
+                    System.out.println("Adding @SuppressWarnings to " + file);
+                    addSuppressWarnings(new File(file));
+                }
             }
+        } catch (IOException e) {
+            throw new MojoExecutionException("Failed to fix header for java file.", e);
         }
         /*
          * Add the generated-sources directory to the compilation root for the remaining
@@ -257,17 +258,44 @@ public class JJTreeJavaCC extends AbstractMojo {
     }
 
     /**
-     * Takes a file generated from javacc, and changes the first line so that it does not contain
-     * escape characters on windows (the filename may contain things like \ u which are invalid
-     * escape chars)
+     * Adds @SuppressWarnings("unchecked") annotation to generated parser classes to suppress Java 17 warnings about raw
+     * type usage in generated code.
+     *
+     * @param sourceFile the parser file to process.
+     * @throws IOException if the file can't be read or the result can't be written.
+     */
+    private void addSuppressWarnings(final File sourceFile) throws IOException {
+        File fixedFile = new File(sourceFile.getParentFile(), sourceFile.getName() + ".fix");
+        try (BufferedReader reader = new BufferedReader(new FileReader(sourceFile));
+                BufferedWriter writer = new BufferedWriter(new FileWriter(fixedFile))) {
+            String line;
+            boolean classFound = false;
+            while ((line = reader.readLine()) != null) {
+                // Add @SuppressWarnings annotation before the class declaration
+                if (!classFound && line.contains("public class") && line.contains("Parser")) {
+                    writer.write("@SuppressWarnings(\"unchecked\")");
+                    writer.newLine();
+                    classFound = true;
+                }
+                writer.write(line);
+                writer.newLine();
+            }
+        }
+        sourceFile.delete();
+        fixedFile.renameTo(sourceFile);
+    }
+
+    /**
+     * Takes a file generated from javacc, and changes the first line so that it does not contain escape characters on
+     * windows (the filename may contain things like \ u which are invalid escape chars)
      *
      * @param sourceFile the file to process.
      * @throws IOException if the file can't be read or the resutl can't be writen.
      */
     private void fixHeader(final File sourceFile) throws IOException {
         File fixedFile = new File(sourceFile.getParentFile(), sourceFile.getName() + ".fix");
-        try (BufferedReader reader = new BufferedReader(new FileReader(sourceFile));
-                BufferedWriter writer = new BufferedWriter(new FileWriter(fixedFile))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(sourceFile, StandardCharsets.UTF_8));
+                BufferedWriter writer = new BufferedWriter(new FileWriter(fixedFile, StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("/*@bgen(jjtree) Generated By:JJTree:")
@@ -283,9 +311,8 @@ public class JJTreeJavaCC extends AbstractMojo {
     }
 
     /**
-     * Returns the concatenation of {@code directory} with {@link #nodePackage}. This is used in
-     * order to construct a directory path which include the Java package. The directory will be
-     * created if it doesn't exists.
+     * Returns the concatenation of {@code directory} with {@link #nodePackage}. This is used in order to construct a
+     * directory path which include the Java package. The directory will be created if it doesn't exists.
      */
     private File createPackageDirectory(final String directory) throws MojoExecutionException {
         File packageDirectory = new File(directory);
@@ -301,9 +328,9 @@ public class JJTreeJavaCC extends AbstractMojo {
     }
 
     /**
-     * Gets the set of user-specified {@code Node.java} files. If none are found, {@code jjtree}
-     * will generate automatically a default one. This method search only in the package defined in
-     * the {@link #nodePackage} attribute.
+     * Gets the set of user-specified {@code Node.java} files. If none are found, {@code jjtree} will generate
+     * automatically a default one. This method search only in the package defined in the {@link #nodePackage}
+     * attribute.
      */
     private Set searchNodeFiles() throws MojoExecutionException {
         final SuffixMapping mapping = new SuffixMapping(".java", ".java");
@@ -333,9 +360,8 @@ public class JJTreeJavaCC extends AbstractMojo {
      * @param sourceDir The source directory.
      * @param ext The extension to search of ({@code .jjt} or {@code .jj}).
      */
-    private Set searchStaleGrammars(final File sourceDir, final String ext)
-            throws MojoExecutionException {
-        final String extCAP = ext.toUpperCase();
+    private Set searchStaleGrammars(final File sourceDir, final String ext) throws MojoExecutionException {
+        final String extCAP = ext.toUpperCase(Locale.ENGLISH);
         final SuffixMapping mapping = new SuffixMapping(ext, ext);
         final SuffixMapping mappingCAP = new SuffixMapping(extCAP, extCAP);
         final SourceInclusionScanner scanner = new StaleSourceScanner(staleMillis);
@@ -346,10 +372,7 @@ public class JJTreeJavaCC extends AbstractMojo {
             return scanner.getIncludedSources(sourceDir, outDir);
         } catch (InclusionScanException e) {
             throw new MojoExecutionException(
-                    "Error scanning source root \""
-                            + sourceDir.getPath()
-                            + "\" for stale grammars to reprocess.",
-                    e);
+                    "Error scanning source root \"" + sourceDir.getPath() + "\" for stale grammars to reprocess.", e);
         }
     }
 

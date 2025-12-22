@@ -19,14 +19,14 @@ package org.geotools.data.vpf;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import org.geotools.data.FeatureReader;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.store.ContentState;
 import org.geotools.data.vpf.file.VPFFile;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.Name;
 
 /**
  * @author <a href="mailto:knuterik@onemap.org">Knut-Erik Johnsen</a>, Project OneMap
@@ -46,14 +46,13 @@ public class VPFFeatureReader implements FeatureReader<SimpleFeatureType, Simple
         this.featureType = type;
     }
 
-    public VPFFeatureReader(ContentState contentState, VPFFeatureType featureType)
-            throws IOException {
+    public VPFFeatureReader(ContentState contentState, VPFFeatureType featureType) throws IOException {
         this.state = contentState;
         this.featureType = featureType;
     }
 
     /* (non-Javadoc)
-     * @see org.geotools.data.FeatureReader#close()
+     * @see org.geotools.api.data.FeatureReader#close()
      */
     @Override
     public synchronized void close() throws IOException {
@@ -61,7 +60,7 @@ public class VPFFeatureReader implements FeatureReader<SimpleFeatureType, Simple
     }
 
     /* (non-Javadoc)
-     * @see org.geotools.data.FeatureReader#getFeatureType()
+     * @see org.geotools.api.data.FeatureReader#getFeatureType()
      */
     @Override
     public SimpleFeatureType getFeatureType() {
@@ -69,7 +68,7 @@ public class VPFFeatureReader implements FeatureReader<SimpleFeatureType, Simple
     }
 
     /* (non-Javadoc)
-     * @see org.geotools.data.FeatureReader#hasNext()
+     * @see org.geotools.api.data.FeatureReader#hasNext()
      */
     @Override
     public synchronized boolean hasNext() throws IOException {
@@ -81,19 +80,18 @@ public class VPFFeatureReader implements FeatureReader<SimpleFeatureType, Simple
     }
 
     /* (non-Javadoc)
-     * @see org.geotools.data.FeatureReader#next()
+     * @see org.geotools.api.data.FeatureReader#next()
      */
     @Override
-    public synchronized SimpleFeature next()
-            throws IOException, IllegalAttributeException, NoSuchElementException {
+    public synchronized SimpleFeature next() throws IOException, IllegalAttributeException, NoSuchElementException {
         readNext();
         return currentFeature;
     }
 
     /**
-     * Read a row and determine if it matches the feature type Three possibilities here: row is null
-     * -- hasNext = false, do not try again row matches -- hasNext = true, do not try again row does
-     * not match -- hasNext is undefined because we must try again
+     * Read a row and determine if it matches the feature type Three possibilities here: row is null -- hasNext = false,
+     * do not try again row matches -- hasNext = true, do not try again row does not match -- hasNext is undefined
+     * because we must try again
      *
      * @return Whether we need to read again
      */
@@ -107,8 +105,8 @@ public class VPFFeatureReader implements FeatureReader<SimpleFeatureType, Simple
     }
 
     /**
-     * Returns the VPFFile for a particular column. It will only find the first match, but that
-     * should be okay because duplicate columns will cause even bigger problems elsewhere.
+     * Returns the VPFFile for a particular column. It will only find the first match, but that should be okay because
+     * duplicate columns will cause even bigger problems elsewhere.
      *
      * @param column the column to search for
      * @return the VPFFile that owns this column
@@ -120,7 +118,7 @@ public class VPFFeatureReader implements FeatureReader<SimpleFeatureType, Simple
         Iterator<VPFFile> iter = featureType.getFeatureClass().getFileList().iterator();
         while (iter.hasNext()) {
             temp = iter.next();
-            if ((temp != null) && (temp.getColumn(columnName) != null)) {
+            if (temp != null && temp.getColumn(columnName) != null) {
                 result = temp;
                 break;
             }
@@ -128,8 +126,8 @@ public class VPFFeatureReader implements FeatureReader<SimpleFeatureType, Simple
         return result;
     }
     /**
-     * Returns the VPFFile for a particular column. It will only find the first match, but that
-     * should be okay because duplicate columns will cause even bigger problems elsewhere.
+     * Returns the VPFFile for a particular column. It will only find the first match, but that should be okay because
+     * duplicate columns will cause even bigger problems elsewhere.
      *
      * @param column the column to search for
      * @return the VPFFile that owns this column
@@ -141,7 +139,7 @@ public class VPFFeatureReader implements FeatureReader<SimpleFeatureType, Simple
         Iterator<VPFFile> iter = featureType.getFeatureClass().getFileList().iterator();
         while (iter.hasNext()) {
             temp = iter.next();
-            if ((temp != null) && (temp.getColumn(columnName.getLocalPart()) != null)) {
+            if (temp != null && temp.getColumn(columnName.getLocalPart()) != null) {
                 result = temp;
                 break;
             }

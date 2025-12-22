@@ -19,11 +19,11 @@ package org.geotools.gml2.simple;
 import java.util.List;
 import java.util.Map;
 import org.eclipse.xsd.XSDElementDeclaration;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.xsd.Encoder;
 import org.geotools.xsd.XSD;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
@@ -48,12 +48,10 @@ public interface GMLDelegate {
     ObjectEncoder createEnvelopeEncoder(Encoder e);
 
     /**
-     * Registers all the geometry encoders for this GML version in a map, by geometry class
-     * (different versions support different types of geometries, e.g., GML3 supports also curved
-     * ones)
+     * Registers all the geometry encoders for this GML version in a map, by geometry class (different versions support
+     * different types of geometries, e.g., GML3 supports also curved ones)
      */
-    void registerGeometryEncoders(
-            Map<Class, GeometryEncoder<? extends Geometry>> encoders, Encoder encoder);
+    void registerGeometryEncoders(Map<Class, GeometryEncoder<? extends Geometry>> encoders, Encoder encoder);
 
     /** Sets the SRS attribute with the proper syntax for the given GML version */
     void setSrsNameAttribute(AttributesImpl atts, CoordinateReferenceSystem crs);
@@ -97,10 +95,7 @@ public interface GMLDelegate {
     /** Returns true if coordinates should be encoded as xs:decimal instead of xs:double */
     boolean forceDecimalEncoding();
 
-    /**
-     * Returns true if coordinates should be right-padded with zeros up to the requested number of
-     * decimals.
-     */
+    /** Returns true if coordinates should be right-padded with zeros up to the requested number of decimals. */
     boolean padWithZeros();
 
     /**

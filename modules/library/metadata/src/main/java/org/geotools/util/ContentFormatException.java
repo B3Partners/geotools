@@ -17,11 +17,12 @@
 package org.geotools.util;
 
 import java.io.IOException;
+import java.io.Serial;
 
 /**
- * Throws when a stream can't be parsed because some content uses an invalid format. This exception
- * typically has a {@link java.text.ParseException} has its cause. It is similar in spirit to {@link
- * java.util.InvalidPropertiesFormatException}.
+ * Throws when a stream can't be parsed because some content uses an invalid format. This exception typically has a
+ * {@link java.text.ParseException} has its cause. It is similar in spirit to
+ * {@link java.util.InvalidPropertiesFormatException}.
  *
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
@@ -30,19 +31,20 @@ import java.io.IOException;
  */
 public class ContentFormatException extends IOException {
     /** Serial version for compatibility with different versions. */
+    @Serial
     private static final long serialVersionUID = 6152194019351374599L;
 
     /**
-     * Constructs a new exception with the specified detail message. The detail message is saved for
-     * later retrieval by the {@link #getMessage()} method.
+     * Constructs a new exception with the specified detail message. The detail message is saved for later retrieval by
+     * the {@link #getMessage()} method.
      */
     public ContentFormatException(final String message) {
         super(message);
     }
 
     /**
-     * Constructs a new exception with the specified detail message and cause. The cause is saved
-     * for later retrieval by the {@link #getCause()} method.
+     * Constructs a new exception with the specified detail message and cause. The cause is saved for later retrieval by
+     * the {@link #getCause()} method.
      */
     public ContentFormatException(final String message, final Throwable cause) {
         super(message);

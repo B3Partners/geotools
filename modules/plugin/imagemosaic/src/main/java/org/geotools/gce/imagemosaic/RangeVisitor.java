@@ -25,6 +25,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.visitor.AbstractCalcResult;
@@ -34,10 +38,6 @@ import org.geotools.util.Converters;
 import org.geotools.util.DateRange;
 import org.geotools.util.Range;
 import org.geotools.util.Utilities;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Generates a list of NumberRanges from a collection
@@ -48,11 +48,11 @@ class RangeVisitor implements FeatureCalc {
 
     enum RangeType {
         NUMBER,
-        DATE;
+        DATE
     }
 
     /** A DateRange comparator */
-    class DateRangeComparator implements Comparator<DateRange> {
+    static class DateRangeComparator implements Comparator<DateRange> {
 
         @Override
         public int compare(DateRange firstDateRange, DateRange secondDateRange) {
@@ -62,8 +62,7 @@ class RangeVisitor implements FeatureCalc {
             final long endFirst = firstDateRange.getMaxValue().getTime();
             final long beginSecond = secondDateRange.getMinValue().getTime();
             final long endSecond = secondDateRange.getMaxValue().getTime();
-            return NumberRangeComparator.doubleCompare(
-                    beginFirst, endFirst, beginSecond, endSecond);
+            return NumberRangeComparator.doubleCompare(beginFirst, endFirst, beginSecond, endSecond);
         }
     }
 
@@ -71,8 +70,7 @@ class RangeVisitor implements FeatureCalc {
     static class NumberRangeComparator implements Comparator<Range<? extends Number>> {
 
         @Override
-        public int compare(
-                Range<? extends Number> firstRange, Range<? extends Number> secondRange) {
+        public int compare(Range<? extends Number> firstRange, Range<? extends Number> secondRange) {
             Utilities.ensureNonNull("firstRange", firstRange);
             Utilities.ensureNonNull("secondRange", secondRange);
             final Number firstRangeMin = firstRange.getMinValue();
@@ -132,8 +130,8 @@ class RangeVisitor implements FeatureCalc {
     Set<Range> set = null;
 
     /**
-     * A set of string representations of the returned ranges. Time ranges will be returned into a
-     * compact form so that intersecting ranges are merged together into a bigger time range.
+     * A set of string representations of the returned ranges. Time ranges will be returned into a compact form so that
+     * intersecting ranges are merged together into a bigger time range.
      */
     Set<String> minimalRanges = null;
 
@@ -144,20 +142,15 @@ class RangeVisitor implements FeatureCalc {
     /**
      * Range visitor constructor.
      *
-     * @param attributeTypeName1 the name of the attribute to be related to the left side of the
-     *     range
-     * @param attributeTypeName2 the name of the attribute to be related to the right side of the
-     *     range
+     * @param attributeTypeName1 the name of the attribute to be related to the left side of the range
+     * @param attributeTypeName2 the name of the attribute to be related to the right side of the range
      * @param rangeType the type of range, one of {@link RangeType#NUMBER},{@link RangeType#DATE}
      */
     public RangeVisitor(String attributeTypeName1, String attributeTypeName2, RangeType rangeType) {
         FilterFactory factory = CommonFactoryFinder.getFilterFactory(null);
         expr1 = factory.property(attributeTypeName1);
         expr2 = factory.property(attributeTypeName2);
-        this.comparator =
-                rangeType == RangeType.NUMBER
-                        ? new NumberRangeComparator()
-                        : new DateRangeComparator();
+        this.comparator = rangeType == RangeType.NUMBER ? new NumberRangeComparator() : new DateRangeComparator();
         set = buildSet();
     }
 
@@ -222,7 +215,7 @@ class RangeVisitor implements FeatureCalc {
         Iterator<Range> iterator = set.iterator();
         while (iterator.hasNext()) {
             Range range = iterator.next();
-            minimalRanges.add((range.getMinValue() + "/" + range.getMaxValue()));
+            minimalRanges.add(range.getMinValue() + "/" + range.getMaxValue());
         }
     }
 
@@ -249,8 +242,7 @@ class RangeVisitor implements FeatureCalc {
         @Override
         public boolean isCompatible(CalcResult targetResults) {
             // list each calculation result which can merge with this type of result
-            if (targetResults instanceof RangeResult || targetResults == CalcResult.NULL_RESULT)
-                return true;
+            if (targetResults instanceof RangeResult || targetResults == CalcResult.NULL_RESULT) return true;
             return false;
         }
 

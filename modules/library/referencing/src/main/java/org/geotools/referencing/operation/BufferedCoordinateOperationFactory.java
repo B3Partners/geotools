@@ -18,41 +18,39 @@ package org.geotools.referencing.operation;
 
 import java.util.Map;
 import java.util.Set;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.CoordinateOperation;
+import org.geotools.api.referencing.operation.CoordinateOperationFactory;
+import org.geotools.api.referencing.operation.OperationMethod;
+import org.geotools.api.referencing.operation.OperationNotFoundException;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.util.SoftValueHashMap;
 import org.geotools.util.Utilities;
 import org.geotools.util.factory.BufferedFactory;
 import org.geotools.util.factory.Hints;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.CoordinateOperation;
-import org.opengis.referencing.operation.CoordinateOperationFactory;
-import org.opengis.referencing.operation.OperationMethod;
-import org.opengis.referencing.operation.OperationNotFoundException;
 
 /**
- * Caches the {@linkplain CoordinateOperation coordinate operations} created by an other factory.
- * Those coordinate operations may be expensive to create. During rendering and during data I/O,
- * some implementations make use a lof of coordinate transformations, hence caching them might help.
+ * Caches the {@linkplain CoordinateOperation coordinate operations} created by an other factory. Those coordinate
+ * operations may be expensive to create. During rendering and during data I/O, some implementations make use a lof of
+ * coordinate transformations, hence caching them might help.
  *
- * <p>In most cases, users should not need to create an instance of this class explicitly. An
- * instance of {@code BufferedCoordinateOperationFactory} should be automatically registered and
- * returned by {@link ReferencingFactoryFinder} in default Geotools configuration.
+ * <p>In most cases, users should not need to create an instance of this class explicitly. An instance of
+ * {@code BufferedCoordinateOperationFactory} should be automatically registered and returned by
+ * {@link ReferencingFactoryFinder} in default Geotools configuration.
  *
  * @since 2.3
  * @version $Id$
  * @author Simone Giannecchini
  * @author Martin Desruisseaux
  */
-public class BufferedCoordinateOperationFactory extends AbstractCoordinateOperationFactory
-        implements BufferedFactory {
+public class BufferedCoordinateOperationFactory extends AbstractCoordinateOperationFactory implements BufferedFactory {
     /** The priority level for this factory. */
     static final int PRIORITY = AuthorityBackedFactory.PRIORITY + 10;
 
     /**
-     * Helper class used in order to build an hashing for a pair of source-destination {@link
-     * CoordinateReferenceSystem} objects. This is used to cache the transformations that are pretty
-     * time-consuming to build each time.
+     * Helper class used in order to build an hashing for a pair of source-destination {@link CoordinateReferenceSystem}
+     * objects. This is used to cache the transformations that are pretty time-consuming to build each time.
      */
     private static final class CRSPair {
         /** The hash code value, computed once for ever at construction time. */
@@ -62,12 +60,10 @@ public class BufferedCoordinateOperationFactory extends AbstractCoordinateOperat
         private final CoordinateReferenceSystem sourceCRS, targetCRS;
 
         /** Creates a {@code CRSPair} for the specified source and target CRS. */
-        public CRSPair(
-                final CoordinateReferenceSystem sourceCRS,
-                final CoordinateReferenceSystem targetCRS) {
+        public CRSPair(final CoordinateReferenceSystem sourceCRS, final CoordinateReferenceSystem targetCRS) {
             this.sourceCRS = sourceCRS;
             this.targetCRS = targetCRS;
-            this.hash = (37 * sourceCRS.hashCode()) + targetCRS.hashCode();
+            this.hash = 37 * sourceCRS.hashCode() + targetCRS.hashCode();
         }
 
         /** Returns the hash code value. */
@@ -88,8 +84,7 @@ public class BufferedCoordinateOperationFactory extends AbstractCoordinateOperat
             if (object == this) {
                 return true;
             }
-            if (object instanceof CRSPair) {
-                final CRSPair that = (CRSPair) object;
+            if (object instanceof CRSPair that) {
                 return Utilities.equals(this.sourceCRS, that.sourceCRS)
                         && Utilities.equals(this.targetCRS, that.targetCRS);
             }
@@ -98,17 +93,15 @@ public class BufferedCoordinateOperationFactory extends AbstractCoordinateOperat
     }
 
     /**
-     * The wrapped factory. If {@code null}, will be fetched when first needed. We should not
-     * initialize this field using {@link ReferencingFactoryFinder} from the no-argument
-     * constructor, since this constructor is typically invoked while {@link
-     * ReferencingFactoryFinder} is still iterating over the registered implementations.
+     * The wrapped factory. If {@code null}, will be fetched when first needed. We should not initialize this field
+     * using {@link ReferencingFactoryFinder} from the no-argument constructor, since this constructor is typically
+     * invoked while {@link ReferencingFactoryFinder} is still iterating over the registered implementations.
      */
     private volatile CoordinateOperationFactory factory;
 
     /**
-     * The pool of cached transformations. This map can not be static, because the values may be
-     * different for the same ({@code sourceCRS}, {@code targetCRS}) pair dependending of hint
-     * values like {@link Hints#LENIENT_DATUM_SHIFT}.
+     * The pool of cached transformations. This map can not be static, because the values may be different for the same
+     * ({@code sourceCRS}, {@code targetCRS}) pair dependending of hint values like {@link Hints#LENIENT_DATUM_SHIFT}.
      */
     private final Map<CRSPair, CoordinateOperation> pool = new SoftValueHashMap<>();
 
@@ -133,12 +126,17 @@ public class BufferedCoordinateOperationFactory extends AbstractCoordinateOperat
         this(userHints, PRIORITY);
     }
 
+    /** Creates a buffered factory wrapping the specified factory. */
+    public BufferedCoordinateOperationFactory(ManyCoordinateOperationFactory many, Hints hints) {
+        this(many, hints, PRIORITY);
+    }
+
     /**
      * Creates a buffered factory wrapping an other factory selected according the specified hints.
      *
      * @param userHints The hints to use for choosing a backing factory.
-     * @param priority The priority for this factory, as a number between {@link #MINIMUM_PRIORITY
-     *     MINIMUM_PRIORITY} and {@link #MAXIMUM_PRIORITY MAXIMUM_PRIORITY} inclusive.
+     * @param priority The priority for this factory, as a number between {@link #MINIMUM_PRIORITY MINIMUM_PRIORITY} and
+     *     {@link #MAXIMUM_PRIORITY MAXIMUM_PRIORITY} inclusive.
      */
     public BufferedCoordinateOperationFactory(final Hints userHints, final int priority) {
         this(getBackingFactory(userHints), userHints, priority);
@@ -148,19 +146,18 @@ public class BufferedCoordinateOperationFactory extends AbstractCoordinateOperat
      * Wraps the specified factory.
      *
      * @param factory The factory to wrap.
-     * @param priority The priority for this factory, as a number between {@link #MINIMUM_PRIORITY
-     *     MINIMUM_PRIORITY} and {@link #MAXIMUM_PRIORITY MAXIMUM_PRIORITY} inclusive.
+     * @param priority The priority for this factory, as a number between {@link #MINIMUM_PRIORITY MINIMUM_PRIORITY} and
+     *     {@link #MAXIMUM_PRIORITY MAXIMUM_PRIORITY} inclusive.
      */
-    public BufferedCoordinateOperationFactory(
-            final CoordinateOperationFactory factory, final int priority) {
+    public BufferedCoordinateOperationFactory(final CoordinateOperationFactory factory, final int priority) {
         this(factory, null, priority);
     }
 
     /**
-     * Work around for RFE #4093999 in Sun's bug database ("Relax constraint on placement of
-     * this()/super() call in constructors").
+     * Work around for RFE #4093999 in Sun's bug database ("Relax constraint on placement of this()/super() call in
+     * constructors").
      */
-    private BufferedCoordinateOperationFactory(
+    public BufferedCoordinateOperationFactory(
             final CoordinateOperationFactory factory, final Hints userHints, final int priority) {
         super(factory, userHints, priority);
         this.factory = factory;
@@ -181,10 +178,10 @@ public class BufferedCoordinateOperationFactory extends AbstractCoordinateOperat
     }
 
     /**
-     * Returns the backing factory. Coordinate operation creation will be delegated to this factory
-     * when not available in the cache.
+     * Returns the backing factory. Coordinate operation creation will be delegated to this factory when not available
+     * in the cache.
      */
-    private final CoordinateOperationFactory getBackingFactory() {
+    public final CoordinateOperationFactory getBackingFactory() {
         if (factory == null) {
             synchronized (this) {
                 if (factory == null) {
@@ -196,9 +193,9 @@ public class BufferedCoordinateOperationFactory extends AbstractCoordinateOperat
     }
 
     /**
-     * Invoked by {@link #AbstractCoordinateOperationFactory} when the {@link #hints} map should be
-     * initialized. The {@link Hints#COORDINATE_OPERATION_FACTORY} can not always be provided at
-     * construction time, because the backing factory may be lazily created.
+     * Invoked by {@link #AbstractCoordinateOperationFactory} when the {@link #hints} map should be initialized. The
+     * {@link Hints#COORDINATE_OPERATION_FACTORY} can not always be provided at construction time, because the backing
+     * factory may be lazily created.
      */
     @Override
     void initializeHints() {
@@ -207,17 +204,15 @@ public class BufferedCoordinateOperationFactory extends AbstractCoordinateOperat
     }
 
     /**
-     * Returns an operation for conversion or transformation between two coordinate reference
-     * systems. If an operation was already created and still in the cache, the cached operation is
-     * returned. Otherwise the operation creation is delegated to the {@linkplain
-     * CoordinateOperationFactory coordinate operation factory} specified at construction time and
-     * the result is cached.
+     * Returns an operation for conversion or transformation between two coordinate reference systems. If an operation
+     * was already created and still in the cache, the cached operation is returned. Otherwise the operation creation is
+     * delegated to the {@linkplain CoordinateOperationFactory coordinate operation factory} specified at construction
+     * time and the result is cached.
      *
      * @param sourceCRS Input coordinate reference system.
      * @param targetCRS Output coordinate reference system.
      * @return A coordinate operation from {@code sourceCRS} to {@code targetCRS}.
-     * @throws OperationNotFoundException if no operation path was found from {@code sourceCRS} to
-     *     {@code targetCRS}.
+     * @throws OperationNotFoundException if no operation path was found from {@code sourceCRS} to {@code targetCRS}.
      * @throws FactoryException if the operation creation failed for some other reason.
      */
     @Override
@@ -236,10 +231,9 @@ public class BufferedCoordinateOperationFactory extends AbstractCoordinateOperat
     }
 
     /**
-     * Returns all available operations for conversion or transformation between two coordinate
-     * reference systems. The operation creation is delegated to the {@linkplain
-     * CoordinateOperationFactory coordinate operation factory} specified at construction time and
-     * the result is not cached.
+     * Returns all available operations for conversion or transformation between two coordinate reference systems. The
+     * operation creation is delegated to the {@linkplain CoordinateOperationFactory coordinate operation factory}
+     * specified at construction time and the result is not cached.
      *
      * @param sourceCRS Input coordinate reference system.
      * @param targetCRS Output coordinate reference system.
@@ -256,10 +250,9 @@ public class BufferedCoordinateOperationFactory extends AbstractCoordinateOperat
     }
 
     /**
-     * Returns an operation for conversion or transformation between two coordinate reference
-     * systems using the specified method. The current implementation delegates to the {@linkplain
-     * CoordinateOperationFactory coordinate operation factory} specified at construction time with
-     * no caching.
+     * Returns an operation for conversion or transformation between two coordinate reference systems using the
+     * specified method. The current implementation delegates to the {@linkplain CoordinateOperationFactory coordinate
+     * operation factory} specified at construction time with no caching.
      */
     @Override
     public CoordinateOperation createOperation(
@@ -268,5 +261,11 @@ public class BufferedCoordinateOperationFactory extends AbstractCoordinateOperat
             final OperationMethod method)
             throws OperationNotFoundException, FactoryException {
         return getBackingFactory().createOperation(sourceCRS, targetCRS, method);
+    }
+
+    @Override
+    public Set<CoordinateOperation> findFromDatabase(
+            CoordinateReferenceSystem sourceCRS, CoordinateReferenceSystem targetCRS, int limit) {
+        return getBackingFactory().findFromDatabase(sourceCRS, targetCRS, limit);
     }
 }

@@ -17,8 +17,8 @@
 package org.geotools.feature.collection;
 
 import java.util.Collection;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * A convenience class for wrapping a Collection Iterator up as a SimpleFeatureCollection.
@@ -27,8 +27,7 @@ import org.opengis.feature.simple.SimpleFeature;
  *
  * @author Ian Schneider
  */
-public class SimpleFeatureIteratorImpl extends FeatureIteratorImpl<SimpleFeature>
-        implements SimpleFeatureIterator {
+public class SimpleFeatureIteratorImpl extends FeatureIteratorImpl<SimpleFeature> implements SimpleFeatureIterator {
 
     /**
      * Create a new SimpleFeatureIterator using the Iterator from the given FeatureCollection.

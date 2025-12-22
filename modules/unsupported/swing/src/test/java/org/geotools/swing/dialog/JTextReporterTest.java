@@ -59,9 +59,8 @@ import org.junit.runner.RunWith;
 /**
  * Tests for {@linkplain JTextReporter}.
  *
- * <p>This test class uses an {@linkplain ExecutorService} to launch the dialog which avoids a
- * deadlock between the dialog waiting for its Connection object and this class waiting for the
- * dialog to show up on the event thread.
+ * <p>This test class uses an {@linkplain ExecutorService} to launch the dialog which avoids a deadlock between the
+ * dialog waiting for its Connection object and this class waiting for the dialog to show up on the event thread.
  *
  * @author Michael Bedward
  * @since 8.0
@@ -123,14 +122,17 @@ public class JTextReporterTest extends GraphicsTestBase<DialogFixture, Dialog, D
         // check dialog state
         DialogFixture df = (DialogFixture) windowFixture;
 
+        // REVISIT: This expression evaluates to 0. If this isn't an error, consider expressing it as a literal 0.
+        // (see https://errorprone.info/bugpattern/ErroneousBitwiseExpression)
+        // Did you mean 'boolean expectModal = (JTextReporter.DEFAULT_FLAGS | JTextReporter.FLAG_MODAL) > 0;'?
+        @SuppressWarnings("ErroneousBitwiseExpression")
         boolean expectModal = (JTextReporter.DEFAULT_FLAGS & JTextReporter.FLAG_MODAL) > 0;
         assertEquals(expectModal, df.target().isModal());
 
         boolean expectResizable = (JTextReporter.DEFAULT_FLAGS & JTextReporter.FLAG_RESIZABLE) > 0;
         assertEquals(expectResizable, df.target().isResizable());
 
-        boolean expectAlwaysOnTop =
-                (JTextReporter.DEFAULT_FLAGS & JTextReporter.FLAG_ALWAYS_ON_TOP) > 0;
+        boolean expectAlwaysOnTop = (JTextReporter.DEFAULT_FLAGS & JTextReporter.FLAG_ALWAYS_ON_TOP) > 0;
         assertEquals(expectAlwaysOnTop, df.target().isAlwaysOnTop());
     }
 
@@ -174,7 +176,7 @@ public class JTextReporterTest extends GraphicsTestBase<DialogFixture, Dialog, D
 
     @Test
     public void appendTextWithFormattedNewlines() throws Exception {
-        final String text = getConcatenatedText(String.format("%n"));
+        final String text = getConcatenatedText("%n".formatted());
 
         Connection conn = showDialog(TITLE).get();
         conn.append(text);
@@ -210,7 +212,7 @@ public class JTextReporterTest extends GraphicsTestBase<DialogFixture, Dialog, D
 
         windowFixture.robot().waitForIdle();
         String displayedText = windowFixture.textBox().text();
-        String expectedText = String.format("%s%n%n%s%n", TEXT[0], TEXT[1]);
+        String expectedText = "%s%n%n%s%n".formatted(TEXT[0], TEXT[1]);
         assertEquals(expectedText, displayedText);
     }
 
@@ -223,7 +225,7 @@ public class JTextReporterTest extends GraphicsTestBase<DialogFixture, Dialog, D
 
         char[] chars = new char[N];
         Arrays.fill(chars, JTextReporter.DEFAULT_SEPARATOR_CHAR);
-        String expected = String.format("%s%n%s%n", TEXT[0], String.valueOf(chars));
+        String expected = "%s%n%s%n".formatted(TEXT[0], String.valueOf(chars));
 
         String displayedText = windowFixture.textBox().text();
         assertEquals(expected, displayedText);
@@ -239,7 +241,7 @@ public class JTextReporterTest extends GraphicsTestBase<DialogFixture, Dialog, D
 
         char[] chars = new char[N];
         Arrays.fill(chars, c);
-        String expected = String.format("%s%n%s%n", TEXT[0], String.valueOf(chars));
+        String expected = "%s%n%s%n".formatted(TEXT[0], String.valueOf(chars));
 
         String displayedText = windowFixture.textBox().text();
         assertEquals(expected, displayedText);
@@ -253,7 +255,7 @@ public class JTextReporterTest extends GraphicsTestBase<DialogFixture, Dialog, D
         windowFixture.robot().waitForIdle();
 
         String actual = windowFixture.textBox().text();
-        String expected = String.format("%s%n%s", TEXT[0], TEXT[1]);
+        String expected = "%s%n%s".formatted(TEXT[0], TEXT[1]);
         assertEquals(expected, actual);
     }
 
@@ -274,7 +276,7 @@ public class JTextReporterTest extends GraphicsTestBase<DialogFixture, Dialog, D
 
     @Test
     public void getTextFromConnection() throws Exception {
-        final String text = getConcatenatedText(String.format("%n"));
+        final String text = getConcatenatedText("%n".formatted());
         Connection conn = showDialog(TITLE, text).get();
         assertEquals(text, conn.getText());
     }
@@ -292,16 +294,15 @@ public class JTextReporterTest extends GraphicsTestBase<DialogFixture, Dialog, D
         Connection conn = showDialog(TITLE).get();
 
         final CountDownLatch latch = new CountDownLatch(1);
-        conn.addListener(
-                new TextReporterListener() {
-                    @Override
-                    public void onReporterClosed() {}
+        conn.addListener(new TextReporterListener() {
+            @Override
+            public void onReporterClosed() {}
 
-                    @Override
-                    public void onReporterUpdated() {
-                        latch.countDown();
-                    }
-                });
+            @Override
+            public void onReporterUpdated() {
+                latch.countDown();
+            }
+        });
 
         conn.append(TEXT[0]);
         assertTrue(latch.await(LISTENER_TIMEOUT, TimeUnit.MILLISECONDS));
@@ -312,16 +313,15 @@ public class JTextReporterTest extends GraphicsTestBase<DialogFixture, Dialog, D
         Connection conn = showDialog(TITLE).get();
 
         final CountDownLatch latch = new CountDownLatch(1);
-        conn.addListener(
-                new TextReporterListener() {
-                    @Override
-                    public void onReporterClosed() {
-                        latch.countDown();
-                    }
+        conn.addListener(new TextReporterListener() {
+            @Override
+            public void onReporterClosed() {
+                latch.countDown();
+            }
 
-                    @Override
-                    public void onReporterUpdated() {}
-                });
+            @Override
+            public void onReporterUpdated() {}
+        });
 
         windowFixture.close();
         assertTrue(latch.await(LISTENER_TIMEOUT, TimeUnit.MILLISECONDS));
@@ -332,16 +332,15 @@ public class JTextReporterTest extends GraphicsTestBase<DialogFixture, Dialog, D
         Connection conn = showDialog(TITLE).get();
 
         final CountDownLatch latch = new CountDownLatch(1);
-        conn.addListener(
-                new TextReporterListener() {
-                    @Override
-                    public void onReporterClosed() {
-                        latch.countDown();
-                    }
+        conn.addListener(new TextReporterListener() {
+            @Override
+            public void onReporterClosed() {
+                latch.countDown();
+            }
 
-                    @Override
-                    public void onReporterUpdated() {}
-                });
+            @Override
+            public void onReporterUpdated() {}
+        });
 
         getButton("Close").click();
         assertTrue(latch.await(LISTENER_TIMEOUT, TimeUnit.MILLISECONDS));
@@ -367,7 +366,7 @@ public class JTextReporterTest extends GraphicsTestBase<DialogFixture, Dialog, D
 
     @Test
     public void copyTextToClipboard() throws Exception {
-        final String text = getConcatenatedText(String.format("%n"));
+        final String text = getConcatenatedText("%n".formatted());
         showDialog(TITLE, text).get();
 
         getButton("Copy to clipboard").click();
@@ -433,11 +432,9 @@ public class JTextReporterTest extends GraphicsTestBase<DialogFixture, Dialog, D
      * @param initial text to be displayed
      * @return the Future for the dialog task
      */
-    private Future<JTextReporter.Connection> showDialog(
-            final String title, final String initialText) throws Exception {
+    private Future<JTextReporter.Connection> showDialog(final String title, final String initialText) throws Exception {
 
-        Future<Connection> future =
-                executor.submit(() -> JTextReporter.showDialog(title, initialText));
+        Future<Connection> future = executor.submit(() -> JTextReporter.showDialog(title, initialText));
 
         assertComponentDisplayed(DIALOG_CLASS);
         windowFixture = listener.getFixture(DISPLAY_TIMEOUT);

@@ -18,22 +18,22 @@ package org.geotools.feature.collection;
 
 import java.io.IOException;
 import java.util.Collection;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
 
 /**
  * A FeatureCollection which completely delegates to another FeatureCollection.
  *
- * <p>This class should be subclasses by classes which must somehow decorate another
- * SimpleFeatureCollection and override the relevant methods.
+ * <p>This class should be subclasses by classes which must somehow decorate another SimpleFeatureCollection and
+ * override the relevant methods.
  *
  * @author Justin Deoliveira, The Open Planning Project, jdeolive@openplans.org
  * @since 2.5
@@ -43,8 +43,7 @@ public class DecoratingSimpleFeatureCollection implements SimpleFeatureCollectio
     /** the delegate */
     protected SimpleFeatureCollection delegate;
 
-    protected DecoratingSimpleFeatureCollection(
-            FeatureCollection<SimpleFeatureType, SimpleFeature> delegate) {
+    protected DecoratingSimpleFeatureCollection(FeatureCollection<SimpleFeatureType, SimpleFeature> delegate) {
         this.delegate = DataUtilities.simple(delegate);
     }
 
@@ -54,7 +53,7 @@ public class DecoratingSimpleFeatureCollection implements SimpleFeatureCollectio
 
     @Override
     public void accepts(
-            org.opengis.feature.FeatureVisitor visitor, org.opengis.util.ProgressListener progress)
+            org.geotools.api.feature.FeatureVisitor visitor, org.geotools.api.util.ProgressListener progress)
             throws IOException {
         if (canDelegate(visitor)) {
             delegate.accepts(visitor, progress);
@@ -64,8 +63,8 @@ public class DecoratingSimpleFeatureCollection implements SimpleFeatureCollectio
     }
 
     /**
-     * Methods for subclass to override in order to determine if the supplied visitor can be passed
-     * to the delegate collection.
+     * Methods for subclass to override in order to determine if the supplied visitor can be passed to the delegate
+     * collection.
      *
      * <p>The default is false and the visitor receives the decoraeted features.
      */

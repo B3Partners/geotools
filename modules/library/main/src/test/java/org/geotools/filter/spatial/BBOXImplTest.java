@@ -5,6 +5,13 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.DataUtilities;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.SchemaException;
@@ -17,17 +24,10 @@ import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.PrecisionModel;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class BBOXImplTest {
 
-    FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+    FilterFactory ff = CommonFactoryFinder.getFilterFactory();
 
     @Test
     public void testBbox() {
@@ -58,23 +58,9 @@ public class BBOXImplTest {
         assertTrue(p.getEnvelopeInternal().contains(e2));
         assertTrue(p.getEnvelopeInternal().intersects(e1));
         BBOXImpl bbox1 =
-                (BBOXImpl)
-                        ff.bbox(
-                                ff.property("geom"),
-                                e1.getMinX(),
-                                e1.getMinY(),
-                                e1.getMaxX(),
-                                e1.getMaxY(),
-                                "");
+                (BBOXImpl) ff.bbox(ff.property("geom"), e1.getMinX(), e1.getMinY(), e1.getMaxX(), e1.getMaxY(), "");
         BBOXImpl bbox2 =
-                (BBOXImpl)
-                        ff.bbox(
-                                ff.property("geom"),
-                                e2.getMinX(),
-                                e2.getMinY(),
-                                e2.getMaxX(),
-                                e2.getMaxY(),
-                                "");
+                (BBOXImpl) ff.bbox(ff.property("geom"), e2.getMinX(), e2.getMinY(), e2.getMaxX(), e2.getMaxY(), "");
         assertFalse(bbox2.evaluate(f));
         assertFalse(bbox1.evaluate(f));
     }

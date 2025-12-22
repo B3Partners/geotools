@@ -93,8 +93,7 @@ public class OptGraphSerializerTest {
             Graph after = serializer().read();
 
             Assert.assertEquals(1, after.getNodesOfDegree(2).size()); // root
-            Assert.assertEquals(
-                    after.getNodesOfDegree(3).size(), (int) Math.pow(2, k) - 2); // internal
+            Assert.assertEquals(after.getNodesOfDegree(3).size(), (int) Math.pow(2, k) - 2); // internal
             Assert.assertEquals(after.getNodesOfDegree(1).size(), (int) Math.pow(2, k)); // leaves
         } catch (Exception e) {
             java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
@@ -102,22 +101,22 @@ public class OptGraphSerializerTest {
     }
 
     protected OptGraphBuilder createBuilder() {
-        return (new OptGraphBuilder());
+        return new OptGraphBuilder();
     }
 
     protected OptGraphBuilder builder() {
-        return (m_builder);
+        return m_builder;
     }
 
     protected OptGraphBuilder createRebuilder() {
-        return (new OptGraphBuilder());
+        return new OptGraphBuilder();
     }
 
     protected OptGraphBuilder rebuilder() {
-        return (m_rebuilder);
+        return m_rebuilder;
     }
 
     protected SerializedReaderWriter serializer() {
-        return (m_serializer);
+        return m_serializer;
     }
 }

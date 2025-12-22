@@ -16,8 +16,8 @@
  */
 package org.geotools.filter.capability;
 
-import org.opengis.filter.capability.ArithmeticOperators;
-import org.opengis.filter.capability.Functions;
+import org.geotools.api.filter.capability.ArithmeticOperators;
+import org.geotools.api.filter.capability.Functions;
 
 /**
  * Implementation of the ArithmeticOperators interface.
@@ -41,10 +41,7 @@ public class ArithmeticOperatorsImpl implements ArithmeticOperators {
 
     public ArithmeticOperatorsImpl(ArithmeticOperators copy) {
         this.simpleArithmetic = copy.hasSimpleArithmetic();
-        this.functions =
-                copy.getFunctions() == null
-                        ? new FunctionsImpl()
-                        : new FunctionsImpl(copy.getFunctions());
+        this.functions = copy.getFunctions() == null ? new FunctionsImpl() : new FunctionsImpl(copy.getFunctions());
     }
 
     public void setSimpleArithmetic(boolean simpleArithmetic) {
@@ -65,8 +62,8 @@ public class ArithmeticOperatorsImpl implements ArithmeticOperators {
         if (functions == null) {
             return new FunctionsImpl();
         }
-        if (functions instanceof FunctionsImpl) {
-            return (FunctionsImpl) functions;
+        if (functions instanceof FunctionsImpl impl) {
+            return impl;
         } else {
             return new FunctionsImpl(functions);
         }
@@ -98,7 +95,7 @@ public class ArithmeticOperatorsImpl implements ArithmeticOperators {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((functions == null) ? 0 : functions.hashCode());
+        result = prime * result + (functions == null ? 0 : functions.hashCode());
         result = prime * result + (simpleArithmetic ? 1231 : 1237);
         return result;
     }

@@ -25,6 +25,35 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.ExcludeFilter;
+import org.geotools.api.filter.IncludeFilter;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.DistanceBufferOperator;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
+import org.geotools.api.filter.temporal.After;
+import org.geotools.api.filter.temporal.Before;
+import org.geotools.api.filter.temporal.Begins;
+import org.geotools.api.filter.temporal.BegunBy;
+import org.geotools.api.filter.temporal.During;
+import org.geotools.api.filter.temporal.EndedBy;
+import org.geotools.api.filter.temporal.Ends;
+import org.geotools.api.filter.temporal.TEquals;
+import org.geotools.api.filter.temporal.TOverlaps;
 import org.geotools.filter.FilterCapabilities;
 import org.geotools.filter.function.FilterFunction_strConcat;
 import org.geotools.filter.function.FilterFunction_strEndsWith;
@@ -51,36 +80,6 @@ import org.geotools.jdbc.PreparedStatementSQLDialect;
 import org.geotools.jdbc.SQLDialect;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTWriter;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.ExcludeFilter;
-import org.opengis.filter.IncludeFilter;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.DistanceBufferOperator;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
-import org.opengis.filter.temporal.After;
-import org.opengis.filter.temporal.Before;
-import org.opengis.filter.temporal.Begins;
-import org.opengis.filter.temporal.BegunBy;
-import org.opengis.filter.temporal.During;
-import org.opengis.filter.temporal.EndedBy;
-import org.opengis.filter.temporal.Ends;
-import org.opengis.filter.temporal.TEquals;
-import org.opengis.filter.temporal.TOverlaps;
 
 /**
  * Generate a WHERE clause for DB2 Spatial Extender based on a spatial filter.
@@ -103,33 +102,28 @@ import org.opengis.filter.temporal.TOverlaps;
  * @author Mueller Christian
  */
 public class DB2FilterToSQL extends PreparedFilterToSQL {
-    private static Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(DB2FilterToSQL.class);
+    private static Logger LOGGER = org.geotools.util.logging.Logging.getLogger(DB2FilterToSQL.class);
 
     // Class to convert geometry value into a Well-known Text string
     private static WKTWriter wktWriter = new WKTWriter();
 
     /** Conversion factor from common units to meter */
-    private static final Map<String, Double> UNITS_MAP =
-            new HashMap<String, Double>() {
-                {
-                    put("kilometers", 1000.0);
-                    put("kilometer", 1000.0);
-                    put("meters", 1.0);
-                    put("meter", 1.0);
-                    put("mm", 0.001);
-                    put("millimeter", 0.001);
-                    put("mi", 1609.344);
-                    put("statute miles", 1609.344);
-                    put("miles", 1609.344);
-                    put("mile", 1609.344);
-                    put("nautical miles", 1852.0);
-                    put("NM", 1852d);
-                    put("feet", 0.3048);
-                    put("ft", 0.3048);
-                    put("in", 0.0254);
-                }
-            };
+    private static final Map<String, Double> UNITS_MAP = Map.ofEntries(
+            Map.entry("kilometers", 1000.0),
+            Map.entry("kilometer", 1000.0),
+            Map.entry("meters", 1.0),
+            Map.entry("meter", 1.0),
+            Map.entry("mm", 0.001),
+            Map.entry("millimeter", 0.001),
+            Map.entry("mi", 1609.344),
+            Map.entry("statute miles", 1609.344),
+            Map.entry("miles", 1609.344),
+            Map.entry("mile", 1609.344),
+            Map.entry("nautical miles", 1852.0),
+            Map.entry("NM", 1852d),
+            Map.entry("feet", 0.3048),
+            Map.entry("ft", 0.3048),
+            Map.entry("in", 0.0254));
 
     boolean functionEncodingEnabled = false;
 
@@ -244,14 +238,14 @@ public class DB2FilterToSQL extends PreparedFilterToSQL {
     }
 
     /**
-     * Sets a SELECTIVITY clause that can be included with the spatial predicate to influence the
-     * query optimizer to exploit a spatial index if it exists.
+     * Sets a SELECTIVITY clause that can be included with the spatial predicate to influence the query optimizer to
+     * exploit a spatial index if it exists.
      *
      * <p>The parameter should be of the form: <br>
      * "SELECTIVITY 0.001" <br>
-     * where the numeric value is the fraction of rows that will be returned by using the index
-     * scan. This doesn't have to be true. The value 0.001 is typically used to force the use of the
-     * spatial in all cases if the spatial index exists.
+     * where the numeric value is the fraction of rows that will be returned by using the index scan. This doesn't have
+     * to be true. The value 0.001 is typically used to force the use of the spatial in all cases if the spatial index
+     * exists.
      *
      * @param string a selectivity clause
      */
@@ -261,18 +255,12 @@ public class DB2FilterToSQL extends PreparedFilterToSQL {
 
     @Override
     protected Object visitBinarySpatialOperator(
-            BinarySpatialOperator filter,
-            PropertyName property,
-            Literal geometry,
-            boolean swapped,
-            Object extraData) {
+            BinarySpatialOperator filter, PropertyName property, Literal geometry, boolean swapped, Object extraData) {
 
-        if (filter instanceof DistanceBufferOperator) {
-            return visitDistanceSpatialOperator(
-                    (DistanceBufferOperator) filter, property, geometry, swapped, extraData);
+        if (filter instanceof DistanceBufferOperator operator) {
+            return visitDistanceSpatialOperator(operator, property, geometry, swapped, extraData);
         } else {
-            return visitBinarySpatialOperator(
-                    filter, property, (Expression) geometry, swapped, extraData);
+            return visitBinarySpatialOperator(filter, property, (Expression) geometry, swapped, extraData);
         }
     }
 
@@ -293,14 +281,10 @@ public class DB2FilterToSQL extends PreparedFilterToSQL {
     }
 
     Object visitDistanceSpatialOperator(
-            DistanceBufferOperator filter,
-            PropertyName property,
-            Literal geometry,
-            boolean swapped,
-            Object extraData) {
+            DistanceBufferOperator filter, PropertyName property, Literal geometry, boolean swapped, Object extraData) {
         try {
             String comparisonOperator = ") < ";
-            if ((filter instanceof DWithin && swapped) || (filter instanceof Beyond && !swapped)) {
+            if (filter instanceof DWithin && swapped || filter instanceof Beyond && !swapped) {
                 comparisonOperator = ") > ";
             }
             out.write("db2gse.ST_Distance(");
@@ -330,11 +314,7 @@ public class DB2FilterToSQL extends PreparedFilterToSQL {
     }
 
     protected Object visitBinarySpatialOperator(
-            BinarySpatialOperator filter,
-            Expression e1,
-            Expression e2,
-            boolean swapped,
-            Object extraData) {
+            BinarySpatialOperator filter, Expression e1, Expression e2, boolean swapped, Object extraData) {
 
         String checkValue = "1";
 
@@ -395,8 +375,7 @@ public class DB2FilterToSQL extends PreparedFilterToSQL {
         String wktRepresentation = wktWriter.write((Geometry) expression.getValue());
         int spacePos = wktRepresentation.indexOf(" ");
         String geomType = wktRepresentation.substring(0, spacePos);
-        this.out.write(
-                "db2gse.ST_" + geomType + "('" + wktRepresentation + "', " + getSRID() + ")");
+        this.out.write("db2gse.ST_" + geomType + "('" + wktRepresentation + "', " + getSRID() + ")");
     }
 
     protected void addSelectivity() throws IOException {
@@ -408,7 +387,7 @@ public class DB2FilterToSQL extends PreparedFilterToSQL {
     /*
      * (non-Javadoc)
      *
-     * @see org.geotools.data.jdbc.FilterToSQL#visit(org.opengis.filter.ExcludeFilter,
+     * @see org.geotools.data.jdbc.FilterToSQL#visit(org.geotools.api.filter.ExcludeFilter,
      * java.lang.Object)
      */
     @Override
@@ -423,7 +402,7 @@ public class DB2FilterToSQL extends PreparedFilterToSQL {
     /*
      * (non-Javadoc)
      *
-     * @see org.geotools.data.jdbc.FilterToSQL#visit(org.opengis.filter.IncludeFilter,
+     * @see org.geotools.data.jdbc.FilterToSQL#visit(org.geotools.api.filter.IncludeFilter,
      * java.lang.Object)
      */
     @Override
@@ -439,18 +418,9 @@ public class DB2FilterToSQL extends PreparedFilterToSQL {
         return getSRID(featureType.getGeometryDescriptor());
     }
 
-    private Integer getSRID(String attrName) {
-        AttributeDescriptor attrDescr = featureType.getDescriptor(attrName);
-        if (attrDescr instanceof GeometryDescriptor) {
-            return getSRID((GeometryDescriptor) attrDescr);
-        }
-        return currentSRID;
-    }
-
     private Integer getSRID(GeometryDescriptor gDescr) {
         Integer result = null;
-        if (gDescr != null)
-            result = (Integer) gDescr.getUserData().get(JDBCDataStore.JDBC_NATIVE_SRID);
+        if (gDescr != null) result = (Integer) gDescr.getUserData().get(JDBCDataStore.JDBC_NATIVE_SRID);
 
         if (result == null) result = currentSRID;
         return result;

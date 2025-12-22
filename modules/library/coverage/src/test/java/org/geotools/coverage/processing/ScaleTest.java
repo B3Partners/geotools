@@ -20,13 +20,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.awt.image.RenderedImage;
-import javax.media.jai.Interpolation;
-import javax.media.jai.PlanarImage;
+import org.eclipse.imagen.Interpolation;
+import org.eclipse.imagen.PlanarImage;
+import org.geotools.api.parameter.ParameterValueGroup;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.Viewer;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.parameter.ParameterValueGroup;
 
 /**
  * Tests the scale operation.
@@ -121,7 +121,8 @@ public class ScaleTest extends GridProcessingTestBase {
             Viewer.show(scaled);
         } else {
             // Force computation
-            assertNotNull(PlanarImage.wrapRenderedImage(coverage.getRenderedImage()).getTiles());
+            assertNotNull(
+                    PlanarImage.wrapRenderedImage(coverage.getRenderedImage()).getTiles());
             assertNotNull(PlanarImage.wrapRenderedImage(scaledImage).getTiles());
         }
 

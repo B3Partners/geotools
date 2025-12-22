@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <!-- Maven Coordinates -->
   <parent>
     <groupId>org.geotools</groupId>
     <artifactId>unsupported</artifactId>
-    <version>29-SNAPSHOT</version>
+    <version>35-SNAPSHOT</version>
   </parent>
 
   <groupId>org.geotools.jdbc</groupId>
   <artifactId>gt-jdbc-h2gis</artifactId>
-  <version>29-SNAPSHOT</version>
+  <version>35-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <!-- Project Information -->
@@ -41,84 +41,89 @@
   <!-- Properties -->
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <h2gis-version>2.2.0</h2gis-version>
-    <h2-version>2.1.214</h2-version>
-    <cts-version>1.7.0</cts-version>
-    <junit-version>5.8.2</junit-version>
+    <h2gis-version>2.2.1</h2gis-version>
+    <h2-version>2.2.224</h2-version>
+    <cts-version>1.7.1</cts-version>
   </properties>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.h2database</groupId>
+        <artifactId>h2</artifactId>
+        <version>${h2-version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.orbisgis</groupId>
+        <artifactId>h2gis</artifactId>
+        <version>${h2gis-version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.orbisgis</groupId>
+        <artifactId>h2gis-utilities</artifactId>
+        <version>${h2gis-version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.orbisgis</groupId>
+        <artifactId>cts</artifactId>
+        <version>${cts-version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies>
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
-      <version>${h2-version}</version>
     </dependency>
     <dependency>
       <groupId>org.orbisgis</groupId>
       <artifactId>h2gis</artifactId>
-      <version>${h2gis-version}</version>
     </dependency>
     <dependency>
       <groupId>org.orbisgis</groupId>
       <artifactId>h2gis-utilities</artifactId>
-      <version>${h2gis-version}</version>
     </dependency>
     <dependency>
       <groupId>org.orbisgis</groupId>
       <artifactId>cts</artifactId>
-      <version>${cts-version}</version>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-main</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-epsg-hsql</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-epsg-extension</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-cql</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-api</artifactId>
-      <version>${junit-version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-engine</artifactId>
-      <version>${junit-version}</version>
+      <artifactId>junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-jdbc</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-jdbc</artifactId>
-      <version>${project.version}</version>
       <classifier>tests</classifier>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-sample-data</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

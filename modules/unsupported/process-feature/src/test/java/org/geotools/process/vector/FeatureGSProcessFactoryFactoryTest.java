@@ -24,9 +24,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.EnumSet;
 import java.util.Map;
-import org.geotools.data.DataStore;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.SimpleFeatureSource;
 import org.geotools.data.property.PropertyDataStore;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.util.NullProgressListener;
 import org.geotools.feature.NameImpl;
 import org.geotools.process.Process;
@@ -58,16 +58,15 @@ public class FeatureGSProcessFactoryFactoryTest {
     public void testSum() throws Exception {
         SimpleFeatureSource source = bugs.getFeatureSource("bugsites");
 
-        Map<String, Object> input =
-                new KVP(
-                        "features",
-                        source.getFeatures(),
-                        "aggregationAttribute",
-                        "cat",
-                        "function",
-                        EnumSet.of(AggregationFunction.Sum),
-                        "singlePass",
-                        true);
+        Map<String, Object> input = new KVP(
+                "features",
+                source.getFeatures(),
+                "aggregationAttribute",
+                "cat",
+                "function",
+                EnumSet.of(AggregationFunction.Sum),
+                "singlePass",
+                true);
 
         NameImpl name = new NameImpl("vec", "Aggregate");
         Process process = Processors.createProcess(name);

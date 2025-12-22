@@ -20,10 +20,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.capability.SpatialOperators;
 import org.geotools.filter.v1_1.OGC;
 import org.geotools.xsd.Binding;
 import org.junit.Test;
-import org.opengis.filter.capability.SpatialOperators;
 import org.w3c.dom.Document;
 
 /**
@@ -76,14 +76,12 @@ public class SpatialOperatorsTypeBindingTest extends OGCTestSupport {
 
     @Test
     public void testEncode() throws Exception {
-        Document dom =
-                encode(
-                        FilterMockData.spatial(),
-                        new QName(OGC.NAMESPACE, "SpatialOperators"),
-                        OGC.SpatialOperatorsType);
+        Document dom = encode(
+                FilterMockData.spatial(), new QName(OGC.NAMESPACE, "SpatialOperators"), OGC.SpatialOperatorsType);
 
         assertEquals(
                 11,
-                getElementsByQName(dom, new QName(OGC.NAMESPACE, "SpatialOperator")).getLength());
+                getElementsByQName(dom, new QName(OGC.NAMESPACE, "SpatialOperator"))
+                        .getLength());
     }
 }

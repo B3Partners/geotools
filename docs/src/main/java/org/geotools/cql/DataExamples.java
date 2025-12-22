@@ -14,6 +14,8 @@ package org.geotools.cql;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import org.apache.commons.io.FileUtils;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.geometry.jts.JTSFactoryFinder;
@@ -23,8 +25,6 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * This utility class provide the data required by the CQL/ECQL examples.
@@ -52,15 +52,14 @@ final class DataExamples extends ECQLExamples {
             return CITY;
         }
 
-        final SimpleFeatureType type =
-                DataUtilities.createType(
-                        "Location",
-                        "geometry:Point:srid=4326,"
-                                + "cityName:String,"
-                                + "over65YearsOld:Double,"
-                                + "under18YearsOld:Double,"
-                                + "population:Integer,"
-                                + "lastEarthQuake:Date");
+        final SimpleFeatureType type = DataUtilities.createType(
+                "Location",
+                "geometry:Point:srid=4326,"
+                        + "cityName:String,"
+                        + "over65YearsOld:Double,"
+                        + "under18YearsOld:Double,"
+                        + "population:Integer,"
+                        + "lastEarthQuake:Date");
         SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(type);
 
         GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
@@ -86,13 +85,12 @@ final class DataExamples extends ECQLExamples {
         if (COUNTRY != null) {
             return COUNTRY;
         }
-        final SimpleFeatureType type =
-                DataUtilities.createType(
-                        "Location",
-                        "geometry:Polygon:srid=4326,"
-                                + "countryName:String,"
-                                + "population:Integer,"
-                                + "principalMineralResource:String");
+        final SimpleFeatureType type = DataUtilities.createType(
+                "Location",
+                "geometry:Polygon:srid=4326,"
+                        + "countryName:String,"
+                        + "population:Integer,"
+                        + "principalMineralResource:String");
         SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(type);
 
         WKTReader reader = new WKTReader();

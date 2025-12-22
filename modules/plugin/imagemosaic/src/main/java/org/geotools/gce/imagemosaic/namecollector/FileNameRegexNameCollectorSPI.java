@@ -27,8 +27,8 @@ import org.geotools.coverage.grid.io.GridCoverage2DReader;
 import org.geotools.gce.imagemosaic.Utils.SourceGetter;
 
 /**
- * A {@link CoverageNameCollectorSPI} implementation setting up the coverage name based on a regex
- * applied to the fileName.
+ * A {@link CoverageNameCollectorSPI} implementation setting up the coverage name based on a regex applied to the
+ * fileName.
  */
 public class FileNameRegexNameCollectorSPI implements CoverageNameCollectorSPI {
 
@@ -37,18 +37,14 @@ public class FileNameRegexNameCollectorSPI implements CoverageNameCollectorSPI {
     @Override
     public CoverageNameCollector create(Object object, Map<String, String> map) {
         String regex = null;
-        if (map != null && map.containsKey(REGEX) && ((regex = map.get(REGEX)) != null)) {
+        if (map != null && map.containsKey(REGEX) && (regex = map.get(REGEX)) != null) {
             return new FileNameRegexBasedCoverageNameCollector(regex);
         }
         throw new IllegalArgumentException(
-                "FileNameRegexNameCollectorSPI should have "
-                        + "a defined REGEX property in the map");
+                "FileNameRegexNameCollectorSPI should have " + "a defined REGEX property in the map");
     }
 
-    /**
-     * A {@link CoverageNameCollector} implementation which setup the coverageName on top of a regex
-     * on the filename
-     */
+    /** A {@link CoverageNameCollector} implementation which setup the coverageName on top of a regex on the filename */
     static class FileNameRegexBasedCoverageNameCollector implements CoverageNameCollector {
 
         private Pattern pattern;
@@ -64,8 +60,7 @@ public class FileNameRegexNameCollectorSPI implements CoverageNameCollectorSPI {
             final File file = sourceGetter.getFile();
             String path = null;
             if (file == null) {
-                if (source instanceof SourceSPIProvider) {
-                    SourceSPIProvider provider = (SourceSPIProvider) source;
+                if (source instanceof SourceSPIProvider provider) {
                     try {
                         path = provider.getSourceUrl().toString();
                     } catch (MalformedURLException e) {

@@ -23,10 +23,11 @@ import java.awt.image.WritableRaster;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.io.Serializable;
-import javax.media.jai.RasterFactory;
-import javax.media.jai.remote.SerializableState;
-import javax.media.jai.remote.SerializerFactory;
+import org.eclipse.imagen.RasterFactory;
+import org.eclipse.imagen.media.serialize.SerializableState;
+import org.eclipse.imagen.media.serialize.SerializerFactory;
 
 /**
  * Simple serializable class holding a sample model and a color model
@@ -35,6 +36,7 @@ import javax.media.jai.remote.SerializerFactory;
  */
 public class SampleImage implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 6324143924454724262l;
 
     transient SampleModel sampleModel;
@@ -51,8 +53,7 @@ public class SampleImage implements Serializable {
     public BufferedImage toBufferedImage() {
         final SampleModel sm = sampleModel.createCompatibleSampleModel(1, 1);
         final WritableRaster raster = RasterFactory.createWritableRaster(sm, null);
-        final BufferedImage image =
-                new BufferedImage(colorModel, raster, colorModel.isAlphaPremultiplied(), null);
+        final BufferedImage image = new BufferedImage(colorModel, raster, colorModel.isAlphaPremultiplied(), null);
         return image;
     }
 

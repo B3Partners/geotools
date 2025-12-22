@@ -18,10 +18,10 @@ package org.geotools.filter.v1_0.capabilities;
 
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.capability.FunctionName;
 
 /**
  * Binding object for the type http://www.opengis.net/ogc:Function_NamesType.
@@ -76,8 +76,7 @@ public class Function_NamesTypeBinding extends AbstractComplexBinding {
 
     @Override
     public Object getProperty(Object object, QName name) throws Exception {
-        if (name.getLocalPart().equals("Function_Name")
-                || name.getLocalPart().equals("FunctionName") /* 1.1 */) {
+        if (name.getLocalPart().equals("Function_Name") || name.getLocalPart().equals("FunctionName") /* 1.1 */) {
             return object;
         }
 

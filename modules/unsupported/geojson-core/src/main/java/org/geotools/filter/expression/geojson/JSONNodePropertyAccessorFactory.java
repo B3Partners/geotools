@@ -23,12 +23,12 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 import java.util.Map;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.geojson.GeoJSONReader;
 import org.geotools.filter.expression.PropertyAccessor;
 import org.geotools.filter.expression.PropertyAccessorFactory;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /** Property Accessor Factory for {@link JsonNode} */
 public class JSONNodePropertyAccessorFactory implements PropertyAccessorFactory {
@@ -37,13 +37,11 @@ public class JSONNodePropertyAccessorFactory implements PropertyAccessorFactory 
     static final String ROOT = "/";
 
     @Override
-    public PropertyAccessor createPropertyAccessor(
-            Class<?> type, String xpath, Class<?> target, Hints hints) {
+    public PropertyAccessor createPropertyAccessor(Class<?> type, String xpath, Class<?> target, Hints hints) {
         if (xpath == null) {
             return null;
         }
-        if (!SimpleFeature.class.isAssignableFrom(type)
-                && !SimpleFeatureType.class.isAssignableFrom(type))
+        if (!SimpleFeature.class.isAssignableFrom(type) && !SimpleFeatureType.class.isAssignableFrom(type))
             return null; // we only work with simple feature
         return JSONNODEPROPERTY;
     }
@@ -56,17 +54,16 @@ public class JSONNodePropertyAccessorFactory implements PropertyAccessorFactory 
         @Override
         public boolean canHandle(Object object, String xpath, Class target) {
             try {
-                if (xpath != null && object != null && object instanceof SimpleFeature) {
+                if (xpath != null && object != null && object instanceof SimpleFeature feature) {
                     String[] parts = stripAndReturnHeadAndRest(xpath);
-                    SimpleFeature feature = (SimpleFeature) object;
                     Object value = getValue(parts, feature);
-                    if (value != null && value instanceof JsonNode) {
+                    if (value != null && value instanceof JsonNode node) {
                         if (parts.length < 2) {
                             // only one part means return whole JsonNode
                             return true;
                         } else {
                             JsonPointer pointer = JsonPointer.compile(parts[1]);
-                            JsonNode jsonNode = ((JsonNode) value).at(pointer);
+                            JsonNode jsonNode = node.at(pointer);
                             return !jsonNode.isMissingNode();
                         }
                     }
@@ -87,10 +84,8 @@ public class JSONNodePropertyAccessorFactory implements PropertyAccessorFactory 
             return value;
         }
 
-        private static Object getValueFromUserData(
-                String[] parts, SimpleFeature feature, Object value) {
-            Map topLevelAttributes =
-                    (Map) feature.getUserData().get(GeoJSONReader.TOP_LEVEL_ATTRIBUTES);
+        private static Object getValueFromUserData(String[] parts, SimpleFeature feature, Object value) {
+            Map topLevelAttributes = (Map) feature.getUserData().get(GeoJSONReader.TOP_LEVEL_ATTRIBUTES);
             if (topLevelAttributes != null) {
                 value = topLevelAttributes.get(parts[0]);
             }
@@ -113,23 +108,20 @@ public class JSONNodePropertyAccessorFactory implements PropertyAccessorFactory 
 
         @Override
         @SuppressWarnings("unchecked")
-        public <T> T get(Object object, String xpath, Class<T> target)
-                throws IllegalArgumentException {
+        public <T> T get(Object object, String xpath, Class<T> target) throws IllegalArgumentException {
             JsonNode jsonNode = null;
-            if (xpath != null && object != null && object instanceof SimpleFeature) {
+            if (xpath != null && object != null && object instanceof SimpleFeature feature) {
                 String[] parts = stripAndReturnHeadAndRest(xpath);
-                SimpleFeature feature = (SimpleFeature) object;
                 Object value = getValue(parts, feature);
-                if (value != null && value instanceof JsonNode) {
+                if (value != null && value instanceof JsonNode node) {
                     if (parts.length < 2) {
                         // only one part means return whole JsonNode
                         return (T) value;
                     } else {
                         JsonPointer pointer = JsonPointer.compile(parts[1]);
-                        jsonNode = ((JsonNode) value).at(pointer);
+                        jsonNode = node.at(pointer);
                         if (jsonNode.isMissingNode()) {
-                            throw new IllegalArgumentException(
-                                    "Cannot get property " + xpath + " from " + object);
+                            throw new IllegalArgumentException("Cannot get property " + xpath + " from " + object);
                         }
                         return (T) getMostPrimitive(jsonNode);
                     }
@@ -203,8 +195,7 @@ public class JSONNodePropertyAccessorFactory implements PropertyAccessorFactory 
         }
 
         @Override
-        public <T> void set(Object object, String xpath, T value, Class<T> target)
-                throws IllegalArgumentException {
+        public <T> void set(Object object, String xpath, T value, Class<T> target) throws IllegalArgumentException {
             throw new UnsupportedOperationException("Does not support updating.");
         }
     }

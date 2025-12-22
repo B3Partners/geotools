@@ -21,7 +21,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Map;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
 import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.jdbc.JDBCDataStoreFactory;
 import org.geotools.jdbc.SQLDialect;
@@ -34,14 +34,8 @@ import org.geotools.jdbc.SQLDialect;
  */
 public class MySQLDataStoreFactory extends JDBCDataStoreFactory {
     /** parameter for database type */
-    public static final Param DBTYPE =
-            new Param(
-                    "dbtype",
-                    String.class,
-                    "Type",
-                    true,
-                    "mysql",
-                    Collections.singletonMap(Parameter.LEVEL, "program"));
+    public static final Param DBTYPE = new Param(
+            "dbtype", String.class, "Type", true, "mysql", Collections.singletonMap(Parameter.LEVEL, "program"));
     /** Default port number for MYSQL */
     public static final Param PORT = new Param("port", Integer.class, "Port", true, 3306);
     /** Storage engine to use when creating tables */
@@ -49,18 +43,13 @@ public class MySQLDataStoreFactory extends JDBCDataStoreFactory {
             new Param("storage engine", String.class, "Storage Engine", false, "MyISAM");
 
     /**
-     * Enhanced Spatial Support is available from MySQL version 5.6 and onward. This includes some
-     * differentiation of the spatial function naming which generally follow the naming convention
-     * ST_xxxx. Moreover spatial operations are performed with precise object shape and not with
-     * minimum bounding rectangles. As of version 8 it is the only option.
+     * Enhanced Spatial Support is available from MySQL version 5.6 and onward. This includes some differentiation of
+     * the spatial function naming which generally follow the naming convention ST_xxxx. Moreover spatial operations are
+     * performed with precise object shape and not with minimum bounding rectangles. As of version 8 it is the only
+     * option.
      */
     public static final Param ENHANCED_SPATIAL_SUPPORT =
-            new Param(
-                    "enhancedSpatialSupport",
-                    Boolean.class,
-                    "Enhanced Spatial Support",
-                    false,
-                    false);
+            new Param("enhancedSpatialSupport", Boolean.class, "Enhanced Spatial Support", false, false);
 
     protected boolean enhancedSpatialSupport = (boolean) ENHANCED_SPATIAL_SUPPORT.sample;
 
@@ -106,8 +95,7 @@ public class MySQLDataStoreFactory extends JDBCDataStoreFactory {
     }
 
     @Override
-    protected JDBCDataStore createDataStoreInternal(JDBCDataStore dataStore, Map<String, ?> params)
-            throws IOException {
+    protected JDBCDataStore createDataStoreInternal(JDBCDataStore dataStore, Map<String, ?> params) throws IOException {
         String storageEngine = (String) STORAGE_ENGINE.lookUp(params);
         if (storageEngine == null) {
             storageEngine = (String) STORAGE_ENGINE.sample;
@@ -119,23 +107,19 @@ public class MySQLDataStoreFactory extends JDBCDataStoreFactory {
             // version is at least 5.6.
             enhancedSpatialSupport = isMySqlVersion56OrAbove(dataStore);
         } else if (enhancedSpatialFlag && !isMySqlVersion56OrAbove(dataStore)) {
-            dataStore
-                    .getLogger()
-                    .info("MySQL version does not support enhancedSpatialSupport. Disabling it");
+            dataStore.getLogger().info("MySQL version does not support enhancedSpatialSupport. Disabling it");
             enhancedSpatialSupport = false;
         }
 
         SQLDialect dialect = dataStore.getSQLDialect();
-        if (dialect instanceof MySQLDialectBasic) {
-            ((MySQLDialectBasic) dialect).setStorageEngine(storageEngine);
-            ((MySQLDialectBasic) dialect).setUsePreciseSpatialOps(enhancedSpatialSupport);
-            ((MySQLDialectBasic) dialect)
-                    .setMySqlVersion80OrAbove(this.isMySqlVersion80OrAbove(dataStore));
+        if (dialect instanceof MySQLDialectBasic basic) {
+            basic.setStorageEngine(storageEngine);
+            basic.setUsePreciseSpatialOps(enhancedSpatialSupport);
+            basic.setMySqlVersion80OrAbove(this.isMySqlVersion80OrAbove(dataStore));
         } else {
             ((MySQLDialectPrepared) dialect).setStorageEngine(storageEngine);
             ((MySQLDialectPrepared) dialect).setUsePreciseSpatialOps(enhancedSpatialSupport);
-            ((MySQLDialectPrepared) dialect)
-                    .setMySqlVersion80OrAbove(this.isMySqlVersion80OrAbove(dataStore));
+            ((MySQLDialectPrepared) dialect).setMySqlVersion80OrAbove(this.isMySqlVersion80OrAbove(dataStore));
         }
 
         return dataStore;
@@ -151,19 +135,15 @@ public class MySQLDataStoreFactory extends JDBCDataStoreFactory {
         try (Connection con = dataStore.getDataSource().getConnection()) {
             int major = con.getMetaData().getDatabaseMajorVersion();
             int minor = con.getMetaData().getDatabaseMinorVersion();
-            isMySQLVersion56OrAbove = major > 5 || (major == 5 && minor > 6);
+            isMySQLVersion56OrAbove = major > 5 || major == 5 && minor > 6;
         } catch (SQLException | IllegalStateException e) {
-            dataStore
-                    .getLogger()
-                    .warning(
-                            "Unable to determine database version. Message: "
-                                    + e.getLocalizedMessage());
+            dataStore.getLogger().warning("Unable to determine database version. Message: " + e.getLocalizedMessage());
         }
         return isMySQLVersion56OrAbove;
     }
     /**
-     * check if the version of MySQL is 8.0 or greater. Needed to determine which syntax can be used
-     * for eg. {@code ST_SRID()}
+     * check if the version of MySQL is 8.0 or greater. Needed to determine which syntax can be used for eg.
+     * {@code ST_SRID()}
      *
      * @return {@code true} if the database varion is is 8.0 or greater
      */
@@ -171,13 +151,9 @@ public class MySQLDataStoreFactory extends JDBCDataStoreFactory {
         boolean isMySQLVersion80OrAbove = false;
         try (Connection con = dataStore.getDataSource().getConnection()) {
             int major = con.getMetaData().getDatabaseMajorVersion();
-            isMySQLVersion80OrAbove = (major >= 8);
+            isMySQLVersion80OrAbove = major >= 8;
         } catch (SQLException | IllegalStateException e) {
-            dataStore
-                    .getLogger()
-                    .warning(
-                            "Unable to determine database version. Message: "
-                                    + e.getLocalizedMessage());
+            dataStore.getLogger().warning("Unable to determine database version. Message: " + e.getLocalizedMessage());
         }
         return isMySQLVersion80OrAbove;
     }

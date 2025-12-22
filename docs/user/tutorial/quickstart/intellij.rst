@@ -1,6 +1,6 @@
 :Author: Devon Tucker
 :Thanks: geotools-user list
-:Version: |release|
+:Version: |version|
 :License: Create Commons with attribution
 
 .. _JetBrains: https://www.jetbrains.com/idea/
@@ -14,7 +14,7 @@ Pre-Requisites
 --------------
 This guide assumes the following:
 
-* You have the latest JDK installed (8 at the time this article was written) installed. If not the `Eclipse Quickstart <./eclipse.html>`_
+* You have the latest JDK installed (17 at the time this article was written) installed. If not the `Eclipse Quickstart <./eclipse.html>`_
   provides instructions on how to do this.
 * You have IntelliJ installed. This article targets IntelliJ CE 2016; however, previous versions at least as far back as
   13 should work fine. Ultimate versions should also work fine. IntelliJ can be downloaded from JetBrains_ and generally
@@ -102,43 +102,51 @@ Maven downloads jars from public repositories on the internet where projects suc
 #. Open up the :file:`pom.xml` file at the root of the project. You can see some of the information we entered through the wizard
    earlier.
    
-#. We're going to add three things to this file. First, at the top of the file after ``moduleVersion`` we want to add a 
+#. We're going to add several things to this file. First, at the top of the file after ``moduleVersion`` we want to add a 
    properties element defining the version of GeoTools we wish to use. This workbook was written for |release| 
    although you may wish to try a different version.
    
-   For production a stable release of |branch| should be used for `geotools.version`:
+   For production a stable release of |series| should be used for `geotools.version`:
     
    .. literalinclude:: /../../tutorials/quickstart/pom.xml
         :language: xml
-        :start-after: <url>http://maven.apache.org</url>
-        :end-before: <dependencies>
+        :start-at: <properties>
+        :end-at: </properties>
    
-   To make use of a nightly build set the `geotools.version` property to |branch|-SNAPSHOT .
+   To make use of a nightly build set the `geotools.version` property to |series|-SNAPSHOT .
+
+#. We use the GeoTools Bill of Materials (BOM) to manage dependency versions. This ensures that all GeoTools modules use compatible versions:
+
+   .. literalinclude:: /../../tutorials/quickstart/pom.xml
+        :language: xml
+        :start-at: <dependencyManagement>
+        :end-at: </dependencyManagement>
+
+   The BOM (Bill of Materials) pattern centralizes version management. By importing the ``gt-bom``, we don't need to specify version numbers for individual GeoTools modules.
         
-#. We are going to add a dependence to GeoTools :file:`gt-main` and :file:`gt-swing` jars. Note we
-   are making use of the ``geotools.version`` defined above.
+#. We add dependencies to GeoTools modules. Note that we don't specify version numbers since these are managed by the BOM:
    
    .. literalinclude:: /../../tutorials/quickstart/pom.xml
         :language: xml
-        :start-after: </properties>
-        :end-before: <repositories>
+        :start-after: </dependencyManagement>
+        :end-at: </dependencies>
     
 #. Finally we need to list the external *repositories* where maven can download GeoTools and
    other required jars from.
 
    .. literalinclude:: /../../tutorials/quickstart/pom.xml
         :language: xml
-        :start-after: </dependencies>
-        :end-before: <build>
+        :start-at: <repositories>
+        :end-at: </repositories>
 
-   .. note:: Note the snapshot repository above is only required if you are using a nightly build (such as |branch|-SNAPSHOT)
+   .. note:: Note the snapshot repository above is only required if you are using a nightly build (such as |series|-SNAPSHOT)
 
-#. GeoTools requires Java 11, you need to tell Maven to use the 11 source level
+#. GeoTools requires Java 17, you need to tell Maven to use the 17 source level
 
    .. literalinclude::  /../../tutorials/quickstart/pom.xml
       :language: xml
       :start-after: </repositories>
-      :end-before: <profiles>
+      :end-at: </build>
 
 #. Here is what the completed :file:`pom.xml` looks like:
 

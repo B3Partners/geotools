@@ -20,18 +20,18 @@ import static org.junit.Assert.assertEquals;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Multiply;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.Subtract;
 import org.geotools.data.DataUtilities;
 import org.geotools.factory.CommonFactoryFinder;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Multiply;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.expression.Subtract;
 
 public class ExpressionTypeVisitorTest {
 
@@ -43,10 +43,9 @@ public class ExpressionTypeVisitorTest {
 
     @Before
     public void setup() throws Exception {
-        ft =
-                DataUtilities.createType(
-                        "test",
-                        "theGeom:LineString,b:java.lang.Byte,s:java.lang.Short,i:java.lang.Integer,l:java.lang.Long,d:java.lang.Double,label:String");
+        ft = DataUtilities.createType(
+                "test",
+                "theGeom:LineString,b:java.lang.Byte,s:java.lang.Short,i:java.lang.Integer,l:java.lang.Long,d:java.lang.Double,label:String");
         visitor = new ExpressionTypeVisitor(ft);
     }
 
@@ -64,14 +63,13 @@ public class ExpressionTypeVisitorTest {
 
     @Test
     public void testFunction() {
-        Function func = ff.function(("abs"), ff.literal(10));
+        Function func = ff.function("abs", ff.literal(10));
         assertEquals(Integer.class, func.accept(visitor, null));
     }
 
     @Test
     public void testIfThenElse() { // special case within function
-        Function func =
-                ff.function(("if_then_else"), ff.literal(true), ff.literal(10), ff.literal(20));
+        Function func = ff.function("if_then_else", ff.literal(true), ff.literal(10), ff.literal(20));
         assertEquals(Integer.class, func.accept(visitor, null));
     }
 

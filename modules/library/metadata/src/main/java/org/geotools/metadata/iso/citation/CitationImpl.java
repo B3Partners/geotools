@@ -19,18 +19,17 @@
  */
 package org.geotools.metadata.iso.citation;
 
+import java.io.Serial;
 import java.util.Collection;
 import java.util.Date;
+import org.geotools.api.metadata.Identifier;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.metadata.citation.PresentationForm;
+import org.geotools.api.metadata.citation.ResponsibleParty;
+import org.geotools.api.util.InternationalString;
 import org.geotools.metadata.iso.IdentifierImpl;
 import org.geotools.metadata.iso.MetadataEntity;
 import org.geotools.util.SimpleInternationalString;
-import org.opengis.metadata.Identifier;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.metadata.citation.CitationDate;
-import org.opengis.metadata.citation.PresentationForm;
-import org.opengis.metadata.citation.ResponsibleParty;
-import org.opengis.metadata.citation.Series;
-import org.opengis.util.InternationalString;
 
 /**
  * Standardized resource reference.
@@ -42,38 +41,30 @@ import org.opengis.util.InternationalString;
  */
 public class CitationImpl extends MetadataEntity implements Citation {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -4415559967618358778L;
 
     /** Name by which the cited resource is known. */
     private InternationalString title;
 
     /**
-     * Short name or other language name by which the cited information is known. Example: "DCW" as
-     * an alternative title for "Digital Chart of the World.
+     * Short name or other language name by which the cited information is known. Example: "DCW" as an alternative title
+     * for "Digital Chart of the World.
      */
     private Collection<InternationalString> alternateTitles;
-
-    /** Reference date for the cited resource. */
-    private Collection<CitationDate> dates;
 
     /** Version of the cited resource. */
     private InternationalString edition;
 
-    /**
-     * Date of the edition in millisecondes ellapsed sine January 1st, 1970, or {@link
-     * Long#MIN_VALUE} if none.
-     */
+    /** Date of the edition in millisecondes ellapsed sine January 1st, 1970, or {@link Long#MIN_VALUE} if none. */
     private long editionDate = Long.MIN_VALUE;
 
-    /**
-     * Unique identifier for the resource. Example: Universal Product Code (UPC), National Stock
-     * Number (NSN).
-     */
+    /** Unique identifier for the resource. Example: Universal Product Code (UPC), National Stock Number (NSN). */
     private Collection<Identifier> identifiers;
 
     /**
-     * Name and position information for an individual or organization that is responsible for the
-     * resource. Returns an empty string if there is none.
+     * Name and position information for an individual or organization that is responsible for the resource. Returns an
+     * empty string if there is none.
      */
     private Collection<ResponsibleParty> citedResponsibleParties;
 
@@ -81,21 +72,13 @@ public class CitationImpl extends MetadataEntity implements Citation {
     private Collection<PresentationForm> presentationForm;
 
     /**
-     * Information about the series, or aggregate dataset, of which the dataset is a part. May be
-     * {@code null} if none.
-     */
-    private Series series;
-
-    /**
-     * Other information required to complete the citation that is not recorded elsewhere. May be
-     * {@code null} if none.
+     * Other information required to complete the citation that is not recorded elsewhere. May be {@code null} if none.
      */
     private InternationalString otherCitationDetails;
 
     /**
-     * Common title with holdings note. Note: title identifies elements of a series collectively,
-     * combined with information about what volumes are available at the source cited. May be {@code
-     * null} if there is no title.
+     * Common title with holdings note. Note: title identifies elements of a series collectively, combined with
+     * information about what volumes are available at the source cited. May be {@code null} if there is no title.
      */
     private InternationalString collectiveTitle;
 
@@ -109,9 +92,8 @@ public class CitationImpl extends MetadataEntity implements Citation {
     public CitationImpl() {}
 
     /**
-     * Constructs a new citation initialized to the values specified by the given object. This
-     * constructor performs a shallow copy (i.e. each source attributes are reused without copying
-     * them).
+     * Constructs a new citation initialized to the values specified by the given object. This constructor performs a
+     * shallow copy (i.e. each source attributes are reused without copying them).
      */
     public CitationImpl(final Citation source) {
         super(source);
@@ -124,8 +106,8 @@ public class CitationImpl extends MetadataEntity implements Citation {
      */
     public CitationImpl(final CharSequence title) {
         final InternationalString t;
-        if (title instanceof InternationalString) {
-            t = (InternationalString) title;
+        if (title instanceof InternationalString string) {
+            t = string;
         } else {
             t = new SimpleInternationalString(title.toString());
         }
@@ -133,11 +115,10 @@ public class CitationImpl extends MetadataEntity implements Citation {
     }
 
     /**
-     * Constructs a citation with the specified responsible party. This convenience constructor
-     * initialize the citation title to the first non-null of the following properties: {@linkplain
-     * ResponsibleParty#getOrganisationName organisation name}, {@linkplain
-     * ResponsibleParty#getPositionName position name} or {@linkplain
-     * ResponsibleParty#getIndividualName individual name}.
+     * Constructs a citation with the specified responsible party. This convenience constructor initialize the citation
+     * title to the first non-null of the following properties: {@linkplain ResponsibleParty#getOrganisationName
+     * organisation name}, {@linkplain ResponsibleParty#getPositionName position name} or
+     * {@linkplain ResponsibleParty#getIndividualName individual name}.
      *
      * @since 2.2
      */
@@ -157,9 +138,8 @@ public class CitationImpl extends MetadataEntity implements Citation {
     }
 
     /**
-     * Adds the specified identifier as a CRS authority factory. This is used as a convenience
-     * method for the creation of constants, and for making sure that all of them use the same
-     * identifier type.
+     * Adds the specified identifier as a CRS authority factory. This is used as a convenience method for the creation
+     * of constants, and for making sure that all of them use the same identifier type.
      */
     final void addAuthority(final String identifier, final boolean asTitle) {
         if (asTitle) {
@@ -181,28 +161,17 @@ public class CitationImpl extends MetadataEntity implements Citation {
     }
 
     /**
-     * Returns the short name or other language name by which the cited information is known.
-     * Example: "DCW" as an alternative title for "Digital Chart of the World".
+     * Returns the short name or other language name by which the cited information is known. Example: "DCW" as an
+     * alternative title for "Digital Chart of the World".
      */
     @Override
     public Collection<InternationalString> getAlternateTitles() {
-        return (alternateTitles = nonNullCollection(alternateTitles, InternationalString.class));
+        return alternateTitles = nonNullCollection(alternateTitles, InternationalString.class);
     }
 
     /** Set the short name or other language name by which the cited information is known. */
     public void setAlternateTitles(final Collection<? extends InternationalString> newValues) {
         alternateTitles = copyCollection(newValues, alternateTitles, InternationalString.class);
-    }
-
-    /** Returns the reference date for the cited resource. */
-    @Override
-    public Collection<CitationDate> getDates() {
-        return dates = nonNullCollection(dates, CitationDate.class);
-    }
-
-    /** Set the reference date for the cited resource. */
-    public void setDates(final Collection<? extends CitationDate> newValues) {
-        dates = copyCollection(newValues, dates, CitationDate.class);
     }
 
     /** Returns the version of the cited resource. */
@@ -220,7 +189,7 @@ public class CitationImpl extends MetadataEntity implements Citation {
     /** Returns the date of the edition, or {@code null} if none. */
     @Override
     public Date getEditionDate() {
-        return (editionDate != Long.MIN_VALUE) ? new Date(editionDate) : null;
+        return editionDate != Long.MIN_VALUE ? new Date(editionDate) : null;
     }
 
     /**
@@ -230,49 +199,46 @@ public class CitationImpl extends MetadataEntity implements Citation {
      */
     public void setEditionDate(final Date newValue) {
         checkWritePermission();
-        editionDate = (newValue != null) ? newValue.getTime() : Long.MIN_VALUE;
+        editionDate = newValue != null ? newValue.getTime() : Long.MIN_VALUE;
     }
 
     /**
-     * Returns the unique identifier for the resource. Example: Universal Product Code (UPC),
-     * National Stock Number (NSN).
+     * Returns the unique identifier for the resource. Example: Universal Product Code (UPC), National Stock Number
+     * (NSN).
      */
     @Override
     public Collection<Identifier> getIdentifiers() {
-        return (identifiers = nonNullCollection(identifiers, Identifier.class));
+        return identifiers = nonNullCollection(identifiers, Identifier.class);
     }
 
     /**
-     * Set the unique identifier for the resource. Example: Universal Product Code (UPC), National
-     * Stock Number (NSN).
+     * Set the unique identifier for the resource. Example: Universal Product Code (UPC), National Stock Number (NSN).
      */
     public void setIdentifiers(final Collection<? extends Identifier> newValues) {
         identifiers = copyCollection(newValues, identifiers, Identifier.class);
     }
 
     /**
-     * Returns the name and position information for an individual or organization that is
-     * responsible for the resource. Returns an empty string if there is none.
+     * Returns the name and position information for an individual or organization that is responsible for the resource.
+     * Returns an empty string if there is none.
      */
     @Override
     public Collection<ResponsibleParty> getCitedResponsibleParties() {
-        return (citedResponsibleParties =
-                nonNullCollection(citedResponsibleParties, ResponsibleParty.class));
+        return citedResponsibleParties = nonNullCollection(citedResponsibleParties, ResponsibleParty.class);
     }
 
     /**
-     * Set the name and position information for an individual or organization that is responsible
-     * for the resource. Returns an empty string if there is none.
+     * Set the name and position information for an individual or organization that is responsible for the resource.
+     * Returns an empty string if there is none.
      */
     public void setCitedResponsibleParties(final Collection<? extends ResponsibleParty> newValues) {
-        citedResponsibleParties =
-                copyCollection(newValues, citedResponsibleParties, ResponsibleParty.class);
+        citedResponsibleParties = copyCollection(newValues, citedResponsibleParties, ResponsibleParty.class);
     }
 
     /** Returns the mode in which the resource is represented, or an empty string if none. */
     @Override
     public Collection<PresentationForm> getPresentationForm() {
-        return (presentationForm = nonNullCollection(presentationForm, PresentationForm.class));
+        return presentationForm = nonNullCollection(presentationForm, PresentationForm.class);
     }
 
     /** Set the mode in which the resource is represented, or an empty string if none. */
@@ -281,26 +247,8 @@ public class CitationImpl extends MetadataEntity implements Citation {
     }
 
     /**
-     * Returns the information about the series, or aggregate dataset, of which the dataset is a
-     * part. Returns {@code null} if none.
-     */
-    @Override
-    public Series getSeries() {
-        return series;
-    }
-
-    /**
-     * Set the information about the series, or aggregate dataset, of which the dataset is a part.
-     * Set to {@code null} if none.
-     */
-    public void setSeries(final Series newValue) {
-        checkWritePermission();
-        series = newValue;
-    }
-
-    /**
-     * Returns other information required to complete the citation that is not recorded elsewhere.
-     * Returns {@code null} if none.
+     * Returns other information required to complete the citation that is not recorded elsewhere. Returns {@code null}
+     * if none.
      */
     @Override
     public InternationalString getOtherCitationDetails() {
@@ -308,8 +256,8 @@ public class CitationImpl extends MetadataEntity implements Citation {
     }
 
     /**
-     * Set other information required to complete the citation that is not recorded elsewhere. Set
-     * to {@code null} if none.
+     * Set other information required to complete the citation that is not recorded elsewhere. Set to {@code null} if
+     * none.
      */
     public void setOtherCitationDetails(final InternationalString newValue) {
         checkWritePermission();
@@ -317,9 +265,8 @@ public class CitationImpl extends MetadataEntity implements Citation {
     }
 
     /**
-     * Returns the common title with holdings note. Note: title identifies elements of a series
-     * collectively, combined with information about what volumes are available at the source cited.
-     * Returns {@code null} if there is no title.
+     * Returns the common title with holdings note. Note: title identifies elements of a series collectively, combined
+     * with information about what volumes are available at the source cited. Returns {@code null} if there is no title.
      */
     @Override
     public InternationalString getCollectiveTitle() {
@@ -327,9 +274,8 @@ public class CitationImpl extends MetadataEntity implements Citation {
     }
 
     /**
-     * Set the common title with holdings note. Note: title identifies elements of a series
-     * collectively, combined with information about what volumes are available at the source cited.
-     * Set to {@code null} if there is no title.
+     * Set the common title with holdings note. Note: title identifies elements of a series collectively, combined with
+     * information about what volumes are available at the source cited. Set to {@code null} if there is no title.
      */
     public void setCollectiveTitle(final InternationalString newValue) {
         checkWritePermission();

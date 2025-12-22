@@ -26,18 +26,16 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import net.miginfocom.swing.MigLayout;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
 import org.geotools.swing.wizard.JPage;
 import org.geotools.swing.wizard.ParamField;
 import org.geotools.util.Converters;
 
 /**
- * A wizard page that will prompt the user for a file of the supplied format ask for any additional
- * information.
+ * A wizard page that will prompt the user for a file of the supplied format ask for any additional information.
  *
- * <p>This page will allow the user to edit and modify the provided connectionParameters map - but
- * will only show parameters that match the indicated "level". If level is null it assumed to be
- * "user".
+ * <p>This page will allow the user to edit and modify the provided connectionParameters map - but will only show
+ * parameters that match the indicated "level". If level is null it assumed to be "user".
  */
 public class JParameterListPage extends JPage {
     String title;
@@ -51,10 +49,7 @@ public class JParameterListPage extends JPage {
     protected Map<String, Object> connectionParameters;
 
     public JParameterListPage(
-            String title,
-            String description,
-            List<Parameter<?>> contents,
-            Map<String, Object> params) {
+            String title, String description, List<Parameter<?>> contents, Map<String, Object> params) {
         this.title = title;
         this.description = description;
         this.contents = contents;

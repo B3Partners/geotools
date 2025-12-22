@@ -18,10 +18,10 @@ package org.geotools.gce.imagemosaic;
 
 import java.util.Date;
 import java.util.Iterator;
+import org.geotools.api.feature.Feature;
 import org.geotools.util.DateRange;
 import org.geotools.util.Range;
 import org.geotools.util.Utilities;
-import org.opengis.feature.Feature;
 
 /**
  * Generates a list of compact DateRanges from a collection
@@ -46,8 +46,8 @@ class DateRangeVisitor extends RangeVisitor {
     }
 
     /**
-     * Setup the minimal set of dataRanges (intersecting ranges are merged together) as a Set of
-     * ISO8601 String intervals with period.
+     * Setup the minimal set of dataRanges (intersecting ranges are merged together) as a Set of ISO8601 String
+     * intervals with period.
      */
     @Override
     protected void populateRange() {
@@ -87,9 +87,8 @@ class DateRangeVisitor extends RangeVisitor {
     }
 
     /**
-     * Merge 2 ranges together. In order to speed up the computations, this method does the
-     * assumption that the 2 date ranges are already sorted (first < second) and they intersect
-     * together.
+     * Merge 2 ranges together. In order to speed up the computations, this method does the assumption that the 2 date
+     * ranges are already sorted (first < second) and they intersect together.
      */
     private static DateRange merge(DateRange firstDateRange, DateRange secondDateRange) {
         Utilities.ensureNonNull("firstDateRange", firstDateRange);

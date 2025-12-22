@@ -2,12 +2,12 @@
 <!-- ======================================================================= Maven 
   Project Configuration File The Geotools Project http://www.geotools.org/ Version: 
   $Id$ ======================================================================= -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.geotools</groupId>
     <artifactId>unsupported</artifactId>
-    <version>29-SNAPSHOT</version>
+    <version>35-SNAPSHOT</version>
   </parent>
   <groupId>org.geotools</groupId>
   <artifactId>gt-elasticsearch</artifactId>
@@ -44,19 +44,57 @@
     <elastic.test.image>docker.elastic.co/elasticsearch/elasticsearch-oss</elastic.test.image>
     <elastic.test.version>7.10.2</elastic.test.version>
     <!-- To run the latest check out https://www.docker.elastic.co/r/elasticsearch/elasticsearch -->
+    <elasticsearch.version>9.1.5</elasticsearch.version>
+    <spatial4j.version>0.8</spatial4j.version>
+    <geo.version>0.7.7</geo.version>
   </properties>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.elasticsearch.client</groupId>
+        <artifactId>elasticsearch-rest-client</artifactId>
+        <version>${elasticsearch.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.locationtech.spatial4j</groupId>
+        <artifactId>spatial4j</artifactId>
+        <version>${spatial4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.github.davidmoten</groupId>
+        <artifactId>geo</artifactId>
+        <version>${geo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.security</groupId>
+        <artifactId>spring-security-core</artifactId>
+        <version>5.7.14</version>
+        <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>aopalliance</groupId>
+            <artifactId>aopalliance</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies>
+    <dependency>
+      <groupId>javax.measure</groupId>
+      <artifactId>unit-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.springframework.security</groupId>
       <artifactId>spring-security-core</artifactId>
-      <version>5.1.13.RELEASE</version>
-      <scope>provided</scope>
-      <exclusions>
-        <exclusion>
-          <artifactId>aopalliance</artifactId>
-          <groupId>aopalliance</groupId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
@@ -86,50 +124,42 @@
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-main</artifactId>
-      <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-epsg-hsql</artifactId>
-      <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-cql</artifactId>
-      <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-process</artifactId>
-      <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-grid</artifactId>
-      <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-process-feature</artifactId>
-      <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-sample-data</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-property</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -139,25 +169,13 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-all</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.testcontainers</groupId>
-      <artifactId>elasticsearch</artifactId>
-      <version>1.16.2</version>
+      <artifactId>testcontainers-elasticsearch</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-geojson-core</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.easymock</groupId>
@@ -167,7 +185,6 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-jdk14</artifactId>
-      <version>${sl4j.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -179,10 +196,10 @@
         <executions>
           <execution>
             <id>add-source</id>
-            <phase>generate-sources</phase>
             <goals>
               <goal>add-source</goal>
             </goals>
+            <phase>generate-sources</phase>
             <configuration>
               <sources>
                 <source>${project.build.directory}/generated-sources</source>
@@ -210,6 +227,17 @@
         <plugins>
           <plugin>
             <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+              <forkCount>1</forkCount>
+              <reuseForks>false</reuseForks>
+              <argLine>-Djava.util.logging.config.file=${project.build.directory}/test-classes/test-classes/logging.properties</argLine>
+              <skipTests>${skipOnlineTests}</skipTests>
+              <skipAfterFailureCount>1</skipAfterFailureCount>
+              <systemPropertyVariables>
+                <elastic.test.image>${elastic.test.image}</elastic.test.image>
+                <elastic.test.version>${elastic.test.version}</elastic.test.version>
+              </systemPropertyVariables>
+            </configuration>
             <executions>
               <execution>
                 <goals>
@@ -218,14 +246,6 @@
                 </goals>
               </execution>
             </executions>
-            <configuration>
-              <argLine>-Djava.util.logging.config.file=${project.build.directory}/test-classes/test-classes/logging.properties</argLine>
-              <skipTests>${skipOnlineTests}</skipTests>
-              <systemPropertyVariables>
-                <elastic.test.image>${elastic.test.image}</elastic.test.image>
-                <elastic.test.version>${elastic.test.version}</elastic.test.version>
-              </systemPropertyVariables>
-            </configuration>
           </plugin>
         </plugins>
       </build>

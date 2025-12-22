@@ -21,7 +21,12 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
-import org.geotools.feature.FeatureImpl;
+import org.geotools.api.feature.ComplexAttribute;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.filter.identity.Identifier;
 import org.geotools.feature.NameImpl;
 import org.geotools.gml3.GML;
 import org.geotools.gml3.XSDIdRegistry;
@@ -30,12 +35,6 @@ import org.geotools.xlink.XLINK;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.feature.ComplexAttribute;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.filter.identity.Identifier;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.Attributes;
@@ -62,8 +61,8 @@ import org.xml.sax.Attributes;
  */
 public class FeaturePropertyTypeBinding extends AbstractComplexBinding {
     /**
-     * id set in the document, used to check against duplicate gml:id. If an gml:id is already
-     * encoded for an featureMember, the next occurrence will be encoded with xlink:href
+     * id set in the document, used to check against duplicate gml:id. If an gml:id is already encoded for an
+     * featureMember, the next occurrence will be encoded with xlink:href
      */
     private XSDIdRegistry idSet;
 
@@ -107,15 +106,14 @@ public class FeaturePropertyTypeBinding extends AbstractComplexBinding {
         if (GML._Feature.equals(name)) {
             if (object instanceof SimpleFeature) {
                 return object;
-            } else if (object instanceof FeatureImpl) {
-                ComplexAttribute complex = (ComplexAttribute) object;
+            } else if (object instanceof ComplexAttribute complex) {
                 Identifier ident = complex.getIdentifier();
                 if (ident == null) {
                     return object;
                 }
                 String id;
-                if (ident instanceof FeatureId) {
-                    id = ((FeatureId) ident).getRid();
+                if (ident instanceof FeatureId featureId) {
+                    id = featureId.getRid();
                 } else {
                     id = Converters.convert(ident.getID(), String.class);
                 }
@@ -123,31 +121,25 @@ public class FeaturePropertyTypeBinding extends AbstractComplexBinding {
                     return null;
                 }
                 return object;
-            } else if (object instanceof ComplexAttribute) {
-                return ((ComplexAttribute) object).getProperties().iterator().next();
+            } else if (object instanceof ComplexAttribute attribute) {
+                return attribute.getProperties().iterator().next();
             }
         }
         return null;
     }
 
-    /**
-     * @see AbstractComplexBinding#encode(java.lang.Object, org.w3c.dom.Document,
-     *     org.w3c.dom.Element)
-     */
+    /** @see AbstractComplexBinding#encode(java.lang.Object, org.w3c.dom.Document, org.w3c.dom.Element) */
     @Override
     public Element encode(Object object, Document document, Element value) throws Exception {
-        if (object instanceof ComplexAttribute) {
-            ComplexAttribute complex = (ComplexAttribute) object;
+        if (object instanceof ComplexAttribute complex) {
             checkXlinkHref(complex);
-            GML3EncodingUtils.encodeClientProperties(complex, value);
-            GML3EncodingUtils.encodeSimpleContent(complex, document, value);
         }
         return value;
     }
 
     /**
-     * Check if the complex attribute contains a feature which id is pre-existing in the document.
-     * If it's true, make sure it's only encoded as an xlink:href to the existing id.
+     * Check if the complex attribute contains a feature which id is pre-existing in the document. If it's true, make
+     * sure it's only encoded as an xlink:href to the existing id.
      *
      * @param att The complex attribute itself
      */
@@ -158,8 +150,8 @@ public class FeaturePropertyTypeBinding extends AbstractComplexBinding {
             return;
         }
         String id;
-        if (ident instanceof FeatureId) {
-            id = ((FeatureId) ident).getRid();
+        if (ident instanceof FeatureId featureId) {
+            id = featureId.getRid();
         } else {
             id = Converters.convert(ident.getID(), String.class);
         }

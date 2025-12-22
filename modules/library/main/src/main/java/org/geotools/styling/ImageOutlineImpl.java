@@ -16,6 +16,11 @@
  */
 package org.geotools.styling;
 
+import org.geotools.api.style.ImageOutline;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.StyleVisitor;
+import org.geotools.api.style.Symbolizer;
 import org.geotools.util.Utilities;
 
 public class ImageOutlineImpl implements ImageOutline {
@@ -42,8 +47,7 @@ public class ImageOutlineImpl implements ImageOutline {
             return true;
         }
 
-        if (obj instanceof ImageOutlineImpl) {
-            ImageOutlineImpl other = (ImageOutlineImpl) obj;
+        if (obj instanceof ImageOutlineImpl other) {
             return Utilities.equals(symbolizer, other.symbolizer);
         }
 

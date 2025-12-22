@@ -16,12 +16,14 @@
  */
 package org.geotools.styling;
 
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.ContrastEnhancement;
+import org.geotools.api.style.SelectedChannelType;
+import org.geotools.api.style.StyleVisitor;
+import org.geotools.api.style.TraversingStyleVisitor;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.util.Utilities;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.StyleVisitor;
 
 /** Default implementation of SelectedChannelType. */
 public class SelectedChannelTypeImpl implements SelectedChannelType {
@@ -45,8 +47,8 @@ public class SelectedChannelTypeImpl implements SelectedChannelType {
         contrastEnhancement = contrast;
     }
 
-    public SelectedChannelTypeImpl(org.opengis.style.SelectedChannelType gray) {
-        filterFactory = CommonFactoryFinder.getFilterFactory2(null);
+    public SelectedChannelTypeImpl(org.geotools.api.style.SelectedChannelType gray) {
+        filterFactory = CommonFactoryFinder.getFilterFactory(null);
         name = gray.getChannelName();
         if (gray.getContrastEnhancement() != null) {
             contrastEnhancement = new ContrastEnhancementImpl(gray.getContrastEnhancement());
@@ -70,12 +72,12 @@ public class SelectedChannelTypeImpl implements SelectedChannelType {
 
     @Override
     public void setChannelName(String name) {
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         this.name = ff.literal(name);
     }
 
     @Override
-    public void setContrastEnhancement(org.opengis.style.ContrastEnhancement enhancement) {
+    public void setContrastEnhancement(org.geotools.api.style.ContrastEnhancement enhancement) {
         this.contrastEnhancement = ContrastEnhancementImpl.cast(enhancement);
     }
 
@@ -91,12 +93,12 @@ public class SelectedChannelTypeImpl implements SelectedChannelType {
     }
 
     @Override
-    public Object accept(StyleVisitor visitor, Object data) {
+    public Object accept(TraversingStyleVisitor visitor, Object data) {
         return visitor.visit(this, data);
     }
 
     @Override
-    public void accept(org.geotools.styling.StyleVisitor visitor) {
+    public void accept(StyleVisitor visitor) {
         visitor.visit(this);
     }
 
@@ -106,11 +108,11 @@ public class SelectedChannelTypeImpl implements SelectedChannelType {
         int result = 0;
 
         if (name != null) {
-            result = (PRIME * result) + name.hashCode();
+            result = PRIME * result + name.hashCode();
         }
 
         if (contrastEnhancement != null) {
-            result = (PRIME * result) + contrastEnhancement.hashCode();
+            result = PRIME * result + contrastEnhancement.hashCode();
         }
 
         return result;
@@ -122,8 +124,7 @@ public class SelectedChannelTypeImpl implements SelectedChannelType {
             return true;
         }
 
-        if (obj instanceof SelectedChannelTypeImpl) {
-            SelectedChannelTypeImpl other = (SelectedChannelTypeImpl) obj;
+        if (obj instanceof SelectedChannelTypeImpl other) {
 
             return Utilities.equals(name, other.name)
                     && Utilities.equals(contrastEnhancement, other.contrastEnhancement);

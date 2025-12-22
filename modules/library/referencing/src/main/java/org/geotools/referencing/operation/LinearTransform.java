@@ -19,16 +19,15 @@
  */
 package org.geotools.referencing.operation;
 
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.Matrix;
 import org.geotools.referencing.operation.matrix.XMatrix;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.Matrix;
 
 /**
- * Interface for linear {@link MathTransform}s. A linear transform can be express as an affine
- * transform using a {@linkplain #getMatrix matrix}. The {@linkplain Matrix#getNumCol number of
- * columns} is equals to the number of {@linkplain #getSourceDimensions source dimensions} plus 1,
- * and the {@linkplain Matrix#getNumRow number of rows} is equals to the number of {@linkplain
- * #getTargetDimensions target dimensions} plus 1.
+ * Interface for linear {@link MathTransform}s. A linear transform can be express as an affine transform using a
+ * {@linkplain #getMatrix matrix}. The {@linkplain Matrix#getNumCol number of columns} is equals to the number of
+ * {@linkplain #getSourceDimensions source dimensions} plus 1, and the {@linkplain Matrix#getNumRow number of rows} is
+ * equals to the number of {@linkplain #getTargetDimensions target dimensions} plus 1.
  *
  * @since 2.0
  * @version $Id$
@@ -43,9 +42,8 @@ public interface LinearTransform extends MathTransform {
     Matrix getMatrix();
 
     /**
-     * Tests whether this transform does not move any points, by using the provided {@code
-     * tolerance} value. The signification of <cite>tolerance value</cite> is the same than in the
-     * following pseudo-code:
+     * Tests whether this transform does not move any points, by using the provided {@code tolerance} value. The
+     * signification of <cite>tolerance value</cite> is the same than in the following pseudo-code:
      *
      * <blockquote>
      *

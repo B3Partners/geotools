@@ -20,12 +20,12 @@ import java.awt.color.ColorSpace;
 import java.awt.image.ColorModel;
 import java.io.IOException;
 import java.util.Map;
-import javax.media.jai.ImageLayout;
+import org.eclipse.imagen.ImageLayout;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
 
 /**
- * A {@link CoverageNameCollectorSPI} implementation which takes the coverage name from the
- * colorspace of the ImageLayout from the coverage reader.
+ * A {@link CoverageNameCollectorSPI} implementation which takes the coverage name from the colorspace of the
+ * ImageLayout from the coverage reader.
  */
 public class ColorSpaceNameCollectorSPI implements CoverageNameCollectorSPI {
 
@@ -59,8 +59,7 @@ public class ColorSpaceNameCollectorSPI implements CoverageNameCollectorSPI {
                         coverageName = RGB;
                         break;
                     default:
-                        throw new IllegalArgumentException(
-                                "The specified ColorSpace's type is not supported: " + type);
+                        throw new IllegalArgumentException("The specified ColorSpace's type is not supported: " + type);
                 }
             } catch (IOException e) {
                 throw new IllegalArgumentException(e);

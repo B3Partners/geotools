@@ -21,7 +21,6 @@ package org.geotools.data.shapefile.dbf;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.ReadableByteChannel;
@@ -69,17 +68,16 @@ public class DbaseFileHeader {
     /**
      * Returns the number of millis at January 1st 4713 BC
      *
-     * <p>Calendar refCal = (Calendar) new GregorianCalendar(TimeZone.getTimeZone("UTC"));
-     * refCal.set(Calendar.ERA, GregorianCalendar.BC); refCal.set(Calendar.YEAR, 4713);
-     * refCal.set(Calendar.MONTH, Calendar.JANUARY); refCal.set(Calendar.DAY_OF_MONTH, 1);
-     * refCal.set(Calendar.HOUR, 12); refCal.set(Calendar.MINUTE, 0); refCal.set(Calendar.SECOND,
-     * 0); refCal.set(Calendar.MILLISECOND, 0); MILLIS_SINCE_4713 = refCal.getTimeInMillis() -
-     * 43200000L; //(43200000L: 12 hour correction factor taken from DBFViewer2000)
+     * <p>Calendar refCal = (Calendar) new GregorianCalendar(TimeZone.getTimeZone("UTC")); refCal.set(Calendar.ERA,
+     * GregorianCalendar.BC); refCal.set(Calendar.YEAR, 4713); refCal.set(Calendar.MONTH, Calendar.JANUARY);
+     * refCal.set(Calendar.DAY_OF_MONTH, 1); refCal.set(Calendar.HOUR, 12); refCal.set(Calendar.MINUTE, 0);
+     * refCal.set(Calendar.SECOND, 0); refCal.set(Calendar.MILLISECOND, 0); MILLIS_SINCE_4713 = refCal.getTimeInMillis()
+     * - 43200000L; //(43200000L: 12 hour correction factor taken from DBFViewer2000)
      */
     public static long MILLIS_SINCE_4713 = -210866803200000L;
 
     /** Class for holding the information associated with a record. */
-    class DbaseField {
+    static class DbaseField {
 
         // Field Name
         String fieldName;
@@ -181,11 +179,10 @@ public class DbaseFileHeader {
     }
 
     /**
-     * Add a column to this DbaseFileHeader. The type is one of (C N L or D) character, number,
-     * logical(true/false), or date. The Field length is the total length in bytes reserved for this
-     * column. The decimal count only applies to numbers(N), and floating point values (F), and
-     * refers to the number of characters to reserve after the decimal point. <B>Don't expect
-     * miracles from this...</B>
+     * Add a column to this DbaseFileHeader. The type is one of (C N L or D) character, number, logical(true/false), or
+     * date. The Field length is the total length in bytes reserved for this column. The decimal count only applies to
+     * numbers(N), and floating point values (F), and refers to the number of characters to reserve after the decimal
+     * point. <B>Don't expect miracles from this...</B>
      *
      * <PRE>
      * Field Type MaxLength
@@ -197,15 +194,13 @@ public class DbaseFileHeader {
      * N          18
      * </PRE>
      *
-     * @param inFieldName The name of the new field, must be less than 10 characters or it gets
-     *     truncated.
+     * @param inFieldName The name of the new field, must be less than 10 characters or it gets truncated.
      * @param inFieldType A character representing the dBase field, ( see above ). Case insensitive.
      * @param inFieldLength The length of the field, in bytes ( see above )
      * @param inDecimalCount For numeric fields, the number of decimal places to track.
      * @throws DbaseFileException If the type is not recognized.
      */
-    public void addColumn(
-            String inFieldName, char inFieldType, int inFieldLength, int inDecimalCount)
+    public void addColumn(String inFieldName, char inFieldType, int inFieldLength, int inDecimalCount)
             throws DbaseFileException {
         if (inFieldLength <= 0) {
             throw new DbaseFileException("field length <= 0");
@@ -237,29 +232,27 @@ public class DbaseFileHeader {
         if (!tempFieldName.equals(fitFieldName)) {
             tempFieldName = fitFieldName;
             if (LOGGER.isLoggable(Level.WARNING)) {
-                LOGGER.warning(
-                        "FieldName "
-                                + inFieldName
-                                + " is longer than 10 bytes in given charset, truncating to "
-                                + tempFieldName);
+                LOGGER.warning("FieldName "
+                        + inFieldName
+                        + " is longer than 10 bytes in given charset, truncating to "
+                        + tempFieldName);
             }
         }
         tempFieldDescriptors[fields.length].fieldName = tempFieldName;
 
         // the field type
-        if ((inFieldType == 'C') || (inFieldType == 'c')) {
+        if (inFieldType == 'C' || inFieldType == 'c') {
             tempFieldDescriptors[fields.length].fieldType = 'C';
             if (inFieldLength > 254) {
                 if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine(
-                            "Field Length for "
-                                    + inFieldName
-                                    + " set to "
-                                    + inFieldLength
-                                    + " Which is longer than 254, not consistent with dbase III");
+                    LOGGER.fine("Field Length for "
+                            + inFieldName
+                            + " set to "
+                            + inFieldLength
+                            + " Which is longer than 254, not consistent with dbase III");
                 }
             }
-        } else if ((inFieldType == 'S') || (inFieldType == 's')) {
+        } else if (inFieldType == 'S' || inFieldType == 's') {
             tempFieldDescriptors[fields.length].fieldType = 'C';
             if (LOGGER.isLoggable(Level.WARNING)) {
                 LOGGER.warning(
@@ -269,25 +262,23 @@ public class DbaseFileHeader {
             }
             if (inFieldLength > 254) {
                 if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine(
-                            "Field Length for "
-                                    + inFieldName
-                                    + " set to "
-                                    + inFieldLength
-                                    + " Which is longer than 254, not consistent with dbase III");
+                    LOGGER.fine("Field Length for "
+                            + inFieldName
+                            + " set to "
+                            + inFieldLength
+                            + " Which is longer than 254, not consistent with dbase III");
                 }
             }
             tempFieldDescriptors[fields.length].fieldLength = 8;
-        } else if ((inFieldType == 'D') || (inFieldType == 'd')) {
+        } else if (inFieldType == 'D' || inFieldType == 'd') {
             tempFieldDescriptors[fields.length].fieldType = 'D';
             if (inFieldLength != 8) {
                 if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine(
-                            "Field Length for "
-                                    + inFieldName
-                                    + " set to "
-                                    + inFieldLength
-                                    + " Setting to 8 digits YYYYMMDD");
+                    LOGGER.fine("Field Length for "
+                            + inFieldName
+                            + " set to "
+                            + inFieldLength
+                            + " Setting to 8 digits YYYYMMDD");
                 }
             }
             tempFieldDescriptors[fields.length].fieldLength = 8;
@@ -295,17 +286,16 @@ public class DbaseFileHeader {
             tempFieldDescriptors[fields.length].fieldType = '@';
             if (inFieldLength != 8) {
                 if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine(
-                            "Field Length for "
-                                    + inFieldName
-                                    + " set to "
-                                    + inFieldLength
-                                    + " Setting to 8 digits - two longs,"
-                                    + "one long for date and one long for time");
+                    LOGGER.fine("Field Length for "
+                            + inFieldName
+                            + " set to "
+                            + inFieldLength
+                            + " Setting to 8 digits - two longs,"
+                            + "one long for date and one long for time");
                 }
             }
             tempFieldDescriptors[fields.length].fieldLength = 8;
-        } else if ((inFieldType == 'F') || (inFieldType == 'f')) {
+        } else if (inFieldType == 'F' || inFieldType == 'f') {
             tempFieldDescriptors[fields.length].fieldType = 'F';
             if (inFieldLength > 20) {
                 if (LOGGER.isLoggable(Level.FINE)) {
@@ -317,58 +307,53 @@ public class DbaseFileHeader {
                                     + " Preserving length, but should be set to Max of 20 not valid for dbase IV, and UP specification, not present in dbaseIII.");
                 }
             }
-        } else if ((inFieldType == 'N') || (inFieldType == 'n')) {
+        } else if (inFieldType == 'N' || inFieldType == 'n') {
             tempFieldDescriptors[fields.length].fieldType = 'N';
             if (inFieldLength > 18) {
                 if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine(
-                            "Field Length for "
-                                    + inFieldName
-                                    + " set to "
-                                    + inFieldLength
-                                    + " Preserving length, but should be set to Max of 18 for dbase III specification.");
+                    LOGGER.fine("Field Length for "
+                            + inFieldName
+                            + " set to "
+                            + inFieldLength
+                            + " Preserving length, but should be set to Max of 18 for dbase III specification.");
                 }
             }
             if (inDecimalCount < 0) {
                 if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine(
-                            "Field Decimal Position for "
-                                    + inFieldName
-                                    + " set to "
-                                    + inDecimalCount
-                                    + " Setting to 0 no decimal data will be saved.");
+                    LOGGER.fine("Field Decimal Position for "
+                            + inFieldName
+                            + " set to "
+                            + inDecimalCount
+                            + " Setting to 0 no decimal data will be saved.");
                 }
                 tempFieldDescriptors[fields.length].decimalCount = 0;
             }
             if (inDecimalCount > inFieldLength - 1) {
                 if (LOGGER.isLoggable(Level.WARNING)) {
-                    LOGGER.warning(
-                            "Field Decimal Position for "
-                                    + inFieldName
-                                    + " set to "
-                                    + inDecimalCount
-                                    + " Setting to "
-                                    + (inFieldLength - 1)
-                                    + " no non decimal data will be saved.");
+                    LOGGER.warning("Field Decimal Position for "
+                            + inFieldName
+                            + " set to "
+                            + inDecimalCount
+                            + " Setting to "
+                            + (inFieldLength - 1)
+                            + " no non decimal data will be saved.");
                 }
                 tempFieldDescriptors[fields.length].decimalCount = inFieldLength - 1;
             }
-        } else if ((inFieldType == 'L') || (inFieldType == 'l')) {
+        } else if (inFieldType == 'L' || inFieldType == 'l') {
             tempFieldDescriptors[fields.length].fieldType = 'L';
             if (inFieldLength != 1) {
                 if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine(
-                            "Field Length for "
-                                    + inFieldName
-                                    + " set to "
-                                    + inFieldLength
-                                    + " Setting to length of 1 for logical fields.");
+                    LOGGER.fine("Field Length for "
+                            + inFieldName
+                            + " set to "
+                            + inFieldLength
+                            + " Setting to length of 1 for logical fields.");
                 }
             }
             tempFieldDescriptors[fields.length].fieldLength = 1;
         } else {
-            throw new DbaseFileException(
-                    "Undefined field type " + inFieldType + " For column " + inFieldName);
+            throw new DbaseFileException("Undefined field type " + inFieldType + " For column " + inFieldName);
         }
         // the length of a record
         tempLength = tempLength + tempFieldDescriptors[fields.length].fieldLength;
@@ -406,8 +391,7 @@ public class DbaseFileHeader {
                 // if this is the last field and we still haven't found the
                 // named field
                 if (i == j && i == fields.length - 1) {
-                    LOGGER.warning(
-                            "Could not find a field named '" + inFieldName + "' for removal");
+                    LOGGER.warning("Could not find a field named '" + inFieldName + "' for removal");
                     return retCol;
                 }
                 tempFieldDescriptors[j] = fields[i];
@@ -520,8 +504,8 @@ public class DbaseFileHeader {
     /**
      * Read the header data from the DBF file.
      *
-     * @param channel A readable byte channel. If you have an InputStream you need to use, you can
-     *     call java.nio.Channels.getChannel(InputStream in).
+     * @param channel A readable byte channel. If you have an InputStream you need to use, you can call
+     *     java.nio.Channels.getChannel(InputStream in).
      * @throws IOException If errors occur while reading.
      */
     public void readHeader(ReadableByteChannel channel) throws IOException {
@@ -533,10 +517,10 @@ public class DbaseFileHeader {
             in.order(ByteOrder.LITTLE_ENDIAN);
 
             // only want to read first 10 bytes...
-            ((Buffer) in).limit(10);
+            in.limit(10);
 
             read(in, channel);
-            ((Buffer) in).position(0);
+            in.position(0);
 
             // type of file.
             byte magic = in.get();
@@ -566,21 +550,24 @@ public class DbaseFileHeader {
             // read the length of the header structure.
             // ahhh.. unsigned little-endian shorts
             // mask out the byte and or it with shifted 2nd byte
-            headerLength = (in.get() & 0xff) | ((in.get() & 0xff) << 8);
+            headerLength = in.get() & 0xff | (in.get() & 0xff) << 8;
 
             // if the header is bigger than our 1K, reallocate
             if (headerLength > in.capacity()) {
                 NIOUtilities.clean(in, false);
                 in = NIOUtilities.allocate(headerLength - 10);
             }
-            ((Buffer) in).limit(headerLength - 10);
+            if (headerLength <= 10) {
+                return; // or throw an exception?
+            }
+            in.limit(headerLength - 10);
             in.position(0);
             read(in, channel);
             in.position(0);
 
             // read the length of a record
             // ahhh.. unsigned little-endian shorts
-            recordLength = (in.get() & 0xff) | ((in.get() & 0xff) << 8);
+            recordLength = in.get() & 0xff | (in.get() & 0xff) << 8;
 
             // skip the reserved bytes in the header.
             in.position(in.position() + 20);
@@ -685,7 +672,7 @@ public class DbaseFileHeader {
         // read the length of the header structure.
         // ahhh.. unsigned little-endian shorts
         // mask out the byte and or it with shifted 2nd byte
-        headerLength = (in.get() & 0xff) | ((in.get() & 0xff) << 8);
+        headerLength = in.get() & 0xff | (in.get() & 0xff) << 8;
 
         // if the header is bigger than our 1K, reallocate
         if (headerLength > in.capacity()) {
@@ -695,7 +682,7 @@ public class DbaseFileHeader {
 
         // read the length of a record
         // ahhh.. unsigned little-endian shorts
-        recordLength = (in.get() & 0xff) | ((in.get() & 0xff) << 8);
+        recordLength = in.get() & 0xff | (in.get() & 0xff) << 8;
 
         // skip the reserved bytes in the header.
         in.position(in.position() + 20);
@@ -779,10 +766,11 @@ public class DbaseFileHeader {
     /**
      * Write the header data to the DBF file.
      *
-     * @param out A channel to write to. If you have an OutputStream you can obtain the correct
-     *     channel by using java.nio.Channels.newChannel(OutputStream out).
+     * @param out A channel to write to. If you have an OutputStream you can obtain the correct channel by using
+     *     java.nio.Channels.newChannel(OutputStream out).
      * @throws IOException If errors occur.
      */
+    @SuppressWarnings("PMD.EmptyControlStatement")
     public void writeHeader(WritableByteChannel out) throws IOException {
         // take care of the annoying case where no records have been added...
         if (headerLength == -1) {
@@ -800,7 +788,7 @@ public class DbaseFileHeader {
             c.setTime(new Date());
             buffer.put((byte) (c.get(Calendar.YEAR) % 100));
             buffer.put((byte) (c.get(Calendar.MONTH) + 1));
-            buffer.put((byte) (c.get(Calendar.DAY_OF_MONTH)));
+            buffer.put((byte) c.get(Calendar.DAY_OF_MONTH));
 
             // write the number of records in the datafile.
             buffer.putInt(recordCnt);
@@ -853,7 +841,7 @@ public class DbaseFileHeader {
             buffer.position(0);
 
             int r = buffer.remaining();
-            while ((r -= out.write(buffer)) > 0) {; // do nothing
+            while ((r -= out.write(buffer)) > 0) { // do nothing
             }
         } finally {
             NIOUtilities.clean(buffer, false);
@@ -869,17 +857,16 @@ public class DbaseFileHeader {
     public String toString() {
         StringBuffer fs = new StringBuffer();
         for (DbaseField f : fields) {
-            fs.append(
-                    f.fieldName
-                            + " "
-                            + f.fieldType
-                            + " "
-                            + f.fieldLength
-                            + " "
-                            + f.decimalCount
-                            + " "
-                            + f.fieldDataAddress
-                            + "\n");
+            fs.append(f.fieldName
+                    + " "
+                    + f.fieldType
+                    + " "
+                    + f.fieldLength
+                    + " "
+                    + f.decimalCount
+                    + " "
+                    + f.fieldDataAddress
+                    + "\n");
         }
 
         return "DB3 Header\n"

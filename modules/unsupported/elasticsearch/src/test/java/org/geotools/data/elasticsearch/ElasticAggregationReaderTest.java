@@ -31,13 +31,13 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.store.ContentState;
 import org.geotools.feature.SchemaException;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class ElasticAggregationReaderTest {
 
@@ -55,8 +55,7 @@ public class ElasticAggregationReaderTest {
 
     @Before
     public void setup() throws SchemaException {
-        SimpleFeatureType featureType =
-                DataUtilities.createType("test", "name:String,_aggregation:java.util.HashMap");
+        SimpleFeatureType featureType = DataUtilities.createType("test", "name:String,_aggregation:java.util.HashMap");
         state = new ContentState(null);
         state.setFeatureType(featureType);
         hits = new ArrayList<>();
@@ -76,9 +75,7 @@ public class ElasticAggregationReaderTest {
         aggregations.put("test", aggregation);
         assertFalse((new ElasticFeatureReader(state, hits, aggregations, 0)).hasNext());
 
-        aggregation.setBuckets(
-                ImmutableList.of(
-                        ImmutableMap.of("key1", "value1"), ImmutableMap.of("key2", "value2")));
+        aggregation.setBuckets(ImmutableList.of(ImmutableMap.of("key1", "value1"), ImmutableMap.of("key2", "value2")));
         reader = new ElasticFeatureReader(state, hits, aggregations, 0);
         assertTrue(reader.hasNext());
         feature = reader.next();
@@ -115,6 +112,6 @@ public class ElasticAggregationReaderTest {
     }
 
     private Map<String, Object> byteArrayToMap(Object bytes) throws IOException {
-        return mapper.readValue((byte[]) bytes, new TypeReference<Map<String, Object>>() {});
+        return mapper.readValue((byte[]) bytes, new TypeReference<>() {});
     }
 }

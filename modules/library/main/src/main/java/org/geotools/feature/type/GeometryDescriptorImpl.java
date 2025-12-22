@@ -16,20 +16,15 @@
  */
 package org.geotools.feature.type;
 
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.feature.type.Name;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
 public class GeometryDescriptorImpl extends AttributeDescriptorImpl implements GeometryDescriptor {
 
     public GeometryDescriptorImpl(
-            GeometryType type,
-            Name name,
-            int min,
-            int max,
-            boolean isNillable,
-            Object defaultValue) {
+            GeometryType type, Name name, int min, int max, boolean isNillable, Object defaultValue) {
         super(type, name, min, max, isNillable, defaultValue);
     }
 

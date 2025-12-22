@@ -16,6 +16,8 @@
  */
 package org.geotools.measure;
 
+import java.io.Serial;
+
 /**
  * A longitude angle. Positive longitudes are East, while negative longitudes are West.
  *
@@ -27,6 +29,7 @@ package org.geotools.measure;
  */
 public final class Longitude extends Angle {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = -8614900608052762636L;
 
     /** Minimum legal value for longitude (-180°). */
@@ -45,10 +48,9 @@ public final class Longitude extends Angle {
     }
 
     /**
-     * Constructs a newly allocated {@code Longitude} object that represents the longitude value
-     * represented by the string. The string should represents an angle in either fractional degrees
-     * (e.g. 45.5°) or degrees with minutes and seconds (e.g. 45°30'). The hemisphere (E or W) is
-     * optional (default to East).
+     * Constructs a newly allocated {@code Longitude} object that represents the longitude value represented by the
+     * string. The string should represents an angle in either fractional degrees (e.g. 45.5°) or degrees with minutes
+     * and seconds (e.g. 45°30'). The hemisphere (E or W) is optional (default to East).
      *
      * @param theta A string to be converted to a {@code Longitude}.
      * @throws NumberFormatException if the string does not contain a parsable longitude.

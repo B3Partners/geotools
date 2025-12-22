@@ -21,13 +21,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.util.Map;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.grid.GridElement;
 import org.geotools.grid.GridFeatureBuilder;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Unit tests for the Hexagons class.
@@ -78,8 +78,7 @@ public class HexagonsTest extends HexagonTestBase {
 
     @Test
     public void createGrid() throws Exception {
-        final SimpleFeatureType TYPE =
-                DataUtilities.createType("hextype", "hexagon:Polygon,id:Integer");
+        final SimpleFeatureType TYPE = DataUtilities.createType("hextype", "hexagon:Polygon,id:Integer");
 
         final double SPAN = 100;
         final ReferencedEnvelope bounds = new ReferencedEnvelope(0, SPAN, 0, SPAN, null);
@@ -99,8 +98,7 @@ public class HexagonsTest extends HexagonTestBase {
 
         Setter setter = new Setter(TYPE);
 
-        SimpleFeatureSource gridSource =
-                Hexagons.createGrid(bounds, SIDE_LEN, HexagonOrientation.FLAT, setter);
+        SimpleFeatureSource gridSource = Hexagons.createGrid(bounds, SIDE_LEN, HexagonOrientation.FLAT, setter);
         assertNotNull(gridSource);
 
         int expectedCols = (int) ((SPAN - 2 * SIDE_LEN) / (1.5 * SIDE_LEN)) + 1;

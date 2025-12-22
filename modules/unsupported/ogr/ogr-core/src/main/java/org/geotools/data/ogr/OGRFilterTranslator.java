@@ -16,33 +16,33 @@
  */
 package org.geotools.data.ogr;
 
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
 import org.geotools.filter.FilterCapabilities;
 import org.geotools.filter.visitor.PostPreProcessFilterSplittingVisitor;
 import org.geotools.filter.visitor.SimplifyingFilterVisitor;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.And;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
 
 /**
  * Helper which translates the GeoTools filters into the filter bits that OGR understands
@@ -107,9 +107,7 @@ class OGRFilterTranslator {
         this.filter = (Filter) filter.accept(simplifier, null);
     }
 
-    /**
-     * Returns true if this filter can be fully encoded without requiring further post processing
-     */
+    /** Returns true if this filter can be fully encoded without requiring further post processing */
     public boolean isFilterFullySupported() {
         if (filter == Filter.INCLUDE || filter == Filter.EXCLUDE) {
             return true;
@@ -117,8 +115,7 @@ class OGRFilterTranslator {
 
         // we can encode fully an attribute filter plus a bbox spatial filter
         PostPreProcessFilterSplittingVisitor visitor =
-                new PostPreProcessFilterSplittingVisitor(
-                        ATTRIBUTE_FILTER_CAPABILITIES, schema, null);
+                new PostPreProcessFilterSplittingVisitor(ATTRIBUTE_FILTER_CAPABILITIES, schema, null);
         filter.accept(visitor, null);
         Filter postFilter = visitor.getFilterPost();
         return postFilter == Filter.INCLUDE || postFilter instanceof BBOX;
@@ -129,47 +126,38 @@ class OGRFilterTranslator {
         // see if the query has a single bbox filter (that's how much we're sure to be able to
         // encode)
         PostPreProcessFilterSplittingVisitor visitor =
-                new PostPreProcessFilterSplittingVisitor(
-                        STRICT_GEOMETRY_FILTER_CAPABILITIES, schema, null);
+                new PostPreProcessFilterSplittingVisitor(STRICT_GEOMETRY_FILTER_CAPABILITIES, schema, null);
         filter.accept(visitor, null);
         Filter preFilter = visitor.getFilterPre();
 
         if (preFilter == null || preFilter instanceof BBOX) {
             // ok, then we can extract using the extended caps
-            visitor =
-                    new PostPreProcessFilterSplittingVisitor(
-                            EXTENDED_FILTER_CAPABILITIES, schema, null);
+            visitor = new PostPreProcessFilterSplittingVisitor(EXTENDED_FILTER_CAPABILITIES, schema, null);
             filter.accept(visitor, null);
             return visitor.getFilterPost();
         } else {
             // though luck, there is more than a single bbox filter
-            visitor =
-                    new PostPreProcessFilterSplittingVisitor(
-                            ATTRIBUTE_FILTER_CAPABILITIES, schema, null);
+            visitor = new PostPreProcessFilterSplittingVisitor(ATTRIBUTE_FILTER_CAPABILITIES, schema, null);
             filter.accept(visitor, null);
             return visitor.getFilterPost();
         }
     }
 
     /**
-     * Parses the Geotools filter and tries to extract an intersecting geometry that can be used as
-     * the OGR spatial filter
+     * Parses the Geotools filter and tries to extract an intersecting geometry that can be used as the OGR spatial
+     * filter
      */
     public Geometry getSpatialFilter() {
         // TODO: switch to the non deprecated splitter (that no one seems to be using)
         PostPreProcessFilterSplittingVisitor visitor =
-                new PostPreProcessFilterSplittingVisitor(
-                        GEOMETRY_FILTER_CAPABILITIES, schema, null);
+                new PostPreProcessFilterSplittingVisitor(GEOMETRY_FILTER_CAPABILITIES, schema, null);
         filter.accept(visitor, null);
         Filter preFilter = visitor.getFilterPre();
-        if (preFilter instanceof BinarySpatialOperator) {
-            BinarySpatialOperator bso = ((BinarySpatialOperator) preFilter);
+        if (preFilter instanceof BinarySpatialOperator bso) {
             Expression geomExpression = null;
-            if (bso.getExpression1() instanceof PropertyName
-                    && bso.getExpression2() instanceof Literal) {
+            if (bso.getExpression1() instanceof PropertyName && bso.getExpression2() instanceof Literal) {
                 geomExpression = bso.getExpression2();
-            } else if (bso.getExpression1() instanceof Literal
-                    && bso.getExpression2() instanceof PropertyName) {
+            } else if (bso.getExpression1() instanceof Literal && bso.getExpression2() instanceof PropertyName) {
                 geomExpression = bso.getExpression1();
             }
             if (geomExpression != null) {
@@ -181,14 +169,12 @@ class OGRFilterTranslator {
     }
 
     /**
-     * Parses the GeoTools filter and tries to extract an SQL expression that can be used as the OGR
-     * attribute filter
+     * Parses the GeoTools filter and tries to extract an SQL expression that can be used as the OGR attribute filter
      */
     public String getAttributeFilter() {
         // TODO: switch to the non deprecated splitter (that no one seems to be using)
         PostPreProcessFilterSplittingVisitor visitor =
-                new PostPreProcessFilterSplittingVisitor(
-                        ATTRIBUTE_FILTER_CAPABILITIES, schema, null);
+                new PostPreProcessFilterSplittingVisitor(ATTRIBUTE_FILTER_CAPABILITIES, schema, null);
         filter.accept(visitor, null);
         Filter preFilter = visitor.getFilterPre();
         if (preFilter != Filter.EXCLUDE && preFilter != Filter.INCLUDE) {

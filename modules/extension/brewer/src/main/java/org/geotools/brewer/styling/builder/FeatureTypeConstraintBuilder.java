@@ -19,9 +19,9 @@ package org.geotools.brewer.styling.builder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.geotools.styling.Extent;
-import org.geotools.styling.FeatureTypeConstraint;
-import org.opengis.filter.Filter;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.style.Extent;
+import org.geotools.api.style.FeatureTypeConstraint;
 
 public class FeatureTypeConstraintBuilder extends AbstractSLDBuilder<FeatureTypeConstraint> {
     private List<Extent> extents = new ArrayList<>();
@@ -64,8 +64,7 @@ public class FeatureTypeConstraintBuilder extends AbstractSLDBuilder<FeatureType
         }
 
         Extent[] ea = extents.toArray(new Extent[extents.size()]);
-        FeatureTypeConstraint constraint =
-                sf.createFeatureTypeConstraint(featureTypeName, filter, ea);
+        FeatureTypeConstraint constraint = sf.createFeatureTypeConstraint(featureTypeName, filter, ea);
 
         if (parent == null) {
             reset();
@@ -103,7 +102,6 @@ public class FeatureTypeConstraintBuilder extends AbstractSLDBuilder<FeatureType
 
     @Override
     protected void buildSLDInternal(StyledLayerDescriptorBuilder sb) {
-        throw new UnsupportedOperationException(
-                "Can't build a SLD out of a feature type contraint");
+        throw new UnsupportedOperationException("Can't build a SLD out of a feature type contraint");
     }
 }

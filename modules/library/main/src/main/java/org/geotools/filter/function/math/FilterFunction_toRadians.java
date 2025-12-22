@@ -20,20 +20,17 @@ package org.geotools.filter.function.math;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.util.Converters;
 import org.geotools.util.factory.Hints;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_toRadians extends FunctionExpressionImpl {
 
     // public static FunctionName NAME = new FunctionNameImpl("toRadians","degree");
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "toRadians",
-                    parameter("radians", Double.class),
-                    parameter("degree", Number.class));
+            new FunctionNameImpl("toRadians", parameter("radians", Double.class), parameter("degree", Number.class));
 
     public FilterFunction_toRadians() {
         super(NAME);

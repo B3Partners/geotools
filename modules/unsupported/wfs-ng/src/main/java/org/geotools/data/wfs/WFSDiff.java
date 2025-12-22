@@ -23,17 +23,17 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.geometry.BoundingBox;
 import org.geotools.data.Diff;
-import org.geotools.data.FeatureReader;
 import org.geotools.data.store.ContentState;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.geometry.BoundingBox;
 
 public class WFSDiff extends Diff {
 
@@ -86,9 +86,7 @@ public class WFSDiff extends Diff {
             if (removed) {
                 // will cause an extra update to be sent after the batch modifications
                 MODULE.finer(
-                        "Removing "
-                                + fid
-                                + " from list of batch modified features as it's being modified directly");
+                        "Removing " + fid + " from list of batch modified features as it's being modified directly");
             }
         }
         super.modify(fid, f);
@@ -103,8 +101,7 @@ public class WFSDiff extends Diff {
             throws IOException {
 
         ReferencedEnvelope bounds =
-                new ReferencedEnvelope(
-                        contentState.getFeatureType().getCoordinateReferenceSystem());
+                new ReferencedEnvelope(contentState.getFeatureType().getCoordinateReferenceSystem());
 
         synchronized (batchModified) {
             while (oldFeatures.hasNext()) {
@@ -119,8 +116,8 @@ public class WFSDiff extends Diff {
                     Name propName = properties[i];
                     Object newValue = values[i];
                     old.setAttribute(propName, newValue);
-                    if (newValue instanceof Geometry) {
-                        Envelope envelope = ((Geometry) newValue).getEnvelopeInternal();
+                    if (newValue instanceof Geometry geometry) {
+                        Envelope envelope = geometry.getEnvelopeInternal();
                         bounds.expandToInclude(envelope);
                     }
                 }

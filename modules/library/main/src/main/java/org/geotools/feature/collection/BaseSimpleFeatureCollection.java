@@ -16,16 +16,15 @@
  */
 package org.geotools.feature.collection;
 
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.store.EmptyFeatureCollection;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
 
-public abstract class BaseSimpleFeatureCollection
-        extends BaseFeatureCollection<SimpleFeatureType, SimpleFeature>
+public abstract class BaseSimpleFeatureCollection extends BaseFeatureCollection<SimpleFeatureType, SimpleFeature>
         implements SimpleFeatureCollection {
 
     protected BaseSimpleFeatureCollection(SimpleFeatureType schema) {
@@ -35,8 +34,8 @@ public abstract class BaseSimpleFeatureCollection
     /**
      * Subclasses required to implement this method to traverse FeatureCollection contents.
      *
-     * <p>Note that {@link SimpleFeatureIterator#close()} is available to clean up after any
-     * resource use required during traversal.
+     * <p>Note that {@link SimpleFeatureIterator#close()} is available to clean up after any resource use required
+     * during traversal.
      */
     @Override
     public abstract SimpleFeatureIterator features();

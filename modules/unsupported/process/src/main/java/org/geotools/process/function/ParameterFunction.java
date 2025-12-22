@@ -22,41 +22,40 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.process.Process;
 import org.geotools.util.Converters;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
 
 /**
  * A helper function helping to bridge the {@link Process} world with the {@link Function} one.
  *
- * <p>In particular this one is used to build a named parameter value, allowing to bridge between
- * the positional parameters of {@link Function} and the named parameters of {@link Process}.
+ * <p>In particular this one is used to build a named parameter value, allowing to bridge between the positional
+ * parameters of {@link Function} and the named parameters of {@link Process}.
  *
  * <p>The value in the returned map will vary depending on how many parameters are given:
  *
  * <ul>
  *   <li>The first parameter is always the process argument name
- *   <li>If there is no second parameter, the evaluation context is used as the value (normally that
- *       would be a Feature, feature collection or grid coverage
- *   <li>If there is is more than one param left after the argument name a collection containing
- *       them will be built and returned
+ *   <li>If there is no second parameter, the evaluation context is used as the value (normally that would be a Feature,
+ *       feature collection or grid coverage
+ *   <li>If there is is more than one param left after the argument name a collection containing them will be built and
+ *       returned
  * </ul>
  *
  * @author Andrea Aime - GeoSolutions
  */
 class ParameterFunction implements Function {
 
-    static final FunctionName NAME =
-            new FunctionNameImpl(
-                    "parameter",
-                    parameter("parameterMap", Map.class),
-                    parameter("argumentName", String.class),
-                    parameter("values", Object.class, 0, Integer.MAX_VALUE));
+    static final FunctionName NAME = new FunctionNameImpl(
+            "parameter",
+            parameter("parameterMap", Map.class),
+            parameter("argumentName", String.class),
+            parameter("values", Object.class, 0, Integer.MAX_VALUE));
 
     Literal fallbackValue;
 
@@ -96,16 +95,14 @@ class ParameterFunction implements Function {
     public Object evaluate(Object object) {
         if (parameters.isEmpty()) {
             throw new IllegalArgumentException(
-                    "The parameter function requires at "
-                            + "least one parameter, the argument name");
+                    "The parameter function requires at " + "least one parameter, the argument name");
         }
 
         // get the param name
         String name = parameters.get(0).evaluate(object, String.class);
         if (name == null) {
             throw new IllegalArgumentException(
-                    "The first function parameter should be a string, "
-                            + "the name of a process argument");
+                    "The first function parameter should be a string, " + "the name of a process argument");
         }
 
         // get the other values
@@ -139,8 +136,8 @@ class ParameterFunction implements Function {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((fallbackValue == null) ? 0 : fallbackValue.hashCode());
-        result = prime * result + ((parameters == null) ? 0 : parameters.hashCode());
+        result = prime * result + (fallbackValue == null ? 0 : fallbackValue.hashCode());
+        result = prime * result + (parameters == null ? 0 : parameters.hashCode());
         return result;
     }
 

@@ -21,13 +21,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.IllegalFilterException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Calculates the median of an attribute in all features of a collection
@@ -39,10 +39,9 @@ public class MedianVisitor implements FeatureCalc, FeatureAttributeVisitor {
     private Expression expr;
     private List<Comparable> list = new ArrayList<>();
     /**
-     * This var is only used to store the median for optimized functions, where we don't have a
-     * complete list, but just the answer instead (merging will be disabled until some cool code is
-     * written to handle this). Only setValue(median) should write to this var. If this value is not
-     * null, it takes priority over list.
+     * This var is only used to store the median for optimized functions, where we don't have a complete list, but just
+     * the answer instead (merging will be disabled until some cool code is written to handle this). Only
+     * setValue(median) should write to this var. If this value is not null, it takes priority over list.
      */
     private Object median = null;
 
@@ -51,8 +50,7 @@ public class MedianVisitor implements FeatureCalc, FeatureAttributeVisitor {
         expr = factory.property(attributeTypeName);
     }
 
-    public MedianVisitor(int attributeTypeIndex, SimpleFeatureType type)
-            throws IllegalFilterException {
+    public MedianVisitor(int attributeTypeIndex, SimpleFeatureType type) throws IllegalFilterException {
         FilterFactory factory = CommonFactoryFinder.getFilterFactory(null);
         expr = factory.property(type.getDescriptor(attributeTypeIndex).getLocalName());
     }
@@ -81,19 +79,18 @@ public class MedianVisitor implements FeatureCalc, FeatureAttributeVisitor {
     }
 
     public void visit(SimpleFeature feature) {
-        visit((org.opengis.feature.Feature) feature);
+        visit((org.geotools.api.feature.Feature) feature);
     }
 
     @Override
-    public void visit(org.opengis.feature.Feature feature) {
-        /** Visitor function */
+    public void visit(org.geotools.api.feature.Feature feature) {
+        /* Visitor function */
         Object result = expr.evaluate(feature);
         if (result == null) {
             return; // skip
         }
 
-        if (result instanceof Comparable) {
-            Comparable value = (Comparable) result;
+        if (result instanceof Comparable value) {
             list.add(value);
         } else {
             throw new IllegalStateException("Expression is not comparable!");
@@ -151,8 +148,7 @@ public class MedianVisitor implements FeatureCalc, FeatureAttributeVisitor {
     public static class MedianResult extends AbstractCalcResult {
         private List<Comparable> list;
         /**
-         * When an optimization is used, median will have a value and list will not. This var takes
-         * priority over list.
+         * When an optimization is used, median will have a value and list will not. This var takes priority over list.
          */
         private Object median;
 
@@ -182,8 +178,7 @@ public class MedianVisitor implements FeatureCalc, FeatureAttributeVisitor {
         @Override
         public boolean isCompatible(CalcResult targetResults) {
             // list each calculation result which can merge with this type of result
-            if (targetResults instanceof MedianResult || targetResults == CalcResult.NULL_RESULT)
-                return true;
+            if (targetResults instanceof MedianResult || targetResults == CalcResult.NULL_RESULT) return true;
             return false;
         }
 
@@ -202,12 +197,10 @@ public class MedianVisitor implements FeatureCalc, FeatureAttributeVisitor {
                 return this;
             }
 
-            if (resultsToAdd instanceof MedianResult) {
-                MedianResult moreResults = (MedianResult) resultsToAdd;
+            if (resultsToAdd instanceof MedianResult moreResults) {
                 // ensure both MedianResults are NOT optimized
                 if (isOptimized() || moreResults.isOptimized()) {
-                    throw new IllegalArgumentException(
-                            "Optimized median results cannot be merged.");
+                    throw new IllegalArgumentException("Optimized median results cannot be merged.");
                 }
                 // merge away...
                 List<Comparable> toAdd = moreResults.getList();
@@ -218,7 +211,7 @@ public class MedianVisitor implements FeatureCalc, FeatureAttributeVisitor {
                 int i;
                 for (i = 0; i < list.size(); i++) values[i] = list.get(i);
                 for (int j = 0; j < toAdd.size(); j++) values[i + j] = toAdd.get(j);
-                Class bestClass = CalcUtil.bestClass(values);
+                Class bestClass = CalcUtil.bestClass((Object[]) values);
                 for (int k = 0; k < size; k++) {
                     if (values[k].getClass() != bestClass)
                         values[k] = (Comparable) CalcUtil.convert(values[k], bestClass);
@@ -233,10 +226,9 @@ public class MedianVisitor implements FeatureCalc, FeatureAttributeVisitor {
     }
 
     /**
-     * Given a list, determines the median value and returns it. For numbers, the middle value is
-     * returned, or the average of the two middle numbers if there are an even number of elements.
-     * For non-numeric values (strings, etc) where the number of elements is even, a list containing
-     * the two middle elements is returned.
+     * Given a list, determines the median value and returns it. For numbers, the middle value is returned, or the
+     * average of the two middle numbers if there are an even number of elements. For non-numeric values (strings, etc)
+     * where the number of elements is even, a list containing the two middle elements is returned.
      *
      * @param list an arraylist which is to be sorted and its median extracted
      * @return the median
@@ -251,15 +243,13 @@ public class MedianVisitor implements FeatureCalc, FeatureAttributeVisitor {
 
         int index = list.size() / 2;
 
-        if ((list.size() % 2) == 0) {
+        if (list.size() % 2 == 0) {
             // even number of elements, so we must average the 2 middle ones, or
             // return a list for non-numeric elements
             Object input1 = list.get(index - 1);
             Object input2 = list.get(index);
 
-            if ((input1 instanceof Number) && (input2 instanceof Number)) {
-                Number num1 = (Number) input1;
-                Number num2 = (Number) input2;
+            if (input1 instanceof Number num1 && input2 instanceof Number num2) {
                 Number[] numbers = new Number[2];
                 numbers[0] = num1;
                 numbers[1] = num2;

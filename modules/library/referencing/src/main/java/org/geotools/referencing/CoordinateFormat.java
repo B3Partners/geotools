@@ -16,10 +16,12 @@
  */
 package org.geotools.referencing;
 
+import java.io.Serial;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.text.Format;
+import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
@@ -29,6 +31,15 @@ import java.util.TimeZone;
 import javax.measure.Unit;
 import javax.measure.UnitConverter;
 import javax.measure.quantity.Time;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.cs.AxisDirection;
+import org.geotools.api.referencing.cs.CoordinateSystem;
+import org.geotools.api.referencing.cs.CoordinateSystemAxis;
+import org.geotools.api.referencing.datum.Datum;
+import org.geotools.api.referencing.datum.TemporalDatum;
+import org.geotools.geometry.GeneralPosition;
 import org.geotools.measure.Angle;
 import org.geotools.measure.AngleFormat;
 import org.geotools.measure.Latitude;
@@ -36,31 +47,22 @@ import org.geotools.measure.Longitude;
 import org.geotools.measure.UnitFormat;
 import org.geotools.measure.UnitFormatter;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.referencing.crs.DefaultTemporalCRS;
 import org.geotools.referencing.util.CRSUtilities;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.cs.AxisDirection;
-import org.opengis.referencing.cs.CoordinateSystem;
-import org.opengis.referencing.cs.CoordinateSystemAxis;
-import org.opengis.referencing.datum.Datum;
-import org.opengis.referencing.datum.TemporalDatum;
 import si.uom.NonSI;
 import si.uom.SI;
 
 /**
- * Formats a {@linkplain org.geotools.geometry.GeneralDirectPosition direct position} in an
- * arbitrary {@linkplain CoordinateReferenceSystem coordinate reference system}. The format for each
- * ordinate is infered from the coordinate system units using the following rules:
+ * Formats a {@linkplain GeneralPosition direct position} in an arbitrary {@linkplain CoordinateReferenceSystem
+ * coordinate reference system}. The format for each ordinate is infered from the coordinate system units using the
+ * following rules:
  *
  * <ul>
  *   <li>Ordinate values in {@linkplain NonSI#DEGREE_ANGLE degrees} are formated as angles using
  *       {@link org.geotools.measure.AngleFormat}.
- *   <li>Ordinate values in any unit compatible with {@linkplain SI#SECOND seconds} are formated as
- *       dates using {@link DateFormat}.
+ *   <li>Ordinate values in any unit compatible with {@linkplain SI#SECOND seconds} are formated as dates using
+ *       {@link DateFormat}.
  *   <li>All other values are formatted as numbers using {@link NumberFormat}.
  * </ul>
  *
@@ -72,6 +74,7 @@ import si.uom.SI;
  */
 public class CoordinateFormat extends Format {
     /** Serial number for interoperability with different versions. */
+    @Serial
     private static final long serialVersionUID = 8235685097881260737L;
 
     /** The output coordinate reference system. May be {@code null}. */
@@ -81,9 +84,8 @@ public class CoordinateFormat extends Format {
     private String separator;
 
     /**
-     * The formats to use for formatting. This array's length must be equals to the {@linkplain
-     * #getCoordinateReferenceSystem coordinate system}'s dimension. This array is never {@code
-     * null}.
+     * The formats to use for formatting. This array's length must be equals to the
+     * {@linkplain #getCoordinateReferenceSystem coordinate system}'s dimension. This array is never {@code null}.
      */
     private Format[] formats;
 
@@ -91,8 +93,8 @@ public class CoordinateFormat extends Format {
     private transient UnitFormatter unitFormatter;
 
     /**
-     * The type for each value in the {@code formats} array. Types are: 0=number, 1=longitude,
-     * 2=latitude, 3=other angle, 4=date, 5=ellapsed time. This array is never {@code null}.
+     * The type for each value in the {@code formats} array. Types are: 0=number, 1=longitude, 2=latitude, 3=other
+     * angle, 4=date, 5=ellapsed time. This array is never {@code null}.
      */
     private byte[] types;
 
@@ -102,10 +104,7 @@ public class CoordinateFormat extends Format {
     /** The time epochs. Non-null only if at least one ordinate is a date. */
     private long[] epochs;
 
-    /**
-     * Conversions from temporal axis units to milliseconds. Non-null only if at least one ordinate
-     * is a date.
-     */
+    /** Conversions from temporal axis units to milliseconds. Non-null only if at least one ordinate is a date. */
     private UnitConverter[] toMillis;
 
     /** Dummy field position. */
@@ -115,16 +114,16 @@ public class CoordinateFormat extends Format {
     private final Locale locale;
 
     /**
-     * Constructs a new coordinate format with default locale and a two-dimensional {@linkplain
-     * DefaultGeographicCRS#WGS84 geographic (WGS 1984)} coordinate reference system.
+     * Constructs a new coordinate format with default locale and a two-dimensional
+     * {@linkplain DefaultGeographicCRS#WGS84 geographic (WGS 1984)} coordinate reference system.
      */
     public CoordinateFormat() {
         this(Locale.getDefault());
     }
 
     /**
-     * Construct a new coordinate format for the specified locale and a two-dimensional {@linkplain
-     * DefaultGeographicCRS#WGS84 geographic (WGS 1984)} coordinate reference system.
+     * Construct a new coordinate format for the specified locale and a two-dimensional
+     * {@linkplain DefaultGeographicCRS#WGS84 geographic (WGS 1984)} coordinate reference system.
      *
      * @param locale The locale for formatting coordinates and numbers.
      */
@@ -154,13 +153,13 @@ public class CoordinateFormat extends Format {
     }
 
     /**
-     * Set the coordinate reference system for points to be formatted. The number of dimensions must
-     * matched the dimension of points to be formatted.
+     * Set the coordinate reference system for points to be formatted. The number of dimensions must matched the
+     * dimension of points to be formatted.
      *
      * @param crs The new coordinate system.
      */
     public void setCoordinateReferenceSystem(final CoordinateReferenceSystem crs) {
-        if (CRS.equalsIgnoreMetadata(this.crs, (this.crs = crs))) {
+        if (CRS.equalsIgnoreMetadata(this.crs, this.crs = crs)) {
             return;
         }
         Format numberFormat = null;
@@ -232,13 +231,13 @@ public class CoordinateFormat extends Format {
                 Unit<Time> timeUnit = (Unit<Time>) unit;
 
                 final Datum datum = CRSUtilities.getDatum(CRSUtilities.getSubCRS(crs, i, i + 1));
-                if (datum instanceof TemporalDatum) {
+                if (datum instanceof TemporalDatum temporalDatum) {
                     if (toMillis == null) {
                         toMillis = new UnitConverter[formats.length];
                         epochs = new long[formats.length];
                     }
                     toMillis[i] = timeUnit.getConverterTo(DefaultTemporalCRS.MILLISECOND);
-                    epochs[i] = ((TemporalDatum) datum).getOrigin().getTime();
+                    epochs[i] = temporalDatum.getOrigin().getTime();
                     if (dateFormat == null) {
                         dateFormat = DateFormat.getDateInstance(DateFormat.DEFAULT, locale);
                     }
@@ -282,17 +281,17 @@ public class CoordinateFormat extends Format {
     }
 
     /**
-     * Set the pattern for numbers fields. If some ordinates are formatted as plain number (for
-     * example in {@linkplain org.geotools.referencing.cs.DefaultCartesianCS cartesian coordinate
-     * system}), then those numbers will be formatted using this pattern.
+     * Set the pattern for numbers fields. If some ordinates are formatted as plain number (for example in
+     * {@linkplain org.geotools.referencing.cs.DefaultCartesianCS cartesian coordinate system}), then those numbers will
+     * be formatted using this pattern.
      *
      * @param pattern The number pattern as specified in {@link DecimalFormat}.
      */
     public void setNumberPattern(final String pattern) {
         Format lastFormat = null;
         for (final Format format : formats) {
-            if (format != lastFormat && (format instanceof DecimalFormat)) {
-                ((DecimalFormat) format).applyPattern(pattern);
+            if (format != lastFormat && format instanceof DecimalFormat decimalFormat) {
+                decimalFormat.applyPattern(pattern);
                 lastFormat = format;
             }
         }
@@ -300,16 +299,16 @@ public class CoordinateFormat extends Format {
 
     /**
      * Set the pattern for angles fields. If some ordinates are formatted as angle (for example in
-     * {@linkplain org.geotools.referencing.cs.DefaultEllipsoidalCS ellipsoidal coordinate system}),
-     * then those angles will be formatted using this pattern.
+     * {@linkplain org.geotools.referencing.cs.DefaultEllipsoidalCS ellipsoidal coordinate system}), then those angles
+     * will be formatted using this pattern.
      *
      * @param pattern The angle pattern as specified in {@link AngleFormat}.
      */
     public void setAnglePattern(final String pattern) {
         Format lastFormat = null;
         for (final Format format : formats) {
-            if (format != lastFormat && (format instanceof AngleFormat)) {
-                ((AngleFormat) format).applyPattern(pattern);
+            if (format != lastFormat && format instanceof AngleFormat angleFormat) {
+                angleFormat.applyPattern(pattern);
                 lastFormat = format;
             }
         }
@@ -317,16 +316,16 @@ public class CoordinateFormat extends Format {
 
     /**
      * Set the pattern for dates fields. If some ordinates are formatted as date (for example in
-     * {@linkplain org.geotools.referencing.cs.DefaultTimeCS time coordinate system}), then those
-     * dates will be formatted using this pattern.
+     * {@linkplain org.geotools.referencing.cs.DefaultTimeCS time coordinate system}), then those dates will be
+     * formatted using this pattern.
      *
      * @param pattern The date pattern as specified in {@link SimpleDateFormat}.
      */
     public void setDatePattern(final String pattern) {
         Format lastFormat = null;
         for (final Format format : formats) {
-            if (format != lastFormat && (format instanceof SimpleDateFormat)) {
-                ((SimpleDateFormat) format).applyPattern(pattern);
+            if (format != lastFormat && format instanceof SimpleDateFormat dateFormat) {
+                dateFormat.applyPattern(pattern);
                 lastFormat = format;
             }
         }
@@ -334,27 +333,26 @@ public class CoordinateFormat extends Format {
 
     /**
      * Set the time zone for dates fields. If some ordinates are formatted as date (for example in
-     * {@linkplain org.geotools.referencing.cs.DefaultTimeCS time coordinate system}), then those
-     * dates will be formatted using the specified time zone.
+     * {@linkplain org.geotools.referencing.cs.DefaultTimeCS time coordinate system}), then those dates will be
+     * formatted using the specified time zone.
      *
      * @param timezone The time zone for dates.
      */
     public void setTimeZone(final TimeZone timezone) {
         Format lastFormat = null;
         for (final Format format : formats) {
-            if (format != lastFormat && (format instanceof DateFormat)) {
-                ((DateFormat) format).setTimeZone(timezone);
+            if (format != lastFormat && format instanceof DateFormat dateFormat) {
+                dateFormat.setTimeZone(timezone);
                 lastFormat = format;
             }
         }
     }
 
     /**
-     * Returns the format to use for formatting an ordinate at the given dimension. The dimension
-     * parameter range from 0 inclusive to the {@linkplain #getCoordinateReferenceSystem coordinate
-     * reference system}'s dimension, exclusive. This method returns a direct reference to the
-     * internal format; any change to the returned {@link Format} object will change the formatting
-     * for this {@code CoordinateFormat} object.
+     * Returns the format to use for formatting an ordinate at the given dimension. The dimension parameter range from 0
+     * inclusive to the {@linkplain #getCoordinateReferenceSystem coordinate reference system}'s dimension, exclusive.
+     * This method returns a direct reference to the internal format; any change to the returned {@link Format} object
+     * will change the formatting for this {@code CoordinateFormat} object.
      *
      * @param dimension The dimension for the ordinate to format.
      * @return The format for the given dimension.
@@ -365,44 +363,35 @@ public class CoordinateFormat extends Format {
     }
 
     /**
-     * Formats a direct position. The position's dimension must matches the {@linkplain
-     * #getCoordinateReferenceSystem coordinate reference system} dimension.
+     * Formats a direct position. The position's dimension must matches the {@linkplain #getCoordinateReferenceSystem
+     * coordinate reference system} dimension.
      *
      * @param point The position to format.
      * @return The formatted position.
-     * @throws IllegalArgumentException if this {@code CoordinateFormat} cannot format the given
-     *     object.
+     * @throws IllegalArgumentException if this {@code CoordinateFormat} cannot format the given object.
      */
-    public String format(final DirectPosition point) {
+    public String format(final Position point) {
         return format(point, new StringBuffer(), null).toString();
     }
 
     /**
-     * Formats a direct position and appends the resulting text to a given string buffer. The
-     * position's dimension must matches the {@linkplain #getCoordinateReferenceSystem coordinate
-     * reference system} dimension.
+     * Formats a direct position and appends the resulting text to a given string buffer. The position's dimension must
+     * matches the {@linkplain #getCoordinateReferenceSystem coordinate reference system} dimension.
      *
      * @param point The position to format.
      * @param toAppendTo Where the text is to be appended.
-     * @param position A {@code FieldPosition} identifying a field in the formatted text, or {@code
-     *     null} if none.
+     * @param position A {@code FieldPosition} identifying a field in the formatted text, or {@code null} if none.
      * @return The string buffer passed in as {@code toAppendTo}, with formatted text appended.
-     * @throws IllegalArgumentException if this {@code CoordinateFormat} cannot format the given
-     *     object.
+     * @throws IllegalArgumentException if this {@code CoordinateFormat} cannot format the given object.
      */
-    public StringBuffer format(
-            final DirectPosition point, final StringBuffer toAppendTo, final FieldPosition position)
+    public StringBuffer format(final Position point, final StringBuffer toAppendTo, final FieldPosition position)
             throws IllegalArgumentException {
         final int dimension = point.getDimension();
         final CoordinateSystem cs;
         if (crs != null) {
             if (dimension != formats.length) {
                 throw new MismatchedDimensionException(
-                        Errors.format(
-                                ErrorKeys.MISMATCHED_DIMENSION_$3,
-                                "point",
-                                dimension,
-                                formats.length));
+                        MessageFormat.format(ErrorKeys.MISMATCHED_DIMENSION_$3, "point", dimension, formats.length));
             }
             cs = crs.getCoordinateSystem();
         } else {
@@ -426,16 +415,15 @@ public class CoordinateFormat extends Format {
                 case ANGLE:
                     object = new Angle(value);
                     break;
-                case DATE:
-                    {
-                        final CoordinateSystemAxis axis = cs.getAxis(i);
-                        long offset = Math.round(toMillis[fi].convert(value));
-                        if (AxisDirection.PAST.equals(axis.getDirection())) {
-                            offset = -offset;
-                        }
-                        object = new Date(epochs[fi] + offset);
-                        break;
+                case DATE: {
+                    final CoordinateSystemAxis axis = cs.getAxis(i);
+                    long offset = Math.round(toMillis[fi].convert(value));
+                    if (AxisDirection.PAST.equals(axis.getDirection())) {
+                        offset = -offset;
                     }
+                    object = new Date(epochs[fi] + offset);
+                    break;
+                }
             }
             if (i != 0) {
                 toAppendTo.append(separator);
@@ -462,25 +450,21 @@ public class CoordinateFormat extends Format {
     }
 
     /**
-     * Formats a direct position and appends the resulting text to a given string buffer. The
-     * position's dimension must matches the {@linkplain #getCoordinateReferenceSystem coordinate
-     * reference system} dimension.
+     * Formats a direct position and appends the resulting text to a given string buffer. The position's dimension must
+     * matches the {@linkplain #getCoordinateReferenceSystem coordinate reference system} dimension.
      *
-     * @param object The {@link DirectPosition} to format.
+     * @param object The {@link Position} to format.
      * @param toAppendTo Where the text is to be appended.
-     * @param position A {@code FieldPosition} identifying a field in the formatted text, or {@code
-     *     null} if none.
+     * @param position A {@code FieldPosition} identifying a field in the formatted text, or {@code null} if none.
      * @return The string buffer passed in as {@code toAppendTo}, with formatted text appended.
      * @throws NullPointerException if {@code toAppendTo} is null.
-     * @throws IllegalArgumentException if this {@code CoordinateFormat} cannot format the given
-     *     object.
+     * @throws IllegalArgumentException if this {@code CoordinateFormat} cannot format the given object.
      */
     @Override
-    public StringBuffer format(
-            final Object object, final StringBuffer toAppendTo, final FieldPosition position)
+    public StringBuffer format(final Object object, final StringBuffer toAppendTo, final FieldPosition position)
             throws IllegalArgumentException {
-        if (object instanceof DirectPosition) {
-            return format((DirectPosition) object, toAppendTo, position);
+        if (object instanceof Position position1) {
+            return format(position1, toAppendTo, position);
         } else {
             throw new IllegalArgumentException(String.valueOf(object));
         }
@@ -493,7 +477,7 @@ public class CoordinateFormat extends Format {
      * @param position The position of the first character to parse.
      */
     @Override
-    public DirectPosition parseObject(final String source, final ParsePosition position) {
+    public Position parseObject(final String source, final ParsePosition position) {
         throw new UnsupportedOperationException("DirectPosition parsing not yet implemented.");
     }
 }

@@ -131,9 +131,7 @@ public class FunctionParseTest {
         // But the default fallback function type for number returns is 'exponential':
         assertEquals(MBFunction.FunctionType.EXPONENTIAL, fn.getTypeWithDefault(Number.class));
 
-        assertEquals(
-                EnumSet.of(MBFunction.FunctionCategory.PROPERTY, MBFunction.FunctionCategory.ZOOM),
-                fn.category());
+        assertEquals(EnumSet.of(MBFunction.FunctionCategory.PROPERTY, MBFunction.FunctionCategory.ZOOM), fn.category());
         assertEquals("rating", fn.getProperty());
         assertNotNull(fn.getStops());
         assertEquals(4, fn.getStops().size());
@@ -175,11 +173,11 @@ public class FunctionParseTest {
     }
 
     /** Verify that an interval function for colours can be parsed. */
-    @SuppressWarnings("unchecked")
     @Test
     public void testParseIntervalFunctionColour() throws IOException, ParseException {
         JSONObject layer = testLayersById.get("functionIntervalColour");
-        JSONObject j = traverse(layer, JSONObject.class, "paint", "circle-color").get();
+        JSONObject j =
+                traverse(layer, JSONObject.class, "paint", "circle-color").get();
         MBFunction fn = new MBFunction(j);
         assertThat(fn, hasProperty("type", is(MBFunction.FunctionType.INTERVAL)));
         assertThat(fn, categories(containsInAnyOrder(MBFunction.FunctionCategory.PROPERTY)));
@@ -189,10 +187,7 @@ public class FunctionParseTest {
                 fn,
                 hasProperty(
                         "stops",
-                        contains(
-                                contains(-273.15, "#4488FF"),
-                                contains(10.0, "#00FF00"),
-                                contains(30.0, "#FF8800"))));
+                        contains(contains(-273.15, "#4488FF"), contains(10.0, "#00FF00"), contains(30.0, "#FF8800"))));
     }
     /**
      * Verify that an interval function for number can be parsed.
@@ -201,10 +196,10 @@ public class FunctionParseTest {
      * @throws IOException problem reading json
      */
     @Test
-    @SuppressWarnings("unchecked")
     public void testParseIntervalFunctionNumber() throws IOException, ParseException {
         JSONObject layer = testLayersById.get("functionIntervalNumeric");
-        JSONObject j = traverse(layer, JSONObject.class, "paint", "circle-radius").get();
+        JSONObject j =
+                traverse(layer, JSONObject.class, "paint", "circle-radius").get();
         MBFunction fn = new MBFunction(j);
         assertThat(fn, hasProperty("type", is(MBFunction.FunctionType.INTERVAL)));
         assertThat(fn, categories(containsInAnyOrder(MBFunction.FunctionCategory.PROPERTY)));
@@ -212,16 +207,11 @@ public class FunctionParseTest {
         assertThat(
                 fn,
                 hasProperty(
-                        "stops",
-                        contains(
-                                contains(0L, 0L),
-                                contains(2L, 5L),
-                                contains(5L, 10L),
-                                contains(10L, 20L))));
+                        "stops", contains(contains(0L, 0L), contains(2L, 5L), contains(5L, 10L), contains(10L, 20L))));
     }
     /**
-     * Traverse a nested map using the array of strings, and cast the result to the provided class,
-     * or return {@link Optional#empty()}.
+     * Traverse a nested map using the array of strings, and cast the result to the provided class, or return
+     * {@link Optional#empty()}.
      *
      * @param clazz expected type
      * @param path used to access map
@@ -234,8 +224,7 @@ public class FunctionParseTest {
 
         Object value = map;
         for (String key : path) {
-            if (value instanceof JSONObject) {
-                JSONObject m = (JSONObject) value;
+            if (value instanceof JSONObject m) {
                 if (m.containsKey(key)) {
                     value = m.get(key);
                 } else {
